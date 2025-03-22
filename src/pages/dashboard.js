@@ -1,4 +1,3 @@
-// src/pages/dashboard.js
 "use client";
 
 import { useMagicLink } from "@/contexts/MagicLinkContext";
@@ -21,17 +20,21 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (!user || !wallet) {
-      const timer = setTimeout(() => router.push("/"), 1200);
+      const timer = setTimeout(() => router.push("/"), 1500);
       return () => clearTimeout(timer);
     }
-  }, [user, wallet]);
+  }, [user, wallet, router]);
 
   useEffect(() => {
     if (wallet && rpcUrls[selectedNetwork]) {
       const provider = new JsonRpcProvider(rpcUrls[selectedNetwork]);
-      provider.getBalance(wallet.address)
+      provider
+        .getBalance(wallet.address)
         .then((bal) => setBalance(formatEther(bal)))
-        .catch(() => setBalance("Error"));
+        .catch((err) => {
+          console.error("Balance fetch error:", err);
+          setBalance("Error");
+        });
     }
   }, [wallet, selectedNetwork]);
 
@@ -40,10 +43,10 @@ export default function Dashboard() {
   }
 
   return (
-    <div className={styles.dashboardWrapper}>
+    <div className="globalContainer">
       <Navbar />
-      <div className={styles.content}>
-        <h1 className={styles.welcome}>Welcome, {user.email}</h1>
+      <div className="contentWrapper glassBox fadeIn">
+        <h1 className={styles.welcome}>Welcome,<br />{user.email}</h1>
 
         <div className={styles.card}>
           <label className={styles.label}>Wallet address:</label>
@@ -68,17 +71,11 @@ export default function Dashboard() {
         </div>
 
         <div className={styles.actions}>
-          <button
-            className={styles.actionButton}
-            onClick={() => router.push("/send")}
-          >
-            📤 Send
+          <button className={styles.actionButton} onClick={() => router.push("/send")}>
+            🧾 SEND
           </button>
-          <button
-            className={styles.actionButton}
-            onClick={() => router.push("/receive")}
-          >
-            📥 Receive
+          <button className={styles.actionButton} onClick={() => router.push("/receive")}>
+            ✅ RECEIVE
           </button>
         </div>
       </div>
