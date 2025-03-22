@@ -1,5 +1,9 @@
 /* ✅ Dashboard Styles – NordBalticum Premium */
 
+body {
+  padding-top: clamp(76px, 9vh, 104px); /* kompensuoja navbar aukštį */
+}
+
 .welcome {
   font-size: clamp(2rem, 4vw, 3rem);
   font-weight: 700;
