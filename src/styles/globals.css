@@ -1,10 +1,3 @@
-/* ✅ GLOBAL RESET */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
 /* ✅ FULLSCREEN, SCALE & ZOOM PREMIUM UI */
 html, body {
   width: 100vw;
