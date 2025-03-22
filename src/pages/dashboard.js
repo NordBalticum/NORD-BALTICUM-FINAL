@@ -1,4 +1,4 @@
-import { useMagicLink } from "../contexts/MagicLinkContext";
+import { useMagicLink } from "@/contexts/MagicLinkContext";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { JsonRpcProvider, formatEther } from "ethers";
