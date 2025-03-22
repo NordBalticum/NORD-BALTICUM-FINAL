@@ -1,106 +1,126 @@
+/* globals.css */
+
+/* ✅ Šaknies kintamieji */
 :root {
   --max-width: 1440px;
   --min-width: 320px;
   --main-padding: clamp(24px, 4vw, 72px);
   --main-radius: 18px;
   --transition: all 0.3s ease-in-out;
-  --scale-factor: 1;
-
-  /* Tavo spalvų paletė (jei dar neįdėta) */
-  --gradient-bg: radial-gradient(ellipse at center, #2B3FFF 0%, #1B2370 40%, #0A122A 100%);
-  --main-white: #ffffff;
-  --main-white-glow: rgba(255, 255, 255, 0.45);
-  --primary-text: #f0f0f0;
-  --text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
-  --glass-effect: rgba(255, 255, 255, 0.04);
-  --button-bg: #000000;
+  --scale-factor: 0.8; /* 20% sumažinimas */
 }
 
-/* ✅ GLOBAL RESET & BASE */
+/* ✅ Bendri nustatymai */
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
 
+/* ✅ HTML ir BODY nustatymai */
 html, body {
-  margin: 0;
-  padding: 0;
-  width: 100vw;
+  width: 100%;
   min-height: 100vh;
   font-family: 'Poppins', sans-serif;
-  background: var(--gradient-bg);
-  color: var(--primary-text);
+  background: radial-gradient(ellipse at center, #2B3FFF 0%, #1B2370 40%, #0A122A 100%);
+  color: #f0f0f0;
   scroll-behavior: smooth;
-  box-sizing: border-box;
-  overflow-x: visible;
-  overflow-y: visible;
+  overflow-x: hidden;
+  overflow-y: auto;
   transform: scale(var(--scale-factor));
   transform-origin: top center;
   transition: var(--transition);
 }
 
-/* ✅ TEXT ELEMENTS */
-h1, h2, h3, h4, p, span, a, label {
-  color: var(--primary-text);
-  text-shadow: var(--text-shadow);
-  font-weight: 500;
-}
-strong {
-  font-weight: 700;
+/* ✅ Pagrindinis konteineris */
+.fullscreenContainer {
+  width: 100%;
+  min-height: 100vh;
+  padding: var(--main-padding);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: inherit;
 }
 
-/* ✅ BUTTON STYLES */
+/* ✅ Turinys */
+.fullscreenContent {
+  width: clamp(var(--min-width), 92vw, var(--max-width));
+  min-height: 88vh;
+  padding: clamp(24px, 5vw, 64px);
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: var(--main-radius);
+  backdrop-filter: blur(16px);
+  box-shadow: 0 0 52px rgba(0, 255, 200, 0.08);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  animation: fadeIn 0.7s ease;
+}
+
+/* ✅ Tipografija */
+h1, h2, h3, p {
+  color: #ffffff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+}
+
+/* ✅ Animacijos */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ✅ Centravimo pagalbinė klasė */
+.centered {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+/* ✅ Mygtukų stilius */
 button {
-  background: var(--button-bg);
-  color: var(--main-white);
-  border: 2px solid var(--main-white);
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  border: 2px solid #ffffff;
   border-radius: 12px;
   padding: clamp(12px, 1.8vw, 24px) clamp(18px, 2.6vw, 36px);
   font-size: clamp(0.95rem, 1.4vw, 1.3rem);
   font-weight: 600;
   text-transform: uppercase;
   transition: all 0.3s ease-in-out;
-  box-shadow: 0px 3px 10px rgba(255, 255, 255, 0.1);
   cursor: pointer;
 }
+
 button:hover {
-  background: var(--main-white);
+  background: #ffffff;
   color: #000000;
-  box-shadow: 0px 0px 16px var(--main-white-glow);
+  box-shadow: 0px 0px 16px rgba(255, 255, 255, 0.5);
   transform: scale(1.05);
 }
 
-/* ✅ INPUT / SELECT */
+/* ✅ Įvesties laukų ir pasirinkimo meniu stilius */
 input, select {
   background: rgba(255, 255, 255, 0.06);
-  border: 2px solid var(--main-white);
-  color: var(--primary-text);
+  border: 2px solid #ffffff;
+  color: #ffffff;
   padding: clamp(10px, 1.4vw, 14px);
   font-size: clamp(1rem, 1.2vw, 1.3rem);
   border-radius: 10px;
   transition: all 0.3s ease-in-out;
 }
+
 input:focus, select:focus {
   outline: none;
-  box-shadow: 0 0 12px var(--main-white-glow);
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.5);
   transform: scale(1.02);
 }
 
-/* ✅ GLASS UI BOX */
+/* ✅ Stiklinis efektas dėžutėms */
 .glassBox {
   backdrop-filter: blur(14px);
-  background: var(--glass-effect);
+  background: rgba(255, 255, 255, 0.1);
   border-radius: 14px;
   padding: clamp(16px, 2vw, 24px);
   box-shadow: 0 0 24px rgba(255, 255, 255, 0.15);
-}
-
-/* ✅ FADE IN ANIMATION */
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-.fadeIn {
-  animation: fadeIn 0.6s ease-in-out;
 }
