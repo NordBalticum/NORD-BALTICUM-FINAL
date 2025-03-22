@@ -1,37 +1,33 @@
-:root {
-  --primary-light: #2B37FF;
-  --primary-dark: #1B2370;
-  --primary-bg-dark: #0E0E52;
-  --gradient-bg: radial-gradient(circle at center, var(--primary-dark) 12%, var(--primary-bg-dark) 88%);
-  --main-white: #F5F5F5;
-  --main-white-glow: rgba(255, 255, 255, 0.8);
-  --glass-effect: rgba(255, 255, 255, 0.08);
-  --button-bg: linear-gradient(145deg, #111111, #2B2B2B);
-  --primary-text: var(--main-white);
-  --secondary-text: rgba(255, 255, 255, 0.85);
-  --text-shadow: 0px 1px 3px rgba(0, 0, 0, 0.3);
-}
+@import url("./variables.css");
 
-body {
+/* ✅ BENDRAS FONAS IR FONTAS */
+html, body {
   background: var(--gradient-bg);
   color: var(--primary-text);
   font-family: 'Poppins', sans-serif;
   transition: background 0.4s ease, color 0.4s ease;
 }
 
-/* Buttons */
+/* ✅ GLOBALUS TEKSTAS */
+h1, h2, h3, p, a, span, strong {
+  color: var(--primary-text);
+  text-shadow: var(--text-shadow);
+}
+
+/* ✅ MYGTUKAI */
 button {
   background: var(--button-bg);
   color: var(--main-white);
   border: 2px solid var(--main-white);
   border-radius: 12px;
-  padding: 12px 24px;
-  font-size: 1rem;
+  padding: clamp(12px, 1.8vw, 24px) clamp(18px, 2.6vw, 36px);
+  font-size: clamp(1rem, 1.4vw, 1.3rem);
   font-weight: 600;
   text-transform: uppercase;
-  box-shadow: 0px 3px 10px rgba(255, 255, 255, 0.1);
   transition: all 0.3s ease-in-out;
+  box-shadow: 0px 3px 10px rgba(255, 255, 255, 0.1);
 }
+
 button:hover {
   background: var(--main-white);
   color: #000000;
@@ -39,38 +35,33 @@ button:hover {
   transform: scale(1.05);
 }
 
-/* Inputs & Selects */
+/* ✅ INPUTS / SELECT */
 input, select {
   background: rgba(255, 255, 255, 0.06);
   border: 2px solid var(--main-white);
   color: var(--primary-text);
-  padding: 10px 14px;
-  font-size: 1rem;
+  padding: clamp(10px, 1.4vw, 14px);
+  font-size: clamp(1rem, 1.2vw, 1.3rem);
   border-radius: 10px;
   transition: all 0.3s ease-in-out;
 }
+
 input:focus, select:focus {
   outline: none;
   box-shadow: 0px 0px 12px var(--main-white-glow);
   transform: scale(1.02);
 }
 
-/* Glass Effect */
+/* ✅ GLASS UI */
 .glassBox {
   backdrop-filter: blur(14px);
   background: var(--glass-effect);
   border-radius: 14px;
-  padding: 16px 24px;
+  padding: clamp(16px, 2vw, 24px);
   box-shadow: 0 0 24px rgba(255, 255, 255, 0.15);
 }
 
-/* Text styling */
-h1, h2, h3, p, a, span, strong {
-  color: var(--primary-text);
-  text-shadow: var(--text-shadow);
-}
-
-/* Animation */
+/* ✅ ANIMACIJA */
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(-10px); }
   to { opacity: 1; transform: translateY(0); }
