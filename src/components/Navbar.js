@@ -11,7 +11,6 @@ export default function Navbar() {
   const router = useRouter();
   const { pathname } = router;
   const { signOut } = useMagicLink();
-
   const [isOpen, setIsOpen] = useState(false);
 
   const navItems = [
@@ -20,7 +19,6 @@ export default function Navbar() {
     { label: "Receive", href: "/receive" },
   ];
 
-  // Uždaro dropdown kai naviguojama
   useEffect(() => {
     setIsOpen(false);
   }, [pathname]);
@@ -31,20 +29,17 @@ export default function Navbar() {
 
   return (
     <header className={styles.navbar} role="navigation" aria-label="Main navigation">
-      {/* Logo */}
       <Link href="/" className={styles.logoLink} aria-label="Go to homepage">
         <Image
-          src="/icons/logo.png"
+          src="/icons/logo.svg"
           alt="NordBalticum Logo"
-          width={42}
-          height={42}
+          width={54}
+          height={54}
           className={styles.logo}
           priority
-          unoptimized={false}
         />
       </Link>
 
-      {/* Desktop Nav */}
       <nav className={styles.navLinks} role="menubar">
         {navItems.map((item) => (
           <Link key={item.href} href={item.href} passHref>
@@ -62,7 +57,6 @@ export default function Navbar() {
         </button>
       </nav>
 
-      {/* Mobile Toggle */}
       <div
         className={styles.mobileToggle}
         onClick={toggleMenu}
@@ -72,7 +66,6 @@ export default function Navbar() {
         {isOpen ? "✖" : "☰"}
       </div>
 
-      {/* Mobile Dropdown */}
       {isOpen && (
         <div className={styles.mobileDropdown} role="menu">
           {navItems.map((item) => (
@@ -86,11 +79,7 @@ export default function Navbar() {
               </button>
             </Link>
           ))}
-          <button
-            onClick={signOut}
-            className={styles.logoutMobile}
-            aria-label="Log out from mobile"
-          >
+          <button onClick={signOut} className={styles.logoutMobile} aria-label="Log out from mobile">
             Sign Out
           </button>
         </div>
