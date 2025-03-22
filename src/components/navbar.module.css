@@ -1,13 +1,14 @@
 .navbar {
   position: fixed;
   top: 0;
-  width: 100%;
+  left: 0;
+  width: 100vw;
   background: rgba(10, 18, 42, 0.88);
   backdrop-filter: blur(14px);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.55rem 1rem;
+  padding: clamp(0.5rem, 2vw, 1rem) clamp(1rem, 4vw, 3rem);
   z-index: 9999;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.25);
@@ -19,11 +20,12 @@
 }
 
 .logo {
-  height: 38px;
+  height: clamp(32px, 3vw, 42px);
   width: auto;
   border-radius: 10px;
   transition: transform 0.3s ease;
 }
+
 .logo:hover {
   transform: scale(1.06);
 }
@@ -31,7 +33,7 @@
 .navLinks {
   display: flex;
   align-items: center;
-  gap: 0.8rem;
+  gap: clamp(0.6rem, 2vw, 1.2rem);
 }
 
 .navButton {
@@ -77,20 +79,22 @@
   box-shadow: 0 0 14px rgba(255, 0, 0, 0.3);
 }
 
+/* HAMBURGER ICON */
 .mobileToggle {
   display: none;
-  font-size: 1.7rem;
+  font-size: clamp(1.3rem, 2vw, 1.7rem);
   color: white;
   cursor: pointer;
-  margin-right: 6px;
+  margin-right: clamp(1.4rem, 5vw, 2.8rem);
   transform: translateY(2px);
 }
 
+/* DROPDOWN MENU */
 .mobileDropdown {
   display: none;
   position: absolute;
-  top: 64px;
-  right: 14px;
+  top: clamp(60px, 8vh, 80px);
+  right: clamp(14px, 4vw, 24px);
   background: rgba(0, 0, 0, 0.95);
   padding: 1rem;
   border-radius: 12px;
@@ -118,6 +122,7 @@
   background: #ff1c1c;
 }
 
+/* MEDIA */
 @media (max-width: 768px) {
   .navLinks {
     display: none;
@@ -132,6 +137,7 @@
   }
 }
 
+/* ANIMATION */
 @keyframes fadeIn {
   from {
     opacity: 0;
