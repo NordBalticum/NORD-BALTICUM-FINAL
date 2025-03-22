@@ -28,11 +28,12 @@
 .logoContainer::before {
   content: "";
   position: absolute;
-  width: 220px;
-  height: 220px;
+  width: 260px;
+  height: 260px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(0, 255, 200, 0.18) 0%, transparent 70%);
-  filter: blur(28px);
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+  box-shadow: 0 0 65px rgba(255, 255, 255, 0.1);
+  filter: blur(44px);
   animation: pulseGlow 3.5s ease-in-out infinite;
   z-index: 0;
 }
@@ -53,10 +54,11 @@
   width: clamp(148px, 18vw, 192px);
   height: auto;
   border-radius: 20px;
-  background: none;
+  background: transparent;
   outline: none;
-  box-shadow: 0 0 34px rgba(255, 255, 255, 0.14),
-              0 0 24px rgba(255, 255, 255, 0.08); /* <- Švelnus baltas glow */
+  box-shadow:
+    0 0 34px rgba(255, 255, 255, 0.14),
+    0 0 80px rgba(255, 255, 255, 0.06); /* papildomas išorinis glow */
   transition: transform 0.4s ease;
 }
 .logoImage:hover {
