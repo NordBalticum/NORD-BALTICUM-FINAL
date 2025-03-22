@@ -29,41 +29,43 @@ export default function Navbar() {
 
   return (
     <header className={styles.navbar} role="navigation" aria-label="Main navigation">
-      <Link href="/" className={styles.logoLink} aria-label="Go to homepage">
-        <Image
-          src="/icons/logo.svg"
-          alt="NordBalticum Logo"
-          width={54}
-          height={54}
-          className={styles.logo}
-          priority
-        />
-      </Link>
+      <div className={styles.navContent}>
+        <Link href="/" className={styles.logoLink} aria-label="Go to homepage">
+          <Image
+            src="/icons/logo.svg"
+            alt="NordBalticum Logo"
+            width={54}
+            height={54}
+            className={styles.logo}
+            priority
+          />
+        </Link>
 
-      <nav className={styles.navLinks} role="menubar">
-        {navItems.map((item) => (
-          <Link key={item.href} href={item.href} passHref>
-            <button
-              role="menuitem"
-              className={`${styles.navButton} ${pathname === item.href ? styles.active : ""}`}
-              aria-current={pathname === item.href ? "page" : undefined}
-            >
-              {item.label}
-            </button>
-          </Link>
-        ))}
-        <button onClick={signOut} className={styles.logout} aria-label="Log out">
-          Sign Out
-        </button>
-      </nav>
+        <nav className={styles.navLinks} role="menubar">
+          {navItems.map((item) => (
+            <Link key={item.href} href={item.href} passHref>
+              <button
+                role="menuitem"
+                className={`${styles.navButton} ${pathname === item.href ? styles.active : ""}`}
+                aria-current={pathname === item.href ? "page" : undefined}
+              >
+                {item.label}
+              </button>
+            </Link>
+          ))}
+          <button onClick={signOut} className={styles.logout} aria-label="Log out">
+            Sign Out
+          </button>
+        </nav>
 
-      <div
-        className={styles.mobileToggle}
-        onClick={toggleMenu}
-        aria-label="Toggle mobile menu"
-        role="button"
-      >
-        {isOpen ? "✖" : "☰"}
+        <div
+          className={styles.mobileToggle}
+          onClick={toggleMenu}
+          aria-label="Toggle mobile menu"
+          role="button"
+        >
+          {isOpen ? "✖" : "☰"}
+        </div>
       </div>
 
       {isOpen && (
