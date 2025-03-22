@@ -1,3 +1,5 @@
+"use client";
+
 import { useMagicLink } from "@/contexts/MagicLinkContext";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
@@ -7,8 +9,6 @@ import Link from "next/link";
 export default function Dashboard() {
   const { user, wallet, signOut } = useMagicLink();
   const router = useRouter();
-  const currentPath = router.pathname;
-
   const [selectedNetwork, setSelectedNetwork] = useState("bsc");
   const [balance, setBalance] = useState(null);
 
@@ -17,25 +17,41 @@ export default function Dashboard() {
     bscTestnet: process.env.NEXT_PUBLIC_BSC_TESTNET_RPC,
   };
 
+  // STEP 1 – redirect jei user nėra
   useEffect(() => {
     if (!user || !wallet) {
-      router.push("/");
+      const timer = setTimeout(() => {
+        router.push("/");
+      }, 1500); // leisti kontekstui pilnai užsikrauti
+      return () => clearTimeout(timer);
     }
-  }, [user, wallet]);
+  }, [user, wallet, router]);
 
+  // STEP 2 – gauti balansą
   useEffect(() => {
     if (wallet && rpcUrls[selectedNetwork]) {
       const provider = new JsonRpcProvider(rpcUrls[selectedNetwork]);
-      provider.getBalance(wallet.address).then((bal) => {
-        setBalance(formatEther(bal));
-      });
+      provider
+        .getBalance(wallet.address)
+        .then((bal) => setBalance(formatEther(bal)))
+        .catch((err) => {
+          console.error("Balance fetch error:", err);
+          setBalance("Error");
+        });
     }
   }, [wallet, selectedNetwork]);
 
-  if (!user || !wallet) return null;
+  // STEP 3 – fallback kol krauna user ir wallet
+  if (!user || !wallet) {
+    return (
+      <div style={{ padding: "2rem", color: "#fff", textAlign: "center" }}>
+        Loading dashboard...
+      </div>
+    );
+  }
 
   return (
-    <div style={{ padding: "2rem" }}>
+    <div style={{ padding: "2rem", color: "#fff" }}>
       <h1>Welcome, {user.email}</h1>
 
       <div style={{ marginTop: "1.5rem" }}>
@@ -66,8 +82,8 @@ export default function Dashboard() {
               padding: "10px 20px",
               borderRadius: "8px",
               fontWeight: "600",
-              background: currentPath === "/send" ? "#fff" : "#111",
-              color: currentPath === "/send" ? "#000" : "#fff",
+              background: router.pathname === "/send" ? "#fff" : "#111",
+              color: router.pathname === "/send" ? "#000" : "#fff",
               border: "2px solid white",
               cursor: "pointer",
             }}
@@ -82,8 +98,8 @@ export default function Dashboard() {
               padding: "10px 20px",
               borderRadius: "8px",
               fontWeight: "600",
-              background: currentPath === "/receive" ? "#fff" : "#111",
-              color: currentPath === "/receive" ? "#000" : "#fff",
+              background: router.pathname === "/receive" ? "#fff" : "#111",
+              color: router.pathname === "/receive" ? "#000" : "#fff",
               border: "2px solid white",
               cursor: "pointer",
             }}
