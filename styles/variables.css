@@ -1,0 +1,18 @@
+:root {
+  /* ✅ SPALVŲ PALETĖ */
+  --primary-light: #2B37FF;
+  --primary-dark: #1B2370;
+  --primary-bg-dark: #0E0E52;
+  --gradient-bg: radial-gradient(circle at center, var(--primary-dark) 12%, var(--primary-bg-dark) 88%);
+
+  /* ✅ TEKSTAS IR AKCENTAI */
+  --main-white: #F5F5F5;
+  --main-white-glow: rgba(255, 255, 255, 0.8);
+  --primary-text: var(--main-white);
+  --secondary-text: rgba(255, 255, 255, 0.85);
+  --text-shadow: 0px 1px 3px rgba(0, 0, 0, 0.3);
+
+  /* ✅ UI ELEMENTAI */
+  --glass-effect: rgba(255, 255, 255, 0.08);
+  --button-bg: linear-gradient(145deg, #111111, #2B2B2B);
+}
