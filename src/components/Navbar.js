@@ -19,7 +19,6 @@ export default function Navbar() {
     { label: "Receive", href: "/receive" },
   ];
 
-  // ✅ Close dropdown on navigation
   useEffect(() => {
     setIsOpen(false);
   }, [pathname]);
@@ -31,7 +30,7 @@ export default function Navbar() {
   return (
     <header className={styles.navbar} role="navigation" aria-label="Main navigation">
       <div className={styles.navContent}>
-        {/* ✅ Logo */}
+        {/* ✅ Logo – kairėje */}
         <Link href="/" className={styles.logoLink} aria-label="Go to homepage">
           <Image
             src="/icons/logo.svg"
@@ -61,13 +60,15 @@ export default function Navbar() {
           </button>
         </nav>
 
-        {/* ✅ Mobile Hamburger */}
+        {/* ✅ Mobile Hamburger – dešinėje, plotis fiksuotas */}
         <div
-          className={`${styles.mobileToggle} ${isOpen ? styles.open : ""}`}
+          className={styles.mobileToggle}
           onClick={toggleMenu}
           aria-label="Toggle mobile menu"
           role="button"
-        ></div>
+        >
+          {isOpen ? "✖" : "☰"}
+        </div>
       </div>
 
       {/* ✅ Mobile Dropdown */}
