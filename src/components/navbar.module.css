@@ -1,4 +1,4 @@
-/* ✅ Fiksuota viršutinė navigacija */
+/* ✅ Fixed Top Navigation – NordBalticum Ultra Premium */
 .navbar {
   position: fixed;
   top: 0;
@@ -26,7 +26,6 @@
   width: auto;
   border-radius: 14px;
   background: transparent !important;
-  backdrop-filter: none !important;
   box-shadow: 0 0 22px rgba(255, 255, 255, 0.1);
   transition: transform 0.3s ease;
 }
@@ -34,13 +33,12 @@
   transform: scale(1.06);
 }
 
-/* ✅ Nuorodos */
+/* ✅ Navigation Links */
 .navLinks {
   display: flex;
   align-items: center;
   gap: clamp(0.6rem, 2vw, 1.4rem);
 }
-
 .navButton {
   background: transparent;
   border: 2px solid white;
@@ -54,20 +52,18 @@
   letter-spacing: 0.6px;
   font-size: clamp(0.9rem, 1vw, 1.05rem);
 }
-
 .navButton:hover {
   background: white;
   color: black;
   box-shadow: 0 0 16px rgba(255, 255, 255, 0.2);
 }
-
 .active {
   background: white;
   color: black;
   box-shadow: 0 0 18px rgba(255, 255, 255, 0.3);
 }
 
-/* ✅ Logout mygtukas */
+/* ✅ Logout Button */
 .logout {
   background: #ff3c3c;
   border: none;
@@ -80,22 +76,48 @@
   margin-left: 12px;
   box-shadow: 0 0 18px rgba(255, 0, 0, 0.1);
 }
-
 .logout:hover {
   background: #ff1c1c;
   box-shadow: 0 0 24px rgba(255, 0, 0, 0.3);
 }
 
-/* ✅ Mobile hamburger */
+/* ✅ Mobile Hamburger */
 .mobileToggle {
   display: none;
-  font-size: clamp(1.5rem, 3vw, 2rem);
-  color: white;
+  width: 34px;
+  height: 34px;
   cursor: pointer;
+  position: relative;
+  z-index: 1002;
   transform: translateY(2px);
 }
+.mobileToggle::before,
+.mobileToggle::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: white;
+  transition: all 0.3s ease-in-out;
+  border-radius: 4px;
+}
+.mobileToggle::before {
+  top: 8px;
+}
+.mobileToggle::after {
+  bottom: 8px;
+}
+.mobileToggle.open::before {
+  transform: rotate(45deg);
+  top: 50%;
+}
+.mobileToggle.open::after {
+  transform: rotate(-45deg);
+  bottom: 50%;
+}
 
-/* ✅ Mobile dropdown menu */
+/* ✅ Mobile Dropdown Menu */
 .mobileDropdown {
   display: none;
   position: absolute;
@@ -109,9 +131,8 @@
   flex-direction: column;
   gap: 1rem;
   width: clamp(180px, 42vw, 240px);
-  animation: fadeIn 0.25s ease-in-out;
+  animation: fadeInMenu 0.3s ease-in-out forwards;
 }
-
 .logoutMobile {
   background: #ff3c3c;
   border: none;
@@ -139,14 +160,14 @@
   }
 }
 
-/* ✅ Animacija */
-@keyframes fadeIn {
+/* ✅ Animacija – dropdown atsiradimas */
+@keyframes fadeInMenu {
   from {
     opacity: 0;
-    transform: scale(0.96);
+    transform: translateY(-6px) scale(0.96);
   }
   to {
     opacity: 1;
-    transform: scale(1);
+    transform: translateY(0) scale(1);
   }
 }
