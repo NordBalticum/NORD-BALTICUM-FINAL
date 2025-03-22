@@ -1,10 +1,10 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
 import { createClient } from "@supabase/supabase-js";
 import { Wallet } from "ethers";
 import dynamic from "next/dynamic";
 
-// Supabase init
-const supabase = createClient(
+// Supabase klientas
+export const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 );
@@ -16,44 +16,42 @@ const MagicLinkProviderBase = ({ children, router }) => {
   const [wallet, setWallet] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // STEP 0 – Redirect į / jei nėra sesijos (tik jei ne jau index puslapyje)
+  // STEP 0 – Nukreipimas jei nėra sesijos
   useEffect(() => {
-    if (!loading && !user && router?.pathname !== "/") {
+    if (!loading && !user && router?.isReady && router.pathname !== "/") {
       router.push("/");
     }
   }, [user, loading, router]);
 
-  // STEP 1 – Gauti sesiją ir subscribe pokyčiams
+  // STEP 1 – Gauti sesiją ir klausytis pokyčių
   useEffect(() => {
     const fetchSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      setUser(session?.user || null);
+      setUser(session?.user ?? null);
       setLoading(false);
     };
     fetchSession();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        setUser(session?.user || null);
-      }
-    );
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
 
     return () => subscription?.unsubscribe?.();
   }, []);
 
-  // STEP 2 – Sukurti ar gauti wallet
+  // STEP 2 – Sukurti arba gauti wallet
   useEffect(() => {
     if (user) loadOrCreateWallet(user.id);
   }, [user]);
 
-  const loadOrCreateWallet = async (user_id) => {
-    const { data: existing } = await supabase
+  const loadOrCreateWallet = useCallback(async (user_id) => {
+    const { data: existing, error } = await supabase
       .from("wallets")
       .select("*")
       .eq("user_id", user_id)
       .single();
 
-    if (existing) {
+    if (existing && !error) {
       setWallet(existing);
     } else {
       const newWallet = Wallet.createRandom();
@@ -63,12 +61,12 @@ const MagicLinkProviderBase = ({ children, router }) => {
         private_key: newWallet.privateKey,
         network: "bsc",
       };
-      const { error } = await supabase.from("wallets").insert(walletData);
-      if (!error) setWallet(walletData);
+      const { error: insertError } = await supabase.from("wallets").insert(walletData);
+      if (!insertError) setWallet(walletData);
     }
-  };
+  }, []);
 
-  // STEP 3 – Kas 60s tikrinti ar sesija galiojanti
+  // STEP 3 – Tikrinti sesiją kas 60s
   useEffect(() => {
     const interval = setInterval(async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -78,7 +76,7 @@ const MagicLinkProviderBase = ({ children, router }) => {
     return () => clearInterval(interval);
   }, []);
 
-  // STEP 4 – AFK logout po 10 min
+  // STEP 4 – Auto logout AFK po 10min
   useEffect(() => {
     if (typeof window === "undefined") return;
     let lastActivity = Date.now();
@@ -88,9 +86,8 @@ const MagicLinkProviderBase = ({ children, router }) => {
     window.addEventListener("keydown", resetTimer);
 
     const interval = setInterval(() => {
-      const now = Date.now();
-      const inactive = (now - lastActivity) / 60000;
-      if (inactive >= 10) signOut();
+      const inactiveTime = (Date.now() - lastActivity) / 60000;
+      if (inactiveTime >= 10) signOut();
     }, 60000);
 
     return () => {
@@ -100,16 +97,18 @@ const MagicLinkProviderBase = ({ children, router }) => {
     };
   }, []);
 
-  const signInWithEmail = async (email) => {
+  // Prisijungimas su Magic Link
+  const signInWithEmail = useCallback(async (email) => {
     const { error } = await supabase.auth.signInWithOtp({ email });
     if (error) throw error;
-  };
+  }, []);
 
-  const signOut = async () => {
+  // Atsijungimas
+  const signOut = useCallback(async () => {
     await supabase.auth.signOut();
     setUser(null);
     setWallet(null);
-  };
+  }, []);
 
   return (
     <MagicLinkContext.Provider value={{ user, wallet, signInWithEmail, signOut, supabase }}>
@@ -118,9 +117,9 @@ const MagicLinkProviderBase = ({ children, router }) => {
   );
 };
 
-// NAUDOJAM DINAMINĮ RENDER TIK NARŠYKLĖJE
+// ✅ Dinaminis render (tik client-side)
 const MagicLinkWrapper = ({ children }) => {
-  const router = require("next/router").useRouter(); // dynamic import
+  const router = require("next/router").useRouter();
   return <MagicLinkProviderBase router={router}>{children}</MagicLinkProviderBase>;
 };
 
