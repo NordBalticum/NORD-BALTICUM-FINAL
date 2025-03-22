@@ -1,15 +1,25 @@
 .navbar {
   position: fixed;
   top: 0;
+  left: 0;
   width: 100%;
-  background: rgba(10, 18, 42, 0.85);
-  backdrop-filter: blur(12px);
+  background: rgba(10, 18, 42, 0.88);
+  backdrop-filter: blur(14px);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.6rem 1.2rem;
-  z-index: 1000;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 0.65rem 1.4rem;
+  z-index: 9999;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 14px rgba(0, 0, 0, 0.15);
+  transition: all 0.25s ease;
+}
+
+.navbarInner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
 }
 
 .logoLink {
@@ -18,9 +28,14 @@
 }
 
 .logo {
-  height: 36px;
+  height: 34px;
   width: auto;
-  border-radius: 8px;
+  border-radius: 6px;
+  transition: transform 0.3s ease;
+}
+
+.logo:hover {
+  transform: scale(1.04);
 }
 
 .navLinks {
@@ -33,56 +48,65 @@
   background: transparent;
   border: 2px solid white;
   color: white;
-  padding: 8px 14px;
+  padding: 7px 14px;
   font-weight: 600;
   border-radius: 8px;
   cursor: pointer;
+  font-size: 0.92rem;
+  letter-spacing: 0.25px;
   transition: all 0.2s ease;
 }
 
 .navButton:hover {
   background: white;
-  color: black;
-  box-shadow: 0 0 10px rgba(255, 255, 255, 0.15);
+  color: #000;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.18);
 }
 
 .active {
   background: white;
-  color: black;
+  color: #000;
 }
 
 .logout {
   background: #ff3c3c;
   border: none;
-  padding: 8px 16px;
+  padding: 7px 16px;
   border-radius: 8px;
   color: white;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: background 0.2s ease;
 }
 
 .logout:hover {
-  background: #ff1c1c;
+  background: #ff1a1a;
+  box-shadow: 0 0 10px rgba(255, 0, 0, 0.25);
 }
 
 .mobileToggle {
   display: none;
-  font-size: 1.6rem;
+  font-size: 1.75rem;
   color: white;
   cursor: pointer;
+  padding-left: 1rem;
 }
 
 .mobileDropdown {
   display: none;
   position: absolute;
-  top: 60px;
+  top: 64px;
   right: 16px;
-  background: #000;
+  background: rgba(10, 18, 42, 0.92);
+  backdrop-filter: blur(14px);
   padding: 1rem;
-  border-radius: 10px;
-  box-shadow: 0 0 18px rgba(0, 255, 200, 0.15);
+  border-radius: 12px;
+  box-shadow: 0 0 24px rgba(0, 255, 200, 0.12);
   z-index: 1001;
+  flex-direction: column;
+  gap: 0.8rem;
+  width: 180px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .logoutMobile {
@@ -94,8 +118,15 @@
   color: white;
   font-weight: 600;
   cursor: pointer;
+  transition: all 0.2s ease;
 }
 
+.logoutMobile:hover {
+  background: #ff1a1a;
+  box-shadow: 0 0 12px rgba(255, 0, 0, 0.35);
+}
+
+/* Responsive Styles */
 @media (max-width: 768px) {
   .navLinks {
     display: none;
@@ -107,8 +138,5 @@
 
   .mobileDropdown {
     display: flex;
-    flex-direction: column;
-    gap: 0.8rem;
-    width: 160px;
   }
 }
