@@ -18,13 +18,15 @@ export default function Dashboard() {
     bscTestnet: process.env.NEXT_PUBLIC_BSC_TESTNET_RPC,
   };
 
+  // ✅ Redirect jei neprisijungęs
   useEffect(() => {
     if (!user || !wallet) {
-      const timer = setTimeout(() => router.push("/"), 1500);
+      const timer = setTimeout(() => router.push("/"), 1000);
       return () => clearTimeout(timer);
     }
   }, [user, wallet, router]);
 
+  // ✅ Gauti balansą
   useEffect(() => {
     if (wallet && rpcUrls[selectedNetwork]) {
       const provider = new JsonRpcProvider(rpcUrls[selectedNetwork]);
@@ -39,27 +41,18 @@ export default function Dashboard() {
   }, [wallet, selectedNetwork]);
 
   if (!user || !wallet) {
-    return (
-      <div className="fullscreenContainer">
-        <div className="fullscreenContent centered">
-          <p className={styles.loading}>Loading your dashboard...</p>
-        </div>
-      </div>
-    );
+    return <div className={styles.loading}>Loading your dashboard...</div>;
   }
 
   return (
     <div className="fullscreenContainer">
       <Navbar />
-      <div className="fullscreenContent">
-        <h1 className={styles.welcome}>
-          Welcome,<br />
-          {user.email}
-        </h1>
+      <div className="fullscreenContent glassBox fadeIn" role="main">
+        <h1 className={styles.welcome}>Welcome, <br />{user.email}</h1>
 
         <div className={styles.card}>
           <label className={styles.label}>Wallet address:</label>
-          <div className={styles.address}>{wallet.address}</div>
+          <p className={styles.address}>{wallet.address}</p>
 
           <div className={styles.networkSelector}>
             <label className={styles.label}>Select network:</label>
@@ -74,7 +67,7 @@ export default function Dashboard() {
 
           <div className={styles.balanceBox}>
             <span className={styles.balanceLabel}>Balance:</span>
-            {balance !== null ? `${balance} BNB` : "Loading..."}
+            <span>{balance !== null ? `${balance} BNB` : "Loading..."}</span>
           </div>
         </div>
 
