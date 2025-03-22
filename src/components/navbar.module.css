@@ -4,16 +4,16 @@
   top: 0;
   left: 0;
   width: 100vw;
-  height: clamp(60px, 8vh, 80px);
-  background: rgba(10, 18, 42, 0.88);
-  backdrop-filter: blur(14px);
+  height: clamp(68px, 7.5vh, 96px);
+  background: radial-gradient(circle at 50% 30%, rgba(20, 30, 60, 0.95), rgba(8, 14, 28, 0.9));
+  backdrop-filter: blur(18px);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: clamp(0.6rem, 2vw, 1.2rem) clamp(1.2rem, 4vw, 3rem);
+  padding: clamp(0.7rem, 2.2vw, 1.4rem) clamp(1.6rem, 5vw, 3.4rem);
   z-index: 9999;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.25);
 }
 
 /* ✅ Logo */
@@ -22,9 +22,12 @@
   align-items: center;
 }
 .logo {
-  height: clamp(34px, 3.4vw, 44px);
+  height: clamp(48px, 6.2vw, 72px);
   width: auto;
-  border-radius: 10px;
+  border-radius: 14px;
+  background: transparent !important;
+  backdrop-filter: none !important;
+  box-shadow: 0 0 22px rgba(255, 255, 255, 0.1);
   transition: transform 0.3s ease;
 }
 .logo:hover {
@@ -35,77 +38,77 @@
 .navLinks {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: clamp(0.6rem, 2vw, 1.4rem);
 }
 
 .navButton {
   background: transparent;
   border: 2px solid white;
   color: white;
-  padding: 8px 14px;
+  padding: clamp(6px, 1vw, 10px) clamp(12px, 2vw, 20px);
   font-weight: 600;
-  border-radius: 12px;
+  border-radius: 14px;
   cursor: pointer;
   transition: all 0.25s ease;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  font-size: clamp(0.85rem, 1vw, 0.95rem);
+  letter-spacing: 0.6px;
+  font-size: clamp(0.9rem, 1vw, 1.05rem);
 }
 
 .navButton:hover {
   background: white;
   color: black;
-  box-shadow: 0 0 12px rgba(255, 255, 255, 0.15);
+  box-shadow: 0 0 16px rgba(255, 255, 255, 0.2);
 }
 
 .active {
   background: white;
   color: black;
-  box-shadow: 0 0 12px rgba(255, 255, 255, 0.25);
+  box-shadow: 0 0 18px rgba(255, 255, 255, 0.3);
 }
 
 /* ✅ Logout mygtukas */
 .logout {
   background: #ff3c3c;
   border: none;
-  padding: 9px 18px;
-  border-radius: 12px;
+  padding: clamp(8px, 1vw, 12px) clamp(14px, 2vw, 22px);
+  border-radius: 14px;
   color: white;
   font-weight: 600;
   cursor: pointer;
   transition: background 0.2s ease-in-out;
-  margin-left: 10px;
+  margin-left: 12px;
+  box-shadow: 0 0 18px rgba(255, 0, 0, 0.1);
 }
 
 .logout:hover {
   background: #ff1c1c;
-  box-shadow: 0 0 16px rgba(255, 0, 0, 0.4);
+  box-shadow: 0 0 24px rgba(255, 0, 0, 0.3);
 }
 
 /* ✅ Mobile hamburger */
 .mobileToggle {
   display: none;
-  font-size: clamp(1.4rem, 2.5vw, 1.9rem);
+  font-size: clamp(1.5rem, 3vw, 2rem);
   color: white;
   cursor: pointer;
   transform: translateY(2px);
-  margin-right: clamp(1.2rem, 4vw, 3rem);
 }
 
 /* ✅ Mobile dropdown menu */
 .mobileDropdown {
   display: none;
   position: absolute;
-  top: clamp(62px, 8vh, 80px);
+  top: clamp(76px, 8vh, 96px);
   right: clamp(1rem, 4vw, 3rem);
   background: rgba(0, 0, 0, 0.96);
   padding: 1.2rem;
-  border-radius: 14px;
-  box-shadow: 0 0 20px rgba(0, 255, 200, 0.15);
+  border-radius: 16px;
+  box-shadow: 0 0 24px rgba(0, 255, 200, 0.15);
   z-index: 1001;
   flex-direction: column;
   gap: 1rem;
-  width: 190px;
+  width: clamp(180px, 42vw, 240px);
   animation: fadeIn 0.25s ease-in-out;
 }
 
@@ -113,13 +116,12 @@
   background: #ff3c3c;
   border: none;
   padding: 10px 16px;
-  border-radius: 10px;
+  border-radius: 12px;
   color: white;
   font-weight: 600;
   cursor: pointer;
   transition: background 0.2s;
 }
-
 .logoutMobile:hover {
   background: #ff1c1c;
 }
