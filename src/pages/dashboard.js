@@ -43,9 +43,9 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="globalContainer">
+    <div className="fullscreenContainer">
       <Navbar />
-      <div className="contentWrapper glassBox fadeIn">
+      <div className="fullscreenContent">
         <h1 className={styles.welcome}>Welcome,<br />{user.email}</h1>
 
         <div className={styles.card}>
@@ -53,9 +53,8 @@ export default function Dashboard() {
           <p className={styles.address}>{wallet.address}</p>
 
           <div className={styles.networkSelector}>
-            <label htmlFor="network">Select network:</label>
+            <label className={styles.label}>Select network:</label>
             <select
-              id="network"
               value={selectedNetwork}
               onChange={(e) => setSelectedNetwork(e.target.value)}
             >
@@ -71,10 +70,16 @@ export default function Dashboard() {
         </div>
 
         <div className={styles.actions}>
-          <button className={styles.actionButton} onClick={() => router.push("/send")}>
+          <button
+            className={styles.actionButton}
+            onClick={() => router.push("/send")}
+          >
             🧾 SEND
           </button>
-          <button className={styles.actionButton} onClick={() => router.push("/receive")}>
+          <button
+            className={styles.actionButton}
+            onClick={() => router.push("/receive")}
+          >
             ✅ RECEIVE
           </button>
         </div>
