@@ -1,20 +1,23 @@
 @import url("./variables.css");
 
-/* ✅ BENDRAS FONAS IR FONTAS */
+/* === GLOBAL BACKGROUND & FONT === */
 html, body {
   background: var(--gradient-bg);
   color: var(--primary-text);
   font-family: 'Poppins', sans-serif;
   transition: background 0.4s ease, color 0.4s ease;
+  font-size: clamp(14px, 1vw + 0.2rem, 18px);
 }
 
-/* ✅ GLOBALUS TEKSTAS */
-h1, h2, h3, p, a, span, strong {
+/* === GLOBAL TEXT === */
+h1, h2, h3, h4, h5, h6,
+p, a, span, strong, label {
   color: var(--primary-text);
   text-shadow: var(--text-shadow);
+  transition: color 0.3s ease-in-out;
 }
 
-/* ✅ MYGTUKAI */
+/* === BUTTONS === */
 button {
   background: var(--button-bg);
   color: var(--main-white);
@@ -24,19 +27,21 @@ button {
   font-size: clamp(1rem, 1.4vw, 1.3rem);
   font-weight: 600;
   text-transform: uppercase;
+  letter-spacing: 0.5px;
   transition: all 0.3s ease-in-out;
-  box-shadow: 0px 3px 10px rgba(255, 255, 255, 0.1);
+  box-shadow: 0 3px 10px rgba(255, 255, 255, 0.1);
+  cursor: pointer;
 }
 
 button:hover {
   background: var(--main-white);
-  color: #000000;
-  box-shadow: 0px 0px 16px var(--main-white-glow);
+  color: #000;
   transform: scale(1.05);
+  box-shadow: 0 0 20px var(--main-white-glow);
 }
 
-/* ✅ INPUTS / SELECT */
-input, select {
+/* === INPUTS / SELECTS === */
+input, select, textarea {
   background: rgba(255, 255, 255, 0.06);
   border: 2px solid var(--main-white);
   color: var(--primary-text);
@@ -44,28 +49,61 @@ input, select {
   font-size: clamp(1rem, 1.2vw, 1.3rem);
   border-radius: 10px;
   transition: all 0.3s ease-in-out;
+  width: 100%;
+  box-sizing: border-box;
 }
 
-input:focus, select:focus {
+input:focus,
+select:focus,
+textarea:focus {
   outline: none;
-  box-shadow: 0px 0px 12px var(--main-white-glow);
+  box-shadow: 0 0 12px var(--main-white-glow);
   transform: scale(1.02);
 }
 
-/* ✅ GLASS UI */
+/* === GLASSMORPHIC BOX === */
 .glassBox {
   backdrop-filter: blur(14px);
   background: var(--glass-effect);
-  border-radius: 14px;
-  padding: clamp(16px, 2vw, 24px);
-  box-shadow: 0 0 24px rgba(255, 255, 255, 0.15);
+  border-radius: 16px;
+  padding: clamp(16px, 2vw, 28px);
+  box-shadow: 0 0 26px rgba(255, 255, 255, 0.15);
+  transition: all 0.3s ease-in-out;
 }
 
-/* ✅ ANIMACIJA */
+/* === FADE-IN ANIMATION === */
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
+
 .fadeIn {
   animation: fadeIn 0.5s ease-in-out;
+}
+
+/* === RESPONSIVE TEXT === */
+.responsiveText {
+  font-size: clamp(0.9rem, 1vw + 0.2rem, 1.2rem);
+}
+
+/* === NEON GLOW EFFECT (10%) === */
+.neonSoft {
+  text-shadow: 0 0 6px rgba(255, 255, 255, 0.15), 0 0 12px rgba(255, 255, 255, 0.1);
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* === WHITE CARD BOX (if needed) === */
+.whiteCard {
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 14px;
+  padding: clamp(14px, 2vw, 24px);
+  color: var(--primary-text);
+  box-shadow: 0 0 18px rgba(255, 255, 255, 0.08);
 }
