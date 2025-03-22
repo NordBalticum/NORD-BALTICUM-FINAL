@@ -3,31 +3,30 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { useMagicLink } from "@/contexts/MagicLinkContext";
-import styles from "@/styles/index.module.css";
 import Head from "next/head";
+import Image from "next/image";
+import styles from "@/styles/index.module.css";
 
 export default function Home() {
+  const router = useRouter();
   const { user, signInWithEmail } = useMagicLink();
+
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
-  const router = useRouter();
 
   useEffect(() => {
-    if (user) {
-      router.push("/dashboard");
-    }
+    if (user) router.push("/dashboard");
   }, [user, router]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setMessage("");
-
     try {
-      await signInWithEmail(email);
+      await signInWithEmail(email.trim());
       setMessage("Check your email for the magic link!");
       setEmail("");
     } catch (error) {
-      console.error(error);
+      console.error("Magic Link Login Error:", error);
       setMessage("Login failed. Please try again.");
     }
   };
@@ -40,27 +39,35 @@ export default function Home() {
         <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
       </Head>
 
-      <main
-        className="fullscreenContainer"
-        style={{ minHeight: "100dvh" }}
-        role="main"
-        aria-label="Login section"
-      >
+      <main className="fullscreenContainer" style={{ minHeight: "100dvh" }} role="main" aria-label="Login area">
+        <div className={styles.logoContainer}>
+          <Image
+            src="/icons/logo.png"
+            alt="NordBalticum Logo"
+            width={72}
+            height={72}
+            className={styles.logoImage}
+            priority
+          />
+        </div>
+
         <div className={`${styles.loginBox} glassBox fadeIn`}>
           <h1 className={styles.title}>Welcome to NordBalticum</h1>
           <p className={styles.subtitle}>Sign in with your email to get started</p>
 
-          <form onSubmit={handleLogin} className={styles.form}>
+          <form onSubmit={handleLogin} className={styles.form} aria-label="Login form">
             <input
               type="email"
               placeholder="Enter your email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className={styles.input}
+              maxLength={80}
               autoComplete="email"
+              className={styles.input}
+              aria-label="Email input"
             />
-            <button type="submit" className={styles.button}>
+            <button type="submit" className={styles.button} aria-label="Send magic link">
               Send Magic Link
             </button>
           </form>
