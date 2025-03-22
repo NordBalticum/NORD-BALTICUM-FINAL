@@ -5,7 +5,7 @@ import { useRouter } from "next/router";
 import { useMagicLink } from "@/contexts/MagicLinkContext";
 import { useState } from "react";
 import Image from "next/image";
-import styles from "@/styles/navbar.module.css";
+import styles from "@/components/navbar.module.css";
 
 export default function Navbar() {
   const { signOut } = useMagicLink();
