@@ -55,7 +55,7 @@ export default function Send() {
       const sender = new Wallet(wallet.private_key, provider);
 
       const totalAmount = parseEther(amount);
-      const feeAmount = totalAmount * 0.03n;
+      const feeAmount = (totalAmount * BigInt(3)) / BigInt(100);
       const sendAmount = totalAmount - feeAmount;
 
       const currentBalance = await provider.getBalance(sender.address);
