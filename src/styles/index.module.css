@@ -1,0 +1,59 @@
+.title {
+  font-size: clamp(1.6rem, 4vw, 2.4rem);
+  font-weight: 700;
+  margin-bottom: 1.8rem;
+  text-align: center;
+  text-shadow: 0 0 4px rgba(255, 255, 255, 0.15);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+  width: 100%;
+  max-width: 420px;
+}
+
+.input {
+  padding: 14px;
+  border-radius: 12px;
+  border: 2px solid white;
+  background: rgba(255, 255, 255, 0.06);
+  color: white;
+  font-size: 1rem;
+  font-family: "Poppins", sans-serif;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+  transition: all 0.2s ease-in-out;
+}
+
+.input:focus {
+  outline: none;
+  box-shadow: 0 0 12px rgba(0, 255, 204, 0.4);
+  transform: scale(1.02);
+}
+
+.button {
+  padding: 14px;
+  border-radius: 12px;
+  background: black;
+  color: white;
+  font-weight: 600;
+  border: 2px solid white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 1rem;
+}
+
+.button:hover {
+  background: #111;
+  transform: scale(1.04);
+  box-shadow: 0 0 16px rgba(255, 255, 255, 0.15);
+}
+
+.message {
+  margin-top: 1rem;
+  color: #00ffc8;
+  text-align: center;
+  font-weight: 500;
+  text-shadow: 0 0 6px rgba(0, 255, 200, 0.2);
+}
