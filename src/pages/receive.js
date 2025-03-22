@@ -37,16 +37,7 @@ export default function Receive() {
 
   const handleCopy = async () => {
     try {
-      if (navigator?.clipboard?.writeText) {
-        await navigator.clipboard.writeText(wallet.address);
-      } else {
-        const textarea = document.createElement("textarea");
-        textarea.value = wallet.address;
-        document.body.appendChild(textarea);
-        textarea.select();
-        document.execCommand("copy");
-        document.body.removeChild(textarea);
-      }
+      await navigator.clipboard.writeText(wallet.address);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
@@ -58,26 +49,23 @@ export default function Receive() {
 
   return (
     <div className="globalContainer">
-      <div
-        className={`contentWrapper glassBox fadeIn ${styles.receiveWrapper}`}
-        role="main"
-        aria-label="Receive crypto interface"
-      >
+      <div className={`contentWrapper glassBox fadeIn ${styles.receiveWrapper}`} role="main">
         <h2 className={styles.title}>Receive Crypto</h2>
-        <p>Email: <strong>{user.email}</strong></p>
-        <p style={{ marginTop: "0.8rem" }}>Wallet address:</p>
+
+        <p className={styles.label}>Email: <strong>{user.email}</strong></p>
+        <p className={styles.label}>Wallet address:</p>
 
         <div
           onClick={handleCopy}
           className={`${styles.qrContainer} ${copied ? styles.copied : ""}`}
-          aria-label="Tap QR to copy address"
+          aria-label="Tap QR to copy wallet address"
         >
           <QRCode
             value={wallet.address}
             size={180}
             bgColor="#ffffff"
             fgColor="#000000"
-            style={{ borderRadius: "12px", margin: "0 auto" }}
+            className={styles.qrCode}
           />
           <p className={styles.qrText}>{wallet.address}</p>
           <small className={`${styles.copyFeedback} ${copied ? styles.copied : ""}`}>
@@ -92,7 +80,6 @@ export default function Receive() {
             value={network}
             onChange={(e) => setNetwork(e.target.value)}
             className={styles.networkSelect}
-            aria-label="Select blockchain network"
           >
             <option value="bsc">BSC Mainnet</option>
             <option value="bscTestnet">BSC Testnet</option>
