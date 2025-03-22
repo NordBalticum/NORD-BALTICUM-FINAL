@@ -7,14 +7,20 @@ html, body {
   font-family: 'Poppins', sans-serif;
   transition: background 0.4s ease, color 0.4s ease;
   font-size: clamp(14px, 1vw + 0.2rem, 18px);
+  font-weight: 400;
 }
 
-/* === GLOBAL TEXT === */
+/* === GLOBAL TEXT ELEMENTS === */
 h1, h2, h3, h4, h5, h6,
 p, a, span, strong, label {
   color: var(--primary-text);
   text-shadow: var(--text-shadow);
   transition: color 0.3s ease-in-out;
+  line-height: 1.4;
+}
+
+strong {
+  font-weight: 700;
 }
 
 /* === BUTTONS === */
@@ -71,6 +77,27 @@ textarea:focus {
   transition: all 0.3s ease-in-out;
 }
 
+/* === NEON GLOW EFFECT === */
+.neonSoft {
+  text-shadow: 0 0 6px rgba(255, 255, 255, 0.15), 0 0 12px rgba(255, 255, 255, 0.1);
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* === WHITE CARD BOX === */
+.whiteCard {
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 14px;
+  padding: clamp(14px, 2vw, 24px);
+  color: var(--primary-text);
+  box-shadow: 0 0 18px rgba(255, 255, 255, 0.08);
+}
+
+/* === RESPONSIVE TEXT === */
+.responsiveText {
+  font-size: clamp(0.9rem, 1vw + 0.2rem, 1.2rem);
+}
+
 /* === FADE-IN ANIMATION === */
 @keyframes fadeIn {
   from {
@@ -84,26 +111,15 @@ textarea:focus {
 }
 
 .fadeIn {
-  animation: fadeIn 0.5s ease-in-out;
+  animation: fadeIn 0.6s ease-in-out;
 }
 
-/* === RESPONSIVE TEXT === */
-.responsiveText {
-  font-size: clamp(0.9rem, 1vw + 0.2rem, 1.2rem);
+/* === PREMIUM ANIMATIONS === */
+.hoverable {
+  transition: all 0.3s ease-in-out;
 }
 
-/* === NEON GLOW EFFECT (10%) === */
-.neonSoft {
-  text-shadow: 0 0 6px rgba(255, 255, 255, 0.15), 0 0 12px rgba(255, 255, 255, 0.1);
-  box-shadow: 0 0 8px rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-/* === WHITE CARD BOX (if needed) === */
-.whiteCard {
-  background: rgba(255, 255, 255, 0.04);
-  border-radius: 14px;
-  padding: clamp(14px, 2vw, 24px);
-  color: var(--primary-text);
-  box-shadow: 0 0 18px rgba(255, 255, 255, 0.08);
+.hoverable:hover {
+  transform: scale(1.02);
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.08);
 }
