@@ -3,8 +3,8 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/router";
-import { useMagicLink } from "@/contexts/MagicLinkContext";
 import { useEffect, useState, useCallback } from "react";
+import { useMagicLink } from "@/contexts/MagicLinkContext";
 import styles from "@/components/navbar.module.css";
 
 export default function Navbar() {
@@ -19,6 +19,7 @@ export default function Navbar() {
     { label: "Receive", href: "/receive" },
   ];
 
+  // ✅ Close dropdown on navigation
   useEffect(() => {
     setIsOpen(false);
   }, [pathname]);
@@ -30,6 +31,7 @@ export default function Navbar() {
   return (
     <header className={styles.navbar} role="navigation" aria-label="Main navigation">
       <div className={styles.navContent}>
+        {/* ✅ Logo */}
         <Link href="/" className={styles.logoLink} aria-label="Go to homepage">
           <Image
             src="/icons/logo.svg"
@@ -41,6 +43,7 @@ export default function Navbar() {
           />
         </Link>
 
+        {/* ✅ Desktop Navigation */}
         <nav className={styles.navLinks} role="menubar">
           {navItems.map((item) => (
             <Link key={item.href} href={item.href} passHref>
@@ -58,16 +61,16 @@ export default function Navbar() {
           </button>
         </nav>
 
+        {/* ✅ Mobile Hamburger */}
         <div
-          className={styles.mobileToggle}
+          className={`${styles.mobileToggle} ${isOpen ? styles.open : ""}`}
           onClick={toggleMenu}
           aria-label="Toggle mobile menu"
           role="button"
-        >
-          {isOpen ? "✖" : "☰"}
-        </div>
+        ></div>
       </div>
 
+      {/* ✅ Mobile Dropdown */}
       {isOpen && (
         <div className={styles.mobileDropdown} role="menu">
           {navItems.map((item) => (
@@ -81,7 +84,11 @@ export default function Navbar() {
               </button>
             </Link>
           ))}
-          <button onClick={signOut} className={styles.logoutMobile} aria-label="Log out from mobile">
+          <button
+            onClick={signOut}
+            className={styles.logoutMobile}
+            aria-label="Log out from mobile"
+          >
             Sign Out
           </button>
         </div>
