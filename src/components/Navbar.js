@@ -10,8 +10,8 @@ import styles from "@/components/navbar.module.css";
 export default function Navbar() {
   const { signOut } = useMagicLink();
   const router = useRouter();
-  const [isOpen, setIsOpen] = useState(false);
   const currentPath = router.pathname;
+  const [isOpen, setIsOpen] = useState(false);
 
   const navItems = [
     { label: "Dashboard", href: "/dashboard" },
@@ -20,44 +20,36 @@ export default function Navbar() {
   ];
 
   return (
-    <header className={styles.navbar} role="navigation" aria-label="Main Navigation">
-      <div className={styles.navbarInner}>
-        <Link href="/" className={styles.logoLink} aria-label="Go to homepage">
-          <Image
-            src="/icons/logo.png"
-            alt="NordBalticum Logo"
-            width={38}
-            height={38}
-            className={styles.logo}
-            priority
-          />
-        </Link>
+    <header className={styles.navbar}>
+      <Link href="/" className={styles.logoLink}>
+        <Image
+          src="/icons/logo.png"
+          alt="Logo"
+          width={42}
+          height={42}
+          className={styles.logo}
+        />
+      </Link>
 
-        <nav className={styles.navLinks}>
-          {navItems.map((item) => (
-            <Link key={item.href} href={item.href}>
-              <button
-                className={`${styles.navButton} ${
-                  currentPath === item.href ? styles.active : ""
-                }`}
-                aria-label={`Navigate to ${item.label}`}
-              >
-                {item.label}
-              </button>
-            </Link>
-          ))}
-          <button onClick={signOut} className={styles.logout} aria-label="Sign out">
-            Sign Out
-          </button>
-        </nav>
+      <nav className={styles.navLinks}>
+        {navItems.map((item) => (
+          <Link key={item.href} href={item.href}>
+            <button
+              className={`${styles.navButton} ${
+                currentPath === item.href ? styles.active : ""
+              }`}
+            >
+              {item.label}
+            </button>
+          </Link>
+        ))}
+        <button onClick={signOut} className={styles.logout}>
+          Sign Out
+        </button>
+      </nav>
 
-        <div
-          className={styles.mobileToggle}
-          onClick={() => setIsOpen(!isOpen)}
-          aria-label="Toggle mobile menu"
-        >
-          {isOpen ? "✖" : "☰"}
-        </div>
+      <div className={styles.mobileToggle} onClick={() => setIsOpen(!isOpen)}>
+        {isOpen ? "✖" : "☰"}
       </div>
 
       {isOpen && (
