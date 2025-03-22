@@ -1,107 +1,90 @@
 .dashboardWrapper {
-  display: flex;
-  flex-direction: column;
-  width: 100vw;
-  min-height: 100vh;
-  overflow: hidden;
-  padding-top: clamp(64px, 8vh, 90px);
-  background: radial-gradient(ellipse at center, #2B3FFF 0%, #1B2370 40%, #0A122A 100%);
-  font-family: "Inter", sans-serif;
-  transform: scale(clamp(0.65, 1vw + 0.72, 0.9));
-  transition: all 0.3s ease-in-out;
-}
-
-.content {
   width: 100%;
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: clamp(1.2rem, 2.4vw, 2.5rem);
+  min-height: 100vh;
+  padding-top: clamp(60px, 8vh, 90px);
+  background: var(--gradient-bg);
+  color: var(--primary-text);
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  animation: fadeIn 0.8s ease-in-out;
+  overflow-x: hidden;
+}
+
+.content {
+  width: clamp(360px, 90vw, 1280px);
+  padding: clamp(24px, 3vw, 48px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  animation: fadeIn 1s ease;
 }
 
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  0% { opacity: 0; transform: translateY(20px); }
+  100% { opacity: 1; transform: translateY(0); }
 }
 
 .loading {
-  text-align: center;
-  color: white;
-  font-size: clamp(1rem, 1.8vw, 1.25rem);
   padding: 4rem;
+  font-size: clamp(1rem, 2vw, 1.3rem);
+  text-align: center;
 }
 
 .welcome {
-  font-size: clamp(1.7rem, 3vw, 2.2rem);
+  font-size: clamp(1.6rem, 3vw, 2.4rem);
   font-weight: 700;
-  margin-bottom: 1.5rem;
-  text-shadow: 0 0 6px rgba(255, 255, 255, 0.15);
-  text-align: center;
+  margin-bottom: 1.8rem;
+  text-shadow: 0 0 4px rgba(255, 255, 255, 0.15);
 }
 
 .card {
+  background: var(--glass-effect);
+  padding: clamp(1.5rem, 3vw, 2.4rem);
+  border-radius: 16px;
+  box-shadow: 0 0 24px rgba(0, 255, 204, 0.08);
+  backdrop-filter: blur(18px);
   width: 100%;
-  background: rgba(255, 255, 255, 0.06);
-  padding: clamp(1.4rem, 3vw, 2rem);
-  border-radius: 18px;
-  backdrop-filter: blur(16px);
-  box-shadow: 0 0 30px rgba(0, 255, 204, 0.12);
+  max-width: 800px;
   transition: all 0.3s ease-in-out;
 }
 
-.card:hover {
-  transform: scale(1.015);
-  box-shadow: 0 0 40px rgba(255, 255, 255, 0.08);
-}
-
 .label {
-  font-weight: 600;
-  margin-bottom: 0.4rem;
-  display: block;
-  font-size: 0.95rem;
+  font-size: 1rem;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
 }
 
 .address {
   font-family: monospace;
-  font-size: 0.95rem;
-  margin-bottom: 0.8rem;
-  word-break: break-word;
-  color: #f0f0f0;
-  background: rgba(255, 255, 255, 0.03);
-  padding: 0.5rem 0.8rem;
+  background: rgba(255, 255, 255, 0.06);
+  padding: 0.6rem;
   border-radius: 10px;
+  word-break: break-all;
+  margin-bottom: 1rem;
+  color: #f0f0f0;
 }
 
 .networkSelector {
-  margin-bottom: 1rem;
+  margin-top: 1rem;
 }
 
 .networkSelector select {
   padding: 0.6rem 1rem;
   border-radius: 10px;
-  border: 2px solid white;
-  background: #000;
+  background: #111;
   color: white;
   font-weight: 600;
-  box-shadow: 0 0 10px rgba(0, 255, 204, 0.25);
+  border: 2px solid white;
+  margin-top: 0.4rem;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
 }
 
 .balanceBox {
-  font-size: 1.25rem;
-  font-weight: 700;
+  margin-top: 1.4rem;
+  font-weight: 600;
   color: #00ffc8;
-  text-shadow: 0 0 4px rgba(0, 255, 200, 0.3);
-  margin-top: 1.5rem;
+  font-size: 1.2rem;
+  text-shadow: 0 0 6px rgba(0, 255, 200, 0.25);
 }
 
 .balanceLabel {
@@ -111,76 +94,44 @@
 .actions {
   margin-top: 3rem;
   display: flex;
-  gap: clamp(1rem, 2vw, 2rem);
   flex-wrap: wrap;
+  gap: 1.2rem;
   justify-content: center;
 }
 
 .actionButton {
   padding: 14px 28px;
-  border-radius: 14px;
+  border-radius: 12px;
   background: #000;
-  color: white;
-  font-weight: 700;
+  color: #fff;
+  font-weight: 600;
   border: 2px solid white;
   cursor: pointer;
-  transition: all 0.25s ease;
+  transition: all 0.3s ease;
+  box-shadow: 0 0 14px rgba(255, 255, 255, 0.1);
   text-transform: uppercase;
-  font-size: 0.95rem;
-  box-shadow: 0 0 14px rgba(255, 255, 255, 0.07);
+  font-size: clamp(0.9rem, 1.2vw, 1rem);
 }
 
 .actionButton:hover {
-  transform: scale(1.05);
   background: #111;
+  transform: scale(1.06);
   box-shadow: 0 0 18px rgba(255, 255, 255, 0.2);
 }
 
 .logout {
   margin-top: 2rem;
   background: #ff3c3c;
-  padding: 11px 24px;
-  border-radius: 12px;
+  padding: 12px 28px;
+  border-radius: 10px;
+  border: none;
   font-weight: 600;
   color: white;
-  border: none;
-  cursor: pointer;
-  box-shadow: 0 0 16px rgba(255, 0, 0, 0.35);
-  transition: all 0.2s ease;
+  box-shadow: 0 0 16px rgba(255, 0, 0, 0.3);
+  transition: all 0.25s ease-in-out;
 }
 
 .logout:hover {
   background: #ff1c1c;
   box-shadow: 0 0 22px rgba(255, 0, 0, 0.4);
-}
-
-/* ✅ Responsive perfection */
-@media (max-width: 768px) {
-  .dashboardWrapper {
-    transform: scale(0.88);
-    padding-top: 70px;
-  }
-
-  .content {
-    padding: 1.2rem;
-  }
-
-  .welcome {
-    font-size: clamp(1.4rem, 4vw, 1.7rem);
-  }
-
-  .address {
-    font-size: 0.85rem;
-  }
-
-  .actions {
-    flex-direction: column;
-    gap: 1rem;
-  }
-
-  .actionButton,
-  .logout {
-    width: 100%;
-    text-align: center;
-  }
 }
