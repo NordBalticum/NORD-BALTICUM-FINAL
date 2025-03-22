@@ -2,16 +2,18 @@
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  background: radial-gradient(ellipse at center, #2B3FFF, #1B2370, #0A122A);
+  width: 100vw;
+  background: radial-gradient(ellipse at center, #2B3FFF 0%, #1B2370 40%, #0A122A 100%);
   color: white;
   font-family: "Inter", sans-serif;
-  padding-top: 80px;
-  zoom: 0.9;
+  padding-top: clamp(60px, 8vh, 90px);
+  transform: scale(clamp(0.7, 1vw + 0.7, 0.92));
   transition: all 0.3s ease-in-out;
+  overflow-x: hidden;
 }
 
 .content {
-  max-width: 860px;
+  max-width: clamp(320px, 80vw, 880px);
   margin: 0 auto;
   padding: 1.5rem;
   animation: fadeIn 1s ease;
@@ -20,7 +22,7 @@
 @keyframes fadeIn {
   0% {
     opacity: 0;
-    transform: translateY(15px);
+    transform: translateY(20px);
   }
   100% {
     opacity: 1;
@@ -32,29 +34,30 @@
   color: white;
   padding: 4rem;
   text-align: center;
-  font-size: 1.15rem;
+  font-size: clamp(1rem, 2vw, 1.25rem);
 }
 
 .welcome {
-  font-size: 1.9rem;
+  font-size: clamp(1.6rem, 3vw, 2rem);
   font-weight: 700;
   margin-bottom: 1.4rem;
   text-shadow: 0 0 4px rgba(255, 255, 255, 0.15);
   line-height: 1.3;
+  text-align: center;
 }
 
 .card {
   background: rgba(255, 255, 255, 0.06);
-  padding: 1.4rem;
+  padding: clamp(1.2rem, 4vw, 1.6rem);
   border-radius: 16px;
-  box-shadow: 0 0 22px rgba(0, 255, 204, 0.07);
+  box-shadow: 0 0 25px rgba(0, 255, 204, 0.1);
   backdrop-filter: blur(14px);
   transition: all 0.25s ease;
 }
 
 .card:hover {
   transform: scale(1.012);
-  box-shadow: 0 0 28px rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 32px rgba(255, 255, 255, 0.1);
 }
 
 .label {
@@ -86,11 +89,11 @@
   background: #000;
   color: white;
   font-weight: 500;
-  box-shadow: 0 0 8px rgba(0, 255, 204, 0.25);
+  box-shadow: 0 0 10px rgba(0, 255, 204, 0.2);
 }
 
 .balanceBox {
-  font-size: 1.15rem;
+  font-size: 1.2rem;
   margin-top: 1rem;
   font-weight: 600;
   color: #00ffc8;
@@ -118,7 +121,7 @@
   border: 2px solid white;
   cursor: pointer;
   transition: all 0.25s ease-in-out;
-  box-shadow: 0 0 12px rgba(255, 255, 255, 0.06);
+  box-shadow: 0 0 14px rgba(255, 255, 255, 0.07);
   text-transform: uppercase;
   letter-spacing: 0.5px;
   font-size: 0.95rem;
@@ -127,11 +130,11 @@
 .actionButton:hover {
   transform: scale(1.05);
   background: #111;
-  box-shadow: 0 0 16px rgba(255, 255, 255, 0.15);
+  box-shadow: 0 0 18px rgba(255, 255, 255, 0.15);
 }
 
 .logout {
-  margin-top: 2.4rem;
+  margin-top: 2.5rem;
   background: #ff3c3c;
   padding: 11px 24px;
   border-radius: 10px;
@@ -139,42 +142,38 @@
   font-weight: 600;
   cursor: pointer;
   color: white;
-  box-shadow: 0 0 12px rgba(255, 0, 0, 0.35);
+  box-shadow: 0 0 14px rgba(255, 0, 0, 0.4);
   transition: all 0.2s ease;
 }
 
 .logout:hover {
   background: #ff1c1c;
-  box-shadow: 0 0 18px rgba(255, 0, 0, 0.45);
+  box-shadow: 0 0 20px rgba(255, 0, 0, 0.45);
 }
 
-/* Responsive layout improvements */
+/* Responsive perfection */
 @media (max-width: 768px) {
   .dashboardWrapper {
-    zoom: 0.88;
-    padding-top: 60px;
+    padding-top: 70px;
+    transform: scale(0.88);
   }
 
   .welcome {
-    font-size: 1.6rem;
-    text-align: center;
+    font-size: clamp(1.4rem, 4vw, 1.6rem);
   }
 
   .address {
     font-size: 0.85rem;
   }
 
-  .actionButton {
-    flex: 1 1 100%;
-    text-align: center;
-  }
-
   .actions {
     flex-direction: column;
-    gap: 0.8rem;
+    gap: 1rem;
   }
 
+  .actionButton,
   .logout {
     width: 100%;
+    text-align: center;
   }
 }
