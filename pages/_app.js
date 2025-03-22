@@ -1,12 +1,14 @@
 import "../styles/globals.css";
+import "../styles/theme.css";
+import Layout from "../components/Layout";
 import { MagicLinkProvider } from "../contexts/MagicLinkContext";
 
-function MyApp({ Component, pageProps }) {
+export default function MyApp({ Component, pageProps }) {
   return (
     <MagicLinkProvider>
-      <Component {...pageProps} />
+      <Layout>
+        <Component {...pageProps} />
+      </Layout>
     </MagicLinkProvider>
   );
 }
-
-export default MyApp;
