@@ -1,68 +1,81 @@
-/* ✅ FULLSCREEN, SCALE & ZOOM PREMIUM UI */
+/* ✅ GLOBAL RESET & TYPOGRAPHY */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
 html, body {
-  width: 100vw;
-  height: 100vh;
-  overflow-x: hidden;
-  overflow-y: auto;
   background: var(--gradient-bg);
   font-family: 'Poppins', sans-serif;
   color: var(--primary-text);
-  zoom: unset;
-  transform: unset;
+  transition: background 0.3s ease, color 0.3s ease;
+}
+
+/* ✅ GLOBAL TEXT */
+h1, h2, h3, h4, p, span, a, label {
+  color: var(--primary-text);
+  text-shadow: var(--text-shadow);
+  font-weight: 500;
+}
+
+strong {
+  font-weight: 700;
+}
+
+/* ✅ BUTTON STYLES */
+button {
+  background: var(--button-bg);
+  color: var(--main-white);
+  border: 2px solid var(--main-white);
+  border-radius: 12px;
+  padding: clamp(12px, 1.8vw, 24px) clamp(18px, 2.6vw, 36px);
+  font-size: clamp(0.95rem, 1.4vw, 1.3rem);
+  font-weight: 600;
+  text-transform: uppercase;
   transition: all 0.3s ease-in-out;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  padding: 0;
+  box-shadow: 0px 3px 10px rgba(255, 255, 255, 0.1);
+  cursor: pointer;
 }
 
-/* ✅ TOP-LEVEL CONTAINER */
-.globalContainer {
-  width: 100%;
-  max-width: 100%;
-  min-height: 100vh;
-  padding: clamp(24px, 4vw, 64px);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
+button:hover {
+  background: var(--main-white);
+  color: #000000;
+  box-shadow: 0px 0px 16px var(--main-white-glow);
+  transform: scale(1.05);
 }
 
-/* ✅ CONTENT CONTAINER */
-.contentWrapper {
-  width: clamp(360px, 95vw, 1400px);
-  min-height: clamp(400px, 90vh, 960px);
-  padding: clamp(20px, 3vw, 48px);
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
+/* ✅ INPUT / SELECT */
+input, select {
+  background: rgba(255, 255, 255, 0.06);
+  border: 2px solid var(--main-white);
+  color: var(--primary-text);
+  padding: clamp(10px, 1.4vw, 14px);
+  font-size: clamp(1rem, 1.2vw, 1.3rem);
+  border-radius: 10px;
+  transition: all 0.3s ease-in-out;
 }
 
-/* ✅ SCALING UI ON LARGE RESOLUTIONS */
-@media (min-width: 2400px) {
-  html {
-    zoom: 0.72;
-  }
+input:focus, select:focus {
+  outline: none;
+  box-shadow: 0 0 12px var(--main-white-glow);
+  transform: scale(1.02);
 }
-@media (min-width: 3200px) {
-  html {
-    zoom: 0.65;
-  }
+
+/* ✅ GLASS UI BOX */
+.glassBox {
+  backdrop-filter: blur(14px);
+  background: var(--glass-effect);
+  border-radius: 14px;
+  padding: clamp(16px, 2vw, 24px);
+  box-shadow: 0 0 24px rgba(255, 255, 255, 0.15);
 }
-@media (min-width: 4000px) {
-  html {
-    zoom: 0.55;
-  }
+
+/* ✅ FADE IN */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
-@media (max-width: 768px) {
-  html {
-    zoom: 0.88;
-  }
-}
-@media (max-width: 480px) {
-  html {
-    zoom: 0.85;
-  }
+.fadeIn {
+  animation: fadeIn 0.6s ease-in-out;
 }
