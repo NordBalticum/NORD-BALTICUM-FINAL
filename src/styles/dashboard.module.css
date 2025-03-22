@@ -1,0 +1,107 @@
+.dashboardWrapper {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: radial-gradient(ellipse at center, #0a1f44, #0b1227);
+  color: white;
+  font-family: "Inter", sans-serif;
+  padding-top: 70px;
+}
+
+.content {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.loading {
+  color: white;
+  padding: 5rem;
+  text-align: center;
+  font-size: 1.3rem;
+}
+
+.welcome {
+  font-size: 2rem;
+  margin-bottom: 1.5rem;
+}
+
+.card {
+  background: rgba(255, 255, 255, 0.04);
+  padding: 1.5rem;
+  border-radius: 16px;
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+}
+
+.label {
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+.address {
+  font-family: monospace;
+  font-size: 0.95rem;
+  margin-bottom: 1rem;
+  word-break: break-all;
+}
+
+.networkSelector {
+  margin-bottom: 1rem;
+}
+
+.networkSelector select {
+  padding: 0.5rem;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  background: #000;
+  color: white;
+}
+
+.balanceBox {
+  font-size: 1.2rem;
+  margin-top: 1rem;
+}
+
+.balanceLabel {
+  font-weight: 600;
+  margin-right: 8px;
+}
+
+.actions {
+  margin-top: 2rem;
+  display: flex;
+  gap: 1rem;
+}
+
+.actionButton {
+  padding: 12px 24px;
+  border-radius: 10px;
+  background: #fff;
+  color: #000;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.actionButton:hover {
+  transform: scale(1.05);
+}
+
+.logout {
+  margin-top: 2rem;
+  background: #ff4d4f;
+  padding: 12px 24px;
+  border-radius: 10px;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+  color: white;
+  transition: background 0.2s ease;
+}
+
+.logout:hover {
+  background: #ff2f3c;
+}
