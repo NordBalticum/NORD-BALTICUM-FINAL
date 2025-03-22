@@ -1,41 +1,56 @@
-/* globals.css */
-
-/* ✅ Šaknies kintamieji */
+/* --------------------------------------
+   ✅ GLOBAL ROOT SETTINGS
+-------------------------------------- */
 :root {
   --max-width: 1440px;
   --min-width: 320px;
   --main-padding: clamp(24px, 4vw, 72px);
   --main-radius: 18px;
   --transition: all 0.3s ease-in-out;
-  --scale-factor: 0.8; /* 20% sumažinimas */
+  --scale-factor: 0.8;
+  --main-white: #ffffff;
+  --primary-text: #f0f0f0;
+  --glass-effect: rgba(255, 255, 255, 0.06);
+  --main-white-glow: rgba(255, 255, 255, 0.4);
+  --gradient-bg: radial-gradient(ellipse at center, #2B3FFF 0%, #1B2370 40%, #0A122A 100%);
+  --text-shadow: 0 0 6px rgba(0, 0, 0, 0.3);
 }
 
-/* ✅ Bendri nustatymai */
+/* --------------------------------------
+   ✅ GLOBAL RESET
+-------------------------------------- */
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
 
-/* ✅ HTML ir BODY nustatymai */
-html, body {
+/* --------------------------------------
+   ✅ HTML & BODY
+-------------------------------------- */
+html,
+body {
   width: 100%;
-  min-height: 100vh;
+  min-height: 100dvh;
   font-family: 'Poppins', sans-serif;
-  background: radial-gradient(ellipse at center, #2B3FFF 0%, #1B2370 40%, #0A122A 100%);
-  color: #f0f0f0;
+  color: var(--primary-text);
+  background: var(--gradient-bg);
   scroll-behavior: smooth;
   overflow-x: hidden;
   overflow-y: auto;
+
+  /* ✅ SCALING */
   transform: scale(var(--scale-factor));
   transform-origin: top center;
   transition: var(--transition);
 }
 
-/* ✅ Pagrindinis konteineris */
+/* --------------------------------------
+   ✅ LAYOUT WRAPPERS
+-------------------------------------- */
 .fullscreenContainer {
   width: 100%;
-  min-height: 100vh;
+  min-height: 100dvh;
   padding: var(--main-padding);
   display: flex;
   align-items: center;
@@ -43,12 +58,11 @@ html, body {
   background: inherit;
 }
 
-/* ✅ Turinys */
 .fullscreenContent {
   width: clamp(var(--min-width), 92vw, var(--max-width));
   min-height: 88vh;
   padding: clamp(24px, 5vw, 64px);
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--glass-effect);
   border-radius: var(--main-radius);
   backdrop-filter: blur(16px);
   box-shadow: 0 0 52px rgba(0, 255, 200, 0.08);
@@ -58,31 +72,26 @@ html, body {
   animation: fadeIn 0.7s ease;
 }
 
-/* ✅ Tipografija */
-h1, h2, h3, p {
-  color: #ffffff;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+/* --------------------------------------
+   ✅ TYPOGRAPHY
+-------------------------------------- */
+h1, h2, h3, h4, p, span, label {
+  color: var(--primary-text);
+  text-shadow: var(--text-shadow);
+  font-weight: 500;
 }
 
-/* ✅ Animacijos */
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(16px); }
-  to { opacity: 1; transform: translateY(0); }
+strong {
+  font-weight: 700;
 }
 
-/* ✅ Centravimo pagalbinė klasė */
-.centered {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-}
-
-/* ✅ Mygtukų stilius */
+/* --------------------------------------
+   ✅ BUTTONS
+-------------------------------------- */
 button {
-  background: rgba(255, 255, 255, 0.1);
-  color: #ffffff;
-  border: 2px solid #ffffff;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--main-white);
+  border: 2px solid var(--main-white);
   border-radius: 12px;
   padding: clamp(12px, 1.8vw, 24px) clamp(18px, 2.6vw, 36px);
   font-size: clamp(0.95rem, 1.4vw, 1.3rem);
@@ -90,37 +99,69 @@ button {
   text-transform: uppercase;
   transition: all 0.3s ease-in-out;
   cursor: pointer;
+  box-shadow: 0 3px 10px rgba(255, 255, 255, 0.08);
 }
 
 button:hover {
   background: #ffffff;
   color: #000000;
-  box-shadow: 0px 0px 16px rgba(255, 255, 255, 0.5);
+  box-shadow: 0px 0px 18px var(--main-white-glow);
   transform: scale(1.05);
 }
 
-/* ✅ Įvesties laukų ir pasirinkimo meniu stilius */
-input, select {
+/* --------------------------------------
+   ✅ INPUTS / SELECTS
+-------------------------------------- */
+input,
+select {
   background: rgba(255, 255, 255, 0.06);
-  border: 2px solid #ffffff;
-  color: #ffffff;
+  border: 2px solid var(--main-white);
+  color: var(--main-white);
   padding: clamp(10px, 1.4vw, 14px);
   font-size: clamp(1rem, 1.2vw, 1.3rem);
   border-radius: 10px;
   transition: all 0.3s ease-in-out;
 }
 
-input:focus, select:focus {
+input:focus,
+select:focus {
   outline: none;
-  box-shadow: 0 0 12px rgba(255, 255, 255, 0.5);
+  box-shadow: 0 0 12px var(--main-white-glow);
   transform: scale(1.02);
 }
 
-/* ✅ Stiklinis efektas dėžutėms */
+/* --------------------------------------
+   ✅ GLASS BOXES
+-------------------------------------- */
 .glassBox {
   backdrop-filter: blur(14px);
   background: rgba(255, 255, 255, 0.1);
   border-radius: 14px;
   padding: clamp(16px, 2vw, 24px);
   box-shadow: 0 0 24px rgba(255, 255, 255, 0.15);
+}
+
+/* --------------------------------------
+   ✅ UTILITY CLASSES
+-------------------------------------- */
+.centered {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.fadeIn {
+  animation: fadeIn 0.6s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
