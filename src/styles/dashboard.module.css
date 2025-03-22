@@ -1,9 +1,16 @@
-/* ✅ Dashboard Styles – NordBalticum Ultra Premium FIX */
+/* ✅ Dashboard Styles – NordBalticum Ultra Premium Final FIX */
 
-body {
+.wrapper {
   padding-top: clamp(76px, 9vh, 104px);
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
+/* =============================== */
+/* ✅ Welcome Text                */
+/* =============================== */
 .welcome {
   font-size: clamp(2rem, 4vw, 3rem);
   font-weight: 700;
@@ -12,27 +19,37 @@ body {
   line-height: 1.4;
   letter-spacing: 0.6px;
   color: var(--main-white);
-  text-shadow: var(--text-shadow);
+  text-shadow: 0 2px 6px rgba(0, 255, 204, 0.18);
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   padding-bottom: 12px;
+  backdrop-filter: blur(4px);
 }
 
+/* =============================== */
+/* ✅ Card Container              */
+/* =============================== */
 .card {
   background: var(--glass-effect);
   padding: clamp(1.8rem, 3vw, 2.6rem);
   border-radius: var(--main-radius);
-  backdrop-filter: blur(22px);
-  box-shadow: 0 0 38px rgba(0, 255, 204, 0.08);
-  width: 100%;
+  backdrop-filter: blur(24px);
+  box-shadow:
+    0 0 42px rgba(0, 255, 204, 0.1),
+    inset 0 0 16px rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  outline: 1px solid rgba(255, 255, 255, 0.05);
+  outline-offset: -6px;
   max-width: 800px;
+  width: 100%;
   margin: 0 auto;
   transition: var(--transition);
   box-sizing: border-box;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  outline: 1px solid rgba(255, 255, 255, 0.06);
-  outline-offset: -8px;
+  position: relative;
 }
 
+/* =============================== */
+/* ✅ Field Label                 */
+/* =============================== */
 .label {
   font-weight: 600;
   font-size: clamp(0.95rem, 1vw, 1.1rem);
@@ -42,6 +59,9 @@ body {
   text-shadow: 0 0 2px rgba(255, 255, 255, 0.08);
 }
 
+/* =============================== */
+/* ✅ Wallet Address              */
+/* =============================== */
 .address {
   font-family: monospace;
   font-size: 0.95rem;
@@ -53,9 +73,12 @@ body {
   color: #f5f5f5;
   text-shadow: 0 0 2px rgba(0, 0, 0, 0.7);
   border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: inset 0 0 8px rgba(255, 255, 255, 0.05);
+  box-shadow: inset 0 0 10px rgba(255, 255, 255, 0.05);
 }
 
+/* =============================== */
+/* ✅ Network Selector            */
+/* =============================== */
 .networkSelector {
   margin-top: 1.2rem;
   text-align: center;
@@ -69,7 +92,9 @@ body {
   font-weight: 600;
   border: 1px solid #ffffff;
   margin-top: 0.5rem;
-  box-shadow: 0 0 14px rgba(255, 255, 255, 0.08);
+  box-shadow:
+    0 0 14px rgba(255, 255, 255, 0.08),
+    inset 0 0 4px rgba(0, 255, 200, 0.06);
   transition: var(--transition);
   backdrop-filter: blur(12px);
 }
@@ -80,6 +105,9 @@ body {
   box-shadow: 0 0 14px rgba(0, 255, 200, 0.25);
 }
 
+/* =============================== */
+/* ✅ Balance Box                 */
+/* =============================== */
 .balanceBox {
   margin-top: 1.6rem;
   font-weight: 700;
@@ -92,15 +120,18 @@ body {
   flex-wrap: wrap;
   padding: 0.6rem 1rem;
   border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.16);
   background: rgba(255, 255, 255, 0.03);
-  box-shadow: inset 0 0 10px rgba(255, 255, 255, 0.04);
+  box-shadow: inset 0 0 12px rgba(255, 255, 255, 0.04);
 }
 
 .balanceLabel {
   margin-right: 8px;
 }
 
+/* =============================== */
+/* ✅ Buttons (Send / Receive)    */
+/* =============================== */
 .actions {
   margin-top: 3rem;
   display: flex;
@@ -118,7 +149,9 @@ body {
   border: 1.5px solid #fff;
   cursor: pointer;
   transition: all 0.3s ease-in-out;
-  box-shadow: 0 0 18px rgba(255, 255, 255, 0.1);
+  box-shadow:
+    0 0 18px rgba(255, 255, 255, 0.1),
+    inset 0 0 8px rgba(255, 255, 255, 0.03);
   text-transform: uppercase;
   font-size: clamp(0.95rem, 1.2vw, 1.1rem);
   letter-spacing: 0.5px;
@@ -129,9 +162,12 @@ body {
   background: #fff;
   color: #000;
   transform: scale(1.07);
-  box-shadow: 0 0 24px rgba(255, 255, 255, 0.4);
+  box-shadow: 0 0 26px rgba(255, 255, 255, 0.45);
 }
 
+/* =============================== */
+/* ✅ Loading State               */
+/* =============================== */
 .loading {
   padding: 4rem;
   font-size: clamp(1rem, 2vw, 1.3rem);
