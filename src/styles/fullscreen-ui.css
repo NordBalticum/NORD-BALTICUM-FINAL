@@ -7,74 +7,63 @@
   --zoom-factor: 0.72;
 }
 
-/* ✅ Base */
+/* ✅ Universal Base */
 html, body {
   margin: 0;
   padding: 0;
-  width: 100vw;
-  height: 100vh;
-  overflow-x: hidden;
-  overflow-y: auto;
+  width: 100%;
+  min-height: 100vh;
   font-family: 'Poppins', sans-serif;
   background: radial-gradient(ellipse at center, #2B3FFF 0%, #1B2370 40%, #0A122A 100%);
   color: #f0f0f0;
   scroll-behavior: smooth;
+  overflow-x: visible;
+  overflow-y: visible;
   transform: scale(var(--zoom-factor));
   transform-origin: top center;
   transition: var(--transition);
+  box-sizing: border-box;
 }
 
-/* ✅ Responsive zooming (CSS-only perfection) */
-@media (max-width: 480px) {
-  :root { --zoom-factor: 0.88; }
-}
-@media (min-width: 768px) {
-  :root { --zoom-factor: 0.82; }
-}
-@media (min-width: 1024px) {
-  :root { --zoom-factor: 0.78; }
-}
-@media (min-width: 1440px) {
-  :root { --zoom-factor: 0.72; }
-}
-@media (min-width: 1920px) {
-  :root { --zoom-factor: 0.66; }
-}
-@media (min-width: 2560px) {
-  :root { --zoom-factor: 0.58; }
-}
-@media (min-width: 3200px) {
-  :root { --zoom-factor: 0.5; }
-}
-@media (min-width: 3840px) {
-  :root { --zoom-factor: 0.44; }
-}
+/* ✅ Zoom levels – ultra responsive */
+@media (max-width: 480px)   { :root { --zoom-factor: 0.88; } }
+@media (min-width: 768px)   { :root { --zoom-factor: 0.82; } }
+@media (min-width: 1024px)  { :root { --zoom-factor: 0.78; } }
+@media (min-width: 1440px)  { :root { --zoom-factor: 0.72; } }
+@media (min-width: 1920px)  { :root { --zoom-factor: 0.66; } }
+@media (min-width: 2560px)  { :root { --zoom-factor: 0.58; } }
+@media (min-width: 3200px)  { :root { --zoom-factor: 0.5; } }
+@media (min-width: 3840px)  { :root { --zoom-factor: 0.44; } }
 
-/* ✅ Layout wrapper */
-.fullscreenContainer {
+/* ✅ Premium Layout Container */
+.fullscreenContainer {padding-bottom: clamp(60px, 8vh, 120px);
   width: 100%;
   min-height: 100vh;
   padding: var(--main-padding);
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
+  background: inherit;
+  overflow: visible;
+  box-sizing: border-box;
 }
 
-/* ✅ Content box */
+/* ✅ Main Content */
 .fullscreenContent {
   width: clamp(var(--min-width), 92vw, var(--max-width));
-  max-width: 100%;
-  min-height: 90vh;
+  min-height: 88vh;
   padding: clamp(24px, 5vw, 64px);
   background: rgba(255, 255, 255, 0.04);
   border-radius: var(--main-radius);
   backdrop-filter: blur(16px);
-  box-shadow: 0 0 42px rgba(0, 255, 200, 0.08);
+  box-shadow: 0 0 52px rgba(0, 255, 200, 0.08);
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
   animation: fadeIn 0.7s ease;
   box-sizing: border-box;
+  position: relative;
+  overflow: visible;
 }
 
 /* ✅ Typography */
@@ -83,13 +72,13 @@ h1, h2, h3, p {
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
 }
 
-/* ✅ Animations */
+/* ✅ Entry Animation */
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(16px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* ✅ Utilities */
+/* ✅ Utility */
 .centered {
   display: flex;
   align-items: center;
