@@ -4,9 +4,9 @@
   max-width: 440px;
   width: 100%;
   padding: clamp(24px, 5vw, 48px);
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--glass-effect);
   border-radius: 20px;
-  box-shadow: 0 0 36px rgba(0, 255, 204, 0.08);
+  box-shadow: 0 0 36px var(--card-glow);
   backdrop-filter: blur(18px);
   display: flex;
   flex-direction: column;
@@ -22,7 +22,7 @@
   font-weight: 700;
   margin-bottom: 0.7rem;
   color: var(--main-white);
-  text-shadow: 0 1px 4px rgba(255, 255, 255, 0.2);
+  text-shadow: var(--text-shadow);
 }
 
 .subtitle {
@@ -45,17 +45,17 @@
   padding: 14px 18px;
   border-radius: 14px;
   border: 2px solid rgba(255, 255, 255, 0.3);
-  background: rgba(255, 255, 255, 0.07);
-  color: #ffffff;
+  background: var(--input-bg);
+  color: var(--main-white);
   font-size: 1rem;
-  transition: all 0.3s ease-in-out;
+  transition: var(--transition);
   box-sizing: border-box;
 }
 
 .input:focus {
   outline: none;
-  border-color: #00ffc8;
-  box-shadow: 0 0 14px rgba(0, 255, 200, 0.3);
+  border-color: var(--success-color);
+  box-shadow: var(--input-focus-glow);
   background: rgba(255, 255, 255, 0.1);
 }
 
@@ -65,28 +65,28 @@
   padding: 14px 22px;
   border-radius: 14px;
   background: #000000;
-  color: #ffffff;
+  color: var(--main-white);
   font-weight: 700;
   font-size: 1rem;
   border: 2px solid #ffffff;
   cursor: pointer;
   text-transform: uppercase;
-  transition: all 0.3s ease;
-  box-shadow: 0 0 18px rgba(255, 255, 255, 0.08);
+  transition: var(--transition);
+  box-shadow: var(--button-shadow);
 }
 
 .button:hover {
-  background: #ffffff;
+  background: var(--main-white);
   color: #000000;
   transform: scale(1.06);
-  box-shadow: 0 0 22px rgba(255, 255, 255, 0.25);
+  box-shadow: 0 0 22px var(--main-white-glow);
 }
 
 /* ✅ Success / Info Message */
 .message {
   margin-top: 1.2rem;
   font-size: 0.95rem;
-  color: #00ffc8;
+  color: var(--success-color);
   text-shadow: 0 0 4px rgba(0, 255, 200, 0.3);
   font-weight: 600;
 }
