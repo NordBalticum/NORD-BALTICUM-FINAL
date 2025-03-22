@@ -21,6 +21,7 @@ export default function Navbar() {
 
   return (
     <header className={styles.navbar}>
+      {/* Logo */}
       <Link href="/" className={styles.logoLink}>
         <Image
           src="/icons/logo.png"
@@ -31,6 +32,7 @@ export default function Navbar() {
         />
       </Link>
 
+      {/* Desktop Menu */}
       <nav className={styles.navLinks}>
         {navItems.map((item) => (
           <Link key={item.href} href={item.href}>
@@ -48,10 +50,12 @@ export default function Navbar() {
         </button>
       </nav>
 
+      {/* Hamburger */}
       <div className={styles.mobileToggle} onClick={() => setIsOpen(!isOpen)}>
         {isOpen ? "✖" : "☰"}
       </div>
 
+      {/* Mobile Dropdown */}
       {isOpen && (
         <div className={styles.mobileDropdown}>
           {navItems.map((item) => (
