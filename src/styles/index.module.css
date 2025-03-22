@@ -1,27 +1,29 @@
 /* ✅ Logo virš login box */
 .logoContainer {
-  margin-bottom: clamp(32px, 5vw, 60px);
+  margin-bottom: clamp(36px, 6vh, 72px);
+  margin-top: clamp(12vh, 18vh, 24vh); /* Nustato viršutinį atstumą nuo ekrano */
   display: flex;
   justify-content: center;
   align-items: center;
+  animation: fadeIn 0.8s ease-in-out;
 }
 
 .logoImage {
-  width: clamp(58px, 5vw, 72px);
+  width: clamp(88px, 12vw, 128px);
   height: auto;
-  border-radius: 12px;
-  box-shadow: 0 0 24px rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  box-shadow: 0 0 34px rgba(255, 255, 255, 0.12);
   transition: transform 0.4s ease;
 }
 .logoImage:hover {
-  transform: scale(1.08);
+  transform: scale(1.1);
 }
 
 /* ✅ Login Box – NordBalticum Standard */
 .loginBox {
   max-width: 440px;
   width: 100%;
-  margin-top: clamp(8px, 2vh, 24px);
+  margin-top: clamp(-10px, -4vh, -24px); /* LoginBox nuleistas žemiau po logotipo */
   padding: clamp(24px, 5vw, 48px);
   background: var(--glass-effect);
   border-radius: 20px;
@@ -31,13 +33,13 @@
   flex-direction: column;
   align-items: center;
   text-align: center;
-  animation: fadeIn 0.7s ease-in-out;
+  animation: fadeIn 0.8s ease-out;
   box-sizing: border-box;
 }
 
 /* ✅ Title / Subtitle */
 .title {
-  font-size: clamp(1.9rem, 4vw, 2.5rem);
+  font-size: clamp(2rem, 5vw, 2.6rem);
   font-weight: 700;
   margin-bottom: 0.7rem;
   color: var(--main-white);
@@ -112,8 +114,8 @@
 
 /* ✅ FadeIn Animation */
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(16px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; transform: translateY(20px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 .fadeIn {
   animation: fadeIn 0.6s ease-in-out;
