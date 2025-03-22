@@ -1,4 +1,4 @@
-/* ✅ Dashboard Styles – Bankinė kokybė */
+/* ✅ Dashboard Styles – Premium Bankinė klasė */
 
 .welcome {
   font-size: clamp(2rem, 4vw, 3rem);
@@ -7,20 +7,21 @@
   text-align: center;
   line-height: 1.4;
   letter-spacing: 0.6px;
-  text-shadow: 0 0 6px rgba(255, 255, 255, 0.15);
   color: var(--main-white);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
 }
 
 .card {
   background: var(--glass-effect);
   padding: clamp(1.8rem, 3vw, 2.6rem);
   border-radius: var(--main-radius);
-  box-shadow: 0 0 34px rgba(0, 255, 204, 0.08);
   backdrop-filter: blur(18px);
+  box-shadow: 0 0 36px rgba(0, 255, 204, 0.08);
   width: 100%;
   max-width: 800px;
   margin: 0 auto;
   transition: var(--transition);
+  box-sizing: border-box;
 }
 
 .label {
@@ -40,11 +41,12 @@
   word-break: break-word;
   margin-bottom: 1rem;
   color: #f5f5f5;
-  text-shadow: 0 0 2px #000;
+  text-shadow: 0 0 2px rgba(0, 0, 0, 0.7);
 }
 
 .networkSelector {
-  margin-top: 1rem;
+  margin-top: 1.2rem;
+  text-align: center;
 }
 
 .networkSelector select {
@@ -66,14 +68,15 @@
 }
 
 .balanceBox {
-  margin-top: 1.5rem;
+  margin-top: 1.6rem;
   font-weight: 700;
   color: #00ffc8;
   font-size: 1.2rem;
-  text-shadow: 0 0 6px rgba(0, 255, 200, 0.3);
+  text-shadow: 0 0 6px rgba(0, 255, 200, 0.25);
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-wrap: wrap;
 }
 
 .balanceLabel {
@@ -81,7 +84,7 @@
 }
 
 .actions {
-  margin-top: 2.8rem;
+  margin-top: 3rem;
   display: flex;
   flex-wrap: wrap;
   gap: 1.5rem;
@@ -94,9 +97,9 @@
   background: #000;
   color: #fff;
   font-weight: 700;
-  border: 2px solid white;
+  border: 2px solid #fff;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.3s ease-in-out;
   box-shadow: 0 0 16px rgba(255, 255, 255, 0.08);
   text-transform: uppercase;
   font-size: clamp(0.95rem, 1.2vw, 1.1rem);
@@ -104,7 +107,7 @@
 }
 
 .actionButton:hover {
-  background: #ffffff;
+  background: #fff;
   color: #000;
   transform: scale(1.07);
   box-shadow: 0 0 22px rgba(255, 255, 255, 0.3);
@@ -116,4 +119,5 @@
   text-align: center;
   color: white;
   text-shadow: 0 0 3px rgba(255, 255, 255, 0.2);
+  font-weight: 600;
 }
