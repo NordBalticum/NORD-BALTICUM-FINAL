@@ -1,4 +1,4 @@
-/* ✅ Dashboard Styles – Premium Bankinė klasė */
+/* ✅ Dashboard Styles – NordBalticum Premium */
 
 .welcome {
   font-size: clamp(2rem, 4vw, 3rem);
@@ -8,7 +8,7 @@
   line-height: 1.4;
   letter-spacing: 0.6px;
   color: var(--main-white);
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+  text-shadow: var(--text-shadow);
 }
 
 .card {
@@ -92,7 +92,7 @@
 }
 
 .actionButton {
-  padding: 14px 32px;
+  padding: clamp(14px, 2vw, 18px) clamp(32px, 4vw, 40px);
   border-radius: 14px;
   background: #000;
   color: #fff;
