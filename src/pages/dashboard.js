@@ -1,15 +1,15 @@
 "use client";
 
-import { useMagicLink } from "@/contexts/MagicLinkContext";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
 import { JsonRpcProvider, formatEther } from "ethers";
-import styles from "@/styles/dashboard.module.css";
+import { useMagicLink } from "@/contexts/MagicLinkContext";
 import Navbar from "@/components/Navbar";
+import styles from "@/styles/dashboard.module.css";
 
 export default function Dashboard() {
-  const { user, wallet } = useMagicLink();
   const router = useRouter();
+  const { user, wallet } = useMagicLink();
   const [selectedNetwork, setSelectedNetwork] = useState("bsc");
   const [balance, setBalance] = useState(null);
 
@@ -18,27 +18,33 @@ export default function Dashboard() {
     bscTestnet: process.env.NEXT_PUBLIC_BSC_TESTNET_RPC,
   };
 
-  // ✅ Redirect jei neprisijungęs
+  // ✅ Automatinis redirect jeigu nėra user arba wallet
   useEffect(() => {
     if (!user || !wallet) {
-      const timer = setTimeout(() => router.push("/"), 1000);
-      return () => clearTimeout(timer);
+      const timeout = setTimeout(() => router.push("/"), 1000);
+      return () => clearTimeout(timeout);
     }
   }, [user, wallet, router]);
 
   // ✅ Gauti balansą
-  useEffect(() => {
-    if (wallet && rpcUrls[selectedNetwork]) {
-      const provider = new JsonRpcProvider(rpcUrls[selectedNetwork]);
-      provider
-        .getBalance(wallet.address)
-        .then((bal) => setBalance(formatEther(bal)))
-        .catch((err) => {
-          console.error("Balance fetch error:", err);
-          setBalance("Error");
-        });
+  const fetchBalance = useCallback(async () => {
+    try {
+      const rpc = rpcUrls[selectedNetwork];
+      if (wallet && rpc) {
+        const provider = new JsonRpcProvider(rpc);
+        const raw = await provider.getBalance(wallet.address);
+        const formatted = parseFloat(formatEther(raw)).toFixed(4);
+        setBalance(formatted);
+      }
+    } catch (err) {
+      console.error("Failed to fetch balance:", err);
+      setBalance("Error");
     }
   }, [wallet, selectedNetwork]);
+
+  useEffect(() => {
+    fetchBalance();
+  }, [fetchBalance]);
 
   if (!user || !wallet) {
     return <div className={styles.loading}>Loading your dashboard...</div>;
@@ -47,7 +53,7 @@ export default function Dashboard() {
   return (
     <div className="fullscreenContainer">
       <Navbar />
-      <div className="fullscreenContent glassBox fadeIn" role="main">
+      <div className="fullscreenContent glassBox fadeIn" role="main" aria-label="Dashboard content">
         <h1 className={styles.welcome}>Welcome, <br />{user.email}</h1>
 
         <div className={styles.card}>
@@ -59,6 +65,7 @@ export default function Dashboard() {
             <select
               value={selectedNetwork}
               onChange={(e) => setSelectedNetwork(e.target.value)}
+              aria-label="Choose network"
             >
               <option value="bsc">BSC Mainnet</option>
               <option value="bscTestnet">BSC Testnet</option>
