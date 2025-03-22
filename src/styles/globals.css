@@ -1,4 +1,22 @@
-/* ✅ GLOBAL RESET & TYPOGRAPHY */
+:root {
+  --max-width: 1440px;
+  --min-width: 320px;
+  --main-padding: clamp(24px, 4vw, 72px);
+  --main-radius: 18px;
+  --transition: all 0.3s ease-in-out;
+  --scale-factor: 1;
+
+  /* Tavo spalvų paletė (jei dar neįdėta) */
+  --gradient-bg: radial-gradient(ellipse at center, #2B3FFF 0%, #1B2370 40%, #0A122A 100%);
+  --main-white: #ffffff;
+  --main-white-glow: rgba(255, 255, 255, 0.45);
+  --primary-text: #f0f0f0;
+  --text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+  --glass-effect: rgba(255, 255, 255, 0.04);
+  --button-bg: #000000;
+}
+
+/* ✅ GLOBAL RESET & BASE */
 * {
   margin: 0;
   padding: 0;
@@ -6,19 +24,28 @@
 }
 
 html, body {
-  background: var(--gradient-bg);
+  margin: 0;
+  padding: 0;
+  width: 100vw;
+  min-height: 100vh;
   font-family: 'Poppins', sans-serif;
+  background: var(--gradient-bg);
   color: var(--primary-text);
-  transition: background 0.3s ease, color 0.3s ease;
+  scroll-behavior: smooth;
+  box-sizing: border-box;
+  overflow-x: visible;
+  overflow-y: visible;
+  transform: scale(var(--scale-factor));
+  transform-origin: top center;
+  transition: var(--transition);
 }
 
-/* ✅ GLOBAL TEXT */
+/* ✅ TEXT ELEMENTS */
 h1, h2, h3, h4, p, span, a, label {
   color: var(--primary-text);
   text-shadow: var(--text-shadow);
   font-weight: 500;
 }
-
 strong {
   font-weight: 700;
 }
@@ -37,7 +64,6 @@ button {
   box-shadow: 0px 3px 10px rgba(255, 255, 255, 0.1);
   cursor: pointer;
 }
-
 button:hover {
   background: var(--main-white);
   color: #000000;
@@ -55,7 +81,6 @@ input, select {
   border-radius: 10px;
   transition: all 0.3s ease-in-out;
 }
-
 input:focus, select:focus {
   outline: none;
   box-shadow: 0 0 12px var(--main-white-glow);
@@ -71,7 +96,7 @@ input:focus, select:focus {
   box-shadow: 0 0 24px rgba(255, 255, 255, 0.15);
 }
 
-/* ✅ FADE IN */
+/* ✅ FADE IN ANIMATION */
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(-10px); }
   to { opacity: 1; transform: translateY(0); }
