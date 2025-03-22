@@ -37,8 +37,14 @@ export default function Home() {
     <>
       <Head>
         <title>NordBalticum – Login</title>
-        <meta name="description" content="Secure login with Magic Link – NordBalticum Web3 Banking" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+        <meta
+          name="description"
+          content="Secure login with Magic Link – NordBalticum Web3 Banking"
+        />
+        <meta
+          name="viewport"
+          content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+        />
       </Head>
 
       <main
@@ -48,24 +54,33 @@ export default function Home() {
         style={{ minHeight: "100dvh" }}
       >
         <div className={styles.centerWrapper}>
-          {/* ✅ Centered animated logo with glow */}
+          {/* ✅ Logo with glow */}
           <div className={styles.logoContainer}>
             <Image
               src="/icons/logo.png"
               alt="NordBalticum Logo"
-              width={108}
-              height={108}
+              width={192}
+              height={192}
               className={styles.logoImage}
               priority
             />
           </div>
 
           {/* ✅ Login Box */}
-          <section className={`${styles.loginBox} glassBox fadeIn`} aria-label="Login box">
+          <section
+            className={`${styles.loginBox} glassBox fadeIn`}
+            aria-label="Login box"
+          >
             <h1 className={styles.title}>Welcome to NordBalticum</h1>
-            <p className={styles.subtitle}>Sign in with your email to get started</p>
+            <p className={styles.subtitle}>
+              Sign in with your email to get started
+            </p>
 
-            <form onSubmit={handleLogin} className={styles.form} aria-label="Login form">
+            <form
+              onSubmit={handleLogin}
+              className={styles.form}
+              aria-label="Login form"
+            >
               <input
                 type="email"
                 placeholder="Enter your email"
