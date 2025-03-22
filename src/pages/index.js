@@ -20,6 +20,8 @@ export default function Home() {
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    setMessage("");
+
     try {
       await signInWithEmail(email);
       setMessage("Check your email for the magic link!");
@@ -34,12 +36,19 @@ export default function Home() {
     <>
       <Head>
         <title>NordBalticum – Login</title>
+        <meta name="description" content="Secure login with Magic Link – NordBalticum Web3 Banking" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
       </Head>
 
-      <div className="fullscreenContainer">
-        <div className={`${styles.loginBox} glassBox fadeIn`} role="main" aria-label="Login form">
+      <main
+        className="fullscreenContainer"
+        style={{ minHeight: "100dvh" }}
+        role="main"
+        aria-label="Login section"
+      >
+        <div className={`${styles.loginBox} glassBox fadeIn`}>
           <h1 className={styles.title}>Welcome to NordBalticum</h1>
-          <p className={styles.subtitle}>Sign in with your email</p>
+          <p className={styles.subtitle}>Sign in with your email to get started</p>
 
           <form onSubmit={handleLogin} className={styles.form}>
             <input
@@ -49,6 +58,7 @@ export default function Home() {
               onChange={(e) => setEmail(e.target.value)}
               required
               className={styles.input}
+              autoComplete="email"
             />
             <button type="submit" className={styles.button}>
               Send Magic Link
@@ -57,7 +67,7 @@ export default function Home() {
 
           {message && <p className={styles.message}>{message}</p>}
         </div>
-      </div>
+      </main>
     </>
   );
           }
