@@ -1,4 +1,4 @@
-/* RESET IR BAZINIAI NUSTATYMAI */
+/* === GLOBAL RESET === */
 *,
 *::before,
 *::after {
@@ -7,6 +7,7 @@
   padding: 0;
 }
 
+/* === ROOT + BASE === */
 html,
 body {
   width: 100vw;
@@ -18,15 +19,14 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
   zoom: clamp(0.7, 1vw + 0.3, 1);
-  transition: all 0.25s ease-in-out;
   scroll-behavior: smooth;
+  transition: all 0.25s ease-in-out;
 }
 
-/* SKALAVIMAS PER EKRANUS */
+/* === SCALING PER DEVICE === */
 @media (max-width: 500px) {
   html,
   body {
@@ -51,7 +51,7 @@ body {
   }
 }
 
-/* ✅ GLOBAL CONTAINER */
+/* === GLOBAL CONTAINER === */
 .globalContainer {
   width: clamp(300px, 92vw, 1400px);
   height: clamp(300px, 92vh, 900px);
@@ -63,17 +63,17 @@ body {
   box-sizing: border-box;
 }
 
-/* ✅ WRAPPERS */
+/* === WRAPPERS === */
 .contentWrapper {
   width: 100%;
   min-height: 80vh;
   display: flex;
   flex-direction: column;
-  align-items: center;
   justify-content: center;
+  align-items: center;
 }
 
-/* ✅ UI ACCESSIBILITY */
+/* === BASE UI ELEMENTS === */
 button,
 input,
 select,
