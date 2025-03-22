@@ -1,16 +1,16 @@
 .navbar {
   position: fixed;
   top: 0;
-  left: 0;
   width: 100%;
   background: rgba(10, 18, 42, 0.88);
   backdrop-filter: blur(14px);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.6rem 1.4rem;
+  padding: 0.55rem 1rem;
   z-index: 9999;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.25);
 }
 
 .logoLink {
@@ -19,9 +19,62 @@
 }
 
 .logo {
-  height: 36px;
+  height: 38px;
   width: auto;
-  border-radius: 8px;
+  border-radius: 10px;
+  transition: transform 0.3s ease;
+}
+.logo:hover {
+  transform: scale(1.06);
+}
+
+.navLinks {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.navButton {
+  background: transparent;
+  border: 2px solid white;
+  color: white;
+  padding: 7px 13px;
+  font-weight: 600;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: 0.9rem;
+}
+
+.navButton:hover {
+  background: white;
+  color: black;
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.15);
+}
+
+.active {
+  background: white;
+  color: black;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.15);
+}
+
+.logout {
+  background: #ff3c3c;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 10px;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+  margin-left: 10px;
+}
+
+.logout:hover {
+  background: #ff1c1c;
+  box-shadow: 0 0 14px rgba(255, 0, 0, 0.3);
 }
 
 .mobileToggle {
@@ -29,10 +82,40 @@
   font-size: 1.7rem;
   color: white;
   cursor: pointer;
-  margin-right: 0.2rem;
-  margin-top: 1px;
-  padding: 4px;
-  transition: transform 0.2s ease;
+  margin-right: 6px;
+  transform: translateY(2px);
+}
+
+.mobileDropdown {
+  display: none;
+  position: absolute;
+  top: 64px;
+  right: 14px;
+  background: rgba(0, 0, 0, 0.95);
+  padding: 1rem;
+  border-radius: 12px;
+  box-shadow: 0 0 20px rgba(0, 255, 200, 0.15);
+  z-index: 1001;
+  flex-direction: column;
+  gap: 0.9rem;
+  width: 180px;
+  animation: fadeIn 0.25s ease-in-out;
+}
+
+.logoutMobile {
+  margin-top: 1rem;
+  background: #ff3c3c;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.logoutMobile:hover {
+  background: #ff1c1c;
 }
 
 @media (max-width: 768px) {
@@ -42,16 +125,20 @@
 
   .mobileToggle {
     display: block;
-    margin-right: 6px; /* <- PRISILAIKYMAS NUO DEŠINIO KRAŠTO */
   }
 
   .mobileDropdown {
     display: flex;
-    flex-direction: column;
-    gap: 0.8rem;
-    width: 160px;
-    position: absolute;
-    top: 64px;
-    right: 14px;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
   }
 }
