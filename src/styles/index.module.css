@@ -13,12 +13,12 @@
 }
 
 /* =============================== */
-/* ✅ LOGO su pulsuojančiu glow   */
+/* ✅ LOGO Offff su pulsuojančiu glow   */
 /* =============================== */
 .logoContainer {
   position: relative;
-  margin-top: clamp(-4vh, -6vh, -2vh);
-  margin-bottom: clamp(36px, 6vh, 72px);
+  margin-top: clamp(-6vh, -8vh, -4vh); /* pakeltas logotipas */
+  margin-bottom: clamp(32px, 5vh, 64px);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -26,46 +26,22 @@
 }
 
 .logoContainer::before {
-  content: "";
-  position: absolute;
-  width: 260px;
-  height: 260px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
-  box-shadow: 0 0 65px rgba(255, 255, 255, 0.1);
-  filter: blur(44px);
-  animation: pulseGlow 3.5s ease-in-out infinite;
-  z-index: 0;
-}
-
-@keyframes pulseGlow {
-  0%, 100% {
-    transform: scale(1);
-    opacity: 0.8;
-  }
-  50% {
-    transform: scale(1.1);
-    opacity: 0.3;
-  }
+  display: none; /* glow išjungtas */
 }
 
 .logoImage {
   z-index: 1;
-  width: clamp(148px, 18vw, 192px);
+  width: clamp(180px, 22vw, 268px); /* padidintas ~40% */
   height: auto;
-  border-radius: 20px;
   background: transparent !important;
-  backdrop-filter: none !important;
   outline: none;
-  box-shadow:
-    0 0 34px rgba(255, 255, 255, 0.14),
-    0 0 80px rgba(255, 255, 255, 0.06); /* papildomas išorinis glow */
+  border-radius: 20px;
+  box-shadow: none; /* pašalinam bet kokį glow */
   transition: transform 0.4s ease;
 }
 .logoImage:hover {
-  transform: scale(1.08);
+  transform: scale(1.06);
 }
-
 /* =============================== */
 /* ✅ LOGIN BOX su efektu         */
 /* =============================== */
