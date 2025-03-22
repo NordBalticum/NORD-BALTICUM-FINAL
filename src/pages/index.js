@@ -57,7 +57,7 @@ export default function Home() {
           {/* ✅ Logo with glow */}
           <div className={styles.logoContainer}>
             <Image
-              src="/icons/logo.png"
+              src="/icons/logo.svg"
               alt="NordBalticum Logo"
               width={192}
               height={192}
