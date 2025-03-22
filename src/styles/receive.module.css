@@ -1,120 +1,88 @@
-"use client";
+.receiveWrapper {
+  max-width: 640px;
+  width: 100%;
+  text-align: center;
+  padding: clamp(1.2rem, 3vw, 2rem);
+  border-radius: 18px;
+  box-shadow: 0 0 30px rgba(0, 255, 204, 0.05);
+  animation: fadeIn 0.6s ease-in-out;
+}
 
-import { useMagicLink } from "@/contexts/MagicLinkContext";
-import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
-import { JsonRpcProvider, formatEther } from "ethers";
-import QRCode from "react-qr-code";
+/* Title */
+.title {
+  font-size: clamp(1.6rem, 2.2vw, 2.2rem);
+  margin-bottom: 1.4rem;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  font-weight: 700;
+  color: var(--main-white);
+  text-shadow: var(--text-shadow);
+}
 
-export default function Receive() {
-  const { user, wallet } = useMagicLink();
-  const router = useRouter();
+/* QR Container */
+.qrContainer {
+  cursor: pointer;
+  padding: 1rem;
+  border-radius: 18px;
+  margin-bottom: 1.5rem;
+  background: rgba(255, 255, 255, 0.06);
+  transition: all 0.3s ease;
+}
 
-  const [copied, setCopied] = useState(false);
-  const [balance, setBalance] = useState(null);
-  const [network, setNetwork] = useState("bsc");
+.qrContainer.copied {
+  box-shadow: 0 0 16px rgba(0, 255, 200, 0.25);
+}
 
-  const rpcUrls = {
-    bsc: process.env.NEXT_PUBLIC_BSC_RPC,
-    bscTestnet: process.env.NEXT_PUBLIC_BSC_TESTNET_RPC,
-  };
+.qrText {
+  word-break: break-word;
+  margin-top: 1rem;
+  font-size: clamp(0.85rem, 1vw, 1rem);
+  color: #f0f0f0;
+  font-weight: 500;
+}
 
-  useEffect(() => {
-    if (!user || !wallet) {
-      const t = setTimeout(() => router.push("/"), 1200);
-      return () => clearTimeout(t);
-    }
-  }, [user, wallet]);
+/* Copy feedback */
+.copyFeedback {
+  display: block;
+  margin-top: 0.5rem;
+  color: #aaa;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+.copyFeedback.copied {
+  color: #00ffc8;
+}
 
-  useEffect(() => {
-    if (wallet && rpcUrls[network]) {
-      const provider = new JsonRpcProvider(rpcUrls[network]);
-      provider.getBalance(wallet.address).then((bal) => {
-        setBalance(formatEther(bal));
-      });
-    }
-  }, [wallet, network]);
+/* Select Network */
+.networkSelector {
+  margin-top: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.8rem;
+}
 
-  const handleCopy = async () => {
-    try {
-      if (navigator?.clipboard?.writeText) {
-        await navigator.clipboard.writeText(wallet.address);
-      } else {
-        const textarea = document.createElement("textarea");
-        textarea.value = wallet.address;
-        document.body.appendChild(textarea);
-        textarea.select();
-        document.execCommand("copy");
-        document.body.removeChild(textarea);
-      }
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch (err) {
-      console.error("Copy failed:", err);
-    }
-  };
+.networkLabel {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
 
-  if (!user || !wallet) return null;
+.networkSelect {
+  padding: 10px 16px;
+  border-radius: 10px;
+  background: #111;
+  color: #fff;
+  border: 2px solid white;
+  font-weight: 600;
+  font-size: 0.95rem;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+}
 
-  return (
-    <div className="globalContainer">
-      <div className="contentWrapper glassBox fadeIn" role="main" aria-label="Receive crypto page">
-        <h2>Receive Crypto</h2>
-        <p>Email: <strong>{user.email}</strong></p>
-        <p>Wallet address:</p>
-
-        <div
-          onClick={handleCopy}
-          style={{
-            cursor: "pointer",
-            marginBottom: "1rem",
-            padding: "1rem",
-            borderRadius: "16px",
-            background: "rgba(255,255,255,0.06)",
-            transition: "background 0.3s",
-          }}
-          className="glassBox hoverable"
-          aria-label="Tap to copy wallet address"
-        >
-          <QRCode
-            value={wallet.address}
-            size={180}
-            bgColor="#ffffff"
-            fgColor="#000000"
-            style={{ borderRadius: "12px", margin: "0 auto" }}
-          />
-          <p style={{ wordBreak: "break-all", marginTop: "1rem", textAlign: "center" }}>
-            {wallet.address}
-          </p>
-          <small style={{ display: "block", textAlign: "center", color: copied ? "lightgreen" : "#ccc" }}>
-            {copied ? "✓ Copied to clipboard!" : "Tap QR to copy address"}
-          </small>
-        </div>
-
-        <div style={{ marginTop: "1rem" }}>
-          <label htmlFor="network">Select network:</label>
-          <select
-            id="network"
-            value={network}
-            onChange={(e) => setNetwork(e.target.value)}
-            style={{
-              marginLeft: "10px",
-              padding: "8px",
-              borderRadius: "8px",
-              background: "#111",
-              color: "#fff",
-              border: "2px solid white",
-            }}
-          >
-            <option value="bsc">BSC Mainnet</option>
-            <option value="bscTestnet">BSC Testnet</option>
-          </select>
-        </div>
-
-        <h3 style={{ marginTop: "1.5rem", fontWeight: "600", color: "#00ffcc" }}>
-          Balance: {balance !== null ? `${balance} BNB` : "Loading..."}
-        </h3>
-      </div>
-    </div>
-  );
-                   }
+/* Balance */
+.balanceText {
+  margin-top: 1.8rem;
+  font-weight: 700;
+  font-size: 1.15rem;
+  color: #00ffc8;
+  text-shadow: 0 0 6px rgba(0, 255, 200, 0.25);
+}
