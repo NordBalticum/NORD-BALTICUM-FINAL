@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
+import { Wallet } from "ethers";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -10,6 +11,7 @@ const MagicLinkContext = createContext();
 
 export const MagicLinkProvider = ({ children }) => {
   const [user, setUser] = useState(null);
+  const [wallet, setWallet] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -32,6 +34,18 @@ export const MagicLinkProvider = ({ children }) => {
     return () => subscription.unsubscribe();
   }, []);
 
+  useEffect(() => {
+    if (user) {
+      const existingWallet = loadWallet();
+      if (existingWallet) {
+        setWallet(existingWallet);
+      } else {
+        const newWallet = createAndSaveWallet();
+        setWallet(newWallet);
+      }
+    }
+  }, [user]);
+
   const signInWithEmail = async (email) => {
     const { error } = await supabase.auth.signInWithOtp({ email });
     if (error) throw error;
@@ -40,13 +54,35 @@ export const MagicLinkProvider = ({ children }) => {
   const signOut = async () => {
     await supabase.auth.signOut();
     setUser(null);
+    setWallet(null);
   };
 
   return (
-    <MagicLinkContext.Provider value={{ user, signInWithEmail, signOut, supabase }}>
+    <MagicLinkContext.Provider
+      value={{ user, wallet, signInWithEmail, signOut, supabase }}
+    >
       {!loading && children}
     </MagicLinkContext.Provider>
   );
 };
 
 export const useMagicLink = () => useContext(MagicLinkContext);
+
+const createAndSaveWallet = () => {
+  const wallet = Wallet.createRandom();
+  const walletData = {
+    address: wallet.address,
+    privateKey: wallet.privateKey,
+  };
+  localStorage.setItem("userWallet", JSON.stringify(walletData));
+  return wallet;
+};
+
+const loadWallet = () => {
+  const walletData = localStorage.getItem("userWallet");
+  if (walletData) {
+    const { privateKey } = JSON.parse(walletData);
+    return new Wallet(privateKey);
+  }
+  return null;
+};
