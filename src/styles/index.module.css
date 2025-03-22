@@ -54,7 +54,8 @@
   width: clamp(148px, 18vw, 192px);
   height: auto;
   border-radius: 20px;
-  background: transparent;
+  background: transparent !important;
+  backdrop-filter: none !important;
   outline: none;
   box-shadow:
     0 0 34px rgba(255, 255, 255, 0.14),
