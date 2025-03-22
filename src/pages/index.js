@@ -1,6 +1,9 @@
+"use client";
+
 import { useState } from "react";
 import { useRouter } from "next/router";
 import { useMagicLink } from "@/contexts/MagicLinkContext";
+import styles from "@/styles/index.module.css";
 
 export default function Home() {
   const [email, setEmail] = useState("");
@@ -12,7 +15,7 @@ export default function Home() {
     e.preventDefault();
     try {
       await signInWithEmail(email);
-      setMessage("Check your email for the magic link!");
+      setMessage("✓ Magic link sent to your email.");
     } catch (error) {
       setMessage("Login error: " + error.message);
     }
@@ -24,22 +27,24 @@ export default function Home() {
   }
 
   return (
-    <div style={{ padding: "2rem", maxWidth: "400px", margin: "100px auto" }}>
-      <h1>Login</h1>
-      <form onSubmit={handleLogin}>
-        <input
-          type="email"
-          placeholder="Enter your email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-          style={{ padding: "10px", width: "100%", marginBottom: "10px" }}
-        />
-        <button type="submit" style={{ padding: "10px", width: "100%" }}>
-          Send Magic Link
-        </button>
-      </form>
-      <p>{message}</p>
+    <div className="globalContainer">
+      <div className="contentWrapper glassBox fadeIn">
+        <h1 className={styles.title}>Welcome to NordBalticum</h1>
+        <form onSubmit={handleLogin} className={styles.form}>
+          <input
+            type="email"
+            placeholder="Enter your email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            className={styles.input}
+          />
+          <button type="submit" className={styles.button}>
+            Send Magic Link
+          </button>
+        </form>
+        {message && <p className={styles.message}>{message}</p>}
+      </div>
     </div>
   );
-}
+        }
