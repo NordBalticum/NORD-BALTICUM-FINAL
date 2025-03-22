@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
-import { createAndSaveWallet, loadWallet } from "../lib/ethers";
+import { Wallet } from "ethers";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -14,6 +14,7 @@ export const MagicLinkProvider = ({ children }) => {
   const [wallet, setWallet] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // STEP 1 – get Supabase session
   useEffect(() => {
     const getSession = async () => {
       const {
@@ -34,17 +35,38 @@ export const MagicLinkProvider = ({ children }) => {
     return () => subscription.unsubscribe();
   }, []);
 
+  // STEP 2 – load wallet from Supabase or create new one
   useEffect(() => {
     if (user) {
-      const existingWallet = loadWallet();
-      if (existingWallet) {
-        setWallet(existingWallet);
-      } else {
-        const newWallet = createAndSaveWallet();
-        setWallet(newWallet);
-      }
+      loadOrCreateWallet(user.id);
     }
   }, [user]);
+
+  const loadOrCreateWallet = async (user_id) => {
+    const { data: existing, error } = await supabase
+      .from("wallets")
+      .select("*")
+      .eq("user_id", user_id)
+      .single();
+
+    if (existing) {
+      setWallet(existing);
+    } else {
+      const newWallet = Wallet.createRandom();
+      const walletData = {
+        user_id,
+        address: newWallet.address,
+        private_key: newWallet.privateKey,
+        network: "bsc",
+      };
+      const { error: insertError } = await supabase
+        .from("wallets")
+        .insert(walletData);
+
+      if (!insertError) setWallet(walletData);
+      else console.error("Wallet creation error:", insertError);
+    }
+  };
 
   const signInWithEmail = async (email) => {
     const { error } = await supabase.auth.signInWithOtp({ email });
