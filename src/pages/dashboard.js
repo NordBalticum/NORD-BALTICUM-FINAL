@@ -18,7 +18,7 @@ export default function Dashboard() {
     bscTestnet: process.env.NEXT_PUBLIC_BSC_TESTNET_RPC,
   };
 
-  // REDIRECT IF NOT LOGGED IN
+  // Redirect if not authenticated
   useEffect(() => {
     if (!user || !wallet) {
       const timer = setTimeout(() => router.push("/"), 1200);
@@ -26,7 +26,7 @@ export default function Dashboard() {
     }
   }, [user, wallet]);
 
-  // GET BALANCE
+  // Get balance from blockchain
   useEffect(() => {
     if (wallet && rpcUrls[selectedNetwork]) {
       const provider = new JsonRpcProvider(rpcUrls[selectedNetwork]);
@@ -40,7 +40,6 @@ export default function Dashboard() {
     }
   }, [wallet, selectedNetwork]);
 
-  // LOADING SCREEN
   if (!user || !wallet) {
     return <div className={styles.loading}>Loading your dashboard...</div>;
   }
@@ -51,7 +50,7 @@ export default function Dashboard() {
       <div className={styles.content}>
         <h1 className={styles.welcome}>Welcome, {user.email}</h1>
 
-        <div className={styles.card}>
+        <div className={styles.card} aria-label="Wallet details">
           <label className={styles.label}>Wallet address:</label>
           <p className={styles.address}>{wallet.address}</p>
 
@@ -61,6 +60,7 @@ export default function Dashboard() {
               id="network"
               value={selectedNetwork}
               onChange={(e) => setSelectedNetwork(e.target.value)}
+              aria-label="Select blockchain network"
             >
               <option value="bsc">BSC Mainnet</option>
               <option value="bscTestnet">BSC Testnet</option>
@@ -69,22 +69,22 @@ export default function Dashboard() {
 
           <div className={styles.balanceBox}>
             <span className={styles.balanceLabel}>Balance:</span>
-            <span>{balance !== null ? `${balance} BNB` : "Loading..."}</span>
+            <span className={styles.balanceValue}>
+              {balance !== null ? `${balance} BNB` : "Loading..."}
+            </span>
           </div>
         </div>
 
-        <div className={styles.actions}>
+        <div className={styles.actions} aria-label="Wallet actions">
           <button
             className={styles.actionButton}
             onClick={() => router.push("/send")}
-            aria-label="Send BNB"
           >
             📤 Send
           </button>
           <button
             className={styles.actionButton}
             onClick={() => router.push("/receive")}
-            aria-label="Receive BNB"
           >
             📥 Receive
           </button>
