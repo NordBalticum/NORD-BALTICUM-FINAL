@@ -1,102 +1,86 @@
-.navbar {
+.navbarWrapper {
+  position: fixed;
+  top: 0;
+  width: 100%;
+  z-index: 9999;
+  background: rgba(0, 8, 20, 0.96);
+  backdrop-filter: blur(12px);
+  padding: 10px 20px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: rgba(0, 0, 0, 0.6);
-  padding: 1rem 2rem;
-  border-bottom: 2px solid #222;
-  color: white;
-  position: sticky;
-  top: 0;
-  z-index: 999;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .logo {
-  font-size: 1.3rem;
-  font-weight: bold;
-  letter-spacing: 1px;
+  height: 34px;
+  width: auto;
 }
 
-.links {
+.desktopMenu {
   display: flex;
-  gap: 1rem;
+  align-items: center;
+  gap: 12px;
 }
 
-.linkButton {
+.navButton {
+  color: white;
   background: transparent;
   border: 2px solid white;
-  color: white;
-  padding: 0.5rem 1rem;
+  padding: 6px 14px;
   border-radius: 8px;
-  cursor: pointer;
   font-weight: 600;
-  transition: all 0.3s ease;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
-.linkButton:hover {
+.navButton:hover,
+.navButton.active {
   background: white;
   color: black;
 }
 
-.active {
-  background: white;
-  color: black;
-}
-
-.logout {
-  background: transparent;
-  border: 2px solid red;
-  color: red;
-  padding: 0.5rem 1rem;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: 600;
-  margin-left: 1rem;
-  transition: all 0.3s ease;
-}
-
-.logout:hover {
-  background: red;
+.logoutButton {
+  background: #ff3c3c;
   color: white;
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.logoutButton:hover {
+  background: #ff1f1f;
 }
 
 .mobileToggle {
   display: none;
-  font-size: 1.8rem;
+  font-size: 1.5rem;
+  color: white;
   cursor: pointer;
 }
 
 .mobileMenu {
-  display: none;
+  position: absolute;
+  top: 60px;
+  left: 0;
+  right: 0;
+  background: #000c1e;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
   flex-direction: column;
-  gap: 0.5rem;
   padding: 1rem;
-  background: #0f172a;
-  border-top: 2px solid #333;
-  animation: fadeIn 0.3s ease-in-out;
+  gap: 0.5rem;
+  z-index: 9999;
 }
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: scaleY(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: scaleY(1);
-  }
-}
-
-@media (max-width: 768px) {
-  .links {
+@media screen and (max-width: 768px) {
+  .desktopMenu {
     display: none;
   }
-
   .mobileToggle {
     display: block;
-  }
-
-  .mobileMenu {
-    display: flex;
   }
 }
