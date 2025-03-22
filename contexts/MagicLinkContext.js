@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
-import { Wallet } from "ethers";
+import { createAndSaveWallet, loadWallet } from "../lib/ethers";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -67,22 +67,3 @@ export const MagicLinkProvider = ({ children }) => {
 };
 
 export const useMagicLink = () => useContext(MagicLinkContext);
-
-const createAndSaveWallet = () => {
-  const wallet = Wallet.createRandom();
-  const walletData = {
-    address: wallet.address,
-    privateKey: wallet.privateKey,
-  };
-  localStorage.setItem("userWallet", JSON.stringify(walletData));
-  return wallet;
-};
-
-const loadWallet = () => {
-  const walletData = localStorage.getItem("userWallet");
-  if (walletData) {
-    const { privateKey } = JSON.parse(walletData);
-    return new Wallet(privateKey);
-  }
-  return null;
-};
