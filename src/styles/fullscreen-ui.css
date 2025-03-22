@@ -4,9 +4,10 @@
   --main-padding: clamp(24px, 4vw, 72px);
   --main-radius: 18px;
   --transition: all 0.3s ease-in-out;
+  --zoom-factor: 0.72;
 }
 
-/* ✅ Universal Fullscreen Layout */
+/* ✅ Base */
 html, body {
   margin: 0;
   padding: 0;
@@ -15,12 +16,41 @@ html, body {
   overflow-x: hidden;
   overflow-y: auto;
   font-family: 'Poppins', sans-serif;
-  background: radial-gradient(ellipse at center, #2B3FFF, #1B2370, #0A122A);
+  background: radial-gradient(ellipse at center, #2B3FFF 0%, #1B2370 40%, #0A122A 100%);
   color: #f0f0f0;
   scroll-behavior: smooth;
+  transform: scale(var(--zoom-factor));
+  transform-origin: top center;
+  transition: var(--transition);
 }
 
-/* ✅ Base container */
+/* ✅ Responsive zooming (CSS-only perfection) */
+@media (max-width: 480px) {
+  :root { --zoom-factor: 0.88; }
+}
+@media (min-width: 768px) {
+  :root { --zoom-factor: 0.82; }
+}
+@media (min-width: 1024px) {
+  :root { --zoom-factor: 0.78; }
+}
+@media (min-width: 1440px) {
+  :root { --zoom-factor: 0.72; }
+}
+@media (min-width: 1920px) {
+  :root { --zoom-factor: 0.66; }
+}
+@media (min-width: 2560px) {
+  :root { --zoom-factor: 0.58; }
+}
+@media (min-width: 3200px) {
+  :root { --zoom-factor: 0.5; }
+}
+@media (min-width: 3840px) {
+  :root { --zoom-factor: 0.44; }
+}
+
+/* ✅ Layout wrapper */
 .fullscreenContainer {
   width: 100%;
   min-height: 100vh;
@@ -30,20 +60,20 @@ html, body {
   justify-content: center;
 }
 
-/* ✅ Content centering */
+/* ✅ Content box */
 .fullscreenContent {
-  width: clamp(var(--min-width), 94vw, var(--max-width));
+  width: clamp(var(--min-width), 92vw, var(--max-width));
   max-width: 100%;
   min-height: 90vh;
   padding: clamp(24px, 5vw, 64px);
   background: rgba(255, 255, 255, 0.04);
   border-radius: var(--main-radius);
-  backdrop-filter: blur(14px);
+  backdrop-filter: blur(16px);
   box-shadow: 0 0 42px rgba(0, 255, 200, 0.08);
   display: flex;
   flex-direction: column;
   justify-content: center;
-  animation: fadeIn 0.6s ease;
+  animation: fadeIn 0.7s ease;
   box-sizing: border-box;
 }
 
@@ -53,41 +83,16 @@ h1, h2, h3, p {
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
 }
 
-/* ✅ Fade in effect */
+/* ✅ Animations */
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(12px); }
+  from { opacity: 0; transform: translateY(16px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* ✅ Responsive Zoom Logic */
-@media (max-width: 480px) {
-  html { zoom: 0.85; }
-}
-@media (min-width: 1920px) {
-  html { zoom: 0.86; }
-}
-@media (min-width: 2560px) {
-  html { zoom: 0.76; }
-}
-@media (min-width: 3200px) {
-  html { zoom: 0.66; }
-}
-@media (min-width: 3840px) {
-  html { zoom: 0.56; }
-}
-
-/* ✅ Utility classes */
+/* ✅ Utilities */
 .centered {
   display: flex;
   align-items: center;
   justify-content: center;
   text-align: center;
-}
-
-/* ✅ Fix for mobile "compressed right edge" */
-@media (max-width: 768px) {
-  .fullscreenContent {
-    padding-left: clamp(20px, 6vw, 48px);
-    padding-right: clamp(20px, 6vw, 48px);
-  }
 }
