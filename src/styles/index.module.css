@@ -1,15 +1,42 @@
-/* ✅ Logo virš login box */
+/* =============================== */
+/* ✅ LOGO su pulsuojančiu glow   */
+/* =============================== */
 .logoContainer {
+  position: relative;
+  margin-top: clamp(12vh, 16vh, 20vh);
   margin-bottom: clamp(36px, 6vh, 72px);
-  margin-top: clamp(12vh, 18vh, 24vh); /* Nustato viršutinį atstumą nuo ekrano */
   display: flex;
   justify-content: center;
   align-items: center;
   animation: fadeIn 0.8s ease-in-out;
 }
 
+.logoContainer::before {
+  content: "";
+  position: absolute;
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(0,255,200,0.18) 0%, transparent 70%);
+  filter: blur(28px);
+  animation: pulseGlow 3.5s ease-in-out infinite;
+  z-index: 0;
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.3;
+  }
+}
+
 .logoImage {
-  width: clamp(88px, 12vw, 128px);
+  z-index: 1;
+  width: clamp(96px, 10vw, 128px);
   height: auto;
   border-radius: 16px;
   box-shadow: 0 0 34px rgba(255, 255, 255, 0.12);
@@ -19,11 +46,14 @@
   transform: scale(1.1);
 }
 
-/* ✅ Login Box – NordBalticum Standard */
+
+/* =============================== */
+/* ✅ LOGIN BOX su efektu         */
+/* =============================== */
 .loginBox {
   max-width: 440px;
   width: 100%;
-  margin-top: clamp(-10px, -4vh, -24px); /* LoginBox nuleistas žemiau po logotipo */
+  margin-top: clamp(-10px, -4vh, -24px);
   padding: clamp(24px, 5vw, 48px);
   background: var(--glass-effect);
   border-radius: 20px;
@@ -37,7 +67,9 @@
   box-sizing: border-box;
 }
 
-/* ✅ Title / Subtitle */
+/* =============================== */
+/* ✅ TEXTS                       */
+/* =============================== */
 .title {
   font-size: clamp(2rem, 5vw, 2.6rem);
   font-weight: 700;
@@ -53,7 +85,9 @@
   font-weight: 500;
 }
 
-/* ✅ Form Styling */
+/* =============================== */
+/* ✅ FORM, INPUT, BUTTON         */
+/* =============================== */
 .form {
   width: 100%;
   display: flex;
@@ -80,7 +114,6 @@
   background: rgba(255, 255, 255, 0.1);
 }
 
-/* ✅ CTA Button */
 .button {
   width: 100%;
   padding: 14px 22px;
@@ -103,20 +136,40 @@
   box-shadow: 0 0 22px var(--main-white-glow, rgba(255, 255, 255, 0.5));
 }
 
-/* ✅ Success / Info Message */
+/* =============================== */
+/* ✅ MESSAGE (Animated)          */
+/* =============================== */
 .message {
   margin-top: 1.2rem;
   font-size: 0.95rem;
   color: var(--success-color, #00ffc8);
   text-shadow: 0 0 4px rgba(0, 255, 200, 0.3);
   font-weight: 600;
+  animation: fadeMessage 0.5s ease-in-out;
 }
 
-/* ✅ FadeIn Animation */
+@keyframes fadeMessage {
+  0% {
+    transform: scale(0.92);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.02);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* =============================== */
+/* ✅ Fade In for boxes, container*/
+/* =============================== */
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(20px) scale(0.98); }
   to   { opacity: 1; transform: translateY(0) scale(1); }
 }
+
 .fadeIn {
   animation: fadeIn 0.6s ease-in-out;
 }
