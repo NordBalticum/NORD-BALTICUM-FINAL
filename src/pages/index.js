@@ -1,4 +1,3 @@
-// pages/index.js
 "use client";
 
 import { useEffect, useState } from "react";
@@ -15,10 +14,12 @@ export default function Home() {
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
 
+  // ✅ Auto redirect if logged in
   useEffect(() => {
     if (user) router.push("/dashboard");
   }, [user, router]);
 
+  // ✅ Magic link email login
   const handleLogin = async (e) => {
     e.preventDefault();
     setMessage("");
@@ -40,9 +41,14 @@ export default function Home() {
         <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
       </Head>
 
-      <main className="fullscreenContainer" role="main" aria-label="Login area" style={{ minHeight: "100dvh" }}>
+      <main
+        className="fullscreenContainer"
+        role="main"
+        aria-label="Login area"
+        style={{ minHeight: "100dvh" }}
+      >
         <div className={styles.centerWrapper}>
-          {/* ✅ Logotipas */}
+          {/* ✅ Centered animated logo with glow */}
           <div className={styles.logoContainer}>
             <Image
               src="/icons/logo.png"
@@ -71,7 +77,11 @@ export default function Home() {
                 className={styles.input}
                 aria-label="Email input"
               />
-              <button type="submit" className={styles.button} aria-label="Send magic link">
+              <button
+                type="submit"
+                className={styles.button}
+                aria-label="Send magic link"
+              >
                 Send Magic Link
               </button>
             </form>
