@@ -1,10 +1,11 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useMagicLink } from "@/contexts/MagicLinkContext";
 import { useState } from "react";
-import styles from "@/components/navbar.module.css";
+import styles from "@/styles/navbar.module.css";
 
 export default function Navbar() {
   const { signOut } = useMagicLink();
@@ -18,19 +19,25 @@ export default function Navbar() {
     { label: "Receive", href: "/receive", icon: "📥" },
   ];
 
-  const toggleMobileMenu = () => {
-    setIsMobileOpen(!isMobileOpen);
-  };
+  const toggleMobileMenu = () => setIsMobileOpen(!isMobileOpen);
 
   return (
-    <nav className={styles.navbar}>
-      <div className={styles.logo}>NordBalticum</div>
+    <nav className={styles.navbarWrapper}>
+      <Link href="/">
+        <Image
+          src="/icons/logo.png"
+          alt="NordBalticum"
+          className={styles.logo}
+          width={120}
+          height={36}
+        />
+      </Link>
 
-      <div className={styles.links}>
+      <div className={styles.desktopMenu}>
         {navItems.map((item) => (
           <Link key={item.href} href={item.href}>
             <button
-              className={`${styles.linkButton} ${
+              className={`${styles.navButton} ${
                 currentPath === item.href ? styles.active : ""
               }`}
             >
@@ -38,7 +45,7 @@ export default function Navbar() {
             </button>
           </Link>
         ))}
-        <button className={styles.logout} onClick={signOut}>
+        <button className={styles.logoutButton} onClick={signOut}>
           🚪 Logout
         </button>
       </div>
@@ -52,7 +59,7 @@ export default function Navbar() {
           {navItems.map((item) => (
             <Link key={item.href} href={item.href}>
               <button
-                className={`${styles.linkButton} ${
+                className={`${styles.navButton} ${
                   currentPath === item.href ? styles.active : ""
                 }`}
                 onClick={() => setIsMobileOpen(false)}
@@ -61,7 +68,7 @@ export default function Navbar() {
               </button>
             </Link>
           ))}
-          <button className={styles.logout} onClick={signOut}>
+          <button className={styles.logoutButton} onClick={signOut}>
             🚪 Logout
           </button>
         </div>
