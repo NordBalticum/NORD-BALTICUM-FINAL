@@ -1,78 +1,64 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useMagicLink } from "@/contexts/MagicLinkContext";
 import { useState } from "react";
-import styles from "@/components/navbar.module.css";
+import Image from "next/image";
+import styles from "@/styles/navbar.module.css";
 
 export default function Navbar() {
   const { signOut } = useMagicLink();
   const router = useRouter();
   const currentPath = router.pathname;
-  const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
 
   const navItems = [
-    { label: "Dashboard", href: "/dashboard", icon: "🏠" },
-    { label: "Send", href: "/send", icon: "📤" },
-    { label: "Receive", href: "/receive", icon: "📥" },
+    { label: "Dashboard", href: "/dashboard" },
+    { label: "Send", href: "/send" },
+    { label: "Receive", href: "/receive" },
   ];
 
-  const toggleMobileMenu = () => setIsMobileOpen(!isMobileOpen);
-
   return (
-    <nav className={styles.navbarWrapper}>
-      <Link href="/">
-        <Image
-          src="/icons/logo.png"
-          alt="NordBalticum"
-          className={styles.logo}
-          width={120}
-          height={36}
-        />
+    <header className={styles.navbar}>
+      <Link href="/" className={styles.logoLink}>
+        <Image src="/icons/logo.png" alt="Logo" width={42} height={42} className={styles.logo} />
       </Link>
 
-      <div className={styles.desktopMenu}>
+      <nav className={styles.navLinks}>
         {navItems.map((item) => (
           <Link key={item.href} href={item.href}>
-            <button
-              className={`${styles.navButton} ${
-                currentPath === item.href ? styles.active : ""
-              }`}
-            >
-              {item.icon} {item.label}
+            <button className={`${styles.navButton} ${currentPath === item.href ? styles.active : ""}`}>
+              {item.label}
             </button>
           </Link>
         ))}
-        <button className={styles.logoutButton} onClick={signOut}>
-          🚪 Logout
+        <button onClick={signOut} className={styles.logout}>
+          Sign Out
         </button>
+      </nav>
+
+      <div className={styles.mobileToggle} onClick={() => setIsOpen(!isOpen)}>
+        {isOpen ? "✖" : "☰"}
       </div>
 
-      <div className={styles.mobileToggle} onClick={toggleMobileMenu}>
-        {isMobileOpen ? "✖" : "☰"}
-      </div>
-
-      {isMobileOpen && (
-        <div className={styles.mobileMenu}>
+      {isOpen && (
+        <div className={styles.mobileDropdown}>
           {navItems.map((item) => (
             <Link key={item.href} href={item.href}>
               <button
-                className={`${styles.navButton} ${
-                  currentPath === item.href ? styles.active : ""
-                }`}
-                onClick={() => setIsMobileOpen(false)}
+                className={`${styles.navButton} ${currentPath === item.href ? styles.active : ""}`}
+                onClick={() => setIsOpen(false)}
               >
-                {item.icon} {item.label}
+                {item.label}
               </button>
             </Link>
           ))}
-          <button className={styles.logoutButton} onClick={signOut}>
-            🚪 Logout
+          <button onClick={signOut} className={styles.logoutMobile}>
+            Sign Out
           </button>
         </div>
       )}
-    </nav>
+    </header>
   );
 }
