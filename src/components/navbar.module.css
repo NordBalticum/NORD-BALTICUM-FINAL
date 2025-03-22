@@ -8,18 +8,9 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.65rem 1.4rem;
+  padding: 0.6rem 1.4rem;
   z-index: 9999;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 0 14px rgba(0, 0, 0, 0.15);
-  transition: all 0.25s ease;
-}
-
-.navbarInner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
 }
 
 .logoLink {
@@ -28,105 +19,22 @@
 }
 
 .logo {
-  height: 34px;
+  height: 36px;
   width: auto;
-  border-radius: 6px;
-  transition: transform 0.3s ease;
-}
-
-.logo:hover {
-  transform: scale(1.04);
-}
-
-.navLinks {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.navButton {
-  background: transparent;
-  border: 2px solid white;
-  color: white;
-  padding: 7px 14px;
-  font-weight: 600;
   border-radius: 8px;
-  cursor: pointer;
-  font-size: 0.92rem;
-  letter-spacing: 0.25px;
-  transition: all 0.2s ease;
-}
-
-.navButton:hover {
-  background: white;
-  color: #000;
-  box-shadow: 0 0 10px rgba(255, 255, 255, 0.18);
-}
-
-.active {
-  background: white;
-  color: #000;
-}
-
-.logout {
-  background: #ff3c3c;
-  border: none;
-  padding: 7px 16px;
-  border-radius: 8px;
-  color: white;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.2s ease;
-}
-
-.logout:hover {
-  background: #ff1a1a;
-  box-shadow: 0 0 10px rgba(255, 0, 0, 0.25);
 }
 
 .mobileToggle {
   display: none;
-  font-size: 1.75rem;
+  font-size: 1.7rem;
   color: white;
   cursor: pointer;
-  padding-left: 1rem;
+  margin-right: 0.2rem;
+  margin-top: 1px;
+  padding: 4px;
+  transition: transform 0.2s ease;
 }
 
-.mobileDropdown {
-  display: none;
-  position: absolute;
-  top: 64px;
-  right: 16px;
-  background: rgba(10, 18, 42, 0.92);
-  backdrop-filter: blur(14px);
-  padding: 1rem;
-  border-radius: 12px;
-  box-shadow: 0 0 24px rgba(0, 255, 200, 0.12);
-  z-index: 1001;
-  flex-direction: column;
-  gap: 0.8rem;
-  width: 180px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.logoutMobile {
-  margin-top: 1rem;
-  background: #ff3c3c;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 8px;
-  color: white;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.logoutMobile:hover {
-  background: #ff1a1a;
-  box-shadow: 0 0 12px rgba(255, 0, 0, 0.35);
-}
-
-/* Responsive Styles */
 @media (max-width: 768px) {
   .navLinks {
     display: none;
@@ -134,9 +42,16 @@
 
   .mobileToggle {
     display: block;
+    margin-right: 6px; /* <- PRISILAIKYMAS NUO DEŠINIO KRAŠTO */
   }
 
   .mobileDropdown {
     display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+    width: 160px;
+    position: absolute;
+    top: 64px;
+    right: 14px;
   }
 }
