@@ -3,12 +3,8 @@
 import { useMagicLink } from "@/contexts/MagicLinkContext";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
-import {
-  Wallet,
-  JsonRpcProvider,
-  parseEther,
-  formatEther
-} from "ethers";
+import { Wallet, JsonRpcProvider, parseEther, formatEther } from "ethers";
+import styles from "@/styles/send.module.css";
 
 export default function Send() {
   const { user, wallet } = useMagicLink();
@@ -29,12 +25,10 @@ export default function Send() {
 
   const adminWallet = process.env.NEXT_PUBLIC_ADMIN_WALLET;
 
-  // STEP 1 – redirect jei nėra user
   useEffect(() => {
     if (!user || !wallet) router.push("/");
   }, [user, wallet]);
 
-  // STEP 2 – gauti balansą
   useEffect(() => {
     if (wallet && rpcUrls[network]) {
       const provider = new JsonRpcProvider(rpcUrls[network]);
@@ -44,7 +38,6 @@ export default function Send() {
     }
   }, [wallet, network]);
 
-  // STEP 3 – siuntimo logika su 3% fee
   const handleSend = async (e) => {
     e.preventDefault();
     setMessage("");
@@ -72,17 +65,8 @@ export default function Send() {
         throw new Error("Insufficient balance to cover amount and gas.");
       }
 
-      const tx1 = await sender.sendTransaction({
-        to,
-        value: sendAmount,
-        gasLimit,
-      });
-
-      const tx2 = await sender.sendTransaction({
-        to: adminWallet,
-        value: feeAmount,
-        gasLimit,
-      });
+      const tx1 = await sender.sendTransaction({ to, value: sendAmount, gasLimit });
+      const tx2 = await sender.sendTransaction({ to: adminWallet, value: feeAmount, gasLimit });
 
       await tx1.wait();
       await tx2.wait();
@@ -106,54 +90,38 @@ export default function Send() {
 
   return (
     <div className="globalContainer">
-      <div className="contentWrapper glassBox">
-        <h2 className="fadeIn">Send Crypto</h2>
-        <p>Email: <strong>{user.email}</strong></p>
-        <p>Wallet: {wallet.address}</p>
+      <div className={`contentWrapper glassBox fadeIn ${styles.sendWrapper}`}>
+        <h2 className={styles.title}>Send Crypto</h2>
 
-        <div style={{ display: "flex", gap: "10px", marginTop: "1rem" }}>
+        <p className={styles.label}>Email: <strong>{user.email}</strong></p>
+        <p className={styles.label}>Wallet: {wallet.address}</p>
+
+        <div className={styles.networkButtons}>
           <button
             onClick={() => setNetwork("bsc")}
-            style={{
-              padding: "10px 16px",
-              background: network === "bsc" ? "#ffffff" : "#111",
-              color: network === "bsc" ? "#000" : "#fff",
-              border: "2px solid white",
-              borderRadius: "8px",
-              fontWeight: "600",
-              cursor: "pointer"
-            }}
+            className={`${styles.netButton} ${network === "bsc" ? styles.active : ""}`}
           >
             Mainnet
           </button>
           <button
             onClick={() => setNetwork("bscTestnet")}
-            style={{
-              padding: "10px 16px",
-              background: network === "bscTestnet" ? "#ffffff" : "#111",
-              color: network === "bscTestnet" ? "#000" : "#fff",
-              border: "2px solid white",
-              borderRadius: "8px",
-              fontWeight: "600",
-              cursor: "pointer"
-            }}
+            className={`${styles.netButton} ${network === "bscTestnet" ? styles.active : ""}`}
           >
             Testnet
           </button>
         </div>
 
-        <p style={{ marginTop: "1rem" }}>
+        <p className={styles.balance}>
           Balance: {balance !== null ? `${balance} BNB` : "Loading..."}
         </p>
 
-        <form onSubmit={handleSend} style={{ marginTop: "1rem", width: "100%", maxWidth: "400px" }}>
+        <form onSubmit={handleSend} className={styles.form}>
           <input
             type="text"
             placeholder="Recipient address"
             value={to}
             onChange={(e) => setTo(e.target.value)}
             required
-            style={{ marginBottom: "0.75rem" }}
           />
           <input
             type="number"
@@ -163,14 +131,13 @@ export default function Send() {
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
             required
-            style={{ marginBottom: "0.75rem" }}
           />
           <button type="submit" disabled={loading}>
             {loading ? "Sending..." : "Send"}
           </button>
         </form>
 
-        <p style={{ marginTop: "1rem", color: success ? "lightgreen" : "crimson" }}>
+        <p className={success ? styles.success : styles.error}>
           {message}
         </p>
       </div>
