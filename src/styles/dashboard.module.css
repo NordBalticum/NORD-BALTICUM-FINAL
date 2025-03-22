@@ -5,33 +5,40 @@
   background: radial-gradient(ellipse at center, #0a1f44, #0b1227);
   color: white;
   font-family: "Inter", sans-serif;
-  padding-top: 70px;
+  padding-top: 80px;
+  zoom: 0.92;
 }
 
 .content {
-  max-width: 900px;
+  max-width: 880px;
   margin: 0 auto;
-  padding: 2rem;
+  padding: 1.5rem;
 }
 
 .loading {
   color: white;
-  padding: 5rem;
+  padding: 4rem;
   text-align: center;
-  font-size: 1.3rem;
+  font-size: 1.15rem;
 }
 
 .welcome {
-  font-size: 2rem;
-  margin-bottom: 1.5rem;
+  font-size: 1.8rem;
+  margin-bottom: 1.2rem;
+  font-weight: 600;
 }
 
 .card {
   background: rgba(255, 255, 255, 0.04);
-  padding: 1.5rem;
-  border-radius: 16px;
-  box-shadow: 0 0 20px rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(10px);
+  padding: 1.3rem;
+  border-radius: 14px;
+  box-shadow: 0 0 22px rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(12px);
+  transition: transform 0.2s ease;
+}
+
+.card:hover {
+  transform: scale(1.015);
 }
 
 .label {
@@ -42,66 +49,71 @@
 
 .address {
   font-family: monospace;
-  font-size: 0.95rem;
-  margin-bottom: 1rem;
-  word-break: break-all;
+  font-size: 0.9rem;
+  margin-bottom: 0.8rem;
+  word-break: break-word;
 }
 
 .networkSelector {
-  margin-bottom: 1rem;
+  margin-bottom: 0.8rem;
 }
 
 .networkSelector select {
-  padding: 0.5rem;
+  padding: 0.45rem 0.75rem;
   border-radius: 8px;
   border: 1px solid #ccc;
   background: #000;
   color: white;
+  font-weight: 500;
 }
 
 .balanceBox {
-  font-size: 1.2rem;
+  font-size: 1.1rem;
   margin-top: 1rem;
+  font-weight: 600;
+  color: #00ffc8;
 }
 
 .balanceLabel {
-  font-weight: 600;
   margin-right: 8px;
 }
 
 .actions {
-  margin-top: 2rem;
+  margin-top: 2.2rem;
   display: flex;
   gap: 1rem;
+  flex-wrap: wrap;
 }
 
 .actionButton {
-  padding: 12px 24px;
-  border-radius: 10px;
-  background: #fff;
-  color: #000;
+  padding: 10px 20px;
+  border-radius: 8px;
+  background: #000;
+  color: #fff;
   font-weight: 600;
-  border: none;
+  border: 2px solid white;
   cursor: pointer;
-  transition: transform 0.2s ease;
+  transition: transform 0.2s ease, background 0.3s;
 }
 
 .actionButton:hover {
   transform: scale(1.05);
+  background: #111;
 }
 
 .logout {
   margin-top: 2rem;
-  background: #ff4d4f;
-  padding: 12px 24px;
+  background: #ff3c3c;
+  padding: 10px 22px;
   border-radius: 10px;
   border: none;
   font-weight: 600;
   cursor: pointer;
   color: white;
+  box-shadow: 0 0 15px rgba(255, 0, 0, 0.3);
   transition: background 0.2s ease;
 }
 
 .logout:hover {
-  background: #ff2f3c;
+  background: #ff1c1c;
 }
