@@ -8,7 +8,7 @@
   justify-content: center;
   min-height: 100dvh;
   width: 100%;
-  padding-top: clamp(8vh, 12vh, 16vh);
+  padding-top: clamp(6vh, 10vh, 14vh);
   box-sizing: border-box;
 }
 
@@ -17,6 +17,7 @@
 /* =============================== */
 .logoContainer {
   position: relative;
+  margin-top: clamp(-4vh, -6vh, -2vh);
   margin-bottom: clamp(36px, 6vh, 72px);
   display: flex;
   justify-content: center;
@@ -27,8 +28,8 @@
 .logoContainer::before {
   content: "";
   position: absolute;
-  width: 180px;
-  height: 180px;
+  width: 220px;
+  height: 220px;
   border-radius: 50%;
   background: radial-gradient(circle, rgba(0, 255, 200, 0.18) 0%, transparent 70%);
   filter: blur(28px);
@@ -49,14 +50,16 @@
 
 .logoImage {
   z-index: 1;
-  width: clamp(96px, 10vw, 128px);
+  width: clamp(148px, 18vw, 192px);
   height: auto;
-  border-radius: 16px;
-  box-shadow: 0 0 34px rgba(255, 255, 255, 0.12);
+  border-radius: 20px;
+  background: none;
+  outline: none;
+  box-shadow: 0 0 34px rgba(255, 255, 255, 0.14);
   transition: transform 0.4s ease;
 }
 .logoImage:hover {
-  transform: scale(1.1);
+  transform: scale(1.08);
 }
 
 /* =============================== */
@@ -65,7 +68,7 @@
 .loginBox {
   max-width: 440px;
   width: 100%;
-  margin-top: clamp(-10px, -4vh, -24px);
+  margin-top: clamp(-12px, -4vh, -24px);
   padding: clamp(24px, 5vw, 48px);
   background: var(--glass-effect);
   border-radius: 20px;
