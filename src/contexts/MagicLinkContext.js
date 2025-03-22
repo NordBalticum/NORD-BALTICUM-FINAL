@@ -14,7 +14,7 @@ export const MagicLinkProvider = ({ children }) => {
   const [wallet, setWallet] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // STEP 1 – get Supabase session
+  // STEP 1 – Get Supabase session & subscribe to auth changes
   useEffect(() => {
     const getSession = async () => {
       const {
@@ -35,7 +35,7 @@ export const MagicLinkProvider = ({ children }) => {
     return () => subscription.unsubscribe();
   }, []);
 
-  // STEP 2 – load wallet from Supabase or create new one
+  // STEP 2 – Load or create wallet
   useEffect(() => {
     if (user) {
       loadOrCreateWallet(user.id);
@@ -43,7 +43,7 @@ export const MagicLinkProvider = ({ children }) => {
   }, [user]);
 
   const loadOrCreateWallet = async (user_id) => {
-    const { data: existing, error } = await supabase
+    const { data: existing } = await supabase
       .from("wallets")
       .select("*")
       .eq("user_id", user_id)
@@ -68,6 +68,51 @@ export const MagicLinkProvider = ({ children }) => {
     }
   };
 
+  // STEP 3 – Session refresh kas 1 minutę
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (!session?.user) {
+        await signOut();
+      } else {
+        setUser(session.user);
+      }
+    }, 60000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // STEP 4 – Auto logout po 10 min AFK
+  useEffect(() => {
+    let lastActivity = Date.now();
+
+    const resetTimer = () => {
+      lastActivity = Date.now();
+    };
+
+    window.addEventListener("mousemove", resetTimer);
+    window.addEventListener("keydown", resetTimer);
+
+    const interval = setInterval(async () => {
+      const now = Date.now();
+      const minutesInactive = (now - lastActivity) / 60000;
+
+      if (minutesInactive >= 10) {
+        await signOut();
+      }
+    }, 60000);
+
+    return () => {
+      window.removeEventListener("mousemove", resetTimer);
+      window.removeEventListener("keydown", resetTimer);
+      clearInterval(interval);
+    };
+  }, []);
+
+  // STEP 5 – Auth functions
   const signInWithEmail = async (email) => {
     const { error } = await supabase.auth.signInWithOtp({ email });
     if (error) throw error;
