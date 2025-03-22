@@ -4,42 +4,33 @@
   --main-padding: clamp(24px, 4vw, 72px);
   --main-radius: 18px;
   --transition: all 0.3s ease-in-out;
-  --zoom-factor: 0.72;
+  --scale-factor: 1;
 }
 
-/* ✅ Universal Base */
+/* ✅ Core fullscreen */
 html, body {
   margin: 0;
   padding: 0;
-  width: 100%;
+  width: 100vw;
   min-height: 100vh;
   font-family: 'Poppins', sans-serif;
   background: radial-gradient(ellipse at center, #2B3FFF 0%, #1B2370 40%, #0A122A 100%);
   color: #f0f0f0;
   scroll-behavior: smooth;
-  overflow-x: visible;
-  overflow-y: visible;
-  transform: scale(var(--zoom-factor));
+  transform: scale(var(--scale-factor));
   transform-origin: top center;
   transition: var(--transition);
+  overflow-x: visible;
+  overflow-y: visible;
   box-sizing: border-box;
 }
 
-/* ✅ Zoom levels – ultra responsive */
-@media (max-width: 480px)   { :root { --zoom-factor: 0.88; } }
-@media (min-width: 768px)   { :root { --zoom-factor: 0.82; } }
-@media (min-width: 1024px)  { :root { --zoom-factor: 0.78; } }
-@media (min-width: 1440px)  { :root { --zoom-factor: 0.72; } }
-@media (min-width: 1920px)  { :root { --zoom-factor: 0.66; } }
-@media (min-width: 2560px)  { :root { --zoom-factor: 0.58; } }
-@media (min-width: 3200px)  { :root { --zoom-factor: 0.5; } }
-@media (min-width: 3840px)  { :root { --zoom-factor: 0.44; } }
-
-/* ✅ Premium Layout Container */
-.fullscreenContainer {padding-bottom: clamp(60px, 8vh, 120px);
+/* ✅ Main wrapper */
+.fullscreenContainer {
   width: 100%;
   min-height: 100vh;
   padding: var(--main-padding);
+  padding-bottom: clamp(60px, 8vh, 120px);
   display: flex;
   align-items: flex-start;
   justify-content: center;
@@ -48,7 +39,7 @@ html, body {
   box-sizing: border-box;
 }
 
-/* ✅ Main Content */
+/* ✅ Main content */
 .fullscreenContent {
   width: clamp(var(--min-width), 92vw, var(--max-width));
   min-height: 88vh;
@@ -66,19 +57,19 @@ html, body {
   overflow: visible;
 }
 
-/* ✅ Typography */
+/* ✅ Text */
 h1, h2, h3, p {
   color: #ffffff;
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
 }
 
-/* ✅ Entry Animation */
+/* ✅ Fade animation */
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(16px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* ✅ Utility */
+/* ✅ Centering util */
 .centered {
   display: flex;
   align-items: center;
