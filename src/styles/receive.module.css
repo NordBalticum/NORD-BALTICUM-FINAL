@@ -1,100 +1,124 @@
 .receiveWrapper {
-  max-width: 640px;
+  max-width: 620px;
   width: 100%;
+  padding: clamp(1.8rem, 3.5vw, 2.6rem);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(16px);
+  box-shadow: 0 0 38px rgba(0, 255, 204, 0.08);
   text-align: center;
-  padding: clamp(1.2rem, 3vw, 2rem);
-  border-radius: 18px;
-  animation: fadeIn 0.6s ease-in-out;
+  animation: fadeIn 0.7s ease-in-out;
+  box-sizing: border-box;
 }
 
 /* Title */
 .title {
-  font-size: clamp(1.6rem, 2.2vw, 2.2rem);
-  margin-bottom: 1.4rem;
+  font-size: clamp(1.8rem, 2.8vw, 2.4rem);
+  margin-bottom: 1.6rem;
   font-weight: 700;
-  color: var(--main-white);
-  text-shadow: var(--text-shadow);
   text-transform: uppercase;
+  color: #ffffff;
+  text-shadow: 0 0 6px rgba(255, 255, 255, 0.15);
 }
 
-/* Label text */
+/* Label */
 .label {
   font-size: 1rem;
   font-weight: 500;
-  color: var(--main-white);
+  color: #e0e0e0;
   margin-top: 1rem;
+  margin-bottom: 0.2rem;
 }
 
 /* QR Container */
 .qrContainer {
-  cursor: pointer;
-  padding: 1rem;
-  border-radius: 18px;
   margin-top: 1rem;
-  margin-bottom: 1.5rem;
-  background: rgba(255, 255, 255, 0.06);
-  transition: all 0.3s ease;
+  padding: 1.2rem;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.05);
+  transition: all 0.3s ease-in-out;
+  cursor: pointer;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.05);
 }
 
 .qrContainer.copied {
-  box-shadow: 0 0 16px rgba(0, 255, 200, 0.25);
+  box-shadow: 0 0 20px rgba(0, 255, 200, 0.3);
 }
 
-.qrText {
-  word-break: break-word;
-  margin-top: 1rem;
-  font-size: clamp(0.85rem, 1vw, 1rem);
-  color: #f0f0f0;
-  font-weight: 500;
-}
-
+/* QR Code */
 .qrCode {
   border-radius: 12px;
   margin: 0 auto;
+  display: block;
+}
+
+/* QR Address Text */
+.qrText {
+  margin-top: 1rem;
+  font-size: clamp(0.9rem, 1vw, 1.05rem);
+  font-family: monospace;
+  color: #f0f0f0;
+  font-weight: 500;
+  word-break: break-word;
+  line-height: 1.4;
 }
 
 /* Copy feedback */
 .copyFeedback {
-  display: block;
-  margin-top: 0.5rem;
-  color: #aaa;
-  font-size: 0.85rem;
+  margin-top: 0.6rem;
+  font-size: 0.9rem;
+  color: #aaaaaa;
   font-weight: 500;
+  transition: color 0.3s ease-in-out;
 }
 .copyFeedback.copied {
   color: #00ffc8;
 }
 
-/* Select Network */
+/* Network Selector */
 .networkSelector {
-  margin-top: 1.2rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.8rem;
+  gap: 1rem;
+  margin-top: 1.6rem;
 }
 
 .networkLabel {
   font-weight: 600;
   font-size: 0.95rem;
+  color: #ffffff;
 }
 
 .networkSelect {
   padding: 10px 16px;
   border-radius: 10px;
-  background: #111;
-  color: #fff;
+  background: #0d0d0d;
+  color: #ffffff;
   border: 2px solid white;
   font-weight: 600;
   font-size: 0.95rem;
-  box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.08);
+  transition: all 0.3s ease;
+}
+
+.networkSelect:focus {
+  outline: none;
+  border-color: #00ffc8;
+  box-shadow: 0 0 14px rgba(0, 255, 200, 0.3);
 }
 
 /* Balance */
 .balanceText {
-  margin-top: 1.8rem;
+  margin-top: 2rem;
   font-weight: 700;
-  font-size: 1.15rem;
+  font-size: 1.2rem;
   color: #00ffc8;
   text-shadow: 0 0 6px rgba(0, 255, 200, 0.25);
+}
+
+/* Fade animation */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
