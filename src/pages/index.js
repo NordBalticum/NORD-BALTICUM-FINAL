@@ -54,13 +54,13 @@ export default function Home() {
         style={{ minHeight: "100dvh" }}
       >
         <div className={styles.centerWrapper}>
-          {/* ✅ Logo with glow */}
+          {/* ✅ Logo */}
           <div className={styles.logoContainer}>
             <Image
               src="/icons/logo.svg"
               alt="NordBalticum Logo"
-              width={192}
-              height={192}
+              width={268}
+              height={268}
               className={styles.logoImage}
               priority
             />
