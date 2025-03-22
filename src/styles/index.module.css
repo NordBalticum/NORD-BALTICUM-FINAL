@@ -55,7 +55,8 @@
   border-radius: 20px;
   background: none;
   outline: none;
-  box-shadow: 0 0 34px rgba(255, 255, 255, 0.14);
+  box-shadow: 0 0 34px rgba(255, 255, 255, 0.14),
+              0 0 24px rgba(255, 255, 255, 0.08); /* <- Švelnus baltas glow */
   transition: transform 0.4s ease;
 }
 .logoImage:hover {
