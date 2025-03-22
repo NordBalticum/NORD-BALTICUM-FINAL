@@ -1,19 +1,14 @@
 import { useEffect } from "react";
 
-/**
- * Automatinis `--scale-factor` nustatymas pagal ekrano dydį.
- * @param {number} baseWidth - dizaino bazinis plotis (default 1440px)
- * @param {number} min - minimalus scale
- * @param {number} max - maksimalus scale
- */
-export function useAutoScale(baseWidth = 1440, min = 0.44, max = 1) {
+export function useAutoScale(baseWidth = 1440, minScale = 0.44, maxScale = 1) {
   useEffect(() => {
     const setScale = () => {
-      const scale = Math.min(max, Math.max(min, window.innerWidth / baseWidth));
-      document.documentElement.style.setProperty('--scale-factor', scale.toFixed(3));
+      const scale = Math.min(Math.max(window.innerWidth / baseWidth, minScale), maxScale);
+      document.documentElement.style.setProperty("--scale-factor", scale.toFixed(3));
     };
-    setScale();
+
+    setScale(); // iškart paleisti
     window.addEventListener("resize", setScale);
     return () => window.removeEventListener("resize", setScale);
-  }, [baseWidth, min, max]);
+  }, [baseWidth, minScale, maxScale]);
 }
