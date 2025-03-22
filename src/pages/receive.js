@@ -1,3 +1,5 @@
+"use client";
+
 import { useMagicLink } from "@/contexts/MagicLinkContext";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
@@ -18,7 +20,10 @@ export default function Receive() {
   };
 
   useEffect(() => {
-    if (!user || !wallet) router.push("/");
+    if (!user || !wallet) {
+      const t = setTimeout(() => router.push("/"), 1200);
+      return () => clearTimeout(t);
+    }
   }, [user, wallet]);
 
   useEffect(() => {
@@ -30,40 +35,83 @@ export default function Receive() {
     }
   }, [wallet, network]);
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(wallet.address);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  const handleCopy = async () => {
+    try {
+      if (navigator?.clipboard?.writeText) {
+        await navigator.clipboard.writeText(wallet.address);
+      } else {
+        const textarea = document.createElement("textarea");
+        textarea.value = wallet.address;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textarea);
+      }
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error("Copy failed:", err);
+    }
   };
 
   if (!user || !wallet) return null;
 
   return (
     <div className="globalContainer">
-      <div className="contentWrapper glassBox">
-        <h2 className="fadeIn">Receive Crypto</h2>
+      <div className="contentWrapper glassBox fadeIn" role="main" aria-label="Receive crypto page">
+        <h2>Receive Crypto</h2>
         <p>Email: <strong>{user.email}</strong></p>
         <p>Wallet address:</p>
 
-        <div onClick={handleCopy} style={{ cursor: "pointer", marginBottom: "1rem" }}>
-          <QRCode value={wallet.address} size={180} bgColor="#ffffff" fgColor="#000000" />
-          <p style={{ wordBreak: "break-all", marginTop: "1rem" }}>{wallet.address}</p>
-          <small>{copied ? "Copied!" : "Tap QR to copy address"}</small>
+        <div
+          onClick={handleCopy}
+          style={{
+            cursor: "pointer",
+            marginBottom: "1rem",
+            padding: "1rem",
+            borderRadius: "16px",
+            background: "rgba(255,255,255,0.06)",
+            transition: "background 0.3s",
+          }}
+          className="glassBox hoverable"
+          aria-label="Tap to copy wallet address"
+        >
+          <QRCode
+            value={wallet.address}
+            size={180}
+            bgColor="#ffffff"
+            fgColor="#000000"
+            style={{ borderRadius: "12px", margin: "0 auto" }}
+          />
+          <p style={{ wordBreak: "break-all", marginTop: "1rem", textAlign: "center" }}>
+            {wallet.address}
+          </p>
+          <small style={{ display: "block", textAlign: "center", color: copied ? "lightgreen" : "#ccc" }}>
+            {copied ? "✓ Copied to clipboard!" : "Tap QR to copy address"}
+          </small>
         </div>
 
-        <label style={{ marginTop: "1rem" }}>
-          Select network:
+        <div style={{ marginTop: "1rem" }}>
+          <label htmlFor="network">Select network:</label>
           <select
+            id="network"
             value={network}
             onChange={(e) => setNetwork(e.target.value)}
-            style={{ marginLeft: "10px" }}
+            style={{
+              marginLeft: "10px",
+              padding: "8px",
+              borderRadius: "8px",
+              background: "#111",
+              color: "#fff",
+              border: "2px solid white",
+            }}
           >
             <option value="bsc">BSC Mainnet</option>
             <option value="bscTestnet">BSC Testnet</option>
           </select>
-        </label>
+        </div>
 
-        <h3 style={{ marginTop: "1.5rem" }}>
+        <h3 style={{ marginTop: "1.5rem", fontWeight: "600", color: "#00ffcc" }}>
           Balance: {balance !== null ? `${balance} BNB` : "Loading..."}
         </h3>
       </div>
