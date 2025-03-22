@@ -6,10 +6,9 @@ import { useEffect, useState } from "react";
 import { JsonRpcProvider, formatEther } from "ethers";
 import styles from "@/styles/dashboard.module.css";
 import Navbar from "@/components/Navbar";
-import clsx from "clsx";
 
 export default function Dashboard() {
-  const { user, wallet, signOut } = useMagicLink();
+  const { user, wallet } = useMagicLink();
   const router = useRouter();
   const [selectedNetwork, setSelectedNetwork] = useState("bsc");
   const [balance, setBalance] = useState(null);
@@ -19,13 +18,15 @@ export default function Dashboard() {
     bscTestnet: process.env.NEXT_PUBLIC_BSC_TESTNET_RPC,
   };
 
+  // REDIRECT IF NOT LOGGED IN
   useEffect(() => {
     if (!user || !wallet) {
-      const timer = setTimeout(() => router.push("/"), 1500);
+      const timer = setTimeout(() => router.push("/"), 1200);
       return () => clearTimeout(timer);
     }
-  }, [user, wallet, router]);
+  }, [user, wallet]);
 
+  // GET BALANCE
   useEffect(() => {
     if (wallet && rpcUrls[selectedNetwork]) {
       const provider = new JsonRpcProvider(rpcUrls[selectedNetwork]);
@@ -39,10 +40,9 @@ export default function Dashboard() {
     }
   }, [wallet, selectedNetwork]);
 
+  // LOADING SCREEN
   if (!user || !wallet) {
-    return (
-      <div className={styles.loading}>Loading your dashboard...</div>
-    );
+    return <div className={styles.loading}>Loading your dashboard...</div>;
   }
 
   return (
@@ -56,8 +56,9 @@ export default function Dashboard() {
           <p className={styles.address}>{wallet.address}</p>
 
           <div className={styles.networkSelector}>
-            <label>Select network:</label>
+            <label htmlFor="network">Select network:</label>
             <select
+              id="network"
               value={selectedNetwork}
               onChange={(e) => setSelectedNetwork(e.target.value)}
             >
@@ -68,24 +69,26 @@ export default function Dashboard() {
 
           <div className={styles.balanceBox}>
             <span className={styles.balanceLabel}>Balance:</span>
-            <span className={styles.balanceValue}>
-              {balance !== null ? `${balance} BNB` : "Loading..."}
-            </span>
+            <span>{balance !== null ? `${balance} BNB` : "Loading..."}</span>
           </div>
         </div>
 
         <div className={styles.actions}>
-          <button onClick={() => router.push("/send")} className={styles.actionButton}>
+          <button
+            className={styles.actionButton}
+            onClick={() => router.push("/send")}
+            aria-label="Send BNB"
+          >
             📤 Send
           </button>
-          <button onClick={() => router.push("/receive")} className={styles.actionButton}>
+          <button
+            className={styles.actionButton}
+            onClick={() => router.push("/receive")}
+            aria-label="Receive BNB"
+          >
             📥 Receive
           </button>
         </div>
-
-        <button onClick={signOut} className={styles.logout}>
-          🚪 Sign Out
-        </button>
       </div>
     </div>
   );
