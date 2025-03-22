@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
 import { Wallet } from "ethers";
 
+// Supabase init
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -14,32 +15,30 @@ export const MagicLinkProvider = ({ children }) => {
   const [wallet, setWallet] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // STEP 1 – Get Supabase session & subscribe to auth changes
+  // STEP 1 – Get session & subscribe to changes
   useEffect(() => {
-    const getSession = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+    const fetchSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
       setUser(session?.user || null);
       setLoading(false);
     };
 
-    getSession();
+    fetchSession();
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user || null);
-    });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        setUser(session?.user || null);
+      }
+    );
 
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription?.unsubscribe?.();
+    };
   }, []);
 
   // STEP 2 – Load or create wallet
   useEffect(() => {
-    if (user) {
-      loadOrCreateWallet(user.id);
-    }
+    if (user) loadOrCreateWallet(user.id);
   }, [user]);
 
   const loadOrCreateWallet = async (user_id) => {
@@ -59,6 +58,7 @@ export const MagicLinkProvider = ({ children }) => {
         private_key: newWallet.privateKey,
         network: "bsc",
       };
+
       const { error: insertError } = await supabase
         .from("wallets")
         .insert(walletData);
@@ -68,41 +68,31 @@ export const MagicLinkProvider = ({ children }) => {
     }
   };
 
-  // STEP 3 – Session refresh kas 1 minutę
+  // STEP 3 – Refresh session kas 60s
   useEffect(() => {
     const interval = setInterval(async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-
-      if (!session?.user) {
-        await signOut();
-      } else {
-        setUser(session.user);
-      }
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) await signOut();
+      else setUser(session.user);
     }, 60000);
 
     return () => clearInterval(interval);
   }, []);
 
-  // STEP 4 – Auto logout po 10 min AFK
+  // STEP 4 – Auto logout po 10 min AFK (tik jei naršyklėje)
   useEffect(() => {
-    let lastActivity = Date.now();
+    if (typeof window === "undefined") return;
 
-    const resetTimer = () => {
-      lastActivity = Date.now();
-    };
+    let lastActivity = Date.now();
+    const resetTimer = () => (lastActivity = Date.now());
 
     window.addEventListener("mousemove", resetTimer);
     window.addEventListener("keydown", resetTimer);
 
-    const interval = setInterval(async () => {
+    const interval = setInterval(() => {
       const now = Date.now();
       const minutesInactive = (now - lastActivity) / 60000;
-
-      if (minutesInactive >= 10) {
-        await signOut();
-      }
+      if (minutesInactive >= 10) signOut();
     }, 60000);
 
     return () => {
