@@ -4,7 +4,9 @@ import { useMagicLink } from "@/contexts/MagicLinkContext";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { JsonRpcProvider, formatEther } from "ethers";
-import Link from "next/link";
+import styles from "@/styles/dashboard.module.css";
+import Navbar from "@/components/Navbar";
+import clsx from "clsx";
 
 export default function Dashboard() {
   const { user, wallet, signOut } = useMagicLink();
@@ -17,17 +19,13 @@ export default function Dashboard() {
     bscTestnet: process.env.NEXT_PUBLIC_BSC_TESTNET_RPC,
   };
 
-  // STEP 1 – redirect jei user nėra
   useEffect(() => {
     if (!user || !wallet) {
-      const timer = setTimeout(() => {
-        router.push("/");
-      }, 1500); // leisti kontekstui pilnai užsikrauti
+      const timer = setTimeout(() => router.push("/"), 1500);
       return () => clearTimeout(timer);
     }
   }, [user, wallet, router]);
 
-  // STEP 2 – gauti balansą
   useEffect(() => {
     if (wallet && rpcUrls[selectedNetwork]) {
       const provider = new JsonRpcProvider(rpcUrls[selectedNetwork]);
@@ -41,89 +39,54 @@ export default function Dashboard() {
     }
   }, [wallet, selectedNetwork]);
 
-  // STEP 3 – fallback kol krauna user ir wallet
   if (!user || !wallet) {
     return (
-      <div style={{ padding: "2rem", color: "#fff", textAlign: "center" }}>
-        Loading dashboard...
-      </div>
+      <div className={styles.loading}>Loading your dashboard...</div>
     );
   }
 
   return (
-    <div style={{ padding: "2rem", color: "#fff" }}>
-      <h1>Welcome, {user.email}</h1>
+    <div className={styles.dashboardWrapper}>
+      <Navbar />
+      <div className={styles.content}>
+        <h1 className={styles.welcome}>Welcome, {user.email}</h1>
 
-      <div style={{ marginTop: "1.5rem" }}>
-        <strong>Wallet address:</strong>
-        <p>{wallet.address}</p>
+        <div className={styles.card}>
+          <label className={styles.label}>Wallet address:</label>
+          <p className={styles.address}>{wallet.address}</p>
 
-        <label style={{ display: "block", marginTop: "1rem" }}>
-          Select network:
-          <select
-            value={selectedNetwork}
-            onChange={(e) => setSelectedNetwork(e.target.value)}
-            style={{ marginLeft: "10px" }}
-          >
-            <option value="bsc">BSC Mainnet</option>
-            <option value="bscTestnet">BSC Testnet</option>
-          </select>
-        </label>
+          <div className={styles.networkSelector}>
+            <label>Select network:</label>
+            <select
+              value={selectedNetwork}
+              onChange={(e) => setSelectedNetwork(e.target.value)}
+            >
+              <option value="bsc">BSC Mainnet</option>
+              <option value="bscTestnet">BSC Testnet</option>
+            </select>
+          </div>
 
-        <h3 style={{ marginTop: "1.5rem" }}>
-          Balance: {balance !== null ? `${balance} BNB` : "Loading..."}
-        </h3>
-      </div>
+          <div className={styles.balanceBox}>
+            <span className={styles.balanceLabel}>Balance:</span>
+            <span className={styles.balanceValue}>
+              {balance !== null ? `${balance} BNB` : "Loading..."}
+            </span>
+          </div>
+        </div>
 
-      <div style={{ marginTop: "2rem", display: "flex", gap: "1rem" }}>
-        <Link href="/send">
-          <button
-            style={{
-              padding: "10px 20px",
-              borderRadius: "8px",
-              fontWeight: "600",
-              background: router.pathname === "/send" ? "#fff" : "#111",
-              color: router.pathname === "/send" ? "#000" : "#fff",
-              border: "2px solid white",
-              cursor: "pointer",
-            }}
-          >
+        <div className={styles.actions}>
+          <button onClick={() => router.push("/send")} className={styles.actionButton}>
             📤 Send
           </button>
-        </Link>
-
-        <Link href="/receive">
-          <button
-            style={{
-              padding: "10px 20px",
-              borderRadius: "8px",
-              fontWeight: "600",
-              background: router.pathname === "/receive" ? "#fff" : "#111",
-              color: router.pathname === "/receive" ? "#000" : "#fff",
-              border: "2px solid white",
-              cursor: "pointer",
-            }}
-          >
+          <button onClick={() => router.push("/receive")} className={styles.actionButton}>
             📥 Receive
           </button>
-        </Link>
-      </div>
+        </div>
 
-      <button
-        onClick={signOut}
-        style={{
-          marginTop: "2rem",
-          padding: "10px 20px",
-          borderRadius: "8px",
-          border: "2px solid red",
-          background: "#111",
-          color: "white",
-          fontWeight: "600",
-          cursor: "pointer",
-        }}
-      >
-        Sign Out
-      </button>
+        <button onClick={signOut} className={styles.logout}>
+          🚪 Sign Out
+        </button>
+      </div>
     </div>
   );
 }
