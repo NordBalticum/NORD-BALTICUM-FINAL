@@ -1,20 +1,22 @@
+/* ✅ Dashboard Styles – Bankinė kokybė */
+
 .welcome {
-  font-size: clamp(1.8rem, 4vw, 2.6rem);
+  font-size: clamp(2rem, 4vw, 3rem);
   font-weight: 700;
-  margin-bottom: 2.5rem;
+  margin-bottom: clamp(24px, 3vw, 40px);
   text-align: center;
-  text-shadow: 0 0 6px rgba(255, 255, 255, 0.2);
-  color: #ffffff;
   line-height: 1.4;
-  letter-spacing: 0.4px;
+  letter-spacing: 0.6px;
+  text-shadow: 0 0 6px rgba(255, 255, 255, 0.15);
+  color: var(--main-white);
 }
 
 .card {
-  background: rgba(255, 255, 255, 0.04);
-  padding: clamp(1.6rem, 3.2vw, 2.5rem);
-  border-radius: 20px;
-  backdrop-filter: blur(18px);
+  background: var(--glass-effect);
+  padding: clamp(1.8rem, 3vw, 2.6rem);
+  border-radius: var(--main-radius);
   box-shadow: 0 0 34px rgba(0, 255, 204, 0.08);
+  backdrop-filter: blur(18px);
   width: 100%;
   max-width: 800px;
   margin: 0 auto;
@@ -23,10 +25,10 @@
 
 .label {
   font-weight: 600;
-  font-size: 1rem;
+  font-size: clamp(0.95rem, 1vw, 1.1rem);
   margin-bottom: 0.5rem;
   display: block;
-  color: #eaeaea;
+  color: var(--primary-text);
 }
 
 .address {
