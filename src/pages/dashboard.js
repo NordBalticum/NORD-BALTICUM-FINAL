@@ -12,33 +12,36 @@ export default function Dashboard() {
   const { user, wallet } = useMagicLink();
   const [selectedNetwork, setSelectedNetwork] = useState("bsc");
   const [balance, setBalance] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   const rpcUrls = {
     bsc: process.env.NEXT_PUBLIC_BSC_RPC,
     bscTestnet: process.env.NEXT_PUBLIC_BSC_TESTNET_RPC,
   };
 
-  // ✅ Automatinis redirect jeigu nėra user arba wallet
+  // ✅ Redirect jei nėra user
   useEffect(() => {
     if (!user || !wallet) {
-      const timeout = setTimeout(() => router.push("/"), 1000);
+      const timeout = setTimeout(() => router.push("/"), 1200);
       return () => clearTimeout(timeout);
     }
   }, [user, wallet, router]);
 
-  // ✅ Gauti balansą
+  // ✅ Balanso užkrovimas
   const fetchBalance = useCallback(async () => {
     try {
       const rpc = rpcUrls[selectedNetwork];
-      if (wallet && rpc) {
+      if (wallet?.address && rpc) {
         const provider = new JsonRpcProvider(rpc);
         const raw = await provider.getBalance(wallet.address);
         const formatted = parseFloat(formatEther(raw)).toFixed(4);
         setBalance(formatted);
       }
-    } catch (err) {
-      console.error("Failed to fetch balance:", err);
+    } catch (error) {
+      console.error("Balance fetch error:", error);
       setBalance("Error");
+    } finally {
+      setLoading(false);
     }
   }, [wallet, selectedNetwork]);
 
@@ -47,47 +50,59 @@ export default function Dashboard() {
   }, [fetchBalance]);
 
   if (!user || !wallet) {
-    return <div className={styles.loading}>Loading your dashboard...</div>;
+    return (
+      <div className={styles.loading} role="status" aria-live="polite">
+        Loading your dashboard...
+      </div>
+    );
   }
 
   return (
-    <div className="fullscreenContainer">
+    <div className="fullscreenContainer" role="main" aria-label="Dashboard Page">
       <Navbar />
-      <div className="fullscreenContent glassBox fadeIn" role="main" aria-label="Dashboard content">
-        <h1 className={styles.welcome}>Welcome, <br />{user.email}</h1>
 
-        <div className={styles.card}>
-          <label className={styles.label}>Wallet address:</label>
-          <p className={styles.address}>{wallet.address}</p>
+      <div className={styles.wrapper}>
+        <h1 className={styles.welcome}>
+          Welcome,<br />
+          {user.email}
+        </h1>
+
+        <section className={styles.card} aria-labelledby="walletSection">
+          <label className={styles.label} htmlFor="walletAddress">Wallet address:</label>
+          <p id="walletAddress" className={styles.address}>{wallet.address}</p>
 
           <div className={styles.networkSelector}>
-            <label className={styles.label}>Select network:</label>
+            <label className={styles.label} htmlFor="networkSelect">Select network:</label>
             <select
+              id="networkSelect"
               value={selectedNetwork}
               onChange={(e) => setSelectedNetwork(e.target.value)}
-              aria-label="Choose network"
+              aria-label="Select Blockchain Network"
             >
               <option value="bsc">BSC Mainnet</option>
               <option value="bscTestnet">BSC Testnet</option>
             </select>
           </div>
 
-          <div className={styles.balanceBox}>
+          <div className={styles.balanceBox} role="contentinfo" aria-live="polite">
             <span className={styles.balanceLabel}>Balance:</span>
-            <span>{balance !== null ? `${balance} BNB` : "Loading..."}</span>
+            <span>{loading ? "Loading..." : `${balance} BNB`}</span>
           </div>
-        </div>
+        </section>
 
-        <div className={styles.actions}>
+        <div className={styles.actions} role="group" aria-label="User actions">
           <button
             className={styles.actionButton}
             onClick={() => router.push("/send")}
+            aria-label="Send BNB"
           >
             🧾 SEND
           </button>
+
           <button
             className={styles.actionButton}
             onClick={() => router.push("/receive")}
+            aria-label="Receive BNB"
           >
             ✅ RECEIVE
           </button>
