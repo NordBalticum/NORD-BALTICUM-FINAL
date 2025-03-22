@@ -2,8 +2,8 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/router";
-import { JsonRpcProvider, formatEther } from "ethers";
 import { useMagicLink } from "@/contexts/MagicLinkContext";
+import { getWalletBalance } from "@/lib/ethers";
 import Navbar from "@/components/Navbar";
 import styles from "@/styles/dashboard.module.css";
 
@@ -12,12 +12,6 @@ export default function Dashboard() {
   const { user, wallet } = useMagicLink();
   const [selectedNetwork, setSelectedNetwork] = useState("bsc");
   const [balance, setBalance] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  const rpcUrls = {
-    bsc: process.env.NEXT_PUBLIC_BSC_RPC,
-    bscTestnet: process.env.NEXT_PUBLIC_BSC_TESTNET_RPC,
-  };
 
   // ✅ Redirect jei nėra user
   useEffect(() => {
@@ -27,27 +21,19 @@ export default function Dashboard() {
     }
   }, [user, wallet, router]);
 
-  // ✅ Balanso užkrovimas
-  const fetchBalance = useCallback(async () => {
-    try {
-      const rpc = rpcUrls[selectedNetwork];
-      if (wallet?.address && rpc) {
-        const provider = new JsonRpcProvider(rpc);
-        const raw = await provider.getBalance(wallet.address);
-        const formatted = parseFloat(formatEther(raw)).toFixed(4);
-        setBalance(formatted);
-      }
-    } catch (error) {
-      console.error("Balance fetch error:", error);
-      setBalance("Error");
-    } finally {
-      setLoading(false);
-    }
-  }, [wallet, selectedNetwork]);
-
+  // ✅ Automatinis balanso atnaujinimas
   useEffect(() => {
-    fetchBalance();
-  }, [fetchBalance]);
+    let interval;
+    const fetch = async () => {
+      if (wallet?.address) {
+        const result = await getWalletBalance(wallet.address, selectedNetwork);
+        setBalance(result);
+      }
+    };
+    fetch(); // pirma užkrova
+    interval = setInterval(fetch, 6000); // kas 6 sek.
+    return () => clearInterval(interval);
+  }, [wallet, selectedNetwork]);
 
   if (!user || !wallet) {
     return (
@@ -86,7 +72,7 @@ export default function Dashboard() {
 
           <div className={styles.balanceBox} role="contentinfo" aria-live="polite">
             <span className={styles.balanceLabel}>Balance:</span>
-            <span>{loading ? "Loading..." : `${balance} BNB`}</span>
+            <span>{balance !== null ? `${balance} BNB` : "Loading..."}</span>
           </div>
         </section>
 
