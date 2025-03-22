@@ -1,7 +1,7 @@
 :root {
-  --max-width: 1400px;
+  --max-width: 1440px;
   --min-width: 320px;
-  --main-padding: clamp(16px, 3vw, 48px);
+  --main-padding: clamp(24px, 4vw, 72px);
   --main-radius: 18px;
   --transition: all 0.3s ease-in-out;
 }
@@ -32,18 +32,19 @@ html, body {
 
 /* ✅ Content centering */
 .fullscreenContent {
-  width: clamp(var(--min-width), 92vw, var(--max-width));
+  width: clamp(var(--min-width), 94vw, var(--max-width));
   max-width: 100%;
   min-height: 90vh;
-  padding: var(--main-padding);
+  padding: clamp(24px, 5vw, 64px);
   background: rgba(255, 255, 255, 0.04);
   border-radius: var(--main-radius);
   backdrop-filter: blur(14px);
-  box-shadow: 0 0 32px rgba(0, 255, 200, 0.1);
+  box-shadow: 0 0 42px rgba(0, 255, 200, 0.08);
   display: flex;
   flex-direction: column;
   justify-content: center;
   animation: fadeIn 0.6s ease;
+  box-sizing: border-box;
 }
 
 /* ✅ Typography */
@@ -63,22 +64,30 @@ h1, h2, h3, p {
   html { zoom: 0.85; }
 }
 @media (min-width: 1920px) {
-  html { zoom: 0.85; }
+  html { zoom: 0.86; }
 }
 @media (min-width: 2560px) {
-  html { zoom: 0.75; }
+  html { zoom: 0.76; }
 }
 @media (min-width: 3200px) {
   html { zoom: 0.66; }
 }
 @media (min-width: 3840px) {
-  html { zoom: 0.58; }
+  html { zoom: 0.56; }
 }
 
-/* ✅ Utility */
+/* ✅ Utility classes */
 .centered {
   display: flex;
   align-items: center;
   justify-content: center;
   text-align: center;
+}
+
+/* ✅ Fix for mobile "compressed right edge" */
+@media (max-width: 768px) {
+  .fullscreenContent {
+    padding-left: clamp(20px, 6vw, 48px);
+    padding-right: clamp(20px, 6vw, 48px);
+  }
 }
