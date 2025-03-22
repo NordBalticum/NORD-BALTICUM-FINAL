@@ -1,18 +1,28 @@
 :root {
-  /* ✅ SPALVŲ PALETĖ */
-  --primary-light: #2B37FF;
+  /* === PRIMARY COLORS === */
+  --primary-light: #2B3FFF;
   --primary-dark: #1B2370;
-  --primary-bg-dark: #0E0E52;
-  --gradient-bg: radial-gradient(circle at center, var(--primary-dark) 12%, var(--primary-bg-dark) 88%);
+  --primary-bg-dark: #0A122A;
 
-  /* ✅ TEKSTAS IR AKCENTAI */
+  /* === GRADIENT BACKGROUND === */
+  --gradient-bg: radial-gradient(ellipse at center, var(--primary-light) 5%, var(--primary-dark) 40%, var(--primary-bg-dark) 100%);
+
+  /* === TEXT COLORS === */
   --main-white: #F5F5F5;
-  --main-white-glow: rgba(255, 255, 255, 0.8);
+  --main-white-glow: rgba(255, 255, 255, 0.88);
   --primary-text: var(--main-white);
-  --secondary-text: rgba(255, 255, 255, 0.85);
-  --text-shadow: 0px 1px 3px rgba(0, 0, 0, 0.3);
+  --secondary-text: rgba(255, 255, 255, 0.78);
+  --text-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
 
-  /* ✅ UI ELEMENTAI */
-  --glass-effect: rgba(255, 255, 255, 0.08);
-  --button-bg: linear-gradient(145deg, #111111, #2B2B2B);
+  /* === UI ELEMENT COLORS === */
+  --glass-effect: rgba(255, 255, 255, 0.07);
+  --glass-effect-dark: rgba(10, 18, 42, 0.6);
+  --button-bg: linear-gradient(145deg, #0A0A0A, #2B2B2B);
+  --card-bg: rgba(255, 255, 255, 0.04);
+  --border-glow: 0 0 10px rgba(255, 255, 255, 0.1);
+
+  /* === ANIMATIONS & GLOW EFFECTS === */
+  --soft-glow: 0 0 12px rgba(255, 255, 255, 0.08);
+  --neon-glow: 0 0 18px rgba(0, 255, 200, 0.15);
+  --focus-glow: 0 0 12px rgba(255, 255, 255, 0.3);
 }
