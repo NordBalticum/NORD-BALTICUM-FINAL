@@ -39,18 +39,27 @@ export default function Dashboard() {
   }, [wallet, selectedNetwork]);
 
   if (!user || !wallet) {
-    return <div className={styles.loading}>Loading your dashboard...</div>;
+    return (
+      <div className="fullscreenContainer">
+        <div className="fullscreenContent centered">
+          <p className={styles.loading}>Loading your dashboard...</p>
+        </div>
+      </div>
+    );
   }
 
   return (
     <div className="fullscreenContainer">
       <Navbar />
       <div className="fullscreenContent">
-        <h1 className={styles.welcome}>Welcome,<br />{user.email}</h1>
+        <h1 className={styles.welcome}>
+          Welcome,<br />
+          {user.email}
+        </h1>
 
         <div className={styles.card}>
           <label className={styles.label}>Wallet address:</label>
-          <p className={styles.address}>{wallet.address}</p>
+          <div className={styles.address}>{wallet.address}</div>
 
           <div className={styles.networkSelector}>
             <label className={styles.label}>Select network:</label>
@@ -65,7 +74,7 @@ export default function Dashboard() {
 
           <div className={styles.balanceBox}>
             <span className={styles.balanceLabel}>Balance:</span>
-            <span>{balance !== null ? `${balance} BNB` : "Loading..."}</span>
+            {balance !== null ? `${balance} BNB` : "Loading..."}
           </div>
         </div>
 
