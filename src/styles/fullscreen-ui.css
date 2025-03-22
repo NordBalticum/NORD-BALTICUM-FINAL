@@ -1,0 +1,84 @@
+:root {
+  --max-width: 1400px;
+  --min-width: 320px;
+  --main-padding: clamp(16px, 3vw, 48px);
+  --main-radius: 18px;
+  --transition: all 0.3s ease-in-out;
+}
+
+/* ✅ Universal Fullscreen Layout */
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow-x: hidden;
+  overflow-y: auto;
+  font-family: 'Poppins', sans-serif;
+  background: radial-gradient(ellipse at center, #2B3FFF, #1B2370, #0A122A);
+  color: #f0f0f0;
+  scroll-behavior: smooth;
+}
+
+/* ✅ Base container */
+.fullscreenContainer {
+  width: 100%;
+  min-height: 100vh;
+  padding: var(--main-padding);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ✅ Content centering */
+.fullscreenContent {
+  width: clamp(var(--min-width), 92vw, var(--max-width));
+  max-width: 100%;
+  min-height: 90vh;
+  padding: var(--main-padding);
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: var(--main-radius);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 0 32px rgba(0, 255, 200, 0.1);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  animation: fadeIn 0.6s ease;
+}
+
+/* ✅ Typography */
+h1, h2, h3, p {
+  color: #ffffff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+}
+
+/* ✅ Fade in effect */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ✅ Responsive Zoom Logic */
+@media (max-width: 480px) {
+  html { zoom: 0.85; }
+}
+@media (min-width: 1920px) {
+  html { zoom: 0.85; }
+}
+@media (min-width: 2560px) {
+  html { zoom: 0.75; }
+}
+@media (min-width: 3200px) {
+  html { zoom: 0.66; }
+}
+@media (min-width: 3840px) {
+  html { zoom: 0.58; }
+}
+
+/* ✅ Utility */
+.centered {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
