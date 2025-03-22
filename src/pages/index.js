@@ -14,13 +14,16 @@ export default function Home() {
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
 
+  // ✅ Automatinis nukreipimas į dashboard
   useEffect(() => {
     if (user) router.push("/dashboard");
   }, [user, router]);
 
+  // ✅ Magic link login
   const handleLogin = async (e) => {
     e.preventDefault();
     setMessage("");
+
     try {
       await signInWithEmail(email.trim());
       setMessage("Check your email for the magic link!");
@@ -39,19 +42,26 @@ export default function Home() {
         <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
       </Head>
 
-      <main className="fullscreenContainer" style={{ minHeight: "100dvh" }} role="main" aria-label="Login area">
+      <main
+        className="fullscreenContainer"
+        role="main"
+        aria-label="Login area"
+        style={{ minHeight: "100dvh" }}
+      >
+        {/* ✅ Logotipas su tobulai pozicionuotu efektu */}
         <div className={styles.logoContainer}>
           <Image
             src="/icons/logo.png"
             alt="NordBalticum Logo"
-            width={72}
-            height={72}
+            width={108}
+            height={108}
             className={styles.logoImage}
             priority
           />
         </div>
 
-        <div className={`${styles.loginBox} glassBox fadeIn`}>
+        {/* ✅ Login Box */}
+        <section className={`${styles.loginBox} glassBox fadeIn`} aria-label="Login box">
           <h1 className={styles.title}>Welcome to NordBalticum</h1>
           <p className={styles.subtitle}>Sign in with your email to get started</p>
 
@@ -67,14 +77,22 @@ export default function Home() {
               className={styles.input}
               aria-label="Email input"
             />
-            <button type="submit" className={styles.button} aria-label="Send magic link">
+            <button
+              type="submit"
+              className={styles.button}
+              aria-label="Send magic link"
+            >
               Send Magic Link
             </button>
           </form>
 
-          {message && <p className={styles.message}>{message}</p>}
-        </div>
+          {message && (
+            <p className={styles.message} role="alert">
+              {message}
+            </p>
+          )}
+        </section>
       </main>
     </>
   );
-          }
+}
