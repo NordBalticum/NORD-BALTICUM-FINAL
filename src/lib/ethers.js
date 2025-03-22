@@ -1,27 +1,43 @@
 import { Wallet, JsonRpcProvider } from "ethers";
 
-// Grąžina pagrindinį BSC providerį
-export const getProvider = () => {
-  return new JsonRpcProvider(process.env.NEXT_PUBLIC_BSC_RPC);
+// ✅ Grąžina provider pagal BSC tinklą
+export const getProvider = (network = "bsc") => {
+  const rpcUrls = {
+    bsc: process.env.NEXT_PUBLIC_BSC_RPC,
+    bscTestnet: process.env.NEXT_PUBLIC_BSC_TESTNET_RPC,
+  };
+  return new JsonRpcProvider(rpcUrls[network] || rpcUrls["bsc"]);
 };
 
-// Sukuria naują piniginę ir išsaugo ją localStorage
-export const createAndSaveWallet = () => {
-  const wallet = Wallet.createRandom();
+// ✅ Sukuria naują wallet (naudojama tik jei reikia lokaliai)
+export const createWallet = () => {
+  return Wallet.createRandom();
+};
+
+// ✅ Išsaugo wallet į localStorage (naudoti tik fallback scenarijuose)
+export const saveWalletToLocalStorage = (wallet) => {
+  if (!wallet?.privateKey) return;
   const walletData = {
     address: wallet.address,
     privateKey: wallet.privateKey,
   };
   localStorage.setItem("userWallet", JSON.stringify(walletData));
-  return wallet;
 };
 
-// Pakrauna esamą piniginę, jei ji yra localStorage
-export const loadWallet = () => {
-  const walletData = localStorage.getItem("userWallet");
-  if (walletData) {
-    const { privateKey } = JSON.parse(walletData);
+// ✅ Pakrauna wallet iš localStorage
+export const loadWalletFromLocalStorage = () => {
+  try {
+    const data = localStorage.getItem("userWallet");
+    if (!data) return null;
+    const { privateKey } = JSON.parse(data);
     return new Wallet(privateKey);
+  } catch (err) {
+    console.error("Failed to load wallet from localStorage:", err);
+    return null;
   }
-  return null;
+};
+
+// ✅ Patikrina ar adresas yra validus (standartinis EVM adresas)
+export const isValidAddress = (address) => {
+  return /^0x[a-fA-F0-9]{40}$/.test(address);
 };
