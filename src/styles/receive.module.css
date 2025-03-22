@@ -4,7 +4,6 @@
   text-align: center;
   padding: clamp(1.2rem, 3vw, 2rem);
   border-radius: 18px;
-  box-shadow: 0 0 30px rgba(0, 255, 204, 0.05);
   animation: fadeIn 0.6s ease-in-out;
 }
 
@@ -12,11 +11,18 @@
 .title {
   font-size: clamp(1.6rem, 2.2vw, 2.2rem);
   margin-bottom: 1.4rem;
-  text-transform: uppercase;
-  letter-spacing: 0.8px;
   font-weight: 700;
   color: var(--main-white);
   text-shadow: var(--text-shadow);
+  text-transform: uppercase;
+}
+
+/* Label text */
+.label {
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--main-white);
+  margin-top: 1rem;
 }
 
 /* QR Container */
@@ -24,6 +30,7 @@
   cursor: pointer;
   padding: 1rem;
   border-radius: 18px;
+  margin-top: 1rem;
   margin-bottom: 1.5rem;
   background: rgba(255, 255, 255, 0.06);
   transition: all 0.3s ease;
@@ -39,6 +46,11 @@
   font-size: clamp(0.85rem, 1vw, 1rem);
   color: #f0f0f0;
   font-weight: 500;
+}
+
+.qrCode {
+  border-radius: 12px;
+  margin: 0 auto;
 }
 
 /* Copy feedback */
