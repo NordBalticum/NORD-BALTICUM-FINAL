@@ -1,4 +1,4 @@
-import { Wallet, JsonRpcProvider } from "ethers";
+import { Wallet, JsonRpcProvider, formatEther } from "ethers";
 
 // ✅ Grąžina provider pagal BSC tinklą
 export const getProvider = (network = "bsc") => {
@@ -7,6 +7,19 @@ export const getProvider = (network = "bsc") => {
     bscTestnet: process.env.NEXT_PUBLIC_BSC_TESTNET_RPC,
   };
   return new JsonRpcProvider(rpcUrls[network] || rpcUrls["bsc"]);
+};
+
+// ✅ Nauja bankinė funkcija – gauna balansą pagal adresą ir tinklą
+export const getWalletBalance = async (address, network = "bsc") => {
+  try {
+    if (!address) return "0.0000";
+    const provider = getProvider(network);
+    const balanceRaw = await provider.getBalance(address);
+    return parseFloat(formatEther(balanceRaw)).toFixed(4);
+  } catch (err) {
+    console.error("❌ Failed to fetch balance:", err);
+    return "Error";
+  }
 };
 
 // ✅ Sukuria naują wallet (naudojama tik jei reikia lokaliai)
@@ -32,7 +45,7 @@ export const loadWalletFromLocalStorage = () => {
     const { privateKey } = JSON.parse(data);
     return new Wallet(privateKey);
   } catch (err) {
-    console.error("Failed to load wallet from localStorage:", err);
+    console.error("❌ Failed to load wallet from localStorage:", err);
     return null;
   }
 };
