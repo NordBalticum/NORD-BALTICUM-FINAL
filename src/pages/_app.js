@@ -1,3 +1,4 @@
+// src/pages/_app.js
 import "@styles/globals.css";
 import "@styles/theme.css";
 import Layout from "@components/Layout";
