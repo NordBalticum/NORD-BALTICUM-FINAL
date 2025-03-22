@@ -4,50 +4,43 @@
   --main-padding: clamp(24px, 4vw, 72px);
   --main-radius: 18px;
   --transition: all 0.3s ease-in-out;
-  --scale-factor: 1; /* Dynamically updated via JS */
+  --scale-factor: 1;
 }
 
-/* ===========================
-   ✅ Root scaling (fullscreen)
-=========================== */
+/* ✅ Natūralus fullscreen layout su tobulintu scaling */
 html, body {
   margin: 0;
   padding: 0;
   width: 100vw;
-  height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  min-height: 100vh;
   font-family: 'Poppins', sans-serif;
   background: radial-gradient(ellipse at center, #2B3FFF 0%, #1B2370 40%, #0A122A 100%);
   color: #f0f0f0;
   scroll-behavior: smooth;
-  overflow: hidden;
   box-sizing: border-box;
+  overflow-x: hidden;
+  overflow-y: auto;
+
+  /* ✅ Automatinis mastelio valdymas – tobulas 30% sumažinimas */
   transform: scale(var(--scale-factor));
   transform-origin: top center;
   transition: var(--transition);
 }
 
-/* ===========================
-   ✅ Fullscreen layout zone
-=========================== */
+/* ✅ Centravimo dėžutė */
 .fullscreenContainer {
   width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  min-height: 100vh;
   padding: var(--main-padding);
+  padding-bottom: clamp(60px, 8vh, 120px);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
   background: inherit;
   box-sizing: border-box;
-  position: relative;
-  overflow: visible;
 }
 
-/* ===========================
-   ✅ Premium content block
-=========================== */
+/* ✅ Turinys (kortelės, dashboard) */
 .fullscreenContent {
   width: clamp(var(--min-width), 92vw, var(--max-width));
   min-height: 88vh;
@@ -60,29 +53,26 @@ html, body {
   flex-direction: column;
   justify-content: flex-start;
   animation: fadeIn 0.7s ease;
+  position: relative;
   box-sizing: border-box;
-  overflow: visible;
 }
 
-/* ===========================
-   ✅ Typography + utility
-=========================== */
+/* ✅ Tekstas */
 h1, h2, h3, p {
   color: #ffffff;
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
 }
 
+/* ✅ Animacija */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ✅ Centravimo pagalbinė klasė */
 .centered {
   display: flex;
   align-items: center;
   justify-content: center;
   text-align: center;
-}
-
-/* ===========================
-   ✅ Entry animation
-=========================== */
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(16px); }
-  to   { opacity: 1; transform: translateY(0); }
 }
