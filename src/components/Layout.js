@@ -1,4 +1,4 @@
-import NavBar from "./NavBar";
+import Navbar from "@/components/Navbar";
 import { useRouter } from "next/router";
 
 export default function Layout({ children }) {
@@ -7,7 +7,7 @@ export default function Layout({ children }) {
 
   return (
     <>
-      {!isIndex && <NavBar />}
+      {!isIndex && <Navbar />}
       <main>{children}</main>
     </>
   );
