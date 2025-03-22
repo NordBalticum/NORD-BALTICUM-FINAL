@@ -1,86 +1,114 @@
-.navbarWrapper {
+.navbar {
   position: fixed;
   top: 0;
   width: 100%;
-  z-index: 9999;
-  background: rgba(0, 8, 20, 0.96);
+  background: rgba(10, 18, 42, 0.85);
   backdrop-filter: blur(12px);
-  padding: 10px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.6rem 1.2rem;
+  z-index: 1000;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.logoLink {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .logo {
-  height: 34px;
+  height: 36px;
   width: auto;
+  border-radius: 8px;
 }
 
-.desktopMenu {
+.navLinks {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 1rem;
 }
 
 .navButton {
-  color: white;
   background: transparent;
   border: 2px solid white;
-  padding: 6px 14px;
-  border-radius: 8px;
+  color: white;
+  padding: 8px 14px;
   font-weight: 600;
+  border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
-.navButton:hover,
-.navButton.active {
+.navButton:hover {
+  background: white;
+  color: black;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.15);
+}
+
+.active {
   background: white;
   color: black;
 }
 
-.logoutButton {
+.logout {
   background: #ff3c3c;
-  color: white;
-  padding: 6px 14px;
-  border-radius: 8px;
-  font-weight: 600;
   border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  color: white;
+  font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s ease;
+  transition: background 0.2s;
 }
 
-.logoutButton:hover {
-  background: #ff1f1f;
+.logout:hover {
+  background: #ff1c1c;
 }
 
 .mobileToggle {
   display: none;
-  font-size: 1.5rem;
+  font-size: 1.6rem;
   color: white;
   cursor: pointer;
 }
 
-.mobileMenu {
+.mobileDropdown {
+  display: none;
   position: absolute;
   top: 60px;
-  left: 0;
-  right: 0;
-  background: #000c1e;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  display: flex;
-  flex-direction: column;
+  right: 16px;
+  background: #000;
   padding: 1rem;
-  gap: 0.5rem;
-  z-index: 9999;
+  border-radius: 10px;
+  box-shadow: 0 0 18px rgba(0, 255, 200, 0.15);
+  z-index: 1001;
 }
 
-@media screen and (max-width: 768px) {
-  .desktopMenu {
+.logoutMobile {
+  margin-top: 1rem;
+  background: #ff3c3c;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+@media (max-width: 768px) {
+  .navLinks {
     display: none;
   }
+
   .mobileToggle {
     display: block;
+  }
+
+  .mobileDropdown {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+    width: 160px;
   }
 }
