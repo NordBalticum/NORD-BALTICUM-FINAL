@@ -1,5 +1,7 @@
+/* ✅ Receive Wrapper – Glass Box */
+
 .receiveWrapper {
-  max-width: 620px;
+  max-width: 640px;
   width: 100%;
   padding: clamp(1.8rem, 3.5vw, 2.6rem);
   border-radius: 20px;
@@ -11,17 +13,17 @@
   box-sizing: border-box;
 }
 
-/* Title */
+/* ✅ Title */
 .title {
-  font-size: clamp(1.8rem, 2.8vw, 2.4rem);
+  font-size: clamp(1.9rem, 3vw, 2.4rem);
   margin-bottom: 1.6rem;
   font-weight: 700;
   text-transform: uppercase;
-  color: #ffffff;
-  text-shadow: 0 0 6px rgba(255, 255, 255, 0.15);
+  color: var(--main-white);
+  text-shadow: var(--text-shadow);
 }
 
-/* Label */
+/* ✅ Label */
 .label {
   font-size: 1rem;
   font-weight: 500;
@@ -30,7 +32,7 @@
   margin-bottom: 0.2rem;
 }
 
-/* QR Container */
+/* ✅ QR Code Container */
 .qrContainer {
   margin-top: 1rem;
   padding: 1.2rem;
@@ -45,14 +47,14 @@
   box-shadow: 0 0 20px rgba(0, 255, 200, 0.3);
 }
 
-/* QR Code */
+/* ✅ QR Code Itself */
 .qrCode {
   border-radius: 12px;
   margin: 0 auto;
   display: block;
 }
 
-/* QR Address Text */
+/* ✅ QR Address */
 .qrText {
   margin-top: 1rem;
   font-size: clamp(0.9rem, 1vw, 1.05rem);
@@ -63,7 +65,7 @@
   line-height: 1.4;
 }
 
-/* Copy feedback */
+/* ✅ Copy Status */
 .copyFeedback {
   margin-top: 0.6rem;
   font-size: 0.9rem;
@@ -71,11 +73,12 @@
   font-weight: 500;
   transition: color 0.3s ease-in-out;
 }
+
 .copyFeedback.copied {
   color: #00ffc8;
 }
 
-/* Network Selector */
+/* ✅ Network Selector */
 .networkSelector {
   display: flex;
   align-items: center;
@@ -108,7 +111,7 @@
   box-shadow: 0 0 14px rgba(0, 255, 200, 0.3);
 }
 
-/* Balance */
+/* ✅ Balance Display */
 .balanceText {
   margin-top: 2rem;
   font-weight: 700;
@@ -117,7 +120,7 @@
   text-shadow: 0 0 6px rgba(0, 255, 200, 0.25);
 }
 
-/* Fade animation */
+/* ✅ Fade In Animation */
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(12px); }
   to   { opacity: 1; transform: translateY(0); }
