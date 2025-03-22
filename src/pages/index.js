@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useRouter } from "next/router";
-import { useMagicLink } from "../contexts/MagicLinkContext";
+import { useMagicLink } from "@/contexts/MagicLinkContext";
 
 export default function Home() {
   const [email, setEmail] = useState("");
