@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
 import { Wallet } from "ethers";
+import { useRouter } from "next/router";
 
 // Supabase init
 const supabase = createClient(
@@ -14,8 +15,16 @@ export const MagicLinkProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [wallet, setWallet] = useState(null);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
-  // STEP 1 – Get session & subscribe to changes
+  // STEP 0 – Redirect į / jei nėra sesijos (tik jei ne jau index puslapyje)
+  useEffect(() => {
+    if (!loading && !user && router.pathname !== "/") {
+      router.push("/");
+    }
+  }, [user, loading, router]);
+
+  // STEP 1 – Gauti esamą sesiją ir prenumeruoti auth pokyčius
   useEffect(() => {
     const fetchSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -25,18 +34,16 @@ export const MagicLinkProvider = ({ children }) => {
 
     fetchSession();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        setUser(session?.user || null);
-      }
-    );
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user || null);
+    });
 
     return () => {
       subscription?.unsubscribe?.();
     };
   }, []);
 
-  // STEP 2 – Load or create wallet
+  // STEP 2 – Sukurti arba gauti piniginę
   useEffect(() => {
     if (user) loadOrCreateWallet(user.id);
   }, [user]);
@@ -59,27 +66,23 @@ export const MagicLinkProvider = ({ children }) => {
         network: "bsc",
       };
 
-      const { error: insertError } = await supabase
-        .from("wallets")
-        .insert(walletData);
-
-      if (!insertError) setWallet(walletData);
-      else console.error("Wallet creation error:", insertError);
+      const { error } = await supabase.from("wallets").insert(walletData);
+      if (!error) setWallet(walletData);
+      else console.error("Wallet creation error:", error);
     }
   };
 
-  // STEP 3 – Refresh session kas 60s
+  // STEP 3 – Kas 60s tikrinti ar sesija dar gyva
   useEffect(() => {
     const interval = setInterval(async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user) await signOut();
       else setUser(session.user);
     }, 60000);
-
     return () => clearInterval(interval);
   }, []);
 
-  // STEP 4 – Auto logout po 10 min AFK (tik jei naršyklėje)
+  // STEP 4 – Auto logout jei AFK 10 min (tik naršyklėje)
   useEffect(() => {
     if (typeof window === "undefined") return;
 
@@ -102,7 +105,7 @@ export const MagicLinkProvider = ({ children }) => {
     };
   }, []);
 
-  // STEP 5 – Auth functions
+  // STEP 5 – Auth metodai
   const signInWithEmail = async (email) => {
     const { error } = await supabase.auth.signInWithOtp({ email });
     if (error) throw error;
@@ -115,9 +118,7 @@ export const MagicLinkProvider = ({ children }) => {
   };
 
   return (
-    <MagicLinkContext.Provider
-      value={{ user, wallet, signInWithEmail, signOut, supabase }}
-    >
+    <MagicLinkContext.Provider value={{ user, wallet, signInWithEmail, signOut, supabase }}>
       {!loading && children}
     </MagicLinkContext.Provider>
   );
