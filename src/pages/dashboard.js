@@ -24,11 +24,11 @@ export default function Dashboard() {
       const timer = setTimeout(() => router.push("/"), 1200);
       return () => clearTimeout(timer);
     }
-  }, [user, wallet]);
+  }, [user, wallet, router]);
 
-  // Get balance from blockchain
+  // Fetch balance
   useEffect(() => {
-    if (wallet && rpcUrls[selectedNetwork]) {
+    if (wallet?.address && rpcUrls[selectedNetwork]) {
       const provider = new JsonRpcProvider(rpcUrls[selectedNetwork]);
       provider
         .getBalance(wallet.address)
@@ -38,8 +38,9 @@ export default function Dashboard() {
           setBalance("Error");
         });
     }
-  }, [wallet, selectedNetwork]);
+  }, [wallet?.address, selectedNetwork]);
 
+  // Loading screen
   if (!user || !wallet) {
     return <div className={styles.loading}>Loading your dashboard...</div>;
   }
@@ -47,20 +48,27 @@ export default function Dashboard() {
   return (
     <div className={styles.dashboardWrapper}>
       <Navbar />
-      <div className={styles.content}>
-        <h1 className={styles.welcome}>Welcome, {user.email}</h1>
 
-        <div className={styles.card} aria-label="Wallet details">
-          <label className={styles.label}>Wallet address:</label>
-          <p className={styles.address}>{wallet.address}</p>
+      <main className={styles.content}>
+        <h1 className={styles.welcome}>
+          Welcome, <span>{user.email}</span>
+        </h1>
+
+        <section className={styles.card} aria-label="Wallet Information">
+          <label className={styles.label} htmlFor="walletAddress">
+            Wallet address:
+          </label>
+          <p className={styles.address} id="walletAddress">
+            {wallet.address}
+          </p>
 
           <div className={styles.networkSelector}>
-            <label htmlFor="network">Select network:</label>
+            <label htmlFor="networkSelect">Select network:</label>
             <select
-              id="network"
+              id="networkSelect"
               value={selectedNetwork}
               onChange={(e) => setSelectedNetwork(e.target.value)}
-              aria-label="Select blockchain network"
+              aria-label="Choose blockchain network"
             >
               <option value="bsc">BSC Mainnet</option>
               <option value="bscTestnet">BSC Testnet</option>
@@ -73,23 +81,25 @@ export default function Dashboard() {
               {balance !== null ? `${balance} BNB` : "Loading..."}
             </span>
           </div>
-        </div>
+        </section>
 
-        <div className={styles.actions} aria-label="Wallet actions">
+        <div className={styles.actions} aria-label="Wallet Actions">
           <button
             className={styles.actionButton}
             onClick={() => router.push("/send")}
+            aria-label="Send crypto"
           >
             📤 Send
           </button>
           <button
             className={styles.actionButton}
             onClick={() => router.push("/receive")}
+            aria-label="Receive crypto"
           >
             📥 Receive
           </button>
         </div>
-      </div>
+      </main>
     </div>
   );
 }
