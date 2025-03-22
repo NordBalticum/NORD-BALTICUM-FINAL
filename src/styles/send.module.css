@@ -1,113 +1,133 @@
 .sendWrapper {
+  max-width: 600px;
   width: 100%;
-  max-width: 640px;
-  padding: clamp(1.8rem, 4vw, 2.8rem);
+  padding: clamp(24px, 4vw, 48px);
   border-radius: 20px;
-  text-align: center;
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(18px);
+  box-shadow: 0 0 36px rgba(0, 255, 204, 0.08);
+  display: flex;
+  flex-direction: column;
+  animation: fadeIn 0.7s ease;
+  box-sizing: border-box;
 }
 
 .title {
-  font-size: clamp(1.8rem, 2.5vw, 2.3rem);
-  margin-bottom: 1.5rem;
+  font-size: clamp(1.8rem, 3vw, 2.4rem);
   font-weight: 700;
+  text-align: center;
+  margin-bottom: 1.6rem;
+  text-transform: uppercase;
   color: #ffffff;
-  text-shadow: 0 0 8px #00f6ff;
+  text-shadow: 0 0 6px rgba(255, 255, 255, 0.2);
 }
 
 .label {
   font-size: 1rem;
-  font-weight: 500;
-  color: #ccc;
-  margin-top: 0.4rem;
+  color: #eaeaea;
+  margin-bottom: 0.4rem;
 }
 
 .networkButtons {
   display: flex;
-  gap: 10px;
-  margin-top: 1.2rem;
   justify-content: center;
+  gap: 1rem;
+  margin-top: 1.2rem;
 }
 
 .netButton {
-  padding: 10px 16px;
-  background: #111;
-  color: #fff;
+  padding: 12px 20px;
+  border-radius: 12px;
   font-weight: 600;
   border: 2px solid white;
-  border-radius: 10px;
-  cursor: pointer;
-  transition: all 0.25s ease;
+  background: #111;
+  color: white;
+  font-size: 0.95rem;
+  transition: all 0.3s ease-in-out;
 }
 
 .netButton:hover {
-  background: #222;
-}
-
-.netButton.active {
   background: #fff;
   color: #000;
-  transform: scale(1.05);
-  box-shadow: 0 0 14px rgba(255, 255, 255, 0.2);
+}
+
+.active {
+  background: #ffffff;
+  color: #000;
+  box-shadow: 0 0 16px rgba(255, 255, 255, 0.2);
 }
 
 .balance {
-  font-size: 1.05rem;
-  margin-top: 1rem;
-  font-weight: 500;
-  color: #00ffcc;
+  margin-top: 1.5rem;
+  font-size: 1.15rem;
+  font-weight: 600;
+  text-align: center;
+  color: #00ffc8;
+  text-shadow: 0 0 6px rgba(0, 255, 200, 0.3);
 }
 
 .form {
   margin-top: 1.5rem;
-  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 
-.form input {
+input {
   width: 100%;
-  padding: 12px 16px;
-  margin-bottom: 1rem;
-  border: 2px solid rgba(255, 255, 255, 0.3);
+  padding: 14px 18px;
   border-radius: 12px;
-  background-color: rgba(255, 255, 255, 0.08);
-  color: #fff;
+  background: rgba(255, 255, 255, 0.08);
+  border: 2px solid rgba(255, 255, 255, 0.2);
   font-size: 1rem;
-  outline: none;
-  transition: border 0.2s ease;
-}
-
-.form input:focus {
-  border: 2px solid #00f6ff;
-  background-color: rgba(255, 255, 255, 0.12);
-}
-
-.form button {
-  width: 100%;
-  padding: 12px 20px;
-  background-color: #111;
   color: #fff;
-  font-weight: 600;
+  transition: all 0.2s ease-in-out;
+}
+
+input:focus {
+  outline: none;
+  border-color: #00ffc8;
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 0 12px rgba(0, 255, 200, 0.3);
+}
+
+button {
+  width: 100%;
+  padding: 14px 22px;
+  background: #000;
+  color: #fff;
+  font-weight: 700;
+  font-size: 1rem;
+  text-transform: uppercase;
   border: 2px solid white;
   border-radius: 12px;
-  font-size: 1rem;
   cursor: pointer;
   transition: all 0.3s ease;
 }
 
-.form button:hover {
-  background-color: #fff;
+button:hover {
+  background: #fff;
   color: #000;
-  transform: scale(1.03);
-  box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
+  transform: scale(1.06);
+  box-shadow: 0 0 18px rgba(255, 255, 255, 0.2);
 }
 
 .success {
   color: lightgreen;
-  margin-top: 1rem;
+  margin-top: 1.4rem;
   font-weight: 600;
+  text-align: center;
 }
 
 .error {
   color: crimson;
-  margin-top: 1rem;
+  margin-top: 1.4rem;
   font-weight: 600;
+  text-align: center;
+}
+
+/* Entry Animation */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
