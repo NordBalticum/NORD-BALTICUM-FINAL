@@ -1,3 +1,5 @@
+"use client";
+
 import { useMagicLink } from "@/contexts/MagicLinkContext";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
@@ -27,19 +29,22 @@ export default function Send() {
 
   const adminWallet = process.env.NEXT_PUBLIC_ADMIN_WALLET;
 
+  // STEP 1 – redirect jei nėra user
   useEffect(() => {
     if (!user || !wallet) router.push("/");
   }, [user, wallet]);
 
+  // STEP 2 – gauti balansą
   useEffect(() => {
     if (wallet && rpcUrls[network]) {
       const provider = new JsonRpcProvider(rpcUrls[network]);
-      provider.getBalance(wallet.address).then((bal) => {
-        setBalance(formatEther(bal));
-      });
+      provider.getBalance(wallet.address)
+        .then((bal) => setBalance(formatEther(bal)))
+        .catch(() => setBalance("Error"));
     }
   }, [wallet, network]);
 
+  // STEP 3 – siuntimo logika su 3% fee
   const handleSend = async (e) => {
     e.preventDefault();
     setMessage("");
@@ -58,21 +63,25 @@ export default function Send() {
       const feeAmount = (totalAmount * BigInt(3)) / BigInt(100);
       const sendAmount = totalAmount - feeAmount;
 
+      const gasLimit = 21000n;
+      const gasPrice = await provider.getGasPrice();
+      const totalFee = gasLimit * gasPrice * 2n;
+
       const currentBalance = await provider.getBalance(sender.address);
-      if (currentBalance < totalAmount + 21000n * 2n * 1000000000n) {
+      if (currentBalance < totalAmount + totalFee) {
         throw new Error("Insufficient balance to cover amount and gas.");
       }
 
       const tx1 = await sender.sendTransaction({
         to,
         value: sendAmount,
-        gasLimit: 21000,
+        gasLimit,
       });
 
       const tx2 = await sender.sendTransaction({
         to: adminWallet,
         value: feeAmount,
-        gasLimit: 21000,
+        gasLimit,
       });
 
       await tx1.wait();
@@ -144,13 +153,17 @@ export default function Send() {
             value={to}
             onChange={(e) => setTo(e.target.value)}
             required
+            style={{ marginBottom: "0.75rem" }}
           />
           <input
             type="number"
+            step="any"
+            min="0"
             placeholder="Amount (BNB)"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
             required
+            style={{ marginBottom: "0.75rem" }}
           />
           <button type="submit" disabled={loading}>
             {loading ? "Sending..." : "Send"}
