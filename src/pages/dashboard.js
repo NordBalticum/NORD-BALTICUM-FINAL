@@ -10,47 +10,57 @@ import styles from "@/styles/dashboard.module.css";
 export default function Dashboard() {
   const router = useRouter();
   const { user, wallet } = useMagicLink();
-
   const {
     balance,
-    rawBalance,
     loading,
     selectedNetwork,
     setSelectedNetwork,
     refreshBalance,
   } = useBalance();
 
-  // ✅ Redirektas jei nėra prisijungusio user ar wallet
+  // ✅ Redirect jei nėra user arba wallet
   useEffect(() => {
-    if (!user || !wallet || !wallet.address) {
-      const timeout = setTimeout(() => router.push("/"), 800);
+    if (!user || !wallet) {
+      const timeout = setTimeout(() => router.push("/"), 1000);
       return () => clearTimeout(timeout);
     }
   }, [user, wallet, router]);
 
-  if (!user || !wallet || !wallet.address) {
+  // ✅ Loader
+  if (!user || !wallet) {
     return (
       <div className={styles.loading} role="status">
-        Loading dashboard...
+        Loading your dashboard...
       </div>
     );
   }
 
   return (
-    <div className="fullscreenContainer" role="main" aria-label="Dashboard page">
+    <div className="fullscreenContainer" role="main">
       <Navbar />
       <div className={styles.wrapper}>
         <h1 className={styles.welcome}>
           Welcome,<br />
-          {user.email}
+          <span className={styles.email}>{user.email}</span>
         </h1>
 
         <section className={styles.card} aria-labelledby="wallet-info">
-          <label className={styles.label}>Wallet address:</label>
-          <p className={styles.address}>{wallet.address}</p>
+          <label className={styles.label}>Your Wallet Address</label>
+          <div className={styles.addressBox}>
+            <p className={styles.address}>{wallet.address}</p>
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText(wallet.address);
+              }}
+              className={styles.copyBtn}
+              aria-label="Copy Wallet Address"
+            >
+              📋
+            </button>
+          </div>
 
           <div className={styles.networkSelector}>
-            <label className={styles.label}>Select network:</label>
+            <label className={styles.label}>Select Network</label>
             <select
               className={styles.select}
               value={selectedNetwork}
@@ -61,40 +71,33 @@ export default function Dashboard() {
             </select>
           </div>
 
-          <div
-            className={styles.balanceBox}
-            role="contentinfo"
-            aria-live="polite"
-            aria-busy={loading}
-          >
-            <span className={styles.balanceLabel}>Balance:</span>
+          <div className={styles.balanceBox} aria-live="polite" aria-busy={loading}>
+            <span className={styles.balanceLabel}>Your Balance:</span>
             <span className={styles.balanceValue}>
-              {loading ? "Loading..." : `${balance} BNB`}
+              {loading ? "Syncing..." : `${balance} BNB`}
             </span>
-          </div>
-
-          <div className={styles.rawInfo}>
-            <span className={styles.rawLabel}>Raw:</span>
-            <span className={styles.rawValue}>{rawBalance}</span>
           </div>
         </section>
 
-        <div className={styles.actions} role="group" aria-label="Wallet actions">
+        <div className={styles.actions}>
           <button
             className={styles.actionButton}
             onClick={() => router.push("/send")}
+            aria-label="Send BNB"
           >
             🧾 SEND
           </button>
           <button
             className={styles.actionButton}
             onClick={() => router.push("/receive")}
+            aria-label="Receive BNB"
           >
             ✅ RECEIVE
           </button>
           <button
             className={styles.actionButton}
             onClick={refreshBalance}
+            aria-label="Refresh Balance"
           >
             🔄 REFRESH
           </button>
