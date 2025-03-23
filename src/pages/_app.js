@@ -2,23 +2,30 @@
 import "@/styles/globals.css";
 import "@/styles/theme.css";
 
-// ✅ Context
+// ✅ Contexts
 import { MagicLinkProvider } from "@/contexts/MagicLinkContext";
+import { BalanceProvider } from "@/contexts/BalanceContext";
 
-// ✅ Head (favicon, metadata jei norėsi vėliau naudoti)
+// ✅ Head (favicon, metadata, scaling)
 import Head from "next/head";
 
 export default function MyApp({ Component, pageProps }) {
   return (
     <>
       <Head>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta
+          name="viewport"
+          content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+        />
         <title>NordBalticum</title>
         <link rel="icon" href="/icons/logo.png" />
       </Head>
 
+      {/* ✅ Contexts */}
       <MagicLinkProvider>
-        <Component {...pageProps} />
+        <BalanceProvider>
+          <Component {...pageProps} />
+        </BalanceProvider>
       </MagicLinkProvider>
     </>
   );
