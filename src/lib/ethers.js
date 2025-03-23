@@ -1,6 +1,12 @@
 // ✅ Ultimate Ethers Utility – NordBalticum Web3 Bank Edition
 
-import { Wallet, JsonRpcProvider, formatEther, isAddress } from "ethers";
+import {
+  Wallet,
+  JsonRpcProvider,
+  formatEther,
+  parseEther,
+  isAddress,
+} from "ethers";
 
 // ✅ Patikimi RPC endpoint’ai su fallback’ais
 const RPC_URLS = {
@@ -31,6 +37,9 @@ export const getProvider = async (network = "bsc") => {
   throw new Error("❌ No valid RPC provider found");
 };
 
+// ✅ Tikrina ar adresas validus
+export const isValidAddress = (addr) => isAddress(addr);
+
 // ✅ Iškart duoda balansą iš blockchain – tiesiai per Ethers (real-time)
 export const getWalletBalance = async (address, network = "bsc") => {
   if (!isValidAddress(address)) {
@@ -51,8 +60,24 @@ export const getWalletBalance = async (address, network = "bsc") => {
   }
 };
 
-// ✅ Tikrina ar adresas validus
-export const isValidAddress = (addr) => isAddress(addr);
+// ✅ Siunčia BNB iš wallet – grąžina TX hash
+export const sendBNB = async (privateKey, to, amount, network = "bscTestnet") => {
+  try {
+    const provider = await getProvider(network);
+    const wallet = new Wallet(privateKey, provider);
+
+    const tx = await wallet.sendTransaction({
+      to,
+      value: parseEther(amount.toString()),
+    });
+
+    await tx.wait();
+    return tx.hash;
+  } catch (err) {
+    console.error("❌ Send BNB failed:", err);
+    throw err;
+  }
+};
 
 // ✅ Naujo wallet kūrimas – naudoti tik dev/demo režimu
 export const createWallet = () => Wallet.createRandom();
