@@ -1,93 +1,58 @@
-/* ✅ Wrapper for Send Card */
-.sendWrapper {
-  max-width: 640px;
-  width: 100%;
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   padding: clamp(24px, 4vw, 48px);
+  max-width: 1080px;
+  margin: 0 auto;
+}
+
+.title {
+  font-size: clamp(2rem, 3vw, 2.8rem);
+  font-weight: 700;
+  text-align: center;
+  color: white;
+  text-transform: uppercase;
+  text-shadow: 0 2px 6px rgba(0, 255, 255, 0.3);
+  margin-bottom: 2rem;
+}
+
+.sendWrapper {
+  width: 100%;
+  max-width: 620px;
+  padding: clamp(24px, 4vw, 36px);
   border-radius: 20px;
   background: rgba(255, 255, 255, 0.04);
   backdrop-filter: blur(18px);
   box-shadow: 0 0 36px rgba(0, 255, 204, 0.08);
-  display: flex;
-  flex-direction: column;
   animation: fadeIn 0.7s ease;
-  box-sizing: border-box;
 }
 
-/* ✅ Title */
-.title {
-  font-size: clamp(1.9rem, 3vw, 2.5rem);
-  font-weight: 700;
+.walletInfo {
   text-align: center;
-  margin-bottom: 1.6rem;
-  text-transform: uppercase;
-  color: var(--main-white);
-  text-shadow: 0 0 6px rgba(255, 255, 255, 0.2);
-}
-
-/* ✅ Email / Wallet Label */
-.label {
-  font-size: 1rem;
-  color: var(--primary-text);
-  margin-bottom: 0.4rem;
-  font-weight: 500;
-}
-
-/* ✅ Network Switch Buttons */
-.networkButtons {
-  display: flex;
-  justify-content: center;
-  gap: 1rem;
-  margin-top: 1.2rem;
-}
-
-.netButton {
-  padding: 12px 20px;
-  border-radius: 12px;
-  font-weight: 600;
-  border: 2px solid white;
-  background: #111;
-  color: white;
+  color: #ccc;
   font-size: 0.95rem;
-  transition: all 0.3s ease-in-out;
-  cursor: pointer;
+  margin-bottom: 1.5rem;
 }
 
-.netButton:hover {
-  background: #fff;
-  color: #000;
+.walletInfo p {
+  margin: 6px 0;
+  font-family: monospace;
+  word-break: break-word;
 }
 
-.active {
-  background: #ffffff;
-  color: #000;
-  box-shadow: 0 0 16px rgba(255, 255, 255, 0.2);
-}
-
-/* ✅ Wallet Balance */
-.balance {
-  margin-top: 1.6rem;
-  font-size: 1.15rem;
-  font-weight: 600;
-  text-align: center;
-  color: #00ffc8;
-  text-shadow: 0 0 6px rgba(0, 255, 200, 0.3);
-}
-
-/* ✅ Form */
 .form {
-  margin-top: 1.5rem;
   display: flex;
   flex-direction: column;
-  gap: 1.2rem;
+  gap: 1rem;
 }
 
-/* ✅ Inputs */
 .form input {
   width: 100%;
   padding: 14px 18px;
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.08);
-  border: 2px solid rgba(255, 255, 255, 0.2);
+  border: 2px solid rgba(255, 255, 255, 0.15);
   font-size: 1rem;
   color: #fff;
   transition: all 0.2s ease-in-out;
@@ -96,16 +61,15 @@
 .form input:focus {
   outline: none;
   border-color: #00ffc8;
-  background: rgba(255, 255, 255, 0.1);
-  box-shadow: 0 0 12px rgba(0, 255, 200, 0.3);
+  background: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 0 14px rgba(0, 255, 200, 0.3);
 }
 
-/* ✅ Submit Button */
 .form button {
   width: 100%;
   padding: 14px 22px;
   background: #000;
-  color: #fff;
+  color: white;
   font-weight: 700;
   font-size: 1rem;
   text-transform: uppercase;
@@ -116,13 +80,19 @@
 }
 
 .form button:hover {
-  background: #fff;
+  background: white;
   color: #000;
   transform: scale(1.06);
   box-shadow: 0 0 18px rgba(255, 255, 255, 0.2);
 }
 
-/* ✅ Feedback Messages */
+.feeInfo {
+  font-size: 0.9rem;
+  color: #ccc;
+  text-align: center;
+  margin-top: 6px;
+}
+
 .success {
   color: lightgreen;
   margin-top: 1.4rem;
@@ -131,14 +101,27 @@
 }
 
 .error {
-  color: crimson;
+  color: #ff4b4b;
   margin-top: 1.4rem;
   font-weight: 600;
   text-align: center;
 }
 
-/* ✅ Fade Animation */
+.loading {
+  font-size: 1.4rem;
+  color: white;
+  text-align: center;
+  margin-top: 2rem;
+  animation: pulse 1.5s infinite ease-in-out;
+}
+
+@keyframes pulse {
+  0% { opacity: 0.4; }
+  50% { opacity: 1; }
+  100% { opacity: 0.4; }
+}
+
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(12px); }
+  from { opacity: 0; transform: translateY(10px); }
   to   { opacity: 1; transform: translateY(0); }
 }
