@@ -1,14 +1,10 @@
-/* --------------------------------------
-   ✅ THEME – COLOR SCHEME & GLOBAL DESIGN
-   ⚡ NordBalticum 2025 Bank CSS Upgrade
--------------------------------------- */
-:root {
-  /* --- Brand Colors --- */
-  --primary-color: #2B3FFF;     /* NordBalticum Blue */
-  --secondary-color: #1B2370;   /* Deep Ocean Blue */
-  --accent-color: #0A122A;      /* Midnight Dark */
+/* === THEME – NordBalticum Color Scheme 2025 === */
 
-  /* --- Gradient Background --- */
+:root {
+  --primary-color: #2B3FFF;
+  --secondary-color: #1B2370;
+  --accent-color: #0A122A;
+
   --gradient-bg: radial-gradient(
     ellipse at center,
     var(--primary-color) 0%,
@@ -16,11 +12,9 @@
     var(--accent-color) 100%
   );
 
-  /* --- Text Colors --- */
   --primary-text: #f0f0f0;
   --main-white: #ffffff;
 
-  /* --- Glow & Shadows --- */
   --main-white-glow: rgba(255, 255, 255, 0.5);
   --text-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
   --button-shadow: 0 0 14px rgba(255, 255, 255, 0.1);
@@ -29,43 +23,32 @@
   --shadow-strong: 0 0 64px rgba(0, 255, 204, 0.12);
   --deep-glow: 0 0 48px rgba(43, 63, 255, 0.2);
 
-  /* --- UI Elements --- */
   --glass-effect: rgba(255, 255, 255, 0.1);
   --glass-effect-light: rgba(255, 255, 255, 0.04);
   --card-bg: rgba(255, 255, 255, 0.06);
   --button-bg: rgba(255, 255, 255, 0.1);
   --input-bg: rgba(255, 255, 255, 0.06);
 
-  /* --- Status Colors --- */
   --success-color: #00ffc8;
   --error-color: crimson;
   --warning-color: #ffcc00;
 
-  /* --- Animation Speeds --- */
   --speed-fast: 0.2s ease;
   --speed-mid: 0.3s ease-in-out;
   --speed-slow: 0.6s ease-in-out;
 }
 
-/* --------------------------------------
-   ✅ ANIMATIONS & EFFECTS – 2025 Ready
--------------------------------------- */
+/* === Shadow Pulse === */
 @keyframes shadowPulse {
-  0% {
-    box-shadow: 0 0 0 rgba(0, 255, 204, 0.2);
-  }
-  50% {
-    box-shadow: 0 0 16px rgba(0, 255, 204, 0.4);
-  }
-  100% {
-    box-shadow: 0 0 0 rgba(0, 255, 204, 0.2);
-  }
+  0%   { box-shadow: 0 0 0 rgba(0, 255, 204, 0.2); }
+  50%  { box-shadow: 0 0 16px rgba(0, 255, 204, 0.4); }
+  100% { box-shadow: 0 0 0 rgba(0, 255, 204, 0.2); }
 }
 .shadowPulse {
   animation: shadowPulse 2.8s infinite;
 }
 
-/* Frosted glass effect for cards */
+/* === Frosted Glass Card === */
 .FrostGlass {
   background: var(--glass-effect);
   backdrop-filter: blur(16px);
@@ -75,7 +58,7 @@
   transition: var(--speed-mid);
 }
 
-/* Neon button effect */
+/* === Neon Button === */
 .NeonDepth {
   background: var(--button-bg);
   border: 2px solid var(--main-white);
@@ -93,14 +76,14 @@
   transform: scale(1.06);
 }
 
-/* Focused Input/Select */
+/* === Inputs Focus === */
 input:focus, select:focus {
   box-shadow: var(--input-focus-glow);
   border-color: var(--success-color);
   transition: var(--speed-fast);
 }
 
-/* Cards with high elevation */
+/* === High Elevation Card === */
 .HighElevation {
   background: var(--card-bg);
   box-shadow: var(--deep-glow);
@@ -110,7 +93,7 @@ input:focus, select:focus {
   transition: var(--speed-mid);
 }
 
-/* Dropdown + Panel Design */
+/* === Dropdown / Panels === */
 .uiDropdown,
 .uiPanel {
   background: var(--glass-effect-light);
@@ -122,7 +105,7 @@ input:focus, select:focus {
   transition: var(--speed-mid);
 }
 
-/* Fade-in */
+/* === FadeIn === */
 .fadeIn {
   animation: fadeIn 0.6s ease-in-out;
 }
