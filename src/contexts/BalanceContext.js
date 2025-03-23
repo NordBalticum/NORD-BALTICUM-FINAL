@@ -10,9 +10,10 @@ import React, {
 import { JsonRpcProvider, formatEther } from "ethers";
 import { useMagicLink } from "@/contexts/MagicLinkContext";
 
+// ✅ Balance kontekstas
 const BalanceContext = createContext();
 
-// ✅ Patikimi RPC su fallback
+// ✅ Patikimi RPC URL'ai su fallback'ais
 const RPC_URLS = {
   bsc: [
     process.env.NEXT_PUBLIC_BSC_RPC,
@@ -26,7 +27,7 @@ const RPC_URLS = {
   ],
 };
 
-// ✅ Grąžina veikiantį provider
+// ✅ Funkcija grąžinanti pirmą galimą veikiančią provider instanciją
 const getProviderWithFallback = (network = "bsc") => {
   const urls = RPC_URLS[network] || [];
   for (let url of urls) {
@@ -35,7 +36,7 @@ const getProviderWithFallback = (network = "bsc") => {
   return null;
 };
 
-// ✅ BalanceProvider – veikia visoje sistemoje
+// ✅ Pagrindinis Balance Provider
 export const BalanceProvider = ({ children }) => {
   const { wallet } = useMagicLink();
   const [selectedNetwork, setSelectedNetwork] = useState("bscTestnet");
@@ -43,7 +44,7 @@ export const BalanceProvider = ({ children }) => {
   const [rawBalance, setRawBalance] = useState("0");
   const [loading, setLoading] = useState(true);
 
-  // ✅ Balanso užkrovimo funkcija
+  // ✅ Balanso užkrovimas pagal piniginę ir tinklą
   const fetchBalance = useCallback(async () => {
     if (!wallet?.address || !selectedNetwork) return;
     setLoading(true);
@@ -52,23 +53,23 @@ export const BalanceProvider = ({ children }) => {
       const provider = getProviderWithFallback(selectedNetwork);
       if (!provider) throw new Error("No valid RPC provider");
 
-      const raw = await provider.getBalance(wallet.address);
+      const raw = await provider.getBalance(wallet.address); // BigInt
       const formatted = parseFloat(formatEther(raw)).toFixed(4);
 
       setRawBalance(raw.toString());
       setBalance(formatted);
     } catch (err) {
       console.error("❌ Balance fetch error:", err);
-      setBalance("0.0000");
       setRawBalance("0");
+      setBalance("0.0000");
     } finally {
       setLoading(false);
     }
   }, [wallet?.address, selectedNetwork]);
 
-  // ✅ Automatinis atnaujinimas kas 6 sek
+  // ✅ Pirmas įkrovimas ir interval atnaujinimui
   useEffect(() => {
-    fetchBalance(); // pirmas užkrovimas
+    fetchBalance();
     const interval = setInterval(fetchBalance, 6000);
     return () => clearInterval(interval);
   }, [fetchBalance]);
@@ -76,11 +77,11 @@ export const BalanceProvider = ({ children }) => {
   return (
     <BalanceContext.Provider
       value={{
-        balance,        // formatuotas, pvz. 0.0043
-        rawBalance,     // raw string, pvz. "4312673987123"
+        balance,            // pvz. "0.0153"
+        rawBalance,         // pvz. "15300000000000000"
         loading,
-        selectedNetwork,
-        setSelectedNetwork,
+        selectedNetwork,    // bsc arba bscTestnet
+        setSelectedNetwork, // keisti iš UI
         refreshBalance: fetchBalance,
       }}
     >
@@ -89,5 +90,5 @@ export const BalanceProvider = ({ children }) => {
   );
 };
 
-// ✅ Hookas – naudoti komponente: const { balance } = useBalance();
+// ✅ Hookas: naudok bet kur projekte
 export const useBalance = () => useContext(BalanceContext);
