@@ -1,9 +1,15 @@
-import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useCallback,
+} from "react";
 import { createClient } from "@supabase/supabase-js";
 import { Wallet } from "ethers";
 import dynamic from "next/dynamic";
 
-// Supabase klientas
+// ✅ Supabase klientas
 export const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -16,19 +22,24 @@ const MagicLinkProviderBase = ({ children, router }) => {
   const [wallet, setWallet] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // STEP 0 – Nukreipimas jei nėra sesijos
+  // ✅ Nukreipimas jei nėra user
   useEffect(() => {
     if (!loading && !user && router?.isReady && router.pathname !== "/") {
       router.push("/");
     }
   }, [user, loading, router]);
 
-  // STEP 1 – Gauti sesiją ir klausytis pokyčių
+  // ✅ Pirma sesija ir listener
   useEffect(() => {
     const fetchSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setUser(session?.user ?? null);
-      setLoading(false);
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        setUser(session?.user ?? null);
+      } catch (error) {
+        console.error("Session fetch failed:", error);
+      } finally {
+        setLoading(false);
+      }
     };
     fetchSession();
 
@@ -39,44 +50,52 @@ const MagicLinkProviderBase = ({ children, router }) => {
     return () => subscription?.unsubscribe?.();
   }, []);
 
-  // STEP 2 – Sukurti arba gauti wallet
+  // ✅ Wallet iš duomenų bazės
   useEffect(() => {
-    if (user) loadOrCreateWallet(user.id);
+    if (user?.id) loadOrCreateWallet(user.id);
   }, [user]);
 
   const loadOrCreateWallet = useCallback(async (user_id) => {
-    const { data: existing, error } = await supabase
-      .from("wallets")
-      .select("*")
-      .eq("user_id", user_id)
-      .single();
+    try {
+      const { data: existing, error } = await supabase
+        .from("wallets")
+        .select("*")
+        .eq("user_id", user_id)
+        .single();
 
-    if (existing && !error) {
-      setWallet(existing);
-    } else {
-      const newWallet = Wallet.createRandom();
-      const walletData = {
-        user_id,
-        address: newWallet.address,
-        private_key: newWallet.privateKey,
-        network: "bsc",
-      };
-      const { error: insertError } = await supabase.from("wallets").insert(walletData);
-      if (!insertError) setWallet(walletData);
+      if (existing && !error) {
+        setWallet(existing);
+      } else {
+        const newWallet = Wallet.createRandom();
+        const walletData = {
+          user_id,
+          address: newWallet.address,
+          private_key: newWallet.privateKey,
+          network: "bsc",
+        };
+        const { error: insertError } = await supabase.from("wallets").insert(walletData);
+        if (!insertError) setWallet(walletData);
+      }
+    } catch (err) {
+      console.error("Wallet fetch/create failed:", err);
     }
   }, []);
 
-  // STEP 3 – Tikrinti sesiją kas 60s
+  // ✅ Kas 60s tikrinam ar sesija gyva
   useEffect(() => {
     const interval = setInterval(async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user) await signOut();
-      else setUser(session.user);
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.user) await signOut();
+        else setUser(session.user);
+      } catch (err) {
+        console.error("Session check failed:", err);
+      }
     }, 60000);
     return () => clearInterval(interval);
   }, []);
 
-  // STEP 4 – Auto logout AFK po 10min
+  // ✅ AFK logout po 10min
   useEffect(() => {
     if (typeof window === "undefined") return;
     let lastActivity = Date.now();
@@ -97,17 +116,33 @@ const MagicLinkProviderBase = ({ children, router }) => {
     };
   }, []);
 
-  // Prisijungimas su Magic Link
+  // ✅ Prisijungimas su Magic Link – greitas
   const signInWithEmail = useCallback(async (email) => {
-    const { error } = await supabase.auth.signInWithOtp({ email });
-    if (error) throw error;
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+          shouldCreateUser: true,
+          emailRedirectTo: `${window.location.origin}/dashboard`,
+        },
+      });
+      if (error) throw error;
+    } catch (err) {
+      console.error("Magic link error:", err.message);
+      throw err;
+    }
   }, []);
 
-  // Atsijungimas
+  // ✅ Atsijungimas
   const signOut = useCallback(async () => {
-    await supabase.auth.signOut();
-    setUser(null);
-    setWallet(null);
+    try {
+      await supabase.auth.signOut();
+    } catch (err) {
+      console.error("Sign out failed:", err);
+    } finally {
+      setUser(null);
+      setWallet(null);
+    }
   }, []);
 
   return (
@@ -117,14 +152,11 @@ const MagicLinkProviderBase = ({ children, router }) => {
   );
 };
 
-// ✅ Dinaminis render (tik client-side)
+// ✅ Dynamic Client Wrapper
 const MagicLinkWrapper = ({ children }) => {
   const router = require("next/router").useRouter();
   return <MagicLinkProviderBase router={router}>{children}</MagicLinkProviderBase>;
 };
 
-export const MagicLinkProvider = dynamic(() => Promise.resolve(MagicLinkWrapper), {
-  ssr: false,
-});
-
+export const MagicLinkProvider = dynamic(() => Promise.resolve(MagicLinkWrapper), { ssr: false });
 export const useMagicLink = () => useContext(MagicLinkContext);
