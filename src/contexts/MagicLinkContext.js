@@ -24,27 +24,22 @@ const MagicLinkProviderBase = ({ children, router }) => {
   const [wallet, setWallet] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // ✅ Nukreipimas jei nėra user
+  // ✅ Redirect jei nėra user
   useEffect(() => {
     if (!loading && !user && router?.isReady && router.pathname !== "/") {
       router.push("/");
     }
   }, [user, loading, router]);
 
-  // ✅ Inicializavimas ir sesijos listener
+  // ✅ Gauti sesiją ir listener
   useEffect(() => {
     const getSession = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        setUser(session?.user ?? null);
-      } catch (error) {
-        console.error("❌ getSession failed:", error);
-      } finally {
-        setLoading(false);
-      }
+      const { data: { session } } = await supabase.auth.getSession();
+      setUser(session?.user ?? null);
     };
 
     getSession();
+    setLoading(false);
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
@@ -53,7 +48,7 @@ const MagicLinkProviderBase = ({ children, router }) => {
     return () => subscription?.unsubscribe?.();
   }, []);
 
-  // ✅ Wallet įkėlimas arba sukūrimas
+  // ✅ Pakrauna wallet iš DB arba sukuria
   useEffect(() => {
     if (user?.id) loadOrCreateWallet(user.id);
   }, [user]);
@@ -80,22 +75,8 @@ const MagicLinkProviderBase = ({ children, router }) => {
         if (!insertError) setWallet(walletData);
       }
     } catch (err) {
-      console.error("❌ Wallet creation/load failed:", err);
+      console.error("❌ Wallet load/create error:", err);
     }
-  }, []);
-
-  // ✅ Tikrina sesiją kas 60s
-  useEffect(() => {
-    const interval = setInterval(async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session?.user) await signOut();
-        else setUser(session.user);
-      } catch (err) {
-        console.error("❌ Session ping failed:", err);
-      }
-    }, 60000);
-    return () => clearInterval(interval);
   }, []);
 
   // ✅ AFK logout po 10min
@@ -119,25 +100,28 @@ const MagicLinkProviderBase = ({ children, router }) => {
     };
   }, []);
 
-  // ✅ Greičiausias Magic Link login
+  // ✅ Magic Link – instant, garantuotas, su fallback URL
   const signInWithEmail = useCallback(async (email) => {
     try {
+      const redirectUrl = `${window?.location?.origin || "https://nordbalticum.com"}/dashboard`;
+
       const { error } = await supabase.auth.signInWithOtp({
         email,
         options: {
           shouldCreateUser: true,
-          emailRedirectTo: `${window.location.origin}/dashboard`,
+          emailRedirectTo: redirectUrl,
         },
       });
+
       if (error) throw error;
-      console.log("✅ Magic Link sent!");
+      console.log("✅ Magic Link sent to:", email);
     } catch (err) {
-      console.error("❌ Magic Link send error:", err.message);
+      console.error("❌ Magic Link error:", err.message);
       throw err;
     }
   }, []);
 
-  // ✅ Atsijungimas
+  // ✅ Logout
   const signOut = useCallback(async () => {
     try {
       await supabase.auth.signOut();
