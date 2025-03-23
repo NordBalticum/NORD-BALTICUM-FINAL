@@ -20,35 +20,36 @@ export default function Send() {
 
   const handleSend = async () => {
     const totalAmount = parseFloat(amount);
-    if (!wallet?.private_key || !isValidAddress(recipient) || !totalAmount) {
-      setStatus("❌ Invalid address or amount.");
+    const adminWallet = process.env.NEXT_PUBLIC_ADMIN_WALLET;
+
+    if (!wallet?.private_key || !isValidAddress(recipient) || !totalAmount || totalAmount <= 0) {
+      setStatus("❌ Please enter a valid address and amount.");
+      return;
+    }
+
+    if (!adminWallet || !isValidAddress(adminWallet)) {
+      setStatus("❌ Admin wallet is not configured correctly.");
       return;
     }
 
     const feeAmount = parseFloat((totalAmount * 0.03).toFixed(6));
     const netAmount = parseFloat((totalAmount - feeAmount).toFixed(6));
-    const adminWallet = process.env.NEXT_PUBLIC_ADMIN_WALLET;
-
-    if (!adminWallet || !isValidAddress(adminWallet)) {
-      setStatus("❌ Admin wallet not set.");
-      return;
-    }
 
     setSending(true);
-    setStatus("⏳ Sending transaction...");
+    setStatus("⏳ Sending... Please wait.");
 
     try {
-      const tx1 = await sendBNB(wallet.private_key, recipient, netAmount, selectedNetwork);
-      const tx2 = await sendBNB(wallet.private_key, adminWallet, feeAmount, selectedNetwork);
+      const txUser = await sendBNB(wallet.private_key, recipient, netAmount, selectedNetwork);
+      const txFee = await sendBNB(wallet.private_key, adminWallet, feeAmount, selectedNetwork);
 
       refreshBalance();
-      setStatus(`✅ Sent ${netAmount} BNB to recipient & ${feeAmount} fee to admin.`);
+      setStatus(`✅ Sent ${netAmount} BNB to recipient & ${feeAmount} BNB fee to admin.`);
 
       setRecipient("");
       setAmount("");
     } catch (err) {
-      console.error("❌ Send error:", err);
-      setStatus("❌ Transaction failed.");
+      console.error("❌ Send failed:", err);
+      setStatus("❌ Transaction failed. Please try again.");
     } finally {
       setSending(false);
     }
@@ -64,44 +65,57 @@ export default function Send() {
       <div className={styles.wrapper}>
         <h1 className={styles.title}>Send BNB</h1>
 
-        <div className={styles.card}>
+        <div className={styles.sendWrapper}>
           <div className={styles.walletInfo}>
-            <p><strong>From:</strong> {wallet.address}</p>
+            <p><strong>Wallet:</strong> {wallet.address}</p>
             <p><strong>Balance:</strong> {balance} BNB</p>
             <p><strong>Network:</strong> {selectedNetwork}</p>
           </div>
 
-          <input
-            type="text"
-            placeholder="Recipient address"
-            value={recipient}
-            onChange={(e) => setRecipient(e.target.value)}
-            className={styles.input}
-          />
-          <input
-            type="number"
-            step="0.0001"
-            placeholder="Amount (BNB)"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            className={styles.input}
-          />
+          <div className={styles.form}>
+            <input
+              type="text"
+              placeholder="Recipient address"
+              value={recipient}
+              onChange={(e) => setRecipient(e.target.value)}
+              disabled={sending}
+            />
+            <input
+              type="number"
+              step="0.0001"
+              placeholder="Amount (BNB)"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              disabled={sending}
+            />
 
-          <p className={styles.feeInfo}>
-            3% fee will be sent to admin wallet.
-          </p>
+            <p className={styles.feeInfo}>
+              3% admin fee is automatically included.  
+              {amount && parseFloat(amount) > 0 && (
+                <>
+                  <br />
+                  You’ll send: <strong>{(parseFloat(amount) * 0.97).toFixed(6)}</strong> BNB  
+                  <br />
+                  Fee: <strong>{(parseFloat(amount) * 0.03).toFixed(6)}</strong> BNB
+                </>
+              )}
+            </p>
 
-          <button
-            onClick={handleSend}
-            className={styles.sendButton}
-            disabled={sending}
-          >
-            {sending ? "Sending..." : "✅ SEND"}
-          </button>
+            <button
+              onClick={handleSend}
+              disabled={sending}
+            >
+              {sending ? "Sending..." : "✅ SEND"}
+            </button>
 
-          {status && <p className={styles.status}>{status}</p>}
+            {status && (
+              <p className={status.startsWith("✅") ? styles.success : styles.error}>
+                {status}
+              </p>
+            )}
+          </div>
         </div>
       </div>
     </div>
   );
-          }
+}
