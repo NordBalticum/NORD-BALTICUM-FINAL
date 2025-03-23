@@ -24,22 +24,22 @@ const MagicLinkProviderBase = ({ children, router }) => {
   const [wallet, setWallet] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // ✅ Redirect jei nėra user
+  // ✅ Redirect jei nėra vartotojo
   useEffect(() => {
     if (!loading && !user && router?.isReady && router.pathname !== "/") {
       router.push("/");
     }
   }, [user, loading, router]);
 
-  // ✅ Gauti sesiją ir listener
+  // ✅ Pagrindinė sesija ir listeneris
   useEffect(() => {
     const getSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       setUser(session?.user ?? null);
+      setLoading(false);
     };
 
     getSession();
-    setLoading(false);
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
@@ -48,7 +48,7 @@ const MagicLinkProviderBase = ({ children, router }) => {
     return () => subscription?.unsubscribe?.();
   }, []);
 
-  // ✅ Pakrauna wallet iš DB arba sukuria
+  // ✅ Wallet iš Supabase
   useEffect(() => {
     if (user?.id) loadOrCreateWallet(user.id);
   }, [user]);
@@ -75,11 +75,21 @@ const MagicLinkProviderBase = ({ children, router }) => {
         if (!insertError) setWallet(walletData);
       }
     } catch (err) {
-      console.error("❌ Wallet load/create error:", err);
+      console.error("❌ Wallet error:", err);
     }
   }, []);
 
-  // ✅ AFK logout po 10min
+  // ✅ Sesijos tikrinimas kas 60s
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) await signOut();
+      else setUser(session.user);
+    }, 60000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // ✅ Auto logout po 10min AFK
   useEffect(() => {
     if (typeof window === "undefined") return;
     let lastActivity = Date.now();
@@ -100,28 +110,25 @@ const MagicLinkProviderBase = ({ children, router }) => {
     };
   }, []);
 
-  // ✅ Magic Link – instant, garantuotas, su fallback URL
+  // ✅ Greičiausias Magic Link siuntimas ever
   const signInWithEmail = useCallback(async (email) => {
     try {
-      const redirectUrl = `${window?.location?.origin || "https://nordbalticum.com"}/dashboard`;
-
       const { error } = await supabase.auth.signInWithOtp({
         email,
         options: {
           shouldCreateUser: true,
-          emailRedirectTo: redirectUrl,
+          emailRedirectTo: `${window.location.origin}/dashboard`,
         },
       });
-
       if (error) throw error;
-      console.log("✅ Magic Link sent to:", email);
+      console.log("✅ Magic Link sent instantly!");
     } catch (err) {
-      console.error("❌ Magic Link error:", err.message);
+      console.error("❌ Magic Link send error:", err.message);
       throw err;
     }
   }, []);
 
-  // ✅ Logout
+  // ✅ Atsijungimas
   const signOut = useCallback(async () => {
     try {
       await supabase.auth.signOut();
@@ -140,7 +147,7 @@ const MagicLinkProviderBase = ({ children, router }) => {
   );
 };
 
-// ✅ Dynamic wrapper
+// ✅ Dynamic Client Wrapper
 const MagicLinkWrapper = ({ children }) => {
   const router = require("next/router").useRouter();
   return <MagicLinkProviderBase router={router}>{children}</MagicLinkProviderBase>;
