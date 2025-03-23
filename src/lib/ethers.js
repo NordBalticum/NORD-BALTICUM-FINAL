@@ -1,6 +1,7 @@
+// ✅ Ultimate Ethers Utility – NordBalticum Bank Edition
 import { Wallet, JsonRpcProvider, formatEther, isAddress } from "ethers";
 
-// ✅ Fallback RPC sistema – labai patikimas tinklo pasirinkimas
+// ✅ Patikimi RPC su fallback'ais
 const RPC_URLS = {
   bsc: [
     process.env.NEXT_PUBLIC_BSC_RPC_1,
@@ -14,13 +15,13 @@ const RPC_URLS = {
   ],
 };
 
-// ✅ Paimam pirmą veikiantį RPC – bankinė logika
+// ✅ Fallback mechanizmas – grąžina pirmą veikiančią RPC instanciją
 export const getProvider = async (network = "bsc") => {
   const urls = RPC_URLS[network] || RPC_URLS["bsc"];
   for (const url of urls) {
     try {
       const provider = new JsonRpcProvider(url);
-      await provider.getBlockNumber(); // ping test
+      await provider.getBlockNumber(); // Ping test – veikia RPC
       return provider;
     } catch (err) {
       console.warn(`⚠️ RPC failed: ${url}`);
@@ -29,29 +30,44 @@ export const getProvider = async (network = "bsc") => {
   throw new Error("❌ No valid RPC provider found.");
 };
 
-// ✅ Gauna balanso info – naudojama visam UI
+// ✅ Gauna balansą pagal adresą ir tinklą – grąžina ir raw, ir formatted
 export const getWalletBalance = async (address, network = "bsc") => {
   try {
-    if (!isValidAddress(address)) return "0.0000";
+    if (!isValidAddress(address)) {
+      return {
+        raw: "0",
+        formatted: "0.0000",
+      };
+    }
+
     const provider = await getProvider(network);
-    const raw = await provider.getBalance(address);
-    return parseFloat(formatEther(raw)).toFixed(4);
+    const raw = await provider.getBalance(address); // BigInt
+    const formatted = parseFloat(formatEther(raw)).toFixed(4);
+
+    return {
+      raw: raw.toString(),         // pvz. "189000000000000000"
+      formatted,                   // pvz. "0.1890"
+    };
   } catch (err) {
     console.error("❌ Failed to fetch balance:", err);
-    return "0.0000";
+    return {
+      raw: "0",
+      formatted: "0.0000",
+    };
   }
 };
 
-// ✅ Tikrina ar adresas validus
+// ✅ Tikrina ar adresas yra validus EVM address
 export const isValidAddress = (addr) => {
   return isAddress(addr);
 };
 
-// ✅ Local fallback funkcijos (naudoti tik jei prireikia)
+// ✅ Sukuria naują Wallet – naudoti tik fallback atvejais
 export const createWallet = () => {
   return Wallet.createRandom();
 };
 
+// ✅ Saugo wallet į localStorage – naudoti tik kaip fallback (ne pagrindinė sistema)
 export const saveWalletToLocalStorage = (wallet) => {
   if (!wallet?.privateKey) return;
   const data = {
@@ -61,10 +77,12 @@ export const saveWalletToLocalStorage = (wallet) => {
   localStorage.setItem("userWallet", JSON.stringify(data));
 };
 
+// ✅ Pakelia wallet iš localStorage – fallback scenarijui (pvz. demo režimas)
 export const loadWalletFromLocalStorage = () => {
   try {
     const data = localStorage.getItem("userWallet");
     if (!data) return null;
+
     const { privateKey } = JSON.parse(data);
     return new Wallet(privateKey);
   } catch (err) {
