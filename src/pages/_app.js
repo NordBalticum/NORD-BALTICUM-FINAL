@@ -27,7 +27,7 @@ export default function MyApp({ Component, pageProps }) {
         <link rel="apple-touch-icon" href="/icons/logo.png" />
       </Head>
 
-      {/* ✅ Global Providers – Auth + Real-Time Ethers Balance */}
+      {/* ✅ Global Providers – Web3 Auth + Real-Time Ethers Balances */}
       <MagicLinkProvider>
         <BalanceProviderEthers>
           <Component {...pageProps} />
