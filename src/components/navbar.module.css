@@ -1,21 +1,17 @@
-/* === NAVBAR – ULTRA PREMIUM 2025 FINAL V3 === */
-
+/* === NAVBAR – ULTRA MAX 2025 V4 === */
 .navbar {
   position: fixed;
   top: 0;
   left: 0;
-  width: 120vh;
+  width: 100vw;
   min-width: 100vw;
   height: clamp(68px, 7.5vh, 96px);
-  background: radial-gradient(circle at 50% 30%, rgba(20, 30, 60, 0.95), rgba(8, 14, 28, 0.92));
-  backdrop-filter: blur(22px);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: clamp(0.7rem, 2vw, 1.4rem) clamp(2rem, 6vw, 4rem);
-  z-index: 9999;
+  background: rgba(15, 20, 40, 0.85);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+  z-index: 9999;
   overflow: hidden;
 }
 
@@ -23,37 +19,36 @@
   content: "";
   position: absolute;
   top: 0;
-  left: -50%;
-  width: 200%;
+  left: -100%;
+  width: 300%;
   height: 100%;
   background: linear-gradient(
     90deg,
-    rgba(255, 255, 255, 0) 0%,
-    rgba(255, 255, 255, 0.3) 50%,
-    rgba(255, 255, 255, 0) 100%
+    transparent,
+    rgba(255, 255, 255, 0.3),
+    transparent
   );
-  animation: shineLoop 6s linear infinite;
-  z-index: 0;
+  animation: shineLoop 5s linear infinite;
   pointer-events: none;
+  z-index: 0;
 }
 
 @keyframes shineLoop {
-  from {
+  0% {
     transform: translateX(-50%);
   }
-  to {
+  100% {
     transform: translateX(50%);
   }
 }
 
 .navContent {
-  width: 100vw;
+  width: 100%;
   max-width: 100%;
-  padding: 0 clamp(1.2rem, 4vw, 2.4rem);
+  padding: 0 clamp(1.6rem, 5vw, 3rem);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  box-sizing: border-box;
   position: relative;
   z-index: 1;
 }
@@ -68,30 +63,30 @@
   width: auto;
   border-radius: 14px;
   transition: transform 0.3s ease;
-  box-shadow: 0 0 24px rgba(255, 255, 255, 0.1);
+  box-shadow: 0 0 22px rgba(255, 255, 255, 0.1);
 }
 .logo:hover {
   transform: scale(1.06);
 }
 
-/* === Desktop Buttons === */
+/* === Desktop Nav === */
 .navLinks {
   display: flex;
   align-items: center;
   gap: clamp(0.6rem, 2vw, 1.4rem);
 }
 .navButton {
-  background: transparent;
+  background: rgba(255, 255, 255, 0.08);
   border: 2px solid white;
   color: white;
   padding: clamp(6px, 1vw, 10px) clamp(12px, 2vw, 20px);
   font-weight: 600;
   border-radius: 14px;
   cursor: pointer;
-  transition: all 0.25s ease;
   text-transform: uppercase;
   letter-spacing: 0.6px;
   font-size: clamp(0.9rem, 1vw, 1.05rem);
+  transition: all 0.25s ease;
 }
 .navButton:hover {
   background: white;
@@ -104,7 +99,6 @@
   box-shadow: 0 0 18px rgba(255, 255, 255, 0.3);
 }
 
-/* === Logout Button === */
 .logout {
   background: #ff3c3c;
   border: none;
@@ -113,20 +107,20 @@
   color: white;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s ease-in-out;
   margin-left: 12px;
   box-shadow: 0 0 18px rgba(255, 0, 0, 0.1);
+  transition: all 0.25s ease;
 }
 .logout:hover {
   background: #ff1c1c;
   box-shadow: 0 0 24px rgba(255, 0, 0, 0.3);
 }
 
-/* === Hamburger Button === */
+/* === Hamburger === */
 .mobileToggle {
   display: none;
-  width: 38px;
-  height: 38px;
+  width: 36px;
+  height: 36px;
   flex-direction: column;
   justify-content: center;
   align-items: center;
@@ -140,16 +134,16 @@
   height: 3px;
   background: white;
   border-radius: 3px;
-  transition: all 0.3s ease;
+  transition: transform 0.3s ease;
 }
 .mobileToggle.open span:first-child {
-  transform: rotate(45deg) translateY(3px);
+  transform: rotate(45deg) translateY(4px);
 }
 .mobileToggle.open span:last-child {
-  transform: rotate(-45deg) translateY(-3px);
+  transform: rotate(-45deg) translateY(-4px);
 }
 
-/* === Mobile Dropdown === */
+/* === Dropdown Menu === */
 .mobileDropdown {
   position: absolute;
   top: clamp(76px, 8vh, 96px);
@@ -157,7 +151,8 @@
   width: 100vw;
   padding: 1.4rem clamp(1rem, 6vw, 2.4rem);
   background: rgba(0, 0, 0, 0.96);
-  box-shadow: 0 12px 24px rgba(0, 255, 200, 0.15);
+  backdrop-filter: blur(18px);
+  box-shadow: 0 12px 32px rgba(0, 255, 200, 0.15);
   border-radius: 0 0 24px 24px;
   display: flex;
   flex-direction: column;
@@ -190,39 +185,19 @@
   }
 }
 
-/* === FULL Responsive Media Queries (Galaxy Ultra – 8K+) === */
-@media (max-width: 1400px) {
-  .navContent {
-    padding: 0 4vw;
-  }
-}
-@media (max-width: 1200px) {
-  .navContent {
-    padding: 0 3vw;
-  }
-}
-@media (max-width: 992px) {
-  .navContent {
-    padding: 0 2.4vw;
-  }
-}
-@media (max-width: 768px) {
+/* === Responsive === */
+@media (max-width: 1024px) {
   .navLinks {
     display: none;
   }
   .mobileToggle {
     display: flex;
   }
+}
+
+@media (max-width: 768px) {
   .mobileDropdown {
     width: 100vw;
     padding: 1.2rem 1.6rem;
-  }
-}
-@media (max-width: 480px) {
-  .logo {
-    height: 42px;
-  }
-  .navButton {
-    font-size: 0.9rem;
   }
 }
