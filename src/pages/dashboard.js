@@ -1,18 +1,21 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/router";
 import { useMagicLink } from "@/contexts/MagicLinkContext";
-import { getWalletBalance } from "@/lib/ethers";
+import { useBalance } from "@/contexts/BalanceContext";
 import Navbar from "@/components/Navbar";
 import styles from "@/styles/dashboard.module.css";
 
 export default function Dashboard() {
   const router = useRouter();
   const { user, wallet } = useMagicLink();
-  const [selectedNetwork, setSelectedNetwork] = useState("bscTestnet");
-  const [balance, setBalance] = useState("Loading...");
-  const [loading, setLoading] = useState(true);
+  const {
+    balance,
+    loading,
+    selectedNetwork,
+    setSelectedNetwork,
+  } = useBalance();
 
   // ✅ Redirect jei nėra vartotojo arba wallet
   useEffect(() => {
@@ -21,23 +24,6 @@ export default function Dashboard() {
       return () => clearTimeout(timeout);
     }
   }, [user, wallet, router]);
-
-  // ✅ Balanso atnaujinimas kas 6s
-  useEffect(() => {
-    let interval;
-
-    const fetchBalance = async () => {
-      if (!wallet?.address) return;
-      setLoading(true);
-      const fetched = await getWalletBalance(wallet.address, selectedNetwork);
-      setBalance(fetched);
-      setLoading(false);
-    };
-
-    fetchBalance();
-    interval = setInterval(fetchBalance, 6000);
-    return () => clearInterval(interval);
-  }, [wallet?.address, selectedNetwork]);
 
   if (!user || !wallet) {
     return (
@@ -72,7 +58,7 @@ export default function Dashboard() {
             </select>
           </div>
 
-          <div className={styles.balanceBox} aria-live="polite">
+          <div className={styles.balanceBox} aria-live="polite" aria-busy={loading}>
             <span className={styles.balanceLabel}>Balance:</span>
             <span>{loading ? "Loading..." : `${balance} BNB`}</span>
           </div>
