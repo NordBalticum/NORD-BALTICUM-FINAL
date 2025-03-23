@@ -1,7 +1,7 @@
 "use client";
 
-import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/router";
 import { useMagicLink } from "@/contexts/MagicLinkContext";
 import { useBalance } from "@/contexts/BalanceProviderEthers";
 import QRCode from "react-qr-code";
@@ -11,7 +11,13 @@ import styles from "@/styles/receive.module.css";
 export default function ReceivePage() {
   const router = useRouter();
   const { user, wallet } = useMagicLink();
-  const { balance, selectedNetwork } = useBalance();
+  const {
+    balance,
+    selectedNetwork,
+    setSelectedNetwork,
+    refreshBalance,
+  } = useBalance();
+
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
@@ -30,7 +36,7 @@ export default function ReceivePage() {
   if (!user || !wallet) return null;
 
   return (
-    <div className="fullscreenContainer" role="main" aria-label="Receive Page">
+    <div className="fullscreenContainer">
       <Navbar />
 
       <div className={styles.wrapper}>
@@ -39,36 +45,38 @@ export default function ReceivePage() {
         <div className={styles.qrBox}>
           <QRCode
             value={wallet.address}
-            size={180}
+            size={200}
             bgColor="#ffffff"
             fgColor="#0A122A"
           />
         </div>
 
-        <p className={styles.addressLabel}>Your wallet address:</p>
-        <p className={styles.address} aria-label="Your wallet address">
-          {wallet.address}
-        </p>
+        <p className={styles.addressLabel}>Wallet Address</p>
+        <p className={styles.address}>{wallet.address}</p>
 
-        <button
-          className={styles.copyButton}
-          onClick={handleCopy}
-          aria-label="Copy address"
-        >
+        <button className={styles.copyButton} onClick={handleCopy}>
           {copied ? "✔ Copied!" : "Copy Address"}
         </button>
 
         <div className={styles.networkInfo}>
-          <p>
-            Network:{" "}
-            <strong>
-              {selectedNetwork === "bsc" ? "BSC Mainnet" : "BSC Testnet"}
-            </strong>
-          </p>
-          <p>
+          <label className={styles.label}>Network:</label>
+          <select
+            className={styles.select}
+            value={selectedNetwork}
+            onChange={(e) => setSelectedNetwork(e.target.value)}
+          >
+            <option value="bsc">BSC Mainnet</option>
+            <option value="bscTestnet">BSC Testnet</option>
+          </select>
+
+          <p className={styles.balance}>
             Balance: <strong>{balance} BNB</strong>
           </p>
         </div>
+
+        <button className={styles.refreshBtn} onClick={refreshBalance}>
+          🔄 Refresh Balance
+        </button>
       </div>
     </div>
   );
