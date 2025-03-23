@@ -75,6 +75,11 @@ export default function Dashboard() {
               {loading ? "Loading..." : `${balance} BNB`}
             </span>
           </div>
+
+          <div className={styles.rawInfo}>
+            <span className={styles.rawLabel}>Raw:</span>
+            <span className={styles.rawValue}>{rawBalance}</span>
+          </div>
         </section>
 
         {/* ✅ Veiksmai */}
