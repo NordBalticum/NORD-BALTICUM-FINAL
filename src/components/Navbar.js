@@ -20,16 +20,21 @@ export default function Navbar() {
     { label: "Receive", href: "/receive" },
   ];
 
-  useEffect(() => setIsOpen(false), [pathname]);
+  useEffect(() => {
+    setIsOpen(false);
+  }, [pathname]);
 
-  const toggleMenu = useCallback(() => setIsOpen((prev) => !prev), []);
+  const toggleMenu = useCallback(() => {
+    setIsOpen((prev) => !prev);
+  }, []);
 
   if (pathname === "/") return null;
 
   return (
-    <header className={styles.navbar}>
+    <header className={styles.navbar} role="navigation" aria-label="Main navigation">
       <div className={styles.navContent}>
-        <Link href="/" className={styles.logoLink}>
+        {/* === Logo === */}
+        <Link href="/" className={styles.logoLink} aria-label="Go to homepage">
           <Image
             src="/icons/logo.svg"
             alt="NordBalticum Logo"
@@ -40,33 +45,44 @@ export default function Navbar() {
           />
         </Link>
 
-        <nav className={styles.navLinks}>
+        {/* === Desktop Nav === */}
+        <nav className={styles.navLinks} role="menubar">
           {navItems.map((item) => (
             <Link key={item.href} href={item.href} passHref>
               <button
-                className={`${styles.navButton} ${pathname === item.href ? styles.active : ""}`}
+                role="menuitem"
+                className={`${styles.navButton} ${
+                  pathname === item.href ? styles.active : ""
+                }`}
               >
                 {item.label}
               </button>
             </Link>
           ))}
-          <button onClick={signOut} className={styles.logout}>Sign Out</button>
+          <button onClick={signOut} className={styles.logout} aria-label="Log out">
+            Sign Out
+          </button>
         </nav>
 
+        {/* === Mobile Toggle === */}
         <div
           className={`${styles.mobileToggle} ${isOpen ? styles.open : ""}`}
           onClick={toggleMenu}
+          aria-label="Toggle mobile menu"
+          role="button"
         >
           <span />
           <span />
         </div>
       </div>
 
+      {/* === Mobile Dropdown with Motion === */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
             className={styles.mobileDropdown}
-            initial={{ opacity: 0, y: -8, scale: 0.96 }}
+            role="menu"
+            initial={{ opacity: 0, y: -10, scale: 0.96 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -8, scale: 0.96 }}
             transition={{ duration: 0.25, ease: "easeInOut" }}
@@ -74,14 +90,23 @@ export default function Navbar() {
             {navItems.map((item) => (
               <Link key={item.href} href={item.href} passHref>
                 <button
-                  className={`${styles.navButton} ${pathname === item.href ? styles.active : ""}`}
+                  role="menuitem"
+                  className={`${styles.navButton} ${
+                    pathname === item.href ? styles.active : ""
+                  }`}
                   onClick={() => setIsOpen(false)}
                 >
                   {item.label}
                 </button>
               </Link>
             ))}
-            <button onClick={signOut} className={styles.logoutMobile}>Sign Out</button>
+            <button
+              onClick={signOut}
+              className={styles.logoutMobile}
+              aria-label="Log out from mobile"
+            >
+              Sign Out
+            </button>
           </motion.div>
         )}
       </AnimatePresence>
