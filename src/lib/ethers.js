@@ -7,22 +7,22 @@ const RPC_URLS = {
   bsc: [
     process.env.NEXT_PUBLIC_BSC_RPC_1,
     process.env.NEXT_PUBLIC_BSC_RPC_2,
-    "https://bsc-dataseed.binance.org/",
+    "https://bsc-dataseed.binance.org",
   ],
   bscTestnet: [
     process.env.NEXT_PUBLIC_BSC_TESTNET_RPC_1,
     process.env.NEXT_PUBLIC_BSC_TESTNET_RPC_2,
-    "https://data-seed-prebsc-1-s1.binance.org:8545/",
+    "https://data-seed-prebsc-1-s1.binance.org:8545",
   ],
 };
 
-// ✅ Grąžina pirmą veikiantį JsonRpcProvider – naudojamas tik fallback atvejuose
+// ✅ Grąžina pirmą veikiantį JsonRpcProvider – garantuotas RPC fallback
 export const getProvider = async (network = "bsc") => {
   const urls = RPC_URLS[network] || RPC_URLS["bsc"];
   for (const url of urls) {
     try {
       const provider = new JsonRpcProvider(url);
-      await provider.getBlockNumber(); // RPC health check
+      await provider.getBlockNumber(); // RPC test ping
       return provider;
     } catch {
       console.warn(`⚠️ RPC failed: ${url}`);
@@ -31,7 +31,7 @@ export const getProvider = async (network = "bsc") => {
   throw new Error("❌ No valid RPC provider found");
 };
 
-// ✅ Gauna balansą pagal adresą ir tinklą – naudoti tik ekstra atvejais
+// ✅ Iškart duoda balansą iš blockchain – tiesiai per Ethers (real-time)
 export const getWalletBalance = async (address, network = "bsc") => {
   if (!isValidAddress(address)) {
     return { raw: "0", formatted: "0.0000" };
@@ -41,20 +41,23 @@ export const getWalletBalance = async (address, network = "bsc") => {
     const provider = await getProvider(network);
     const raw = await provider.getBalance(address);
     const formatted = parseFloat(formatEther(raw)).toFixed(4);
-    return { raw: raw.toString(), formatted };
+    return {
+      raw: raw.toString(),
+      formatted,
+    };
   } catch (err) {
-    console.error("❌ Failed to fetch balance:", err);
+    console.error("❌ Balance fetch error:", err);
     return { raw: "0", formatted: "0.0000" };
   }
 };
 
-// ✅ Validuoja EVM adresą
+// ✅ Tikrina ar adresas validus
 export const isValidAddress = (addr) => isAddress(addr);
 
-// ✅ Sukuria naują wallet’ą (naudoti tik dev/demo režimu)
+// ✅ Naujo wallet kūrimas – naudoti tik dev/demo režimu
 export const createWallet = () => Wallet.createRandom();
 
-// ⛔️ Lokalus saugojimas – naudoti tik jei tiksliai žinai ką darai
+// ✅ Lokalus wallet saugojimas – fallback (nerekomenduojama prod)
 export const saveWalletToLocalStorage = (wallet) => {
   if (!wallet?.privateKey) return;
   const data = {
@@ -64,6 +67,7 @@ export const saveWalletToLocalStorage = (wallet) => {
   localStorage.setItem("userWallet", JSON.stringify(data));
 };
 
+// ✅ Lokalus wallet pakrovimas – fallback
 export const loadWalletFromLocalStorage = () => {
   try {
     const data = localStorage.getItem("userWallet");
@@ -71,7 +75,7 @@ export const loadWalletFromLocalStorage = () => {
     const { privateKey } = JSON.parse(data);
     return new Wallet(privateKey);
   } catch (err) {
-    console.error("❌ Failed to load local wallet:", err);
+    console.error("❌ Failed to load wallet from localStorage:", err);
     return null;
   }
 };
