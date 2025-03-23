@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { useMagicLink } from "@/contexts/MagicLinkContext";
 import { getWalletBalance } from "@/lib/ethers";
@@ -11,43 +11,35 @@ export default function Dashboard() {
   const router = useRouter();
   const { user, wallet } = useMagicLink();
   const [selectedNetwork, setSelectedNetwork] = useState("bscTestnet");
-  const [balance, setBalance] = useState("0.0000");
+  const [balance, setBalance] = useState("Loading...");
   const [loading, setLoading] = useState(true);
 
-  // ✅ Nukreipiam jei nėra user ar wallet
+  // ✅ Redirect jei nėra vartotojo arba wallet
   useEffect(() => {
-    if (!user || !wallet?.address) {
-      const timeout = setTimeout(() => router.push("/"), 1000);
+    if (!user || !wallet) {
+      const timeout = setTimeout(() => router.push("/"), 1200);
       return () => clearTimeout(timeout);
     }
   }, [user, wallet, router]);
 
-  // ✅ Gauti balansą (pirmą kartą ir kas 6 sek.)
+  // ✅ Balanso atnaujinimas kas 6s
   useEffect(() => {
     let interval;
 
     const fetchBalance = async () => {
-      if (!wallet?.address || !selectedNetwork) return;
-
-      try {
-        setLoading(true);
-        const result = await getWalletBalance(wallet.address, selectedNetwork);
-        setBalance(result);
-      } catch (error) {
-        console.error("❌ Balance fetch error:", error);
-        setBalance("0.0000");
-      } finally {
-        setLoading(false);
-      }
+      if (!wallet?.address) return;
+      setLoading(true);
+      const fetched = await getWalletBalance(wallet.address, selectedNetwork);
+      setBalance(fetched);
+      setLoading(false);
     };
 
-    fetchBalance(); // pirmas kartas
-    interval = setInterval(fetchBalance, 6000); // kas 6 sek.
-
+    fetchBalance();
+    interval = setInterval(fetchBalance, 6000);
     return () => clearInterval(interval);
   }, [wallet?.address, selectedNetwork]);
 
-  if (!user || !wallet?.address) {
+  if (!user || !wallet) {
     return (
       <div className={styles.loading} role="status" aria-live="polite">
         Loading your dashboard...
@@ -58,21 +50,19 @@ export default function Dashboard() {
   return (
     <div className="fullscreenContainer" role="main" aria-label="Dashboard Page">
       <Navbar />
-
       <div className={styles.wrapper}>
         <h1 className={styles.welcome}>
           Welcome,<br />
           {user.email}
         </h1>
 
-        <section className={styles.card} aria-labelledby="walletSection">
-          <label className={styles.label} htmlFor="walletAddress">Wallet address:</label>
-          <p id="walletAddress" className={styles.address}>{wallet.address}</p>
+        <section className={styles.card}>
+          <label className={styles.label}>Wallet address:</label>
+          <p className={styles.address}>{wallet.address}</p>
 
           <div className={styles.networkSelector}>
-            <label className={styles.label} htmlFor="networkSelect">Select network:</label>
+            <label className={styles.label}>Select network:</label>
             <select
-              id="networkSelect"
               value={selectedNetwork}
               onChange={(e) => setSelectedNetwork(e.target.value)}
               aria-label="Select Blockchain Network"
@@ -82,30 +72,22 @@ export default function Dashboard() {
             </select>
           </div>
 
-          <div
-            className={styles.balanceBox}
-            role="contentinfo"
-            aria-live="polite"
-            aria-busy={loading}
-          >
+          <div className={styles.balanceBox} aria-live="polite">
             <span className={styles.balanceLabel}>Balance:</span>
             <span>{loading ? "Loading..." : `${balance} BNB`}</span>
           </div>
         </section>
 
-        <div className={styles.actions} role="group" aria-label="User actions">
+        <div className={styles.actions}>
           <button
             className={styles.actionButton}
             onClick={() => router.push("/send")}
-            aria-label="Send BNB"
           >
             🧾 SEND
           </button>
-
           <button
             className={styles.actionButton}
             onClick={() => router.push("/receive")}
-            aria-label="Receive BNB"
           >
             ✅ RECEIVE
           </button>
