@@ -1,4 +1,4 @@
-// functions/sync_balances.ts
+// supabase/functions/sync_balances.ts
 
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
