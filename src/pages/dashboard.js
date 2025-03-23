@@ -10,10 +10,11 @@ import styles from "@/styles/dashboard.module.css";
 export default function Dashboard() {
   const router = useRouter();
   const { user, wallet } = useMagicLink();
-  const [selectedNetwork, setSelectedNetwork] = useState("bsc");
+  const [selectedNetwork, setSelectedNetwork] = useState("bscTestnet");
   const [balance, setBalance] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  // ✅ Redirect jei nėra user
+  // ✅ Auto redirect jei nėra user arba wallet
   useEffect(() => {
     if (!user || !wallet) {
       const timeout = setTimeout(() => router.push("/"), 1200);
@@ -21,19 +22,29 @@ export default function Dashboard() {
     }
   }, [user, wallet, router]);
 
-  // ✅ Automatinis balanso atnaujinimas
+  // ✅ Tikrinam balansą (ir kas 6s)
   useEffect(() => {
     let interval;
-    const fetch = async () => {
-      if (wallet?.address) {
-        const result = await getWalletBalance(wallet.address, selectedNetwork);
-        setBalance(result);
+    const fetchBalance = async () => {
+      if (wallet?.address && selectedNetwork) {
+        try {
+          setLoading(true);
+          const result = await getWalletBalance(wallet.address, selectedNetwork);
+          setBalance(result);
+        } catch (err) {
+          console.error("Balance error:", err);
+          setBalance("0.0000");
+        } finally {
+          setLoading(false);
+        }
       }
     };
-    fetch(); // pirma užkrova
-    interval = setInterval(fetch, 6000); // kas 6 sek.
+
+    fetchBalance(); // pirmas kartas
+    interval = setInterval(fetchBalance, 6000); // kas 6 sek.
+
     return () => clearInterval(interval);
-  }, [wallet, selectedNetwork]);
+  }, [wallet?.address, selectedNetwork]);
 
   if (!user || !wallet) {
     return (
@@ -70,9 +81,14 @@ export default function Dashboard() {
             </select>
           </div>
 
-          <div className={styles.balanceBox} role="contentinfo" aria-live="polite">
+          <div
+            className={styles.balanceBox}
+            role="contentinfo"
+            aria-live="polite"
+            aria-busy={loading}
+          >
             <span className={styles.balanceLabel}>Balance:</span>
-            <span>{balance !== null ? `${balance} BNB` : "Loading..."}</span>
+            <span>{loading ? "Loading..." : `${balance} BNB`}</span>
           </div>
         </section>
 
