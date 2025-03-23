@@ -88,14 +88,6 @@ const MagicLinkProviderBase = ({ children, router }) => {
         if (!insertError) {
           setWallet(walletData);
         }
-
-        // ✅ Balanso lentelė irgi sukuriama
-        await supabase.from("balances").upsert({
-          user_id,
-          network: walletData.network,
-          balance_raw: "0",
-          balance_formatted: "0.0000"
-        });
       }
     } catch (err) {
       console.error("❌ Wallet create/load error:", err);
