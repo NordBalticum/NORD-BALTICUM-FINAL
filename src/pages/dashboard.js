@@ -11,32 +11,33 @@ export default function Dashboard() {
   const router = useRouter();
   const { user, wallet } = useMagicLink();
   const [selectedNetwork, setSelectedNetwork] = useState("bscTestnet");
-  const [balance, setBalance] = useState(null);
+  const [balance, setBalance] = useState("0.0000");
   const [loading, setLoading] = useState(true);
 
-  // ✅ Auto redirect jei nėra user arba wallet
+  // ✅ Nukreipiam jei nėra user ar wallet
   useEffect(() => {
-    if (!user || !wallet) {
-      const timeout = setTimeout(() => router.push("/"), 1200);
+    if (!user || !wallet?.address) {
+      const timeout = setTimeout(() => router.push("/"), 1000);
       return () => clearTimeout(timeout);
     }
   }, [user, wallet, router]);
 
-  // ✅ Tikrinam balansą (ir kas 6s)
+  // ✅ Gauti balansą (pirmą kartą ir kas 6 sek.)
   useEffect(() => {
     let interval;
+
     const fetchBalance = async () => {
-      if (wallet?.address && selectedNetwork) {
-        try {
-          setLoading(true);
-          const result = await getWalletBalance(wallet.address, selectedNetwork);
-          setBalance(result);
-        } catch (err) {
-          console.error("Balance error:", err);
-          setBalance("0.0000");
-        } finally {
-          setLoading(false);
-        }
+      if (!wallet?.address || !selectedNetwork) return;
+
+      try {
+        setLoading(true);
+        const result = await getWalletBalance(wallet.address, selectedNetwork);
+        setBalance(result);
+      } catch (error) {
+        console.error("❌ Balance fetch error:", error);
+        setBalance("0.0000");
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -46,7 +47,7 @@ export default function Dashboard() {
     return () => clearInterval(interval);
   }, [wallet?.address, selectedNetwork]);
 
-  if (!user || !wallet) {
+  if (!user || !wallet?.address) {
     return (
       <div className={styles.loading} role="status" aria-live="polite">
         Loading your dashboard...
