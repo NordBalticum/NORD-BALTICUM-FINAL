@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useRouter } from "next/router";
 import { useEffect, useState, useCallback } from "react";
 import { useMagicLink } from "@/contexts/MagicLinkContext";
-import { motion, AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import styles from "@/components/navbar.module.css";
 
 export default function Navbar() {
@@ -28,7 +28,6 @@ export default function Navbar() {
     setIsOpen((prev) => !prev);
   }, []);
 
-  // ✅ Nerodyti ant pagrindinio puslapio
   if (pathname === "/") return null;
 
   return (
@@ -46,7 +45,7 @@ export default function Navbar() {
           />
         </Link>
 
-        {/* ✅ Desktop Navigacija */}
+        {/* ✅ Desktop Navigation */}
         <nav className={styles.navLinks} role="menubar">
           {navItems.map((item) => (
             <Link key={item.href} href={item.href} passHref>
@@ -64,7 +63,7 @@ export default function Navbar() {
           </button>
         </nav>
 
-        {/* ✅ Mobile Toggle */}
+        {/* ✅ Mobile Hamburger Toggle */}
         <div
           className={`${styles.mobileToggle} ${isOpen ? styles.open : ""}`}
           onClick={toggleMenu}
@@ -76,16 +75,16 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* ✅ Animated Mobile Dropdown */}
+      {/* ✅ Mobile Dropdown – with framer-motion animation */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
             className={styles.mobileDropdown}
             role="menu"
-            initial={{ opacity: 0, y: -10, scale: 0.98 }}
+            initial={{ opacity: 0, y: -10, scale: 0.96 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -6, scale: 0.96 }}
-            transition={{ duration: 0.28, ease: [0.25, 1, 0.5, 1] }}
+            exit={{ opacity: 0, y: -8, scale: 0.96 }}
+            transition={{ duration: 0.25, ease: "easeInOut" }}
           >
             {navItems.map((item) => (
               <Link key={item.href} href={item.href} passHref>
