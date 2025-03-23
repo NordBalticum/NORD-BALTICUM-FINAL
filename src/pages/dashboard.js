@@ -20,27 +20,25 @@ export default function Dashboard() {
     refreshBalance,
   } = useBalance();
 
-  // ✅ Redirect jei nėra user arba wallet
+  // ✅ Redirektas jei nėra prisijungusio user ar wallet
   useEffect(() => {
-    if (!user || !wallet) {
-      const timeout = setTimeout(() => router.push("/"), 1000);
+    if (!user || !wallet || !wallet.address) {
+      const timeout = setTimeout(() => router.push("/"), 800);
       return () => clearTimeout(timeout);
     }
   }, [user, wallet, router]);
 
-  // ✅ Atvaizduoja "loading" jei user nėra
-  if (!user || !wallet) {
+  if (!user || !wallet || !wallet.address) {
     return (
       <div className={styles.loading} role="status">
-        Loading your dashboard...
+        Loading dashboard...
       </div>
     );
   }
 
   return (
-    <div className="fullscreenContainer" role="main">
+    <div className="fullscreenContainer" role="main" aria-label="Dashboard page">
       <Navbar />
-
       <div className={styles.wrapper}>
         <h1 className={styles.welcome}>
           Welcome,<br />
@@ -63,7 +61,12 @@ export default function Dashboard() {
             </select>
           </div>
 
-          <div className={styles.balanceBox} aria-live="polite" aria-busy={loading}>
+          <div
+            className={styles.balanceBox}
+            role="contentinfo"
+            aria-live="polite"
+            aria-busy={loading}
+          >
             <span className={styles.balanceLabel}>Balance:</span>
             <span className={styles.balanceValue}>
               {loading ? "Loading..." : `${balance} BNB`}
@@ -76,25 +79,22 @@ export default function Dashboard() {
           </div>
         </section>
 
-        <div className={styles.actions}>
+        <div className={styles.actions} role="group" aria-label="Wallet actions">
           <button
             className={styles.actionButton}
             onClick={() => router.push("/send")}
-            aria-label="Send Crypto"
           >
             🧾 SEND
           </button>
           <button
             className={styles.actionButton}
             onClick={() => router.push("/receive")}
-            aria-label="Receive Crypto"
           >
             ✅ RECEIVE
           </button>
           <button
             className={styles.actionButton}
             onClick={refreshBalance}
-            aria-label="Refresh Balance"
           >
             🔄 REFRESH
           </button>
