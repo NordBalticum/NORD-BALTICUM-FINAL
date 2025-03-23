@@ -1,5 +1,3 @@
-// ✅ Ultimate Ethers Utility – NordBalticum 1000000% Web3 Bank Edition
-
 import {
   Wallet,
   JsonRpcProvider,
@@ -8,44 +6,42 @@ import {
   isAddress,
 } from "ethers";
 
-// ✅ Patikimi RPC endpoint’ai su 4x fallback – Ankr, PublicNode, Binance, ENV
+// ✅ Fiksuoti 100% veikiančių RPC endpoint’ai (Mainnet ir Testnet)
 const RPCS = {
   bsc: [
-    process.env.NEXT_PUBLIC_BSC_RPC_1,
-    process.env.NEXT_PUBLIC_BSC_RPC_2,
+    "https://bsc-dataseed.binance.org/",
+    "https://bsc-rpc.publicnode.com",
     "https://rpc.ankr.com/bsc",
-    "https://bsc.publicnode.com",
-    "https://bsc-dataseed.binance.org",
+    "https://bsc-dataseed1.defibit.io",
   ],
   bscTestnet: [
-    process.env.NEXT_PUBLIC_BSC_TESTNET_RPC_1,
-    process.env.NEXT_PUBLIC_BSC_TESTNET_RPC_2,
-    "https://rpc.ankr.com/bsc_testnet_chapel",
+    "https://data-seed-prebsc-1-s1.binance.org:8545/",
     "https://bsc-testnet.publicnode.com",
-    "https://data-seed-prebsc-1-s1.binance.org:8545",
+    "https://rpc.ankr.com/bsc_testnet_chapel",
+    "https://data-seed-prebsc-2-s1.binance.org:8545/",
   ],
 };
 
-// ✅ Grąžina pirmą veikiančią RPC instanciją
+// ✅ Gauk veikiantį provider’į automatiškai su fallback
 export const getProvider = async (network = "bsc") => {
-  const urls = RPCS[network] || RPCS["bsc"];
+  const urls = RPCS[network] || RPCS.bsc;
   for (const url of urls) {
-    if (!url) continue;
     try {
       const provider = new JsonRpcProvider(url);
       await provider.getBlockNumber(); // ping test
+      console.log(`✅ Using RPC: ${url}`);
       return provider;
-    } catch (err) {
+    } catch {
       console.warn(`⚠️ RPC failed: ${url}`);
     }
   }
-  throw new Error("❌ No working RPC provider found.");
+  throw new Error("❌ No working RPC provider found");
 };
 
 // ✅ Tikrina ar adresas validus
 export const isValidAddress = (addr) => isAddress(addr);
 
-// ✅ Iškart grąžina balansą realiu laiku iš blockchain
+// ✅ Gauna balansą iš blockchain
 export const getWalletBalance = async (address, network = "bsc") => {
   if (!isValidAddress(address)) {
     return { raw: "0", formatted: "0.0000" };
@@ -65,12 +61,11 @@ export const getWalletBalance = async (address, network = "bsc") => {
   }
 };
 
-// ✅ Siunčia BNB iš piniginės – realus blockchain TX
+// ✅ Siunčia BNB iš piniginės
 export const sendBNB = async (privateKey, to, amount, network = "bscTestnet") => {
   try {
     const provider = await getProvider(network);
     const wallet = new Wallet(privateKey, provider);
-
     const tx = await wallet.sendTransaction({
       to,
       value: parseEther(amount.toString()),
@@ -84,10 +79,10 @@ export const sendBNB = async (privateKey, to, amount, network = "bscTestnet") =>
   }
 };
 
-// ✅ Demo/Dev režimo wallet kūrimas
+// ✅ Sukuria naują wallet
 export const createWallet = () => Wallet.createRandom();
 
-// ✅ Lokalus wallet saugojimas – fallback
+// ✅ Saugo localStorage (fallback)
 export const saveWalletToLocalStorage = (wallet) => {
   if (!wallet?.privateKey) return;
   const data = {
@@ -97,7 +92,7 @@ export const saveWalletToLocalStorage = (wallet) => {
   localStorage.setItem("userWallet", JSON.stringify(data));
 };
 
-// ✅ Lokalus wallet pakrovimas – fallback
+// ✅ Pakrauna iš localStorage (fallback)
 export const loadWalletFromLocalStorage = () => {
   try {
     const data = localStorage.getItem("userWallet");
