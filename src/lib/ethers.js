@@ -1,40 +1,50 @@
 import { Wallet, JsonRpcProvider, formatEther } from "ethers";
 
-// ✅ Grąžina provider pagal BSC tinklą
-export const getProvider = (network = "bsc") => {
-  const rpcUrls = {
-    bsc: process.env.NEXT_PUBLIC_BSC_RPC,
-    bscTestnet: process.env.NEXT_PUBLIC_BSC_TESTNET_RPC,
-  };
-  return new JsonRpcProvider(rpcUrls[network] || rpcUrls["bsc"]);
+// ✅ Global RPC URL'ai
+const rpcUrls = {
+  bsc: process.env.NEXT_PUBLIC_BSC_RPC,
+  bscTestnet: process.env.NEXT_PUBLIC_BSC_TESTNET_RPC,
 };
 
-// ✅ Nauja bankinė funkcija – gauna balansą pagal adresą ir tinklą
+// ✅ Gauna provider pagal tinklą
+export const getProvider = (network = "bsc") => {
+  const url = rpcUrls[network] || rpcUrls["bsc"];
+  if (!url) throw new Error(`❌ RPC URL not found for network: ${network}`);
+  return new JsonRpcProvider(url);
+};
+
+// ✅ Grąžina balansą pagal adresą ir tinklą
 export const getWalletBalance = async (address, network = "bsc") => {
   try {
-    if (!address) return "0.0000";
+    if (!address || !/^0x[a-fA-F0-9]{40}$/.test(address)) {
+      console.warn("⚠️ Invalid address:", address);
+      return "0.0000";
+    }
+
     const provider = getProvider(network);
-    const balanceRaw = await provider.getBalance(address);
-    return parseFloat(formatEther(balanceRaw)).toFixed(4);
+    const rawBalance = await provider.getBalance(address);
+
+    if (!rawBalance) throw new Error("No balance returned");
+    return parseFloat(formatEther(rawBalance)).toFixed(4);
   } catch (err) {
     console.error("❌ Failed to fetch balance:", err);
-    return "Error";
+    return "0.0000";
   }
 };
 
-// ✅ Sukuria naują wallet (naudojama tik jei reikia lokaliai)
-export const createWallet = () => {
-  return Wallet.createRandom();
-};
+// ✅ Sukuria naują wallet
+export const createWallet = () => Wallet.createRandom();
 
-// ✅ Išsaugo wallet į localStorage (naudoti tik fallback scenarijuose)
+// ✅ Išsaugo wallet lokaliai (fallback)
 export const saveWalletToLocalStorage = (wallet) => {
   if (!wallet?.privateKey) return;
-  const walletData = {
-    address: wallet.address,
-    privateKey: wallet.privateKey,
-  };
-  localStorage.setItem("userWallet", JSON.stringify(walletData));
+  localStorage.setItem(
+    "userWallet",
+    JSON.stringify({
+      address: wallet.address,
+      privateKey: wallet.privateKey,
+    })
+  );
 };
 
 // ✅ Pakrauna wallet iš localStorage
@@ -50,7 +60,5 @@ export const loadWalletFromLocalStorage = () => {
   }
 };
 
-// ✅ Patikrina ar adresas yra validus (standartinis EVM adresas)
-export const isValidAddress = (address) => {
-  return /^0x[a-fA-F0-9]{40}$/.test(address);
-};
+// ✅ Validuoja adresą
+export const isValidAddress = (address) => /^0x[a-fA-F0-9]{40}$/.test(address);
