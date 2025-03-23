@@ -1,10 +1,10 @@
-/* === NAVBAR – ULTRA PREMIUM 2025 FINAL V2 === */
+/* === NAVBAR – ULTRA PREMIUM 2025 FINAL V3 === */
 
 .navbar {
   position: fixed;
   top: 0;
   left: 0;
-  width: 120vh; /* eksperimentui – žiūrim ar padės išplėtimui */
+  width: 120vh;
   min-width: 100vw;
   height: clamp(68px, 7.5vh, 96px);
   background: radial-gradient(circle at 50% 30%, rgba(20, 30, 60, 0.95), rgba(8, 14, 28, 0.92));
@@ -22,20 +22,28 @@
 .navbar::after {
   content: "";
   position: absolute;
-  bottom: 0;
-  left: -100%;
+  top: 0;
+  left: -50%;
   width: 200%;
-  height: 2px;
-  background: linear-gradient(90deg,
+  height: 100%;
+  background: linear-gradient(
+    90deg,
     rgba(255, 255, 255, 0) 0%,
-    rgba(255, 255, 255, 0.6) 50%,
-    rgba(255, 255, 255, 0) 100%);
-  animation: shine 3s linear infinite;
+    rgba(255, 255, 255, 0.3) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  animation: shineLoop 6s linear infinite;
+  z-index: 0;
+  pointer-events: none;
 }
 
-@keyframes shine {
-  from { left: -100%; }
-  to { left: 100%; }
+@keyframes shineLoop {
+  from {
+    transform: translateX(-50%);
+  }
+  to {
+    transform: translateX(50%);
+  }
 }
 
 .navContent {
@@ -46,6 +54,8 @@
   justify-content: space-between;
   align-items: center;
   box-sizing: border-box;
+  position: relative;
+  z-index: 1;
 }
 
 /* === Logo === */
@@ -57,9 +67,8 @@
   height: clamp(48px, 6.2vw, 72px);
   width: auto;
   border-radius: 14px;
-  background: transparent;
-  box-shadow: 0 0 22px rgba(255, 255, 255, 0.1);
   transition: transform 0.3s ease;
+  box-shadow: 0 0 24px rgba(255, 255, 255, 0.1);
 }
 .logo:hover {
   transform: scale(1.06);
@@ -95,6 +104,7 @@
   box-shadow: 0 0 18px rgba(255, 255, 255, 0.3);
 }
 
+/* === Logout Button === */
 .logout {
   background: #ff3c3c;
   border: none;
@@ -112,7 +122,7 @@
   box-shadow: 0 0 24px rgba(255, 0, 0, 0.3);
 }
 
-/* === Hamburger === */
+/* === Hamburger Button === */
 .mobileToggle {
   display: none;
   width: 38px;
@@ -122,6 +132,7 @@
   align-items: center;
   gap: 6px;
   cursor: pointer;
+  z-index: 99999;
 }
 .mobileToggle span {
   display: block;
@@ -138,7 +149,7 @@
   transform: rotate(-45deg) translateY(-3px);
 }
 
-/* === Dropdown – Mobile Menu === */
+/* === Mobile Dropdown === */
 .mobileDropdown {
   position: absolute;
   top: clamp(76px, 8vh, 96px);
@@ -179,7 +190,22 @@
   }
 }
 
-/* === Responsive === */
+/* === FULL Responsive Media Queries (Galaxy Ultra – 8K+) === */
+@media (max-width: 1400px) {
+  .navContent {
+    padding: 0 4vw;
+  }
+}
+@media (max-width: 1200px) {
+  .navContent {
+    padding: 0 3vw;
+  }
+}
+@media (max-width: 992px) {
+  .navContent {
+    padding: 0 2.4vw;
+  }
+}
 @media (max-width: 768px) {
   .navLinks {
     display: none;
@@ -189,9 +215,14 @@
   }
   .mobileDropdown {
     width: 100vw;
-    max-width: 100%;
-    left: 0;
-    right: 0;
     padding: 1.2rem 1.6rem;
+  }
+}
+@media (max-width: 480px) {
+  .logo {
+    height: 42px;
+  }
+  .navButton {
+    font-size: 0.9rem;
   }
 }
