@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/router";
 import { useMagicLink } from "@/contexts/MagicLinkContext";
-import { useBalance } from "@/contexts/BalanceContext";
+import { useBalance } from "@/contexts/BalanceProviderEthers";
 import { isValidAddress, sendBNB } from "@/lib/ethers";
 import Navbar from "@/components/Navbar";
 import styles from "@/styles/send.module.css";
@@ -31,9 +31,7 @@ export default function Send() {
       const txHash = await sendBNB(wallet.private_key, recipient, amount, selectedNetwork);
       setStatus(`✅ Sent! Tx: ${txHash.slice(0, 10)}...`);
 
-      // ✅ Atnaujina balansą po siuntimo
       refreshBalance();
-
       setRecipient("");
       setAmount("");
     } catch (error) {
@@ -88,4 +86,4 @@ export default function Send() {
       </div>
     </div>
   );
-          }
+}
