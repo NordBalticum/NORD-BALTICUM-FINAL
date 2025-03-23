@@ -1,94 +1,56 @@
 "use client";
 
-import { useMagicLink } from "@/contexts/MagicLinkContext";
 import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
-import { JsonRpcProvider, formatEther } from "ethers";
+import { useMagicLink } from "@/contexts/MagicLinkContext";
+import { useBalance } from "@/contexts/BalanceContext";
 import QRCode from "react-qr-code";
+import { useEffect, useState } from "react";
+import Navbar from "@/components/Navbar";
 import styles from "@/styles/receive.module.css";
 
-export default function Receive() {
-  const { user, wallet } = useMagicLink();
+export default function ReceivePage() {
   const router = useRouter();
+  const { user, wallet } = useMagicLink();
+  const { balance, selectedNetwork } = useBalance();
   const [copied, setCopied] = useState(false);
-  const [balance, setBalance] = useState(null);
-  const [network, setNetwork] = useState("bsc");
-
-  const rpcUrls = {
-    bsc: process.env.NEXT_PUBLIC_BSC_RPC,
-    bscTestnet: process.env.NEXT_PUBLIC_BSC_TESTNET_RPC,
-  };
 
   useEffect(() => {
     if (!user || !wallet) {
-      const t = setTimeout(() => router.push("/"), 1200);
-      return () => clearTimeout(t);
+      router.push("/");
     }
-  }, [user, wallet]);
+  }, [user, wallet, router]);
 
-  useEffect(() => {
-    if (wallet && rpcUrls[network]) {
-      const provider = new JsonRpcProvider(rpcUrls[network]);
-      provider.getBalance(wallet.address).then((bal) => {
-        setBalance(formatEther(bal));
-      });
-    }
-  }, [wallet, network]);
-
-  const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(wallet.address);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch (err) {
-      console.error("Copy failed:", err);
-    }
+  const handleCopy = () => {
+    if (!wallet?.address) return;
+    navigator.clipboard.writeText(wallet.address);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   if (!user || !wallet) return null;
 
   return (
-    <div className="globalContainer">
-      <div className={`contentWrapper glassBox fadeIn ${styles.receiveWrapper}`} role="main">
-        <h2 className={styles.title}>Receive Crypto</h2>
+    <div className="fullscreenContainer" role="main" aria-label="Receive Page">
+      <Navbar />
 
-        <p className={styles.label}>Email: <strong>{user.email}</strong></p>
-        <p className={styles.label}>Wallet address:</p>
+      <div className={styles.wrapper}>
+        <h1 className={styles.title}>Receive BNB</h1>
 
-        <div
-          onClick={handleCopy}
-          className={`${styles.qrContainer} ${copied ? styles.copied : ""}`}
-          aria-label="Tap QR to copy wallet address"
-        >
-          <QRCode
-            value={wallet.address}
-            size={180}
-            bgColor="#ffffff"
-            fgColor="#000000"
-            className={styles.qrCode}
-          />
-          <p className={styles.qrText}>{wallet.address}</p>
-          <small className={`${styles.copyFeedback} ${copied ? styles.copied : ""}`}>
-            {copied ? "✓ Copied to clipboard!" : "Tap QR to copy address"}
-          </small>
+        <div className={styles.qrBox}>
+          <QRCode value={wallet.address} size={180} bgColor="#ffffff" fgColor="#0A122A" />
         </div>
 
-        <div className={styles.networkSelector}>
-          <label htmlFor="network" className={styles.networkLabel}>Network:</label>
-          <select
-            id="network"
-            value={network}
-            onChange={(e) => setNetwork(e.target.value)}
-            className={styles.networkSelect}
-          >
-            <option value="bsc">BSC Mainnet</option>
-            <option value="bscTestnet">BSC Testnet</option>
-          </select>
-        </div>
+        <p className={styles.addressLabel}>Your wallet address:</p>
+        <p className={styles.address} aria-label="Your wallet address">{wallet.address}</p>
 
-        <h3 className={styles.balanceText}>
-          Balance: {balance !== null ? `${balance} BNB` : "Loading..."}
-        </h3>
+        <button className={styles.copyButton} onClick={handleCopy} aria-label="Copy address">
+          {copied ? "✔ Copied!" : "Copy Address"}
+        </button>
+
+        <div className={styles.networkInfo}>
+          <p>Network: <strong>{selectedNetwork === "bsc" ? "BSC Mainnet" : "BSC Testnet"}</strong></p>
+          <p>Balance: <strong>{balance} BNB</strong></p>
+        </div>
       </div>
     </div>
   );
