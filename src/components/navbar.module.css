@@ -1,4 +1,3 @@
-/* ✅ Fixed Top Navigation – NordBalticum Ultra Premium */
 .navbar {
   position: fixed;
   top: 0;
@@ -33,7 +32,7 @@
   height: clamp(48px, 6.2vw, 72px);
   width: auto;
   border-radius: 14px;
-  background: transparent !important;
+  background: transparent;
   box-shadow: 0 0 22px rgba(255, 255, 255, 0.1);
   transition: transform 0.3s ease;
 }
@@ -41,7 +40,7 @@
   transform: scale(1.06);
 }
 
-/* ✅ Navigation Links */
+/* ✅ Navigation Buttons */
 .navLinks {
   display: flex;
   align-items: center;
@@ -71,7 +70,7 @@
   box-shadow: 0 0 18px rgba(255, 255, 255, 0.3);
 }
 
-/* ✅ Logout Button */
+/* ✅ Logout Desktop */
 .logout {
   background: #ff3c3c;
   border: none;
@@ -89,43 +88,33 @@
   box-shadow: 0 0 24px rgba(255, 0, 0, 0.3);
 }
 
-/* ✅ Mobile Hamburger */
+/* ✅ Mobile Hamburger Toggle */
 .mobileToggle {
   display: none;
-  width: 34px;
-  height: 34px;
+  width: 36px;
+  height: 36px;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
   cursor: pointer;
-  position: relative;
-  z-index: 1002;
-  transform: translateY(2px);
 }
-.mobileToggle::before,
-.mobileToggle::after {
-  content: "";
-  position: absolute;
-  left: 0;
+.mobileToggle span {
+  display: block;
   width: 100%;
   height: 3px;
   background: white;
-  transition: all 0.3s ease-in-out;
-  border-radius: 4px;
+  border-radius: 3px;
+  transition: all 0.3s ease;
 }
-.mobileToggle::before {
-  top: 8px;
+.mobileToggle.open span:first-child {
+  transform: rotate(45deg) translateY(3px);
 }
-.mobileToggle::after {
-  bottom: 8px;
-}
-.mobileToggle.open::before {
-  transform: rotate(45deg);
-  top: 50%;
-}
-.mobileToggle.open::after {
-  transform: rotate(-45deg);
-  bottom: 50%;
+.mobileToggle.open span:last-child {
+  transform: rotate(-45deg) translateY(-3px);
 }
 
-/* ✅ Mobile Dropdown Menu */
+/* ✅ Dropdown */
 .mobileDropdown {
   display: none;
   position: absolute;
@@ -155,20 +144,19 @@
   background: #ff1c1c;
 }
 
-/* ✅ Responsive Breakpoint */
+/* ✅ Responsive */
 @media (max-width: 768px) {
   .navLinks {
     display: none;
   }
   .mobileToggle {
-    display: block;
+    display: flex;
   }
   .mobileDropdown {
     display: flex;
   }
 }
 
-/* ✅ Animacija – dropdown atsiradimas */
 @keyframes fadeInMenu {
   from {
     opacity: 0;
