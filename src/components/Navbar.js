@@ -33,7 +33,6 @@ export default function Navbar() {
   return (
     <header className={styles.navbar} role="navigation" aria-label="Main navigation">
       <div className={styles.navContent}>
-        {/* === Logo === */}
         <Link href="/" className={styles.logoLink} aria-label="Go to homepage">
           <Image
             src="/icons/logo.svg"
@@ -45,7 +44,6 @@ export default function Navbar() {
           />
         </Link>
 
-        {/* === Desktop Nav === */}
         <nav className={styles.navLinks} role="menubar">
           {navItems.map((item) => (
             <Link key={item.href} href={item.href} passHref>
@@ -64,7 +62,6 @@ export default function Navbar() {
           </button>
         </nav>
 
-        {/* === Mobile Toggle === */}
         <div
           className={`${styles.mobileToggle} ${isOpen ? styles.open : ""}`}
           onClick={toggleMenu}
@@ -76,7 +73,6 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* === Mobile Dropdown with Motion === */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
