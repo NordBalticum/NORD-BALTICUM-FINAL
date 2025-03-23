@@ -1,127 +1,115 @@
-/* ✅ Receive Wrapper – Glass Box */
-
+/* ✅ Receive Wrapper – Glass Box Premium */
 .receiveWrapper {
-  max-width: 640px;
+  max-width: 720px;
   width: 100%;
-  padding: clamp(1.8rem, 3.5vw, 2.6rem);
-  border-radius: 20px;
-  background: rgba(255, 255, 255, 0.04);
-  backdrop-filter: blur(16px);
-  box-shadow: 0 0 38px rgba(0, 255, 204, 0.08);
+  padding: clamp(1.8rem, 4vw, 3rem);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.035);
+  backdrop-filter: blur(22px);
+  box-shadow: 0 0 42px rgba(0, 255, 204, 0.08);
   text-align: center;
   animation: fadeIn 0.7s ease-in-out;
   box-sizing: border-box;
+  margin: 0 auto;
 }
 
 /* ✅ Title */
 .title {
-  font-size: clamp(1.9rem, 3vw, 2.4rem);
-  margin-bottom: 1.6rem;
+  font-size: clamp(2rem, 4vw, 2.8rem);
+  margin-bottom: clamp(1.4rem, 3vw, 2.2rem);
   font-weight: 700;
   text-transform: uppercase;
   color: var(--main-white);
   text-shadow: var(--text-shadow);
 }
 
-/* ✅ Label */
-.label {
-  font-size: 1rem;
-  font-weight: 500;
-  color: #e0e0e0;
-  margin-top: 1rem;
-  margin-bottom: 0.2rem;
-}
-
 /* ✅ QR Code Container */
 .qrContainer {
-  margin-top: 1rem;
-  padding: 1.2rem;
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.05);
+  margin-top: clamp(1rem, 2.4vw, 1.8rem);
+  padding: clamp(1rem, 2.4vw, 1.6rem);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.06);
   transition: all 0.3s ease-in-out;
   cursor: pointer;
-  box-shadow: 0 0 10px rgba(255, 255, 255, 0.05);
+  box-shadow: 0 0 14px rgba(255, 255, 255, 0.05);
 }
-
 .qrContainer.copied {
-  box-shadow: 0 0 20px rgba(0, 255, 200, 0.3);
+  box-shadow: 0 0 22px rgba(0, 255, 200, 0.25);
 }
 
 /* ✅ QR Code Itself */
 .qrCode {
-  border-radius: 12px;
+  border-radius: 14px;
   margin: 0 auto;
   display: block;
+  width: clamp(160px, 24vw, 220px);
+  height: auto;
 }
 
-/* ✅ QR Address */
+/* ✅ Wallet Address Text */
 .qrText {
-  margin-top: 1rem;
-  font-size: clamp(0.9rem, 1vw, 1.05rem);
+  margin-top: clamp(1rem, 2.2vw, 1.6rem);
+  font-size: clamp(0.95rem, 1.2vw, 1.1rem);
   font-family: monospace;
-  color: #f0f0f0;
-  font-weight: 500;
+  color: #ffffff;
+  font-weight: 600;
   word-break: break-word;
-  line-height: 1.4;
+  line-height: 1.5;
+  text-shadow: var(--text-shadow);
 }
 
-/* ✅ Copy Status */
+/* ✅ Copy Feedback Text */
 .copyFeedback {
-  margin-top: 0.6rem;
-  font-size: 0.9rem;
-  color: #aaaaaa;
+  margin-top: 0.4rem;
+  font-size: clamp(0.85rem, 1vw, 1rem);
+  color: #999999;
   font-weight: 500;
-  transition: color 0.3s ease-in-out;
+  transition: color 0.3s ease;
 }
-
 .copyFeedback.copied {
   color: #00ffc8;
 }
 
-/* ✅ Network Selector */
-.networkSelector {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 1rem;
-  margin-top: 1.6rem;
-}
-
-.networkLabel {
-  font-weight: 600;
-  font-size: 0.95rem;
-  color: #ffffff;
-}
-
-.networkSelect {
-  padding: 10px 16px;
-  border-radius: 10px;
-  background: #0d0d0d;
-  color: #ffffff;
-  border: 2px solid white;
-  font-weight: 600;
-  font-size: 0.95rem;
-  box-shadow: 0 0 12px rgba(255, 255, 255, 0.08);
-  transition: all 0.3s ease;
-}
-
-.networkSelect:focus {
-  outline: none;
-  border-color: #00ffc8;
-  box-shadow: 0 0 14px rgba(0, 255, 200, 0.3);
-}
-
 /* ✅ Balance Display */
 .balanceText {
-  margin-top: 2rem;
+  margin-top: clamp(1.6rem, 3vw, 2.4rem);
   font-weight: 700;
-  font-size: 1.2rem;
+  font-size: clamp(1.1rem, 1.6vw, 1.4rem);
   color: #00ffc8;
   text-shadow: 0 0 6px rgba(0, 255, 200, 0.25);
 }
 
-/* ✅ Fade In Animation */
+/* ✅ Network Info */
+.networkInfo {
+  margin-top: clamp(1.2rem, 2.6vw, 2rem);
+  font-size: clamp(0.9rem, 1vw, 1.05rem);
+  color: #cccccc;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+/* ✅ Copy Button */
+.copyButton {
+  margin-top: clamp(0.8rem, 1.4vw, 1.4rem);
+  background: #ffffff;
+  color: #0A122A;
+  font-weight: 700;
+  padding: clamp(0.7rem, 1.6vw, 1rem) clamp(1.2rem, 3vw, 1.8rem);
+  border-radius: 12px;
+  font-size: clamp(0.9rem, 1vw, 1.1rem);
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease-in-out;
+}
+.copyButton:hover {
+  background: #00ffc8;
+  color: #000000;
+  box-shadow: 0 0 14px rgba(0, 255, 200, 0.4);
+}
+
+/* ✅ Fade Animation */
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(12px); }
+  from { opacity: 0; transform: translateY(16px); }
   to   { opacity: 1; transform: translateY(0); }
 }
