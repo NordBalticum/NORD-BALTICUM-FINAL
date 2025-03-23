@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useRouter } from "next/router";
 import { useEffect, useState, useCallback } from "react";
 import { useMagicLink } from "@/contexts/MagicLinkContext";
+import { motion, AnimatePresence } from "framer-motion";
 import styles from "@/components/navbar.module.css";
 
 export default function Navbar() {
@@ -27,13 +28,13 @@ export default function Navbar() {
     setIsOpen((prev) => !prev);
   }, []);
 
-  // ✅ Nenaudojame visai navbaro ant index puslapio
+  // ✅ Nerodyti ant pagrindinio puslapio
   if (pathname === "/") return null;
 
   return (
     <header className={styles.navbar} role="navigation" aria-label="Main navigation">
       <div className={styles.navContent}>
-        {/* ✅ Logo – kairėje */}
+        {/* ✅ Logo */}
         <Link href="/" className={styles.logoLink} aria-label="Go to homepage">
           <Image
             src="/icons/logo.svg"
@@ -45,7 +46,7 @@ export default function Navbar() {
           />
         </Link>
 
-        {/* ✅ Desktop Navigation */}
+        {/* ✅ Desktop Navigacija */}
         <nav className={styles.navLinks} role="menubar">
           {navItems.map((item) => (
             <Link key={item.href} href={item.href} passHref>
@@ -63,7 +64,7 @@ export default function Navbar() {
           </button>
         </nav>
 
-        {/* ✅ Mobile Hamburger Toggle */}
+        {/* ✅ Mobile Toggle */}
         <div
           className={`${styles.mobileToggle} ${isOpen ? styles.open : ""}`}
           onClick={toggleMenu}
@@ -75,29 +76,38 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* ✅ Mobile Dropdown */}
-      {isOpen && (
-        <div className={styles.mobileDropdown} role="menu">
-          {navItems.map((item) => (
-            <Link key={item.href} href={item.href} passHref>
-              <button
-                className={`${styles.navButton} ${pathname === item.href ? styles.active : ""}`}
-                onClick={() => setIsOpen(false)}
-                role="menuitem"
-              >
-                {item.label}
-              </button>
-            </Link>
-          ))}
-          <button
-            onClick={signOut}
-            className={styles.logoutMobile}
-            aria-label="Log out from mobile"
+      {/* ✅ Animated Mobile Dropdown */}
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            className={styles.mobileDropdown}
+            role="menu"
+            initial={{ opacity: 0, y: -10, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -6, scale: 0.96 }}
+            transition={{ duration: 0.28, ease: [0.25, 1, 0.5, 1] }}
           >
-            Sign Out
-          </button>
-        </div>
-      )}
+            {navItems.map((item) => (
+              <Link key={item.href} href={item.href} passHref>
+                <button
+                  className={`${styles.navButton} ${pathname === item.href ? styles.active : ""}`}
+                  onClick={() => setIsOpen(false)}
+                  role="menuitem"
+                >
+                  {item.label}
+                </button>
+              </Link>
+            ))}
+            <button
+              onClick={signOut}
+              className={styles.logoutMobile}
+              aria-label="Log out from mobile"
+            >
+              Sign Out
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </header>
   );
 }
