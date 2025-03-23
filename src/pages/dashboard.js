@@ -17,8 +17,10 @@ export default function Dashboard() {
     loading,
     selectedNetwork,
     setSelectedNetwork,
+    refreshBalance,
   } = useBalance();
 
+  // ✅ Redirect jei nėra user arba wallet
   useEffect(() => {
     if (!user || !wallet) {
       const timeout = setTimeout(() => router.push("/"), 1000);
@@ -26,20 +28,26 @@ export default function Dashboard() {
     }
   }, [user, wallet, router]);
 
+  // ✅ Atvaizduoja "loading" jei user nėra
   if (!user || !wallet) {
-    return <div className={styles.loading}>Loading your dashboard...</div>;
+    return (
+      <div className={styles.loading} role="status">
+        Loading your dashboard...
+      </div>
+    );
   }
 
   return (
-    <div className="fullscreenContainer">
+    <div className="fullscreenContainer" role="main">
       <Navbar />
+
       <div className={styles.wrapper}>
         <h1 className={styles.welcome}>
           Welcome,<br />
           {user.email}
         </h1>
 
-        <section className={styles.card}>
+        <section className={styles.card} aria-labelledby="wallet-info">
           <label className={styles.label}>Wallet address:</label>
           <p className={styles.address}>{wallet.address}</p>
 
@@ -55,7 +63,7 @@ export default function Dashboard() {
             </select>
           </div>
 
-          <div className={styles.balanceBox}>
+          <div className={styles.balanceBox} aria-live="polite" aria-busy={loading}>
             <span className={styles.balanceLabel}>Balance:</span>
             <span className={styles.balanceValue}>
               {loading ? "Loading..." : `${balance} BNB`}
@@ -72,14 +80,23 @@ export default function Dashboard() {
           <button
             className={styles.actionButton}
             onClick={() => router.push("/send")}
+            aria-label="Send Crypto"
           >
             🧾 SEND
           </button>
           <button
             className={styles.actionButton}
             onClick={() => router.push("/receive")}
+            aria-label="Receive Crypto"
           >
             ✅ RECEIVE
+          </button>
+          <button
+            className={styles.actionButton}
+            onClick={refreshBalance}
+            aria-label="Refresh Balance"
+          >
+            🔄 REFRESH
           </button>
         </div>
       </div>
