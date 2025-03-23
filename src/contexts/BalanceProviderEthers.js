@@ -20,16 +20,17 @@ export const BalanceProviderEthers = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [selectedNetwork, setSelectedNetwork] = useState("bscTestnet");
 
+  // ✅ Reali balanso sinchronizacija iš blockchain
   const fetchBalance = useCallback(async () => {
     if (!wallet?.address || !selectedNetwork) return;
 
     setLoading(true);
     try {
-      const { raw, formatted } = await getWalletBalance(wallet.address, selectedNetwork);
-      setRawBalance(raw);
-      setBalance(formatted);
+      const result = await getWalletBalance(wallet.address, selectedNetwork);
+      setRawBalance(result.raw);
+      setBalance(result.formatted);
     } catch (err) {
-      console.error("❌ Balance fetch error via getWalletBalance:", err);
+      console.error("❌ Balance fetch error in context:", err);
       setRawBalance("0");
       setBalance("0.0000");
     } finally {
@@ -37,6 +38,7 @@ export const BalanceProviderEthers = ({ children }) => {
     }
   }, [wallet?.address, selectedNetwork]);
 
+  // ✅ Periodinis tikrinimas kas 6s
   useEffect(() => {
     fetchBalance();
     const interval = setInterval(fetchBalance, 6000);
