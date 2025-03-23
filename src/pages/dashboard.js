@@ -12,19 +12,22 @@ export default function Dashboard() {
   const { user, wallet } = useMagicLink();
   const {
     balance,
+    rawBalance,
     loading,
     selectedNetwork,
     setSelectedNetwork,
+    refreshBalance,
   } = useBalance();
 
-  // ✅ Redirect jei nėra vartotojo arba wallet
+  // ✅ Redirect jei user ar wallet nėra
   useEffect(() => {
     if (!user || !wallet) {
-      const timeout = setTimeout(() => router.push("/"), 1200);
+      const timeout = setTimeout(() => router.push("/"), 1000);
       return () => clearTimeout(timeout);
     }
   }, [user, wallet, router]);
 
+  // ✅ Jei neautorizuotas
   if (!user || !wallet) {
     return (
       <div className={styles.loading} role="status" aria-live="polite">
@@ -42,38 +45,51 @@ export default function Dashboard() {
           {user.email}
         </h1>
 
-        <section className={styles.card}>
-          <label className={styles.label}>Wallet address:</label>
-          <p className={styles.address}>{wallet.address}</p>
+        {/* ✅ Wallet info kortelė */}
+        <section className={styles.card} aria-labelledby="wallet-info">
+          <label className={styles.label} htmlFor="walletAddress">Wallet address:</label>
+          <p id="walletAddress" className={styles.address}>{wallet.address}</p>
 
           <div className={styles.networkSelector}>
-            <label className={styles.label}>Select network:</label>
+            <label className={styles.label} htmlFor="networkSelect">Select network:</label>
             <select
+              id="networkSelect"
               value={selectedNetwork}
               onChange={(e) => setSelectedNetwork(e.target.value)}
-              aria-label="Select Blockchain Network"
+              className={styles.select}
+              aria-label="Blockchain network selector"
             >
               <option value="bsc">BSC Mainnet</option>
               <option value="bscTestnet">BSC Testnet</option>
             </select>
           </div>
 
-          <div className={styles.balanceBox} aria-live="polite" aria-busy={loading}>
+          <div
+            className={styles.balanceBox}
+            role="contentinfo"
+            aria-live="polite"
+            aria-busy={loading}
+          >
             <span className={styles.balanceLabel}>Balance:</span>
-            <span>{loading ? "Loading..." : `${balance} BNB`}</span>
+            <span className={styles.balanceValue}>
+              {loading ? "Loading..." : `${balance} BNB`}
+            </span>
           </div>
         </section>
 
-        <div className={styles.actions}>
+        {/* ✅ Veiksmai */}
+        <div className={styles.actions} role="group" aria-label="Wallet actions">
           <button
             className={styles.actionButton}
             onClick={() => router.push("/send")}
+            aria-label="Go to Send Page"
           >
             🧾 SEND
           </button>
           <button
             className={styles.actionButton}
             onClick={() => router.push("/receive")}
+            aria-label="Go to Receive Page"
           >
             ✅ RECEIVE
           </button>
