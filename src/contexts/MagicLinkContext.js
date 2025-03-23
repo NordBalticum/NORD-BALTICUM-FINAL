@@ -1,3 +1,5 @@
+"use client";
+
 import React, {
   createContext,
   useContext,
@@ -29,19 +31,20 @@ const MagicLinkProviderBase = ({ children, router }) => {
     }
   }, [user, loading, router]);
 
-  // ✅ Pirma sesija ir listener
+  // ✅ Inicializavimas ir sesijos listener
   useEffect(() => {
-    const fetchSession = async () => {
+    const getSession = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         setUser(session?.user ?? null);
       } catch (error) {
-        console.error("Session fetch failed:", error);
+        console.error("❌ getSession failed:", error);
       } finally {
         setLoading(false);
       }
     };
-    fetchSession();
+
+    getSession();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
@@ -50,7 +53,7 @@ const MagicLinkProviderBase = ({ children, router }) => {
     return () => subscription?.unsubscribe?.();
   }, []);
 
-  // ✅ Wallet iš duomenų bazės
+  // ✅ Wallet įkėlimas arba sukūrimas
   useEffect(() => {
     if (user?.id) loadOrCreateWallet(user.id);
   }, [user]);
@@ -77,11 +80,11 @@ const MagicLinkProviderBase = ({ children, router }) => {
         if (!insertError) setWallet(walletData);
       }
     } catch (err) {
-      console.error("Wallet fetch/create failed:", err);
+      console.error("❌ Wallet creation/load failed:", err);
     }
   }, []);
 
-  // ✅ Kas 60s tikrinam ar sesija gyva
+  // ✅ Tikrina sesiją kas 60s
   useEffect(() => {
     const interval = setInterval(async () => {
       try {
@@ -89,7 +92,7 @@ const MagicLinkProviderBase = ({ children, router }) => {
         if (!session?.user) await signOut();
         else setUser(session.user);
       } catch (err) {
-        console.error("Session check failed:", err);
+        console.error("❌ Session ping failed:", err);
       }
     }, 60000);
     return () => clearInterval(interval);
@@ -116,7 +119,7 @@ const MagicLinkProviderBase = ({ children, router }) => {
     };
   }, []);
 
-  // ✅ Prisijungimas su Magic Link – greitas
+  // ✅ Greičiausias Magic Link login
   const signInWithEmail = useCallback(async (email) => {
     try {
       const { error } = await supabase.auth.signInWithOtp({
@@ -127,8 +130,9 @@ const MagicLinkProviderBase = ({ children, router }) => {
         },
       });
       if (error) throw error;
+      console.log("✅ Magic Link sent!");
     } catch (err) {
-      console.error("Magic link error:", err.message);
+      console.error("❌ Magic Link send error:", err.message);
       throw err;
     }
   }, []);
@@ -138,7 +142,7 @@ const MagicLinkProviderBase = ({ children, router }) => {
     try {
       await supabase.auth.signOut();
     } catch (err) {
-      console.error("Sign out failed:", err);
+      console.error("❌ Sign out failed:", err);
     } finally {
       setUser(null);
       setWallet(null);
@@ -152,7 +156,7 @@ const MagicLinkProviderBase = ({ children, router }) => {
   );
 };
 
-// ✅ Dynamic Client Wrapper
+// ✅ Dynamic wrapper
 const MagicLinkWrapper = ({ children }) => {
   const router = require("next/router").useRouter();
   return <MagicLinkProviderBase router={router}>{children}</MagicLinkProviderBase>;
