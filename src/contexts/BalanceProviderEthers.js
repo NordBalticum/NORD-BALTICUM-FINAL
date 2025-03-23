@@ -7,9 +7,8 @@ import React, {
   useState,
   useCallback,
 } from "react";
-import { formatEther } from "ethers";
 import { useMagicLink } from "@/contexts/MagicLinkContext";
-import { getProvider } from "@/lib/ethers";
+import { getWalletBalance } from "@/lib/ethers";
 
 const BalanceContext = createContext();
 
@@ -22,18 +21,15 @@ export const BalanceProviderEthers = ({ children }) => {
   const [selectedNetwork, setSelectedNetwork] = useState("bscTestnet");
 
   const fetchBalance = useCallback(async () => {
-    if (!wallet?.address) return;
+    if (!wallet?.address || !selectedNetwork) return;
+
     setLoading(true);
-
     try {
-      const provider = await getProvider(selectedNetwork);
-      const raw = await provider.getBalance(wallet.address);
-      const formatted = parseFloat(formatEther(raw)).toFixed(4);
-
-      setRawBalance(raw.toString());
+      const { raw, formatted } = await getWalletBalance(wallet.address, selectedNetwork);
+      setRawBalance(raw);
       setBalance(formatted);
     } catch (err) {
-      console.error("❌ Balance fetch error in context:", err);
+      console.error("❌ Balance fetch error via getWalletBalance:", err);
       setRawBalance("0");
       setBalance("0.0000");
     } finally {
