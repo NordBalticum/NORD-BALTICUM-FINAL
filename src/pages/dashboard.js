@@ -15,10 +15,8 @@ export default function Dashboard() {
     loading,
     selectedNetwork,
     setSelectedNetwork,
-    refreshBalance,
   } = useBalance();
 
-  // ✅ Redirect jei nėra user arba wallet
   useEffect(() => {
     if (!user || !wallet) {
       const timeout = setTimeout(() => router.push("/"), 1000);
@@ -26,7 +24,6 @@ export default function Dashboard() {
     }
   }, [user, wallet, router]);
 
-  // ✅ Loader
   if (!user || !wallet) {
     return (
       <div className={styles.loading} role="status">
@@ -34,6 +31,10 @@ export default function Dashboard() {
       </div>
     );
   }
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(wallet.address);
+  };
 
   return (
     <div className="fullscreenContainer" role="main">
@@ -46,17 +47,8 @@ export default function Dashboard() {
 
         <section className={styles.card} aria-labelledby="wallet-info">
           <label className={styles.label}>Your Wallet Address</label>
-          <div className={styles.addressBox}>
+          <div className={styles.addressBox} onClick={handleCopy} title="Click to copy">
             <p className={styles.address}>{wallet.address}</p>
-            <button
-              onClick={() => {
-                navigator.clipboard.writeText(wallet.address);
-              }}
-              className={styles.copyBtn}
-              aria-label="Copy Wallet Address"
-            >
-              📋
-            </button>
           </div>
 
           <div className={styles.networkSelector}>
@@ -71,10 +63,10 @@ export default function Dashboard() {
             </select>
           </div>
 
-          <div className={styles.balanceBox} aria-live="polite" aria-busy={loading}>
+          <div className={styles.balanceBox}>
             <span className={styles.balanceLabel}>Your Balance:</span>
             <span className={styles.balanceValue}>
-              {loading ? "Syncing..." : `${balance} BNB`}
+              {balance} BNB
             </span>
           </div>
         </section>
@@ -93,13 +85,6 @@ export default function Dashboard() {
             aria-label="Receive BNB"
           >
             ✅ RECEIVE
-          </button>
-          <button
-            className={styles.actionButton}
-            onClick={refreshBalance}
-            aria-label="Refresh Balance"
-          >
-            🔄 REFRESH
           </button>
         </div>
       </div>
