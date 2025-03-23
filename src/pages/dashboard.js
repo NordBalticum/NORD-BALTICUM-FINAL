@@ -19,7 +19,7 @@ export default function Dashboard() {
     refreshBalance,
   } = useBalance();
 
-  // ✅ Redirect jei user ar wallet nėra
+  // ✅ Redirect jei nėra user arba wallet
   useEffect(() => {
     if (!user || !wallet) {
       const timeout = setTimeout(() => router.push("/"), 1000);
@@ -27,17 +27,16 @@ export default function Dashboard() {
     }
   }, [user, wallet, router]);
 
-  // ✅ Jei neautorizuotas
   if (!user || !wallet) {
     return (
-      <div className={styles.loading} role="status" aria-live="polite">
+      <div className={styles.loading}>
         Loading your dashboard...
       </div>
     );
   }
 
   return (
-    <div className="fullscreenContainer" role="main" aria-label="Dashboard Page">
+    <div className="fullscreenContainer">
       <Navbar />
       <div className={styles.wrapper}>
         <h1 className={styles.welcome}>
@@ -45,31 +44,26 @@ export default function Dashboard() {
           {user.email}
         </h1>
 
-        {/* ✅ Wallet info kortelė */}
-        <section className={styles.card} aria-labelledby="wallet-info">
-          <label className={styles.label} htmlFor="walletAddress">Wallet address:</label>
-          <p id="walletAddress" className={styles.address}>{wallet.address}</p>
+        <section className={styles.card}>
+          <label className={styles.label}>Wallet address:</label>
+          <p className={styles.address}>{wallet.address}</p>
 
           <div className={styles.networkSelector}>
-            <label className={styles.label} htmlFor="networkSelect">Select network:</label>
+            <label className={styles.label}>Select network:</label>
             <select
-              id="networkSelect"
-              value={selectedNetwork}
-              onChange={(e) => setSelectedNetwork(e.target.value)}
               className={styles.select}
-              aria-label="Blockchain network selector"
+              value={selectedNetwork}
+              onChange={(e) => {
+                setSelectedNetwork(e.target.value);
+                refreshBalance();
+              }}
             >
               <option value="bsc">BSC Mainnet</option>
               <option value="bscTestnet">BSC Testnet</option>
             </select>
           </div>
 
-          <div
-            className={styles.balanceBox}
-            role="contentinfo"
-            aria-live="polite"
-            aria-busy={loading}
-          >
+          <div className={styles.balanceBox}>
             <span className={styles.balanceLabel}>Balance:</span>
             <span className={styles.balanceValue}>
               {loading ? "Loading..." : `${balance} BNB`}
@@ -82,19 +76,16 @@ export default function Dashboard() {
           </div>
         </section>
 
-        {/* ✅ Veiksmai */}
-        <div className={styles.actions} role="group" aria-label="Wallet actions">
+        <div className={styles.actions}>
           <button
             className={styles.actionButton}
             onClick={() => router.push("/send")}
-            aria-label="Go to Send Page"
           >
             🧾 SEND
           </button>
           <button
             className={styles.actionButton}
             onClick={() => router.push("/receive")}
-            aria-label="Go to Receive Page"
           >
             ✅ RECEIVE
           </button>
