@@ -6,47 +6,43 @@ import {
   isAddress,
 } from "ethers";
 
-// ✅ Fiksuoti 100% veikiančių RPC endpoint’ai (Mainnet ir Testnet)
+// ✅ Patikimi RPC fallback’ai
 const RPCS = {
   bsc: [
-    "https://bsc-dataseed.binance.org/",
-    "https://bsc-rpc.publicnode.com",
     "https://rpc.ankr.com/bsc",
+    "https://bsc.publicnode.com",
     "https://bsc-dataseed1.defibit.io",
+    "https://bsc-dataseed1.ninicoin.io",
   ],
   bscTestnet: [
-    "https://data-seed-prebsc-1-s1.binance.org:8545/",
-    "https://bsc-testnet.publicnode.com",
     "https://rpc.ankr.com/bsc_testnet_chapel",
-    "https://data-seed-prebsc-2-s1.binance.org:8545/",
+    "https://bsc-testnet.publicnode.com",
+    "https://data-seed-prebsc-1-s1.binance.org:8545",
+    "https://bsc-testnet.blockpi.network/v1/rpc/public",
   ],
 };
 
-// ✅ Gauk veikiantį provider’į automatiškai su fallback
+// ✅ Gauna pirmą gyvą RPC provider
 export const getProvider = async (network = "bsc") => {
-  const urls = RPCS[network] || RPCS.bsc;
+  const urls = RPCS[network] || RPCS["bsc"];
   for (const url of urls) {
     try {
       const provider = new JsonRpcProvider(url);
-      await provider.getBlockNumber(); // ping test
-      console.log(`✅ Using RPC: ${url}`);
+      await provider.getBlockNumber();
       return provider;
-    } catch {
+    } catch (e) {
       console.warn(`⚠️ RPC failed: ${url}`);
     }
   }
-  throw new Error("❌ No working RPC provider found");
+  throw new Error("❌ No valid RPC provider found.");
 };
 
 // ✅ Tikrina ar adresas validus
 export const isValidAddress = (addr) => isAddress(addr);
 
-// ✅ Gauna balansą iš blockchain
+// ✅ Grąžina balansą realiu laiku
 export const getWalletBalance = async (address, network = "bsc") => {
-  if (!isValidAddress(address)) {
-    return { raw: "0", formatted: "0.0000" };
-  }
-
+  if (!isValidAddress(address)) return { raw: "0", formatted: "0.0000" };
   try {
     const provider = await getProvider(network);
     const raw = await provider.getBalance(address);
@@ -61,28 +57,22 @@ export const getWalletBalance = async (address, network = "bsc") => {
   }
 };
 
-// ✅ Siunčia BNB iš piniginės
+// ✅ Siunčia BNB
 export const sendBNB = async (privateKey, to, amount, network = "bscTestnet") => {
-  try {
-    const provider = await getProvider(network);
-    const wallet = new Wallet(privateKey, provider);
-    const tx = await wallet.sendTransaction({
-      to,
-      value: parseEther(amount.toString()),
-    });
-
-    await tx.wait();
-    return tx.hash;
-  } catch (err) {
-    console.error("❌ Send BNB failed:", err);
-    throw err;
-  }
+  const provider = await getProvider(network);
+  const wallet = new Wallet(privateKey, provider);
+  const tx = await wallet.sendTransaction({
+    to,
+    value: parseEther(amount.toString()),
+  });
+  await tx.wait();
+  return tx.hash;
 };
 
 // ✅ Sukuria naują wallet
 export const createWallet = () => Wallet.createRandom();
 
-// ✅ Saugo localStorage (fallback)
+// ✅ Lokalus saugojimas (tik fallback/dev)
 export const saveWalletToLocalStorage = (wallet) => {
   if (!wallet?.privateKey) return;
   const data = {
@@ -92,7 +82,6 @@ export const saveWalletToLocalStorage = (wallet) => {
   localStorage.setItem("userWallet", JSON.stringify(data));
 };
 
-// ✅ Pakrauna iš localStorage (fallback)
 export const loadWalletFromLocalStorage = () => {
   try {
     const data = localStorage.getItem("userWallet");
@@ -100,7 +89,7 @@ export const loadWalletFromLocalStorage = () => {
     const { privateKey } = JSON.parse(data);
     return new Wallet(privateKey);
   } catch (err) {
-    console.error("❌ Failed to load wallet from localStorage:", err);
+    console.error("❌ Failed to load wallet:", err);
     return null;
   }
 };
