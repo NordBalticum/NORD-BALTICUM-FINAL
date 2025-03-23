@@ -10,6 +10,10 @@ import styles from "@/components/navbar.module.css";
 export default function Navbar() {
   const router = useRouter();
   const { pathname } = router;
+
+  // ✅ Nerodyti navbar ant index puslapio
+  if (pathname === "/") return null;
+
   const { signOut } = useMagicLink();
   const [isOpen, setIsOpen] = useState(false);
 
@@ -19,9 +23,7 @@ export default function Navbar() {
     { label: "Receive", href: "/receive" },
   ];
 
-  useEffect(() => {
-    setIsOpen(false);
-  }, [pathname]);
+  useEffect(() => setIsOpen(false), [pathname]);
 
   const toggleMenu = useCallback(() => {
     setIsOpen((prev) => !prev);
@@ -30,7 +32,6 @@ export default function Navbar() {
   return (
     <header className={styles.navbar} role="navigation" aria-label="Main navigation">
       <div className={styles.navContent}>
-        {/* ✅ Logo – kairėje */}
         <Link href="/" className={styles.logoLink} aria-label="Go to homepage">
           <Image
             src="/icons/logo.svg"
@@ -42,13 +43,12 @@ export default function Navbar() {
           />
         </Link>
 
-        {/* ✅ Desktop Navigation */}
         <nav className={styles.navLinks} role="menubar">
           {navItems.map((item) => (
             <Link key={item.href} href={item.href} passHref>
               <button
-                role="menuitem"
                 className={`${styles.navButton} ${pathname === item.href ? styles.active : ""}`}
+                role="menuitem"
                 aria-current={pathname === item.href ? "page" : undefined}
               >
                 {item.label}
@@ -60,18 +60,17 @@ export default function Navbar() {
           </button>
         </nav>
 
-        {/* ✅ Mobile Hamburger – dešinėje, plotis fiksuotas */}
+        {/* ✅ Vienas hamburgeris – subalansuotas */}
         <div
-          className={styles.mobileToggle}
+          className={`${styles.mobileToggle} ${isOpen ? styles.open : ""}`}
           onClick={toggleMenu}
-          aria-label="Toggle mobile menu"
-          role="button"
+          aria-label="Toggle menu"
         >
-          {isOpen ? "✖" : "☰"}
+          <span />
+          <span />
         </div>
       </div>
 
-      {/* ✅ Mobile Dropdown */}
       {isOpen && (
         <div className={styles.mobileDropdown} role="menu">
           {navItems.map((item) => (
@@ -88,7 +87,7 @@ export default function Navbar() {
           <button
             onClick={signOut}
             className={styles.logoutMobile}
-            aria-label="Log out from mobile"
+            aria-label="Log out mobile"
           >
             Sign Out
           </button>
