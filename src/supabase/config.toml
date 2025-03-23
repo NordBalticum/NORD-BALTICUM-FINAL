@@ -1,0 +1,2 @@
+[functions.sync_balances]
+runtime = "edge"
