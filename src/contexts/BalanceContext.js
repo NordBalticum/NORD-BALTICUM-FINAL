@@ -7,67 +7,49 @@ import React, {
   useState,
   useCallback,
 } from "react";
-import { JsonRpcProvider, formatEther } from "ethers";
 import { useMagicLink } from "@/contexts/MagicLinkContext";
 
-// ✅ Balance kontekstas
+// ✅ Konteksto inicializavimas
 const BalanceContext = createContext();
 
-// ✅ Patikimi RPC URL'ai su fallback'ais
-const RPC_URLS = {
-  bsc: [
-    process.env.NEXT_PUBLIC_BSC_RPC,
-    "https://bsc-dataseed.binance.org",
-    "https://bsc.publicnode.com",
-  ],
-  bscTestnet: [
-    process.env.NEXT_PUBLIC_BSC_TESTNET_RPC,
-    "https://data-seed-prebsc-1-s1.binance.org:8545",
-    "https://bsc-testnet.publicnode.com",
-  ],
-};
-
-// ✅ Funkcija grąžinanti pirmą galimą veikiančią provider instanciją
-const getProviderWithFallback = (network = "bsc") => {
-  const urls = RPC_URLS[network] || [];
-  for (let url of urls) {
-    if (url) return new JsonRpcProvider(url);
-  }
-  return null;
-};
-
-// ✅ Pagrindinis Balance Provider
+// ✅ BalanceProvider – naudoja realų Supabase duomenų šaltinį
 export const BalanceProvider = ({ children }) => {
-  const { wallet } = useMagicLink();
+  const { user, wallet, supabase } = useMagicLink();
   const [selectedNetwork, setSelectedNetwork] = useState("bscTestnet");
   const [balance, setBalance] = useState("0.0000");
   const [rawBalance, setRawBalance] = useState("0");
   const [loading, setLoading] = useState(true);
 
-  // ✅ Balanso užkrovimas pagal piniginę ir tinklą
+  // ✅ Gauna balansą iš Supabase duomenų bazės
   const fetchBalance = useCallback(async () => {
-    if (!wallet?.address || !selectedNetwork) return;
+    if (!user?.id || !selectedNetwork) return;
     setLoading(true);
 
     try {
-      const provider = getProviderWithFallback(selectedNetwork);
-      if (!provider) throw new Error("No valid RPC provider");
+      const { data, error } = await supabase
+        .from("balances")
+        .select("balance_formatted, balance_raw")
+        .eq("user_id", user.id)
+        .eq("network", selectedNetwork)
+        .single();
 
-      const raw = await provider.getBalance(wallet.address); // BigInt
-      const formatted = parseFloat(formatEther(raw)).toFixed(4);
-
-      setRawBalance(raw.toString());
-      setBalance(formatted);
+      if (error || !data) {
+        setBalance("0.0000");
+        setRawBalance("0");
+      } else {
+        setBalance(data.balance_formatted || "0.0000");
+        setRawBalance(data.balance_raw || "0");
+      }
     } catch (err) {
-      console.error("❌ Balance fetch error:", err);
-      setRawBalance("0");
+      console.error("❌ Supabase balance fetch failed:", err);
       setBalance("0.0000");
+      setRawBalance("0");
     } finally {
       setLoading(false);
     }
-  }, [wallet?.address, selectedNetwork]);
+  }, [supabase, user?.id, selectedNetwork]);
 
-  // ✅ Pirmas įkrovimas ir interval atnaujinimui
+  // ✅ Automatinis užkrovimas ir atnaujinimas kas 6 sek.
   useEffect(() => {
     fetchBalance();
     const interval = setInterval(fetchBalance, 6000);
@@ -77,11 +59,11 @@ export const BalanceProvider = ({ children }) => {
   return (
     <BalanceContext.Provider
       value={{
-        balance,            // pvz. "0.0153"
-        rawBalance,         // pvz. "15300000000000000"
+        balance,
+        rawBalance,
         loading,
-        selectedNetwork,    // bsc arba bscTestnet
-        setSelectedNetwork, // keisti iš UI
+        selectedNetwork,
+        setSelectedNetwork,
         refreshBalance: fetchBalance,
       }}
     >
@@ -90,5 +72,5 @@ export const BalanceProvider = ({ children }) => {
   );
 };
 
-// ✅ Hookas: naudok bet kur projekte
+// ✅ Hookas naudoti komponentuose
 export const useBalance = () => useContext(BalanceContext);
