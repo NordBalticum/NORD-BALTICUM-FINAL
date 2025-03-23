@@ -13,23 +13,28 @@ export default function Home() {
 
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
+  const [status, setStatus] = useState("idle"); // idle | sending | sent | error
 
   // ✅ Auto redirect if logged in
   useEffect(() => {
     if (user) router.push("/dashboard");
   }, [user, router]);
 
-  // ✅ Magic link email login
+  // ✅ Magic Link Email Handler
   const handleLogin = async (e) => {
     e.preventDefault();
     setMessage("");
+    setStatus("sending");
+
     try {
       await signInWithEmail(email.trim());
-      setMessage("Check your email for the magic link!");
+      setStatus("sent");
+      setMessage("✅ Magic Link sent! Check your email.");
       setEmail("");
     } catch (error) {
-      console.error("Magic Link Login Error:", error);
-      setMessage("Login failed. Please try again.");
+      console.error("Magic Link Error:", error);
+      setStatus("error");
+      setMessage("❌ Failed to send link. Try again.");
     }
   };
 
@@ -37,22 +42,11 @@ export default function Home() {
     <>
       <Head>
         <title>NordBalticum – Login</title>
-        <meta
-          name="description"
-          content="Secure login with Magic Link – NordBalticum Web3 Banking"
-        />
-        <meta
-          name="viewport"
-          content="width=device-width, initial-scale=1.0, viewport-fit=cover"
-        />
+        <meta name="description" content="Secure login with Magic Link – NordBalticum Web3 Banking" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
       </Head>
 
-      <main
-        className="fullscreenContainer"
-        role="main"
-        aria-label="Login area"
-        style={{ minHeight: "100dvh" }}
-      >
+      <main className="fullscreenContainer" role="main" aria-label="Login Page">
         <div className={styles.centerWrapper}>
           {/* ✅ Logo */}
           <div className={styles.logoContainer}>
@@ -67,20 +61,11 @@ export default function Home() {
           </div>
 
           {/* ✅ Login Box */}
-          <section
-            className={`${styles.loginBox} glassBox fadeIn`}
-            aria-label="Login box"
-          >
+          <section className={`${styles.loginBox} glassBox fadeIn`} aria-label="Login Section">
             <h1 className={styles.title}>Welcome to NordBalticum</h1>
-            <p className={styles.subtitle}>
-              Sign in with your email to get started
-            </p>
+            <p className={styles.subtitle}>Sign in with your email</p>
 
-            <form
-              onSubmit={handleLogin}
-              className={styles.form}
-              aria-label="Login form"
-            >
+            <form onSubmit={handleLogin} className={styles.form} aria-label="Login Form">
               <input
                 type="email"
                 placeholder="Enter your email"
@@ -90,19 +75,25 @@ export default function Home() {
                 maxLength={80}
                 autoComplete="email"
                 className={styles.input}
-                aria-label="Email input"
+                aria-label="Email Address"
               />
+
               <button
                 type="submit"
                 className={styles.button}
-                aria-label="Send magic link"
+                aria-label="Submit login"
+                disabled={status === "sending"}
               >
-                Send Magic Link
+                {status === "sending" ? "Sending..." : "Send Magic Link"}
               </button>
             </form>
 
             {message && (
-              <p className={styles.message} role="alert">
+              <p
+                className={styles.message}
+                role="alert"
+                style={{ color: status === "error" ? "#ff4c4c" : "#00ffc8" }}
+              >
                 {message}
               </p>
             )}
