@@ -15,13 +15,13 @@ const RPC_URLS = {
   ],
 };
 
-// ✅ Fallback mechanizmas – grąžina pirmą veikiančią RPC instanciją
+// ✅ Grąžina pirmą veikiantį JsonRpcProvider (bankinis fallback)
 export const getProvider = async (network = "bsc") => {
   const urls = RPC_URLS[network] || RPC_URLS["bsc"];
   for (const url of urls) {
     try {
       const provider = new JsonRpcProvider(url);
-      await provider.getBlockNumber(); // Ping test – veikia RPC
+      await provider.getBlockNumber(); // RPC ping check
       return provider;
     } catch (err) {
       console.warn(`⚠️ RPC failed: ${url}`);
@@ -30,7 +30,7 @@ export const getProvider = async (network = "bsc") => {
   throw new Error("❌ No valid RPC provider found.");
 };
 
-// ✅ Gauna balansą pagal adresą ir tinklą – grąžina ir raw, ir formatted
+// ✅ Gauna balansą pagal adresą ir tinklą – grąžina ir RAW, ir FORMATTED
 export const getWalletBalance = async (address, network = "bsc") => {
   try {
     if (!isValidAddress(address)) {
@@ -45,8 +45,8 @@ export const getWalletBalance = async (address, network = "bsc") => {
     const formatted = parseFloat(formatEther(raw)).toFixed(4);
 
     return {
-      raw: raw.toString(),         // pvz. "189000000000000000"
-      formatted,                   // pvz. "0.1890"
+      raw: raw.toString(),     // pvz. "2389000000000000000"
+      formatted,               // pvz. "2.3890"
     };
   } catch (err) {
     console.error("❌ Failed to fetch balance:", err);
@@ -57,17 +57,13 @@ export const getWalletBalance = async (address, network = "bsc") => {
   }
 };
 
-// ✅ Tikrina ar adresas yra validus EVM address
-export const isValidAddress = (addr) => {
-  return isAddress(addr);
-};
+// ✅ Tikrina ar adresas validus (standartinis EVM)
+export const isValidAddress = (addr) => isAddress(addr);
 
-// ✅ Sukuria naują Wallet – naudoti tik fallback atvejais
-export const createWallet = () => {
-  return Wallet.createRandom();
-};
+// ✅ Wallet kūrimas (fallback atvejais – naudoti tik demo/dev)
+export const createWallet = () => Wallet.createRandom();
 
-// ✅ Saugo wallet į localStorage – naudoti tik kaip fallback (ne pagrindinė sistema)
+// ⛔️ OPTIONAL / Fallback tik jei nori saugoti lokaliai (nerekomenduojama produkcijai)
 export const saveWalletToLocalStorage = (wallet) => {
   if (!wallet?.privateKey) return;
   const data = {
@@ -77,12 +73,10 @@ export const saveWalletToLocalStorage = (wallet) => {
   localStorage.setItem("userWallet", JSON.stringify(data));
 };
 
-// ✅ Pakelia wallet iš localStorage – fallback scenarijui (pvz. demo režimas)
 export const loadWalletFromLocalStorage = () => {
   try {
     const data = localStorage.getItem("userWallet");
     if (!data) return null;
-
     const { privateKey } = JSON.parse(data);
     return new Wallet(privateKey);
   } catch (err) {
