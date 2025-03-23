@@ -39,24 +39,23 @@ export default function ReceivePage() {
     <div className="fullscreenContainer">
       <Navbar />
 
-      <div className={styles.wrapper}>
+      <div className={styles.receiveWrapper}>
         <h1 className={styles.title}>Receive BNB</h1>
 
-        <div className={styles.qrBox}>
+        <div className={`${styles.qrContainer} ${copied ? styles.copied : ""}`} onClick={handleCopy}>
           <QRCode
             value={wallet.address}
             size={200}
             bgColor="#ffffff"
             fgColor="#0A122A"
+            className={styles.qrCode}
           />
         </div>
 
-        <p className={styles.addressLabel}>Wallet Address</p>
-        <p className={styles.address}>{wallet.address}</p>
-
-        <button className={styles.copyButton} onClick={handleCopy}>
-          {copied ? "✔ Copied!" : "Copy Address"}
-        </button>
+        <p className={styles.qrText}>{wallet.address}</p>
+        <p className={`${styles.copyFeedback} ${copied ? styles.copied : ""}`}>
+          {copied ? "✔ Copied!" : "Click QR or address to copy"}
+        </p>
 
         <div className={styles.networkInfo}>
           <label className={styles.label}>Network:</label>
@@ -68,13 +67,13 @@ export default function ReceivePage() {
             <option value="bsc">BSC Mainnet</option>
             <option value="bscTestnet">BSC Testnet</option>
           </select>
-
-          <p className={styles.balance}>
-            Balance: <strong>{balance} BNB</strong>
-          </p>
         </div>
 
-        <button className={styles.refreshBtn} onClick={refreshBalance}>
+        <p className={styles.balanceText}>
+          Balance: <strong>{balance} BNB</strong>
+        </p>
+
+        <button className={styles.copyButton} onClick={refreshBalance}>
           🔄 Refresh Balance
         </button>
       </div>
