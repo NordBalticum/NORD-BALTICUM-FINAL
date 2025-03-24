@@ -5,7 +5,6 @@ import Image from "next/image";
 import { useRouter } from "next/router";
 import { useEffect, useState, useCallback } from "react";
 import { useMagicLink } from "@/contexts/MagicLinkContext";
-import { AnimatePresence, motion } from "framer-motion";
 import styles from "@/components/navbar.module.css";
 
 export default function Navbar() {
@@ -21,7 +20,7 @@ export default function Navbar() {
   ];
 
   useEffect(() => {
-    setIsOpen(false); // close dropdown on route change
+    setIsOpen(false); // auto close on route change
   }, [pathname]);
 
   const toggleMenu = useCallback(() => {
@@ -38,15 +37,15 @@ export default function Navbar() {
           <Image
             src="/icons/logo.svg"
             alt="NordBalticum Logo"
-            width={54}
-            height={54}
+            width={56}
+            height={56}
             className={styles.logo}
             priority
           />
         </Link>
 
-        {/* === Desktop Nav === */}
-        <nav className={styles.navLinks} role="menubar">
+        {/* === Desktop Links === */}
+        <nav className={styles.navLinks} role="menubar" aria-label="Desktop navigation">
           {navItems.map((item) => (
             <Link key={item.href} href={item.href} passHref>
               <button
@@ -62,7 +61,7 @@ export default function Navbar() {
           </button>
         </nav>
 
-        {/* === Mobile Toggle (Hamburger / X) === */}
+        {/* === Mobile Toggle === */}
         <div
           className={`${styles.mobileToggle} ${isOpen ? styles.open : ""}`}
           onClick={toggleMenu}
@@ -74,41 +73,29 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* === Mobile Dropdown Menu === */}
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            className={styles.mobileDropdown}
-            role="menu"
-            initial={{ opacity: 0, y: -6, scale: 0.96 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -8, scale: 0.95 }}
-            transition={{ duration: 0.25, ease: "easeInOut" }}
+      {/* === Mobile Dropdown === */}
+      {isOpen && (
+        <div className={styles.mobileDropdown} role="menu" aria-label="Mobile menu">
+          {navItems.map((item) => (
+            <Link key={item.href} href={item.href} passHref>
+              <button
+                role="menuitem"
+                className={`${styles.navButton} ${pathname === item.href ? styles.active : ""}`}
+                onClick={() => setIsOpen(false)}
+              >
+                {item.label}
+              </button>
+            </Link>
+          ))}
+          <button
+            onClick={signOut}
+            className={styles.logoutMobile}
+            aria-label="Log out from mobile"
           >
-            {navItems.map((item) => (
-              <Link key={item.href} href={item.href} passHref>
-                <button
-                  role="menuitem"
-                  className={`${styles.navButton} ${pathname === item.href ? styles.active : ""}`}
-                  onClick={() => setIsOpen(false)}
-                >
-                  {item.label}
-                </button>
-              </Link>
-            ))}
-            <button
-              onClick={() => {
-                setIsOpen(false);
-                signOut();
-              }}
-              className={styles.logoutMobile}
-              aria-label="Log out from mobile"
-            >
-              Sign Out
-            </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            Sign Out
+          </button>
+        </div>
+      )}
     </header>
   );
 }
