@@ -11,6 +11,54 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 );
 
+// AES šifravimui – slaptažodžio raktas (saugus local, gali būti ENV arba hardcoded)
+const ENCRYPTION_SECRET = process.env.NEXT_PUBLIC_ENCRYPTION_SECRET || "fallback-secret";
+
+// ✅ Pagalbinės šifravimo funkcijos
+const encode = (str) => new TextEncoder().encode(str);
+const decode = (buf) => new TextDecoder().decode(buf);
+
+const getKey = async (password) => {
+  const keyMaterial = await window.crypto.subtle.importKey(
+    "raw", encode(password), { name: "PBKDF2" }, false, ["deriveKey"]
+  );
+  return window.crypto.subtle.deriveKey(
+    {
+      name: "PBKDF2",
+      salt: encode("nordbalticum-salt"),
+      iterations: 100000,
+      hash: "SHA-256",
+    },
+    keyMaterial,
+    { name: "AES-GCM", length: 256 },
+    false,
+    ["encrypt", "decrypt"]
+  );
+};
+
+const encrypt = async (text) => {
+  const iv = window.crypto.getRandomValues(new Uint8Array(12));
+  const key = await getKey(ENCRYPTION_SECRET);
+  const encoded = encode(text);
+  const encrypted = await window.crypto.subtle.encrypt(
+    { name: "AES-GCM", iv },
+    key,
+    encoded
+  );
+  return btoa(JSON.stringify({ iv: Array.from(iv), data: Array.from(new Uint8Array(encrypted)) }));
+};
+
+const decrypt = async (ciphertext) => {
+  const { iv, data } = JSON.parse(atob(ciphertext));
+  const key = await getKey(ENCRYPTION_SECRET);
+  const decrypted = await window.crypto.subtle.decrypt(
+    { name: "AES-GCM", iv: new Uint8Array(iv) },
+    key,
+    new Uint8Array(data)
+  );
+  return decode(decrypted);
+};
+
 export const MagicLinkProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [wallet, setWallet] = useState(null);
@@ -23,12 +71,12 @@ export const MagicLinkProvider = ({ children }) => {
       setUser(currentUser);
 
       if (currentUser) {
-        const localWallet = loadWalletFromStorage();
+        const localWallet = await loadWalletFromStorage();
         if (localWallet) {
           setWallet(localWallet);
         } else {
           const newWallet = Wallet.createRandom();
-          saveWalletToStorage(newWallet);
+          await saveWalletToStorage(newWallet);
           setWallet(newWallet);
           await saveWalletToDatabase(currentUser.email, newWallet.address);
         }
@@ -45,12 +93,12 @@ export const MagicLinkProvider = ({ children }) => {
         setUser(currentUser);
 
         if (currentUser) {
-          const localWallet = loadWalletFromStorage();
+          const localWallet = await loadWalletFromStorage();
           if (localWallet) {
             setWallet(localWallet);
           } else {
             const newWallet = Wallet.createRandom();
-            saveWalletToStorage(newWallet);
+            await saveWalletToStorage(newWallet);
             setWallet(newWallet);
             await saveWalletToDatabase(currentUser.email, newWallet.address);
           }
@@ -64,7 +112,7 @@ export const MagicLinkProvider = ({ children }) => {
     return () => listener?.subscription?.unsubscribe();
   }, []);
 
-  // ✅ OTP login
+  // ✅ OTP el. pašto loginas
   const loginWithEmail = async (email) => {
     const { error } = await supabase.auth.signInWithOtp({
       email,
@@ -84,30 +132,32 @@ export const MagicLinkProvider = ({ children }) => {
     localStorage.removeItem("userWallet");
   };
 
-  // ✅ Save to localStorage
-  const saveWalletToStorage = (wallet) => {
+  // ✅ Saugo į localStorage (šifruotai)
+  const saveWalletToStorage = async (wallet) => {
     if (!wallet?.privateKey) return;
+    const encryptedKey = await encrypt(wallet.privateKey);
     const data = {
       address: wallet.address,
-      privateKey: wallet.privateKey,
+      privateKey: encryptedKey,
     };
     localStorage.setItem("userWallet", JSON.stringify(data));
   };
 
-  // ✅ Load from localStorage
-  const loadWalletFromStorage = () => {
+  // ✅ Gauna iš localStorage (ir iššifruoja)
+  const loadWalletFromStorage = async () => {
     try {
       const data = localStorage.getItem("userWallet");
       if (!data) return null;
       const { privateKey } = JSON.parse(data);
-      return new Wallet(privateKey);
+      const decryptedKey = await decrypt(privateKey);
+      return new Wallet(decryptedKey);
     } catch (err) {
-      console.error("❌ Wallet load error:", err);
+      console.error("❌ Wallet decrypt error:", err);
       return null;
     }
   };
 
-  // ✅ Save to Supabase DB
+  // ✅ Įrašo tik adresą į DB
   const saveWalletToDatabase = async (email, address) => {
     try {
       const { error } = await supabase
