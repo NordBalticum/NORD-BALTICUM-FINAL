@@ -1,4 +1,4 @@
-/* === WRAPPER === */
+/* === FULLSCREEN WRAPPER === */
 .wrapper {
   width: 100%;
   max-width: var(--max-width);
@@ -8,195 +8,82 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-start;
-  gap: 28px;
+  gap: 32px;
 }
 
-/* === TITLE === */
+/* === SEND CRYPTO TITLE === */
 .title {
-  font-size: clamp(28px, 5vw, 40px);
-  font-weight: 800;
-  color: white;
+  font-size: clamp(32px, 6vw, 48px);
+  font-weight: 900;
   text-align: center;
-  text-shadow: 0 0 10px rgba(255, 255, 255, 0.25);
-  margin-bottom: 4px;
+  background: linear-gradient(to right, #ffe600, #ffffff, #ffe600);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 0 12px rgba(255, 215, 0, 0.25);
 }
 
-/* === NETWORK TEXT === */
-.networkText {
-  font-size: 0.95rem;
+/* === SUBTEXT (CHOOSE NETWORK) === */
+.subtext {
+  font-size: 1.05rem;
+  color: rgba(255, 255, 255, 0.75);
+  text-align: center;
   font-weight: 500;
-  opacity: 0.75;
-  text-align: center;
-  margin-bottom: 12px;
+  margin-top: -10px;
 }
 
-/* === CARD CONTAINER === */
-.card {
+/* === GRID OF NETWORK BOXES === */
+.networkGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 18px;
   width: 100%;
-  max-width: 520px;
-  background: var(--glass-bg);
-  backdrop-filter: blur(30px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 22px;
-  padding: clamp(24px, 4vw, 32px);
-  box-shadow: 0 0 32px rgba(255, 255, 255, 0.08);
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
+  max-width: 580px;
 }
 
-/* === FROM SECTION === */
-.fromBlock {
-  font-size: 0.92rem;
-  color: white;
-  word-break: break-all;
-  line-height: 1.5;
-}
-.fromBalance {
-  margin-top: 6px;
-  font-size: 0.85rem;
-  opacity: 0.75;
-}
-
-/* === SELECT / INPUT === */
-.select {
-  border-radius: 14px;
-  font-size: 0.95rem;
-  background: transparent;
-  overflow: hidden;
-}
-
-.input {
-  padding: 16px 20px;
-  border-radius: 16px;
-  font-size: 1rem;
+.networkBox {
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  color: white;
-  transition: var(--transition);
-}
-
-.input:focus {
-  outline: none;
-  border-color: white;
-  box-shadow: 0 0 16px rgba(255, 255, 255, 0.25);
-  background: rgba(255, 255, 255, 0.06);
-}
-
-/* === BUTTON === */
-.sendButton {
-  background: black;
-  color: white;
-  border: 1px solid white;
-  padding: 16px;
-  border-radius: 16px;
-  font-size: 1.05rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: var(--transition);
-  text-transform: uppercase;
-}
-.sendButton:hover {
-  transform: scale(1.06);
-  box-shadow: 0 0 20px var(--white-gold);
-}
-
-/* === STATUS === */
-.success {
-  color: #aaffaa;
-  font-size: 0.9rem;
-  text-align: center;
-}
-.error {
-  color: #ff6b6b;
-  font-size: 0.9rem;
-  text-align: center;
-}
-.loading {
-  color: white;
-  font-size: 1.2rem;
-  text-align: center;
-  padding-top: 120px;
-}
-
-/* === MODAL === */
-.modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  backdrop-filter: blur(18px);
-  background: rgba(0, 0, 0, 0.6);
-  z-index: 9999;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.modalContent {
-  background: #0a122a;
-  color: white;
-  padding: 36px;
-  border-radius: 22px;
-  width: 92%;
-  max-width: 440px;
-  text-align: center;
-  box-shadow: 0 0 28px rgba(255, 255, 255, 0.15);
-  animation: zoomIn 0.25s ease-out forwards;
-}
-.cancelButton {
-  margin-top: 16px;
-  background: transparent;
-  color: white;
-  border: 1px solid #888;
-  border-radius: 14px;
-  padding: 10px 14px;
-  font-size: 0.9rem;
-  cursor: pointer;
-  transition: var(--transition);
-}
-.cancelButton:hover {
-  background: rgba(255, 255, 255, 0.06);
-}
-
-/* === SELECT OPTIONS === */
-.option {
+  border-radius: 18px;
+  padding: 16px 20px;
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 12px;
-  background: rgba(255, 255, 255, 0.03);
-  border-radius: 14px;
-  transition: background 0.2s ease;
+  transition: all 0.3s ease;
   cursor: pointer;
+  backdrop-filter: blur(18px);
 }
-.option:hover {
+.networkBox:hover {
+  transform: scale(1.03);
+  box-shadow: 0 0 14px var(--white-gold);
   background: rgba(255, 255, 255, 0.08);
 }
-.optionIcon {
-  width: 30px;
-  height: 30px;
+
+.networkIcon {
+  width: 38px;
+  height: 38px;
   border-radius: 50%;
   object-fit: contain;
 }
-.optionLabel {
-  font-weight: 600;
-  font-size: 1rem;
+
+.networkInfo {
+  display: flex;
+  flex-direction: column;
 }
-.optionBalance {
+.networkLabel {
+  font-size: 1rem;
+  font-weight: 600;
+  color: white;
+}
+.networkBalance {
   font-size: 0.85rem;
   opacity: 0.7;
+  color: white;
 }
 
-/* === ANIMATION === */
-@keyframes zoomIn {
-  from {
-    transform: scale(0.95);
-    opacity: 0;
-  }
-  to {
-    transform: scale(1);
-    opacity: 1;
-  }
+/* === LOADING === */
+.loading {
+  font-size: 1.2rem;
+  color: white;
+  text-align: center;
+  padding-top: 120px;
 }
