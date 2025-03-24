@@ -1,0 +1,20 @@
+.layoutWrapper {
+  width: 100vw;
+  height: 100vh;
+  max-width: 100vw;
+  max-height: 100vh;
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: inherit;
+}
+
+.mainContent {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: clamp(72px, 8vh, 96px) clamp(16px, 4vw, 32px) clamp(88px, 10vh, 120px);
+  box-sizing: border-box;
+  height: 100%;
+}
