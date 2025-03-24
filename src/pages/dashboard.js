@@ -51,8 +51,12 @@ export default function Dashboard() {
   const networks = useMemo(() => networksData, []);
 
   const totalEUR = useMemo(() => {
-    return Object.values(balances).reduce((sum, b) => sum + parseFloat(b.eur), 0).toFixed(2);
-  }, [balances]);
+    return loading
+      ? "0.00"
+      : Object.values(balances)
+          .reduce((sum, b) => sum + parseFloat(b.eur), 0)
+          .toFixed(2);
+  }, [balances, loading]);
 
   if (!user || !address) return null;
 
@@ -60,9 +64,7 @@ export default function Dashboard() {
     <div className={styles.container}>
       <div className={styles.totalBalanceBox}>
         <div className={styles.totalLabel}>TOTAL VALUE</div>
-        <div className={styles.totalValue}>
-          € {loading ? "0.00" : totalEUR}
-        </div>
+        <div className={styles.totalValue}>€ {totalEUR}</div>
       </div>
 
       <div className={styles.assetList}>
@@ -89,7 +91,7 @@ export default function Dashboard() {
 
               <div className={styles.assetBalance}>
                 {!loading && `${bal.amount} ${net.symbol}`}
-                <div className={styles.assetEur}>€ {bal.eur}</div>
+                <div className={styles.assetEur}>€ {!loading && bal.eur}</div>
               </div>
             </div>
           );
