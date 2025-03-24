@@ -46,21 +46,21 @@
 
 .assetItem {
   width: 100%;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 20px;
   padding: 16px 24px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  backdrop-filter: blur(14px);
-  box-shadow: 0 0 16px rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(16px);
+  box-shadow: 0 0 18px rgba(255, 255, 255, 0.07);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .assetItem:hover {
   transform: scale(1.015);
-  box-shadow: 0 0 24px rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 26px rgba(255, 255, 255, 0.1);
 }
 
 .assetLeft {
@@ -70,31 +70,43 @@
 }
 
 .assetLogo {
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
-  object-fit: contain;
   background: white;
   padding: 4px;
-  width: 36px;
-  height: 36px;
+  object-fit: contain;
+  box-shadow: 0 0 4px rgba(255,255,255,0.3);
 }
 
 .assetText {
   display: flex;
   flex-direction: column;
+  justify-content: center;
 }
 
 .assetSymbol {
   font-size: clamp(16px, 2vw, 20px);
-  font-weight: 600;
+  font-weight: 700;
+  line-height: 1;
 }
 
 .assetName {
-  font-size: clamp(12px, 1.5vw, 14px);
-  opacity: 0.7;
+  font-size: clamp(12px, 1.5vw, 13px);
+  opacity: 0.65;
+  font-weight: 400;
 }
 
 .assetBalance {
-  font-size: clamp(16px, 2vw, 20px);
-  font-weight: 500;
+  display: flex;
+  flex-direction: column;
   text-align: right;
+  font-size: clamp(16px, 2vw, 20px);
+  font-weight: 600;
+}
+
+.assetEur {
+  font-size: 14px;
+  opacity: 0.6;
+  margin-top: 4px;
 }
