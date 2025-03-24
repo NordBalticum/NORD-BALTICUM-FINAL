@@ -1,63 +1,56 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { useRouter } from "next/router";
-import { useState } from "react";
 import { useMagicLink } from "@/contexts/MagicLinkContext";
-import styles from "@/components/sidedrawer.module.css";
+import styles from "./sideDrawer.module.css";
+import { useState } from "react";
+import { FaBars, FaTimes } from "react-icons/fa";
 
 export default function SideDrawer() {
-  const { signOut } = useMagicLink();
   const router = useRouter();
   const { pathname } = router;
-
+  const { signOut } = useMagicLink();
   const [open, setOpen] = useState(false);
 
+  const toggleDrawer = () => setOpen(!open);
+
   const navItems = [
-    { label: "Dashboard", href: "/dashboard" },
-    { label: "Send", href: "/send" },
-    { label: "Receive", href: "/receive" },
+    { label: "Dashboard", path: "/dashboard" },
+    { label: "Send", path: "/send" },
+    { label: "Receive", path: "/receive" },
+    { label: "Transactions", path: "/transactions" },
   ];
 
   if (pathname === "/") return null;
 
   return (
     <>
-      <div className={styles.hamburger} onClick={() => setOpen(!open)} aria-label="Toggle menu">
-        <span />
-        <span />
-        <span />
+      <div className={styles.hamburger} onClick={toggleDrawer}>
+        <FaBars size={22} />
       </div>
 
       <aside className={`${styles.drawer} ${open ? styles.open : ""}`}>
-        <div className={styles.header}>
-          <Image
-            src="/icons/logo.svg"
-            alt="NordBalticum Logo"
-            width={48}
-            height={48}
-            className={styles.logo}
-            onClick={() => router.push("/dashboard")}
-          />
-          <button className={styles.closeBtn} onClick={() => setOpen(false)}>×</button>
+        <div className={styles.drawerHeader}>
+          <FaTimes className={styles.closeIcon} onClick={toggleDrawer} />
         </div>
 
-        <nav className={styles.menu}>
+        <nav className={styles.nav}>
           {navItems.map((item) => (
-            <Link key={item.href} href={item.href} passHref>
-              <button
-                className={`${styles.menuItem} ${pathname === item.href ? styles.active : ""}`}
-                onClick={() => setOpen(false)}
-              >
-                {item.label}
-              </button>
+            <Link
+              key={item.path}
+              href={item.path}
+              className={`${styles.link} ${pathname === item.path ? styles.active : ""}`}
+              onClick={() => setOpen(false)}
+            >
+              {item.label}
             </Link>
           ))}
+          <button className={styles.logout} onClick={signOut}>Sign Out</button>
         </nav>
-
-        <button onClick={signOut} className={styles.signout}>Sign Out</button>
       </aside>
+
+      {open && <div className={styles.backdrop} onClick={toggleDrawer} />}
     </>
   );
 }
