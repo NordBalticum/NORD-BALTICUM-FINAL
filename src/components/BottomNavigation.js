@@ -1,5 +1,3 @@
-// src/components/BottomNavigation.js
-
 import React from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
@@ -18,14 +16,18 @@ const BottomNavigation = () => {
   ];
 
   return (
-    <nav className={styles.bottomNav}>
+    <nav className={styles.bottomNav} role="navigation" aria-label="Bottom navigation">
       {navItems.map(({ href, icon, label }) => {
         const isActive = router.pathname === href;
         return (
-          <Link href={href} key={href} passHref>
-            <button className={`${styles.navButton} ${isActive ? styles.active : ''}`}>
+          <Link href={href} key={href} passHref legacyBehavior>
+            <button
+              type="button"
+              className={`${styles.navButton} ${isActive ? styles.active : ''}`}
+              aria-label={label}
+            >
               <span className={styles.icon}>{icon}</span>
-              {label}
+              <span>{label}</span>
             </button>
           </Link>
         );
