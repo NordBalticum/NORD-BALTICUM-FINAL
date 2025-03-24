@@ -1,124 +1,86 @@
-.receiveWrapper {
-  max-width: 720px;
+.container {
   width: 100%;
-  padding: clamp(1.8rem, 4vw, 3rem);
-  border-radius: 22px;
-  background: rgba(255, 255, 255, 0.035);
-  backdrop-filter: blur(22px);
-  box-shadow: 0 0 42px rgba(0, 255, 204, 0.08);
-  text-align: center;
-  animation: fadeIn 0.7s ease-in-out;
-  box-sizing: border-box;
-  margin: 0 auto;
+  min-height: 100vh;
+  padding: clamp(24px, 4vw, 48px);
+  background: radial-gradient(circle at center, rgba(10,18,42,1), rgba(27,35,112,0.98), rgba(43,55,255,0.95));
+  color: white;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .title {
-  font-size: clamp(2rem, 4vw, 2.8rem);
-  margin-bottom: clamp(1.4rem, 3vw, 2.2rem);
+  font-size: clamp(22px, 4vw, 32px);
   font-weight: 700;
-  text-transform: uppercase;
-  color: var(--main-white);
-  text-shadow: 0 2px 6px rgba(255, 255, 255, 0.2);
+  margin-bottom: 32px;
+  background: linear-gradient(90deg, #fff, #ffd700);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
-.qrContainer {
-  margin-top: clamp(1rem, 2.4vw, 1.8rem);
-  padding: clamp(1rem, 2.4vw, 1.6rem);
-  border-radius: 18px;
-  background: rgba(255, 255, 255, 0.06);
-  transition: all 0.3s ease-in-out;
+.card {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 20px;
+  padding: 32px;
+  backdrop-filter: blur(16px);
+  box-shadow: 0 0 24px rgba(255, 255, 255, 0.08);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  max-width: 420px;
+  width: 100%;
+}
+
+.qrBox {
+  background: white;
+  padding: 12px;
+  border-radius: 12px;
   cursor: pointer;
-  box-shadow: 0 0 14px rgba(255, 255, 255, 0.05);
-}
-.qrContainer:hover {
-  transform: scale(1.02);
-  box-shadow: 0 0 18px rgba(0, 255, 200, 0.25);
-}
-.qrContainer.copied {
-  box-shadow: 0 0 24px rgba(0, 255, 200, 0.4);
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.2);
 }
 
-.qrCode {
-  border-radius: 14px;
-  margin: 0 auto;
-  display: block;
-  width: clamp(160px, 24vw, 220px);
-  height: auto;
-}
-
-.qrText {
-  margin-top: clamp(1rem, 2.2vw, 1.6rem);
-  font-size: clamp(0.95rem, 1.2vw, 1.1rem);
-  font-family: monospace;
-  color: #ffffff;
-  font-weight: 600;
-  word-break: break-word;
-  line-height: 1.5;
-  text-shadow: 0 0 5px rgba(255, 255, 255, 0.1);
+.addressText {
+  word-break: break-all;
+  text-align: center;
+  font-size: 16px;
+  cursor: pointer;
+  opacity: 0.9;
 }
 
 .copyFeedback {
-  margin-top: 0.4rem;
-  font-size: clamp(0.85rem, 1vw, 1rem);
-  color: #999999;
-  font-weight: 500;
-  transition: color 0.3s ease;
-}
-.copyFeedback.copied {
-  color: #00ffc8;
-}
-
-.balanceText {
-  margin-top: clamp(1.6rem, 3vw, 2.4rem);
-  font-weight: 700;
-  font-size: clamp(1.1rem, 1.6vw, 1.4rem);
-  color: #00ffc8;
-  text-shadow: 0 0 6px rgba(0, 255, 200, 0.25);
+  font-size: 14px;
+  opacity: 0.6;
 }
 
 .networkInfo {
-  margin-top: clamp(1.2rem, 2.6vw, 2rem);
-  font-size: clamp(0.9rem, 1vw, 1.05rem);
-  color: #cccccc;
   display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
+  gap: 8px;
+  font-size: 14px;
+  opacity: 0.8;
 }
 
-.select {
-  background-color: #000;
-  color: white;
-  padding: 12px 18px;
-  font-size: 1rem;
-  border-radius: 12px;
-  border: 1px solid #555;
-  transition: all 0.3s ease;
-}
-.select:focus {
-  outline: none;
-  border-color: white;
-  background: #111;
+.label {
+  font-weight: 600;
 }
 
-.copyButton {
-  margin-top: clamp(1.2rem, 1.4vw, 1.6rem);
-  background: #ffffff;
-  color: #0A122A;
-  font-weight: 700;
-  padding: clamp(0.7rem, 1.6vw, 1rem) clamp(1.4rem, 3vw, 2rem);
-  border-radius: 12px;
-  font-size: clamp(0.9rem, 1vw, 1.1rem);
-  border: none;
-  cursor: pointer;
-  transition: all 0.3s ease-in-out;
-}
-.copyButton:hover {
-  background: #00ffc8;
-  color: #000000;
-  box-shadow: 0 0 14px rgba(0, 255, 200, 0.4);
+.networkValue {
+  font-weight: 500;
+  text-transform: uppercase;
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(16px); }
-  to   { opacity: 1; transform: translateY(0); }
+.balanceBox {
+  margin-top: 12px;
+  font-size: 14px;
+  opacity: 0.85;
+}
+
+.balanceLabel {
+  font-weight: 600;
+}
+
+.balanceValue {
+  font-weight: 500;
+  margin-left: 6px;
 }
