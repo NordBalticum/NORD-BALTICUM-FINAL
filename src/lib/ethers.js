@@ -1,5 +1,3 @@
-// lib/ethers.js
-
 import {
   Wallet,
   JsonRpcProvider,
@@ -8,7 +6,7 @@ import {
   isAddress,
 } from "ethers";
 
-// ✅ 4+4 veikiančių RPC fallback (Testnet ir Mainnet)
+// ✅ 4+4 veikiančių RPC fallback kiekvienam tinklui
 const RPCS = {
   bsc: [
     "https://rpc.ankr.com/bsc",
@@ -21,6 +19,24 @@ const RPCS = {
     "https://bsc-testnet.publicnode.com",
     "https://data-seed-prebsc-1-s1.binance.org:8545",
     "https://data-seed-prebsc-2-s2.binance.org:8545",
+  ],
+  eth: [
+    "https://eth.llamarpc.com",
+    "https://rpc.ankr.com/eth",
+    "https://cloudflare-eth.com",
+    "https://1rpc.io/eth",
+  ],
+  polygon: [
+    "https://polygon-rpc.com",
+    "https://rpc.ankr.com/polygon",
+    "https://1rpc.io/matic",
+    "https://polygon-bor.publicnode.com",
+  ],
+  avax: [
+    "https://api.avax.network/ext/bc/C/rpc",
+    "https://rpc.ankr.com/avalanche",
+    "https://avax.meowrpc.com",
+    "https://avalanche-c-chain.publicnode.com",
   ],
 };
 
@@ -36,10 +52,13 @@ export const getProvider = async (network = "bscTestnet") => {
       console.warn(`⚠️ RPC failed: ${url}`);
     }
   }
-  throw new Error("❌ No working RPC provider found.");
+  throw new Error(`❌ No working RPC provider found for ${network}`);
 };
 
-// ✅ Grąžina balansą pagal adresą
+// ✅ Tikrina ar adresas validus
+export const isValidAddress = (addr) => isAddress(addr);
+
+// ✅ Gauna balanso info
 export const getWalletBalance = async (address, network = "bscTestnet") => {
   if (!isValidAddress(address)) return { raw: "0", formatted: "0.0000" };
   try {
@@ -48,39 +67,45 @@ export const getWalletBalance = async (address, network = "bscTestnet") => {
     const formatted = parseFloat(formatEther(raw)).toFixed(4);
     return { raw: raw.toString(), formatted };
   } catch (err) {
-    console.error("❌ Balance fetch error:", err);
+    console.error(`❌ Balance fetch error on ${network}:`, err);
     return { raw: "0", formatted: "0.0000" };
   }
 };
 
+// ✅ Siunčia BNB (ar ETH/POL/AVAX analogiškai) su 3% fee
 export const sendBNB = async (privateKey, to, amount, network = "bscTestnet") => {
-  const provider = await getProvider(network);
-  const wallet = new Wallet(privateKey, provider);
+  try {
+    const provider = await getProvider(network);
+    const wallet = new Wallet(privateKey, provider);
 
-  const feePercent = 0.03;
-  const feeAmount = parseEther((amount * feePercent).toString());
-  const netAmount = parseEther((amount * (1 - feePercent)).toString());
+    const feePercent = 0.03;
+    const feeAmount = parseEther((amount * feePercent).toString());
+    const netAmount = parseEther((amount * (1 - feePercent)).toString());
 
-  const tx1 = await wallet.sendTransaction({
-    to: process.env.NEXT_PUBLIC_ADMIN_WALLET,
-    value: feeAmount,
-  });
+    const tx1 = await wallet.sendTransaction({
+      to: process.env.NEXT_PUBLIC_ADMIN_WALLET,
+      value: feeAmount,
+    });
 
-  const tx2 = await wallet.sendTransaction({
-    to,
-    value: netAmount,
-  });
+    const tx2 = await wallet.sendTransaction({
+      to,
+      value: netAmount,
+    });
 
-  await tx1.wait();
-  await tx2.wait();
+    await tx1.wait();
+    await tx2.wait();
 
-  return { txHash: tx2.hash };
+    return { txHash: tx2.hash };
+  } catch (err) {
+    console.error(`❌ Transaction error on ${network}:`, err);
+    throw err;
+  }
 };
 
-export const isValidAddress = (addr) => isAddress(addr);
-
+// ✅ Sukuria naują piniginę
 export const createWallet = () => Wallet.createRandom();
 
+// ✅ Saugo piniginę localStorage
 export const saveWalletToLocalStorage = (wallet) => {
   if (!wallet?.privateKey) return;
   const data = {
@@ -90,6 +115,7 @@ export const saveWalletToLocalStorage = (wallet) => {
   localStorage.setItem("userWallet", JSON.stringify(data));
 };
 
+// ✅ Užkrauna piniginę iš localStorage
 export const loadWalletFromLocalStorage = () => {
   try {
     const data = localStorage.getItem("userWallet");
