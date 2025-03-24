@@ -2,8 +2,8 @@
 
 import { useRouter } from "next/router";
 import { useEffect } from "react";
-import SideDrawer from "@/SideDrawer";
-import BottomNav from "@/BottomNav";
+import SideDrawer from "@/components/SideDrawer";
+import BottomNav from "@/components/BottomNav";
 import styles from "@/components/layout.module.css";
 
 export default function Layout({ children }) {
