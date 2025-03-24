@@ -2,9 +2,7 @@
   position: fixed;
   top: 0;
   left: 0;
-  width: 100vw !important;
-  max-width: 100vw !important;
-  min-width: 100vw;
+  right: 0;
   height: clamp(68px, 7.5vh, 96px);
   background: rgba(15, 20, 40, 0.88);
   backdrop-filter: blur(22px);
@@ -12,7 +10,13 @@
   z-index: 9999;
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
   box-shadow: 0 8px 28px rgba(0, 0, 0, 0.2);
-  overflow-x: visible;
+  overflow-x: auto;
+  overflow-y: hidden;
+  width: 100%;
+  min-width: 100%;
+  max-width: 100%;
+  white-space: nowrap;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* === Apvado animacija – Luxury Shine Border === */
