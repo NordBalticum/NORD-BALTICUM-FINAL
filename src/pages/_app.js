@@ -1,7 +1,7 @@
 import "@/styles/globals.css";
 import "@/styles/theme.css";
 import { MagicLinkProvider } from "@/contexts/MagicLinkContext";
-import { BalanceProviderEthers } from "@/contexts/BalanceProviderEthers";
+import { BalanceProvider } from "@/contexts/BalanceContext";
 import Layout from "@/components/Layout";
 import Head from "next/head";
 
@@ -16,11 +16,11 @@ export default function App({ Component, pageProps }) {
       </Head>
 
       <MagicLinkProvider>
-        <BalanceProviderEthers>
+        <BalanceProvider>
           <Layout>
             <Component {...pageProps} />
           </Layout>
-        </BalanceProviderEthers>
+        </BalanceProvider>
       </MagicLinkProvider>
     </>
   );
