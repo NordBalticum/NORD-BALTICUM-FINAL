@@ -1,166 +1,193 @@
-/* ========== Premium Dashboard Styles ========== */
-
-.wrapper {
+.dashboardContainer {
+  width: 100vw;
+  min-height: 100vh;
+  padding-top: clamp(68px, 7.5vh, 96px);
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-start;
-  padding: clamp(24px, 4vw, 48px);
-  max-width: 1280px;
-  margin: 0 auto;
-  width: 100%;
+  background: inherit;
+  overflow-x: hidden;
   box-sizing: border-box;
 }
 
+.wrapper {
+  width: 100%;
+  max-width: 1440px;
+  padding: clamp(2rem, 4vw, 4rem);
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  animation: fadeIn 0.5s ease;
+}
+
 .welcome {
-  font-size: clamp(1.8rem, 2.5vw, 2.8rem);
+  font-size: clamp(2rem, 2.5vw, 3rem);
   font-weight: 700;
   color: white;
   text-align: center;
-  margin-bottom: 1rem;
-  line-height: 1.4;
-  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+  margin-bottom: 1.2rem;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
 }
 
 .email {
-  font-size: clamp(1rem, 1.8vw, 1.3rem);
+  font-size: clamp(1rem, 1.4vw, 1.3rem);
   font-weight: 400;
-  opacity: 0.8;
-  color: #cfcfcf;
+  color: #ccc;
+  opacity: 0.85;
 }
 
 .card {
   background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 18px;
-  padding: clamp(1.5rem, 3vw, 2rem);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  width: 100%;
-  max-width: 620px;
+  padding: clamp(1.4rem, 3vw, 2rem);
   margin-top: 2rem;
-  box-shadow: 0 0 24px rgba(0, 0, 0, 0.2);
+  width: 100%;
+  max-width: 640px;
+  box-shadow: 0 0 32px rgba(0, 0, 0, 0.2);
 }
 
 .label {
   font-size: 0.9rem;
+  text-transform: uppercase;
   color: #aaa;
   margin-bottom: 0.5rem;
-  display: block;
-  text-transform: uppercase;
-  letter-spacing: 1px;
 }
 
 .addressBox {
   background: rgba(255, 255, 255, 0.05);
-  padding: 12px 16px;
-  border-radius: 10px;
-  margin-bottom: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 14px 18px;
+  border-radius: 12px;
+  margin-bottom: 1.2rem;
   cursor: pointer;
-  transition: all 0.2s ease;
   user-select: all;
-  border: 1px solid rgba(255, 255, 255, 0.05);
   text-align: center;
+  transition: all 0.25s ease;
 }
 
 .addressBox:hover {
-  transform: scale(1.01);
   background: rgba(255, 255, 255, 0.08);
+  transform: scale(1.02);
 }
 
 .address {
   font-family: monospace;
   font-size: 0.92rem;
-  color: #f3f3f3;
   word-break: break-word;
-  word-wrap: break-word;
+  color: #f3f3f3;
 }
 
 .networkSelector {
-  margin: 1.2rem 0;
+  margin: 1.4rem 0;
 }
 
 .select {
-  background-color: #000;
-  color: #fff;
-  padding: 10px 16px;
-  font-size: 1rem;
-  border: 1px solid #444;
-  border-radius: 10px;
   width: 100%;
+  padding: 12px 16px;
+  font-size: 1rem;
+  border-radius: 12px;
+  background: black;
+  color: white;
+  border: 1px solid #444;
   transition: all 0.3s ease;
 }
 
 .select:focus {
   outline: none;
-  border-color: #fff;
-  background-color: #111;
+  border-color: white;
+  background: #111;
 }
 
 .balanceBox {
-  margin-top: 1.4rem;
+  margin-top: 1.6rem;
+  padding: 1.2rem;
+  border-radius: 14px;
   background: rgba(255, 255, 255, 0.06);
-  border-radius: 12px;
-  padding: 1rem 1.2rem;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  font-size: 1.4rem;
-  font-weight: 600;
-  color: white;
-  text-shadow: 0 0 4px rgba(255, 255, 255, 0.2);
+  text-align: center;
+  box-shadow: 0 0 18px rgba(255, 255, 255, 0.1);
 }
 
 .balanceLabel {
   font-size: 0.9rem;
-  font-weight: 400;
-  opacity: 0.6;
-  margin-bottom: 4px;
+  opacity: 0.65;
 }
 
 .balanceValue {
-  font-size: 1.8rem;
+  font-size: 1.9rem;
   font-weight: bold;
+  color: white;
+  margin-top: 4px;
 }
 
 .actions {
   display: flex;
   justify-content: center;
-  gap: 1.5rem;
-  margin-top: 2.5rem;
+  align-items: center;
+  margin-top: 3rem;
+  gap: 2rem;
   flex-wrap: wrap;
 }
 
 .actionButton {
-  background-color: #000;
-  color: white;
-  border: 2px solid white;
-  border-radius: 14px;
-  padding: 12px 24px;
-  font-size: 1rem;
+  padding: 14px 26px;
+  font-size: 1.1rem;
   font-weight: 600;
+  border: 2px solid white;
+  border-radius: 16px;
+  background: black;
+  color: white;
   cursor: pointer;
-  transition: all 0.3s ease;
-  width: clamp(160px, 30vw, 220px);
-  text-align: center;
   box-shadow: 0 0 14px rgba(255, 255, 255, 0.1);
+  transition: all 0.3s ease;
+  min-width: 180px;
+  text-align: center;
 }
 
 .actionButton:hover {
-  background-color: white;
-  color: #000;
+  background: white;
+  color: black;
   transform: scale(1.05);
 }
 
 .loading {
-  font-size: 1.5rem;
-  color: white;
+  font-size: 1.4rem;
   text-align: center;
+  color: white;
   margin-top: 3rem;
-  animation: pulse 1.5s infinite ease-in-out;
+  animation: pulse 1.4s infinite ease-in-out;
 }
 
 @keyframes pulse {
   0% { opacity: 0.4; }
   50% { opacity: 1; }
   100% { opacity: 0.4; }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* === Media Fixes 8K to mobile === */
+@media (max-width: 1600px) {
+  .wrapper { padding: 2rem 3rem; }
+}
+@media (max-width: 1200px) {
+  .wrapper { padding: 2rem; }
+}
+@media (max-width: 992px) {
+  .actionButton { min-width: 160px; }
+}
+@media (max-width: 768px) {
+  .wrapper { padding: 1.5rem; }
+  .actionButton { width: 100%; max-width: 280px; }
+}
+@media (max-width: 480px) {
+  .welcome { font-size: 2rem; }
+  .card { padding: 1.2rem; }
+  .select { font-size: 0.95rem; }
+  .addressBox { padding: 12px; }
 }
