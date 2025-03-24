@@ -46,22 +46,22 @@ export default function Dashboard() {
     if (!user || !address) {
       router.push("/");
     }
-
-    return () => {
-      // cleanup jei papildomai naudosim interval/us
-    };
   }, [user, address]);
 
   const networks = useMemo(() => networksData, []);
+
+  const totalEUR = useMemo(() => {
+    return Object.values(balances).reduce((sum, b) => sum + parseFloat(b.eur), 0).toFixed(2);
+  }, [balances]);
 
   if (!user || !address) return null;
 
   return (
     <div className={styles.container}>
-      <div className={styles.headerBox}>
-        <div className={styles.walletLabel}>WALLET</div>
-        <div className={styles.walletAddress}>
-          {address.slice(0, 6)}...{address.slice(-4)}
+      <div className={styles.totalBalanceBox}>
+        <div className={styles.totalLabel}>TOTAL VALUE</div>
+        <div className={styles.totalValue}>
+          € {loading ? "0.00" : totalEUR}
         </div>
       </div>
 
@@ -78,6 +78,8 @@ export default function Dashboard() {
                   width={36}
                   height={36}
                   className={styles.assetLogo}
+                  loading="eager"
+                  unoptimized
                 />
                 <div className={styles.assetText}>
                   <div className={styles.assetSymbol}>{net.symbol}</div>
@@ -86,7 +88,7 @@ export default function Dashboard() {
               </div>
 
               <div className={styles.assetBalance}>
-                {loading ? "..." : `${bal.amount} ${net.symbol}`}
+                {!loading && `${bal.amount} ${net.symbol}`}
                 <div className={styles.assetEur}>€ {bal.eur}</div>
               </div>
             </div>
