@@ -1,10 +1,10 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React from "react";
 import styles from "@/styles/dashboard.module.css";
-import { useMagic } from "@/contexts/MagicLinkContext";
 import { useRouter } from "next/navigation";
+import { useMagic } from "@/contexts/MagicLinkContext";
+import { useBalance } from "@/contexts/BalanceContext";
 import Image from "next/image";
-import { fetchBalancesForAllChains } from "@/utils/fetchBalancesForAllChains";
 
 const networks = [
   {
@@ -37,26 +37,12 @@ const networks = [
 export default function Dashboard() {
   const router = useRouter();
   const { user, publicAddress } = useMagic();
-  const [balances, setBalances] = useState({});
+  const { balances, loading } = useBalance();
 
-  const loadBalances = async () => {
-    if (publicAddress) {
-      const data = await fetchBalancesForAllChains(publicAddress);
-      setBalances(data);
-    }
-  };
-
-  useEffect(() => {
-    if (!user) {
-      router.push("/");
-    } else {
-      loadBalances();
-      const interval = setInterval(loadBalances, 10000);
-      return () => clearInterval(interval);
-    }
-  }, [user, publicAddress]);
-
-  if (!user) return null;
+  if (!user) {
+    router.push("/");
+    return null;
+  }
 
   return (
     <div className={styles.container}>
@@ -86,8 +72,8 @@ export default function Dashboard() {
                 </div>
               </div>
               <div className={styles.assetBalance}>
-                {bal.amount} {net.symbol}
-                <div style={{ fontSize: "14px", opacity: 0.6 }}>€ {bal.eur}</div>
+                {loading ? "..." : `${bal.amount} ${net.symbol}`}
+                <div className={styles.assetEur}>€ {bal.eur}</div>
               </div>
             </div>
           );
