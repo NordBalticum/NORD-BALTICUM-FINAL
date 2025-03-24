@@ -1,39 +1,25 @@
-// ✅ Global Styles – CSS hierarchy
 import "@/styles/globals.css";
 import "@/styles/theme.css";
-
-// ✅ Contexts
 import { MagicLinkProvider } from "@/contexts/MagicLinkContext";
 import { BalanceProviderEthers } from "@/contexts/BalanceProviderEthers";
-
-// ✅ Head – Favicon, Metadata, Scaling, SEO
+import Layout from "@/components/layout";
 import Head from "next/head";
 
-export default function MyApp({ Component, pageProps }) {
+export default function App({ Component, pageProps }) {
   return (
     <>
       <Head>
-        <meta
-          name="viewport"
-          content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
-        />
-        <meta name="description" content="NordBalticum – Ultra Secure Web3 Bank" />
-        <meta name="theme-color" content="#0A1F44" />
-        <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-        <meta name="format-detection" content="telephone=no" />
         <title>NordBalticum</title>
-        <link rel="icon" href="/icons/logo.png" type="image/png" />
-        <link rel="apple-touch-icon" href="/icons/logo.png" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+        <meta name="theme-color" content="#0A1F44" />
+        <link rel="icon" href="/icons/logo.png" />
       </Head>
 
-      {/* ✅ Global Context Wrappers */}
       <MagicLinkProvider>
         <BalanceProviderEthers>
-          {/* ✅ Main content be Navbar */}
-          <main>
+          <Layout>
             <Component {...pageProps} />
-          </main>
+          </Layout>
         </BalanceProviderEthers>
       </MagicLinkProvider>
     </>
