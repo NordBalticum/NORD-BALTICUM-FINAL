@@ -1,192 +1,202 @@
+/* === WRAPPER === */
 .wrapper {
   width: 100%;
   max-width: var(--max-width);
   padding: var(--main-padding);
+  padding-bottom: calc(var(--nav-height) + 2rem);
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  gap: 24px;
-  padding-bottom: calc(var(--nav-height) + 2rem);
+  gap: 28px;
 }
 
+/* === TITLE === */
 .title {
-  font-size: clamp(24px, 4vw, 36px);
-  font-weight: 700;
+  font-size: clamp(28px, 5vw, 40px);
+  font-weight: 800;
   color: white;
   text-align: center;
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.25);
   margin-bottom: 4px;
-  text-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
 }
 
+/* === NETWORK TEXT === */
 .networkText {
   font-size: 0.95rem;
   font-weight: 500;
   opacity: 0.75;
+  text-align: center;
   margin-bottom: 12px;
 }
 
+/* === CARD CONTAINER === */
 .card {
   width: 100%;
   max-width: 520px;
   background: var(--glass-bg);
+  backdrop-filter: blur(30px);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 20px;
-  backdrop-filter: blur(24px);
+  border-radius: 22px;
   padding: clamp(24px, 4vw, 32px);
+  box-shadow: 0 0 32px rgba(255, 255, 255, 0.08);
   display: flex;
   flex-direction: column;
-  gap: 18px;
-  box-shadow: 0 0 24px rgba(255, 255, 255, 0.08);
+  gap: 20px;
 }
 
+/* === FROM SECTION === */
 .fromBlock {
-  font-size: 0.9rem;
+  font-size: 0.92rem;
   color: white;
-  line-height: 1.4;
+  word-break: break-all;
+  line-height: 1.5;
 }
-
 .fromBalance {
-  display: block;
   margin-top: 6px;
   font-size: 0.85rem;
   opacity: 0.75;
 }
 
+/* === SELECT / INPUT === */
 .select {
-  border-radius: 12px;
-  overflow: hidden;
+  border-radius: 14px;
   font-size: 0.95rem;
   background: transparent;
+  overflow: hidden;
 }
 
 .input {
-  padding: 14px 18px;
-  border-radius: 14px;
+  padding: 16px 20px;
+  border-radius: 16px;
+  font-size: 1rem;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
   color: white;
-  font-size: 1rem;
   transition: var(--transition);
 }
 
 .input:focus {
   outline: none;
-  background: rgba(255, 255, 255, 0.08);
   border-color: white;
-  box-shadow: 0 0 12px rgba(255, 255, 255, 0.2);
+  box-shadow: 0 0 16px rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.06);
 }
 
+/* === BUTTON === */
 .sendButton {
   background: black;
   color: white;
   border: 1px solid white;
-  padding: 14px;
-  border-radius: 14px;
-  font-size: 1rem;
-  font-weight: 600;
+  padding: 16px;
+  border-radius: 16px;
+  font-size: 1.05rem;
+  font-weight: 700;
   cursor: pointer;
   transition: var(--transition);
   text-transform: uppercase;
 }
-
 .sendButton:hover {
-  transform: scale(1.05);
-  box-shadow: 0 0 14px var(--white-gold);
+  transform: scale(1.06);
+  box-shadow: 0 0 20px var(--white-gold);
 }
 
+/* === STATUS === */
 .success {
   color: #aaffaa;
   font-size: 0.9rem;
-  margin-top: 8px;
   text-align: center;
 }
-
 .error {
   color: #ff6b6b;
   font-size: 0.9rem;
-  margin-top: 8px;
   text-align: center;
 }
-
 .loading {
-  font-size: 1.2rem;
   color: white;
+  font-size: 1.2rem;
   text-align: center;
   padding-top: 120px;
 }
 
-/* --- Modal --- */
+/* === MODAL === */
 .modal {
   position: fixed;
   top: 0;
   left: 0;
   width: 100vw;
   height: 100vh;
-  backdrop-filter: blur(12px);
+  backdrop-filter: blur(18px);
   background: rgba(0, 0, 0, 0.6);
   z-index: 9999;
   display: flex;
   align-items: center;
   justify-content: center;
 }
-
 .modalContent {
   background: #0a122a;
   color: white;
-  border-radius: 18px;
-  padding: 32px;
-  width: 90%;
-  max-width: 420px;
+  padding: 36px;
+  border-radius: 22px;
+  width: 92%;
+  max-width: 440px;
   text-align: center;
-  box-shadow: 0 0 24px rgba(255, 255, 255, 0.1);
+  box-shadow: 0 0 28px rgba(255, 255, 255, 0.15);
+  animation: zoomIn 0.25s ease-out forwards;
 }
-
 .cancelButton {
-  margin-top: 12px;
+  margin-top: 16px;
   background: transparent;
   color: white;
   border: 1px solid #888;
-  border-radius: 12px;
-  padding: 10px;
+  border-radius: 14px;
+  padding: 10px 14px;
   font-size: 0.9rem;
   cursor: pointer;
   transition: var(--transition);
 }
-
 .cancelButton:hover {
   background: rgba(255, 255, 255, 0.06);
 }
 
-/* --- Custom react-select option --- */
+/* === SELECT OPTIONS === */
 .option {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 10px;
+  gap: 14px;
+  padding: 12px;
   background: rgba(255, 255, 255, 0.03);
-  border-radius: 10px;
+  border-radius: 14px;
+  transition: background 0.2s ease;
   cursor: pointer;
 }
-
 .option:hover {
   background: rgba(255, 255, 255, 0.08);
 }
-
 .optionIcon {
-  width: 28px;
-  height: 28px;
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
   object-fit: contain;
 }
-
 .optionLabel {
   font-weight: 600;
-  font-size: 0.95rem;
+  font-size: 1rem;
 }
-
 .optionBalance {
   font-size: 0.85rem;
   opacity: 0.7;
+}
+
+/* === ANIMATION === */
+@keyframes zoomIn {
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
