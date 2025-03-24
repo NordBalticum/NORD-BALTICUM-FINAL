@@ -1,4 +1,4 @@
-"use client";
+m"use client";
 
 import { useEffect } from "react";
 import { useRouter } from "next/router";
@@ -19,14 +19,14 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (!user || !wallet) {
-      const timeout = setTimeout(() => router.push("/"), 1000);
+      const timeout = setTimeout(() => router.push("/"), 800);
       return () => clearTimeout(timeout);
     }
   }, [user, wallet, router]);
 
   if (!user || !wallet) {
     return (
-      <div className={styles.loading} role="status">
+      <div className={styles.loading}>
         Loading your dashboard...
       </div>
     );
@@ -37,7 +37,7 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="fullscreenContainer" role="main">
+    <div className={styles.dashboardContainer}>
       <Navbar />
       <div className={styles.wrapper}>
         <h1 className={styles.welcome}>
@@ -45,7 +45,7 @@ export default function Dashboard() {
           <span className={styles.email}>{user.email}</span>
         </h1>
 
-        <section className={styles.card} aria-labelledby="wallet-info">
+        <section className={styles.card}>
           <label className={styles.label}>Your Wallet Address</label>
           <div className={styles.addressBox} onClick={handleCopy} title="Click to copy">
             <p className={styles.address}>{wallet.address}</p>
@@ -65,9 +65,7 @@ export default function Dashboard() {
 
           <div className={styles.balanceBox}>
             <span className={styles.balanceLabel}>Your Balance:</span>
-            <span className={styles.balanceValue}>
-              {balance} BNB
-            </span>
+            <span className={styles.balanceValue}>{balance} BNB</span>
           </div>
         </section>
 
@@ -75,14 +73,12 @@ export default function Dashboard() {
           <button
             className={styles.actionButton}
             onClick={() => router.push("/send")}
-            aria-label="Send BNB"
           >
             🧾 SEND
           </button>
           <button
             className={styles.actionButton}
             onClick={() => router.push("/receive")}
-            aria-label="Receive BNB"
           >
             ✅ RECEIVE
           </button>
