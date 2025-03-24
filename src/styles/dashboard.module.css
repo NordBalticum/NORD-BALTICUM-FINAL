@@ -1,14 +1,17 @@
 .container {
-  width: 100%;
+  width: 100vw;
   height: 100vh;
   padding: clamp(24px, 4vw, 48px);
-  background: radial-gradient(circle at center, rgba(10,18,42,1), rgba(27,35,112,0.98), rgba(43,55,255,0.95));
+  background: radial-gradient(circle at center, rgba(5,12,26,1), rgba(18,28,66,0.98), rgba(30,45,135,0.95));
   color: white;
   display: flex;
   flex-direction: column;
   align-items: center;
   overflow: hidden;
-  -ms-overflow-style: none;
+  touch-action: none;
+  -ms-touch-action: none;
+  user-select: none;
+  overscroll-behavior: none;
   scrollbar-width: none;
 }
 
@@ -35,7 +38,6 @@
 .totalValue {
   font-size: clamp(28px, 3vw, 36px);
   font-weight: 700;
-  color: white;
   text-shadow: 0 0 12px rgba(255, 255, 255, 0.25);
   background: linear-gradient(90deg, #fff, #ffd700);
   -webkit-background-clip: text;
