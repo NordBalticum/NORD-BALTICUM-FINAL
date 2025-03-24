@@ -1,62 +1,37 @@
-/* === BOTTOM NAVIGATION – NordBalticum v2.0 LUXURY MODE === */
+// src/components/BottomNavigation.js
 
-.bottomNav {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  width: 100vw;
-  height: clamp(64px, 7vh, 88px);
-  background: linear-gradient(to top, rgba(10, 18, 42, 0.95), rgba(43, 63, 255, 0.1));
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  display: flex;
-  justify-content: space-around;
-  align-items: center;
-  z-index: 9999;
-  backdrop-filter: blur(22px);
-  box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.4);
-  padding-bottom: env(safe-area-inset-bottom);
-  transition: all 0.3s ease-in-out;
-}
+import React from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/router';
+import { FaWallet, FaClock, FaArrowDown, FaArrowUp, FaCog } from 'react-icons/fa';
+import styles from './bottomnavigation.module.css';
 
-/* === Nav Button === */
-.navButton {
-  flex: 1;
-  height: 100%;
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.6);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  background: transparent;
-  transition: all 0.25s ease-in-out;
-  text-shadow: 0 0 8px rgba(0, 0, 0, 0.3);
-  letter-spacing: 0.5px;
-  font-family: 'Poppins', sans-serif;
-}
+const BottomNavigation = () => {
+  const router = useRouter();
 
-.navButton:hover {
-  color: #ffffff;
-  transform: scale(1.06);
-  text-shadow: 0 0 12px var(--white-gold);
-}
+  const navItems = [
+    { href: '/dashboard', icon: <FaWallet />, label: 'Wallet' },
+    { href: '/transactions', icon: <FaClock />, label: 'History' },
+    { href: '/receive', icon: <FaArrowDown />, label: 'Receive' },
+    { href: '/send', icon: <FaArrowUp />, label: 'Send' },
+    { href: '/settings', icon: <FaCog />, label: 'Settings' },
+  ];
 
-/* === Icon Styling === */
-.icon {
-  font-size: 1.3rem;
-  margin-bottom: 4px;
-  color: inherit;
-  transition: transform 0.2s ease-in-out;
-}
+  return (
+    <nav className={styles.bottomNav}>
+      {navItems.map(({ href, icon, label }) => {
+        const isActive = router.pathname === href;
+        return (
+          <Link href={href} key={href} passHref>
+            <button className={`${styles.navButton} ${isActive ? styles.active : ''}`}>
+              <span className={styles.icon}>{icon}</span>
+              {label}
+            </button>
+          </Link>
+        );
+      })}
+    </nav>
+  );
+};
 
-.navButton:hover .icon {
-  transform: scale(1.15);
-}
-
-/* === Active Nav === */
-.active {
-  color: var(--white-gold);
-  text-shadow: 0 0 10px var(--gold-glow);
-}
+export default BottomNavigation;
