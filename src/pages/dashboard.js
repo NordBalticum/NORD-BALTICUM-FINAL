@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import styles from "@/styles/dashboard.module.css";
 import { useRouter } from "next/navigation";
 import { useMagicLink } from "@/contexts/MagicLinkContext";
@@ -38,25 +38,23 @@ const networksData = [
 export default function Dashboard() {
   const router = useRouter();
   const { user, wallet } = useMagicLink();
-  const { balances, loading } = useBalance();
-
+  const { balances } = useBalance();
   const address = wallet?.address || "";
 
+  const [cachedBalances, setCachedBalances] = useState({});
+  const [totalEUR, setTotalEUR] = useState("0.00");
+
   useEffect(() => {
-    if (!user || !address) {
-      router.push("/");
-    }
+    if (!user || !address) router.push("/");
   }, [user, address]);
 
-  const networks = useMemo(() => networksData, []);
+  useEffect(() => {
+    const total = Object.values(balances).reduce((sum, b) => sum + parseFloat(b.eur), 0).toFixed(2);
+    setCachedBalances(balances);
+    setTotalEUR(total);
+  }, [balances]);
 
-  const totalEUR = useMemo(() => {
-    return loading
-      ? "0.00"
-      : Object.values(balances)
-          .reduce((sum, b) => sum + parseFloat(b.eur), 0)
-          .toFixed(2);
-  }, [balances, loading]);
+  const networks = useMemo(() => networksData, []);
 
   if (!user || !address) return null;
 
@@ -69,7 +67,7 @@ export default function Dashboard() {
 
       <div className={styles.assetList}>
         {networks.map((net) => {
-          const bal = balances[net.symbol] || { amount: "0.0000", eur: "0.00" };
+          const bal = cachedBalances[net.symbol] || { amount: "0.0000", eur: "0.00" };
 
           return (
             <div key={net.symbol} className={styles.assetItem}>
@@ -80,7 +78,6 @@ export default function Dashboard() {
                   width={36}
                   height={36}
                   className={styles.assetLogo}
-                  loading="eager"
                   unoptimized
                 />
                 <div className={styles.assetText}>
@@ -90,8 +87,8 @@ export default function Dashboard() {
               </div>
 
               <div className={styles.assetBalance}>
-                {!loading && `${bal.amount} ${net.symbol}`}
-                <div className={styles.assetEur}>€ {!loading && bal.eur}</div>
+                {bal.amount} {net.symbol}
+                <div className={styles.assetEur}>€ {bal.eur}</div>
               </div>
             </div>
           );
