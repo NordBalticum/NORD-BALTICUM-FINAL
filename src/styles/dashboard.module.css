@@ -1,181 +1,100 @@
-.dashboardContainer {
+.container {
   width: 100%;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  background: inherit;
-  padding: clamp(80px, 7vh, 96px) clamp(1rem, 4vw, 2rem) 120px;
-  box-sizing: border-box;
-  align-items: center;
-  justify-content: flex-start;
-  overflow-x: hidden;
-}
-
-.wrapper {
-  width: 100%;
-  max-width: 1280px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: clamp(2rem, 4vh, 3rem);
-}
-
-.welcome {
-  font-size: clamp(1.8rem, 2.6vw, 3rem);
-  font-weight: 700;
+  height: 100vh;
+  padding: clamp(24px, 4vw, 48px);
+  background: radial-gradient(circle at center, rgba(10,18,42,1), rgba(27,35,112,0.98), rgba(43,55,255,0.95));
   color: white;
-  text-align: center;
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
-}
-
-.email {
-  font-size: clamp(1rem, 1.4vw, 1.2rem);
-  font-weight: 400;
-  color: #ccc;
-  opacity: 0.8;
-  margin-top: 0.2rem;
-}
-
-.card {
-  width: 100%;
-  max-width: 600px;
-  background: rgba(255, 255, 255, 0.035);
-  backdrop-filter: blur(14px);
-  border-radius: 18px;
-  padding: clamp(1.6rem, 3vw, 2.4rem);
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  box-shadow: 0 0 24px rgba(0, 255, 200, 0.05);
   display: flex;
   flex-direction: column;
-  gap: 1.6rem;
+  align-items: center;
+  overflow-y: auto;
+  scrollbar-width: none;
 }
 
-.label {
-  font-size: 0.95rem;
+.headerBox {
+  width: 100%;
+  max-width: 960px;
+  text-align: left;
+  margin-bottom: clamp(24px, 4vw, 40px);
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.walletLabel {
+  font-size: clamp(14px, 2vw, 18px);
   font-weight: 500;
-  color: #aaa;
-  text-transform: uppercase;
-  margin-bottom: 0.5rem;
+  opacity: 0.8;
+  letter-spacing: 1px;
+  margin-bottom: 4px;
 }
 
-.addressBox {
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  padding: 14px 18px;
-  border-radius: 12px;
-  font-family: monospace;
-  font-size: 0.95rem;
-  color: #eee;
-  cursor: pointer;
-  user-select: all;
-  text-align: center;
-  transition: all 0.25s ease;
-}
-.addressBox:hover {
-  transform: scale(1.02);
-  background: rgba(255, 255, 255, 0.09);
+.walletAddress {
+  font-size: clamp(18px, 2.5vw, 24px);
+  font-weight: 600;
+  background: linear-gradient(90deg, #fff, #ffd700);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
-.networkSelector {
+.assetList {
+  width: 100%;
+  max-width: 960px;
   display: flex;
   flex-direction: column;
-  gap: 0.6rem;
+  gap: 16px;
 }
 
-.select {
-  background: #000;
-  border: 1px solid #444;
-  color: white;
-  padding: 12px 14px;
-  border-radius: 12px;
-  font-size: 1rem;
-  transition: all 0.25s ease;
-}
-.select:focus {
-  border-color: white;
-  background: #111;
-  outline: none;
-}
-
-.balanceBox {
+.assetItem {
+  width: 100%;
   background: rgba(255, 255, 255, 0.05);
-  padding: 1rem 1.4rem;
-  border-radius: 14px;
-  text-align: center;
-  box-shadow: 0 0 14px rgba(255, 255, 255, 0.08);
-}
-.balanceLabel {
-  font-size: 0.9rem;
-  opacity: 0.65;
-}
-.balanceValue {
-  font-size: 1.8rem;
-  font-weight: bold;
-  margin-top: 0.3rem;
-  color: white;
-}
-
-.actions {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  padding: 16px 24px;
   display: flex;
-  gap: 1.4rem;
-  margin-top: 2rem;
-  flex-wrap: wrap;
-  justify-content: center;
+  justify-content: space-between;
+  align-items: center;
+  backdrop-filter: blur(14px);
+  box-shadow: 0 0 16px rgba(255, 255, 255, 0.05);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.actionButton {
-  background: black;
-  color: white;
-  border: 2px solid white;
-  border-radius: 16px;
-  font-weight: 600;
-  padding: 14px 28px;
-  font-size: 1.05rem;
-  cursor: pointer;
-  box-shadow: 0 0 14px rgba(255, 255, 255, 0.1);
-  transition: all 0.3s ease;
-  min-width: 180px;
+.assetItem:hover {
+  transform: scale(1.015);
+  box-shadow: 0 0 24px rgba(255, 255, 255, 0.08);
 }
-.actionButton:hover {
+
+.assetLeft {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.assetLogo {
+  border-radius: 50%;
+  object-fit: contain;
   background: white;
-  color: black;
-  transform: scale(1.05);
+  padding: 4px;
+  width: 36px;
+  height: 36px;
 }
 
-.loading {
-  font-size: 1.4rem;
-  color: white;
-  margin-top: 3rem;
-  animation: pulse 1.4s infinite ease-in-out;
-  text-align: center;
+.assetText {
+  display: flex;
+  flex-direction: column;
 }
 
-@keyframes pulse {
-  0% { opacity: 0.4; }
-  50% { opacity: 1; }
-  100% { opacity: 0.4; }
+.assetSymbol {
+  font-size: clamp(16px, 2vw, 20px);
+  font-weight: 600;
 }
 
-/* === Media Fixes === */
-@media (max-width: 1024px) {
-  .wrapper {
-    padding: 0 2rem;
-  }
+.assetName {
+  font-size: clamp(12px, 1.5vw, 14px);
+  opacity: 0.7;
 }
-@media (max-width: 768px) {
-  .actionButton {
-    width: 100%;
-    max-width: 280px;
-  }
-}
-@media (max-width: 480px) {
-  .welcome {
-    font-size: 2.2rem;
-  }
-  .card {
-    padding: 1.4rem;
-  }
-  .select {
-    font-size: 0.95rem;
-  }
+
+.assetBalance {
+  font-size: clamp(16px, 2vw, 20px);
+  font-weight: 500;
+  text-align: right;
 }
