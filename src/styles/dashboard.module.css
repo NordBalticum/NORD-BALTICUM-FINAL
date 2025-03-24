@@ -1,37 +1,35 @@
 .dashboardContainer {
-  width: 100vw;
+  width: 100%;
   min-height: 100vh;
-  padding-top: clamp(68px, 7.5vh, 96px);
   display: flex;
   flex-direction: column;
-  align-items: center;
   background: inherit;
-  overflow-x: hidden;
+  padding: clamp(80px, 7vh, 96px) clamp(1rem, 4vw, 2rem) 120px;
   box-sizing: border-box;
+  align-items: center;
+  justify-content: flex-start;
 }
 
 .wrapper {
   width: 100%;
-  max-width: 1440px;
-  padding: clamp(2rem, 4vw, 4rem);
-  box-sizing: border-box;
+  max-width: 1280px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  animation: fadeIn 0.5s ease;
+  gap: clamp(2rem, 4vh, 3rem);
 }
 
 .welcome {
-  font-size: clamp(2rem, 2.5vw, 3rem);
+  font-size: clamp(1.8rem, 2.6vw, 3rem);
   font-weight: 700;
   color: white;
   text-align: center;
-  margin-bottom: 1.2rem;
-  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+  line-height: 1.3;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
 }
 
 .email {
-  font-size: clamp(1rem, 1.4vw, 1.3rem);
+  font-size: clamp(1rem, 1.3vw, 1.2rem);
   font-weight: 400;
   color: #ccc;
   opacity: 0.85;
@@ -39,111 +37,109 @@
 
 .card {
   background: rgba(255, 255, 255, 0.03);
-  backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 18px;
   padding: clamp(1.4rem, 3vw, 2rem);
-  margin-top: 2rem;
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   width: 100%;
   max-width: 640px;
   box-shadow: 0 0 32px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  gap: 1.4rem;
 }
 
 .label {
   font-size: 0.9rem;
   text-transform: uppercase;
   color: #aaa;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.4rem;
 }
 
 .addressBox {
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  padding: 14px 18px;
+  padding: 16px 20px;
   border-radius: 12px;
-  margin-bottom: 1.2rem;
-  cursor: pointer;
-  user-select: all;
   text-align: center;
+  word-break: break-word;
+  font-family: monospace;
+  font-size: 0.92rem;
+  color: #f3f3f3;
+  cursor: pointer;
   transition: all 0.25s ease;
 }
 
 .addressBox:hover {
   background: rgba(255, 255, 255, 0.08);
-  transform: scale(1.02);
-}
-
-.address {
-  font-family: monospace;
-  font-size: 0.92rem;
-  word-break: break-word;
-  color: #f3f3f3;
+  transform: scale(1.015);
 }
 
 .networkSelector {
-  margin: 1.4rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
 }
 
 .select {
-  width: 100%;
-  padding: 12px 16px;
-  font-size: 1rem;
-  border-radius: 12px;
-  background: black;
-  color: white;
+  background: #000;
   border: 1px solid #444;
-  transition: all 0.3s ease;
+  color: white;
+  padding: 12px 16px;
+  border-radius: 12px;
+  font-size: 1rem;
+  transition: 0.3s ease;
+  width: 100%;
 }
 
 .select:focus {
   outline: none;
   border-color: white;
-  background: #111;
+  background-color: #111;
 }
 
 .balanceBox {
-  margin-top: 1.6rem;
+  margin-top: 1rem;
   padding: 1.2rem;
   border-radius: 14px;
   background: rgba(255, 255, 255, 0.06);
   text-align: center;
   box-shadow: 0 0 18px rgba(255, 255, 255, 0.1);
+  color: white;
 }
 
 .balanceLabel {
   font-size: 0.9rem;
-  opacity: 0.65;
+  opacity: 0.7;
 }
 
 .balanceValue {
-  font-size: 1.9rem;
+  font-size: 2rem;
   font-weight: bold;
-  color: white;
-  margin-top: 4px;
+  margin-top: 6px;
 }
 
 .actions {
   display: flex;
+  flex-direction: row;
+  gap: 1.6rem;
   justify-content: center;
-  align-items: center;
-  margin-top: 3rem;
-  gap: 2rem;
   flex-wrap: wrap;
+  margin-top: 2rem;
 }
 
 .actionButton {
-  padding: 14px 26px;
-  font-size: 1.1rem;
+  min-width: 180px;
+  padding: 14px 24px;
+  font-size: 1.05rem;
   font-weight: 600;
+  text-align: center;
+  color: white;
+  background: black;
   border: 2px solid white;
   border-radius: 16px;
-  background: black;
-  color: white;
-  cursor: pointer;
-  box-shadow: 0 0 14px rgba(255, 255, 255, 0.1);
   transition: all 0.3s ease;
-  min-width: 180px;
-  text-align: center;
+  box-shadow: 0 0 14px rgba(255, 255, 255, 0.1);
 }
 
 .actionButton:hover {
@@ -166,28 +162,32 @@
   100% { opacity: 0.4; }
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(16px); }
-  to   { opacity: 1; transform: translateY(0); }
+/* === Media Fixes === */
+@media (max-width: 768px) {
+  .dashboardContainer {
+    padding-bottom: 140px;
+  }
+
+  .actionButton {
+    width: 100%;
+    max-width: 300px;
+  }
+
+  .wrapper {
+    padding-inline: 1rem;
+  }
 }
 
-/* === Media Fixes 8K to mobile === */
-@media (max-width: 1600px) {
-  .wrapper { padding: 2rem 3rem; }
-}
-@media (max-width: 1200px) {
-  .wrapper { padding: 2rem; }
-}
-@media (max-width: 992px) {
-  .actionButton { min-width: 160px; }
-}
-@media (max-width: 768px) {
-  .wrapper { padding: 1.5rem; }
-  .actionButton { width: 100%; max-width: 280px; }
-}
 @media (max-width: 480px) {
-  .welcome { font-size: 2rem; }
-  .card { padding: 1.2rem; }
-  .select { font-size: 0.95rem; }
-  .addressBox { padding: 12px; }
+  .welcome {
+    font-size: 1.8rem;
+  }
+
+  .balanceValue {
+    font-size: 1.6rem;
+  }
+
+  .card {
+    padding: 1.2rem;
+  }
 }
