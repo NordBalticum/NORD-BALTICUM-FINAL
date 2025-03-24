@@ -20,7 +20,7 @@ export default function Navbar() {
   ];
 
   useEffect(() => {
-    setIsOpen(false); // auto close on route change
+    setIsOpen(false);
   }, [pathname]);
 
   const toggleMenu = useCallback(() => {
@@ -30,10 +30,9 @@ export default function Navbar() {
   if (pathname === "/") return null;
 
   return (
-    <header className={styles.navbar} role="navigation" aria-label="Main navigation">
+    <header className={styles.navbar}>
       <div className={styles.navContent}>
-        {/* === Logo === */}
-        <Link href="/" className={styles.logoLink} aria-label="Go to homepage">
+        <Link href="/" className={styles.logoLink}>
           <Image
             src="/icons/logo.svg"
             alt="NordBalticum Logo"
@@ -44,54 +43,47 @@ export default function Navbar() {
           />
         </Link>
 
-        {/* === Desktop Links === */}
-        <nav className={styles.navLinks} role="menubar" aria-label="Desktop navigation">
+        <nav className={styles.navLinks}>
           {navItems.map((item) => (
-            <Link key={item.href} href={item.href} passHref>
+            <Link key={item.href} href={item.href}>
               <button
-                role="menuitem"
-                className={`${styles.navButton} ${pathname === item.href ? styles.active : ""}`}
+                className={`${styles.navButton} ${
+                  pathname === item.href ? styles.active : ""
+                }`}
               >
                 {item.label}
               </button>
             </Link>
           ))}
-          <button onClick={signOut} className={styles.logout} aria-label="Log out">
+          <button onClick={signOut} className={styles.logout}>
             Sign Out
           </button>
         </nav>
 
-        {/* === Mobile Toggle === */}
         <div
           className={`${styles.mobileToggle} ${isOpen ? styles.open : ""}`}
           onClick={toggleMenu}
-          aria-label="Toggle mobile menu"
-          role="button"
         >
           <span />
           <span />
         </div>
       </div>
 
-      {/* === Mobile Dropdown === */}
       {isOpen && (
-        <div className={styles.mobileDropdown} role="menu" aria-label="Mobile menu">
+        <div className={styles.mobileDropdown}>
           {navItems.map((item) => (
-            <Link key={item.href} href={item.href} passHref>
+            <Link key={item.href} href={item.href}>
               <button
-                role="menuitem"
-                className={`${styles.navButton} ${pathname === item.href ? styles.active : ""}`}
+                className={`${styles.navButton} ${
+                  pathname === item.href ? styles.active : ""
+                }`}
                 onClick={() => setIsOpen(false)}
               >
                 {item.label}
               </button>
             </Link>
           ))}
-          <button
-            onClick={signOut}
-            className={styles.logoutMobile}
-            aria-label="Log out from mobile"
-          >
+          <button onClick={signOut} className={styles.logoutMobile}>
             Sign Out
           </button>
         </div>
