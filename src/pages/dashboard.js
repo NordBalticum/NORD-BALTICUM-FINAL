@@ -49,7 +49,9 @@ export default function Dashboard() {
   }, [user, address]);
 
   useEffect(() => {
-    const total = Object.values(balances).reduce((sum, b) => sum + parseFloat(b.eur), 0).toFixed(2);
+    const total = Object.values(balances)
+      .reduce((sum, b) => sum + parseFloat(b.eur || 0), 0)
+      .toFixed(2);
     setCachedBalances(balances);
     setTotalEUR(total);
   }, [balances]);
@@ -60,39 +62,45 @@ export default function Dashboard() {
 
   return (
     <div className={styles.container}>
-      <div className={styles.totalBalanceBox}>
-        <div className={styles.totalLabel}>TOTAL VALUE</div>
-        <div className={styles.totalValue}>€ {totalEUR}</div>
-      </div>
+      <div className={styles.globalWrapper}>
+        <div className={styles.totalBalanceBox}>
+          <div className={styles.totalLabel}>TOTAL VALUE</div>
+          <div className={styles.totalValue}>€ {totalEUR}</div>
+        </div>
 
-      <div className={styles.assetList}>
-        {networks.map((net) => {
-          const bal = cachedBalances[net.symbol] || { amount: "0.0000", eur: "0.00" };
+        <div className={styles.assetList}>
+          {networks.map((net) => {
+            const bal = cachedBalances[net.symbol] || {
+              amount: "0.0000",
+              eur: "0.00",
+            };
 
-          return (
-            <div key={net.symbol} className={styles.assetItem}>
-              <div className={styles.assetLeft}>
-                <Image
-                  src={net.logo}
-                  alt={net.symbol}
-                  width={36}
-                  height={36}
-                  className={styles.assetLogo}
-                  unoptimized
-                />
-                <div className={styles.assetText}>
-                  <div className={styles.assetSymbol}>{net.symbol}</div>
-                  <div className={styles.assetName}>{net.name}</div>
+            return (
+              <div key={net.symbol} className={styles.assetItem}>
+                <div className={styles.assetLeft}>
+                  <Image
+                    src={net.logo}
+                    alt={net.symbol}
+                    width={36}
+                    height={36}
+                    className={styles.assetLogo}
+                    loading="eager"
+                    unoptimized
+                  />
+                  <div className={styles.assetText}>
+                    <div className={styles.assetSymbol}>{net.symbol}</div>
+                    <div className={styles.assetName}>{net.name}</div>
+                  </div>
+                </div>
+
+                <div className={styles.assetBalance}>
+                  {bal.amount} {net.symbol}
+                  <div className={styles.assetEur}>€ {bal.eur}</div>
                 </div>
               </div>
-
-              <div className={styles.assetBalance}>
-                {bal.amount} {net.symbol}
-                <div className={styles.assetEur}>€ {bal.eur}</div>
-              </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
     </div>
   );
