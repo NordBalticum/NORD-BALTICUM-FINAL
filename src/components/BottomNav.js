@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
-import styles from "./bottomnav.module.css";
+import styles from "@/components/bottomnav.module.css";
 import { FaWallet, FaClock, FaArrowDown, FaArrowUp, FaCog } from "react-icons/fa";
 
 export default function BottomNav() {
