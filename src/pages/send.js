@@ -3,9 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/router";
 import { useMagicLink } from "@/contexts/MagicLinkContext";
-import { useBalance } from "@/contexts/BalanceProviderEthers";
+import { useBalance } from "@/contexts/BalanceContext";
 import { isValidAddress, sendBNB } from "@/lib/ethers";
-import Navbar from "@/components/Navbar";
 import styles from "@/styles/send.module.css";
 
 export default function Send() {
