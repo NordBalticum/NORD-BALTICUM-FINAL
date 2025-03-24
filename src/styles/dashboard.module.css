@@ -1,20 +1,28 @@
 .container {
-  min-width: 100vw;
+  width: 100vw;
   min-height: 100vh;
+  padding: clamp(24px, 5vw, 60px);
   display: flex;
   justify-content: center;
   align-items: center;
-  overflow: hidden;
-  padding: clamp(24px, 5vw, 60px);
   background: radial-gradient(
-    150% 130% at 50% 50%,
+    180% 180% at 50% 50%,
     rgba(10, 18, 42, 1) 0%,
     rgba(27, 35, 112, 0.98) 55%,
     rgba(43, 55, 255, 0.92) 100%
   );
-  touch-action: none;
-  overscroll-behavior: none;
+  transform: scale(0.86);
+  transform-origin: center;
+  overflow: hidden;
   user-select: none;
+  touch-action: none;
+  -ms-touch-action: none;
+  overscroll-behavior: none;
+  scrollbar-width: none;
+}
+
+.container::-webkit-scrollbar {
+  display: none;
 }
 
 .globalWrapper {
@@ -23,20 +31,20 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: center;
 }
 
 .logoWrapper {
-  margin-bottom: clamp(24px, 4vw, 48px);
+  margin-bottom: clamp(32px, 5vw, 48px);
   display: flex;
   justify-content: center;
   align-items: center;
+  animation: fadeInDown 0.6s ease-in-out;
 }
 
 .logo {
-  width: clamp(120px, 20vw, 180px);
+  width: clamp(140px, 18vw, 200px);
   height: auto;
-  object-fit: contain;
   filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.15));
 }
 
