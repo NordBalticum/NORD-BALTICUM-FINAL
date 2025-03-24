@@ -1,18 +1,24 @@
+/* === DASHBOARD MODULE – NordBalticum Web3 Premium UI === */
+
 .container {
-  width: 100vw;
-  height: 100vh;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: calc(100vw - 160px);
+  height: calc(100vh - 160px);
+  transform: translate(-50%, -50%);
   background: var(--bg-gradient);
   padding: var(--main-padding);
   display: flex;
   justify-content: center;
   align-items: center;
-  overflow-y: auto;
-  overflow-x: hidden;
-  -webkit-font-smoothing: antialiased;
-  scroll-behavior: smooth;
+  overflow: hidden;
   user-select: none;
+  -webkit-font-smoothing: antialiased;
   touch-action: manipulation;
   -ms-touch-action: manipulation;
+  scroll-behavior: smooth;
+  transition: var(--transition);
 }
 
 .globalWrapper {
@@ -29,8 +35,12 @@
   transition: var(--transition);
 }
 
-/* === Mobile Zoom-Out === */
+/* === Mobile Zoom-Out (Auto scale on small screens) === */
 @media (max-width: 768px) {
+  .container {
+    width: 100vw;
+    height: 100vh;
+  }
   .globalWrapper {
     transform: scale(0.88) translateY(-2%);
     transform-origin: top center;
@@ -75,7 +85,7 @@
   font-size: clamp(28px, 3vw, 36px);
 }
 
-/* === Assets === */
+/* === Asset List === */
 .assetList {
   width: 100%;
   display: flex;
