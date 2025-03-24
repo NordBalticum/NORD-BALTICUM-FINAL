@@ -1,24 +1,19 @@
 .container {
   width: 100vw;
   height: 100vh;
-  padding: clamp(24px, 4vw, 48px);
+  padding: clamp(24px, 5vw, 60px);
   display: flex;
   justify-content: center;
   align-items: center;
+  background: radial-gradient(180% 180% at 50% 50%, rgba(10, 18, 42, 1) 0%, rgba(27, 35, 112, 0.98) 55%, rgba(43, 55, 255, 0.92) 100%);
+  transform: scale(0.86);
+  transform-origin: center;
   overflow: hidden;
   user-select: none;
   touch-action: none;
   -ms-touch-action: none;
   overscroll-behavior: none;
   scrollbar-width: none;
-  background: radial-gradient(
-    180% 180% at 50% 50%,
-    rgba(10, 18, 42, 1) 0%,
-    rgba(27, 35, 112, 0.98) 50%,
-    rgba(43, 55, 255, 0.93) 100%
-  );
-  transform: scale(0.88);
-  transform-origin: center;
 }
 
 .container::-webkit-scrollbar {
