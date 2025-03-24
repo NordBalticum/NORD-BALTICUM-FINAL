@@ -1,29 +1,37 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/router";
-import { FaWallet, FaHistory, FaArrowDown, FaArrowUp } from "react-icons/fa";
-import styles from "./bottomNav.module.css";
+import { useEffect, useState } from "react";
+import styles from "./bottomnav.module.css";
+import { FaWallet, FaClock, FaArrowDown, FaArrowUp, FaCog } from "react-icons/fa";
 
 export default function BottomNav() {
-  const { pathname } = useRouter();
+  const router = useRouter();
+  const [active, setActive] = useState("");
+
+  useEffect(() => {
+    setActive(router.pathname);
+  }, [router.pathname]);
 
   const navItems = [
-    { icon: <FaWallet />, label: "Dashboard", path: "/dashboard" },
-    { icon: <FaArrowUp />, label: "Send", path: "/send" },
-    { icon: <FaArrowDown />, label: "Receive", path: "/receive" },
-    { icon: <FaHistory />, label: "History", path: "/transactions" },
+    { label: "Wallet", icon: <FaWallet />, path: "/dashboard" },
+    { label: "History", icon: <FaClock />, path: "/transactions" },
+    { label: "Receive", icon: <FaArrowDown />, path: "/receive" },
+    { label: "Send", icon: <FaArrowUp />, path: "/send" },
+    { label: "Settings", icon: <FaCog />, path: "/settings" },
   ];
 
   return (
     <nav className={styles.bottomNav}>
       {navItems.map((item) => (
-        <Link key={item.path} href={item.path} className={styles.navItem}>
-          <div className={`${styles.iconWrapper} ${pathname === item.path ? styles.active : ""}`}>
-            {item.icon}
-          </div>
+        <button
+          key={item.path}
+          className={`${styles.navButton} ${active === item.path ? styles.active : ""}`}
+          onClick={() => router.push(item.path)}
+        >
+          <span className={styles.icon}>{item.icon}</span>
           <span className={styles.label}>{item.label}</span>
-        </Link>
+        </button>
       ))}
     </nav>
   );
