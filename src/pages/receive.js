@@ -6,12 +6,12 @@ import { useMagicLink } from "@/contexts/MagicLinkContext";
 import { useBalance } from "@/contexts/BalanceContext";
 import QRCode from "react-qr-code";
 import styles from "@/styles/receive.module.css";
+import BottomNavigation from "@/components/BottomNavigation";
 
 export default function ReceivePage() {
   const router = useRouter();
   const { user, wallet } = useMagicLink();
   const { selectedNetwork, balances } = useBalance();
-
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
@@ -30,40 +30,43 @@ export default function ReceivePage() {
   if (!user || !wallet) return null;
 
   return (
-    <div className={styles.container}>
-      <h1 className={styles.title}>Receive</h1>
+    <div className="globalContainer">
+      <div className={styles.wrapper}>
+        <h1 className={styles.title}>Receive</h1>
 
-      <div className={styles.card}>
-        <div className={styles.qrBox} onClick={handleCopy}>
-          <QRCode
-            value={wallet.address}
-            size={160}
-            bgColor="#ffffff"
-            fgColor="#0A122A"
-            className={styles.qrCode}
-          />
-        </div>
+        <div className={styles.card}>
+          <div className={styles.qrBox} onClick={handleCopy}>
+            <QRCode
+              value={wallet.address}
+              size={180}
+              bgColor="#ffffff"
+              fgColor="#0A122A"
+              className={styles.qrCode}
+            />
+          </div>
 
-        <p className={styles.addressText} onClick={handleCopy}>
-          {wallet.address}
-        </p>
-        <p className={styles.copyFeedback}>
-          {copied ? "✔ Copied!" : "Click QR or address to copy"}
-        </p>
+          <p className={styles.address} onClick={handleCopy}>
+            {wallet.address}
+          </p>
+          <p className={styles.copyFeedback}>
+            {copied ? "✔ Copied!" : "Click QR or address to copy"}
+          </p>
 
-        <div className={styles.networkInfo}>
-          <span className={styles.label}>Network:</span>
-          <span className={styles.networkValue}>{selectedNetwork}</span>
-        </div>
+          <div className={styles.infoRow}>
+            <span className={styles.label}>Network:</span>
+            <span className={styles.value}>{selectedNetwork}</span>
+          </div>
 
-        <div className={styles.balanceBox}>
-          <span className={styles.balanceLabel}>Balance:</span>
-          <span className={styles.balanceValue}>
-            {balances[selectedNetwork]?.amount || "0.0000"}{" "}
-            {selectedNetwork?.toUpperCase()}
-          </span>
+          <div className={styles.infoRow}>
+            <span className={styles.label}>Balance:</span>
+            <span className={styles.value}>
+              {balances[selectedNetwork]?.amount || "0.0000"}{" "}
+              {selectedNetwork?.toUpperCase()}
+            </span>
+          </div>
         </div>
       </div>
+      <BottomNavigation />
     </div>
   );
 }
