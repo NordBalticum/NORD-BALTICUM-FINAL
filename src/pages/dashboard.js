@@ -1,10 +1,10 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import styles from "./dashboard.module.css";
-import { useMagic } from "../loginsystem/MagicLinkContext";
+import { useMagic } from "/@loginsystem/MagicLinkContext";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { fetchBalancesForAllChains } from "../utils/fetchBalances";
+import { fetchBalancesForAllChains } from "/@utils/fetchBalancesForAllChains";
 
 const networks = [
   {
@@ -39,16 +39,22 @@ export default function Dashboard() {
   const { user, publicAddress } = useMagic();
   const [balances, setBalances] = useState({});
 
+  const loadBalances = async () => {
+    if (publicAddress) {
+      const data = await fetchBalancesForAllChains(publicAddress);
+      setBalances(data);
+    }
+  };
+
   useEffect(() => {
     if (!user) {
       router.push("/");
     } else {
-      (async () => {
-        const fetched = await fetchBalancesForAllChains(publicAddress);
-        setBalances(fetched);
-      })();
+      loadBalances();
+      const interval = setInterval(loadBalances, 10000);
+      return () => clearInterval(interval);
     }
-  }, [user, publicAddress, router]);
+  }, [user, publicAddress]);
 
   if (!user) return null;
 
@@ -62,26 +68,30 @@ export default function Dashboard() {
       </div>
 
       <div className={styles.assetList}>
-        {networks.map((net) => (
-          <div key={net.symbol} className={styles.assetItem}>
-            <div className={styles.assetLeft}>
-              <Image
-                src={net.logo}
-                alt={net.symbol}
-                width={36}
-                height={36}
-                className={styles.assetLogo}
-              />
-              <div className={styles.assetText}>
-                <div className={styles.assetSymbol}>{net.symbol}</div>
-                <div className={styles.assetName}>{net.name}</div>
+        {networks.map((net) => {
+          const bal = balances[net.symbol] || { amount: "0.0000", eur: "0.00" };
+          return (
+            <div key={net.symbol} className={styles.assetItem}>
+              <div className={styles.assetLeft}>
+                <Image
+                  src={net.logo}
+                  alt={net.symbol}
+                  width={36}
+                  height={36}
+                  className={styles.assetLogo}
+                />
+                <div className={styles.assetText}>
+                  <div className={styles.assetSymbol}>{net.symbol}</div>
+                  <div className={styles.assetName}>{net.name}</div>
+                </div>
+              </div>
+              <div className={styles.assetBalance}>
+                {bal.amount} {net.symbol}
+                <div style={{ fontSize: "14px", opacity: 0.6 }}>€ {bal.eur}</div>
               </div>
             </div>
-            <div className={styles.assetBalance}>
-              {balances[net.symbol] ? balances[net.symbol] : "0.0000"} {net.symbol}
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
