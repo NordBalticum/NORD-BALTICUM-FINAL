@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/router";
 import { useMagicLink } from "@/contexts/MagicLinkContext";
 import { useBalance } from "@/contexts/BalanceProviderEthers";
-import Navbar from "@/components/Navbar";
+import SideDrawer from "@/components/SideDrawer"; // ✅ NAUJAS komponentas
 import styles from "@/styles/dashboard.module.css";
 
 export default function Dashboard() {
@@ -38,7 +38,7 @@ export default function Dashboard() {
 
   return (
     <div className={styles.dashboardContainer}>
-      <Navbar />
+      <SideDrawer /> {/* ✅ Čia vietoje Navbar */}
       <div className={styles.wrapper}>
         <h1 className={styles.welcome}>
           Welcome,<br />
