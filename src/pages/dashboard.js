@@ -4,7 +4,8 @@ import { useEffect } from "react";
 import { useRouter } from "next/router";
 import { useMagicLink } from "@/contexts/MagicLinkContext";
 import { useBalance } from "@/contexts/BalanceProviderEthers";
-import SideDrawer from "@/components/SideDrawer"; // ✅ NAUJAS komponentas
+import SideDrawer from "@/components/SideDrawer";
+import BottomNavigation from "@/components/BottomNavigation";
 import styles from "@/styles/dashboard.module.css";
 
 export default function Dashboard() {
@@ -25,11 +26,7 @@ export default function Dashboard() {
   }, [user, wallet, router]);
 
   if (!user || !wallet) {
-    return (
-      <div className={styles.loading}>
-        Loading your dashboard...
-      </div>
-    );
+    return <div className={styles.loading}>Loading your dashboard...</div>;
   }
 
   const handleCopy = () => {
@@ -38,52 +35,50 @@ export default function Dashboard() {
 
   return (
     <div className={styles.dashboardContainer}>
-      <SideDrawer /> {/* ✅ Čia vietoje Navbar */}
+      <SideDrawer />
       <div className={styles.wrapper}>
-        <h1 className={styles.welcome}>
-          Welcome,<br />
-          <span className={styles.email}>{user.email}</span>
-        </h1>
+        <div className={styles.card}>
+          <div className={styles.header}>
+            <h2 className={styles.balanceLabel}>Total Balance</h2>
+            <p className={styles.balanceValue}>{balance} BNB</p>
+          </div>
 
-        <section className={styles.card}>
-          <label className={styles.label}>Your Wallet Address</label>
-          <div className={styles.addressBox} onClick={handleCopy} title="Click to copy">
-            <p className={styles.address}>{wallet.address}</p>
+          <div className={styles.walletBox} onClick={handleCopy}>
+            <p className={styles.walletAddress}>
+              {wallet.address.slice(0, 6)}...{wallet.address.slice(-4)}
+            </p>
+            <span className={styles.copyHint}>Tap to Copy</span>
           </div>
 
           <div className={styles.networkSelector}>
-            <label className={styles.label}>Select Network</label>
+            <label>Select Network</label>
             <select
-              className={styles.select}
               value={selectedNetwork}
               onChange={(e) => setSelectedNetwork(e.target.value)}
+              className={styles.select}
             >
               <option value="bsc">BSC Mainnet</option>
               <option value="bscTestnet">BSC Testnet</option>
             </select>
           </div>
 
-          <div className={styles.balanceBox}>
-            <span className={styles.balanceLabel}>Your Balance:</span>
-            <span className={styles.balanceValue}>{balance} BNB</span>
+          <div className={styles.actions}>
+            <button
+              className={styles.actionButton}
+              onClick={() => router.push("/send")}
+            >
+              🧾 SEND
+            </button>
+            <button
+              className={styles.actionButton}
+              onClick={() => router.push("/receive")}
+            >
+              ✅ RECEIVE
+            </button>
           </div>
-        </section>
-
-        <div className={styles.actions}>
-          <button
-            className={styles.actionButton}
-            onClick={() => router.push("/send")}
-          >
-            🧾 SEND
-          </button>
-          <button
-            className={styles.actionButton}
-            onClick={() => router.push("/receive")}
-          >
-            ✅ RECEIVE
-          </button>
         </div>
       </div>
+      <BottomNavigation />
     </div>
   );
 }
