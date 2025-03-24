@@ -160,11 +160,12 @@ input:focus, select:focus {
   animation: fadeIn 0.6s ease-in-out;
 }
 
-/* === NAVBAR FIX – FULL WIDTH UNLOCK === */
-header,
+/* === NAVBAR EXPANSION FIX (FORCE WIDTH) === */
 .navbar,
 .navContent {
   width: 100vw !important;
   max-width: 100vw !important;
+  transform: scale(1) !important;
+  transform-origin: center !important;
   overflow-x: visible !important;
 }
