@@ -1,10 +1,10 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import styles from "./dashboard.module.css";
-import { useMagic } from "/@loginsystem/MagicLinkContext";
+import styles from "@/styles/dashboard.module.css";
+import { useMagic } from "@/contexts/MagicLinkContext";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { fetchBalancesForAllChains } from "/@utils/fetchBalancesForAllChains";
+import { fetchBalancesForAllChains } from "@/utils/fetchBalancesForAllChains";
 
 const networks = [
   {
