@@ -2,7 +2,7 @@ import "@/styles/globals.css";
 import "@/styles/theme.css";
 import { MagicLinkProvider } from "@/contexts/MagicLinkContext";
 import { BalanceProviderEthers } from "@/contexts/BalanceProviderEthers";
-import Layout from "@/components/layout";
+import Layout from "@/components/Layout";
 import Head from "next/head";
 
 export default function App({ Component, pageProps }) {
