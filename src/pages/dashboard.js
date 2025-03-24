@@ -4,6 +4,8 @@ import { useEffect } from "react";
 import { useRouter } from "next/router";
 import { useMagicLink } from "@/contexts/MagicLinkContext";
 import { useBalance } from "@/contexts/BalanceProviderEthers";
+import SideDrawer from "@/components/SideDrawer";
+import BottomNavigation from "@/components/BottomNavigation";
 import styles from "@/styles/dashboard.module.css";
 
 export default function Dashboard() {
@@ -11,65 +13,73 @@ export default function Dashboard() {
   const { user, wallet } = useMagicLink();
   const {
     balance,
+    loading,
     selectedNetwork,
     setSelectedNetwork,
-    loading,
   } = useBalance();
 
   useEffect(() => {
     if (!user || !wallet) {
-      const timeout = setTimeout(() => router.push("/"), 500);
+      const timeout = setTimeout(() => router.push("/"), 600);
       return () => clearTimeout(timeout);
     }
   }, [user, wallet, router]);
 
   if (!user || !wallet) {
-    return <div className={styles.loading}>Loading Wallet...</div>;
+    return (
+      <div className={styles.loading}>
+        Loading your wallet...
+      </div>
+    );
   }
 
-  const copyAddress = () => {
+  const handleCopy = () => {
     navigator.clipboard.writeText(wallet.address);
   };
 
   return (
-    <div className={styles.container}>
-      <div className={styles.balanceCard}>
-        <div className={styles.network}>
-          <select
-            className={styles.select}
-            value={selectedNetwork}
-            onChange={(e) => setSelectedNetwork(e.target.value)}
-          >
-            <option value="bsc">BNB Smart Chain</option>
-            <option value="bscTestnet">BNB Testnet</option>
-          </select>
-        </div>
+    <div className={styles.dashboardContainer}>
+      <SideDrawer />
 
-        <div className={styles.addressBox} onClick={copyAddress} title="Tap to copy">
-          <span className={styles.addressLabel}>Wallet:</span>
-          <span className={styles.address}>{wallet.address}</span>
-        </div>
+      <div className={styles.wrapper}>
+        <h1 className={styles.title}>My Wallet</h1>
 
-        <div className={styles.balance}>
-          <span className={styles.balanceValue}>{balance}</span>
-          <span className={styles.balanceUnit}>BNB</span>
+        <div className={styles.walletCard}>
+          <div className={styles.addressSection} onClick={handleCopy} title="Tap to copy">
+            <span className={styles.label}>Wallet Address:</span>
+            <p className={styles.address}>{wallet.address}</p>
+          </div>
+
+          <div className={styles.balanceSection}>
+            <span className={styles.label}>Balance:</span>
+            <p className={styles.balance}>{balance} BNB</p>
+          </div>
+
+          <div className={styles.networkSelector}>
+            <label htmlFor="network" className={styles.label}>Network:</label>
+            <select
+              id="network"
+              className={styles.select}
+              value={selectedNetwork}
+              onChange={(e) => setSelectedNetwork(e.target.value)}
+            >
+              <option value="bsc">BSC Mainnet</option>
+              <option value="bscTestnet">BSC Testnet</option>
+            </select>
+          </div>
         </div>
 
         <div className={styles.actions}>
-          <button
-            className={styles.btnSend}
-            onClick={() => router.push("/send")}
-          >
-            SEND
+          <button onClick={() => router.push("/send")} className={styles.actionBtn}>
+            Send
           </button>
-          <button
-            className={styles.btnReceive}
-            onClick={() => router.push("/receive")}
-          >
-            RECEIVE
+          <button onClick={() => router.push("/receive")} className={styles.actionBtn}>
+            Receive
           </button>
         </div>
       </div>
+
+      <BottomNavigation />
     </div>
   );
 }
