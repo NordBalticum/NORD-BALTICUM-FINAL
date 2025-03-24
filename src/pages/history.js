@@ -1,4 +1,4 @@
-import styles from '@/history.module.css';
+import styles from '@/styles/history.module.css';
 
 export default function YourPage() {
   return (
