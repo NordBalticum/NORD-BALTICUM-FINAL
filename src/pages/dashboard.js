@@ -1,3 +1,4 @@
+// src/pages/dashboard.js
 "use client";
 
 import { useEffect } from "react";
@@ -5,6 +6,7 @@ import { useRouter } from "next/router";
 import { useMagicLink } from "@/contexts/MagicLinkContext";
 import { useBalance } from "@/contexts/BalanceProviderEthers";
 import styles from "@/styles/dashboard.module.css";
+import Image from "next/image";
 
 export default function Dashboard() {
   const router = useRouter();
@@ -19,57 +21,73 @@ export default function Dashboard() {
   }, [user, wallet, router]);
 
   if (!user || !wallet) {
-    return (
-      <div className={styles.loading}>
-        Loading Wallet...
-      </div>
-    );
+    return <div className={styles.loading}>Loading Wallet...</div>;
   }
 
-  return (
-    <div className={styles.container}>
-      <div className={styles.header}>
-        <div className={styles.accountGroup}>
-          <h2 className={styles.label}>My Wallet</h2>
-          <p className={styles.address}>
-            {wallet.address.slice(0, 6)}...{wallet.address.slice(-4)}
-          </p>
-        </div>
+  const displayAddress = `${wallet.address.slice(0, 6)}...${wallet.address.slice(-4)}`;
 
-        <div className={styles.networkSelect}>
+  const networks = [
+    {
+      name: "BNB Smart Chain",
+      short: "BNB",
+      id: "bsc",
+      logo: "https://cryptologos.cc/logos/bnb-bnb-logo.png",
+    },
+    {
+      name: "BSC Testnet",
+      short: "TBNB",
+      id: "bscTestnet",
+      logo: "https://cryptologos.cc/logos/binance-coin-bnb-logo.png",
+    },
+  ];
+
+  return (
+    <div className={styles.dashboardContainer}>
+      <div className={styles.header}>
+        <div className={styles.walletInfo}>
+          <p className={styles.label}>Wallet</p>
+          <h2 className={styles.address}>{displayAddress}</h2>
+        </div>
+        <div className={styles.networkSelector}>
           <select
             className={styles.select}
             value={selectedNetwork}
             onChange={(e) => setSelectedNetwork(e.target.value)}
           >
-            <option value="bsc">BSC Mainnet</option>
-            <option value="bscTestnet">BSC Testnet</option>
+            {networks.map((net) => (
+              <option key={net.id} value={net.id}>
+                {net.name}
+              </option>
+            ))}
           </select>
         </div>
       </div>
 
-      <div className={styles.balanceCard}>
-        <span className={styles.balanceLabel}>Available Balance</span>
-        <span className={styles.balanceValue}>{balance} BNB</span>
-      </div>
-
-      <div className={styles.actionGroup}>
-        <button
-          className={styles.action}
-          onClick={() => router.push("/send")}
-        >
-          Send
-        </button>
-        <button
-          className={styles.action}
-          onClick={() => router.push("/receive")}
-        >
-          Receive
-        </button>
+      <div className={styles.tokenTable}>
+        {networks.map((net) => (
+          <div key={net.id} className={styles.tokenRow}>
+            <div className={styles.tokenInfo}>
+              <Image
+                src={net.logo}
+                alt={net.name}
+                width={32}
+                height={32}
+                className={styles.tokenLogo}
+              />
+              <div>
+                <p className={styles.tokenSymbol}>{net.short}</p>
+                <p className={styles.tokenName}>{net.name}</p>
+              </div>
+            </div>
+            <div className={styles.tokenBalance}>
+              {selectedNetwork === net.id ? balance : "—"} {net.short}
+            </div>
+          </div>
+        ))}
       </div>
 
       <p className={styles.note}>
-        Transactions and staking options coming soon.
+        Staking & transactions history will be shown here soon.
       </p>
     </div>
   );
