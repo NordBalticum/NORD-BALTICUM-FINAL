@@ -1,37 +1,55 @@
-/* === THEME – NordBalticum Web3 Wallet v1.5 === */
+/* === THEME – NordBalticum Web3 Wallet v1.6 === */
 /* Fully aligned with globals.css – MAXIMUM RESPONSIVE + PREMIUM FEEL */
 
 :root {
+  --max-width: 1440px;
+  --min-width: 320px;
+  --nav-height: clamp(64px, 7vh, 88px);
+  --main-padding: clamp(16px, 5vw, 32px);
+  --spacing: clamp(16px, 4vw, 32px);
+  --radius: 18px;
+  --transition: all 0.3s ease-in-out;
+
+  /* COLORS */
+  --primary-text: #ffffff;
   --accent-color: #00ffc8;
   --danger-color: #ff3c3c;
+  --primary-bg: #2B3FFF;
+  --primary-bg-dark: #0A122A;
+  --white-gold: #FFD700;
+  --gold-glow: rgba(255, 215, 0, 0.3);
+
+  /* BACKGROUNDS */
+  --bg-gradient: radial-gradient(ellipse at center, var(--primary-bg) 0%, #1B2370 40%, var(--primary-bg-dark) 100%);
   --glass-bg: rgba(255, 255, 255, 0.04);
   --glass-blur: blur(18px);
   --shadow: 0 0 24px rgba(0, 0, 0, 0.2);
-  --spacing: clamp(16px, 4vw, 32px);
-  --font-main: 'Poppins', sans-serif;
-  --nav-height: clamp(64px, 7vh, 88px);
 }
 
-/* === Typography === */
+/* === Base === */
 body, html {
-  font-family: var(--font-main);
+  font-family: 'Poppins', sans-serif;
   color: var(--primary-text);
-  background: none;
+  background: var(--bg-gradient);
+  background-size: cover;
+  background-position: center;
   -webkit-font-smoothing: antialiased;
+  scroll-behavior: smooth;
+  overflow-x: hidden;
 }
 
 /* === Containers === */
 .pageWrapper {
   width: 100%;
   max-width: var(--max-width);
+  margin: 0 auto;
   padding: var(--spacing);
   padding-bottom: calc(var(--nav-height) + var(--spacing));
-  margin: 0 auto;
-  box-sizing: border-box;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
+  box-sizing: border-box;
 }
 
 /* === Glass Cards === */
@@ -74,6 +92,7 @@ p, label, span {
   max-width: 240px;
   text-align: center;
 }
+
 .btnPrimary:hover {
   background: white;
   color: black;
@@ -90,6 +109,7 @@ p, label, span {
   width: 100%;
   max-width: 240px;
 }
+
 .btnDanger:hover {
   background: #cc1a1a;
 }
@@ -106,6 +126,7 @@ p, label, span {
   margin-bottom: 1rem;
   transition: var(--transition);
 }
+
 .inputBox:focus {
   outline: none;
   border-color: white;
