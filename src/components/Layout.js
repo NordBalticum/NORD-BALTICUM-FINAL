@@ -2,9 +2,9 @@
 
 import { useRouter } from "next/router";
 import { useEffect } from "react";
-import SideDrawer from "./SideDrawer";
-import BottomNav from "./BottomNav";
-import styles from "./layout.module.css";
+import SideDrawer from "@/SideDrawer";
+import BottomNav from "@/BottomNav";
+import styles from "@/components/layout.module.css";
 
 export default function Layout({ children }) {
   const router = useRouter();
