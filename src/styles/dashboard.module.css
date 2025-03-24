@@ -2,33 +2,42 @@
   width: 100vw;
   height: 100vh;
   padding: clamp(24px, 4vw, 48px);
-  background: radial-gradient(
-    160% 140% at 50% 50%,
-    rgba(10, 18, 42, 1) 0%,
-    rgba(27, 35, 112, 0.98) 60%,
-    rgba(43, 55, 255, 0.95) 100%
-  );
-  color: white;
   display: flex;
-  flex-direction: column;
+  justify-content: center;
   align-items: center;
   overflow: hidden;
-  overscroll-behavior: none;
+  user-select: none;
   touch-action: none;
   -ms-touch-action: none;
-  user-select: none;
+  overscroll-behavior: none;
   scrollbar-width: none;
+  background: radial-gradient(
+    180% 180% at 50% 50%,
+    rgba(10, 18, 42, 1) 0%,
+    rgba(27, 35, 112, 0.98) 50%,
+    rgba(43, 55, 255, 0.93) 100%
+  );
+  transform: scale(0.88);
+  transform-origin: center;
 }
 
 .container::-webkit-scrollbar {
   display: none;
 }
 
-.totalBalanceBox {
+.globalWrapper {
   width: 100%;
   max-width: 960px;
-  margin-bottom: clamp(24px, 4vw, 40px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.totalBalanceBox {
+  width: 100%;
   text-align: left;
+  margin-bottom: clamp(24px, 4vw, 40px);
   animation: fadeInDown 0.5s ease-in-out;
 }
 
@@ -51,7 +60,6 @@
 
 .assetList {
   width: 100%;
-  max-width: 960px;
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -90,7 +98,7 @@
   background: white;
   padding: 4px;
   object-fit: contain;
-  box-shadow: 0 0 6px rgba(255, 255, 255, 0.25);
+  box-shadow: 0 0 6px rgba(255,255,255,0.25);
 }
 
 .assetText {
