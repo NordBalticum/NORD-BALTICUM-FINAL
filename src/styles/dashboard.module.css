@@ -1,19 +1,17 @@
 .container {
-  width: 100vw;
   min-height: 100vh;
+  width: 100vw;
   padding: clamp(24px, 5vw, 60px);
   display: flex;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
+  overflow: hidden;
   background: radial-gradient(
     180% 180% at 50% 50%,
     rgba(10, 18, 42, 1) 0%,
     rgba(27, 35, 112, 0.98) 55%,
     rgba(43, 55, 255, 0.92) 100%
   );
-  transform: scale(0.86);
-  transform-origin: center;
-  overflow: hidden;
   user-select: none;
   touch-action: none;
   -ms-touch-action: none;
@@ -26,16 +24,14 @@
 }
 
 .globalWrapper {
-  width: 100%;
-  max-width: 960px;
   display: flex;
   flex-direction: column;
-  align-items: center;
   justify-content: center;
+  align-items: center;
+  gap: clamp(32px, 4vw, 64px);
 }
 
 .logoWrapper {
-  margin-bottom: clamp(32px, 5vw, 48px);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -43,15 +39,14 @@
 }
 
 .logo {
-  width: clamp(140px, 18vw, 200px);
+  display: block;
   height: auto;
   filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.15));
+  max-width: clamp(140px, 18vw, 200px);
 }
 
 .totalBalanceBox {
-  width: 100%;
-  text-align: left;
-  margin-bottom: clamp(24px, 4vw, 40px);
+  text-align: center;
   animation: fadeInDown 0.5s ease-in-out;
 }
 
@@ -73,11 +68,11 @@
 }
 
 .assetList {
-  width: 100%;
   display: flex;
   flex-direction: column;
   gap: 16px;
   animation: fadeInUp 0.5s ease-in-out;
+  width: 100%;
 }
 
 .assetItem {
