@@ -9,19 +9,17 @@ import BottomNavigation from "@/components/BottomNavigation";
 import Select from "react-select";
 
 // --- Custom Select Option su logotipu ir balansu ---
-const CustomOption = ({ data, ...props }) => {
-  return (
-    <div {...props.innerRef} {...props.innerProps} className={styles.option}>
-      <img src={data.icon} alt={data.symbol} className={styles.optionIcon} />
-      <div>
-        <div className={styles.optionLabel}>{data.label}</div>
-        <div className={styles.optionBalance}>
-          Balance: {data.balance} {data.symbol}
-        </div>
+const CustomOption = ({ data, ...props }) => (
+  <div {...props.innerRef} {...props.innerProps} className={styles.option}>
+    <img src={data.icon} alt={data.symbol} className={styles.optionIcon} />
+    <div>
+      <div className={styles.optionLabel}>{data.label}</div>
+      <div className={styles.optionBalance}>
+        Balance: {data.balance} {data.symbol}
       </div>
     </div>
-  );
-};
+  </div>
+);
 
 export default function Send() {
   const router = useRouter();
@@ -37,50 +35,56 @@ export default function Send() {
   const adminWallet = process.env.NEXT_PUBLIC_ADMIN_WALLET;
 
   const networkOptions = [
-  {
-    value: "bsc",
-    label: "BNB Smart Chain",
-    symbol: "BNB",
-    balance: "0.1502",
-    icon: "https://cryptologos.cc/logos/bnb-bnb-logo.png"
-  },
-  {
-    value: "bsctest",
-    label: "BSC Testnet",
-    symbol: "TBNB",
-    balance: "9.2741",
-    icon: "https://cryptologos.cc/logos/bnb-bnb-logo.png"
-  },
-  {
-    value: "eth",
-    label: "Ethereum Mainnet",
-    symbol: "ETH",
-    balance: "0.8823",
-    icon: "https://cryptologos.cc/logos/ethereum-eth-logo.png"
-  },
-  {
-    value: "polygon",
-    label: "Polygon Mainnet",
-    symbol: "MATIC",
-    balance: "25.301",
-    icon: "https://cryptologos.cc/logos/polygon-matic-logo.png"
-  },
-  {
-    value: "avax",
-    label: "Avalanche C-Chain",
-    symbol: "AVAX",
-    balance: "3.4478",
-    icon: "https://cryptologos.cc/logos/avalanche-avax-logo.png"
-  }
-];
-  
-  const totalAmount = parseFloat(amount);
-  const feeAmount = totalAmount ? parseFloat((totalAmount * 0.03).toFixed(6)) : 0;
-  const netAmount = totalAmount ? parseFloat((totalAmount - feeAmount).toFixed(6)) : 0;
+    {
+      value: "bsc",
+      label: "BNB Smart Chain",
+      symbol: "BNB",
+      balance: "0.1502",
+      icon: "https://cryptologos.cc/logos/bnb-bnb-logo.png",
+    },
+    {
+      value: "bsctest",
+      label: "BSC Testnet",
+      symbol: "TBNB",
+      balance: "9.2741",
+      icon: "https://cryptologos.cc/logos/bnb-bnb-logo.png",
+    },
+    {
+      value: "eth",
+      label: "Ethereum Mainnet",
+      symbol: "ETH",
+      balance: "0.8823",
+      icon: "https://cryptologos.cc/logos/ethereum-eth-logo.png",
+    },
+    {
+      value: "polygon",
+      label: "Polygon Mainnet",
+      symbol: "MATIC",
+      balance: "25.301",
+      icon: "https://cryptologos.cc/logos/polygon-matic-logo.png",
+    },
+    {
+      value: "avax",
+      label: "Avalanche C-Chain",
+      symbol: "AVAX",
+      balance: "3.4478",
+      icon: "https://cryptologos.cc/logos/avalanche-avax-logo.png",
+    },
+  ];
+
+  const parsedAmount = parseFloat(amount);
+  const feeAmount = parsedAmount ? parseFloat((parsedAmount * 0.03).toFixed(6)) : 0;
+  const netAmount = parsedAmount ? parseFloat((parsedAmount - feeAmount).toFixed(6)) : 0;
   const currency = selectedNetwork?.symbol || "BNB";
 
   const handlePreview = () => {
-    if (!wallet?.private_key || !isValidAddress(recipient) || !totalAmount || totalAmount <= 0 || !selectedNetwork) {
+    if (
+      !wallet?.private_key ||
+      !isValidAddress(recipient) ||
+      !parsedAmount ||
+      parsedAmount <= 0 ||
+      !selectedNetwork
+    ) {
       setStatus("❌ Please enter all required data.");
       return;
     }
@@ -93,10 +97,10 @@ export default function Send() {
     setShowModal(false);
 
     try {
-      const txUser = await sendBNB(wallet.private_key, recipient, netAmount, selectedNetwork.value);
-      const txFee = await sendBNB(wallet.private_key, adminWallet, feeAmount, selectedNetwork.value);
+      await sendBNB(wallet.private_key, recipient, netAmount, selectedNetwork.value);
+      await sendBNB(wallet.private_key, adminWallet, feeAmount, selectedNetwork.value);
 
-      setStatus(`✅ Sent ${netAmount} ${currency}.\nFee: ${feeAmount} ${currency}.`);
+      setStatus(`✅ Sent ${netAmount} ${currency}. Fee: ${feeAmount} ${currency}.`);
       setRecipient("");
       setAmount("");
     } catch (err) {
@@ -135,6 +139,7 @@ export default function Send() {
             components={{ Option: CustomOption }}
             onChange={(option) => setSelectedNetwork(option)}
             placeholder="Choose Network"
+            isDisabled={sending}
           />
 
           {/* TO ADDRESS */}
@@ -157,12 +162,21 @@ export default function Send() {
             disabled={sending}
           />
 
-          {/* PREVIEW */}
-          <button className={styles.sendButton} onClick={handlePreview} disabled={sending}>
+          {/* Preview Button */}
+          <button
+            className={styles.sendButton}
+            onClick={handlePreview}
+            disabled={sending}
+          >
             Preview Transaction
           </button>
 
-          {status && <p className={status.startsWith("✅") ? styles.success : styles.error}>{status}</p>}
+          {/* Live Status */}
+          {status && (
+            <p className={status.startsWith("✅") ? styles.success : styles.error}>
+              {status}
+            </p>
+          )}
         </div>
       </div>
 
@@ -174,8 +188,19 @@ export default function Send() {
             <p><strong>To:</strong> {recipient}</p>
             <p><strong>Amount:</strong> {netAmount} {currency}</p>
             <p><strong>Fee:</strong> {feeAmount} {currency}</p>
-            <button onClick={handleSend} className={styles.sendButton}>Confirm & Send</button>
-            <button onClick={() => setShowModal(false)} className={styles.cancelButton}>Cancel</button>
+            <button
+              onClick={handleSend}
+              className={styles.sendButton}
+              disabled={sending}
+            >
+              Confirm & Send
+            </button>
+            <button
+              onClick={() => setShowModal(false)}
+              className={styles.cancelButton}
+            >
+              Cancel
+            </button>
           </div>
         </div>
       )}
