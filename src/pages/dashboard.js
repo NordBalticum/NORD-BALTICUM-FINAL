@@ -48,7 +48,7 @@ export default function Dashboard() {
             src="/icons/logo.svg"
             alt="NordBalticum"
             width={180}
-            height={40}
+            height={60}
             className={styles.logo}
             priority
           />
