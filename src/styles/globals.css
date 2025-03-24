@@ -22,6 +22,7 @@
   -webkit-tap-highlight-color: transparent;
 }
 
+/* === No Scroll & No Zoom – GLOBAL LOCKDOWN === */
 html, body {
   font-size: 100%;
   font-family: 'Poppins', sans-serif;
@@ -34,8 +35,13 @@ html, body {
   color: var(--primary-text);
   scroll-behavior: smooth;
   -webkit-font-smoothing: antialiased;
-  overflow-x: hidden;
-  overflow-y: auto;
+  overflow: hidden;
+  touch-action: none;
+  -ms-touch-action: none;
+  user-select: none;
+  zoom: reset;
+  position: fixed;
+  inset: 0;
 }
 
 /* === Pagrindinis konteineris – PERFECT fullscreen adaptive === */
