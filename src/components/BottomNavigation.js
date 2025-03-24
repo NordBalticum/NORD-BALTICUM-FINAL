@@ -9,7 +9,7 @@ const BottomNavigation = () => {
 
   const navItems = [
     { href: '/dashboard', icon: <FaWallet />, label: 'Wallet' },
-    { href: '/transactions', icon: <FaClock />, label: 'History' },
+    { href: '/history', icon: <FaClock />, label: 'History' },
     { href: '/receive', icon: <FaArrowDown />, label: 'Receive' },
     { href: '/send', icon: <FaArrowUp />, label: 'Send' },
     { href: '/settings', icon: <FaCog />, label: 'Settings' },
