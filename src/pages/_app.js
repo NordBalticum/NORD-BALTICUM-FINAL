@@ -6,19 +6,10 @@ import "@/styles/theme.css";
 import { MagicLinkProvider } from "@/contexts/MagicLinkContext";
 import { BalanceProviderEthers } from "@/contexts/BalanceProviderEthers";
 
-// ✅ UI Components
-import Navbar from "@/components/Navbar";
-
 // ✅ Head – Favicon, Metadata, Scaling, SEO
 import Head from "next/head";
-import { useRouter } from "next/router";
 
 export default function MyApp({ Component, pageProps }) {
-  const router = useRouter();
-  const hideNavbarRoutes = ["/"]; // galima pridėti ir kitus route be navbar
-
-  const showNavbar = !hideNavbarRoutes.includes(router.pathname);
-
   return (
     <>
       <Head>
@@ -39,11 +30,8 @@ export default function MyApp({ Component, pageProps }) {
       {/* ✅ Global Context Wrappers */}
       <MagicLinkProvider>
         <BalanceProviderEthers>
-          {/* ✅ Navbar (tik kai reikia) */}
-          {showNavbar && <Navbar />}
-
-          {/* ✅ Main layout su paddingTop kai rodomas navbar */}
-          <main style={{ paddingTop: showNavbar ? "clamp(68px, 7.5vh, 96px)" : 0 }}>
+          {/* ✅ Main content be Navbar */}
+          <main>
             <Component {...pageProps} />
           </main>
         </BalanceProviderEthers>
