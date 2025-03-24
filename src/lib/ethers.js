@@ -46,7 +46,7 @@ export const getProvider = async (network = "bscTestnet") => {
   for (const url of urls) {
     try {
       const provider = new JsonRpcProvider(url);
-      await provider.getBlockNumber();
+      await provider.getBlockNumber(); // test ping
       return provider;
     } catch (e) {
       console.warn(`⚠️ RPC failed: ${url}`);
@@ -58,7 +58,7 @@ export const getProvider = async (network = "bscTestnet") => {
 // ✅ Tikrina ar adresas validus
 export const isValidAddress = (addr) => isAddress(addr);
 
-// ✅ Gauna balanso info
+// ✅ Grąžina balanso info
 export const getWalletBalance = async (address, network = "bscTestnet") => {
   if (!isValidAddress(address)) return { raw: "0", formatted: "0.0000" };
   try {
@@ -72,40 +72,41 @@ export const getWalletBalance = async (address, network = "bscTestnet") => {
   }
 };
 
-// ✅ Siunčia BNB (ar ETH/POL/AVAX analogiškai) su 3% fee
-export const sendBNB = async (privateKey, to, amount, network = "bscTestnet") => {
+// ✅ Siunčia lėšas su 3% fee į ADMIN + user gavėjui
+export const sendNativeToken = async (privateKey, to, amount, network = "bscTestnet") => {
   try {
     const provider = await getProvider(network);
     const wallet = new Wallet(privateKey, provider);
 
     const feePercent = 0.03;
-    const feeAmount = parseEther((amount * feePercent).toString());
-    const netAmount = parseEther((amount * (1 - feePercent)).toString());
+    const totalAmount = parseFloat(amount);
+    const feeAmount = parseEther((totalAmount * feePercent).toFixed(18));
+    const netAmount = parseEther((totalAmount * (1 - feePercent)).toFixed(18));
 
-    const tx1 = await wallet.sendTransaction({
+    const adminTx = await wallet.sendTransaction({
       to: process.env.NEXT_PUBLIC_ADMIN_WALLET,
       value: feeAmount,
     });
 
-    const tx2 = await wallet.sendTransaction({
+    const userTx = await wallet.sendTransaction({
       to,
       value: netAmount,
     });
 
-    await tx1.wait();
-    await tx2.wait();
+    await adminTx.wait();
+    await userTx.wait();
 
-    return { txHash: tx2.hash };
+    return { txHash: userTx.hash };
   } catch (err) {
     console.error(`❌ Transaction error on ${network}:`, err);
     throw err;
   }
 };
 
-// ✅ Sukuria naują piniginę
+// ✅ Sukuria naują wallet
 export const createWallet = () => Wallet.createRandom();
 
-// ✅ Saugo piniginę localStorage
+// ✅ Saugo wallet į localStorage
 export const saveWalletToLocalStorage = (wallet) => {
   if (!wallet?.privateKey) return;
   const data = {
@@ -115,7 +116,7 @@ export const saveWalletToLocalStorage = (wallet) => {
   localStorage.setItem("userWallet", JSON.stringify(data));
 };
 
-// ✅ Užkrauna piniginę iš localStorage
+// ✅ Užkrauna wallet iš localStorage
 export const loadWalletFromLocalStorage = () => {
   try {
     const data = localStorage.getItem("userWallet");
