@@ -1,94 +1,88 @@
-// src/pages/dashboard.js
 "use client";
-
-import { useEffect } from "react";
-import { useRouter } from "next/router";
-import { useMagicLink } from "@/contexts/MagicLinkContext";
-import { useBalance } from "@/contexts/BalanceProviderEthers";
-import styles from "@/styles/dashboard.module.css";
+import React, { useEffect, useState } from "react";
+import styles from "./dashboard.module.css";
+import { useMagic } from "../loginsystem/MagicLinkContext";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
+import { fetchBalancesForAllChains } from "../utils/fetchBalances";
+
+const networks = [
+  {
+    name: "BNB Smart Chain",
+    symbol: "BNB",
+    logo: "https://cryptologos.cc/logos/bnb-bnb-logo.png",
+  },
+  {
+    name: "BSC Testnet",
+    symbol: "TBNB",
+    logo: "https://cryptologos.cc/logos/binance-coin-bnb-logo.png",
+  },
+  {
+    name: "Ethereum",
+    symbol: "ETH",
+    logo: "https://cryptologos.cc/logos/ethereum-eth-logo.png",
+  },
+  {
+    name: "Polygon",
+    symbol: "POL",
+    logo: "https://cryptologos.cc/logos/polygon-matic-logo.png",
+  },
+  {
+    name: "Avalanche",
+    symbol: "AVAX",
+    logo: "https://cryptologos.cc/logos/avalanche-avax-logo.png",
+  },
+];
 
 export default function Dashboard() {
   const router = useRouter();
-  const { user, wallet } = useMagicLink();
-  const { balance, selectedNetwork, setSelectedNetwork } = useBalance();
+  const { user, publicAddress } = useMagic();
+  const [balances, setBalances] = useState({});
 
   useEffect(() => {
-    if (!user || !wallet) {
-      const timeout = setTimeout(() => router.push("/"), 800);
-      return () => clearTimeout(timeout);
+    if (!user) {
+      router.push("/");
+    } else {
+      (async () => {
+        const fetched = await fetchBalancesForAllChains(publicAddress);
+        setBalances(fetched);
+      })();
     }
-  }, [user, wallet, router]);
+  }, [user, publicAddress, router]);
 
-  if (!user || !wallet) {
-    return <div className={styles.loading}>Loading Wallet...</div>;
-  }
-
-  const displayAddress = `${wallet.address.slice(0, 6)}...${wallet.address.slice(-4)}`;
-
-  const networks = [
-    {
-      name: "BNB Smart Chain",
-      short: "BNB",
-      id: "bsc",
-      logo: "https://cryptologos.cc/logos/bnb-bnb-logo.png",
-    },
-    {
-      name: "BSC Testnet",
-      short: "TBNB",
-      id: "bscTestnet",
-      logo: "https://cryptologos.cc/logos/binance-coin-bnb-logo.png",
-    },
-  ];
+  if (!user) return null;
 
   return (
-    <div className={styles.dashboardContainer}>
-      <div className={styles.header}>
-        <div className={styles.walletInfo}>
-          <p className={styles.label}>Wallet</p>
-          <h2 className={styles.address}>{displayAddress}</h2>
-        </div>
-        <div className={styles.networkSelector}>
-          <select
-            className={styles.select}
-            value={selectedNetwork}
-            onChange={(e) => setSelectedNetwork(e.target.value)}
-          >
-            {networks.map((net) => (
-              <option key={net.id} value={net.id}>
-                {net.name}
-              </option>
-            ))}
-          </select>
+    <div className={styles.container}>
+      <div className={styles.headerBox}>
+        <div className={styles.walletLabel}>WALLET</div>
+        <div className={styles.walletAddress}>
+          {publicAddress?.slice(0, 6)}...{publicAddress?.slice(-4)}
         </div>
       </div>
 
-      <div className={styles.tokenTable}>
+      <div className={styles.assetList}>
         {networks.map((net) => (
-          <div key={net.id} className={styles.tokenRow}>
-            <div className={styles.tokenInfo}>
+          <div key={net.symbol} className={styles.assetItem}>
+            <div className={styles.assetLeft}>
               <Image
                 src={net.logo}
-                alt={net.name}
-                width={32}
-                height={32}
-                className={styles.tokenLogo}
+                alt={net.symbol}
+                width={36}
+                height={36}
+                className={styles.assetLogo}
               />
-              <div>
-                <p className={styles.tokenSymbol}>{net.short}</p>
-                <p className={styles.tokenName}>{net.name}</p>
+              <div className={styles.assetText}>
+                <div className={styles.assetSymbol}>{net.symbol}</div>
+                <div className={styles.assetName}>{net.name}</div>
               </div>
             </div>
-            <div className={styles.tokenBalance}>
-              {selectedNetwork === net.id ? balance : "—"} {net.short}
+            <div className={styles.assetBalance}>
+              {balances[net.symbol] ? balances[net.symbol] : "0.0000"} {net.symbol}
             </div>
           </div>
         ))}
       </div>
-
-      <p className={styles.note}>
-        Staking & transactions history will be shown here soon.
-      </p>
     </div>
   );
 }
