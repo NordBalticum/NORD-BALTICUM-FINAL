@@ -1,83 +1,104 @@
-.container {
+.wrapper {
   width: 100%;
-  min-height: 100vh;
-  padding: clamp(24px, 4vw, 48px);
-  background: radial-gradient(circle at center, rgba(10,18,42,1), rgba(27,35,112,0.98), rgba(43,55,255,0.95));
-  color: white;
+  max-width: var(--max-width);
+  padding: var(--main-padding);
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: flex-start;
+  gap: 24px;
+  padding-bottom: calc(var(--nav-height) + 2rem);
 }
 
 .title {
-  font-size: clamp(22px, 4vw, 32px);
+  font-size: clamp(24px, 4vw, 36px);
   font-weight: 700;
-  margin-bottom: 32px;
-  background: linear-gradient(90deg, #fff, #ffd700);
+  background: linear-gradient(90deg, #ffffff, #ffd700);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+  text-align: center;
+  margin-bottom: 16px;
+  text-shadow: 0 0 6px var(--gold-glow);
 }
 
 .card {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 20px;
-  backdrop-filter: blur(16px);
-  box-shadow: 0 0 24px rgba(255, 255, 255, 0.08);
-  padding: 24px;
+  background: var(--glass-bg);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius);
+  backdrop-filter: var(--glass-blur);
+  box-shadow: var(--shadow);
+  padding: clamp(24px, 4vw, 32px);
   width: 100%;
-  max-width: 480px;
+  max-width: 520px;
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
 
-.label {
-  font-size: 14px;
-  font-weight: 500;
-  opacity: 0.8;
+.walletInfo {
+  font-size: 0.9rem;
+  line-height: 1.4;
+  color: var(--primary-text);
 }
 
-.select,
 .input {
-  padding: 12px;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.08);
+  padding: 14px 18px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid #444;
+  font-size: 1rem;
   color: white;
-  border: none;
-  font-size: 16px;
-  outline: none;
+  transition: var(--transition);
 }
 
-.balanceText {
-  font-size: 14px;
-  opacity: 0.75;
-  margin-top: 8px;
+.input:focus {
+  outline: none;
+  border-color: white;
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.2);
+}
+
+.feeInfo {
+  font-size: 0.9rem;
+  color: #ccc;
+  opacity: 0.85;
+  line-height: 1.4;
 }
 
 .sendButton {
-  margin-top: 12px;
   background: black;
-  border: 1px solid white;
   color: white;
-  padding: 14px;
-  font-size: 16px;
+  border: 1px solid white;
   border-radius: 14px;
+  padding: 14px;
+  font-size: 1rem;
+  font-weight: 600;
   cursor: pointer;
-  transition: 0.2s ease;
+  transition: var(--transition);
+  text-transform: uppercase;
 }
 
 .sendButton:hover {
-  transform: scale(1.03);
-  box-shadow: 0 0 12px #ffd700;
-}
-
-.error {
-  color: #ff6b6b;
-  font-size: 14px;
+  transform: scale(1.04);
+  box-shadow: 0 0 16px var(--white-gold);
 }
 
 .success {
   color: #aaffaa;
-  font-size: 14px;
+  font-size: 0.9rem;
+  margin-top: 12px;
+}
+
+.error {
+  color: #ff6b6b;
+  font-size: 0.9rem;
+  margin-top: 12px;
+}
+
+.loading {
+  font-size: 1.2rem;
+  text-align: center;
+  color: white;
+  padding-top: 120px;
 }
