@@ -26,7 +26,7 @@ export default function Dashboard() {
   }, [user, wallet, router]);
 
   if (!user || !wallet) {
-    return <div className={styles.loading}>Loading your dashboard...</div>;
+    return <div className={styles.loading}>Loading wallet...</div>;
   }
 
   const handleCopy = () => {
@@ -34,50 +34,38 @@ export default function Dashboard() {
   };
 
   return (
-    <div className={styles.dashboardContainer}>
+    <div className={styles.dashboardPage}>
       <SideDrawer />
-      <div className={styles.wrapper}>
-        <div className={styles.card}>
-          <div className={styles.header}>
-            <h2 className={styles.balanceLabel}>Total Balance</h2>
-            <p className={styles.balanceValue}>{balance} BNB</p>
+
+      <div className={styles.mainContent}>
+        <div className={styles.balanceCard}>
+          <div className={styles.walletLabel}>Wallet Address</div>
+          <div className={styles.addressBox} onClick={handleCopy}>
+            <p className={styles.address}>{wallet.address}</p>
           </div>
 
-          <div className={styles.walletBox} onClick={handleCopy}>
-            <p className={styles.walletAddress}>
-              {wallet.address.slice(0, 6)}...{wallet.address.slice(-4)}
-            </p>
-            <span className={styles.copyHint}>Tap to Copy</span>
-          </div>
-
-          <div className={styles.networkSelector}>
-            <label>Select Network</label>
-            <select
-              value={selectedNetwork}
-              onChange={(e) => setSelectedNetwork(e.target.value)}
-              className={styles.select}
-            >
-              <option value="bsc">BSC Mainnet</option>
-              <option value="bscTestnet">BSC Testnet</option>
-            </select>
+          <div className={styles.balanceSection}>
+            <p className={styles.balanceLabel}>BNB Balance</p>
+            <h2 className={styles.balanceAmount}>{balance} BNB</h2>
           </div>
 
           <div className={styles.actions}>
             <button
-              className={styles.actionButton}
+              className={styles.sendBtn}
               onClick={() => router.push("/send")}
             >
-              🧾 SEND
+              Send
             </button>
             <button
-              className={styles.actionButton}
+              className={styles.receiveBtn}
               onClick={() => router.push("/receive")}
             >
-              ✅ RECEIVE
+              Receive
             </button>
           </div>
         </div>
       </div>
+
       <BottomNavigation />
     </div>
   );
