@@ -1,80 +1,101 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/router";
+import React, { useEffect, useState } from "react";
+import styles from "@/styles/send.module.css";
 import { useMagicLink } from "@/contexts/MagicLinkContext";
-import { useBalance } from "@/contexts/BalanceProviderEthers";
-import QRCode from "react-qr-code";
-import Navbar from "@/components/Navbar";
-import styles from "@/styles/receive.module.css";
+import { useBalance } from "@/contexts/BalanceContext";
+import { sendBNB, isValidAddress } from "@/lib/ethers";
+import { useRouter } from "next/navigation";
 
-export default function ReceivePage() {
+export default function SendPage() {
   const router = useRouter();
   const { user, wallet } = useMagicLink();
-  const {
-    balance,
-    selectedNetwork,
-    setSelectedNetwork,
-    refreshBalance,
-  } = useBalance();
+  const { selectedNetwork, setSelectedNetwork, balances, refreshBalances } = useBalance();
 
-  const [copied, setCopied] = useState(false);
+  const [to, setTo] = useState("");
+  const [amount, setAmount] = useState("");
+  const [status, setStatus] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    if (!user || !wallet) {
-      router.push("/");
-    }
-  }, [user, wallet, router]);
+    if (!user || !wallet) router.push("/");
+  }, [user, wallet]);
 
-  const handleCopy = () => {
-    if (!wallet?.address) return;
-    navigator.clipboard.writeText(wallet.address);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  const handleSend = async () => {
+    setError("");
+    setStatus("");
+
+    if (!isValidAddress(to)) return setError("Invalid address.");
+    if (parseFloat(amount) <= 0) return setError("Invalid amount.");
+    if (!wallet?.privateKey) return setError("Wallet not loaded.");
+
+    try {
+      setLoading(true);
+      const tx = await sendBNB(wallet.privateKey, to, parseFloat(amount), selectedNetwork);
+      setStatus(`✔ Sent! TX: ${tx.txHash}`);
+      setTo("");
+      setAmount("");
+      refreshBalances();
+    } catch (err) {
+      console.error("❌ Send error:", err);
+      setError("Transaction failed. Check logs.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (!user || !wallet) return null;
 
   return (
-    <div className="fullscreenContainer">
-      <Navbar />
+    <div className={styles.container}>
+      <h1 className={styles.title}>Send Crypto</h1>
 
-      <div className={styles.receiveWrapper}>
-        <h1 className={styles.title}>Receive BNB</h1>
+      <div className={styles.card}>
+        <label className={styles.label}>Select Network:</label>
+        <select
+          className={styles.select}
+          value={selectedNetwork}
+          onChange={(e) => setSelectedNetwork(e.target.value)}
+        >
+          <option value="bsc">BSC Mainnet</option>
+          <option value="bscTestnet">BSC Testnet</option>
+          <option value="eth">Ethereum</option>
+          <option value="polygon">Polygon</option>
+          <option value="avax">Avalanche</option>
+        </select>
 
-        <div className={`${styles.qrContainer} ${copied ? styles.copied : ""}`} onClick={handleCopy}>
-          <QRCode
-            value={wallet.address}
-            size={200}
-            bgColor="#ffffff"
-            fgColor="#0A122A"
-            className={styles.qrCode}
-          />
-        </div>
+        <label className={styles.label}>Receiver Address:</label>
+        <input
+          type="text"
+          className={styles.input}
+          value={to}
+          onChange={(e) => setTo(e.target.value)}
+          placeholder="0x..."
+        />
 
-        <p className={styles.qrText}>{wallet.address}</p>
-        <p className={`${styles.copyFeedback} ${copied ? styles.copied : ""}`}>
-          {copied ? "✔ Copied!" : "Click QR or address to copy"}
-        </p>
-
-        <div className={styles.networkInfo}>
-          <label className={styles.label}>Network:</label>
-          <select
-            className={styles.select}
-            value={selectedNetwork}
-            onChange={(e) => setSelectedNetwork(e.target.value)}
-          >
-            <option value="bsc">BSC Mainnet</option>
-            <option value="bscTestnet">BSC Testnet</option>
-          </select>
-        </div>
+        <label className={styles.label}>Amount:</label>
+        <input
+          type="number"
+          className={styles.input}
+          value={amount}
+          onChange={(e) => setAmount(e.target.value)}
+          placeholder="0.0"
+        />
 
         <p className={styles.balanceText}>
-          Balance: <strong>{balance} BNB</strong>
+          Balance: <strong>{balances[selectedNetwork]?.amount || "0.0000"}</strong>
         </p>
 
-        <button className={styles.copyButton} onClick={refreshBalance}>
-          🔄 Refresh Balance
+        {error && <p className={styles.error}>{error}</p>}
+        {status && <p className={styles.success}>{status}</p>}
+
+        <button
+          className={styles.sendButton}
+          onClick={handleSend}
+          disabled={loading}
+        >
+          {loading ? "Sending..." : "Send"}
         </button>
       </div>
     </div>
