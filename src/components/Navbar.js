@@ -30,7 +30,7 @@ export default function Navbar() {
   if (pathname === "/") return null;
 
   return (
-    <header className={styles.navbar}>
+    <header className={styles.navbar} role="navigation">
       <div className={styles.navContent}>
         <Link href="/" className={styles.logoLink}>
           <Image
@@ -45,19 +45,15 @@ export default function Navbar() {
 
         <nav className={styles.navLinks}>
           {navItems.map((item) => (
-            <Link key={item.href} href={item.href}>
+            <Link key={item.href} href={item.href} passHref>
               <button
-                className={`${styles.navButton} ${
-                  pathname === item.href ? styles.active : ""
-                }`}
+                className={`${styles.navButton} ${pathname === item.href ? styles.active : ""}`}
               >
                 {item.label}
               </button>
             </Link>
           ))}
-          <button onClick={signOut} className={styles.logout}>
-            Sign Out
-          </button>
+          <button onClick={signOut} className={styles.logout}>Sign Out</button>
         </nav>
 
         <div
@@ -72,20 +68,16 @@ export default function Navbar() {
       {isOpen && (
         <div className={styles.mobileDropdown}>
           {navItems.map((item) => (
-            <Link key={item.href} href={item.href}>
+            <Link key={item.href} href={item.href} passHref>
               <button
-                className={`${styles.navButton} ${
-                  pathname === item.href ? styles.active : ""
-                }`}
+                className={`${styles.navButton} ${pathname === item.href ? styles.active : ""}`}
                 onClick={() => setIsOpen(false)}
               >
                 {item.label}
               </button>
             </Link>
           ))}
-          <button onClick={signOut} className={styles.logoutMobile}>
-            Sign Out
-          </button>
+          <button onClick={signOut} className={styles.logoutMobile}>Sign Out</button>
         </div>
       )}
     </header>
