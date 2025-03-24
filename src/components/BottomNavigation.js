@@ -1,38 +1,62 @@
-"use client";
+/* === BOTTOM NAVIGATION – NordBalticum v2.0 LUXURY MODE === */
 
-import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
-import styles from "@/components/bottomnavigation.module.css";
-import { FaWallet, FaClock, FaArrowDown, FaArrowUp, FaCog } from "react-icons/fa";
+.bottomNav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100vw;
+  height: clamp(64px, 7vh, 88px);
+  background: linear-gradient(to top, rgba(10, 18, 42, 0.95), rgba(43, 63, 255, 0.1));
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  z-index: 9999;
+  backdrop-filter: blur(22px);
+  box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.4);
+  padding-bottom: env(safe-area-inset-bottom);
+  transition: all 0.3s ease-in-out;
+}
 
-export default function BottomNav() {
-  const router = useRouter();
-  const [active, setActive] = useState("");
+/* === Nav Button === */
+.navButton {
+  flex: 1;
+  height: 100%;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.6);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  transition: all 0.25s ease-in-out;
+  text-shadow: 0 0 8px rgba(0, 0, 0, 0.3);
+  letter-spacing: 0.5px;
+  font-family: 'Poppins', sans-serif;
+}
 
-  useEffect(() => {
-    setActive(router.pathname);
-  }, [router.pathname]);
+.navButton:hover {
+  color: #ffffff;
+  transform: scale(1.06);
+  text-shadow: 0 0 12px var(--white-gold);
+}
 
-  const navItems = [
-    { label: "Wallet", icon: <FaWallet />, path: "/dashboard" },
-    { label: "History", icon: <FaClock />, path: "/transactions" },
-    { label: "Receive", icon: <FaArrowDown />, path: "/receive" },
-    { label: "Send", icon: <FaArrowUp />, path: "/send" },
-    { label: "Settings", icon: <FaCog />, path: "/settings" },
-  ];
+/* === Icon Styling === */
+.icon {
+  font-size: 1.3rem;
+  margin-bottom: 4px;
+  color: inherit;
+  transition: transform 0.2s ease-in-out;
+}
 
-  return (
-    <nav className={styles.bottomNav}>
-      {navItems.map((item) => (
-        <button
-          key={item.path}
-          className={`${styles.navButton} ${active === item.path ? styles.active : ""}`}
-          onClick={() => router.push(item.path)}
-        >
-          <span className={styles.icon}>{item.icon}</span>
-          <span className={styles.label}>{item.label}</span>
-        </button>
-      ))}
-    </nav>
-  );
+.navButton:hover .icon {
+  transform: scale(1.15);
+}
+
+/* === Active Nav === */
+.active {
+  color: var(--white-gold);
+  text-shadow: 0 0 10px var(--gold-glow);
 }
