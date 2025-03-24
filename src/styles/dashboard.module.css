@@ -1,22 +1,18 @@
 .container {
-  min-height: 100vh;
-  width: 100vw;
-  padding: clamp(24px, 5vw, 60px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
+  @apply fullscreen;
   background: radial-gradient(
-    180% 180% at 50% 50%,
+    160% 120% at 50% 50%,
     rgba(10, 18, 42, 1) 0%,
     rgba(27, 35, 112, 0.98) 55%,
     rgba(43, 55, 255, 0.92) 100%
   );
+  overflow: hidden;
   user-select: none;
   touch-action: none;
   -ms-touch-action: none;
   overscroll-behavior: none;
   scrollbar-width: none;
+  padding: var(--main-padding);
 }
 
 .container::-webkit-scrollbar {
@@ -24,10 +20,11 @@
 }
 
 .globalWrapper {
+  @apply globalContainer;
   display: flex;
   flex-direction: column;
-  justify-content: center;
   align-items: center;
+  justify-content: flex-start;
   gap: clamp(32px, 4vw, 64px);
 }
 
@@ -41,8 +38,10 @@
 .logo {
   display: block;
   height: auto;
+  max-width: 100%;
+  width: 100%;
+  max-height: 120px;
   filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.15));
-  max-width: clamp(140px, 18vw, 200px);
 }
 
 .totalBalanceBox {
@@ -51,20 +50,20 @@
 }
 
 .totalLabel {
-  font-size: clamp(14px, 2vw, 18px);
   font-weight: 500;
   opacity: 0.75;
   margin-bottom: 6px;
   letter-spacing: 1px;
+  font-size: clamp(14px, 2vw, 18px);
 }
 
 .totalValue {
-  font-size: clamp(28px, 3vw, 36px);
   font-weight: 700;
-  text-shadow: 0 0 12px rgba(255, 255, 255, 0.25);
   background: linear-gradient(90deg, #ffffff, #ffd700);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+  text-shadow: 0 0 12px rgba(255, 255, 255, 0.25);
+  font-size: clamp(28px, 3vw, 36px);
 }
 
 .assetList {
@@ -76,17 +75,16 @@
 }
 
 .assetItem {
-  width: 100%;
   background: rgba(255, 255, 255, 0.035);
   border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 20px;
+  border-radius: var(--radius);
   padding: 16px 24px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   backdrop-filter: blur(16px);
   box-shadow: 0 0 18px rgba(255, 255, 255, 0.05);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: var(--transition);
 }
 
 .assetItem:hover {
@@ -117,23 +115,23 @@
 }
 
 .assetSymbol {
-  font-size: clamp(16px, 2vw, 20px);
   font-weight: 700;
+  font-size: clamp(16px, 2vw, 20px);
   line-height: 1;
 }
 
 .assetName {
-  font-size: clamp(12px, 1.5vw, 13px);
   opacity: 0.65;
   font-weight: 400;
+  font-size: clamp(12px, 1.5vw, 13px);
 }
 
 .assetBalance {
   display: flex;
   flex-direction: column;
   text-align: right;
-  font-size: clamp(16px, 2vw, 20px);
   font-weight: 600;
+  font-size: clamp(16px, 2vw, 20px);
   line-height: 1.3;
 }
 
