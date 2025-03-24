@@ -20,9 +20,13 @@ export default function Navbar() {
     { label: "Receive", href: "/receive" },
   ];
 
-  useEffect(() => setIsOpen(false), [pathname]);
+  useEffect(() => {
+    setIsOpen(false); // close dropdown on route change
+  }, [pathname]);
 
-  const toggleMenu = useCallback(() => setIsOpen((prev) => !prev), []);
+  const toggleMenu = useCallback(() => {
+    setIsOpen((prev) => !prev);
+  }, []);
 
   if (pathname === "/") return null;
 
@@ -47,9 +51,7 @@ export default function Navbar() {
             <Link key={item.href} href={item.href} passHref>
               <button
                 role="menuitem"
-                className={`${styles.navButton} ${
-                  pathname === item.href ? styles.active : ""
-                }`}
+                className={`${styles.navButton} ${pathname === item.href ? styles.active : ""}`}
               >
                 {item.label}
               </button>
@@ -60,7 +62,7 @@ export default function Navbar() {
           </button>
         </nav>
 
-        {/* === Mobile Toggle === */}
+        {/* === Mobile Toggle (Hamburger / X) === */}
         <div
           className={`${styles.mobileToggle} ${isOpen ? styles.open : ""}`}
           onClick={toggleMenu}
@@ -72,24 +74,22 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* === Mobile Dropdown === */}
+      {/* === Mobile Dropdown Menu === */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
             className={styles.mobileDropdown}
             role="menu"
-            initial={{ opacity: 0, y: -10, scale: 0.96 }}
+            initial={{ opacity: 0, y: -6, scale: 0.96 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -8, scale: 0.96 }}
+            exit={{ opacity: 0, y: -8, scale: 0.95 }}
             transition={{ duration: 0.25, ease: "easeInOut" }}
           >
             {navItems.map((item) => (
               <Link key={item.href} href={item.href} passHref>
                 <button
                   role="menuitem"
-                  className={`${styles.navButton} ${
-                    pathname === item.href ? styles.active : ""
-                  }`}
+                  className={`${styles.navButton} ${pathname === item.href ? styles.active : ""}`}
                   onClick={() => setIsOpen(false)}
                 >
                   {item.label}
@@ -97,7 +97,10 @@ export default function Navbar() {
               </Link>
             ))}
             <button
-              onClick={signOut}
+              onClick={() => {
+                setIsOpen(false);
+                signOut();
+              }}
               className={styles.logoutMobile}
               aria-label="Log out from mobile"
             >
