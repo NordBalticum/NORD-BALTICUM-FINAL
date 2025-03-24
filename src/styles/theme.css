@@ -1,46 +1,40 @@
-/* === THEME – NordBalticum Web3 Wallet v1 === */
-/* Inspired by TrustWallet & Metamask 2025 mobile UI */
+/* === THEME – NordBalticum Web3 Wallet v1.5 === */
+/* Fully aligned with globals.css – MAXIMUM RESPONSIVE + PREMIUM FEEL */
 
 :root {
-  --primary-color: #ffffff;
   --accent-color: #00ffc8;
   --danger-color: #ff3c3c;
-  --bg-gradient: radial-gradient(ellipse at center, #2B3FFF 0%, #1B2370 40%, #0A122A 100%);
-  --bg-dark: #0a122a;
   --glass-bg: rgba(255, 255, 255, 0.04);
   --glass-blur: blur(18px);
-  --radius: 18px;
   --shadow: 0 0 24px rgba(0, 0, 0, 0.2);
   --spacing: clamp(16px, 4vw, 32px);
-  --transition: all 0.3s ease-in-out;
   --font-main: 'Poppins', sans-serif;
   --nav-height: clamp(64px, 7vh, 88px);
 }
 
-/* === Base === */
-body,
-html {
+/* === Typography === */
+body, html {
   font-family: var(--font-main);
-  background: var(--bg-gradient);
-  color: var(--primary-color);
+  color: var(--primary-text);
+  background: none;
   -webkit-font-smoothing: antialiased;
-  overflow-x: hidden;
-  scroll-behavior: smooth;
 }
 
-/* === Global Containers === */
+/* === Containers === */
 .pageWrapper {
+  width: 100%;
+  max-width: var(--max-width);
   padding: var(--spacing);
   padding-bottom: calc(var(--nav-height) + var(--spacing));
+  margin: 0 auto;
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  min-height: 100vh;
-  box-sizing: border-box;
 }
 
-/* === Cards === */
+/* === Glass Cards === */
 .cardGlass {
   width: 100%;
   max-width: 600px;
@@ -53,13 +47,14 @@ html {
   margin-bottom: 1.6rem;
 }
 
-/* === Typography === */
+/* === Headings & Text === */
 h1, h2, h3 {
-  color: white;
+  color: var(--primary-text);
   font-weight: 700;
   text-align: center;
   margin-bottom: 1rem;
 }
+
 p, label, span {
   color: #ccc;
   font-size: 1rem;
@@ -109,6 +104,7 @@ p, label, span {
   font-size: 1rem;
   color: white;
   margin-bottom: 1rem;
+  transition: var(--transition);
 }
 .inputBox:focus {
   outline: none;
@@ -121,12 +117,12 @@ p, label, span {
 .qrBox {
   background: black;
   padding: 24px;
-  border-radius: 18px;
+  border-radius: var(--radius);
   box-shadow: 0 0 32px rgba(255, 255, 255, 0.12);
   margin: 2rem 0;
 }
 
-/* === Fade Animation === */
+/* === Animations === */
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(16px); }
   to   { opacity: 1; transform: translateY(0); }
@@ -136,7 +132,7 @@ p, label, span {
   animation: fadeIn 0.6s ease-in-out;
 }
 
-/* === Media Responsive Fixes === */
+/* === Responsive Fixes === */
 @media (max-width: 768px) {
   .pageWrapper {
     padding: 1rem;
