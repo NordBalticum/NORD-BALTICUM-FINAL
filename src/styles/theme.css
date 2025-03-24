@@ -1,115 +1,151 @@
-/* === THEME – NordBalticum Color Scheme 2025 === */
+/* === THEME – NordBalticum Web3 Wallet v1 === */
+/* Inspired by TrustWallet & Metamask 2025 mobile UI */
 
 :root {
-  --primary-color: #2B3FFF;
-  --secondary-color: #1B2370;
-  --accent-color: #0A122A;
-
-  --gradient-bg: radial-gradient(
-    ellipse at center,
-    var(--primary-color) 0%,
-    var(--secondary-color) 40%,
-    var(--accent-color) 100%
-  );
-
-  --primary-text: #f0f0f0;
-  --main-white: #ffffff;
-
-  --main-white-glow: rgba(255, 255, 255, 0.5);
-  --text-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
-  --button-shadow: 0 0 14px rgba(255, 255, 255, 0.1);
-  --input-focus-glow: 0 0 12px rgba(0, 255, 200, 0.3);
-  --card-glow: 0 0 42px rgba(0, 255, 204, 0.08);
-  --shadow-strong: 0 0 64px rgba(0, 255, 204, 0.12);
-  --deep-glow: 0 0 48px rgba(43, 63, 255, 0.2);
-
-  --glass-effect: rgba(255, 255, 255, 0.1);
-  --glass-effect-light: rgba(255, 255, 255, 0.04);
-  --card-bg: rgba(255, 255, 255, 0.06);
-  --button-bg: rgba(255, 255, 255, 0.1);
-  --input-bg: rgba(255, 255, 255, 0.06);
-
-  --success-color: #00ffc8;
-  --error-color: crimson;
-  --warning-color: #ffcc00;
-
-  --speed-fast: 0.2s ease;
-  --speed-mid: 0.3s ease-in-out;
-  --speed-slow: 0.6s ease-in-out;
+  --primary-color: #ffffff;
+  --accent-color: #00ffc8;
+  --danger-color: #ff3c3c;
+  --bg-gradient: radial-gradient(ellipse at center, #2B3FFF 0%, #1B2370 40%, #0A122A 100%);
+  --bg-dark: #0a122a;
+  --glass-bg: rgba(255, 255, 255, 0.04);
+  --glass-blur: blur(18px);
+  --radius: 18px;
+  --shadow: 0 0 24px rgba(0, 0, 0, 0.2);
+  --spacing: clamp(16px, 4vw, 32px);
+  --transition: all 0.3s ease-in-out;
+  --font-main: 'Poppins', sans-serif;
+  --nav-height: clamp(64px, 7vh, 88px);
 }
 
-/* === Shadow Pulse === */
-@keyframes shadowPulse {
-  0%   { box-shadow: 0 0 0 rgba(0, 255, 204, 0.2); }
-  50%  { box-shadow: 0 0 16px rgba(0, 255, 204, 0.4); }
-  100% { box-shadow: 0 0 0 rgba(0, 255, 204, 0.2); }
-}
-.shadowPulse {
-  animation: shadowPulse 2.8s infinite;
-}
-
-/* === Frosted Glass Card === */
-.FrostGlass {
-  background: var(--glass-effect);
-  backdrop-filter: blur(16px);
-  border-radius: 18px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  box-shadow: var(--card-glow);
-  transition: var(--speed-mid);
+/* === Base === */
+body,
+html {
+  font-family: var(--font-main);
+  background: var(--bg-gradient);
+  color: var(--primary-color);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+  scroll-behavior: smooth;
 }
 
-/* === Neon Button === */
-.NeonDepth {
-  background: var(--button-bg);
-  border: 2px solid var(--main-white);
-  color: var(--main-white);
-  text-transform: uppercase;
-  font-weight: 600;
-  letter-spacing: 0.6px;
-  transition: var(--speed-mid);
-  box-shadow: 0 0 12px rgba(255, 255, 255, 0.1);
-}
-.NeonDepth:hover {
-  background: var(--main-white);
-  color: #000;
-  box-shadow: 0 0 24px var(--main-white-glow);
-  transform: scale(1.06);
+/* === Global Containers === */
+.pageWrapper {
+  padding: var(--spacing);
+  padding-bottom: calc(var(--nav-height) + var(--spacing));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  min-height: 100vh;
+  box-sizing: border-box;
 }
 
-/* === Inputs Focus === */
-input:focus, select:focus {
-  box-shadow: var(--input-focus-glow);
-  border-color: var(--success-color);
-  transition: var(--speed-fast);
-}
-
-/* === High Elevation Card === */
-.HighElevation {
-  background: var(--card-bg);
-  box-shadow: var(--deep-glow);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(20px);
-  border-radius: 18px;
-  transition: var(--speed-mid);
-}
-
-/* === Dropdown / Panels === */
-.uiDropdown,
-.uiPanel {
-  background: var(--glass-effect-light);
-  backdrop-filter: blur(14px);
+/* === Cards === */
+.cardGlass {
+  width: 100%;
+  max-width: 600px;
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  border-radius: var(--radius);
+  padding: var(--spacing);
+  box-shadow: var(--shadow);
   border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 14px;
-  box-shadow: 0 0 24px rgba(255, 255, 255, 0.06);
-  padding: clamp(14px, 2vw, 22px);
-  transition: var(--speed-mid);
+  margin-bottom: 1.6rem;
 }
 
-/* === FadeIn === */
+/* === Typography === */
+h1, h2, h3 {
+  color: white;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 1rem;
+}
+p, label, span {
+  color: #ccc;
+  font-size: 1rem;
+}
+
+/* === Buttons === */
+.btnPrimary {
+  background: black;
+  color: white;
+  padding: 14px 24px;
+  border: 2px solid white;
+  border-radius: 14px;
+  font-weight: 600;
+  text-transform: uppercase;
+  transition: var(--transition);
+  width: 100%;
+  max-width: 240px;
+  text-align: center;
+}
+.btnPrimary:hover {
+  background: white;
+  color: black;
+  transform: scale(1.04);
+}
+
+.btnDanger {
+  background: var(--danger-color);
+  color: white;
+  padding: 14px 24px;
+  border: none;
+  border-radius: 14px;
+  font-weight: 600;
+  width: 100%;
+  max-width: 240px;
+}
+.btnDanger:hover {
+  background: #cc1a1a;
+}
+
+/* === Inputs === */
+.inputBox {
+  width: 100%;
+  padding: 14px 18px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid #444;
+  border-radius: 14px;
+  font-size: 1rem;
+  color: white;
+  margin-bottom: 1rem;
+}
+.inputBox:focus {
+  outline: none;
+  border-color: white;
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.2);
+}
+
+/* === QR & Icons === */
+.qrBox {
+  background: black;
+  padding: 24px;
+  border-radius: 18px;
+  box-shadow: 0 0 32px rgba(255, 255, 255, 0.12);
+  margin: 2rem 0;
+}
+
+/* === Fade Animation === */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
 .fadeIn {
   animation: fadeIn 0.6s ease-in-out;
 }
-@keyframes fadeIn {
-  from { opacity: 0; transform: scale(0.96); }
-  to   { opacity: 1; transform: scale(1); }
+
+/* === Media Responsive Fixes === */
+@media (max-width: 768px) {
+  .pageWrapper {
+    padding: 1rem;
+    padding-bottom: calc(var(--nav-height) + 2rem);
+  }
+  .btnPrimary, .btnDanger {
+    max-width: 100%;
+  }
+  .qrBox {
+    padding: 16px;
+  }
 }
