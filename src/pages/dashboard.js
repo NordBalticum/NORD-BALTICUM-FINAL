@@ -1,13 +1,13 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useMemo } from "react";
 import styles from "@/styles/dashboard.module.css";
 import { useRouter } from "next/navigation";
 import { useMagicLink } from "@/contexts/MagicLinkContext";
 import { useBalance } from "@/contexts/BalanceContext";
 import Image from "next/image";
 
-const networks = [
+const networksData = [
   {
     name: "BNB Smart Chain",
     symbol: "BNB",
@@ -38,22 +38,30 @@ const networks = [
 export default function Dashboard() {
   const router = useRouter();
   const { user, wallet } = useMagicLink();
-  const { balances, loading, refreshBalances } = useBalance();
+  const { balances, loading } = useBalance();
+
+  const address = wallet?.address || "";
 
   useEffect(() => {
-    if (!user || !wallet?.address) {
+    if (!user || !address) {
       router.push("/");
     }
-  }, [user, wallet]);
 
-  if (!user || !wallet?.address) return null;
+    return () => {
+      // cleanup jei papildomai naudosim interval/us
+    };
+  }, [user, address]);
+
+  const networks = useMemo(() => networksData, []);
+
+  if (!user || !address) return null;
 
   return (
     <div className={styles.container}>
       <div className={styles.headerBox}>
         <div className={styles.walletLabel}>WALLET</div>
         <div className={styles.walletAddress}>
-          {wallet.address.slice(0, 6)}...{wallet.address.slice(-4)}
+          {address.slice(0, 6)}...{address.slice(-4)}
         </div>
       </div>
 
