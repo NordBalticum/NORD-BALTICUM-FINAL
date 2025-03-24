@@ -45,7 +45,7 @@ export default function Dashboard() {
       <div className={styles.globalWrapper}>
         <div className={styles.logoWrapper}>
           <Image
-            src="/public/icons/logo.svg"
+            src="/icons/logo.svg"
             alt="NordBalticum"
             width={180}
             height={40}
