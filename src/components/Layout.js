@@ -3,7 +3,7 @@
 import { useRouter } from "next/router";
 import { useEffect } from "react";
 import SideDrawer from "@/components/SideDrawer";
-import BottomNav from "@/components/BottomNav";
+import BottomNav from "@/components/BottomNavigation";
 import styles from "@/components/layout.module.css";
 
 export default function Layout({ children }) {
