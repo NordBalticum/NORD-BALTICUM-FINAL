@@ -31,7 +31,7 @@
   gap: clamp(32px, 4vw, 64px);
   padding-bottom: calc(var(--nav-height) + 2rem);
   box-sizing: border-box;
-  transform: scale(1);
+  transform: translateY(7%);
   transition: var(--transition);
 }
 
@@ -42,7 +42,7 @@
     height: 100vh;
   }
   .globalWrapper {
-    transform: scale(0.88) translateY(-2%);
+    transform: scale(0.88) translateY(5%);
     transform-origin: top center;
   }
 }
