@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useMagicLink } from "@/contexts/MagicLinkContext";
-import styles from "./sideDrawer.module.css";
+import styles from "@/components/sidedrawer.module.css";
 import { useState } from "react";
 import { FaBars, FaTimes } from "react-icons/fa";
 
