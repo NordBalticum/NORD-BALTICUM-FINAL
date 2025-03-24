@@ -1,74 +1,90 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { Magic } from "magic-sdk";
+import { createClient } from "@supabase/supabase-js";
 import { Wallet } from "ethers";
 
-export const MagicContext = createContext();
+export const MagicLinkContext = createContext();
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+);
 
 export const MagicLinkProvider = ({ children }) => {
-  const [magic, setMagic] = useState(null);
   const [user, setUser] = useState(null);
   const [wallet, setWallet] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  // ✅ Inicijuojam Magic SDK be jokio key (kaip veikia tavo sistemoj)
   useEffect(() => {
-    const initMagic = async () => {
-      try {
-        const magicInstance = new Magic(); // be publishableKey
-        setMagic(magicInstance);
+    const init = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      const currentUser = session?.user || null;
+      setUser(currentUser);
 
-        const isLoggedIn = await magicInstance.user.isLoggedIn();
-        if (isLoggedIn) {
-          const userMetadata = await magicInstance.user.getMetadata();
-          const loadedWallet = loadWalletFromStorage();
+      if (currentUser) {
+        const localWallet = loadWalletFromStorage();
+        if (localWallet) {
+          setWallet(localWallet);
+        } else {
+          const newWallet = Wallet.createRandom();
+          saveWalletToStorage(newWallet);
+          setWallet(newWallet);
+          await saveWalletToDatabase(currentUser.email, newWallet.address);
+        }
+      }
 
-          if (loadedWallet) {
-            setUser(userMetadata);
-            setWallet(loadedWallet);
+      setLoading(false);
+    };
+
+    init();
+
+    const { data: listener } = supabase.auth.onAuthStateChange(
+      async (_event, session) => {
+        const currentUser = session?.user || null;
+        setUser(currentUser);
+
+        if (currentUser) {
+          const localWallet = loadWalletFromStorage();
+          if (localWallet) {
+            setWallet(localWallet);
           } else {
             const newWallet = Wallet.createRandom();
             saveWalletToStorage(newWallet);
-            setUser(userMetadata);
             setWallet(newWallet);
+            await saveWalletToDatabase(currentUser.email, newWallet.address);
           }
+        } else {
+          setWallet(null);
+          localStorage.removeItem("userWallet");
         }
-      } catch (err) {
-        console.error("❌ Magic SDK init error:", err);
       }
-    };
+    );
 
-    initMagic();
+    return () => listener?.subscription?.unsubscribe();
   }, []);
 
-  // ✅ Login su OTP per email
+  // ✅ OTP login
   const loginWithEmail = async (email) => {
-    try {
-      await magic.auth.loginWithEmailOTP({ email });
-      const userMetadata = await magic.user.getMetadata();
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: { shouldCreateUser: true },
+    });
 
-      const newWallet = Wallet.createRandom();
-      saveWalletToStorage(newWallet);
-      setUser(userMetadata);
-      setWallet(newWallet);
-    } catch (err) {
-      console.error("❌ Login failed:", err);
+    if (error) {
+      console.error("❌ Login error:", error.message);
     }
   };
 
-  // ✅ Logout + wallet valymas
+  // ✅ Logout
   const logout = async () => {
-    try {
-      await magic.user.logout();
-      setUser(null);
-      setWallet(null);
-      localStorage.removeItem("userWallet");
-    } catch (err) {
-      console.error("❌ Logout failed:", err);
-    }
+    await supabase.auth.signOut();
+    setUser(null);
+    setWallet(null);
+    localStorage.removeItem("userWallet");
   };
 
-  // ✅ Išsaugo piniginę į localStorage
+  // ✅ Save to localStorage
   const saveWalletToStorage = (wallet) => {
     if (!wallet?.privateKey) return;
     const data = {
@@ -78,25 +94,48 @@ export const MagicLinkProvider = ({ children }) => {
     localStorage.setItem("userWallet", JSON.stringify(data));
   };
 
-  // ✅ Užkrauna piniginę iš localStorage
+  // ✅ Load from localStorage
   const loadWalletFromStorage = () => {
     try {
       const data = localStorage.getItem("userWallet");
       if (!data) return null;
-
       const { privateKey } = JSON.parse(data);
       return new Wallet(privateKey);
     } catch (err) {
-      console.error("❌ Failed to load wallet from storage:", err);
+      console.error("❌ Wallet load error:", err);
       return null;
     }
   };
 
+  // ✅ Save to Supabase DB
+  const saveWalletToDatabase = async (email, address) => {
+    try {
+      const { error } = await supabase
+        .from("wallets")
+        .upsert({ email, address }, { onConflict: ["email"] });
+
+      if (error) {
+        console.error("❌ Supabase DB error:", error.message);
+      }
+    } catch (err) {
+      console.error("❌ Supabase saveWallet error:", err);
+    }
+  };
+
   return (
-    <MagicContext.Provider value={{ magic, user, wallet, loginWithEmail, logout }}>
+    <MagicLinkContext.Provider
+      value={{
+        supabase,
+        user,
+        wallet,
+        loading,
+        loginWithEmail,
+        logout,
+      }}
+    >
       {children}
-    </MagicContext.Provider>
+    </MagicLinkContext.Provider>
   );
 };
 
-export const useMagic = () => useContext(MagicContext);
+export const useMagicLink = () => useContext(MagicLinkContext);
