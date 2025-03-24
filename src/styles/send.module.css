@@ -14,64 +14,76 @@
 .title {
   font-size: clamp(24px, 4vw, 36px);
   font-weight: 700;
-  background: linear-gradient(90deg, #ffffff, #ffd700);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: white;
   text-align: center;
-  margin-bottom: 16px;
-  text-shadow: 0 0 6px var(--gold-glow);
+  margin-bottom: 4px;
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
+}
+
+.networkText {
+  font-size: 0.95rem;
+  font-weight: 500;
+  opacity: 0.75;
+  margin-bottom: 12px;
 }
 
 .card {
-  background: var(--glass-bg);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: var(--radius);
-  backdrop-filter: var(--glass-blur);
-  box-shadow: var(--shadow);
-  padding: clamp(24px, 4vw, 32px);
   width: 100%;
   max-width: 520px;
+  background: var(--glass-bg);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  backdrop-filter: blur(24px);
+  padding: clamp(24px, 4vw, 32px);
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 18px;
+  box-shadow: 0 0 24px rgba(255, 255, 255, 0.08);
 }
 
-.walletInfo {
+.fromBlock {
   font-size: 0.9rem;
+  color: white;
   line-height: 1.4;
-  color: var(--primary-text);
+}
+
+.fromBalance {
+  display: block;
+  margin-top: 6px;
+  font-size: 0.85rem;
+  opacity: 0.75;
+}
+
+.select {
+  border-radius: 12px;
+  overflow: hidden;
+  font-size: 0.95rem;
+  background: transparent;
 }
 
 .input {
   padding: 14px 18px;
   border-radius: 14px;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid #444;
-  font-size: 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   color: white;
+  font-size: 1rem;
   transition: var(--transition);
 }
 
 .input:focus {
   outline: none;
-  border-color: white;
   background: rgba(255, 255, 255, 0.08);
+  border-color: white;
   box-shadow: 0 0 12px rgba(255, 255, 255, 0.2);
-}
-
-.feeInfo {
-  font-size: 0.9rem;
-  color: #ccc;
-  opacity: 0.85;
-  line-height: 1.4;
 }
 
 .sendButton {
   background: black;
   color: white;
   border: 1px solid white;
-  border-radius: 14px;
   padding: 14px;
+  border-radius: 14px;
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
@@ -80,25 +92,101 @@
 }
 
 .sendButton:hover {
-  transform: scale(1.04);
-  box-shadow: 0 0 16px var(--white-gold);
+  transform: scale(1.05);
+  box-shadow: 0 0 14px var(--white-gold);
 }
 
 .success {
   color: #aaffaa;
   font-size: 0.9rem;
-  margin-top: 12px;
+  margin-top: 8px;
+  text-align: center;
 }
 
 .error {
   color: #ff6b6b;
   font-size: 0.9rem;
-  margin-top: 12px;
+  margin-top: 8px;
+  text-align: center;
 }
 
 .loading {
   font-size: 1.2rem;
-  text-align: center;
   color: white;
+  text-align: center;
   padding-top: 120px;
+}
+
+/* --- Modal --- */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  backdrop-filter: blur(12px);
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modalContent {
+  background: #0a122a;
+  color: white;
+  border-radius: 18px;
+  padding: 32px;
+  width: 90%;
+  max-width: 420px;
+  text-align: center;
+  box-shadow: 0 0 24px rgba(255, 255, 255, 0.1);
+}
+
+.cancelButton {
+  margin-top: 12px;
+  background: transparent;
+  color: white;
+  border: 1px solid #888;
+  border-radius: 12px;
+  padding: 10px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.cancelButton:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+/* --- Custom react-select option --- */
+.option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.option:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.optionIcon {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: contain;
+}
+
+.optionLabel {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.optionBalance {
+  font-size: 0.85rem;
+  opacity: 0.7;
 }
