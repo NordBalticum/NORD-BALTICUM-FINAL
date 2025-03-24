@@ -6,6 +6,7 @@ import { useMagicLink } from "@/contexts/MagicLinkContext";
 import { useBalance } from "@/contexts/BalanceContext";
 import { isValidAddress, sendBNB } from "@/lib/ethers";
 import styles from "@/styles/send.module.css";
+import BottomNavigation from "@/components/BottomNavigation";
 
 export default function Send() {
   const router = useRouter();
@@ -59,62 +60,64 @@ export default function Send() {
   }
 
   return (
-    <div className="fullscreenContainer">
-      <Navbar />
+    <div className="globalContainer">
       <div className={styles.wrapper}>
         <h1 className={styles.title}>Send BNB</h1>
 
-        <div className={styles.sendWrapper}>
+        <div className={styles.card}>
           <div className={styles.walletInfo}>
             <p><strong>Wallet:</strong> {wallet.address}</p>
             <p><strong>Balance:</strong> {balance} BNB</p>
             <p><strong>Network:</strong> {selectedNetwork}</p>
           </div>
 
-          <div className={styles.form}>
-            <input
-              type="text"
-              placeholder="Recipient address"
-              value={recipient}
-              onChange={(e) => setRecipient(e.target.value)}
-              disabled={sending}
-            />
-            <input
-              type="number"
-              step="0.0001"
-              placeholder="Amount (BNB)"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              disabled={sending}
-            />
+          <input
+            className={styles.input}
+            type="text"
+            placeholder="Recipient address"
+            value={recipient}
+            onChange={(e) => setRecipient(e.target.value)}
+            disabled={sending}
+          />
 
-            <p className={styles.feeInfo}>
-              3% admin fee is automatically included.  
-              {amount && parseFloat(amount) > 0 && (
-                <>
-                  <br />
-                  You’ll send: <strong>{(parseFloat(amount) * 0.97).toFixed(6)}</strong> BNB  
-                  <br />
-                  Fee: <strong>{(parseFloat(amount) * 0.03).toFixed(6)}</strong> BNB
-                </>
-              )}
-            </p>
+          <input
+            className={styles.input}
+            type="number"
+            step="0.0001"
+            placeholder="Amount (BNB)"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            disabled={sending}
+          />
 
-            <button
-              onClick={handleSend}
-              disabled={sending}
-            >
-              {sending ? "Sending..." : "✅ SEND"}
-            </button>
-
-            {status && (
-              <p className={status.startsWith("✅") ? styles.success : styles.error}>
-                {status}
-              </p>
+          <p className={styles.feeInfo}>
+            3% admin fee is automatically included.
+            {amount && parseFloat(amount) > 0 && (
+              <>
+                <br />
+                You’ll send: <strong>{(parseFloat(amount) * 0.97).toFixed(6)}</strong> BNB<br />
+                Fee: <strong>{(parseFloat(amount) * 0.03).toFixed(6)}</strong> BNB
+              </>
             )}
-          </div>
+          </p>
+
+          <button
+            className={styles.sendButton}
+            onClick={handleSend}
+            disabled={sending}
+          >
+            {sending ? "Sending..." : "✅ SEND"}
+          </button>
+
+          {status && (
+            <p className={status.startsWith("✅") ? styles.success : styles.error}>
+              {status}
+            </p>
+          )}
         </div>
       </div>
+
+      <BottomNavigation />
     </div>
   );
 }
