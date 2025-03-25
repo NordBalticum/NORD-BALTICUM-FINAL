@@ -1,107 +1,76 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { useMagicLink } from "@/contexts/MagicLinkContext";
-import { useBalance } from "@/contexts/BalanceContext";
-import BottomNavigation from "@/components/BottomNavigation";
 import styles from "@/styles/settings.module.css";
+import { useRouter } from "next/router";
 
-export default function SettingsPage() {
+export default function Settings() {
+  const { user } = useMagicLink();
   const router = useRouter();
-  const { user, wallet, changeEmail, requestAccountDeletion } = useMagicLink();
-  const { balance, selectedNetwork } = useBalance();
-
   const [newEmail, setNewEmail] = useState("");
   const [status, setStatus] = useState("");
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    if (!user || !wallet) {
-      router.push("/");
-    }
-  }, [user, wallet]);
+  const recoveryPhrase = "border silver globe vacuum symbol saddle lamp filter logic coffee hazard sugar";
 
   const handleEmailChange = async () => {
-    setLoading(true);
-    setStatus("Sending Magic Link...");
     try {
-      await changeEmail(newEmail);
-      setStatus("✅ Confirmation email sent. Check your inbox.");
-    } catch (error) {
-      console.error(error);
-      setStatus("❌ Failed to send confirmation link.");
-    } finally {
-      setLoading(false);
-      setNewEmail("");
-    }
-  };
-
-  const handleDeleteRequest = async () => {
-    setLoading(true);
-    setStatus("⏳ Sending deletion request...");
-    try {
-      await requestAccountDeletion();
-      setStatus("✅ Your request was submitted.");
+      const { data, error } = await supabase.auth.updateUser({ email: newEmail });
+      if (error) throw error;
+      setStatus("✅ Confirmation link sent to your new email.");
     } catch (err) {
-      setStatus("❌ Something went wrong. Try again.");
-    } finally {
-      setLoading(false);
+      setStatus("❌ Failed to update email.");
     }
   };
-
-  if (!user || !wallet) return null;
 
   return (
     <div className="globalContainer">
       <div className={styles.wrapper}>
-        <h1 className={styles.title}>Settings</h1>
+        <h1 className={styles.title}>SETTINGS</h1>
 
-        <div className={styles.section}>
-          <h2 className={styles.sectionTitle}>Wallet Info</h2>
-          <p><strong>Address:</strong> {wallet.address}</p>
-          <p><strong>Network:</strong> {selectedNetwork}</p>
-          <p><strong>Balance:</strong> {balance} BNB</p>
+        {/* 2FA Placeholder */}
+        <div className={styles.box}>
+          <h2 className={styles.label}>Two-Factor Authentication (2FA)</h2>
+          <button className={styles.button} disabled>
+            Enable 2FA (coming soon)
+          </button>
         </div>
 
-        <div className={styles.section}>
-          <h2 className={styles.sectionTitle}>Change Email</h2>
+        {/* Recovery Phrase */}
+        <div className={styles.box}>
+          <h2 className={styles.label}>Recovery Phrase</h2>
+          <p className={styles.recovery}>{recoveryPhrase}</p>
+        </div>
+
+        {/* Email Change */}
+        <div className={styles.box}>
+          <h2 className={styles.label}>Change Email</h2>
           <input
+            className={styles.input}
             type="email"
-            placeholder="New email address"
+            placeholder="Enter new email"
             value={newEmail}
             onChange={(e) => setNewEmail(e.target.value)}
-            className={styles.input}
-            disabled={loading}
           />
-          <button
-            className={styles.primaryButton}
-            onClick={handleEmailChange}
-            disabled={loading || !newEmail}
-          >
-            {loading ? "Sending..." : "Send Confirmation Link"}
+          <button className={styles.button} onClick={handleEmailChange}>
+            Update Email
           </button>
+          {status && (
+            <p className={status.startsWith("✅") ? styles.success : styles.error}>
+              {status}
+            </p>
+          )}
         </div>
 
-        <div className={styles.section}>
-          <h2 className={styles.sectionTitle}>Account</h2>
-          <button
-            className={styles.dangerButton}
-            onClick={handleDeleteRequest}
-            disabled={loading}
-          >
-            Request Account Deletion
+        {/* Help / History Buttons */}
+        <div className={styles.row}>
+          <button onClick={() => router.push("/pages/help")} className={styles.linkBtn}>
+            Help
+          </button>
+          <button onClick={() => router.push("/pages/history")} className={styles.linkBtn}>
+            Transaction History
           </button>
         </div>
-
-        {status && (
-          <p className={status.startsWith("✅") ? styles.success : styles.error}>
-            {status}
-          </p>
-        )}
       </div>
-
-      <BottomNavigation />
     </div>
   );
 }
