@@ -2,198 +2,214 @@
 /* ✅ MAIN CONTAINER              */
 /* =============================== */
 .container {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  width: calc(100vw - 160px);
-  height: calc(100vh - 160px);
-  transform: translate(-50%, -50%);
-  background: var(--bg-gradient);
-  padding: var(--main-padding);
+  height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
-  overflow: hidden;
-  user-select: none;
-  -webkit-font-smoothing: antialiased;
-  touch-action: manipulation;
-  -ms-touch-action: manipulation;
-  scroll-behavior: smooth;
-  transition: var(--transition);
+  background: radial-gradient(ellipse at center, #0a1f44, #000000);
 }
 
 /* =============================== */
-/* ✅ GLOBAL WRAPPER              */
+/* ✅ CENTER WRAPPER              */
 /* =============================== */
-.globalWrapper {
-  width: 100%;
-  max-width: var(--max-width);
+.centerWrapper {
   display: flex;
   flex-direction: column;
-  justify-content: flex-start;
   align-items: center;
-  gap: clamp(32px, 4vw, 64px);
-  padding-bottom: calc(var(--nav-height) + 2rem);
+  justify-content: center;
+  min-height: 100dvh;
+  width: 100%;
+  padding-top: clamp(6vh, 10vh, 14vh);
   box-sizing: border-box;
-  transform: translateY(7%);
-  transition: var(--transition);
 }
 
 /* =============================== */
-/* ✅ MOBILE ZOOM-OUT (Auto scale) */
+/* ✅ LOGO Offff su pulsuojančiu glow   */
 /* =============================== */
-@media (max-width: 768px) {
-  .container {
-    width: 100vw;
-    height: 100vh;
-  }
-  .globalWrapper {
-    transform: scale(0.88) translateY(5%);
-    transform-origin: top center;
-  }
-}
-
-/* =============================== */
-/* ✅ LOGO                        */
-/* =============================== */
-.logoWrapper {
+.logoContainer {
+  position: relative;
+  margin-top: clamp(-6vh, -8vh, -4vh);
+  margin-bottom: clamp(32px, 5vh, 64px);
   display: flex;
   justify-content: center;
   align-items: center;
-  animation: fadeInDown 0.6s ease-in-out;
+  animation: fadeIn 0.8s ease-in-out;
 }
 
-.logo {
-  display: block;
+.logoImage {
+  z-index: 1;
+  width: clamp(180px, 22vw, 268px);
   height: auto;
-  max-width: clamp(140px, 22vw, 220px);
-  filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.15));
+  background: transparent !important;
+  outline: none;
+  border-radius: 20px;
+  box-shadow: 0 0 22px rgba(255, 255, 255, 0.08);
+  transition: transform 0.4s ease, box-shadow 0.4s ease;
+}
+
+.logoImage:hover {
+  transform: scale(1.06);
+  box-shadow: 0 0 32px rgba(255, 255, 255, 0.3);
 }
 
 /* =============================== */
-/* ✅ BALANCE                     */
+/* ✅ LOGIN BOX su efektu         */
 /* =============================== */
-.totalBalanceBox {
+.loginBox {
+  max-width: 440px;
+  width: 100%;
+  margin-top: clamp(-12px, -4vh, -24px);
+  padding: clamp(24px, 5vw, 48px);
+  background: var(--glass-effect);
+  border-radius: 20px;
+  box-shadow: 0 0 36px rgba(0, 255, 204, 0.08);
+  backdrop-filter: blur(18px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   text-align: center;
-  animation: fadeInDown 0.5s ease-in-out;
+  animation: fadeIn 0.8s ease-out;
+  box-sizing: border-box;
 }
 
-.totalLabel {
-  font-weight: 500;
-  opacity: 0.75;
-  margin-bottom: 6px;
-  letter-spacing: 1px;
-  font-size: clamp(14px, 2vw, 18px);
-}
-
-.totalValue {
+/* =============================== */
+/* ✅ TEXTS                       */
+/* =============================== */
+.title {
+  font-size: clamp(2rem, 5vw, 2.6rem);
   font-weight: 700;
-  background: linear-gradient(90deg, #ffffff, #ffd700);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  text-shadow: 0 0 12px rgba(255, 255, 255, 0.25);
-  font-size: clamp(28px, 3vw, 36px);
+  margin-bottom: 0.7rem;
+  color: #ffffff;
+  text-shadow: 0 1px 4px rgba(255, 255, 255, 0.2);
+}
+
+.subtitle {
+  font-size: clamp(1rem, 1.5vw, 1.25rem);
+  color: #cccccc;
+  margin-bottom: 2.2rem;
+  font-weight: 500;
 }
 
 /* =============================== */
-/* ✅ ASSET LIST                  */
+/* ✅ FORM, INPUT, BUTTON         */
 /* =============================== */
-.assetList {
+.form {
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  animation: fadeInUp 0.5s ease-in-out;
+  gap: 1.2rem;
 }
 
-.assetItem {
-  background: var(--glass-bg);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: var(--radius);
-  padding: 16px 24px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  backdrop-filter: var(--glass-blur);
-  box-shadow: var(--shadow);
-  transition: var(--transition);
+.input {
+  width: 100%;
+  padding: 14px 18px;
+  border-radius: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.07);
+  color: #ffffff;
+  font-size: 1rem;
+  transition: all 0.25s ease;
+  box-sizing: border-box;
 }
 
-.assetItem:hover {
-  transform: scale(1.015);
-  box-shadow: 0 0 26px rgba(255, 255, 255, 0.1);
+.input:focus {
+  outline: none;
+  border-color: #00ffc8;
+  box-shadow: 0 0 14px rgba(0, 255, 200, 0.3);
+  background: rgba(255, 255, 255, 0.1);
 }
 
-.assetLeft {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.assetLogo {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: white;
-  padding: 4px;
-  object-fit: contain;
-  box-shadow: 0 0 6px rgba(255,255,255,0.25);
-}
-
-.assetText {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-
-.assetSymbol {
+.button {
+  width: 100%;
+  padding: 14px 22px;
+  border-radius: 14px;
+  background: #000000;
+  color: #ffffff;
   font-weight: 700;
-  font-size: clamp(16px, 2vw, 20px);
-  line-height: 1;
+  font-size: 1rem;
+  border: 2px solid #ffffff;
+  cursor: pointer;
+  text-transform: uppercase;
+  transition: all 0.25s ease;
+  box-shadow: 0 0 18px rgba(255, 255, 255, 0.08);
 }
 
-.assetName {
-  opacity: 0.65;
-  font-weight: 400;
-  font-size: clamp(12px, 1.5vw, 13px);
+.button:hover {
+  background: #ffffff;
+  color: #000000;
+  transform: scale(1.06);
+  box-shadow: 0 0 22px rgba(255, 255, 255, 0.5);
 }
 
-.assetBalance {
-  display: flex;
-  flex-direction: column;
-  text-align: right;
+.biometricButton {
+  margin-top: 12px;
+  background: black;
+  color: white;
+  border: 1px solid white;
+  padding: 14px;
+  border-radius: 16px;
+  font-size: 1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.biometricButton:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 16px rgba(255, 223, 0, 0.5);
+}
+
+.divider {
+  text-align: center;
+  color: rgba(255, 255, 255, 0.5);
+  margin-top: -8px;
+}
+
+/* =============================== */
+/* ✅ MESSAGE (Animated)          */
+/* =============================== */
+.message {
+  margin-top: 1.2rem;
+  font-size: 0.95rem;
+  color: #00ffc8;
+  text-shadow: 0 0 4px rgba(0, 255, 200, 0.3);
   font-weight: 600;
-  font-size: clamp(16px, 2vw, 20px);
-  line-height: 1.3;
+  animation: fadeMessage 0.5s ease-in-out;
 }
 
-.assetEur {
-  font-size: 14px;
-  opacity: 0.6;
-  margin-top: 4px;
+@keyframes fadeMessage {
+  0% {
+    transform: scale(0.92);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.02);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 /* =============================== */
-/* ✅ ANIMATIONS                  */
+/* ✅ Fade In – Universal         */
 /* =============================== */
-@keyframes fadeInDown {
-  from {
-    opacity: 0;
-    transform: translateY(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.fadeIn {
+  animation: fadeIn 0.6s ease-in-out;
 }
 
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+/* =============================== */
+/* ✅ Fullscreen and Responsive    */
+/* =============================== */
+.fullscreenContainer {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
 }
