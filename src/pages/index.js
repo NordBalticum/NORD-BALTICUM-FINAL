@@ -117,8 +117,8 @@ const Home = () => {
   return (
     <main className={styles.container}>
       <div className={styles.centerWrapper}>
-        
-        {/* Logo */}
+
+        {/* Logo – SVG optimized, transparent, neon glow-ready */}
         <div className={styles.logoContainer}>
           <Image
             src="/icons/logo.svg"
