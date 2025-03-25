@@ -21,7 +21,7 @@ body {
   color: var(--primary-text);
   transition: var(--transition);
   font-family: var(--font-crypto), 'Poppins', sans-serif;
-  overflow: hidden;
+  overflow: visible;
   position: relative;
 }
 
