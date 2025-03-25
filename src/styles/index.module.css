@@ -2,96 +2,106 @@
 /* ✅ MAIN CONTAINER              */
 /* =============================== */
 .container {
-  height: 100vh;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: calc(100vw - 180px);
+  height: calc(100vh - 180px);
+  transform: translate(-50%, -50%);
+  background: var(--bg-gradient);
+  padding: clamp(24px, 4vw, 48px);
   display: flex;
   justify-content: center;
   align-items: center;
-  background: radial-gradient(ellipse at center, #0a1f44, #000000);
+  overflow: hidden;
+  user-select: none;
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  touch-action: manipulation;
+  transition: var(--transition);
+  z-index: 1;
 }
 
 /* =============================== */
 /* ✅ CENTER WRAPPER              */
 /* =============================== */
 .centerWrapper {
+  width: 100%;
+  max-width: 520px;
   display: flex;
   flex-direction: column;
-  align-items: center;
   justify-content: center;
-  min-height: 100dvh;
-  width: 100%;
-  padding-top: clamp(6vh, 10vh, 14vh);
-  box-sizing: border-box;
+  align-items: center;
+  gap: clamp(32px, 4vw, 64px);
+  padding-bottom: calc(var(--nav-height) + 2rem);
+  transform: translateY(5%);
+  animation: fadeIn 0.6s ease-in-out;
+  transition: var(--transition);
 }
 
 /* =============================== */
-/* ✅ LOGO Offff su pulsuojančiu glow   */
+/* ✅ LOGO                        */
 /* =============================== */
 .logoContainer {
-  position: relative;
   margin-top: clamp(-6vh, -8vh, -4vh);
-  margin-bottom: clamp(32px, 5vh, 64px);
+  margin-bottom: clamp(24px, 5vh, 64px);
   display: flex;
   justify-content: center;
   align-items: center;
-  animation: fadeIn 0.8s ease-in-out;
+  animation: fadeInDown 0.6s ease-in-out;
 }
 
 .logoImage {
-  z-index: 1;
   width: clamp(180px, 22vw, 268px);
   height: auto;
-  background: transparent !important;
-  outline: none;
   border-radius: 20px;
-  box-shadow: 0 0 22px rgba(255, 255, 255, 0.08);
   transition: transform 0.4s ease, box-shadow 0.4s ease;
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.06);
 }
 
 .logoImage:hover {
-  transform: scale(1.06);
-  box-shadow: 0 0 32px rgba(255, 255, 255, 0.3);
+  transform: scale(1.05);
+  box-shadow: 0 0 36px rgba(255, 255, 255, 0.25);
 }
 
 /* =============================== */
-/* ✅ LOGIN BOX su efektu         */
+/* ✅ LOGIN BOX                   */
 /* =============================== */
 .loginBox {
-  max-width: 440px;
   width: 100%;
-  margin-top: clamp(-12px, -4vh, -24px);
-  padding: clamp(24px, 5vw, 48px);
+  max-width: 480px;
   background: var(--glass-effect);
-  border-radius: 20px;
-  box-shadow: 0 0 36px rgba(0, 255, 204, 0.08);
   backdrop-filter: blur(18px);
+  border-radius: 22px;
+  padding: clamp(28px, 5vw, 48px);
+  box-shadow: 0 0 36px rgba(0, 255, 204, 0.06);
+  text-align: center;
   display: flex;
   flex-direction: column;
   align-items: center;
-  text-align: center;
-  animation: fadeIn 0.8s ease-out;
-  box-sizing: border-box;
+  animation: fadeIn 0.8s ease-in-out;
 }
 
 /* =============================== */
 /* ✅ TEXTS                       */
 /* =============================== */
 .title {
-  font-size: clamp(2rem, 5vw, 2.6rem);
+  font-size: clamp(2.2rem, 5vw, 2.8rem);
   font-weight: 700;
-  margin-bottom: 0.7rem;
-  color: #ffffff;
-  text-shadow: 0 1px 4px rgba(255, 255, 255, 0.2);
+  color: var(--main-white);
+  margin-bottom: 0.5rem;
+  text-shadow: var(--text-shadow);
 }
 
 .subtitle {
   font-size: clamp(1rem, 1.5vw, 1.25rem);
-  color: #cccccc;
-  margin-bottom: 2.2rem;
+  color: rgba(255, 255, 255, 0.65);
+  margin-bottom: 2rem;
   font-weight: 500;
 }
 
 /* =============================== */
-/* ✅ FORM, INPUT, BUTTON         */
+/* ✅ FORM                        */
 /* =============================== */
 .form {
   width: 100%;
@@ -100,31 +110,36 @@
   gap: 1.2rem;
 }
 
+/* =============================== */
+/* ✅ INPUT                       */
+/* =============================== */
 .input {
   width: 100%;
   padding: 14px 18px;
-  border-radius: 14px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  background: rgba(255, 255, 255, 0.07);
-  color: #ffffff;
   font-size: 1rem;
+  color: var(--main-white);
+  background: rgba(255, 255, 255, 0.05);
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  border-radius: 16px;
   transition: all 0.25s ease;
-  box-sizing: border-box;
 }
 
 .input:focus {
   outline: none;
-  border-color: #00ffc8;
-  box-shadow: 0 0 14px rgba(0, 255, 200, 0.3);
-  background: rgba(255, 255, 255, 0.1);
+  border-color: var(--success-color);
+  background: rgba(255, 255, 255, 0.09);
+  box-shadow: 0 0 12px rgba(0, 255, 200, 0.25);
 }
 
+/* =============================== */
+/* ✅ BUTTON                      */
+/* =============================== */
 .button {
   width: 100%;
   padding: 14px 22px;
   border-radius: 14px;
   background: #000000;
-  color: #ffffff;
+  color: var(--main-white);
   font-weight: 700;
   font-size: 1rem;
   border: 2px solid #ffffff;
@@ -135,17 +150,20 @@
 }
 
 .button:hover {
-  background: #ffffff;
+  background: var(--main-white);
   color: #000000;
   transform: scale(1.06);
   box-shadow: 0 0 22px rgba(255, 255, 255, 0.5);
 }
 
+/* =============================== */
+/* ✅ BIOMETRIC BUTTON            */
+/* =============================== */
 .biometricButton {
   margin-top: 12px;
   background: black;
   color: white;
-  border: 1px solid white;
+  border: 2px solid white;
   padding: 14px;
   border-radius: 16px;
   font-size: 1rem;
@@ -157,59 +175,63 @@
 
 .biometricButton:hover {
   transform: scale(1.05);
-  box-shadow: 0 0 16px rgba(255, 223, 0, 0.5);
-}
-
-.divider {
-  text-align: center;
-  color: rgba(255, 255, 255, 0.5);
-  margin-top: -8px;
+  box-shadow: 0 0 18px var(--white-gold, rgba(255, 223, 0, 0.6));
 }
 
 /* =============================== */
-/* ✅ MESSAGE (Animated)          */
+/* ✅ DIVIDER                     */
+/* =============================== */
+.divider {
+  color: rgba(255, 255, 255, 0.5);
+  text-align: center;
+  margin: 16px 0;
+}
+
+/* =============================== */
+/* ✅ MESSAGE                     */
 /* =============================== */
 .message {
-  margin-top: 1.2rem;
+  margin-top: 1rem;
   font-size: 0.95rem;
-  color: #00ffc8;
-  text-shadow: 0 0 4px rgba(0, 255, 200, 0.3);
   font-weight: 600;
+  color: var(--success-color);
+  text-shadow: 0 0 4px rgba(0, 255, 200, 0.3);
   animation: fadeMessage 0.5s ease-in-out;
 }
 
+/* =============================== */
+/* ✅ ANIMATIONS                  */
+/* =============================== */
 @keyframes fadeMessage {
-  0% {
-    transform: scale(0.92);
-    opacity: 0;
-  }
-  60% {
-    transform: scale(1.02);
-    opacity: 1;
-  }
-  100% {
-    transform: scale(1);
-  }
+  0% { transform: scale(0.92); opacity: 0; }
+  60% { transform: scale(1.02); opacity: 1; }
+  100% { transform: scale(1); }
 }
 
-/* =============================== */
-/* ✅ Fade In – Universal         */
-/* =============================== */
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(20px) scale(0.98); }
-  to   { opacity: 1; transform: translateY(0) scale(1); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
 }
+
+@keyframes fadeInDown {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 .fadeIn {
   animation: fadeIn 0.6s ease-in-out;
 }
 
 /* =============================== */
-/* ✅ Fullscreen and Responsive    */
+/* ✅ RESPONSIVE MOBILE SCALE     */
 /* =============================== */
-.fullscreenContainer {
-  min-height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 20px;
+@media (max-width: 768px) {
+  .container {
+    width: 100vw;
+    height: 100vh;
+  }
+  .centerWrapper {
+    transform: scale(0.88) translateY(5%);
+    transform-origin: top center;
+  }
 }
