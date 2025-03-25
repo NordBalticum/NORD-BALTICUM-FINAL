@@ -1,14 +1,14 @@
-/* === INDEX PAGE – NordBalticum Web3 Login (Final Version – PC 100–100 / Mobile 0.75) === */
+/* === INDEX PAGE – NordBalticum Web3 Login (Ferrari Clamp Fix) === */
 
 /* =============================== */
-/* ✅ CONTAINER – Fullscreen      */
+/* ✅ CONTAINER – Adaptive Fullscreen */
 /* =============================== */
 .container {
   position: fixed;
   top: 50%;
   left: 50%;
-  width: calc(100vw - 100px);
-  height: calc(100vh - 100px);
+  width: min(100vw, clamp(320px, 100vw - 100px, 1920px));
+  height: min(100vh, clamp(320px, 100vh - 100px, 1080px));
   transform: translate(-50%, -50%);
   background: var(--bg-gradient);
   display: flex;
