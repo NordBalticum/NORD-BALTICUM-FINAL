@@ -131,6 +131,29 @@
   box-shadow: 0 0 22px var(--main-white-glow, rgba(255, 255, 255, 0.5));
 }
 
+.biometricButton {
+  margin-top: 12px;
+  background: black;
+  color: white;
+  border: 1px solid white;
+  padding: 14px;
+  border-radius: 16px;
+  font-size: 1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+.biometricButton:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 16px var(--white-gold);
+}
+.divider {
+  text-align: center;
+  color: rgba(255, 255, 255, 0.5);
+  margin-top: -8px;
+}
+
 /* =============================== */
 /* ✅ MESSAGE (Animated)          */
 /* =============================== */
