@@ -27,14 +27,14 @@ body {
 
 /* Live Star Background Layer – Žvaigždžių efektas */
 body::before {
-  content: "";
+  content: '';
   position: fixed;
   inset: 0;
   background: url("/stars/stars-bg.svg") repeat center;
-  background-size: cover;
-  opacity: 0.2;
+  background-size: 600px;
   z-index: 0;
-  animation: starMotion 100s linear infinite;
+  opacity: 0.3; /* padidintas */
+  mix-blend-mode: screen; /* leidžia išryškinti baltas žvaigždes ant gradientų */
   pointer-events: none;
 }
 
