@@ -1,7 +1,7 @@
-/* === INDEX PAGE – NordBalticum Web3 Login (999999x Final Perfection) === */
+/* === INDEX PAGE – NordBalticum Diamond Login UI (Bank Luxury Level) === */
 
 /* =============================== */
-/* ✅ CONTAINER – Ultra Balanced Centering */
+/* ✅ CONTAINER – Lux Precision Centering */
 /* =============================== */
 .container {
   position: fixed;
@@ -10,7 +10,7 @@
   width: 100vw;
   height: 100vh;
   transform: translate(-50%, -50%);
-  background: var(--bg-gradient);
+  background: radial-gradient(circle at center, rgba(10,18,42,1) 20%, rgba(27,35,112,0.95) 60%, rgba(43,55,255,0.88) 100%);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -18,16 +18,15 @@
   box-sizing: border-box;
   user-select: none;
   scroll-behavior: smooth;
-  -webkit-font-smoothing: antialiased;
   touch-action: manipulation;
-  transition: var(--transition);
+  transition: all 0.4s ease-in-out;
   margin: 0;
   z-index: 1;
-  overflow: visible;
+  overflow: hidden;
 }
 
 /* =============================== */
-/* ✅ CENTER WRAPPER – lifted 5% up */
+/* ✅ CENTER WRAPPER – text lifted */
 /* =============================== */
 .centerWrapper {
   width: 100%;
@@ -38,76 +37,79 @@
   justify-content: center;
   align-items: center;
   gap: clamp(32px, 4vw, 64px);
-  box-sizing: border-box;
-  animation: fadeIn 0.6s ease-in-out;
-  transition: var(--transition);
   transform: translateY(-5%);
+  animation: fadeIn 1.2s ease-in-out;
+  transition: all 0.4s ease-in-out;
 }
 
 /* =============================== */
-/* ✅ LOGO CONTAINER – pushed 5% down */
+/* ✅ LOGO CONTAINER – logo down */
 /* =============================== */
 .logoContainer {
   transform: translateY(5%);
-  margin-bottom: clamp(24px, 4vh, 64px);
+  margin-bottom: clamp(32px, 5vh, 72px);
   display: flex;
   justify-content: center;
   align-items: center;
-  animation: fadeInDown 0.6s ease-in-out;
+  animation: fadeInDown 1s ease-in-out;
 }
 
 /* =============================== */
-/* ✅ LOGO IMAGE – 70% HD Version */
+/* ✅ LOGO IMAGE – Diamond Glow */
 /* =============================== */
 .logoImage {
   width: clamp(440px, 48vw, 600px);
   height: auto;
-  transition: transform 0.4s ease, box-shadow 0.4s ease;
-  filter: drop-shadow(0 0 34px rgba(255, 255, 255, 0.35));
+  filter: drop-shadow(0 0 35px rgba(255,255,255,0.35));
+  transition: transform 0.6s ease, filter 0.6s ease;
 }
 
 .logoImage:hover {
   transform: scale(1.07);
-  filter: drop-shadow(0 0 60px rgba(255, 255, 255, 0.5));
+  filter: drop-shadow(0 0 65px rgba(255,255,255,0.55)) brightness(1.2);
 }
 
 /* =============================== */
-/* ✅ TEXTS – centered & premium */
+/* ✅ TEXTS – Clean Luxe */
 /* =============================== */
 .title {
-  font-size: clamp(2.2rem, 5vw, 2.8rem);
+  font-size: clamp(2.3rem, 5vw, 3rem);
   font-weight: 700;
   color: var(--primary-text);
-  margin-bottom: 0.5rem;
-  text-shadow: 0 0 6px rgba(255, 255, 255, 0.2);
+  margin-bottom: 0.4rem;
+  text-shadow: 0 0 8px rgba(255,255,255,0.25);
   text-align: center;
+  letter-spacing: 0.5px;
 }
 
 .subtitle {
-  font-size: clamp(1rem, 1.5vw, 1.25rem);
-  color: rgba(255, 255, 255, 0.65);
+  font-size: clamp(1rem, 1.5vw, 1.3rem);
+  color: rgba(255, 255, 255, 0.75);
   margin-bottom: 2rem;
   font-weight: 500;
   text-align: center;
+  text-shadow: 0 0 4px rgba(0,255,200,0.15);
 }
 
 /* =============================== */
-/* ✅ LOGIN BOX – adjusted precision spacing */
+/* ✅ LOGIN BOX – Diamond Aura Glass */
 /* =============================== */
 .loginBox {
   width: 100%;
   max-width: clamp(340px, 100%, 520px);
-  background: var(--glass-bg);
-  backdrop-filter: var(--glass-blur);
-  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255,255,255,0.12);
+  backdrop-filter: blur(18px) saturate(160%);
+  border-radius: 28px;
   padding: clamp(28px, 5vw, 48px);
-  box-shadow: var(--shadow);
+  box-shadow: 0 0 24px rgba(255, 255, 255, 0.08), 0 0 64px rgba(0, 255, 200, 0.05);
+  animation: fadeIn 1.2s ease-in-out;
   text-align: center;
   display: flex;
   flex-direction: column;
   align-items: center;
-  animation: fadeIn 0.8s ease-in-out;
-  margin-top: clamp(-12px, -2vh, 0);
+  position: relative;
+  z-index: 2;
 }
 
 /* =============================== */
@@ -121,67 +123,67 @@
 }
 
 /* =============================== */
-/* ✅ INPUT FIELD – adaptive size */
+/* ✅ INPUT FIELD                 */
 /* =============================== */
 .input {
   width: 100%;
-  padding: 14px 18px;
+  padding: 16px 20px;
   font-size: 1rem;
-  color: var(--primary-text);
-  background: rgba(255, 255, 255, 0.05);
-  border: 2px solid rgba(255, 255, 255, 0.25);
+  color: #fff;
+  background: rgba(255, 255, 255, 0.06);
+  border: 2px solid rgba(255, 255, 255, 0.2);
   border-radius: 16px;
-  transition: all 0.25s ease;
+  transition: all 0.3s ease;
 }
 
 .input:focus {
   outline: none;
   border-color: var(--accent-color);
-  background: rgba(255, 255, 255, 0.09);
-  box-shadow: 0 0 12px rgba(0, 255, 200, 0.25);
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 0 12px rgba(0, 255, 200, 0.35);
 }
 
 /* =============================== */
-/* ✅ LOGIN BUTTON                */
+/* ✅ LOGIN BUTTON – Black Card Glow */
 /* =============================== */
 .button {
   width: 100%;
-  padding: 14px 22px;
-  border-radius: 14px;
-  background: #000000;
-  color: var(--primary-text);
+  padding: 16px 24px;
+  border-radius: 16px;
+  background: black;
+  color: white;
   font-weight: 700;
   font-size: 1rem;
-  border: 2px solid #ffffff;
+  border: 2px solid white;
   cursor: pointer;
   text-transform: uppercase;
-  transition: all 0.25s ease;
-  box-shadow: 0 0 18px rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.08);
+  transition: all 0.3s ease;
 }
 
 .button:hover {
-  background: var(--primary-text);
-  color: #000000;
-  transform: scale(1.06);
-  box-shadow: 0 0 22px rgba(255, 255, 255, 0.5);
+  background: white;
+  color: black;
+  transform: scale(1.05);
+  box-shadow: 0 0 26px rgba(255, 255, 255, 0.5);
 }
 
 /* =============================== */
-/* ✅ GOOGLE LOGIN WITH ICON      */
+/* ✅ GOOGLE BUTTON – Lux White Glow */
 /* =============================== */
 .googleButton {
-  margin-top: 10px;
+  margin-top: 12px;
   width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 12px;
-  padding: 14px 22px;
+  padding: 16px 24px;
   font-weight: 700;
   font-size: 1rem;
-  border-radius: 14px;
-  background: #ffffff;
-  color: #000000;
+  border-radius: 16px;
+  background: white;
+  color: black;
   text-transform: uppercase;
   border: none;
   cursor: pointer;
@@ -191,7 +193,7 @@
 
 .googleButton:hover {
   transform: scale(1.05);
-  box-shadow: 0 0 24px var(--white-gold);
+  box-shadow: 0 0 32px var(--white-gold);
 }
 
 .googleLogo {
@@ -200,15 +202,15 @@
 }
 
 /* =============================== */
-/* ✅ BIOMETRIC BUTTON            */
+/* ✅ BIOMETRIC BUTTON – High-Security Style */
 /* =============================== */
 .biometricButton {
   margin-top: 12px;
   background: black;
   color: white;
   border: 2px solid white;
-  padding: 14px;
-  border-radius: 16px;
+  padding: 16px;
+  border-radius: 18px;
   font-size: 1rem;
   font-weight: 700;
   text-transform: uppercase;
@@ -218,52 +220,24 @@
 
 .biometricButton:hover {
   transform: scale(1.05);
-  box-shadow: 0 0 18px var(--white-gold);
-}
-
-/* =============================== */
-/* ✅ DIVIDER & MESSAGE           */
-/* =============================== */
-.divider {
-  color: rgba(255, 255, 255, 0.5);
-  text-align: center;
-  margin: 16px 0;
-}
-
-.message {
-  margin-top: 1rem;
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: var(--accent-color);
-  text-shadow: 0 0 4px rgba(0, 255, 200, 0.3);
-  animation: fadeMessage 0.5s ease-in-out;
+  box-shadow: 0 0 24px var(--white-gold);
 }
 
 /* =============================== */
 /* ✅ ANIMATIONS                  */
 /* =============================== */
-@keyframes fadeMessage {
-  0% { transform: scale(0.92); opacity: 0; }
-  60% { transform: scale(1.02); opacity: 1; }
-  100% { transform: scale(1); }
-}
-
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(20px) scale(0.98); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
+  0% { opacity: 0; transform: scale(0.98); }
+  100% { opacity: 1; transform: scale(1); }
 }
 
 @keyframes fadeInDown {
-  from { opacity: 0; transform: translateY(-20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.fadeIn {
-  animation: fadeIn 0.6s ease-in-out;
+  0% { opacity: 0; transform: translateY(-20px); }
+  100% { opacity: 1; transform: translateY(0); }
 }
 
 /* =============================== */
-/* ✅ RESPONSIVE FIX              */
+/* ✅ MOBILE FIXES                */
 /* =============================== */
 @media (max-width: 768px) {
   .container {
@@ -277,7 +251,7 @@
   }
 
   .logoImage {
-    width: clamp(280px, 48vw, 440px);
+    width: clamp(280px, 64vw, 440px);
   }
 
   .loginBox {
