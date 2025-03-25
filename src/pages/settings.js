@@ -10,7 +10,6 @@ export default function Settings() {
   const router = useRouter();
   const [newEmail, setNewEmail] = useState("");
   const [status, setStatus] = useState("");
-  const recoveryPhrase = "border silver globe vacuum symbol saddle lamp filter logic coffee hazard sugar";
 
   const handleEmailChange = async () => {
     try {
@@ -35,12 +34,6 @@ export default function Settings() {
           </button>
         </div>
 
-        {/* Recovery Phrase */}
-        <div className={styles.box}>
-          <h2 className={styles.label}>Recovery Phrase</h2>
-          <p className={styles.recovery}>{recoveryPhrase}</p>
-        </div>
-
         {/* Email Change */}
         <div className={styles.box}>
           <h2 className={styles.label}>Change Email</h2>
@@ -59,6 +52,14 @@ export default function Settings() {
               {status}
             </p>
           )}
+        </div>
+
+        {/* Biometric Login */}
+        <div className={styles.box}>
+          <h2 className={styles.label}>Biometric Login (Fingerprint/FaceID)</h2>
+          <button className={styles.button} onClick={() => alert("Coming soon – Biometric integration")}>
+            Enable Biometrics
+          </button>
         </div>
 
         {/* Help / History Buttons */}
