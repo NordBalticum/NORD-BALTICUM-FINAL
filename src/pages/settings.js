@@ -2,59 +2,62 @@
 
 import { useState, useEffect } from "react";
 import { useMagicLink } from "@/contexts/MagicLinkContext";
-import { enableBiometricLogin } from "@/lib/biometrics";
-import { supabase } from "@/lib/supabase";
-import styles from "@/styles/settings.module.css";
 import { useRouter } from "next/router";
+import styles from "@/styles/settings.module.css";
 
 export default function Settings() {
-  const { user } = useMagicLink();
+  const { user, supabase } = useMagicLink();
   const router = useRouter();
+
   const [newEmail, setNewEmail] = useState("");
   const [status, setStatus] = useState("");
+  const [biometricsEnabled, setBiometricsEnabled] = useState(false);
 
+  // Tikrina ar biometrika aktyvuota
+  useEffect(() => {
+    const biometricEmail = localStorage.getItem("biometric_user");
+    if (biometricEmail && user?.email === biometricEmail) {
+      setBiometricsEnabled(true);
+    }
+  }, [user]);
+
+  // El. pašto keitimas
   const handleEmailChange = async () => {
+    setStatus("⏳ Sending confirmation link...");
     try {
-      const { data, error } = await supabase.auth.updateUser({ email: newEmail });
+      const { error } = await supabase.auth.updateUser({ email: newEmail });
       if (error) throw error;
-      setStatus("✅ Confirmation link sent to your new email.");
+      setStatus("✅ Confirmation link sent. Check your email.");
+      setNewEmail("");
     } catch (err) {
+      console.error(err);
       setStatus("❌ Failed to update email.");
     }
   };
 
-  const handleEnableBiometrics = async () => {
-    const success = await enableBiometricLogin(user.email);
-    setStatus(success ? "✅ Biometric login enabled!" : "❌ Failed to enable biometrics.");
+  // Biometrikos įjungimas
+  const toggleBiometrics = () => {
+    if (!user?.email) return;
+    if (!biometricsEnabled) {
+      localStorage.setItem("biometric_user", user.email);
+      setBiometricsEnabled(true);
+    } else {
+      localStorage.removeItem("biometric_user");
+      setBiometricsEnabled(false);
+    }
   };
 
-  useEffect(() => {
-    // Enable scroll for this page only
-    document.body.style.overflow = "auto";
-    return () => {
-      document.body.style.overflow = "hidden";
-    };
-  }, []);
-
   return (
-    <div className="globalContainer">
+    <div className="globalContainer scrollable">
       <div className={styles.wrapper}>
         <h1 className={styles.title}>SETTINGS</h1>
 
-        {/* 2FA Placeholder */}
-        <div className={styles.box}>
-          <h2 className={styles.label}>Two-Factor Authentication (2FA)</h2>
-          <button className={styles.button} disabled>
-            Enable 2FA (coming soon)
-          </button>
-        </div>
-
-        {/* Email Change */}
+        {/* Email keitimas */}
         <div className={styles.box}>
           <h2 className={styles.label}>Change Email</h2>
           <input
-            className={styles.input}
             type="email"
+            className={styles.input}
             placeholder="Enter new email"
             value={newEmail}
             onChange={(e) => setNewEmail(e.target.value)}
@@ -71,13 +74,26 @@ export default function Settings() {
 
         {/* Biometric Login */}
         <div className={styles.box}>
-          <h2 className={styles.label}>Biometric Login (Fingerprint/FaceID)</h2>
-          <button className={styles.button} onClick={handleEnableBiometrics}>
-            Enable Biometrics
+          <h2 className={styles.label}>Biometric Login</h2>
+          <button className={styles.button} onClick={toggleBiometrics}>
+            {biometricsEnabled ? "Disable Biometrics" : "Enable Biometrics"}
+          </button>
+          <p className={styles.note}>
+            {biometricsEnabled
+              ? "Biometric login is enabled for this device."
+              : "You can enable fingerprint/FaceID login on this device."}
+          </p>
+        </div>
+
+        {/* 2FA Placeholder */}
+        <div className={styles.box}>
+          <h2 className={styles.label}>Two-Factor Authentication (2FA)</h2>
+          <button className={styles.button} disabled>
+            Enable 2FA (coming soon)
           </button>
         </div>
 
-        {/* Help / History Buttons */}
+        {/* Navigation */}
         <div className={styles.row}>
           <button onClick={() => router.push("/pages/help")} className={styles.linkBtn}>
             Help
