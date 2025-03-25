@@ -1,13 +1,11 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useMagicLink } from "@/contexts/MagicLinkContext";
 import { useWebAuthn } from "@/contexts/WebAuthnContext";
 import Image from "next/image";
 import styles from "@/styles/index.module.css";
-
-// ✅ Pridedame žvaigždes
 import StarsBackground from "@/components/StarsBackground";
 
 const Home = () => {
@@ -25,6 +23,47 @@ const Home = () => {
   const [message, setMessage] = useState("");
   const [autoTried, setAutoTried] = useState(false);
 
+  const logoRef = useRef(null);
+
+  // ✅ 3D tilt pelės efektas
+  useEffect(() => {
+    const handleTilt = (e) => {
+      const logo = logoRef.current;
+      if (!logo) return;
+
+      const rect = logo.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+
+      const centerX = rect.width / 2;
+      const centerY = rect.height / 2;
+
+      const rotateX = ((y - centerY) / centerY) * -5;
+      const rotateY = ((x - centerX) / centerX) * 5;
+
+      logo.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.07)`;
+    };
+
+    const resetTilt = () => {
+      if (logoRef.current) {
+        logoRef.current.style.transform = "rotateX(0deg) rotateY(0deg) scale(1)";
+      }
+    };
+
+    const logoContainer = document.querySelector(`.${styles.logoContainer}`);
+    if (logoContainer) {
+      logoContainer.addEventListener("mousemove", handleTilt);
+      logoContainer.addEventListener("mouseleave", resetTilt);
+    }
+
+    return () => {
+      if (logoContainer) {
+        logoContainer.removeEventListener("mousemove", handleTilt);
+        logoContainer.removeEventListener("mouseleave", resetTilt);
+      }
+    };
+  }, []);
+
   useEffect(() => {
     if (user) router.push("/dashboard");
   }, [user]);
@@ -37,13 +76,8 @@ const Home = () => {
         setMessage("⏳ Logging in with biometrics...");
         try {
           const success = await loginWebAuthn(biometricEmail);
-          if (success) {
-            setStatus("success");
-            setMessage("✅ Biometric login success.");
-          } else {
-            setStatus("error");
-            setMessage("❌ Biometric login failed.");
-          }
+          setStatus(success ? "success" : "error");
+          setMessage(success ? "✅ Biometric login success." : "❌ Biometric login failed.");
         } catch (err) {
           console.error("Biometric login error:", err);
           setStatus("error");
@@ -98,13 +132,8 @@ const Home = () => {
     setMessage("⏳ Biometric login...");
     try {
       const success = await loginWebAuthn(biometricEmail);
-      if (success) {
-        setStatus("success");
-        setMessage("✅ Biometric login success.");
-      } else {
-        setStatus("error");
-        setMessage("❌ Biometric login failed.");
-      }
+      setStatus(success ? "success" : "error");
+      setMessage(success ? "✅ Biometric login success." : "❌ Biometric login failed.");
     } catch (err) {
       console.error("Biometric login error:", err);
       setStatus("error");
@@ -114,10 +143,7 @@ const Home = () => {
 
   return (
     <>
-      {/* ✅ Animacinis fonas */}
       <StarsBackground />
-
-      {/* Login UI */}
       <main className={styles.container}>
         <div className={styles.centerWrapper}>
           <div className={styles.logoContainer}>
@@ -127,6 +153,7 @@ const Home = () => {
               width={268}
               height={268}
               className={styles.logoImage}
+              ref={logoRef}
               priority
             />
           </div>
@@ -165,7 +192,11 @@ const Home = () => {
             {biometricEmail && (
               <>
                 <div className={styles.divider}>or</div>
-                <button onClick={handleBiometricLogin} className={styles.biometricButton} disabled={status === "sending"}>
+                <button
+                  onClick={handleBiometricLogin}
+                  className={styles.biometricButton}
+                  disabled={status === "sending"}
+                >
                   Login with Biometrics
                 </button>
               </>
