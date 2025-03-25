@@ -1,7 +1,7 @@
-/* === INDEX PAGE – NordBalticum Web3 Login (9999x Final Touch) === */
+/* === INDEX PAGE – NordBalticum Web3 Login (999999x Final Perfection) === */
 
 /* =============================== */
-/* ✅ CONTAINER – Ultra Precision Centered */
+/* ✅ CONTAINER – Ultra Balanced Centering */
 /* =============================== */
 .container {
   position: fixed;
@@ -27,7 +27,7 @@
 }
 
 /* =============================== */
-/* ✅ CENTER WRAPPER – Perfected Vertical Alignment */
+/* ✅ CENTER WRAPPER – lifted 5% up */
 /* =============================== */
 .centerWrapper {
   width: 100%;
@@ -41,15 +41,15 @@
   box-sizing: border-box;
   animation: fadeIn 0.6s ease-in-out;
   transition: var(--transition);
-  transform: translateY(4%); /* ✅ pakelta login zona aukštyn */
+  transform: translateY(-5%);
 }
 
 /* =============================== */
-/* ✅ LOGO CONTAINER              */
+/* ✅ LOGO CONTAINER – pushed 5% down */
 /* =============================== */
 .logoContainer {
-  transform: translateY(10vh); /* ✅ čia jis fiziškai pasislenka žemyn */
-  margin-bottom: clamp(24px, 5vh, 52px);
+  transform: translateY(5%);
+  margin-bottom: clamp(24px, 4vh, 64px);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -57,22 +57,22 @@
 }
 
 /* =============================== */
-/* ✅ LOGO IMAGE – 70% didesnis HD 3D 8K efektas */
+/* ✅ LOGO IMAGE – 70% HD Version */
 /* =============================== */
 .logoImage {
-  width: clamp(440px, 48vw, 600px); /* buvo 360–480px → dabar ~70% didesnis */
+  width: clamp(440px, 48vw, 600px);
   height: auto;
   transition: transform 0.4s ease, box-shadow 0.4s ease;
-  filter: drop-shadow(0 0 34px rgba(255, 255, 255, 0.35)); /* šiek tiek ryškesnis glow */
+  filter: drop-shadow(0 0 34px rgba(255, 255, 255, 0.35));
 }
 
 .logoImage:hover {
-  transform: scale(1.07); /* mažas boost kad dar gražiau plauktų */
+  transform: scale(1.07);
   filter: drop-shadow(0 0 60px rgba(255, 255, 255, 0.5));
 }
 
 /* =============================== */
-/* ✅ TEXTS                       */
+/* ✅ TEXTS – centered & premium */
 /* =============================== */
 .title {
   font-size: clamp(2.2rem, 5vw, 2.8rem);
@@ -92,11 +92,11 @@
 }
 
 /* =============================== */
-/* ✅ LOGIN BOX                   */
+/* ✅ LOGIN BOX – adjusted precision spacing */
 /* =============================== */
 .loginBox {
   width: 100%;
-  max-width: 480px;
+  max-width: clamp(340px, 100%, 520px);
   background: var(--glass-bg);
   backdrop-filter: var(--glass-blur);
   border-radius: 22px;
@@ -107,7 +107,7 @@
   flex-direction: column;
   align-items: center;
   animation: fadeIn 0.8s ease-in-out;
-  margin-top: clamp(-12px, -2vh, 0); /* ✅ login dėžutė pakelta arčiau logotipo */
+  margin-top: clamp(-12px, -2vh, 0);
 }
 
 /* =============================== */
@@ -121,7 +121,7 @@
 }
 
 /* =============================== */
-/* ✅ INPUT FIELD                 */
+/* ✅ INPUT FIELD – adaptive size */
 /* =============================== */
 .input {
   width: 100%;
@@ -263,15 +263,24 @@
 }
 
 /* =============================== */
-/* ✅ MOBILE RESPONSIVE FIX       */
+/* ✅ RESPONSIVE FIX              */
 /* =============================== */
 @media (max-width: 768px) {
   .container {
     width: 100vw;
     height: 100vh;
   }
+
   .centerWrapper {
-    transform: scale(0.75) translateY(6%);
+    transform: scale(0.78) translateY(-4%);
     transform-origin: top center;
+  }
+
+  .logoImage {
+    width: clamp(280px, 48vw, 440px);
+  }
+
+  .loginBox {
+    max-width: 94%;
   }
 }
