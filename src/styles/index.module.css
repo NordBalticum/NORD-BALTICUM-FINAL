@@ -48,8 +48,8 @@
 /* ✅ LOGO CONTAINER              */
 /* =============================== */
 .logoContainer {
-  margin-top: clamp(20vh, 26vh, 30vh); /* ✅ vizualiai centras + kvėpuoja */
-  margin-bottom: clamp(24px, 5vh, 52px); /* ✅ sumažintas tarpas iki teksto */
+  transform: translateY(10vh); /* ✅ čia jis fiziškai pasislenka žemyn */
+  margin-bottom: clamp(24px, 5vh, 52px);
   display: flex;
   justify-content: center;
   align-items: center;
