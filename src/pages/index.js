@@ -9,25 +9,27 @@ import styles from "@/styles/index.module.css";
 
 export default function Home() {
   const router = useRouter();
-  const { user, signInWithEmail } = useMagicLink();
+  const { user, loginWithEmail, biometricEmail } = useMagicLink();
 
   const [email, setEmail] = useState("");
-  const [message, setMessage] = useState("");
   const [status, setStatus] = useState("idle"); // idle | sending | sent | error
+  const [message, setMessage] = useState("");
 
-  // ✅ Automatinis redirect jei user prisijungęs
   useEffect(() => {
-    if (user) router.push("/dashboard");
-  }, [user, router]);
+    if (user) {
+      router.push("/dashboard");
+    }
+  }, [user]);
 
-  // ✅ Magic Link Handler
+  // ✅ Login with Email
   const handleLogin = async (e) => {
     e.preventDefault();
     setMessage("");
     setStatus("sending");
 
     try {
-      await signInWithEmail(email.trim());
+      await loginWithEmail(email.trim());
+      localStorage.setItem("biometric_user", email.trim());
       setStatus("sent");
       setMessage("✅ Magic Link sent! Check your email.");
       setEmail("");
@@ -35,6 +37,27 @@ export default function Home() {
       console.error("❌ Magic Link Error:", error);
       setStatus("error");
       setMessage("❌ Failed to send link. Try again.");
+    }
+  };
+
+  // ✅ Login with Biometrics
+  const handleBiometricLogin = async () => {
+    if (!biometricEmail) {
+      setMessage("❌ No biometric email found.");
+      return;
+    }
+
+    setStatus("sending");
+    setMessage("⏳ Logging in with biometrics...");
+
+    try {
+      await loginWithEmail(biometricEmail);
+      setStatus("sent");
+      setMessage("✅ Magic Link sent via biometrics.");
+    } catch (error) {
+      console.error("❌ Biometric login failed:", error);
+      setStatus("error");
+      setMessage("❌ Failed biometric login.");
     }
   };
 
@@ -47,14 +70,9 @@ export default function Home() {
         <link rel="icon" href="/icons/logo.png" />
       </Head>
 
-      <main
-        className="fullscreenContainer"
-        role="main"
-        aria-label="Login Page"
-        style={{ minHeight: "100dvh" }}
-      >
+      <main className="fullscreenContainer" role="main" style={{ minHeight: "100dvh" }}>
         <div className={styles.centerWrapper}>
-          {/* ✅ Logo */}
+          {/* Logo */}
           <div className={styles.logoContainer}>
             <Image
               src="/icons/logo.svg"
@@ -66,19 +84,13 @@ export default function Home() {
             />
           </div>
 
-          {/* ✅ Login Box */}
-          <section
-            className={`${styles.loginBox} glassBox fadeIn`}
-            aria-label="Login box"
-          >
+          {/* Login Box */}
+          <section className={`${styles.loginBox} glassBox fadeIn`}>
             <h1 className={styles.title}>Welcome to NordBalticum</h1>
-            <p className={styles.subtitle}>Sign in with your email</p>
+            <p className={styles.subtitle}>Sign in with your email or biometrics</p>
 
-            <form
-              onSubmit={handleLogin}
-              className={styles.form}
-              aria-label="Login form"
-            >
+            {/* Email Form */}
+            <form onSubmit={handleLogin} className={styles.form}>
               <input
                 type="email"
                 placeholder="Enter your email"
@@ -88,25 +100,29 @@ export default function Home() {
                 maxLength={80}
                 autoComplete="email"
                 className={styles.input}
-                aria-label="Email input"
               />
-
               <button
                 type="submit"
                 className={styles.button}
-                aria-label="Send magic link"
                 disabled={status === "sending"}
               >
                 {status === "sending" ? "Sending..." : "Send Magic Link"}
               </button>
             </form>
 
+            {/* Biometric Login Option */}
+            {biometricEmail && (
+              <>
+                <div className={styles.divider}>or</div>
+                <button className={styles.biometricButton} onClick={handleBiometricLogin}>
+                  Login with Biometrics
+                </button>
+              </>
+            )}
+
+            {/* Status Message */}
             {message && (
-              <p
-                className={styles.message}
-                role="alert"
-                style={{ color: status === "error" ? "#ff4c4c" : "#00ffc8" }}
-              >
+              <p className={status === "error" ? styles.error : styles.success}>
                 {message}
               </p>
             )}
