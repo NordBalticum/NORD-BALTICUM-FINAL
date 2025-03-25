@@ -1,125 +1,81 @@
-.scrollable {
-  overflow-y: auto !important;
-  height: 100dvh;
-}
-
-/* === WRAPPER === */
-.wrapper {
-  width: 100%;
-  max-width: 620px;
-  padding: var(--main-padding);
-  padding-bottom: calc(var(--nav-height) + 2rem);
-  margin: 0 auto;
+.container {
+  min-height: 100vh;
   display: flex;
-  flex-direction: column;
-  gap: 28px;
+  justify-content: center;
+  align-items: center;
+  background: radial-gradient(ellipse at center, #0a1f44, #000000);
 }
 
-/* === TITLE === */
-.title {
-  font-size: clamp(32px, 6vw, 46px);
-  text-align: center;
-  font-family: var(--font-crypto);
-  background: linear-gradient(to right, #ffe600, #ffffff, #ffe600);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  text-shadow: 0 0 12px rgba(255, 255, 255, 0.2);
-}
-
-/* === BOX === */
 .box {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 20px;
-  padding: 24px;
-  backdrop-filter: blur(20px);
-  box-shadow: 0 0 24px rgba(255, 255, 255, 0.05);
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-/* === LABEL === */
-.label {
-  font-size: 1.05rem;
-  font-weight: 600;
-  font-family: var(--font-crypto);
-  color: white;
-}
-
-/* === INPUT === */
-.input {
-  padding: 12px 16px;
-  border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.03);
-  color: white;
-  font-family: var(--font-crypto);
-  font-size: 1rem;
-}
-.input:focus {
-  outline: none;
-  border-color: white;
   background: rgba(255, 255, 255, 0.05);
-  box-shadow: 0 0 10px rgba(255, 255, 255, 0.15);
+  padding: 2rem;
+  border-radius: 20px;
+  width: clamp(300px, 35vw, 500px);
+  color: white;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 0 25px rgba(255, 255, 255, 0.1);
 }
 
-/* === BUTTON === */
+.section {
+  margin-top: 1rem;
+}
+
+.input {
+  padding: 10px;
+  width: 100%;
+  margin-top: 0.5rem;
+  border: none;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
 .button {
+  margin-top: 0.7rem;
+  padding: 10px;
+  width: 100%;
   background: black;
   color: white;
-  border: 1px solid white;
-  padding: 12px;
-  font-size: 0.95rem;
-  font-weight: 600;
-  border-radius: 14px;
+  font-weight: bold;
+  border: none;
+  border-radius: 8px;
   cursor: pointer;
-  font-family: var(--font-crypto);
-  transition: all 0.2s ease;
 }
+
 .button:hover {
-  transform: scale(1.04);
-  box-shadow: 0 0 12px var(--white-gold);
+  transform: scale(1.03);
+  background: white;
+  color: black;
 }
 
-/* === STATUS === */
-.success {
-  color: #90caf9;
-  font-size: 0.9rem;
-}
-.error {
-  color: #ff6b6b;
-  font-size: 0.9rem;
-}
-
-/* === ROW BUTTONS === */
-.row {
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
-  margin-top: 8px;
-}
-.linkBtn {
-  flex: 1;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+.smallButton {
+  margin-left: 10px;
+  font-size: 12px;
+  padding: 6px;
+  background: darkred;
   color: white;
-  font-family: var(--font-crypto);
-  font-size: 0.95rem;
-  padding: 12px;
-  border-radius: 14px;
+  border: none;
+  border-radius: 6px;
   cursor: pointer;
-  transition: all 0.2s ease;
-}
-.linkBtn:hover {
-  background: rgba(255, 255, 255, 0.1);
-  box-shadow: 0 0 12px rgba(255, 255, 255, 0.1);
 }
 
-/* === NOTE (Biometrics Info) === */
-.note {
-  font-size: 0.85rem;
-  font-family: var(--font-crypto);
-  color: rgba(255, 255, 255, 0.65);
-  margin-top: 6px;
+.danger {
+  background: red;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  width: 100%;
+  padding: 10px;
+  margin-top: 10px;
+}
+
+.logout {
+  margin-top: 20px;
+  padding: 12px;
+  background: #111;
+  color: white;
+  font-weight: bold;
+  border: 1px solid white;
+  border-radius: 8px;
+  width: 100%;
 }
