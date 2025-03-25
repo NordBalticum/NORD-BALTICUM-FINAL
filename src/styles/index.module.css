@@ -41,15 +41,15 @@
   box-sizing: border-box;
   animation: fadeIn 0.6s ease-in-out;
   transition: var(--transition);
-  transform: translateY(8%);
+  transform: none;
 }
 
 /* ====≈=========================== */
 /* ✅️ LOGO CONTAINER               */
 /* =============================== */
 .logoContainer {
-  margin-top: clamp(22vh, 28vh, 32vh); /* ✅ dar žemiau – dabar jau arti vizualinio centro */
-  margin-bottom: clamp(28px, 5vh, 64px); /* šiek tiek sumažinam, kad išlaikyt balansą */
+  margin-top: clamp(28vh, 32vh, 36vh); /* realiai stumiame žemyn dar daugiau */
+  margin-bottom: clamp(32px, 6vh, 72px);
   display: flex;
   justify-content: center;
   align-items: center;
