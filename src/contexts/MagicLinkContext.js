@@ -11,17 +11,21 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 );
 
-// AES šifravimui – slaptažodžio raktas (saugus local, gali būti ENV arba hardcoded)
+// --- Šifravimui (saugus vietinis raktas) ---
 const ENCRYPTION_SECRET = process.env.NEXT_PUBLIC_ENCRYPTION_SECRET || "fallback-secret";
 
-// ✅ Pagalbinės šifravimo funkcijos
 const encode = (str) => new TextEncoder().encode(str);
 const decode = (buf) => new TextDecoder().decode(buf);
 
 const getKey = async (password) => {
   const keyMaterial = await window.crypto.subtle.importKey(
-    "raw", encode(password), { name: "PBKDF2" }, false, ["deriveKey"]
+    "raw",
+    encode(password),
+    { name: "PBKDF2" },
+    false,
+    ["deriveKey"]
   );
+
   return window.crypto.subtle.deriveKey(
     {
       name: "PBKDF2",
@@ -63,12 +67,16 @@ export const MagicLinkProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [wallet, setWallet] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [biometricEmail, setBiometricEmail] = useState(null);
 
   useEffect(() => {
     const init = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       const currentUser = session?.user || null;
       setUser(currentUser);
+
+      const storedBiometric = localStorage.getItem("biometric_user");
+      if (storedBiometric) setBiometricEmail(storedBiometric);
 
       if (currentUser) {
         const localWallet = await loadWalletFromStorage();
@@ -92,6 +100,9 @@ export const MagicLinkProvider = ({ children }) => {
         const currentUser = session?.user || null;
         setUser(currentUser);
 
+        const storedBiometric = localStorage.getItem("biometric_user");
+        if (storedBiometric) setBiometricEmail(storedBiometric);
+
         if (currentUser) {
           const localWallet = await loadWalletFromStorage();
           if (localWallet) {
@@ -112,7 +123,6 @@ export const MagicLinkProvider = ({ children }) => {
     return () => listener?.subscription?.unsubscribe();
   }, []);
 
-  // ✅ OTP el. pašto loginas
   const loginWithEmail = async (email) => {
     const { error } = await supabase.auth.signInWithOtp({
       email,
@@ -124,7 +134,6 @@ export const MagicLinkProvider = ({ children }) => {
     }
   };
 
-  // ✅ Logout
   const logout = async () => {
     await supabase.auth.signOut();
     setUser(null);
@@ -132,7 +141,6 @@ export const MagicLinkProvider = ({ children }) => {
     localStorage.removeItem("userWallet");
   };
 
-  // ✅ Saugo į localStorage (šifruotai)
   const saveWalletToStorage = async (wallet) => {
     if (!wallet?.privateKey) return;
     const encryptedKey = await encrypt(wallet.privateKey);
@@ -143,7 +151,6 @@ export const MagicLinkProvider = ({ children }) => {
     localStorage.setItem("userWallet", JSON.stringify(data));
   };
 
-  // ✅ Gauna iš localStorage (ir iššifruoja)
   const loadWalletFromStorage = async () => {
     try {
       const data = localStorage.getItem("userWallet");
@@ -157,7 +164,6 @@ export const MagicLinkProvider = ({ children }) => {
     }
   };
 
-  // ✅ Įrašo tik adresą į DB
   const saveWalletToDatabase = async (email, address) => {
     try {
       const { error } = await supabase
@@ -179,6 +185,7 @@ export const MagicLinkProvider = ({ children }) => {
         user,
         wallet,
         loading,
+        biometricEmail,
         loginWithEmail,
         logout,
       }}
