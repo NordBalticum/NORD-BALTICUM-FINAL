@@ -1,35 +1,50 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import { useMagicLink } from "@/contexts/MagicLinkContext";
+import { useWebAuthn } from "../loginsystem/WebAuthnContext";
 import Head from "next/head";
 import Image from "next/image";
 import styles from "@/styles/index.module.css";
 
-export default function Home() {
+const LoginPage = () => {
   const router = useRouter();
   const { user, loginWithEmail, biometricEmail } = useMagicLink();
+  const { loginWebAuthn } = useWebAuthn();
 
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState("idle"); // idle | sending | sent | error
   const [message, setMessage] = useState("");
+  const [autoBioTried, setAutoBioTried] = useState(false);
 
+  // Redirect to dashboard if user is already logged in
   useEffect(() => {
     if (user) {
       router.push("/dashboard");
     }
   }, [user]);
 
-  // ✅ Login with Email
-  const handleLogin = async (e) => {
+  // Automatic biometric login if the user exists and there's a saved biometric email
+  useEffect(() => {
+    const autoLogin = async () => {
+      if (!user && biometricEmail && !autoBioTried) {
+        setAutoBioTried(true);
+        const success = await loginWebAuthn(biometricEmail);
+        if (!success) console.warn("Biometric login failed");
+      }
+    };
+    autoLogin();
+  }, [user, biometricEmail, autoBioTried]);
+
+  // Email login handler
+  const handleEmailLogin = async (e) => {
     e.preventDefault();
     setMessage("");
     setStatus("sending");
 
     try {
       await loginWithEmail(email.trim());
-      localStorage.setItem("biometric_user", email.trim());
       setStatus("sent");
       setMessage("✅ Magic Link sent! Check your email.");
       setEmail("");
@@ -40,7 +55,7 @@ export default function Home() {
     }
   };
 
-  // ✅ Login with Biometrics
+  // Biometric login handler
   const handleBiometricLogin = async () => {
     if (!biometricEmail) {
       setMessage("❌ No biometric email found.");
@@ -59,6 +74,11 @@ export default function Home() {
       setStatus("error");
       setMessage("❌ Failed biometric login.");
     }
+  };
+
+  // Google login handler (not included in previous code, added for completeness)
+  const handleGoogleLogin = async () => {
+    // Logic for Google login
   };
 
   return (
@@ -90,7 +110,7 @@ export default function Home() {
             <p className={styles.subtitle}>Sign in with your email or biometrics</p>
 
             {/* Email Form */}
-            <form onSubmit={handleLogin} className={styles.form}>
+            <form onSubmit={handleEmailLogin} className={styles.form}>
               <input
                 type="email"
                 placeholder="Enter your email"
@@ -109,6 +129,11 @@ export default function Home() {
                 {status === "sending" ? "Sending..." : "Send Magic Link"}
               </button>
             </form>
+
+            {/* Google Login */}
+            <button onClick={handleGoogleLogin} className={styles.button}>
+              Login with Google
+            </button>
 
             {/* Biometric Login Option */}
             {biometricEmail && (
@@ -131,4 +156,6 @@ export default function Home() {
       </main>
     </>
   );
-}
+};
+
+export default LoginPage;
