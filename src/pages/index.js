@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import { useMagicLink } from "@/contexts/MagicLinkContext";
-import { useWebAuthn } from "../loginsystem/WebAuthnContext";
+import { useWebAuthn } from "@/contexts/WebAuthnContext";
 import Head from "next/head";
 import Image from "next/image";
 import styles from "@/styles/index.module.css";
