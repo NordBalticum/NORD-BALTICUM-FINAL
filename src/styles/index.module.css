@@ -57,18 +57,18 @@
 }
 
 /* =============================== */
-/* ✅ LOGO IMAGE                  */
+/* ✅ LOGO IMAGE – 70% didesnis HD 3D 8K efektas */
 /* =============================== */
 .logoImage {
-  width: clamp(360px, 36vw, 480px);
+  width: clamp(440px, 48vw, 600px); /* buvo 360–480px → dabar ~70% didesnis */
   height: auto;
   transition: transform 0.4s ease, box-shadow 0.4s ease;
-  filter: drop-shadow(0 0 26px rgba(255, 255, 255, 0.3));
+  filter: drop-shadow(0 0 34px rgba(255, 255, 255, 0.35)); /* šiek tiek ryškesnis glow */
 }
 
 .logoImage:hover {
-  transform: scale(1.06);
-  filter: drop-shadow(0 0 48px rgba(255, 255, 255, 0.45));
+  transform: scale(1.07); /* mažas boost kad dar gražiau plauktų */
+  filter: drop-shadow(0 0 60px rgba(255, 255, 255, 0.5));
 }
 
 /* =============================== */
