@@ -2,7 +2,6 @@
 
 /* =============================== */
 /* ✅ CONTAINER – Ultra Balanced Centering */
-/* =============================== */
 .container {
   position: fixed;
   top: 50%;
@@ -59,7 +58,7 @@
 /* =============================== */
 /* ✅ LOGO IMAGE – 77% HD + glow sync */
 .logoImage {
-  width: clamp(470px, 52vw, 640px); /* padidintas ~7% nuo buvusio */
+  width: clamp(470px, 52vw, 640px);
   height: auto;
   transition: transform 0.4s ease, box-shadow 0.4s ease;
   filter: drop-shadow(0 0 24px rgba(0, 255, 200, 0.25)) drop-shadow(0 0 48px rgba(0, 255, 200, 0.18));
@@ -95,11 +94,11 @@
 /* ✅ LOGIN BOX – Diamond Neon Pulse */
 .loginBox {
   width: 100%;
-  max-width: clamp(340px, 100%, 520px);
+  max-width: clamp(640px, 64vw, 860px); /* ✅ PC – wide & luxury look */
   background: var(--glass-bg);
   backdrop-filter: var(--glass-blur);
   border-radius: 22px;
-  padding: clamp(28px, 5vw, 48px);
+  padding: clamp(32px, 5vw, 52px);
   border: 2px solid rgba(0, 255, 200, 0.35);
   animation: fadeIn 0.8s ease-in-out, neonPulse 3.4s infinite ease-in-out;
   text-align: center;
@@ -112,7 +111,7 @@
 }
 
 /* =============================== */
-/* ✅ FORM                        */
+/* ✅ FORM */
 .form {
   width: 100%;
   display: flex;
@@ -141,7 +140,7 @@
 }
 
 /* =============================== */
-/* ✅ LOGIN BUTTON                */
+/* ✅ LOGIN BUTTON */
 .button {
   width: 100%;
   padding: 14px 22px;
@@ -165,7 +164,7 @@
 }
 
 /* =============================== */
-/* ✅ GOOGLE LOGIN WITH ICON      */
+/* ✅ GOOGLE LOGIN WITH ICON */
 .googleButton {
   margin-top: 10px;
   width: 100%;
@@ -197,7 +196,7 @@
 }
 
 /* =============================== */
-/* ✅ BIOMETRIC BUTTON            */
+/* ✅ BIOMETRIC BUTTON */
 .biometricButton {
   margin-top: 12px;
   background: black;
@@ -218,7 +217,7 @@
 }
 
 /* =============================== */
-/* ✅ DIVIDER & MESSAGE           */
+/* ✅ DIVIDER & MESSAGE */
 .divider {
   color: rgba(255, 255, 255, 0.5);
   text-align: center;
@@ -235,7 +234,7 @@
 }
 
 /* =============================== */
-/* ✅ ANIMATIONS                  */
+/* ✅ ANIMATIONS */
 @keyframes fadeMessage {
   0% { transform: scale(0.92); opacity: 0; }
   60% { transform: scale(1.02); opacity: 1; }
@@ -280,7 +279,7 @@
 }
 
 /* =============================== */
-/* ✅ RESPONSIVE FIX              */
+/* ✅ RESPONSIVE FIX – Mobile */
 @media (max-width: 768px) {
   .container {
     width: 100vw;
