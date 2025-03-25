@@ -18,6 +18,7 @@
   --primary-bg-dark: #0A122A;
   --white-gold: #FFD700;
   --gold-glow: rgba(255, 215, 0, 0.3);
+  --font-crypto: 'Share Tech Mono', monospace;
 
   /* BACKGROUNDS */
   --bg-gradient: radial-gradient(ellipse at center, var(--primary-bg) 0%, #1B2370 40%, var(--primary-bg-dark) 100%);
