@@ -219,6 +219,3 @@ a:hover {
 .hidden {
   display: none !important;
 }
-"""
-
-print(theme_css)
