@@ -20,9 +20,9 @@ export default function StarsBackground() {
         x: Math.random() * canvas.width,
         y: Math.random() * canvas.height,
         radius: Math.random() * maxSize,
-        alpha: Math.random() * 0.35 + 0.1,
+        alpha: Math.random() * 0.45 + 0.15, // ✅ 25% ryškiau nei prieš tai
         speedY: Math.random() * 0.08 + 0.01,
-        flicker: Math.random() * 0.02 + 0.005,
+        flicker: Math.random() * 0.025 + 0.01, // švelnus gyvumas
       }));
     };
 
@@ -30,12 +30,12 @@ export default function StarsBackground() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       stars.forEach((star) => {
         star.alpha += (Math.random() - 0.5) * star.flicker;
-        star.alpha = Math.max(0.05, Math.min(star.alpha, 0.5));
+        star.alpha = Math.max(0.08, Math.min(star.alpha, 0.6)); // šiek tiek padidinta riba
         ctx.beginPath();
         ctx.arc(star.x, star.y, star.radius, 0, 2 * Math.PI);
         ctx.fillStyle = `rgba(255, 255, 255, ${star.alpha})`;
-        ctx.shadowBlur = 18;
-        ctx.shadowColor = "rgba(255, 255, 255, 0.4)";
+        ctx.shadowBlur = 22;
+        ctx.shadowColor = "rgba(255, 255, 255, 0.45)";
         ctx.fill();
         star.y += star.speedY;
         if (star.y > canvas.height) {
@@ -63,9 +63,9 @@ export default function StarsBackground() {
         width: "100vw",
         height: "100vh",
         pointerEvents: "none",
-        opacity: 0.2,
-        mixBlendMode: "screen", // ✅ leidžia žvaigždėms švelniai švytėti
-        filter: "blur(0.5px)", // ✅ suteikia tikroviško glow efekto
+        opacity: 0.22, // ✅ šiek tiek padidintas matomumas
+        mixBlendMode: "screen",
+        filter: "blur(0.45px)",
       }}
     />
   );
