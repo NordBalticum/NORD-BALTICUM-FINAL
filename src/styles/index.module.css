@@ -45,27 +45,30 @@
 }
 
 /* =============================== */
-/* ✅ LOGO                        */
+/* ✅ LOGO CONTAINER              */
 /* =============================== */
 .logoContainer {
-  margin-top: clamp(-1vh, -2vh, 0);
-  margin-bottom: clamp(24px, 5vh, 64px);
+  margin-top: clamp(0vh, 1vh, 2vh); /* buvo -1vh → dabar švelnus atstumas žemyn */
+  margin-bottom: clamp(32px, 6vh, 72px); /* buvo mažiau → didesnis balansas */
   display: flex;
   justify-content: center;
   align-items: center;
   animation: fadeInDown 0.6s ease-in-out;
 }
 
+/* =============================== */
+/* ✅ LOGO IMAGE                  */
+/* =============================== */
 .logoImage {
-  width: clamp(240px, 26vw, 348px);
+  width: clamp(360px, 36vw, 480px); /* buvo clamp(240px, 26vw, 348px) → +50% */
   height: auto;
   transition: transform 0.4s ease, box-shadow 0.4s ease;
-  filter: drop-shadow(0 0 22px rgba(255, 255, 255, 0.25));
+  filter: drop-shadow(0 0 26px rgba(255, 255, 255, 0.3));
 }
 
 .logoImage:hover {
   transform: scale(1.06);
-  filter: drop-shadow(0 0 48px rgba(255, 255, 255, 0.4));
+  filter: drop-shadow(0 0 48px rgba(255, 255, 255, 0.45));
 }
 
 /* =============================== */
