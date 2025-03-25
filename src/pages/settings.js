@@ -1,7 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMagicLink } from "@/contexts/MagicLinkContext";
+import { enableBiometricLogin } from "@/lib/biometrics";
+import { supabase } from "@/lib/supabase";
 import styles from "@/styles/settings.module.css";
 import { useRouter } from "next/router";
 
@@ -20,6 +22,19 @@ export default function Settings() {
       setStatus("❌ Failed to update email.");
     }
   };
+
+  const handleEnableBiometrics = async () => {
+    const success = await enableBiometricLogin(user.email);
+    setStatus(success ? "✅ Biometric login enabled!" : "❌ Failed to enable biometrics.");
+  };
+
+  useEffect(() => {
+    // Enable scroll for this page only
+    document.body.style.overflow = "auto";
+    return () => {
+      document.body.style.overflow = "hidden";
+    };
+  }, []);
 
   return (
     <div className="globalContainer">
@@ -57,7 +72,7 @@ export default function Settings() {
         {/* Biometric Login */}
         <div className={styles.box}>
           <h2 className={styles.label}>Biometric Login (Fingerprint/FaceID)</h2>
-          <button className={styles.button} onClick={() => alert("Coming soon – Biometric integration")}>
+          <button className={styles.button} onClick={handleEnableBiometrics}>
             Enable Biometrics
           </button>
         </div>
