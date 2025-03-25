@@ -15,27 +15,25 @@ const Home = () => {
     loginWithGoogle,
     biometricEmail
   } = useMagicLink();
-
   const { loginWebAuthn } = useWebAuthn();
 
   const [email, setEmail] = useState("");
-  const [status, setStatus] = useState("idle"); // idle | sending | success | error
+  const [status, setStatus] = useState("idle");
   const [message, setMessage] = useState("");
   const [autoTried, setAutoTried] = useState(false);
 
-  // ✅ Redirect į dashboard jei prisijungęs
+  // ✅ Redirect if logged in
   useEffect(() => {
     if (user) router.push("/dashboard");
   }, [user]);
 
-  // ✅ Automatinis biometrinis login
+  // ✅ Auto biometric login
   useEffect(() => {
-    const tryBiometric = async () => {
+    const autoLogin = async () => {
       if (!user && biometricEmail && !autoTried) {
         setAutoTried(true);
         setStatus("sending");
         setMessage("⏳ Logging in with biometrics...");
-
         try {
           const success = await loginWebAuthn(biometricEmail);
           if (success) {
@@ -52,7 +50,7 @@ const Home = () => {
         }
       }
     };
-    tryBiometric();
+    autoLogin();
   }, [user, biometricEmail, autoTried]);
 
   // ✅ Email login
@@ -62,10 +60,8 @@ const Home = () => {
       setMessage("❌ Please enter a valid email.");
       return;
     }
-
     setStatus("sending");
     setMessage("⏳ Sending Magic Link...");
-
     try {
       await signInWithEmail(email.trim());
       localStorage.setItem("biometric_user", email.trim());
@@ -83,7 +79,6 @@ const Home = () => {
   const handleGoogleLogin = async () => {
     setStatus("sending");
     setMessage("⏳ Logging in with Google...");
-
     try {
       await loginWithGoogle();
       setStatus("success");
@@ -101,10 +96,8 @@ const Home = () => {
       setMessage("❌ No biometric session found.");
       return;
     }
-
     setStatus("sending");
     setMessage("⏳ Biometric login...");
-
     try {
       const success = await loginWebAuthn(biometricEmail);
       if (success) {
@@ -124,7 +117,7 @@ const Home = () => {
   return (
     <main className={styles.container}>
       <div className={styles.centerWrapper}>
-
+        
         {/* Logo */}
         <div className={styles.logoContainer}>
           <Image
@@ -142,7 +135,7 @@ const Home = () => {
           <h1 className={styles.title}>Welcome to NordBalticum</h1>
           <p className={styles.subtitle}>Secure Web3 access with Email, Google, Biometrics</p>
 
-          {/* Email Login */}
+          {/* Email Form */}
           <form onSubmit={handleEmailLogin} className={styles.form}>
             <input
               type="email"
@@ -160,14 +153,10 @@ const Home = () => {
           </form>
 
           {/* Google Login */}
-          <button
-            onClick={handleGoogleLogin}
-            className={styles.googleButton}
-            disabled={status === "sending"}
-          >
+          <button onClick={handleGoogleLogin} className={styles.googleButton} disabled={status === "sending"}>
             <Image
               src="/icons/google-logo.png"
-              alt="Google"
+              alt="Google Logo"
               width={20}
               height={20}
               className={styles.googleLogo}
@@ -179,20 +168,14 @@ const Home = () => {
           {biometricEmail && (
             <>
               <div className={styles.divider}>or</div>
-              <button
-                onClick={handleBiometricLogin}
-                className={styles.biometricButton}
-                disabled={status === "sending"}
-              >
+              <button onClick={handleBiometricLogin} className={styles.biometricButton} disabled={status === "sending"}>
                 Login with Biometrics
               </button>
             </>
           )}
 
           {/* Status Message */}
-          {message && (
-            <p className={styles.message}>{message}</p>
-          )}
+          {message && <p className={styles.message}>{message}</p>}
         </section>
       </div>
     </main>
