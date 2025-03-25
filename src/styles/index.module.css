@@ -47,10 +47,9 @@
 /* ====≈=========================== */
 /* ✅️ LOGO CONTAINER               */
 /* =============================== */
-
 .logoContainer {
-  margin-top: clamp(16vh, 24vh, 28vh); /* ✅ dabar 20% žemiau nei prieš tai */
-  margin-bottom: clamp(32px, 6vh, 72px);
+  margin-top: clamp(22vh, 28vh, 32vh); /* ✅ dar žemiau – dabar jau arti vizualinio centro */
+  margin-bottom: clamp(28px, 5vh, 64px); /* šiek tiek sumažinam, kad išlaikyt balansą */
   display: flex;
   justify-content: center;
   align-items: center;
@@ -61,7 +60,7 @@
 /* ✅ LOGO IMAGE                  */
 /* =============================== */
 .logoImage {
-  width: clamp(360px, 36vw, 480px); /* 50% didesnis – paliekam */
+  width: clamp(360px, 36vw, 480px);
   height: auto;
   transition: transform 0.4s ease, box-shadow 0.4s ease;
   filter: drop-shadow(0 0 26px rgba(255, 255, 255, 0.3));
