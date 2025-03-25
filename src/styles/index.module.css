@@ -57,10 +57,22 @@
 }
 
 /* =============================== */
+/* ✅ LOGO CONTAINER              */
+/* =============================== */
+.logoContainer {
+  margin-top: clamp(8vh, 12vh, 15vh); /* buvo 1vh – dabar 15–19% žemiau */
+  margin-bottom: clamp(32px, 6vh, 72px); /* paliekam, nes balansas su login box geras */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  animation: fadeInDown 0.6s ease-in-out;
+}
+
+/* =============================== */
 /* ✅ LOGO IMAGE                  */
 /* =============================== */
 .logoImage {
-  width: clamp(360px, 36vw, 480px); /* buvo clamp(240px, 26vw, 348px) → +50% */
+  width: clamp(360px, 36vw, 480px); /* 50% didesnis – paliekam */
   height: auto;
   transition: transform 0.4s ease, box-shadow 0.4s ease;
   filter: drop-shadow(0 0 26px rgba(255, 255, 255, 0.3));
@@ -69,24 +81,6 @@
 .logoImage:hover {
   transform: scale(1.06);
   filter: drop-shadow(0 0 48px rgba(255, 255, 255, 0.45));
-}
-
-/* =============================== */
-/* ✅ LOGIN BOX                   */
-/* =============================== */
-.loginBox {
-  width: 100%;
-  max-width: 480px;
-  background: var(--glass-bg);
-  backdrop-filter: var(--glass-blur);
-  border-radius: 22px;
-  padding: clamp(28px, 5vw, 48px);
-  box-shadow: var(--shadow);
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  animation: fadeIn 0.8s ease-in-out;
 }
 
 /* =============================== */
