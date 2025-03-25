@@ -54,16 +54,16 @@
 }
 
 .logoImage {
-  width: clamp(180px, 22vw, 268px);
+  width: clamp(240px, 26vw, 348px); /* +50% */
   height: auto;
   border-radius: 20px;
   transition: transform 0.4s ease, box-shadow 0.4s ease;
-  box-shadow: 0 0 22px rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 26px rgba(255, 255, 255, 0.15); /* metamorphic glow */
 }
 
 .logoImage:hover {
-  transform: scale(1.05);
-  box-shadow: 0 0 36px rgba(255, 255, 255, 0.25);
+  transform: scale(1.06);
+  box-shadow: 0 0 48px rgba(255, 255, 255, 0.4);
 }
 
 /* =============================== */
@@ -92,7 +92,7 @@
   font-weight: 700;
   color: var(--primary-text);
   margin-bottom: 0.5rem;
-  text-shadow: var(--text-shadow, 0 0 6px rgba(255, 255, 255, 0.2));
+  text-shadow: 0 0 6px rgba(255, 255, 255, 0.2);
 }
 
 .subtitle {
