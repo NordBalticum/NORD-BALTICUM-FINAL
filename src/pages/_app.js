@@ -19,6 +19,12 @@ export default function App({ Component, pageProps }) {
         />
         <meta name="theme-color" content="#0A1F44" />
         <link rel="icon" href="/icons/logo.png" />
+
+        {/* Crypto šriftas */}
+        <link
+          href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap"
+          rel="stylesheet"
+        />
       </Head>
 
       <MagicLinkProvider>
