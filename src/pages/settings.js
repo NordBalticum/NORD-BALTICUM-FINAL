@@ -1,108 +1,103 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useMagicLink } from "@/contexts/MagicLinkContext";
-import { useRouter } from "next/router";
 import styles from "@/styles/settings.module.css";
 
-export default function Settings() {
-  const { user, supabase } = useMagicLink();
-  const router = useRouter();
+const SettingsPage = () => {
+  const {
+    user,
+    wallet,
+    biometricEmail,
+    logout,
+    supabase,
+  } = useMagicLink();
 
-  const [newEmail, setNewEmail] = useState("");
-  const [status, setStatus] = useState("");
-  const [biometricsEnabled, setBiometricsEnabled] = useState(false);
+  const [emailInput, setEmailInput] = useState("");
+  const [walletAddress, setWalletAddress] = useState("");
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
-  // Tikrina ar biometrika aktyvuota
   useEffect(() => {
-    const biometricEmail = localStorage.getItem("biometric_user");
-    if (biometricEmail && user?.email === biometricEmail) {
-      setBiometricsEnabled(true);
-    }
-  }, [user]);
+    if (wallet?.address) setWalletAddress(wallet.address);
+  }, [wallet]);
 
-  // El. pašto keitimas
-  const handleEmailChange = async () => {
-    setStatus("⏳ Sending confirmation link...");
-    try {
-      const { error } = await supabase.auth.updateUser({ email: newEmail });
-      if (error) throw error;
-      setStatus("✅ Confirmation link sent. Check your email.");
-      setNewEmail("");
-    } catch (err) {
-      console.error(err);
-      setStatus("❌ Failed to update email.");
-    }
+  const handleChangeEmail = async () => {
+    if (!emailInput) return alert("Įveskite naują el. paštą");
+    const { error } = await supabase.auth.updateUser({
+      email: emailInput,
+    });
+    if (error) alert("Klaida: " + error.message);
+    else alert("Magic Link išsiųstas į naują el. paštą.");
   };
 
-  // Biometrikos įjungimas
-  const toggleBiometrics = () => {
-    if (!user?.email) return;
-    if (!biometricsEnabled) {
-      localStorage.setItem("biometric_user", user.email);
-      setBiometricsEnabled(true);
-    } else {
-      localStorage.removeItem("biometric_user");
-      setBiometricsEnabled(false);
-    }
+  const handleDeleteRequest = () => {
+    if (!confirmDelete) return setConfirmDelete(true);
+    alert("Paskyros ištrynimo prašymas išsiųstas (mock).");
+  };
+
+  const clearBiometric = () => {
+    localStorage.removeItem("biometric_user");
+    alert("Biometrinė informacija pašalinta");
+    window.location.reload();
   };
 
   return (
-    <div className="globalContainer scrollable">
-      <div className={styles.wrapper}>
-        <h1 className={styles.title}>SETTINGS</h1>
+    <div className={styles.container}>
+      <div className={styles.box}>
+        <h2>Profilio nustatymai</h2>
 
-        {/* Email keitimas */}
-        <div className={styles.box}>
-          <h2 className={styles.label}>Change Email</h2>
+        <p><strong>El. paštas:</strong> {user?.email}</p>
+        <p><strong>Wallet adresas:</strong> {walletAddress || "Nerastas"}</p>
+        <p>
+          <strong>Biometrinis login:</strong>{" "}
+          {biometricEmail ? (
+            <>
+              <span>Aktyvuotas ({biometricEmail})</span>
+              <button className={styles.smallButton} onClick={clearBiometric}>
+                Išjungti
+              </button>
+            </>
+          ) : (
+            "Neaktyvus"
+          )}
+        </p>
+
+        <hr />
+
+        <div className={styles.section}>
+          <h4>Keisti el. paštą</h4>
           <input
             type="email"
+            placeholder="Naujas el. paštas"
+            value={emailInput}
+            onChange={(e) => setEmailInput(e.target.value)}
             className={styles.input}
-            placeholder="Enter new email"
-            value={newEmail}
-            onChange={(e) => setNewEmail(e.target.value)}
           />
-          <button className={styles.button} onClick={handleEmailChange}>
-            Update Email
-          </button>
-          {status && (
-            <p className={status.startsWith("✅") ? styles.success : styles.error}>
-              {status}
-            </p>
-          )}
-        </div>
-
-        {/* Biometric Login */}
-        <div className={styles.box}>
-          <h2 className={styles.label}>Biometric Login</h2>
-          <button className={styles.button} onClick={toggleBiometrics}>
-            {biometricsEnabled ? "Disable Biometrics" : "Enable Biometrics"}
-          </button>
-          <p className={styles.note}>
-            {biometricsEnabled
-              ? "Biometric login is enabled for this device."
-              : "You can enable fingerprint/FaceID login on this device."}
-          </p>
-        </div>
-
-        {/* 2FA Placeholder */}
-        <div className={styles.box}>
-          <h2 className={styles.label}>Two-Factor Authentication (2FA)</h2>
-          <button className={styles.button} disabled>
-            Enable 2FA (coming soon)
+          <button className={styles.button} onClick={handleChangeEmail}>
+            Siųsti Magic Link
           </button>
         </div>
 
-        {/* Navigation */}
-        <div className={styles.row}>
-          <button onClick={() => router.push("/pages/help")} className={styles.linkBtn}>
-            Help
-          </button>
-          <button onClick={() => router.push("/pages/history")} className={styles.linkBtn}>
-            Transaction History
+        <hr />
+
+        <div className={styles.section}>
+          <h4>Paskyros ištrynimas</h4>
+          <button
+            className={styles.danger}
+            onClick={handleDeleteRequest}
+          >
+            {confirmDelete ? "Tikrai ištrinti?" : "Pateikti prašymą ištrinti"}
           </button>
         </div>
+
+        <hr />
+
+        <button className={styles.logout} onClick={logout}>
+          Atsijungti
+        </button>
       </div>
     </div>
   );
-}
+};
+
+export default SettingsPage;
