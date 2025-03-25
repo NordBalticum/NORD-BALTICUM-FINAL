@@ -1,32 +1,46 @@
-/* === THEME.CSS — NordBalticum Ferrari Ultra Final Theme === */
+/* === THEME.CSS — NordBalticum Premium Theme (Ferrari Ultra Final Fix 2025) === */
 
 /* =============================== */
-/* ✅ BACKGROUND – Live Space Stars + Luxury Glow */
+/* ✅ FONTAI & GRADIENTAI + ŽVAIGŽDĖS */
 /* =============================== */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+
 body {
-  background: radial-gradient(ellipse at center, oklch(50% 0.25 250) 0%, oklch(30% 0.22 270) 40%, oklch(10% 0.18 280) 100%);
+  /* Pagrindinis gradientas su 7% tamsinimu (naudojame filter brightness) */
+  background: radial-gradient(
+      ellipse at center,
+      oklch(45% 0.25 250) 0%,
+      oklch(30% 0.22 270) 40%,
+      oklch(15% 0.18 280) 100%
+    );
   background-size: cover;
+  background-repeat: no-repeat;
   background-position: center;
+  filter: brightness(93%); /* patamsinama 7% */
   color: var(--primary-text);
   transition: var(--transition);
+  font-family: var(--font-crypto), 'Poppins', sans-serif;
   overflow: hidden;
+  position: relative;
 }
 
-/* Live Star Background Layer */
+/* Live Star Background Layer – Žvaigždžių efektas */
 body::before {
-  content: '';
+  content: "";
   position: fixed;
   inset: 0;
   background: url("/stars/stars-bg.svg") repeat center;
-  animation: starMotion 80s linear infinite;
+  background-size: cover;
+  opacity: 0.08;
   z-index: 0;
-  opacity: 0.04;
+  animation: starMotion 100s linear infinite;
   pointer-events: none;
 }
 
-/* Animated Glow Wave Layer */
+/* Animated Glow Wave Layer – subtilus slow glow wave efektas */
 body::after {
-  content: '';
+  content: "";
   position: fixed;
   inset: 0;
   background: radial-gradient(ellipse at center, rgba(255,255,255,0.03) 0%, transparent 70%);
@@ -36,43 +50,59 @@ body::after {
 }
 
 /* =============================== */
-/* ✅ TYPOGRAPHY STYLES */
+/* ✅ TYPOGRAPHY STILIAI          */
 /* =============================== */
 h1, h2, h3, h4, h5, h6, p, span, label {
   font-family: var(--font-crypto), 'Poppins', sans-serif;
   color: var(--primary-text);
-  text-shadow: 0 0 3px rgba(255,255,255,0.1);
+  text-shadow: 0 0 4px rgba(255,255,255,0.1);
   letter-spacing: 0.02em;
 }
 
 /* =============================== */
-/* ✅ BUTTON UNIVERSAL STYLE */
+/* ✅ NEON & SHADOWS EFFECTS      */
+/* =============================== */
+.neonGlow {
+  color: var(--white-gold);
+  text-shadow:
+    0 0 2px var(--white-gold),
+    0 0 6px var(--white-gold),
+    0 0 12px var(--white-gold);
+}
+
+.deepShadow {
+  box-shadow:
+    0 0 8px rgba(255,255,255,0.1),
+    0 0 24px rgba(255,255,255,0.06),
+    inset 0 0 12px rgba(255,255,255,0.05);
+}
+
+/* =============================== */
+/* ✅ BUTTON BASE STILIAI         */
 /* =============================== */
 .buttonBase {
   padding: 14px 22px;
-  border: 2px solid #ffffff;
-  background: #000000;
-  color: var(--primary-text);
   font-weight: 700;
   text-transform: uppercase;
   border-radius: var(--radius);
+  border: 2px solid #fff;
+  background: #000;
+  color: var(--primary-text);
+  box-shadow: 0 0 12px rgba(255,255,255,0.12);
   cursor: pointer;
   transition: var(--transition);
-  box-shadow: 0 0 12px rgba(255, 255, 255, 0.12);
-  backdrop-filter: blur(12px);
   position: relative;
-  overflow: hidden;
   z-index: 1;
 }
 
 .buttonBase:hover {
   background: var(--primary-text);
-  color: #000000;
+  color: #000;
   transform: scale(1.05);
-  box-shadow: 0 0 24px var(--white-gold);
+  box-shadow: 0 0 18px var(--white-gold);
 }
 
-/* Live glow pulse effect */
+/* Live glow pulse effect on buttons */
 .buttonBase::after {
   content: '';
   position: absolute;
@@ -84,88 +114,97 @@ h1, h2, h3, h4, h5, h6, p, span, label {
 }
 
 /* =============================== */
-/* ✅ GLASS EFFECTS */
+/* ✅ GLASSMORPHISM ELEMENTAI     */
 /* =============================== */
 .glassBox {
-  background: rgba(255,255,255,0.05);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  background: rgba(255,255,255,0.06);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
   border: 1px solid rgba(255,255,255,0.15);
-  box-shadow: 0 0 24px rgba(255, 255, 255, 0.04);
+  box-shadow: 0 0 24px rgba(255,255,255,0.04);
   border-radius: var(--radius);
-  padding: var(--main-padding);
+  padding: clamp(24px, 5vw, 48px);
   transition: var(--transition);
 }
 
 /* =============================== */
-/* ✅ INPUT FIELDS */
+/* ✅ INPUTAI                     */
 /* =============================== */
-.inputField {
-  padding: 14px 18px;
-  background: rgba(255,255,255,0.05);
-  border: 2px solid rgba(255,255,255,0.25);
+input, textarea {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: var(--radius);
   color: var(--primary-text);
-  border-radius: var(--radius);
+  padding: 12px 18px;
+  outline: none;
   transition: var(--transition);
 }
 
-.inputField:focus {
-  outline: none;
+input:focus, textarea:focus {
   border-color: var(--white-gold);
-  background: rgba(255,255,255,0.09);
-  box-shadow: 0 0 12px rgba(0, 255, 200, 0.25);
+  box-shadow: 0 0 10px rgba(255,255,255,0.3);
 }
 
 /* =============================== */
-/* ✅ LOGO + ICONS */
+/* ✅ INTERAKCIJOS               */
 /* =============================== */
-.logoImage {
-  filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.2));
-  transition: transform 0.4s ease, filter 0.4s ease;
+a {
+  color: var(--white-gold);
+  text-decoration: none;
+  transition: var(--transition);
 }
 
-.logoImage:hover {
-  transform: scale(1.06);
-  filter: drop-shadow(0 0 32px rgba(255, 255, 255, 0.4));
-}
-
-/* =============================== */
-/* ✅ ANIMATIONS */
-/* =============================== */
-@keyframes fadeMessage {
-  0% { transform: scale(0.92); opacity: 0; }
-  60% { transform: scale(1.02); opacity: 1; }
-  100% { transform: scale(1); }
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(20px) scale(0.98); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
-}
-
-@keyframes fadeInDown {
-  from { opacity: 0; transform: translateY(-20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes pulseGlow {
-  0%, 100% { transform: scale(1); opacity: 0.2; }
-  50% { transform: scale(1.1); opacity: 0.5; }
-}
-
-@keyframes glowWaves {
-  0% { transform: scale(1) rotate(0deg); }
-  50% { transform: scale(1.02) rotate(180deg); }
-  100% { transform: scale(1) rotate(360deg); }
-}
-
-@keyframes starMotion {
-  from { background-position: 0 0; }
-  to { background-position: 1000px 1000px; }
+a:hover {
+  text-shadow: 0 0 12px var(--white-gold);
+  transform: scale(1.02);
 }
 
 /* =============================== */
-/* ✅ UTILITIES */
+/* ✅ GRADIENŲ ATNAUJINTA KOKYBĖ  */
+/* =============================== */
+.gradientBg {
+  background: linear-gradient(
+    135deg,
+    oklch(65% 0.18 255),
+    oklch(42% 0.10 250),
+    oklch(22% 0.04 240)
+  );
+  background-size: 200% 200%;
+  animation: moveGradient 6s ease infinite;
+}
+@keyframes moveGradient {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* =============================== */
+/* ✅ PREMIUM UI UTILS           */
+/* =============================== */
+.deepShadow {
+  box-shadow: 0 0 64px rgba(0,0,0,0.4);
+}
+.neonText {
+  color: #fff;
+  text-shadow: 0 0 6px var(--white-gold), 0 0 16px var(--white-gold);
+}
+.glowBox {
+  border: 1px solid rgba(255,255,255,0.1);
+  box-shadow: 0 0 40px rgba(255,255,255,0.1), 0 0 20px var(--white-gold);
+}
+
+/* =============================== */
+/* ✅ MOBILUS RESPONSIVE SCALE FIX */
+/* =============================== */
+@media (max-width: 768px) {
+  .centerWrapper {
+    transform: scale(0.75) translateY(6%);
+    transform-origin: top center;
+  }
+}
+
+/* =============================== */
+/* ✅ UTILITY CLASSES           */
 /* =============================== */
 .flexCenter {
   display: flex;
@@ -180,11 +219,6 @@ h1, h2, h3, h4, h5, h6, p, span, label {
 .hidden {
   display: none !important;
 }
+"""
 
-.fadeIn {
-  animation: fadeIn 0.6s ease-in-out;
-}
-
-.fadeInDown {
-  animation: fadeInDown 0.6s ease-in-out;
-}
+print(theme_css)
