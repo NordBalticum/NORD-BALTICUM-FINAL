@@ -1,5 +1,7 @@
+/* === INDEX PAGE – NordBalticum Web3 Login === */
+
 /* =============================== */
-/* ✅ MAIN CONTAINER              */
+/* ✅ CONTAINER – Background      */
 /* =============================== */
 .container {
   position: fixed;
@@ -56,7 +58,7 @@
   height: auto;
   border-radius: 20px;
   transition: transform 0.4s ease, box-shadow 0.4s ease;
-  box-shadow: 0 0 20px rgba(255, 255, 255, 0.06);
+  box-shadow: 0 0 22px rgba(255, 255, 255, 0.08);
 }
 
 .logoImage:hover {
@@ -70,11 +72,11 @@
 .loginBox {
   width: 100%;
   max-width: 480px;
-  background: var(--glass-effect);
-  backdrop-filter: blur(18px);
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
   border-radius: 22px;
   padding: clamp(28px, 5vw, 48px);
-  box-shadow: 0 0 36px rgba(0, 255, 204, 0.06);
+  box-shadow: var(--shadow);
   text-align: center;
   display: flex;
   flex-direction: column;
@@ -88,9 +90,9 @@
 .title {
   font-size: clamp(2.2rem, 5vw, 2.8rem);
   font-weight: 700;
-  color: var(--main-white);
+  color: var(--primary-text);
   margin-bottom: 0.5rem;
-  text-shadow: var(--text-shadow);
+  text-shadow: var(--text-shadow, 0 0 6px rgba(255, 255, 255, 0.2));
 }
 
 .subtitle {
@@ -111,13 +113,13 @@
 }
 
 /* =============================== */
-/* ✅ INPUT                       */
+/* ✅ INPUT FIELD                 */
 /* =============================== */
 .input {
   width: 100%;
   padding: 14px 18px;
   font-size: 1rem;
-  color: var(--main-white);
+  color: var(--primary-text);
   background: rgba(255, 255, 255, 0.05);
   border: 2px solid rgba(255, 255, 255, 0.25);
   border-radius: 16px;
@@ -126,20 +128,20 @@
 
 .input:focus {
   outline: none;
-  border-color: var(--success-color);
+  border-color: var(--accent-color);
   background: rgba(255, 255, 255, 0.09);
   box-shadow: 0 0 12px rgba(0, 255, 200, 0.25);
 }
 
 /* =============================== */
-/* ✅ BUTTON                      */
+/* ✅ LOGIN BUTTON                */
 /* =============================== */
 .button {
   width: 100%;
   padding: 14px 22px;
   border-radius: 14px;
   background: #000000;
-  color: var(--main-white);
+  color: var(--primary-text);
   font-weight: 700;
   font-size: 1rem;
   border: 2px solid #ffffff;
@@ -150,10 +152,43 @@
 }
 
 .button:hover {
-  background: var(--main-white);
+  background: var(--primary-text);
   color: #000000;
   transform: scale(1.06);
   box-shadow: 0 0 22px rgba(255, 255, 255, 0.5);
+}
+
+/* =============================== */
+/* ✅ GOOGLE LOGIN WITH ICON      */
+/* =============================== */
+.googleButton {
+  margin-top: 10px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 14px 22px;
+  font-weight: 700;
+  font-size: 1rem;
+  border-radius: 14px;
+  background: #ffffff;
+  color: #000000;
+  text-transform: uppercase;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 0 18px rgba(255, 255, 255, 0.08);
+}
+
+.googleButton:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 24px var(--white-gold);
+}
+
+.googleLogo {
+  width: 22px;
+  height: 22px;
 }
 
 /* =============================== */
@@ -175,11 +210,11 @@
 
 .biometricButton:hover {
   transform: scale(1.05);
-  box-shadow: 0 0 18px var(--white-gold, rgba(255, 223, 0, 0.6));
+  box-shadow: 0 0 18px var(--white-gold);
 }
 
 /* =============================== */
-/* ✅ DIVIDER                     */
+/* ✅ DIVIDER & MESSAGE           */
 /* =============================== */
 .divider {
   color: rgba(255, 255, 255, 0.5);
@@ -187,14 +222,11 @@
   margin: 16px 0;
 }
 
-/* =============================== */
-/* ✅ MESSAGE                     */
-/* =============================== */
 .message {
   margin-top: 1rem;
   font-size: 0.95rem;
   font-weight: 600;
-  color: var(--success-color);
+  color: var(--accent-color);
   text-shadow: 0 0 4px rgba(0, 255, 200, 0.3);
   animation: fadeMessage 0.5s ease-in-out;
 }
