@@ -1,4 +1,4 @@
-/* === INDEX PAGE – NordBalticum Web3 Login (Final Ultra Fix 100–85) === */
+/* === INDEX PAGE – NordBalticum Web3 Login (Final Version – PC 100–100 / Mobile 0.75) === */
 
 /* =============================== */
 /* ✅ CONTAINER – Fullscreen      */
@@ -7,8 +7,8 @@
   position: fixed;
   top: 50%;
   left: 50%;
-  width: calc(100vw - 85px);
-  height: calc(100vh - 85px);
+  width: calc(100vw - 100px);
+  height: calc(100vh - 100px);
   transform: translate(-50%, -50%);
   background: var(--bg-gradient);
   display: flex;
@@ -263,7 +263,7 @@
     height: 100vh;
   }
   .centerWrapper {
-    transform: scale(0.88) translateY(5%);
+    transform: scale(0.75) translateY(6%);
     transform-origin: top center;
   }
 }
