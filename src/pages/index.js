@@ -7,6 +7,9 @@ import { useWebAuthn } from "@/contexts/WebAuthnContext";
 import Image from "next/image";
 import styles from "@/styles/index.module.css";
 
+// ✅ Pridedame žvaigždes
+import StarsBackground from "@/components/StarsBackground";
+
 const Home = () => {
   const router = useRouter();
   const {
@@ -22,12 +25,10 @@ const Home = () => {
   const [message, setMessage] = useState("");
   const [autoTried, setAutoTried] = useState(false);
 
-  // ✅ Redirect if logged in
   useEffect(() => {
     if (user) router.push("/dashboard");
   }, [user]);
 
-  // ✅ Auto biometric login
   useEffect(() => {
     const autoLogin = async () => {
       if (!user && biometricEmail && !autoTried) {
@@ -53,7 +54,6 @@ const Home = () => {
     autoLogin();
   }, [user, biometricEmail, autoTried]);
 
-  // ✅ Email login
   const handleEmailLogin = async (e) => {
     e.preventDefault();
     if (!email.trim()) {
@@ -75,7 +75,6 @@ const Home = () => {
     }
   };
 
-  // ✅ Google login
   const handleGoogleLogin = async () => {
     setStatus("sending");
     setMessage("⏳ Logging in with Google...");
@@ -90,7 +89,6 @@ const Home = () => {
     }
   };
 
-  // ✅ Manual biometric login
   const handleBiometricLogin = async () => {
     if (!biometricEmail) {
       setMessage("❌ No biometric session found.");
@@ -115,70 +113,69 @@ const Home = () => {
   };
 
   return (
-    <main className={styles.container}>
-      <div className={styles.centerWrapper}>
+    <>
+      {/* ✅ Animacinis fonas */}
+      <StarsBackground />
 
-        {/* Logo – SVG optimized, transparent, neon glow-ready */}
-        <div className={styles.logoContainer}>
-          <Image
-            src="/icons/logo.svg"
-            alt="NordBalticum Logo"
-            width={268}
-            height={268}
-            className={styles.logoImage}
-            priority
-          />
-        </div>
-
-        {/* Login Box */}
-        <section className={styles.loginBox}>
-          <h1 className={styles.title}>Welcome to NordBalticum</h1>
-          <p className={styles.subtitle}>Secure Web3 access with Email, Google, Biometrics</p>
-
-          {/* Email Form */}
-          <form onSubmit={handleEmailLogin} className={styles.form}>
-            <input
-              type="email"
-              className={styles.input}
-              placeholder="Enter your email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              disabled={status === "sending"}
-              autoComplete="email"
-            />
-            <button type="submit" className={styles.button} disabled={status === "sending"}>
-              {status === "sending" ? "Sending..." : "Send Magic Link"}
-            </button>
-          </form>
-
-          {/* Google Login */}
-          <button onClick={handleGoogleLogin} className={styles.googleButton} disabled={status === "sending"}>
+      {/* Login UI */}
+      <main className={styles.container}>
+        <div className={styles.centerWrapper}>
+          <div className={styles.logoContainer}>
             <Image
-              src="/icons/google-logo.png"
-              alt="Google Logo"
-              width={20}
-              height={20}
-              className={styles.googleLogo}
+              src="/icons/logo.svg"
+              alt="NordBalticum Logo"
+              width={268}
+              height={268}
+              className={styles.logoImage}
+              priority
             />
-            Login with Google
-          </button>
+          </div>
 
-          {/* Biometric Login */}
-          {biometricEmail && (
-            <>
-              <div className={styles.divider}>or</div>
-              <button onClick={handleBiometricLogin} className={styles.biometricButton} disabled={status === "sending"}>
-                Login with Biometrics
+          <section className={styles.loginBox}>
+            <h1 className={styles.title}>Welcome to NordBalticum</h1>
+            <p className={styles.subtitle}>Secure Web3 access with Email, Google, Biometrics</p>
+
+            <form onSubmit={handleEmailLogin} className={styles.form}>
+              <input
+                type="email"
+                className={styles.input}
+                placeholder="Enter your email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                disabled={status === "sending"}
+                autoComplete="email"
+              />
+              <button type="submit" className={styles.button} disabled={status === "sending"}>
+                {status === "sending" ? "Sending..." : "Send Magic Link"}
               </button>
-            </>
-          )}
+            </form>
 
-          {/* Status Message */}
-          {message && <p className={styles.message}>{message}</p>}
-        </section>
-      </div>
-    </main>
+            <button onClick={handleGoogleLogin} className={styles.googleButton} disabled={status === "sending"}>
+              <Image
+                src="/icons/google-logo.png"
+                alt="Google Logo"
+                width={20}
+                height={20}
+                className={styles.googleLogo}
+              />
+              Login with Google
+            </button>
+
+            {biometricEmail && (
+              <>
+                <div className={styles.divider}>or</div>
+                <button onClick={handleBiometricLogin} className={styles.biometricButton} disabled={status === "sending"}>
+                  Login with Biometrics
+                </button>
+              </>
+            )}
+
+            {message && <p className={styles.message}>{message}</p>}
+          </section>
+        </div>
+      </main>
+    </>
   );
 };
 
