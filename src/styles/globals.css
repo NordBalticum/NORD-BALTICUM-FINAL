@@ -1,3 +1,6 @@
+/* =============================== */
+/* ✅ ROOT VARIABLES              */
+/* =============================== */
 :root {
   --max-width: 1440px;
   --min-width: 320px;
@@ -6,7 +9,7 @@
   --transition: all 0.3s ease-in-out;
   --safe-area-inset-bottom: env(safe-area-inset-bottom);
 
-  /* Nauji spalvų kintamieji */
+  /* Spalvos */
   --primary-bg: #2B3FFF;
   --primary-bg-dark: #0A122A;
   --primary-text: #ffffff;
@@ -15,7 +18,9 @@
   --gold-glow: rgba(255, 215, 0, 0.3);
 }
 
-/* Reset */
+/* =============================== */
+/* ✅ RESET                       */
+/* =============================== */
 * {
   margin: 0;
   padding: 0;
@@ -23,95 +28,67 @@
   -webkit-tap-highlight-color: transparent;
 }
 
-/* === No Scroll & No Zoom – GLOBAL LOCKDOWN === */
-html, body {
-  font-size: 100%;
-  font-family: 'Poppins', sans-serif;
+/* =============================== */
+/* ✅ HTML & BODY LOCKDOWN        */
+/* =============================== */
+html,
+body {
   width: 100%;
   height: 100%;
   min-height: 100vh;
+  font-family: 'Poppins', sans-serif;
+  font-size: 100%;
+  color: var(--primary-text);
   background: radial-gradient(ellipse at center, var(--primary-bg) 0%, #1B2370 40%, var(--primary-bg-dark) 100%);
   background-size: cover;
   background-position: center;
-  color: var(--primary-text);
   scroll-behavior: smooth;
   -webkit-font-smoothing: antialiased;
   overflow: hidden;
   touch-action: none;
-  -ms-touch-action: none;
   user-select: none;
   zoom: reset;
   position: fixed;
   inset: 0;
 }
 
-/* === Pagrindinis konteineris – PERFECT fullscreen adaptive === */
+/* =============================== */
+/* ✅ GLOBAL FULLSCREEN CONTAINER */
+/* =============================== */
 .globalContainer {
   position: fixed;
   top: 50%;
   left: 50%;
-  width: calc(100vw - 160px);
-  height: calc(100vh - 160px);
+  width: 100vw;
+  height: 100vh;
   transform: translate(-50%, -50%);
   display: flex;
-  align-items: center;
   justify-content: center;
-  padding: var(--main-padding);
+  align-items: center;
+  padding-inline: clamp(16px, 4vw, 64px);
   background: radial-gradient(ellipse at center, var(--primary-bg) 25%, var(--primary-bg-dark) 100%);
   background-size: cover;
   background-position: center;
+  box-sizing: border-box;
   transition: var(--transition);
-  overflow: hidden;
+  overflow: visible;
+  z-index: 1;
 }
 
-/* === Responsive adaptyvumas – per medijas automatinis išplėtimas === */
-@media (max-width: 1600px) {
-  .globalContainer {
-    width: calc(100vw - 140px);
-    height: calc(100vh - 140px);
-    background-size: 180% 180%;
-  }
-}
-@media (max-width: 1200px) {
-  .globalContainer {
-    width: calc(100vw - 120px);
-    height: calc(100vh - 120px);
-    background-size: 160% 160%;
-  }
-}
-@media (max-width: 992px) {
-  .globalContainer {
-    width: calc(100vw - 100px);
-    height: calc(100vh - 100px);
-    background-size: 140% 140%;
-  }
-}
+/* =============================== */
+/* ✅ RESPONSIVE SCALE FIX        */
+/* =============================== */
 @media (max-width: 768px) {
   .globalContainer {
-    width: calc(100vw - 80px);
-    height: calc(100vh - 80px);
-    background-size: 120% 120%;
-  }
-}
-@media (max-width: 576px) {
-  .globalContainer {
-    width: 100vw;
-    height: 100vh;
-    background-size: 100% 100%;
+    transform: scale(0.75) translateY(6%);
+    transform-origin: top center;
+    padding-inline: clamp(8px, 5vw, 24px);
   }
 }
 
-/* === Pilnas ekranas – adaptuojamas su zoom efektu */
-.fullscreen {
-  width: 100%;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-  align-items: center;
-}
-
-/* === Scrollbar */
+/* =============================== */
+/* ✅ SCROLLBAR                   */
+/* =============================== */
 ::-webkit-scrollbar {
   width: 6px;
 }
@@ -123,7 +100,9 @@ html, body {
   background: transparent;
 }
 
-/* === Utility === */
+/* =============================== */
+/* ✅ UTILITY                     */
+/* =============================== */
 .hidden {
   display: none !important;
 }
@@ -136,7 +115,9 @@ html, body {
   padding-bottom: calc(80px + var(--safe-area-inset-bottom));
 }
 
-/* === Animacijos */
+/* =============================== */
+/* ✅ ANIMATIONS                  */
+/* =============================== */
 @keyframes fadeIn {
   0% { opacity: 0; transform: translateY(12px); }
   100% { opacity: 1; transform: translateY(0); }
