@@ -44,24 +44,9 @@
   transform: translateY(8%);
 }
 
-/* =============================== */
-/* ✅ LOGO CONTAINER              */
-/* =============================== */
 .logoContainer {
-  margin-top: clamp(0vh, 1vh, 2vh); /* buvo -1vh → dabar švelnus atstumas žemyn */
-  margin-bottom: clamp(32px, 6vh, 72px); /* buvo mažiau → didesnis balansas */
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  animation: fadeInDown 0.6s ease-in-out;
-}
-
-/* =============================== */
-/* ✅ LOGO CONTAINER              */
-/* =============================== */
-.logoContainer {
-  margin-top: clamp(8vh, 12vh, 15vh); /* buvo 1vh – dabar 15–19% žemiau */
-  margin-bottom: clamp(32px, 6vh, 72px); /* paliekam, nes balansas su login box geras */
+  margin-top: clamp(12vh, 18vh, 22vh); /* buvo iki 15vh → dabar +10% žemiau */
+  margin-bottom: clamp(32px, 6vh, 72px);
   display: flex;
   justify-content: center;
   align-items: center;
