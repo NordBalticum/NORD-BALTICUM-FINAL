@@ -1,13 +1,13 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useMagicLink } from "@/contexts/MagicLinkContext";
 import { useWebAuthn } from "@/contexts/WebAuthnContext";
 import Image from "next/image";
 import styles from "@/styles/index.module.css";
 
-const HomePage = () => {
+const Home = () => {
   const router = useRouter();
   const {
     user,
@@ -23,43 +23,43 @@ const HomePage = () => {
   const [message, setMessage] = useState("");
   const [autoTried, setAutoTried] = useState(false);
 
-  // ✅ Redirect jei user prisijungęs
+  // ✅ Redirect į dashboard jei prisijungęs
   useEffect(() => {
     if (user) router.push("/dashboard");
   }, [user]);
 
   // ✅ Automatinis biometrinis login
   useEffect(() => {
-    const tryAutoBiometric = async () => {
+    const tryBiometric = async () => {
       if (!user && biometricEmail && !autoTried) {
         setAutoTried(true);
         setStatus("sending");
-        setMessage("⏳ Trying biometric login...");
+        setMessage("⏳ Logging in with biometrics...");
 
         try {
           const success = await loginWebAuthn(biometricEmail);
           if (success) {
             setStatus("success");
-            setMessage("✅ Biometric login success!");
+            setMessage("✅ Biometric login success.");
           } else {
             setStatus("error");
             setMessage("❌ Biometric login failed.");
           }
         } catch (err) {
-          console.error("Biometric Error:", err);
+          console.error("Biometric login error:", err);
           setStatus("error");
           setMessage("❌ Biometric login error.");
         }
       }
     };
-    tryAutoBiometric();
+    tryBiometric();
   }, [user, biometricEmail, autoTried]);
 
-  // ✅ Email login handler
+  // ✅ Email login
   const handleEmailLogin = async (e) => {
     e.preventDefault();
     if (!email.trim()) {
-      setMessage("❌ Please enter your email.");
+      setMessage("❌ Please enter a valid email.");
       return;
     }
 
@@ -70,16 +70,16 @@ const HomePage = () => {
       await signInWithEmail(email.trim());
       localStorage.setItem("biometric_user", email.trim());
       setStatus("success");
-      setMessage("✅ Magic Link sent. Check your email!");
+      setMessage("✅ Magic Link sent. Check your inbox.");
       setEmail("");
     } catch (err) {
-      console.error("Email Login Error:", err);
+      console.error("Magic Link error:", err);
       setStatus("error");
       setMessage("❌ Failed to send Magic Link.");
     }
   };
 
-  // ✅ Google login handler
+  // ✅ Google login
   const handleGoogleLogin = async () => {
     setStatus("sending");
     setMessage("⏳ Logging in with Google...");
@@ -89,33 +89,33 @@ const HomePage = () => {
       setStatus("success");
       setMessage("✅ Logged in with Google.");
     } catch (err) {
-      console.error("Google Login Error:", err);
+      console.error("Google login error:", err);
       setStatus("error");
       setMessage("❌ Google login failed.");
     }
   };
 
-  // ✅ Biometric login handler (manual)
+  // ✅ Manual biometric login
   const handleBiometricLogin = async () => {
     if (!biometricEmail) {
-      setMessage("❌ No biometric email saved.");
+      setMessage("❌ No biometric session found.");
       return;
     }
 
     setStatus("sending");
-    setMessage("⏳ Logging in with biometrics...");
+    setMessage("⏳ Biometric login...");
 
     try {
       const success = await loginWebAuthn(biometricEmail);
       if (success) {
         setStatus("success");
-        setMessage("✅ Biometric login success!");
+        setMessage("✅ Biometric login success.");
       } else {
         setStatus("error");
         setMessage("❌ Biometric login failed.");
       }
     } catch (err) {
-      console.error("Biometric Error:", err);
+      console.error("Biometric login error:", err);
       setStatus("error");
       setMessage("❌ Biometric login error.");
     }
@@ -124,47 +124,42 @@ const HomePage = () => {
   return (
     <main className={styles.container}>
       <div className={styles.centerWrapper}>
-        {/* LOGO */}
+
+        {/* Logo */}
         <div className={styles.logoContainer}>
           <Image
             src="/icons/logo.svg"
             alt="NordBalticum Logo"
-            width={240}
-            height={240}
+            width={268}
+            height={268}
             className={styles.logoImage}
             priority
           />
         </div>
 
-        {/* LOGIN BOX */}
+        {/* Login Box */}
         <section className={styles.loginBox}>
           <h1 className={styles.title}>Welcome to NordBalticum</h1>
-          <p className={styles.subtitle}>
-            Secure Web3 Login with Email, Google or Biometrics
-          </p>
+          <p className={styles.subtitle}>Secure Web3 access with Email, Google, Biometrics</p>
 
-          {/* Email login */}
-          <form className={styles.form} onSubmit={handleEmailLogin}>
+          {/* Email Login */}
+          <form onSubmit={handleEmailLogin} className={styles.form}>
             <input
               type="email"
+              className={styles.input}
               placeholder="Enter your email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className={styles.input}
+              disabled={status === "sending"}
               autoComplete="email"
-              disabled={status === "sending"}
             />
-            <button
-              type="submit"
-              className={styles.button}
-              disabled={status === "sending"}
-            >
+            <button type="submit" className={styles.button} disabled={status === "sending"}>
               {status === "sending" ? "Sending..." : "Send Magic Link"}
             </button>
           </form>
 
-          {/* Google login */}
+          {/* Google Login */}
           <button
             onClick={handleGoogleLogin}
             className={styles.googleButton}
@@ -173,14 +168,14 @@ const HomePage = () => {
             <Image
               src="/icons/google-logo.png"
               alt="Google"
-              width={22}
-              height={22}
+              width={20}
+              height={20}
               className={styles.googleLogo}
             />
             Login with Google
           </button>
 
-          {/* Biometric login */}
+          {/* Biometric Login */}
           {biometricEmail && (
             <>
               <div className={styles.divider}>or</div>
@@ -194,11 +189,9 @@ const HomePage = () => {
             </>
           )}
 
-          {/* Status message */}
+          {/* Status Message */}
           {message && (
-            <p className={styles.message}>
-              {message}
-            </p>
+            <p className={styles.message}>{message}</p>
           )}
         </section>
       </div>
@@ -206,4 +199,4 @@ const HomePage = () => {
   );
 };
 
-export default HomePage;
+export default Home;
