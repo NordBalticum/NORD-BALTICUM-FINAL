@@ -28,7 +28,6 @@
 
 /* =============================== */
 /* ✅ CENTER WRAPPER – lifted 5% up */
-/* =============================== */
 .centerWrapper {
   width: 100%;
   max-width: 100vw;
@@ -46,7 +45,6 @@
 
 /* =============================== */
 /* ✅ LOGO CONTAINER – pushed 5% down + 3D tilt */
-/* =============================== */
 .logoContainer {
   transform: translateY(5%);
   margin-bottom: clamp(24px, 4vh, 64px);
@@ -59,25 +57,23 @@
 }
 
 /* =============================== */
-/* ✅ LOGO IMAGE – 70% HD + 3D style */
-/* =============================== */
+/* ✅ LOGO IMAGE – 77% HD + glow sync */
 .logoImage {
-  width: clamp(440px, 48vw, 600px);
+  width: clamp(470px, 52vw, 640px); /* padidintas ~7% nuo buvusio */
   height: auto;
   transition: transform 0.4s ease, box-shadow 0.4s ease;
-  filter: drop-shadow(0 0 34px rgba(255, 255, 255, 0.35));
+  filter: drop-shadow(0 0 24px rgba(0, 255, 200, 0.25)) drop-shadow(0 0 48px rgba(0, 255, 200, 0.18));
   transform-style: preserve-3d;
   will-change: transform;
 }
 
 .logoImage:hover {
   transform: scale(1.07);
-  filter: drop-shadow(0 0 60px rgba(255, 255, 255, 0.5));
+  filter: drop-shadow(0 0 38px rgba(0, 255, 200, 0.35)) drop-shadow(0 0 72px rgba(0, 255, 200, 0.28));
 }
 
 /* =============================== */
 /* ✅ TEXTS – centered & premium */
-/* =============================== */
 .title {
   font-size: clamp(2.2rem, 5vw, 2.8rem);
   font-weight: 700;
@@ -97,7 +93,6 @@
 
 /* =============================== */
 /* ✅ LOGIN BOX – Diamond Neon Pulse */
-/* =============================== */
 .loginBox {
   width: 100%;
   max-width: clamp(340px, 100%, 520px);
@@ -105,7 +100,6 @@
   backdrop-filter: var(--glass-blur);
   border-radius: 22px;
   padding: clamp(28px, 5vw, 48px);
-  box-shadow: var(--shadow);
   border: 2px solid rgba(0, 255, 200, 0.35);
   animation: fadeIn 0.8s ease-in-out, neonPulse 3.4s infinite ease-in-out;
   text-align: center;
@@ -285,10 +279,6 @@
   }
 }
 
-.fadeIn {
-  animation: fadeIn 0.6s ease-in-out;
-}
-
 /* =============================== */
 /* ✅ RESPONSIVE FIX              */
 @media (max-width: 768px) {
@@ -303,7 +293,7 @@
   }
 
   .logoImage {
-    width: clamp(280px, 48vw, 440px);
+    width: clamp(280px, 52vw, 470px);
   }
 
   .loginBox {
