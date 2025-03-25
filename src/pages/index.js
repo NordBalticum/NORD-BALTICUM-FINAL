@@ -2,10 +2,10 @@
 
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useMagicLink } from "../loginsystem/MagicLinkProvider";
-import { useWebAuthn } from "../loginsystem/WebAuthnContext";
+import { useMagicLink } from "@/contexts/MagicLinkContext";
+import { useWebAuthn } from "@/contexts/WebAuthnContext";
 import Image from "next/image";
-import styles from "./index.module.css";
+import styles from "@/styles/index.module.css";
 
 const HomePage = () => {
   const router = useRouter();
