@@ -29,8 +29,8 @@
 /* ✅ CENTER WRAPPER              */
 /* =============================== */
 .centerWrapper {
-  width: 100%;
-  max-width: 520px;
+  width: clamp(320px, 100vw, 1920px);
+  max-width: clamp(320px, 100vw, 1920px);
   display: flex;
   flex-direction: column;
   justify-content: center;
