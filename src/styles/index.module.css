@@ -1,4 +1,4 @@
-/* === INDEX PAGE – NordBalticum Web3 Login (Final Ultra Fix) === */
+/* === INDEX PAGE – NordBalticum Web3 Login (Final Ultra Fix 100–85) === */
 
 /* =============================== */
 /* ✅ CONTAINER – Fullscreen      */
@@ -7,8 +7,8 @@
   position: fixed;
   top: 50%;
   left: 50%;
-  width: calc(100vw - 280px);
-  height: calc(100vh - 280px);
+  width: calc(100vw - 85px);
+  height: calc(100vh - 85px);
   transform: translate(-50%, -50%);
   background: var(--bg-gradient);
   display: flex;
@@ -39,7 +39,7 @@
   padding: 0 clamp(20px, 5vw, 48px);
   animation: fadeIn 0.6s ease-in-out;
   transition: var(--transition);
-  transform: translateY(10%); /* logotipo žeminimas */
+  transform: translateY(10%);
 }
 
 /* =============================== */
