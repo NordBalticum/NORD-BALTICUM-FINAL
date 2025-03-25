@@ -32,7 +32,7 @@ body::before {
   inset: 0;
   background: url("/stars/stars-bg.svg") repeat center;
   background-size: cover;
-  opacity: 0.08;
+  opacity: 0.2;
   z-index: 0;
   animation: starMotion 100s linear infinite;
   pointer-events: none;
