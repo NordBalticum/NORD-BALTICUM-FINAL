@@ -1,4 +1,15 @@
 /* =============================== */
+/* ✅ MAIN CONTAINER              */
+/* =============================== */
+.container {
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: radial-gradient(ellipse at center, #0a1f44, #000000);
+}
+
+/* =============================== */
 /* ✅ CENTER WRAPPER              */
 /* =============================== */
 .centerWrapper {
@@ -25,10 +36,6 @@
   animation: fadeIn 0.8s ease-in-out;
 }
 
-.logoContainer::before {
-  display: none; /* glow išjungtas */
-}
-
 .logoImage {
   z-index: 1;
   width: clamp(180px, 22vw, 268px); /* padidintas ~40% */
@@ -39,9 +46,11 @@
   box-shadow: none; /* pašalinam bet kokį glow */
   transition: transform 0.4s ease;
 }
+
 .logoImage:hover {
   transform: scale(1.06);
 }
+
 /* =============================== */
 /* ✅ LOGIN BOX su efektu         */
 /* =============================== */
@@ -144,10 +153,12 @@
   cursor: pointer;
   transition: all 0.25s ease;
 }
+
 .biometricButton:hover {
   transform: scale(1.05);
   box-shadow: 0 0 16px var(--white-gold);
 }
+
 .divider {
   text-align: center;
   color: rgba(255, 255, 255, 0.5);
@@ -189,4 +200,15 @@
 }
 .fadeIn {
   animation: fadeIn 0.6s ease-in-out;
+}
+
+/* =============================== */
+/* ✅ Fullscreen and Responsive    */
+/* =============================== */
+.fullscreenContainer {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
 }
