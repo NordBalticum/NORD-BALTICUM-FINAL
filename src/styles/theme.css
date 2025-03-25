@@ -1,80 +1,39 @@
-/* === THEME.CSS — NordBalticum Premium Theme (Ferrari Ultra Final Fix 2025) === */
+/* === THEME.CSS — NordBalticum Ferrari Ultra Final (2025+) === */
 
 /* =============================== */
-/* ✅ FONTAI & GRADIENTAI + ŽVAIGŽDĖS */
+/* ✅ GOOGLE FONTAS               */
 /* =============================== */
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
 
+/* =============================== */
+/* ✅ GLOBALUS BACKGROUND         */
+/* =============================== */
 body {
-  /* Pagrindinis gradientas su 7% tamsinimu (naudojame filter brightness) */
   background: radial-gradient(
-      ellipse at center,
-      oklch(45% 0.25 250) 0%,
-      oklch(30% 0.22 270) 40%,
-      oklch(15% 0.18 280) 100%
-    );
+    ellipse at center,
+    oklch(45% 0.25 250) 0%,
+    oklch(30% 0.22 270) 40%,
+    oklch(15% 0.18 280) 100%
+  );
   background-size: cover;
   background-repeat: no-repeat;
   background-position: center;
-  filter: brightness(93%); /* patamsinama 7% */
+  filter: brightness(93%);
   color: var(--primary-text);
   transition: var(--transition);
-  font-family: var(--font-crypto), 'Poppins', sans-serif;
+  font-family: 'Share Tech Mono', monospace;
   overflow: visible;
   position: relative;
-}
-
-/* Live Star Background Layer – Žvaigždžių efektas */
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background: url("/stars/stars-bg.svg") repeat center;
-  background-size: 600px;
-  z-index: 0;
-  opacity: 0.3; /* padidintas */
-  mix-blend-mode: screen; /* leidžia išryškinti baltas žvaigždes ant gradientų */
-  pointer-events: none;
-}
-
-/* Animated Glow Wave Layer – subtilus slow glow wave efektas */
-body::after {
-  content: "";
-  position: fixed;
-  inset: 0;
-  background: radial-gradient(ellipse at center, rgba(255,255,255,0.03) 0%, transparent 70%);
-  animation: glowWaves 60s ease-in-out infinite;
-  z-index: 0;
-  pointer-events: none;
+  z-index: 1;
 }
 
 /* =============================== */
-/* ✅ TYPOGRAPHY STILIAI          */
+/* ✅ TYPOGRAFIJA                 */
 /* =============================== */
 h1, h2, h3, h4, h5, h6, p, span, label {
-  font-family: var(--font-crypto), 'Poppins', sans-serif;
   color: var(--primary-text);
-  text-shadow: 0 0 4px rgba(255,255,255,0.1);
-  letter-spacing: 0.02em;
-}
-
-/* =============================== */
-/* ✅ NEON & SHADOWS EFFECTS      */
-/* =============================== */
-.neonGlow {
-  color: var(--white-gold);
-  text-shadow:
-    0 0 2px var(--white-gold),
-    0 0 6px var(--white-gold),
-    0 0 12px var(--white-gold);
-}
-
-.deepShadow {
-  box-shadow:
-    0 0 8px rgba(255,255,255,0.1),
-    0 0 24px rgba(255,255,255,0.06),
-    inset 0 0 12px rgba(255,255,255,0.05);
+  text-shadow: 0 0 4px rgba(255, 255, 255, 0.1);
+  letter-spacing: 0.03em;
 }
 
 /* =============================== */
@@ -88,7 +47,7 @@ h1, h2, h3, h4, h5, h6, p, span, label {
   border: 2px solid #fff;
   background: #000;
   color: var(--primary-text);
-  box-shadow: 0 0 12px rgba(255,255,255,0.12);
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.12);
   cursor: pointer;
   transition: var(--transition);
   position: relative;
@@ -99,16 +58,15 @@ h1, h2, h3, h4, h5, h6, p, span, label {
   background: var(--primary-text);
   color: #000;
   transform: scale(1.05);
-  box-shadow: 0 0 18px var(--white-gold);
+  box-shadow: 0 0 24px var(--white-gold);
 }
 
-/* Live glow pulse effect on buttons */
+/* ✅ Glow Pulse efektas */
 .buttonBase::after {
   content: '';
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at center, rgba(255,255,255,0.05), transparent);
-  opacity: 0.3;
+  background: radial-gradient(circle at center, rgba(255,255,255,0.06), transparent);
   animation: pulseGlow 4s ease-in-out infinite;
   z-index: -1;
 }
@@ -117,11 +75,11 @@ h1, h2, h3, h4, h5, h6, p, span, label {
 /* ✅ GLASSMORPHISM ELEMENTAI     */
 /* =============================== */
 .glassBox {
-  background: rgba(255,255,255,0.06);
+  background: rgba(255, 255, 255, 0.06);
   backdrop-filter: blur(24px) saturate(180%);
   -webkit-backdrop-filter: blur(24px) saturate(180%);
-  border: 1px solid rgba(255,255,255,0.15);
-  box-shadow: 0 0 24px rgba(255,255,255,0.04);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 0 32px rgba(255, 255, 255, 0.04);
   border-radius: var(--radius);
   padding: clamp(24px, 5vw, 48px);
   transition: var(--transition);
@@ -131,8 +89,8 @@ h1, h2, h3, h4, h5, h6, p, span, label {
 /* ✅ INPUTAI                     */
 /* =============================== */
 input, textarea {
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.2);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: var(--radius);
   color: var(--primary-text);
   padding: 12px 18px;
@@ -142,25 +100,24 @@ input, textarea {
 
 input:focus, textarea:focus {
   border-color: var(--white-gold);
-  box-shadow: 0 0 10px rgba(255,255,255,0.3);
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.06);
 }
 
 /* =============================== */
-/* ✅ INTERAKCIJOS               */
+/* ✅ LOGO / ICONAI               */
 /* =============================== */
-a {
-  color: var(--white-gold);
-  text-decoration: none;
-  transition: var(--transition);
+.logoImage {
+  filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.2));
+  transition: transform 0.4s ease, filter 0.4s ease;
 }
-
-a:hover {
-  text-shadow: 0 0 12px var(--white-gold);
-  transform: scale(1.02);
+.logoImage:hover {
+  transform: scale(1.06);
+  filter: drop-shadow(0 0 32px rgba(255, 255, 255, 0.4));
 }
 
 /* =============================== */
-/* ✅ GRADIENŲ ATNAUJINTA KOKYBĖ  */
+/* ✅ GRADIENŲ BACKGROUND UTILS   */
 /* =============================== */
 .gradientBg {
   background: linear-gradient(
@@ -172,39 +129,45 @@ a:hover {
   background-size: 200% 200%;
   animation: moveGradient 6s ease infinite;
 }
+
 @keyframes moveGradient {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
   100% { background-position: 0% 50%; }
 }
 
 /* =============================== */
-/* ✅ PREMIUM UI UTILS           */
+/* ✅ ANIMACIJOS                  */
 /* =============================== */
-.deepShadow {
-  box-shadow: 0 0 64px rgba(0,0,0,0.4);
+@keyframes pulseGlow {
+  0%, 100% { transform: scale(1); opacity: 0.2; }
+  50% { transform: scale(1.1); opacity: 0.5; }
 }
-.neonText {
-  color: #fff;
-  text-shadow: 0 0 6px var(--white-gold), 0 0 16px var(--white-gold);
+
+@keyframes glowWaves {
+  0% { transform: scale(1) rotate(0deg); }
+  50% { transform: scale(1.02) rotate(180deg); }
+  100% { transform: scale(1) rotate(360deg); }
 }
-.glowBox {
-  border: 1px solid rgba(255,255,255,0.1);
-  box-shadow: 0 0 40px rgba(255,255,255,0.1), 0 0 20px var(--white-gold);
+
+@keyframes fadeMessage {
+  0% { transform: scale(0.92); opacity: 0; }
+  60% { transform: scale(1.02); opacity: 1; }
+  100% { transform: scale(1); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes fadeInDown {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 /* =============================== */
-/* ✅ MOBILUS RESPONSIVE SCALE FIX */
-/* =============================== */
-@media (max-width: 768px) {
-  .centerWrapper {
-    transform: scale(0.75) translateY(6%);
-    transform-origin: top center;
-  }
-}
-
-/* =============================== */
-/* ✅ UTILITY CLASSES           */
+/* ✅ NAUDOJAMI UI UTILS          */
 /* =============================== */
 .flexCenter {
   display: flex;
@@ -218,4 +181,27 @@ a:hover {
 
 .hidden {
   display: none !important;
+}
+
+.neonText {
+  color: var(--white-gold);
+  text-shadow:
+    0 0 6px var(--white-gold),
+    0 0 12px var(--white-gold),
+    0 0 24px var(--white-gold);
+}
+
+.glowBox {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 32px rgba(255, 255, 255, 0.06), 0 0 18px var(--white-gold);
+}
+
+/* =============================== */
+/* ✅ RESPONSIVE SCALE FIX        */
+/* =============================== */
+@media (max-width: 768px) {
+  .centerWrapper {
+    transform: scale(0.75) translateY(6%);
+    transform-origin: top center;
+  }
 }
