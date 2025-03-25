@@ -1,13 +1,15 @@
-/* === DASHBOARD MODULE – NordBalticum Web3 Premium UI === */
+/* === DASHBOARD MODULE – NordBalticum Web3 Diamond Tilt Pulse Level === */
 
+/* =============================== */
+/* ✅ CONTAINER – Fullscreen Gradient + Blur Stars */
 .container {
   position: fixed;
   top: 50%;
   left: 50%;
-  width: calc(100vw - 160px);
-  height: calc(100vh - 160px);
+  width: 100vw;
+  height: 100vh;
   transform: translate(-50%, -50%);
-  background: var(--bg-gradient);
+  background: radial-gradient(circle at center, rgba(10,18,42,1) 20%, rgba(27,35,112,0.95) 60%, rgba(43,55,255,0.88) 100%);
   padding: var(--main-padding);
   display: flex;
   justify-content: center;
@@ -16,11 +18,13 @@
   user-select: none;
   -webkit-font-smoothing: antialiased;
   touch-action: manipulation;
-  -ms-touch-action: manipulation;
   scroll-behavior: smooth;
   transition: var(--transition);
+  z-index: 1;
 }
 
+/* =============================== */
+/* ✅ WRAPPER – Auto Scale Mobile Fix */
 .globalWrapper {
   width: 100%;
   max-width: var(--max-width);
@@ -31,38 +35,51 @@
   gap: clamp(32px, 4vw, 64px);
   padding-bottom: calc(var(--nav-height) + 2rem);
   box-sizing: border-box;
-  transform: translateY(7%);
+  transform: translateY(3%);
   transition: var(--transition);
 }
 
-/* === Mobile Zoom-Out (Auto scale on small screens) === */
+/* =============================== */
+/* ✅ Mobile Optimization – Push Up All Content */
 @media (max-width: 768px) {
   .container {
     width: 100vw;
     height: 100vh;
   }
+
   .globalWrapper {
-    transform: scale(0.88) translateY(5%);
+    transform: scale(0.88) translateY(-2%);
     transform-origin: top center;
   }
 }
 
-/* === Logo === */
+/* =============================== */
+/* ✅ LOGO – 50% Larger + Glow Sync */
 .logoWrapper {
   display: flex;
   justify-content: center;
   align-items: center;
-  animation: fadeInDown 0.6s ease-in-out;
+  animation: fadeInDown 0.6s ease-in-out, tiltGlow 6s infinite ease-in-out;
+  perspective: 1000px;
+  transform-style: preserve-3d;
 }
 
 .logo {
   display: block;
   height: auto;
-  max-width: clamp(140px, 22vw, 220px);
-  filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.15));
+  max-width: clamp(210px, 38vw, 320px); /* +50% scale */
+  filter: drop-shadow(0 0 24px rgba(0, 255, 200, 0.25)) drop-shadow(0 0 48px rgba(0, 255, 200, 0.18));
+  transition: transform 0.4s ease, filter 0.4s ease;
+  transform-style: preserve-3d;
 }
 
-/* === Balance === */
+.logo:hover {
+  transform: scale(1.07);
+  filter: drop-shadow(0 0 38px rgba(0, 255, 200, 0.35)) drop-shadow(0 0 72px rgba(0, 255, 200, 0.28));
+}
+
+/* =============================== */
+/* ✅ TOTAL VALUE – Gradient Euro */
 .totalBalanceBox {
   text-align: center;
   animation: fadeInDown 0.5s ease-in-out;
@@ -85,7 +102,8 @@
   font-size: clamp(28px, 3vw, 36px);
 }
 
-/* === Asset List === */
+/* =============================== */
+/* ✅ ASSET LIST – Metamorphic Glass */
 .assetList {
   width: 100%;
   display: flex;
@@ -95,21 +113,21 @@
 }
 
 .assetItem {
-  background: var(--glass-bg);
+  background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: var(--radius);
-  padding: 16px 24px;
+  border-radius: 24px;
+  padding: 20px 28px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  backdrop-filter: var(--glass-blur);
-  box-shadow: var(--shadow);
+  backdrop-filter: blur(20px) saturate(160%);
+  box-shadow: 0 0 24px rgba(255, 255, 255, 0.06);
   transition: var(--transition);
 }
 
 .assetItem:hover {
-  transform: scale(1.015);
-  box-shadow: 0 0 26px rgba(255, 255, 255, 0.1);
+  transform: scale(1.02);
+  box-shadow: 0 0 32px rgba(0, 255, 200, 0.15);
 }
 
 .assetLeft {
@@ -119,13 +137,13 @@
 }
 
 .assetLogo {
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   background: white;
   padding: 4px;
   object-fit: contain;
-  box-shadow: 0 0 6px rgba(255,255,255,0.25);
+  box-shadow: 0 0 6px rgba(255,255,255,0.3);
 }
 
 .assetText {
@@ -161,25 +179,20 @@
   margin-top: 4px;
 }
 
-/* === Animacijos === */
+/* =============================== */
+/* ✅ ANIMATIONS */
 @keyframes fadeInDown {
-  from {
-    opacity: 0;
-    transform: translateY(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes tiltGlow {
+  0% { transform: translateY(0%) rotateX(0deg) rotateY(0deg); }
+  50% { transform: translateY(0%) rotateX(2deg) rotateY(2deg); }
+  100% { transform: translateY(0%) rotateX(0deg) rotateY(0deg); }
 }
