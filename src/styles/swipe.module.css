@@ -1,8 +1,5 @@
+/* === SWIPE MODULE – NordBalticum Ultra Premium Wallet === */
 
-/* === SWIPE MODULE ā€“ NordBalticum Ultra Premium Wallet === */
-
-/* =============================== */
-/* ā… Swipe Wrapper */
 .swipeWrapper {
   width: 100%;
   overflow-x: auto;
@@ -11,15 +8,12 @@
   gap: 16px;
   padding: 24px 0;
   scrollbar-width: none;
-  -ms-overflow-style: none;
 }
 
 .swipeWrapper::-webkit-scrollbar {
   display: none;
 }
 
-/* =============================== */
-/* ā… Wallet Card */
 .walletCard {
   min-width: 300px;
   scroll-snap-align: start;
@@ -41,8 +35,6 @@
   box-shadow: 0 0 38px rgba(0, 255, 200, 0.2);
 }
 
-/* =============================== */
-/* ā… Wallet Header */
 .walletHeader {
   display: flex;
   justify-content: space-between;
@@ -63,8 +55,6 @@
   -webkit-text-fill-color: transparent;
 }
 
-/* =============================== */
-/* ā… Wallet Actions */
 .walletActions {
   display: flex;
   flex-direction: column;
@@ -100,8 +90,6 @@
   box-shadow: 0 0 18px rgba(255, 255, 255, 0.4);
 }
 
-/* =============================== */
-/* ā… Confirm Modal */
 .confirmModal {
   position: fixed;
   bottom: 0;
