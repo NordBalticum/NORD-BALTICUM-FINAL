@@ -1,89 +1,156 @@
 
-/* === SWIPE MODULE ✅️“ Best in Class Crypto Wallet UX === */
+/* === SWIPE MODULE ā€“ NordBalticum Ultra Premium Wallet === */
 
+/* =============================== */
+/* ā… Swipe Wrapper */
 .swipeWrapper {
   width: 100%;
-  max-width: 480px;
-  margin: 0 auto;
-  padding: 24px 16px 100px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.title {
-  font-size: clamp(1.5rem, 5vw, 2.4rem);
-  font-weight: 700;
-  color: white;
-  text-align: center;
-  margin-bottom: 32px;
-}
-
-.carousel {
-  display: flex;
   overflow-x: auto;
-  gap: 16px;
-  padding: 12px;
   scroll-snap-type: x mandatory;
-  -webkit-overflow-scrolling: touch;
+  display: flex;
+  gap: 16px;
+  padding: 24px 0;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
-.card {
-  flex: 0 0 140px;
-  scroll-snap-align: center;
-  border-radius: 18px;
-  padding: 16px;
-  text-align: center;
-  background: rgba(255,255,255,0.04);
-  backdrop-filter: blur(14px);
-  border: 1px solid rgba(255,255,255,0.1);
-  transition: all 0.3s ease;
+.swipeWrapper::-webkit-scrollbar {
+  display: none;
 }
 
-.card:hover {
-  transform: scale(1.05);
-}
-
-.active {
-  border: 2px solid rgba(0,255,200,0.4);
-  box-shadow: 0 0 22px rgba(0,255,200,0.15);
-}
-
-.icon {
-  width: 44px;
-  height: 44px;
-  margin-bottom: 10px;
-}
-
-.infoBox {
-  width: 100%;
-  margin-top: 28px;
+/* =============================== */
+/* ā… Wallet Card */
+.walletCard {
+  min-width: 300px;
+  scroll-snap-align: start;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 24px;
+  padding: 20px 28px;
+  backdrop-filter: blur(20px) saturate(160%);
+  box-shadow: 0 0 26px rgba(255, 255, 255, 0.05);
+  transition: var(--transition);
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  justify-content: space-between;
+  color: white;
 }
 
-.input {
-  padding: 12px 14px;
-  border-radius: 12px;
-  border: 1px solid rgba(255,255,255,0.2);
-  background: rgba(255,255,255,0.05);
-  color: white;
+.walletCard:hover {
+  transform: scale(1.02);
+  box-shadow: 0 0 38px rgba(0, 255, 200, 0.2);
+}
+
+/* =============================== */
+/* ā… Wallet Header */
+.walletHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.walletName {
+  font-weight: 600;
   font-size: 1rem;
 }
 
-.sendBtn {
-  padding: 14px;
-  background: #000;
-  color: white;
-  border-radius: 14px;
+.walletBalance {
   font-weight: 700;
-  border: 2px solid white;
-  text-transform: uppercase;
-  transition: all 0.25s ease;
+  font-size: 1.1rem;
+  background: linear-gradient(90deg, #ffffff, #ffd700);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
-.sendBtn:hover {
+/* =============================== */
+/* ā… Wallet Actions */
+.walletActions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.inputField {
+  width: 100%;
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  color: white;
+  font-size: 1rem;
+  outline: none;
+}
+
+.confirmButton {
+  padding: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+  background: black;
+  color: white;
+  border: 2px solid white;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: 0.3s ease;
+}
+
+.confirmButton:hover {
   background: white;
   color: black;
+  box-shadow: 0 0 18px rgba(255, 255, 255, 0.4);
+}
+
+/* =============================== */
+/* ā… Confirm Modal */
+.confirmModal {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 95%;
+  max-width: 420px;
+  background: rgba(0, 0, 0, 0.85);
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  border-radius: 18px;
+  padding: 24px;
+  color: white;
+  backdrop-filter: blur(18px);
+  z-index: 9999;
+  box-shadow: 0 0 24px rgba(0, 255, 200, 0.2);
+}
+
+.modalTitle {
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+.modalInfo {
+  font-size: 1rem;
+  opacity: 0.85;
+  margin-bottom: 18px;
+}
+
+.modalActions {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.modalButton {
+  flex: 1;
+  padding: 12px;
+  border-radius: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  cursor: pointer;
+  border: none;
+  background: white;
+  color: black;
+}
+
+.modalButton.cancel {
+  background: transparent;
+  color: white;
+  border: 2px solid white;
 }
