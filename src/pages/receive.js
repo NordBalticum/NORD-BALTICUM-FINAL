@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { useMagicLink } from "@/contexts/MagicLinkContext";
+import { supabase } from "@/lib/supabaseClient";
 import { ethers } from "ethers";
 import styles from "@/styles/swipe.module.css";
 import BottomNavigation from "@/components/BottomNavigation";
