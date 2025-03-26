@@ -1,0 +1,89 @@
+
+/* === SWIPE MODULE ✅️“ Best in Class Crypto Wallet UX === */
+
+.swipeWrapper {
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 24px 16px 100px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.title {
+  font-size: clamp(1.5rem, 5vw, 2.4rem);
+  font-weight: 700;
+  color: white;
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.carousel {
+  display: flex;
+  overflow-x: auto;
+  gap: 16px;
+  padding: 12px;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+}
+
+.card {
+  flex: 0 0 140px;
+  scroll-snap-align: center;
+  border-radius: 18px;
+  padding: 16px;
+  text-align: center;
+  background: rgba(255,255,255,0.04);
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(255,255,255,0.1);
+  transition: all 0.3s ease;
+}
+
+.card:hover {
+  transform: scale(1.05);
+}
+
+.active {
+  border: 2px solid rgba(0,255,200,0.4);
+  box-shadow: 0 0 22px rgba(0,255,200,0.15);
+}
+
+.icon {
+  width: 44px;
+  height: 44px;
+  margin-bottom: 10px;
+}
+
+.infoBox {
+  width: 100%;
+  margin-top: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.input {
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.2);
+  background: rgba(255,255,255,0.05);
+  color: white;
+  font-size: 1rem;
+}
+
+.sendBtn {
+  padding: 14px;
+  background: #000;
+  color: white;
+  border-radius: 14px;
+  font-weight: 700;
+  border: 2px solid white;
+  text-transform: uppercase;
+  transition: all 0.25s ease;
+}
+
+.sendBtn:hover {
+  background: white;
+  color: black;
+}
