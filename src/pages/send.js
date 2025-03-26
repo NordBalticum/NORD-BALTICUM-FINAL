@@ -4,7 +4,6 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMagicLink } from "@/contexts/MagicLinkContext";
-import { createClient } from "@supabase/supabase-js";
 import { ethers } from "ethers";
 import BottomNavigation from "@/components/BottomNavigation";
 import styles from "@/styles/swipe.module.css";
