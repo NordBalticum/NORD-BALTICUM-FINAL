@@ -1,18 +1,12 @@
-
 "use client";
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useMagicLink } from "@/contexts/MagicLinkContext";
-import { createClient } from "@supabase/supabase-js";
 import { ethers } from "ethers";
-import BottomNavigation from "@/components/BottomNavigation";
+import { useMagicLink } from "@/contexts/MagicLinkContext";
+import { supabase } from "@/libs/supabaseClient";
 import styles from "@/styles/swipe.module.css";
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-);
+import BottomNavigation from "@/components/BottomNavigation";
 
 const networks = [
   {
@@ -57,8 +51,17 @@ export default function Send() {
   const { user } = useMagicLink();
   const router = useRouter();
   const [selected, setSelected] = useState(0);
+  const [receiver, setReceiver] = useState("");
+  const [amount, setAmount] = useState("");
+  const [showModal, setShowModal] = useState(false);
 
-  const handleRoute = () => {
+  const handleSend = () => {
+    if (!receiver || !amount) return alert("Please enter address and amount");
+    setShowModal(true);
+  };
+
+  const confirmSend = () => {
+    setShowModal(false);
     router.push(networks[selected].route);
   };
 
@@ -68,31 +71,67 @@ export default function Send() {
     <div className="globalContainer">
       <div className={styles.swipeWrapper}>
         <h1 className={styles.title}>SEND CRYPTO</h1>
-        <div className={styles.carousel}>
+        <div className={styles.swipeWrapper}>
           {networks.map((net, index) => (
             <div
               key={net.symbol}
-              className={`${styles.card} ${index === selected ? styles.active : ""}`}
+              className={styles.walletCard}
               onClick={() => setSelected(index)}
             >
+              <div className={styles.walletHeader}>
+                <span className={styles.walletName}>{net.name}</span>
+                <span className={styles.walletBalance}>0.0000 {net.symbol}</span>
+              </div>
               <img src={net.icon} alt={net.symbol} className={styles.icon} />
-              <h2>{net.symbol}</h2>
-              <p>{net.name}</p>
             </div>
           ))}
         </div>
 
-        <div className={styles.infoBox}>
-          <p>Receiver Address</p>
-          <input type="text" placeholder="0x..." className={styles.input} />
-          <p>Amount</p>
-          <input type="number" placeholder="0.00" className={styles.input} />
+        <div className={styles.walletActions}>
+          <input
+            type="text"
+            placeholder="Receiver address"
+            value={receiver}
+            onChange={(e) => setReceiver(e.target.value)}
+            className={styles.inputField}
+          />
+          <input
+            type="number"
+            placeholder="Amount"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            className={styles.inputField}
+          />
           <p>Estimated Fee: 0.003 {networks[selected].symbol}</p>
-          <button onClick={handleRoute} className={styles.sendBtn}>
+          <button onClick={handleSend} className={styles.confirmButton}>
             SEND
           </button>
         </div>
       </div>
+
+      {showModal && (
+        <div className={styles.confirmModal}>
+          <div className={styles.modalTitle}>Confirm Transaction</div>
+          <div className={styles.modalInfo}>
+            <p><strong>Network:</strong> {networks[selected].name}</p>
+            <p><strong>To:</strong> {receiver}</p>
+            <p><strong>Amount:</strong> {amount} {networks[selected].symbol}</p>
+            <p><strong>Fee:</strong> 0.003 {networks[selected].symbol}</p>
+          </div>
+          <div className={styles.modalActions}>
+            <button className={styles.modalButton} onClick={confirmSend}>
+              Confirm
+            </button>
+            <button
+              className={`${styles.modalButton} ${styles.cancel}`}
+              onClick={() => setShowModal(false)}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
       <BottomNavigation />
     </div>
   );
