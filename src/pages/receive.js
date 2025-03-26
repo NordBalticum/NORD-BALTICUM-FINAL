@@ -1,85 +1,82 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/router";
+import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useMagicLink } from "@/contexts/MagicLinkContext";
-import { supabase } from "@/lib/supabaseClient";
-import { ethers } from "ethers";
+import { supabase } from "@/libs/supabaseClient";
 import styles from "@/styles/swipe.module.css";
 import BottomNavigation from "@/components/BottomNavigation";
-import Image from "next/image";
 
 const networks = [
   {
     name: "BNB Smart Chain",
     symbol: "BNB",
-    balance: "0.0000",
+    route: "/receive/bnb",
     icon: "https://cryptologos.cc/logos/bnb-bnb-logo.png",
-    route: "/receive/bnb"
   },
   {
     name: "BSC Testnet",
     symbol: "TBNB",
-    balance: "0.0000",
+    route: "/receive/tbnb",
     icon: "https://cryptologos.cc/logos/bnb-bnb-logo.png",
-    route: "/receive/tbnb"
   },
   {
     name: "Ethereum",
     symbol: "ETH",
-    balance: "0.0000",
+    route: "/receive/eth",
     icon: "https://cryptologos.cc/logos/ethereum-eth-logo.png",
-    route: "/receive/eth"
   },
   {
     name: "Polygon",
     symbol: "POL",
-    balance: "0.0000",
+    route: "/receive/pol",
     icon: "https://cryptologos.cc/logos/polygon-matic-logo.png",
-    route: "/receive/pol"
   },
   {
     name: "Avalanche",
     symbol: "AVAX",
-    balance: "0.0000",
+    route: "/receive/avax",
     icon: "https://cryptologos.cc/logos/avalanche-avax-logo.png",
-    route: "/receive/avax"
-  }
+  },
+  {
+    name: "Solana",
+    symbol: "SOL",
+    route: "/receive/sol",
+    icon: "https://cryptologos.cc/logos/solana-sol-logo.png",
+  },
 ];
 
 export default function Receive() {
-  const router = useRouter();
   const { user } = useMagicLink();
+  const router = useRouter();
+  const [selected, setSelected] = useState(0);
 
-  if (!user) {
-    return <div className={styles.loading}>Loading Wallet...</div>;
-  }
+  if (!user) return <div className={styles.loading}>Loading Wallet...</div>;
 
   return (
-    <div className={styles.container}>
-      <h1 className={styles.pageTitle}>RECEIVE CRYPTO</h1>
-      <p className={styles.subtext}>Swipe to choose the network</p>
-
-      <div className={styles.swiper}>
-        {networks.map((network, index) => (
-          <div
-            key={network.symbol}
-            className={styles.card}
-            onClick={() => router.push(network.route)}
-          >
-            <Image
-              src={network.icon}
-              width={52}
-              height={52}
-              alt={network.symbol}
-              className={styles.icon}
-            />
-            <h2 className={styles.cardTitle}>{network.name}</h2>
-            <p className={styles.cardBalance}>{network.balance} {network.symbol}</p>
-          </div>
-        ))}
+    <div className="globalContainer">
+      <div className={styles.swipeWrapper}>
+        <h1 className={styles.title}>RECEIVE CRYPTO</h1>
+        <p className={styles.subtitle}>Swipe to choose the network</p>
+        <div className={styles.swipeWrapper}>
+          {networks.map((net, index) => (
+            <div
+              key={net.symbol}
+              className={styles.walletCard}
+              onClick={() => {
+                setSelected(index);
+                router.push(net.route);
+              }}
+            >
+              <div className={styles.walletHeader}>
+                <span className={styles.walletName}>{net.name}</span>
+                <span className={styles.walletBalance}>0.0000 {net.symbol}</span>
+              </div>
+              <img src={net.icon} alt={net.symbol} className={styles.icon} />
+            </div>
+          ))}
+        </div>
       </div>
-
       <BottomNavigation />
     </div>
   );
