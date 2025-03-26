@@ -1,7 +1,7 @@
-/* === DASHBOARD MODULE – NordBalticum Web3 Diamond Tilt Pulse Level === */
+/* === DASHBOARD MODULE – NordBalticum Web3 Diamond Final Mode === */
 
 /* =============================== */
-/* ✅ CONTAINER – Fullscreen Gradient + Blur Stars */
+/* ✅ CONTAINER – Fullscreen Gradient + Stars */
 .container {
   position: fixed;
   top: 50%;
@@ -14,7 +14,8 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
   user-select: none;
   -webkit-font-smoothing: antialiased;
   touch-action: manipulation;
@@ -24,8 +25,22 @@
 }
 
 /* =============================== */
-/* ✅ WRAPPER – Auto Scale Mobile Fix */
+/* ✅ STARS BACKGROUND – Visible everywhere */
+.container::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: url('/images/stars-bg.svg') repeat center center;
+  background-size: cover;
+  opacity: 0.18;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* =============================== */
+/* ✅ WRAPPER */
 .globalWrapper {
+  position: relative;
   width: 100%;
   max-width: var(--max-width);
   display: flex;
@@ -33,28 +48,29 @@
   justify-content: flex-start;
   align-items: center;
   gap: clamp(32px, 4vw, 64px);
-  padding-bottom: calc(var(--nav-height) + 2rem);
+  padding-bottom: calc(var(--nav-height) + 3.5rem);
   box-sizing: border-box;
-  transform: translateY(3%);
+  transform: translateY(2.5%);
   transition: var(--transition);
+  z-index: 2;
 }
 
 /* =============================== */
-/* ✅ Mobile Optimization – Push Up All Content */
+/* ✅ Mobile Optimization – Push Up & Fit Bottom Nav */
 @media (max-width: 768px) {
   .container {
-    width: 100vw;
-    height: 100vh;
+    padding-bottom: 80px;
   }
 
   .globalWrapper {
     transform: scale(0.88) translateY(-2%);
     transform-origin: top center;
+    padding-bottom: 96px;
   }
 }
 
 /* =============================== */
-/* ✅ LOGO – 50% Larger + Glow Sync */
+/* ✅ LOGO – Bigger + White Glow */
 .logoWrapper {
   display: flex;
   justify-content: center;
@@ -67,19 +83,19 @@
 .logo {
   display: block;
   height: auto;
-  max-width: clamp(210px, 38vw, 320px); /* +50% scale */
-  filter: drop-shadow(0 0 24px rgba(0, 255, 200, 0.25)) drop-shadow(0 0 48px rgba(0, 255, 200, 0.18));
+  max-width: clamp(220px, 40vw, 340px);
+  filter: drop-shadow(0 0 28px rgba(255, 255, 255, 0.32)) drop-shadow(0 0 48px rgba(255, 255, 255, 0.22));
   transition: transform 0.4s ease, filter 0.4s ease;
   transform-style: preserve-3d;
 }
 
 .logo:hover {
   transform: scale(1.07);
-  filter: drop-shadow(0 0 38px rgba(0, 255, 200, 0.35)) drop-shadow(0 0 72px rgba(0, 255, 200, 0.28));
+  filter: drop-shadow(0 0 48px rgba(255, 255, 255, 0.42));
 }
 
 /* =============================== */
-/* ✅ TOTAL VALUE – Gradient Euro */
+/* ✅ TOTAL BALANCE */
 .totalBalanceBox {
   text-align: center;
   animation: fadeInDown 0.5s ease-in-out;
@@ -103,7 +119,7 @@
 }
 
 /* =============================== */
-/* ✅ ASSET LIST – Metamorphic Glass */
+/* ✅ ASSET LIST – Metamorphic Cards */
 .assetList {
   width: 100%;
   display: flex;
@@ -120,16 +136,24 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  backdrop-filter: blur(20px) saturate(160%);
-  box-shadow: 0 0 24px rgba(255, 255, 255, 0.06);
-  transition: var(--transition);
+  backdrop-filter: blur(22px) saturate(160%);
+  box-shadow: 0 0 28px rgba(0, 0, 0, 0.07);
+  transition: all 0.3s ease;
+  cursor: pointer;
 }
 
 .assetItem:hover {
   transform: scale(1.02);
-  box-shadow: 0 0 32px rgba(0, 255, 200, 0.15);
+  box-shadow: 0 0 32px rgba(0, 255, 200, 0.18);
 }
 
+/* === Route Clicks === */
+.assetItem:active {
+  transform: scale(0.98);
+}
+
+/* =============================== */
+/* ✅ Asset Content */
 .assetLeft {
   display: flex;
   align-items: center;
@@ -137,8 +161,8 @@
 }
 
 .assetLogo {
-  width: 40px;
-  height: 40px;
+  width: 42px;
+  height: 42px;
   border-radius: 50%;
   background: white;
   padding: 4px;
