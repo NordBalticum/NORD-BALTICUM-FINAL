@@ -6,7 +6,8 @@ import Head from "next/head";
 import { MagicLinkProvider } from "@/contexts/MagicLinkContext";
 import { WalletLoadProvider } from "@/contexts/WalletLoadContext";
 import { BalanceProvider } from "@/contexts/BalanceContext";
-import { AuthProvider } from "@/contexts/AuthContext"; // <- jungia viską
+import { GenerateWalletProvider } from "@/contexts/GenerateWalletContext"; // <- PRIDĖTA
+import { AuthProvider } from "@/contexts/AuthContext"; // <- sujungia viską
 import Layout from "@/components/Layout";
 
 export default function App({ Component, pageProps }) {
@@ -14,7 +15,10 @@ export default function App({ Component, pageProps }) {
     <React.StrictMode>
       <Head>
         <title>NordBalticum</title>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+        <meta
+          name="viewport"
+          content="width=device-width, initial-scale=1.0, user-scalable=no"
+        />
         <meta name="theme-color" content="#0A1F44" />
         <link rel="icon" href="/icons/logo.png" />
         <link
@@ -23,15 +27,17 @@ export default function App({ Component, pageProps }) {
         />
       </Head>
 
-      <MagicLinkProvider> {/* <- PRIVALOMAS */}
+      <MagicLinkProvider>
         <WalletLoadProvider>
-            <BalanceProvider>
-              <AuthProvider> {/* <- čia jungiam viską */}
+          <BalanceProvider>
+            <GenerateWalletProvider> {/* <- PRIDĖTA */}
+              <AuthProvider>
                 <Layout>
                   <Component {...pageProps} />
                 </Layout>
               </AuthProvider>
-            </BalanceProvider>
+            </GenerateWalletProvider>
+          </BalanceProvider>
         </WalletLoadProvider>
       </MagicLinkProvider>
     </React.StrictMode>
