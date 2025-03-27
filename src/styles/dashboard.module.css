@@ -163,15 +163,15 @@
   100% { text-shadow: 0 0 8px rgba(255, 255, 255, 0.15); }
 }
 
-/* === MEDIA === */
 @media (max-width: 768px) {
   .avatarCenter {
-    margin-top: 64px;
+    margin-top: 48px; /* BUVO 64px – pakelta */
   }
 
   .dashboardWrapper {
-    padding: 16px 18px 80px;
-    transform: scale(0.96);
+    padding: 8px 18px 80px;
+    transform: scale(0.96) translateY(-12%);
+    transform-origin: top center;
   }
 
   .assetLogo {
