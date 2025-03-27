@@ -2,26 +2,20 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/contexts/AuthContext";
 import Image from "next/image";
 import styles from "@/styles/index.module.css";
 import StarsBackground from "@/components/StarsBackground";
 
-// Kontekstai
-import { useAuth } from "@/contexts/AuthContext";
-import { useMagicLink } from "@/contexts/MagicLinkContext";
-
 export default function Home() {
   const router = useRouter();
-  const { user: authUser, signInWithEmail, loginWithGoogle, sessionReady } = useAuth();
-  const { user: magicUser } = useMagicLink();
-
-  const user = authUser || magicUser;
+  const { user, signInWithEmail, loginWithGoogle, loadingUser } = useAuth();
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState("idle");
   const [message, setMessage] = useState("");
   const logoRef = useRef(null);
 
-  // === 3D Tilt Logo Animation
+  // 3D Tilt Logo Animation
   useEffect(() => {
     const logo = logoRef.current;
     if (!logo) return;
@@ -51,14 +45,14 @@ export default function Home() {
     };
   }, []);
 
-  // === Redirect if logged in
+  // Redirect if logged in
   useEffect(() => {
-    if (sessionReady && user) {
+    if (user) {
       router.push("/dashboard");
     }
-  }, [sessionReady, user]);
+  }, [user, router]);
 
-  // === Email login
+  // Email login
   const handleEmailLogin = async (e) => {
     e.preventDefault();
     if (!email.trim()) return setMessage("❌ Please enter a valid email.");
@@ -76,7 +70,7 @@ export default function Home() {
     }
   };
 
-  // === Google login
+  // Google login
   const handleGoogleLogin = async () => {
     setStatus("sending");
     setMessage("⏳ Logging in with Google...");
