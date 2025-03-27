@@ -116,6 +116,33 @@
   }
 }
 
+.walletBox {
+  margin-top: 4px;
+  background: rgba(255, 255, 255, 0.06);
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-family: monospace;
+  font-size: clamp(12px, 2vw, 14px);
+  line-height: 1.4;
+  cursor: pointer;
+  user-select: all;
+  word-break: break-all;
+  border: 1px solid rgba(255,255,255,0.2);
+  transition: 0.2s ease;
+}
+
+.walletBox:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.walletAddress {
+  display: block;
+  opacity: 0.85;
+  margin-top: 4px;
+  font-size: clamp(11px, 1.6vw, 13px);
+  word-break: break-word;
+}
+
 /* === ✅ FULL MEDIA RESPONSIVE – 4K / Galaxy Ultra / Small Phones === */
 @media (max-width: 768px) {
   .container {
