@@ -99,7 +99,7 @@
   .navbar {
     width: calc(100% - 20px);
     height: 64px;
-    bottom: 34px; /* Final optimized position */
+    bottom: 40px; /* FINAL: Pakelta aukščiau +6px */
     padding: 0 10px;
     border-radius: 18px;
   }
