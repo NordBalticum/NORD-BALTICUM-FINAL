@@ -3,9 +3,8 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMagicLink } from "@/contexts/MagicLinkContext";
-import { supabase } from "@/lib/supabaseClient";
-import styles from "@/styles/swipe.module.css";
 import BottomNavigation from "@/components/BottomNavigation";
+import styles from "@/styles/swipe.module.css";
 
 const networks = [
   {
@@ -37,13 +36,7 @@ const networks = [
     symbol: "AVAX",
     route: "/receive/avax",
     icon: "https://cryptologos.cc/logos/avalanche-avax-logo.png",
-  },
-  {
-    name: "Solana",
-    symbol: "SOL",
-    route: "/receive/sol",
-    icon: "https://cryptologos.cc/logos/solana-sol-logo.png",
-  },
+  }
 ];
 
 export default function Receive() {
@@ -55,9 +48,10 @@ export default function Receive() {
 
   return (
     <div className="globalContainer">
-      <div className={styles.swipeWrapper}>
+      <div className={styles.wrapper}>
         <h1 className={styles.title}>RECEIVE CRYPTO</h1>
-        <p className={styles.subtitle}>Swipe to choose the network</p>
+        <p className={styles.subtext}>Choose your network to receive</p>
+
         <div className={styles.swipeWrapper}>
           {networks.map((net, index) => (
             <div
