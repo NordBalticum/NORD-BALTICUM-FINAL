@@ -11,15 +11,16 @@ import { FaBars, FaTimes } from "react-icons/fa";
 export default function SideDrawer() {
   const router = useRouter();
   const { pathname } = router;
-  const { signOut, user, wallet } = useMagicLink();
+  const { logout, user, wallet } = useMagicLink();
   const [open, setOpen] = useState(false);
 
   const toggleDrawer = () => setOpen(!open);
 
-  const handleSignOut = async () => {
+  const handleLogout = async () => {
     try {
-      await signOut();
-      router.replace("/");
+      await logout();         // ✅ naudok tą patį logout iš MagicLinkContext
+      setOpen(false);         // ✅ uždarom drawer
+      router.replace("/");    // ✅ redirectinam iškart
     } catch (error) {
       console.error("Logout failed:", error);
     }
@@ -61,7 +62,7 @@ export default function SideDrawer() {
               {item.label}
             </Link>
           ))}
-          <button className={styles.logout} onClick={handleSignOut}>Sign Out</button>
+          <button className={styles.logout} onClick={handleLogout}>Sign Out</button>
         </nav>
       </aside>
 
