@@ -6,6 +6,7 @@ import { useRouter } from "next/router";
 import StarsBackground from "@/components/StarsBackground";
 import AvatarModalPicker from "@/components/AvatarModalPicker";
 import AvatarDisplay from "@/components/AvatarDisplay";
+import SuccessModal from "@/components/SuccessModal";
 import styles from "@/styles/settings.module.css";
 
 export default function SettingsPage() {
@@ -16,6 +17,7 @@ export default function SettingsPage() {
   const [walletAddress, setWalletAddress] = useState("");
   const [showAvatarModal, setShowAvatarModal] = useState(false);
   const [avatarKey, setAvatarKey] = useState(Date.now());
+  const [success, setSuccess] = useState(false);
 
   useEffect(() => {
     if (wallet?.address) setWalletAddress(wallet.address);
@@ -54,6 +56,7 @@ export default function SettingsPage() {
   const handleAvatarChange = () => {
     setAvatarKey(Date.now());
     setShowAvatarModal(false);
+    setSuccess(true); // Show success modal
   };
 
   return (
@@ -121,6 +124,13 @@ export default function SettingsPage() {
         <AvatarModalPicker
           onClose={handleAvatarChange}
           onSelect={() => {}}
+        />
+      )}
+
+      {success && (
+        <SuccessModal
+          message="Avatar updated successfully!"
+          onClose={() => setSuccess(false)}
         />
       )}
     </div>
