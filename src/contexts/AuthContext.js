@@ -1,17 +1,17 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from "react";
+import { createClient } from "@supabase/supabase-js";
 import { useMagicLink } from "./MagicLinkContext";
 import { useWalletLoad } from "./WalletLoadContext";
 import { useBalance } from "./BalanceContext";
-import { createClient } from "@supabase/supabase-js";
+
+const AuthContext = createContext();
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 );
-
-const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const {
@@ -33,52 +33,55 @@ export const AuthProvider = ({ children }) => {
 
   const [sessionReady, setSessionReady] = useState(false);
   const [autoLoginTried, setAutoLoginTried] = useState(false);
+  const [wasLoggedIn, setWasLoggedIn] = useState(false);
 
-  // ✅ Automatinis WebAuthn fallback login
+  // ✅ 1. Automatinis WebAuthn fallback (vieną kartą)
   useEffect(() => {
-    const attemptBiometricAutoLogin = async () => {
+    const tryAutoLogin = async () => {
       if (!user && biometricEmail && !autoLoginTried) {
         setAutoLoginTried(true);
         try {
           await signInWithEmail(biometricEmail);
+          console.log("✅ Biometric fallback success");
         } catch (err) {
-          console.warn("Biometric fallback failed:", err);
+          console.warn("❌ Biometric fallback failed:", err);
         }
       }
     };
-    attemptBiometricAutoLogin();
+    tryAutoLogin();
   }, [user, biometricEmail, autoLoginTried]);
 
-  // ✅ Sesijos monitoringas realiu laiku
+  // ✅ 2. Sesijos monitoringas realiu laiku
   useEffect(() => {
     const { data: subscription } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        const onRoot = window.location.pathname === "/";
+
         if (event === "SIGNED_OUT" || !session?.user) {
-          console.warn("⚠️ Sesija baigta. Vartotojas atsijungė.");
-          alert("Jūsų sesija baigėsi. Prašome prisijungti iš naujo.");
-          logout();
-          if (typeof window !== "undefined") {
-            window.location.href = "/";
+          console.warn("⚠️ Sesija baigėsi.");
+
+          if (wasLoggedIn) {
+            alert("Jūsų sesija baigėsi. Prašome prisijungti iš naujo.");
+            await logout();
+            if (!onRoot) window.location.href = "/";
           }
         }
 
         if (event === "SIGNED_IN" && session?.user) {
-          console.log("✅ Nauja sesija aptikta – balansas atnaujinamas.");
-          await refreshBalances();
+          console.log("✅ Nauja sesija aptikta.");
+          await refreshBalances?.();
+          setWasLoggedIn(true);
         }
       }
     );
 
     return () => subscription?.unsubscribe();
-  }, [refreshBalances, logout]);
+  }, [logout, refreshBalances, wasLoggedIn]);
 
-  // ✅ Visos sistemos ready flag
+  // ✅ 3. `sessionReady` – tik kai viskas pilnai pakrauta
   useEffect(() => {
-    if (!loadingUser && !loadingWallets && !loadingBalances && user && wallets) {
-      setSessionReady(true);
-    } else {
-      setSessionReady(false);
-    }
+    const ready = !loadingUser && !loadingWallets && !loadingBalances && user && wallets;
+    setSessionReady(ready);
   }, [loadingUser, loadingWallets, loadingBalances, user, wallets]);
 
   return (
