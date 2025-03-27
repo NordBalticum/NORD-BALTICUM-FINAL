@@ -5,13 +5,15 @@
   width: 84vw;
   max-width: 320px;
   height: 100vh;
-  background: #0f1428;
-  box-shadow: 2px 0 12px rgba(0, 0, 0, 0.3);
+  background: rgba(15, 20, 40, 0.95);
+  box-shadow: 0 0 32px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(22px) saturate(160%);
   padding: 2rem 1.6rem;
-  transition: left 0.3s ease;
+  transition: left 0.33s ease-in-out;
   z-index: 9999;
   display: flex;
   flex-direction: column;
+  border-right: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .drawer.open {
@@ -24,48 +26,70 @@
 }
 
 .closeIcon {
-  font-size: 1.4rem;
-  color: white;
+  font-size: 1.6rem;
+  color: #ffffff;
   cursor: pointer;
+  transition: transform 0.3s ease;
+}
+.closeIcon:hover {
+  transform: rotate(90deg) scale(1.2);
 }
 
 .nav {
-  margin-top: 2rem;
+  margin-top: 2.5rem;
   display: flex;
   flex-direction: column;
-  gap: 1.2rem;
+  gap: 1.6rem;
 }
 
 .link {
   color: #ccc;
-  font-size: 1rem;
+  font-size: 1.05rem;
   font-weight: 500;
   text-decoration: none;
   transition: all 0.25s ease;
+  position: relative;
+}
+
+.link::before {
+  content: "";
+  position: absolute;
+  left: -10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 6px;
+  height: 6px;
+  background: transparent;
+  border-radius: 50%;
+  transition: background 0.3s ease;
 }
 
 .link:hover {
-  color: white;
+  color: #fff;
 }
 
 .active {
-  color: white;
+  color: #fff;
   font-weight: 700;
+}
+.active::before {
+  background: #ffd700;
 }
 
 .logout {
-  margin-top: 2rem;
-  background: #ff3c3c;
+  margin-top: auto;
+  background: linear-gradient(90deg, #ff3c3c, #e62323);
   border: none;
   color: white;
   font-weight: 600;
   padding: 12px;
-  border-radius: 12px;
+  border-radius: 14px;
   cursor: pointer;
+  transition: background 0.3s ease;
 }
 
 .logout:hover {
-  background: #e62323;
+  background: linear-gradient(90deg, #e62323, #c71d1d);
 }
 
 .hamburger {
@@ -75,6 +99,15 @@
   z-index: 10000;
   color: white;
   cursor: pointer;
+  backdrop-filter: blur(12px);
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  padding: 8px;
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.05);
+  transition: transform 0.2s ease;
+}
+.hamburger:hover {
+  transform: scale(1.08);
 }
 
 .backdrop {
