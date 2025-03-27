@@ -197,12 +197,6 @@
 
 /* === ✅ MEDIA RESPONSIVE FINAL PATCH – NordBalticum Mobile Ultra UX === */
 @media (max-width: 768px) {
-  html, body {
-    overflow: hidden !important;
-    touch-action: none !important;
-    overscroll-behavior: none;
-  }
-
   .container {
     height: 100vh;
     overflow: hidden;
@@ -225,7 +219,6 @@
     height: 38px;
   }
 
-  /* Pakeltas BottomNavigation per Z-Axis + Margin Fix */
   .bottomNav {
     position: fixed;
     bottom: 3.2vh;
