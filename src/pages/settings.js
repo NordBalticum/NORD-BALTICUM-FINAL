@@ -4,6 +4,8 @@ import React, { useState, useEffect } from "react";
 import { useMagicLink } from "@/contexts/MagicLinkContext";
 import { useRouter } from "next/router";
 import StarsBackground from "@/components/StarsBackground";
+import AvatarModalPicker from "@/components/AvatarModalPicker";
+import AvatarDisplay from "@/components/AvatarDisplay";
 import styles from "@/styles/settings.module.css";
 
 export default function SettingsPage() {
@@ -13,16 +15,18 @@ export default function SettingsPage() {
   const [emailInput, setEmailInput] = useState("");
   const [walletAddress, setWalletAddress] = useState("");
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [showAvatarModal, setShowAvatarModal] = useState(false);
+  const [avatarKey, setAvatarKey] = useState(Date.now());
 
   useEffect(() => {
     if (wallet?.address) setWalletAddress(wallet.address);
   }, [wallet]);
 
   const handleChangeEmail = async () => {
-    if (!emailInput) return alert("Please enter new email.");
+    if (!emailInput) return alert("Please enter a new email.");
     const { error } = await supabase.auth.updateUser({ email: emailInput });
     if (error) alert("Error: " + error.message);
-    else alert("Magic Link sent to the new email.");
+    else alert("Magic Link has been sent to your new email.");
   };
 
   const handleDeleteRequest = () => {
@@ -32,7 +36,7 @@ export default function SettingsPage() {
 
   const clearBiometric = () => {
     localStorage.removeItem("biometric_user");
-    alert("Biometric login removed.");
+    alert("Biometric login disabled.");
     window.location.reload();
   };
 
@@ -53,11 +57,21 @@ export default function SettingsPage() {
     router.replace("/");
   };
 
+  const handleAvatarChange = () => {
+    setAvatarKey(Date.now());
+    setShowAvatarModal(false);
+  };
+
   return (
     <div className={styles.container}>
       <StarsBackground />
       <div className={styles.box}>
         <h2 className={styles.heading}>Profile Settings</h2>
+
+        <div className={styles.avatarContainer} onClick={() => setShowAvatarModal(true)} title="Click to change avatar">
+          <AvatarDisplay walletAddress={wallet?.address} size={80} key={avatarKey} />
+          <p className={styles.avatarText}>Change Avatar</p>
+        </div>
 
         <p><strong>Email:</strong> {user?.email}</p>
 
@@ -113,6 +127,13 @@ export default function SettingsPage() {
           Log Out
         </button>
       </div>
+
+      {showAvatarModal && (
+        <AvatarModalPicker
+          onClose={handleAvatarChange}
+          onSelect={() => {}}
+        />
+      )}
     </div>
   );
 }
