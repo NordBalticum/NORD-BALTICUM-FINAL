@@ -1,13 +1,15 @@
 "use client";
 
 import React from "react";
-import styles from "@/components/avatarpicker.module.css"; // Susikurk arba pritaikyk stilius
+import styles from "./avatarpicker.module.css";
+
+const baseUrl = "https://i.pravatar.cc/150?img=";
 
 const AvatarAutoPicker = ({ walletAddress, size = 64 }) => {
   if (!walletAddress) return null;
 
-  const index = parseInt(walletAddress.slice(-2), 16) % 20; // 0–19
-  const avatarSrc = `/avatars/avatar_${index + 1}.png`; // Failai turi būti įdėti į public/avatars/
+  const index = parseInt(walletAddress.slice(-2), 16) % 20 + 1; // 1–20
+  const avatarSrc = `${baseUrl}${index}`;
 
   return (
     <img
