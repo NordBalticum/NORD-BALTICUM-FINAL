@@ -8,10 +8,10 @@ import Image from "next/image";
 import BottomNavigation from "@/components/BottomNavigation";
 import AvatarDisplay from "@/components/AvatarDisplay";
 
-// Pagrindinis AuthContext (visa sistema)
+// Pagrindinis kontekstas
 import { useAuth } from "@/contexts/AuthContext";
 
-// Atsarginiai kontekstai (MagicLink, Wallet, Balances)
+// Fallback kontekstai
 import { useMagicLink } from "@/contexts/MagicLinkContext";
 import { useWalletLoad } from "@/contexts/WalletLoadContext";
 import { useBalance } from "@/contexts/BalanceContext";
@@ -27,15 +27,7 @@ const networksData = [
 export default function Dashboard() {
   const router = useRouter();
 
-  // Primary from AuthContext
-  const {
-    user: authUser,
-    wallet: authWallet,
-    balances: authBalances,
-    sessionReady,
-  } = useAuth();
-
-  // Optional fallback if AuthContext fails
+  const { user: authUser, wallet: authWallet, balances: authBalances, sessionReady } = useAuth();
   const { user: magicUser } = useMagicLink();
   const { wallets: fallbackWallet } = useWalletLoad();
   const { balances: fallbackBalances } = useBalance();
@@ -47,21 +39,20 @@ export default function Dashboard() {
   const [totalEUR, setTotalEUR] = useState("0.00");
 
   useEffect(() => {
-    if (!user || !wallet?.address) {
-      router.push("/");
-    }
-  }, [user, wallet, router]);
+    if (!user || !wallet?.address) router.push("/");
+  }, [user, wallet]);
 
   useEffect(() => {
-    const total = Object.values(balances || {})
-      .reduce((sum, b) => sum + parseFloat(b.eur || 0), 0)
-      .toFixed(2);
-    setTotalEUR(total);
+    const total = Object.values(balances || {}).reduce(
+      (sum, b) => sum + parseFloat(b?.eur || 0),
+      0
+    );
+    setTotalEUR(total.toFixed(2));
   }, [balances]);
 
   const networks = useMemo(() => networksData, []);
 
-  if (!sessionReady || !user || !wallet?.address) return null;
+  if ((!sessionReady && !wallet?.address) || !user) return null;
 
   return (
     <div className={styles.container}>
@@ -79,7 +70,7 @@ export default function Dashboard() {
 
         <div className={styles.assetList}>
           {networks.map((net) => {
-            const bal = balances[net.symbol] || { amount: "0.0000", eur: "0.00" };
+            const bal = balances?.[net.symbol] || { amount: "0.0000", eur: "0.00" };
             return (
               <div
                 key={net.symbol}
