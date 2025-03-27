@@ -26,7 +26,8 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  color: rgba(255, 255, 255, 0.7);
+  background: black;
+  color: white;
   font-size: 0.8rem;
   text-decoration: none;
   transition: all 0.25s ease;
@@ -56,10 +57,10 @@
 }
 
 .active {
-  color: #ffd700;
+  background: white;
+  color: black;
   font-weight: 700;
-  background: rgba(255, 255, 255, 0.04);
-  box-shadow: 0 0 12px rgba(255, 215, 0, 0.2);
+  box-shadow: 0 0 14px rgba(255, 255, 255, 0.2);
   backdrop-filter: blur(4px);
 }
 
@@ -92,12 +93,11 @@
   }
 }
 
-/* === Responsive Polishing === */
 @media (max-width: 420px) {
   .navbar {
     width: calc(100% - 20px);
     height: 64px;
-    bottom: 20px; /* BUVO 10px, DABAR 20px – pakelta aukščiau */
+    bottom: 28px; /* Pakelta papildomai */
     padding: 0 10px;
     border-radius: 18px;
   }
@@ -121,7 +121,7 @@
   }
 
   .navbar {
-    bottom: 20px;
+    bottom: 24px;
     max-width: 520px;
     height: 78px;
   }
