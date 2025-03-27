@@ -47,33 +47,16 @@ export default function Dashboard() {
     <div className={styles.container}>
       <StarsBackground />
 
-      {/* Global content wrapper */}
       <div className={styles.dashboardWrapper}>
-        
-        {/* Small logo top-left */}
-        <div className={styles.logoFixed}>
-          <Image
-            src="/icons/logo-small.svg"
-            alt="NordBalticum"
-            width={64}
-            height={64}
-            className={styles.logoMini}
-            priority
-          />
-        </div>
-
-        {/* Avatar in center */}
         <div className={styles.avatarCenter}>
           <AvatarDisplay walletAddress={wallet?.address} size={92} />
         </div>
 
-        {/* TOTAL VALUE */}
         <div className={styles.totalValueContainer}>
           <p className={styles.totalLabel}>Total Value</p>
           <p className={styles.totalValue}>€ {totalEUR}</p>
         </div>
 
-        {/* NETWORK BALANCES */}
         <div className={styles.assetList}>
           {networks.map((net) => {
             const bal = cachedBalances[net.symbol] || { amount: "0.0000", eur: "0.00" };
@@ -82,7 +65,6 @@ export default function Dashboard() {
                 key={net.symbol}
                 className={styles.assetItem}
                 onClick={() => router.push(net.route)}
-                title={`Open ${net.name}`}
               >
                 <div className={styles.assetLeft}>
                   <Image
