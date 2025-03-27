@@ -1,81 +1,104 @@
 .container {
   min-height: 100vh;
+  width: 100%;
   display: flex;
   justify-content: center;
   align-items: center;
-  background: radial-gradient(ellipse at center, #0a1f44, #000000);
+  background: radial-gradient(circle at center, #0a122a 15%, #1b2370 65%, #2b37ff 100%);
+  padding: 40px 16px;
+  box-sizing: border-box;
 }
 
 .box {
-  background: rgba(255, 255, 255, 0.05);
-  padding: 2rem;
-  border-radius: 20px;
-  width: clamp(300px, 35vw, 500px);
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(18px);
+  border-radius: 24px;
+  box-shadow: 0 0 36px rgba(0, 0, 0, 0.3);
+  width: clamp(320px, 38vw, 540px);
+  padding: 32px;
   color: white;
-  backdrop-filter: blur(10px);
-  box-shadow: 0 0 25px rgba(255, 255, 255, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  animation: fadeInUp 0.6s ease-in-out;
 }
 
 .section {
-  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .input {
-  padding: 10px;
-  width: 100%;
-  margin-top: 0.5rem;
-  border: none;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.1);
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.08);
   color: white;
+  border: none;
+  border-radius: 12px;
+  outline: none;
 }
 
 .button {
-  margin-top: 0.7rem;
-  padding: 10px;
-  width: 100%;
-  background: black;
+  padding: 12px;
+  background: #000;
   color: white;
-  font-weight: bold;
+  font-weight: 600;
   border: none;
-  border-radius: 8px;
+  border-radius: 12px;
   cursor: pointer;
+  transition: 0.3s ease;
 }
 
 .button:hover {
-  transform: scale(1.03);
   background: white;
   color: black;
 }
 
 .smallButton {
-  margin-left: 10px;
-  font-size: 12px;
-  padding: 6px;
+  margin-left: 12px;
+  padding: 6px 12px;
   background: darkred;
   color: white;
+  font-size: 12px;
+  border-radius: 8px;
   border: none;
-  border-radius: 6px;
   cursor: pointer;
 }
 
 .danger {
   background: red;
   color: white;
+  padding: 12px;
   border: none;
-  border-radius: 8px;
-  width: 100%;
-  padding: 10px;
-  margin-top: 10px;
+  border-radius: 12px;
+  font-weight: bold;
+  cursor: pointer;
 }
 
 .logout {
-  margin-top: 20px;
-  padding: 12px;
-  background: #111;
+  margin-top: 12px;
+  padding: 14px;
+  background: transparent;
+  border: 1px solid white;
+  border-radius: 12px;
   color: white;
   font-weight: bold;
-  border: 1px solid white;
-  border-radius: 8px;
-  width: 100%;
+  transition: 0.3s ease;
+}
+
+.logout:hover {
+  background: white;
+  color: black;
+}
+
+/* Animation */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
