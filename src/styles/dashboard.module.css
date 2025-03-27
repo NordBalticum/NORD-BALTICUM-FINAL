@@ -1,7 +1,5 @@
-/* === DASHBOARD MODULE – NordBalticum Web3 Diamond Final Mode === */
+/* === DASHBOARD MODULE – NordBalticum Web3 Final 9999x Upgrade === */
 
-/* =============================== */
-/* ✅ CONTAINER – Fullscreen Gradient + Stars */
 .container {
   position: fixed;
   top: 50%;
@@ -9,68 +7,51 @@
   width: 100vw;
   height: 100vh;
   transform: translate(-50%, -50%);
-  background: radial-gradient(circle at center, rgba(10,18,42,1) 20%, rgba(27,35,112,0.95) 60%, rgba(43,55,255,0.88) 100%);
-  padding: var(--main-padding);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  overflow-y: auto;
-  overflow-x: hidden;
+  background: radial-gradient(circle at center, #0a122a 15%, #1b2370 65%, #2b37ff 100%);
+  overflow: hidden;
   user-select: none;
   -webkit-font-smoothing: antialiased;
-  touch-action: manipulation;
   scroll-behavior: smooth;
+  touch-action: manipulation;
   transition: var(--transition);
   z-index: 1;
 }
 
-/* =============================== */
-/* ✅ STARS BACKGROUND – Visible everywhere */
+/* Žvaigždės iš komponento StarsBackground.js */
 .container::before {
   content: "";
   position: absolute;
   inset: 0;
-  background: url('/images/stars-bg.svg') repeat center center;
+  background-image: url("/images/stars-bg.svg");
+  background-repeat: repeat;
+  background-position: center;
   background-size: cover;
   opacity: 0.18;
   z-index: 0;
   pointer-events: none;
 }
 
-/* =============================== */
-/* ✅ WRAPPER */
+/* Wrapper */
 .globalWrapper {
   position: relative;
   width: 100%;
   max-width: var(--max-width);
+  height: 100%;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
   align-items: center;
   gap: clamp(32px, 4vw, 64px);
-  padding-bottom: calc(var(--nav-height) + 3.5rem);
+  padding: clamp(16px, 4vw, 64px);
+  padding-bottom: 96px;
   box-sizing: border-box;
+  z-index: 2;
   transform: translateY(2.5%);
   transition: var(--transition);
-  z-index: 2;
+  overflow: hidden;
 }
 
-/* =============================== */
-/* ✅ Mobile Optimization – Push Up & Fit Bottom Nav */
-@media (max-width: 768px) {
-  .container {
-    padding-bottom: 80px;
-  }
-
-  .globalWrapper {
-    transform: scale(0.82) translateY(-2%);
-    transform-origin: top center;
-    padding-bottom: 96px;
-  }
-}
-
-/* =============================== */
-/* ✅ LOGO – Bigger + White Glow */
+/* LOGO */
 .logoWrapper {
   display: flex;
   justify-content: center;
@@ -82,11 +63,10 @@
 
 .logo {
   display: block;
+  max-width: clamp(220px, 42vw, 340px);
   height: auto;
-  max-width: clamp(220px, 40vw, 340px);
   filter: drop-shadow(0 0 28px rgba(255, 255, 255, 0.32)) drop-shadow(0 0 48px rgba(255, 255, 255, 0.22));
   transition: transform 0.4s ease, filter 0.4s ease;
-  transform-style: preserve-3d;
 }
 
 .logo:hover {
@@ -94,8 +74,7 @@
   filter: drop-shadow(0 0 48px rgba(255, 255, 255, 0.42));
 }
 
-/* =============================== */
-/* ✅ TOTAL BALANCE */
+/* TOTAL VALUE */
 .totalBalanceBox {
   text-align: center;
   animation: fadeInDown 0.5s ease-in-out;
@@ -118,8 +97,7 @@
   font-size: clamp(28px, 3vw, 36px);
 }
 
-/* =============================== */
-/* ✅ ASSET LIST – Metamorphic Cards */
+/* ASSET LIST */
 .assetList {
   width: 100%;
   display: flex;
@@ -147,13 +125,10 @@
   box-shadow: 0 0 32px rgba(0, 255, 200, 0.18);
 }
 
-/* === Route Clicks === */
 .assetItem:active {
   transform: scale(0.98);
 }
 
-/* =============================== */
-/* ✅ Asset Content */
 .assetLeft {
   display: flex;
   align-items: center;
@@ -167,7 +142,7 @@
   background: white;
   padding: 4px;
   object-fit: contain;
-  box-shadow: 0 0 6px rgba(255,255,255,0.3);
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.3);
 }
 
 .assetText {
@@ -203,7 +178,6 @@
   margin-top: 4px;
 }
 
-/* =============================== */
 /* ✅ ANIMATIONS */
 @keyframes fadeInDown {
   from { opacity: 0; transform: translateY(-20px); }
@@ -219,4 +193,35 @@
   0% { transform: translateY(0%) rotateX(0deg) rotateY(0deg); }
   50% { transform: translateY(0%) rotateX(2deg) rotateY(2deg); }
   100% { transform: translateY(0%) rotateX(0deg) rotateY(0deg); }
+}
+
+/* === ✅ MEDIA RESPONSIVE === */
+@media (max-width: 768px) {
+  html, body {
+    overflow: hidden !important;
+    touch-action: none !important;
+    overscroll-behavior: none;
+  }
+
+  .container {
+    height: 100vh;
+    overflow: hidden;
+    padding: 0;
+  }
+
+  .globalWrapper {
+    transform: scale(0.80) translateY(-4%);
+    transform-origin: top center;
+    padding: 0 16px 96px;
+    overflow: hidden;
+  }
+
+  .assetItem {
+    padding: 18px 22px;
+  }
+
+  .assetLogo {
+    width: 38px;
+    height: 38px;
+  }
 }
