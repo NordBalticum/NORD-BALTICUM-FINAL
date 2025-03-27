@@ -173,28 +173,35 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* === MEDIA === */
+/* ... visas esamas kodas viršuje išlieka tas pats ... */
+
 @media (max-width: 768px) {
   .avatarCenter {
-    margin-top: 72px;
+    margin-top: 48px; /* buvę 72px, sumažinta 15% */
   }
+
   .dashboardWrapper {
-    padding: 16px 18px 80px;
-    transform: scale(0.95);
+    padding: 12px 18px 96px;
+    transform: translateY(-8%) scale(0.95); /* buvo scale(0.95) – pridėtas pakėlimas */
   }
+
   .assetLogo {
     width: 34px;
     height: 34px;
   }
+
   .assetSymbol {
     font-size: 0.95rem;
   }
+
   .assetName {
     font-size: 0.75rem;
   }
+
   .assetAmount {
     font-size: 0.95rem;
   }
+
   .assetEur {
     font-size: 0.75rem;
   }
