@@ -16,14 +16,13 @@ export default function SideDrawer() {
   const toggleDrawer = () => setOpen(!open);
 
   const handleSignOut = async () => {
-    try {
-      await signOut();             // ✅ Atsijungiam
-      setOpen(false);              // ✅ Uždaro drawer
-      router.push("/");            // ✅ Redirect į homepage
-    } catch (error) {
-      console.error("Logout failed:", error);
-    }
-  };
+  try {
+    await signOut();                // ✅ Palaukiam, kol pilnai išsijungia
+    router.replace("/");           // ✅ Neprideda į istoriją – iškart meta į /
+  } catch (error) {
+    console.error("Logout failed:", error);
+  }
+};
 
   const navItems = [
     { label: "Dashboard", path: "/dashboard" },
