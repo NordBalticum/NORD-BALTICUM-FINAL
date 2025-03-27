@@ -195,14 +195,7 @@
   100% { transform: translateY(0%) rotateX(0deg) rotateY(0deg); }
 }
 
-/* === ✅ MEDIA RESPONSIVE === */
 @media (max-width: 768px) {
-  html, body {
-    overflow: hidden !important;
-    touch-action: none !important;
-    overscroll-behavior: none;
-  }
-
   .container {
     height: 100vh;
     overflow: hidden;
