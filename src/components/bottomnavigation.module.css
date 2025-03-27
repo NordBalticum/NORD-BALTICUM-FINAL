@@ -1,67 +1,55 @@
-/* === BOTTOM NAVIGATION – NordBalticum v2.1 ULTRA BANKING === */
+/* === BOTTOM NAVIGATION – NordBalticum Web3 Ultra UI === */
 
 .bottomNav {
   position: fixed;
-  bottom: 0;
-  left: 0;
-  width: 100vw;
-  height: clamp(64px, 7vh, 88px);
-  background: linear-gradient(to top, rgba(10, 18, 42, 0.95), rgba(43, 63, 255, 0.08));
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  bottom: 5.5vh;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 22px;
+  backdrop-filter: blur(18px) saturate(180%);
   display: flex;
   justify-content: space-around;
   align-items: center;
-  z-index: 9999;
-  backdrop-filter: blur(22px);
-  box-shadow: 0 -6px 28px rgba(0, 0, 0, 0.35);
-  padding-bottom: env(safe-area-inset-bottom);
-  transition: all 0.3s ease-in-out;
+  padding: 12px clamp(12px, 5vw, 24px);
+  box-shadow: 0 0 36px rgba(0, 0, 0, 0.3), 0 0 18px rgba(0, 100, 255, 0.15);
+  z-index: 999;
+  width: clamp(90%, 94vw, 640px);
+  transition: all 0.4s ease;
 }
 
-/* === Nav Buttons === */
 .navButton {
-  flex: 1;
-  height: 100%;
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.6);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  border: none;
+  font-size: clamp(12px, 2vw, 14px);
+  font-weight: 600;
+  color: #ffffffcc;
   background: transparent;
-  transition: all 0.25s ease-in-out;
-  font-family: 'Poppins', sans-serif;
-  text-shadow: 0 0 6px rgba(0, 0, 0, 0.3);
-  letter-spacing: 0.5px;
-  position: relative;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  padding: 6px 8px;
+  border-radius: 12px;
+  transition: all 0.3s ease;
 }
 
 .navButton:hover {
-  color: #ffffff;
+  background: rgba(255, 255, 255, 0.07);
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.15);
   transform: scale(1.05);
-  text-shadow: 0 0 10px rgba(255, 255, 255, 0.35);
+}
+
+.active {
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+  box-shadow: 0 0 18px rgba(255, 255, 255, 0.3), 0 0 18px rgba(0, 200, 255, 0.3);
+  transform: scale(1.12);
 }
 
 .icon {
-  font-size: 1.3rem;
+  font-size: clamp(16px, 3vw, 20px);
   margin-bottom: 4px;
-  color: inherit;
-  transition: transform 0.2s ease-in-out;
-}
-
-.navButton:hover .icon {
-  transform: scale(1.15);
-}
-
-/* === Active State (subtle white glow, no yellow) === */
-.active {
-  color: #ffffff;
-  text-shadow: 0 0 14px rgba(255, 255, 255, 0.6);
-  transform: scale(1.08);
-}
-
-.active .icon {
-  transform: scale(1.2);
+  color: #fff;
 }
