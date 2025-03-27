@@ -4,25 +4,26 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import { useMagicLink } from "@/contexts/MagicLinkContext";
 import styles from "@/components/sidedrawer.module.css";
+import AvatarDisplay from "@/components/AvatarDisplay";
 import { useState } from "react";
 import { FaBars, FaTimes } from "react-icons/fa";
 
 export default function SideDrawer() {
   const router = useRouter();
   const { pathname } = router;
-  const { signOut } = useMagicLink();
+  const { signOut, user, wallet } = useMagicLink();
   const [open, setOpen] = useState(false);
 
   const toggleDrawer = () => setOpen(!open);
 
   const handleSignOut = async () => {
-  try {
-    await signOut();                // ✅ Palaukiam, kol pilnai išsijungia
-    router.replace("/");           // ✅ Neprideda į istoriją – iškart meta į /
-  } catch (error) {
-    console.error("Logout failed:", error);
-  }
-};
+    try {
+      await signOut();
+      router.replace("/");
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
+  };
 
   const navItems = [
     { label: "Dashboard", path: "/dashboard" },
@@ -42,6 +43,11 @@ export default function SideDrawer() {
       <aside className={`${styles.drawer} ${open ? styles.open : ""}`} role="navigation">
         <div className={styles.drawerHeader}>
           <FaTimes className={styles.closeIcon} onClick={toggleDrawer} aria-label="Close menu" />
+        </div>
+
+        <div className={styles.userBox}>
+          <AvatarDisplay walletAddress={wallet?.address} size={64} />
+          <p className={styles.email}>{user?.email || "Not logged in"}</p>
         </div>
 
         <nav className={styles.nav}>
