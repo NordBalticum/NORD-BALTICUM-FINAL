@@ -2,11 +2,9 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ethers } from "ethers";
 import { useMagicLink } from "@/contexts/MagicLinkContext";
-import { supabase } from "@/lib/supabaseClient";
-import styles from "@/styles/swipe.module.css";
 import BottomNavigation from "@/components/BottomNavigation";
+import styles from "@/styles/swipe.module.css";
 
 const networks = [
   {
@@ -56,7 +54,7 @@ export default function Send() {
   const [showModal, setShowModal] = useState(false);
 
   const handleSend = () => {
-    if (!receiver || !amount) return alert("Please enter address and amount");
+    if (!receiver || !amount) return alert("Please enter both address and amount.");
     setShowModal(true);
   };
 
@@ -69,8 +67,10 @@ export default function Send() {
 
   return (
     <div className="globalContainer">
-      <div className={styles.swipeWrapper}>
+      <div className={styles.wrapper}>
         <h1 className={styles.title}>SEND CRYPTO</h1>
+        <p className={styles.subtext}>Choose your network and enter details</p>
+
         <div className={styles.swipeWrapper}>
           {networks.map((net, index) => (
             <div
