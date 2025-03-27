@@ -2,20 +2,29 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/contexts/AuthContext";
 import Image from "next/image";
 import styles from "@/styles/index.module.css";
 import StarsBackground from "@/components/StarsBackground";
 
+// Kontekstai
+import { useAuth } from "@/contexts/AuthContext";
+import { useMagicLink } from "@/contexts/MagicLinkContext";
+
 export default function Home() {
   const router = useRouter();
-  const { user, signInWithEmail, loginWithGoogle, loadingUser } = useAuth();
+
+  // Pagrindinis kontekstas
+  const { user: authUser, signInWithEmail, loginWithGoogle, sessionReady } = useAuth();
+  const { user: fallbackUser, loadingUser } = useMagicLink();
+
+  const user = authUser || fallbackUser;
+
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState("idle");
   const [message, setMessage] = useState("");
   const logoRef = useRef(null);
 
-  // 3D Tilt Logo Animation
+  // === Logo tilt efektas
   useEffect(() => {
     const logo = logoRef.current;
     if (!logo) return;
@@ -24,10 +33,8 @@ export default function Home() {
       const rect = logo.getBoundingClientRect();
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
-      const centerX = rect.width / 2;
-      const centerY = rect.height / 2;
-      const rotateX = ((y - centerY) / centerY) * -4;
-      const rotateY = ((x - centerX) / centerX) * 4;
+      const rotateX = ((y - rect.height / 2) / rect.height / 2) * -4;
+      const rotateY = ((x - rect.width / 2) / rect.width / 2) * 4;
       logo.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.05)`;
     };
 
@@ -45,14 +52,14 @@ export default function Home() {
     };
   }, []);
 
-  // Redirect if logged in
+  // === Automatinis nukreipimas jei jau prisijungęs
   useEffect(() => {
-    if (user) {
+    if (sessionReady && user) {
       router.push("/dashboard");
     }
-  }, [user, router]);
+  }, [sessionReady, user]);
 
-  // Email login
+  // === Magic Link login
   const handleEmailLogin = async (e) => {
     e.preventDefault();
     if (!email.trim()) return setMessage("❌ Please enter a valid email.");
@@ -63,14 +70,14 @@ export default function Home() {
       setMessage("✅ Check your inbox for the Magic Link.");
       setEmail("");
     } catch (err) {
-      console.error("Email login error:", err);
+      console.error("Magic Link error:", err.message);
       setMessage("❌ Failed to send Magic Link.");
     } finally {
       setStatus("idle");
     }
   };
 
-  // Google login
+  // === Google login
   const handleGoogleLogin = async () => {
     setStatus("sending");
     setMessage("⏳ Logging in with Google...");
@@ -78,7 +85,7 @@ export default function Home() {
       await loginWithGoogle();
       setMessage("✅ Logged in with Google.");
     } catch (err) {
-      console.error("Google login error:", err);
+      console.error("Google login error:", err.message);
       setMessage("❌ Google login failed.");
     } finally {
       setStatus("idle");
@@ -142,3 +149,4 @@ export default function Home() {
       </main>
     </>
   );
+            }
