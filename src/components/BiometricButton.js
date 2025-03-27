@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { useWebAuthn } from "@/contexts/WebAuthnContext";
 import { useMagicLink } from "@/contexts/MagicLinkContext";
-import styles from "@/styles/components/BiometricButton.module.css";
+import styles from "@/styles/components/biometricbutton.module.css";
 import Image from "next/image";
 
 export default function BiometricButton() {
