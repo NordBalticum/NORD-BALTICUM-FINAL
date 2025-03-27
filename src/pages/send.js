@@ -36,13 +36,7 @@ const networks = [
     symbol: "AVAX",
     route: "/avax",
     icon: "https://cryptologos.cc/logos/avalanche-avax-logo.png",
-  },
-  {
-    name: "Solana",
-    symbol: "SOL",
-    route: "/sol",
-    icon: "https://cryptologos.cc/logos/solana-sol-logo.png",
-  },
+  }
 ];
 
 export default function Send() {
