@@ -5,7 +5,6 @@ import Head from "next/head";
 
 import { MagicLinkProvider } from "@/contexts/MagicLinkContext";
 import { WalletLoadProvider } from "@/contexts/WalletLoadContext";
-import { WebAuthnProvider } from "@/contexts/WebAuthnContext";
 import { BalanceProvider } from "@/contexts/BalanceContext";
 import { AuthProvider } from "@/contexts/AuthContext"; // <- jungia viską
 import Layout from "@/components/Layout";
@@ -26,7 +25,6 @@ export default function App({ Component, pageProps }) {
 
       <MagicLinkProvider> {/* <- PRIVALOMAS */}
         <WalletLoadProvider>
-          <WebAuthnProvider>
             <BalanceProvider>
               <AuthProvider> {/* <- čia jungiam viską */}
                 <Layout>
@@ -34,7 +32,6 @@ export default function App({ Component, pageProps }) {
                 </Layout>
               </AuthProvider>
             </BalanceProvider>
-          </WebAuthnProvider>
         </WalletLoadProvider>
       </MagicLinkProvider>
     </React.StrictMode>
