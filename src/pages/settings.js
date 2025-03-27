@@ -3,17 +3,11 @@
 import React, { useState, useEffect } from "react";
 import { useMagicLink } from "@/contexts/MagicLinkContext";
 import { useRouter } from "next/router";
+import StarsBackground from "@/components/StarsBackground";
 import styles from "@/styles/settings.module.css";
 
-const SettingsPage = () => {
-  const {
-    user,
-    wallet,
-    biometricEmail,
-    logout,
-    supabase,
-  } = useMagicLink();
-
+export default function SettingsPage() {
+  const { user, wallet, biometricEmail, logout, supabase } = useMagicLink();
   const router = useRouter();
 
   const [emailInput, setEmailInput] = useState("");
@@ -25,20 +19,20 @@ const SettingsPage = () => {
   }, [wallet]);
 
   const handleChangeEmail = async () => {
-    if (!emailInput) return alert("Įveskite naują el. paštą");
+    if (!emailInput) return alert("Please enter new email.");
     const { error } = await supabase.auth.updateUser({ email: emailInput });
-    if (error) alert("Klaida: " + error.message);
-    else alert("Magic Link išsiųstas į naują el. paštą.");
+    if (error) alert("Error: " + error.message);
+    else alert("Magic Link sent to the new email.");
   };
 
   const handleDeleteRequest = () => {
     if (!confirmDelete) return setConfirmDelete(true);
-    alert("Paskyros ištrynimo prašymas išsiųstas (mock).");
+    alert("Account deletion request sent. (mock)");
   };
 
   const clearBiometric = () => {
     localStorage.removeItem("biometric_user");
-    alert("Biometrinė informacija pašalinta");
+    alert("Biometric login removed.");
     window.location.reload();
   };
 
@@ -49,11 +43,12 @@ const SettingsPage = () => {
 
   return (
     <div className={styles.container}>
+      <StarsBackground />
       <div className={styles.box}>
-        <h2>Profile Settings</h2>
+        <h2 className={styles.heading}>Profile Settings</h2>
 
         <p><strong>Email:</strong> {user?.email}</p>
-        <p><strong>Wallet Address:</strong> {walletAddress || "Unavailable"}</p>
+        <p><strong>Wallet Address:</strong><br />{walletAddress || "Unavailable"}</p>
         <p>
           <strong>Biometric Login:</strong>{" "}
           {biometricEmail ? (
@@ -101,6 +96,4 @@ const SettingsPage = () => {
       </div>
     </div>
   );
-};
-
-export default SettingsPage;
+}
