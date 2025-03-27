@@ -63,7 +63,7 @@
   }
 
   .globalWrapper {
-    transform: scale(0.88) translateY(-2%);
+    transform: scale(0.82) translateY(-2%);
     transform-origin: top center;
     padding-bottom: 96px;
   }
