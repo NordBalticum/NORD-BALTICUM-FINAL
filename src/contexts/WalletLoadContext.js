@@ -5,19 +5,19 @@ import { Wallet } from "ethers";
 import { createClient } from "@supabase/supabase-js";
 import { useMagicLink } from "./MagicLinkContext";
 
-// === Kontekstas
-const WalletLoadContext = createContext();
-
-// === Supabase
+// === Supabase client
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 );
 
-// === Šifravimo konfigūracija
+const WalletLoadContext = createContext();
+
+// === Encryption config
 const ENCRYPTION_SECRET = process.env.NEXT_PUBLIC_ENCRYPTION_SECRET || "nordbalticum-2024";
 const SALT = "nbc-salt";
-const encode = (str) => new TextEncoder().encode(str);
+
+const encode = (text) => new TextEncoder().encode(text);
 const decode = (buf) => new TextDecoder().decode(buf);
 
 const getKey = async (password) => {
@@ -43,16 +43,16 @@ const getKey = async (password) => {
   );
 };
 
-const encrypt = async (text) => {
+const encrypt = async (plainText) => {
   const iv = window.crypto.getRandomValues(new Uint8Array(12));
   const key = await getKey(ENCRYPTION_SECRET);
-  const encrypted = await window.crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, encode(text));
+  const encrypted = await window.crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, encode(plainText));
   return btoa(JSON.stringify({ iv: Array.from(iv), data: Array.from(new Uint8Array(encrypted)) }));
 };
 
-const decrypt = async (cipher) => {
+const decrypt = async (cipherText) => {
   try {
-    const { iv, data } = JSON.parse(atob(cipher));
+    const { iv, data } = JSON.parse(atob(cipherText));
     const key = await getKey(ENCRYPTION_SECRET);
     const decrypted = await window.crypto.subtle.decrypt(
       { name: "AES-GCM", iv: new Uint8Array(iv) },
@@ -61,23 +61,24 @@ const decrypt = async (cipher) => {
     );
     return decode(decrypted);
   } catch (err) {
-    console.error("❌ Decrypt error:", err);
+    console.error("❌ Decryption failed:", err);
     return null;
   }
 };
 
-// === Provider
+// === Wallet Provider
 export const WalletLoadProvider = ({ children }) => {
   const { user } = useMagicLink();
   const [wallets, setWallets] = useState(null);
   const [loadingWallets, setLoadingWallets] = useState(true);
 
   useEffect(() => {
-    const loadWallets = async () => {
+    const loadWallet = async () => {
       if (!user?.email) return;
 
       setLoadingWallets(true);
 
+      // 1. Try localStorage
       const local = await loadFromLocal();
       if (local) {
         setWallets(local);
@@ -85,10 +86,11 @@ export const WalletLoadProvider = ({ children }) => {
         return;
       }
 
+      // 2. Create new wallet
       const newWallet = Wallet.createRandom();
       const encryptedKey = await encrypt(newWallet.privateKey);
 
-      const walletObj = {
+      const walletObject = {
         address: newWallet.address,
         privateKey: encryptedKey,
         networks: {
@@ -100,34 +102,34 @@ export const WalletLoadProvider = ({ children }) => {
         },
       };
 
+      // 3. Save to Supabase
       try {
-        await supabase
-          .from("wallets")
-          .upsert(
-            {
-              user_id: user.id,
-              email: user.email,
-              ...walletObj.networks,
-            },
-            { onConflict: ["email"] }
-          );
+        await supabase.from("wallets").upsert(
+          {
+            user_id: user.id,
+            email: user.email,
+            ...walletObject.networks,
+          },
+          { onConflict: ["email"] }
+        );
       } catch (err) {
-        console.error("❌ Supabase wallet save error:", err.message);
+        console.error("❌ Supabase wallet save failed:", err.message);
       }
 
-      await saveToLocal(walletObj);
-      setWallets(walletObj);
+      // 4. Save locally
+      await saveToLocal(walletObject);
+      setWallets(walletObject);
       setLoadingWallets(false);
     };
 
-    loadWallets();
+    loadWallet();
   }, [user]);
 
   const saveToLocal = async (walletObj) => {
     try {
       localStorage.setItem("userWallets", JSON.stringify(walletObj));
     } catch (err) {
-      console.error("❌ LocalStorage save error:", err);
+      console.error("❌ LocalStorage save failed:", err);
     }
   };
 
@@ -135,10 +137,9 @@ export const WalletLoadProvider = ({ children }) => {
     try {
       const stored = localStorage.getItem("userWallets");
       if (!stored) return null;
-      const parsed = JSON.parse(stored);
-      return parsed;
+      return JSON.parse(stored);
     } catch (err) {
-      console.error("❌ LocalStorage load error:", err);
+      console.error("❌ LocalStorage load failed:", err);
       return null;
     }
   };
