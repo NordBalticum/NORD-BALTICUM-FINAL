@@ -1,31 +1,24 @@
-.avatarPicker {
+.wrapper {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 24px;
-  padding: 16px 0;
+  gap: 18px;
 }
 
-.current img {
+.mainAvatar {
   width: 96px;
   height: 96px;
   border-radius: 50%;
-  border: 3px solid #ffffff;
-  box-shadow: 0 0 12px rgba(255, 255, 255, 0.3);
-}
-
-.current p {
-  margin-top: 8px;
-  font-size: 14px;
-  opacity: 0.8;
+  border: 2px solid white;
+  box-shadow: 0 0 16px rgba(255, 255, 255, 0.4);
+  object-fit: cover;
 }
 
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(48px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(48px, 1fr));
   gap: 12px;
-  width: 100%;
-  max-width: 420px;
+  max-width: 340px;
 }
 
 .avatar {
@@ -33,15 +26,18 @@
   height: 48px;
   border-radius: 50%;
   cursor: pointer;
-  transition: 0.3s ease;
-  border: 2px solid transparent;
+  object-fit: cover;
+  opacity: 0.6;
+  transition: 0.2s ease;
+  border: 1px solid transparent;
 }
 
 .avatar:hover {
-  transform: scale(1.1);
-  border-color: #ffd700;
+  opacity: 1;
+  transform: scale(1.05);
 }
 
-.selected {
-  border-color: white !important;
+.active {
+  border: 2px solid #ffd700;
+  opacity: 1;
 }
