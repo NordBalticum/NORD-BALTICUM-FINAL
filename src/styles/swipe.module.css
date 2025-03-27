@@ -50,6 +50,7 @@
   gap: 16px;
   padding: 24px 0;
   scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
 }
 
 .swipeWrapper::-webkit-scrollbar {
@@ -66,16 +67,17 @@
   padding: 20px 28px;
   backdrop-filter: blur(20px) saturate(160%);
   box-shadow: 0 0 26px rgba(255, 255, 255, 0.05);
-  transition: var(--transition);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   color: white;
+  position: relative;
 }
 
 .walletCard:hover {
-  transform: scale(1.02);
-  box-shadow: 0 0 38px rgba(0, 255, 200, 0.2);
+  transform: scale(1.03);
+  box-shadow: 0 0 48px rgba(255, 255, 255, 0.25), 0 0 64px rgba(0, 255, 200, 0.25);
 }
 
 .walletHeader {
@@ -98,11 +100,22 @@
   -webkit-text-fill-color: transparent;
 }
 
-/* === INPUTS + BUTTON === */
+/* === ICON INSIDE CARD === */
+.icon {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  margin-top: 12px;
+  filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.15));
+}
+
+/* === INPUTS + BUTTON (used in /send) === */
 .walletActions {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  width: 100%;
+  margin-top: 32px;
 }
 
 .inputField {
@@ -114,8 +127,14 @@
   color: white;
   font-size: 1rem;
   outline: none;
+  transition: background 0.2s ease;
 }
 
+.inputField:focus {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* === SEND BUTTON === */
 .confirmButton {
   padding: 14px;
   font-weight: 700;
@@ -125,16 +144,16 @@
   border: 2px solid white;
   border-radius: 14px;
   cursor: pointer;
-  transition: 0.3s ease;
+  transition: all 0.3s ease;
 }
 
 .confirmButton:hover {
   background: white;
   color: black;
-  box-shadow: 0 0 18px rgba(255, 255, 255, 0.4);
+  box-shadow: 0 0 22px rgba(255, 255, 255, 0.4);
 }
 
-/* === MODAL === */
+/* === MODAL (for send.js) === */
 .confirmModal {
   position: fixed;
   bottom: 0;
@@ -150,6 +169,18 @@
   backdrop-filter: blur(18px);
   z-index: 9999;
   box-shadow: 0 0 24px rgba(0, 255, 200, 0.2);
+  animation: fadeInUp 0.35s ease;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 12px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
 }
 
 .modalTitle {
