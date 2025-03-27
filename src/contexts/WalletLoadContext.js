@@ -5,23 +5,34 @@ import { Wallet } from "ethers";
 import { createClient } from "@supabase/supabase-js";
 import { useMagicLink } from "./MagicLinkContext";
 
+// === Kontekstas
 const WalletLoadContext = createContext();
 
+// === Supabase
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 );
 
+// === Šifravimo konfigūracija
 const ENCRYPTION_SECRET = process.env.NEXT_PUBLIC_ENCRYPTION_SECRET || "nordbalticum-2024";
+const SALT = "nbc-salt";
 const encode = (str) => new TextEncoder().encode(str);
 const decode = (buf) => new TextDecoder().decode(buf);
 
 const getKey = async (password) => {
-  const keyMaterial = await window.crypto.subtle.importKey("raw", encode(password), { name: "PBKDF2" }, false, ["deriveKey"]);
+  const keyMaterial = await window.crypto.subtle.importKey(
+    "raw",
+    encode(password),
+    { name: "PBKDF2" },
+    false,
+    ["deriveKey"]
+  );
+
   return window.crypto.subtle.deriveKey(
     {
       name: "PBKDF2",
-      salt: encode("nbc-salt"),
+      salt: encode(SALT),
       iterations: 100000,
       hash: "SHA-256",
     },
@@ -43,14 +54,19 @@ const decrypt = async (cipher) => {
   try {
     const { iv, data } = JSON.parse(atob(cipher));
     const key = await getKey(ENCRYPTION_SECRET);
-    const decrypted = await window.crypto.subtle.decrypt({ name: "AES-GCM", iv: new Uint8Array(iv) }, key, new Uint8Array(data));
+    const decrypted = await window.crypto.subtle.decrypt(
+      { name: "AES-GCM", iv: new Uint8Array(iv) },
+      key,
+      new Uint8Array(data)
+    );
     return decode(decrypted);
-  } catch (e) {
-    console.error("Decrypt error:", e);
+  } catch (err) {
+    console.error("❌ Decrypt error:", err);
     return null;
   }
 };
 
+// === Provider
 export const WalletLoadProvider = ({ children }) => {
   const { user } = useMagicLink();
   const [wallets, setWallets] = useState(null);
@@ -58,7 +74,7 @@ export const WalletLoadProvider = ({ children }) => {
 
   useEffect(() => {
     const loadWallets = async () => {
-      if (!user || !user.email) return;
+      if (!user?.email) return;
 
       setLoadingWallets(true);
 
@@ -72,12 +88,13 @@ export const WalletLoadProvider = ({ children }) => {
       const newWallet = Wallet.createRandom();
       const encryptedKey = await encrypt(newWallet.privateKey);
 
-      const allWallets = {
+      const walletObj = {
         address: newWallet.address,
         privateKey: encryptedKey,
         networks: {
-          eth: newWallet.address,
           bsc: newWallet.address,
+          tbnb: newWallet.address,
+          eth: newWallet.address,
           pol: newWallet.address,
           avax: newWallet.address,
         },
@@ -90,16 +107,16 @@ export const WalletLoadProvider = ({ children }) => {
             {
               user_id: user.id,
               email: user.email,
-              ...allWallets.networks,
+              ...walletObj.networks,
             },
             { onConflict: ["email"] }
           );
       } catch (err) {
-        console.error("❌ Supabase wallet upsert failed:", err.message);
+        console.error("❌ Supabase wallet save error:", err.message);
       }
 
-      await saveToLocal(allWallets);
-      setWallets(allWallets);
+      await saveToLocal(walletObj);
+      setWallets(walletObj);
       setLoadingWallets(false);
     };
 
@@ -109,8 +126,8 @@ export const WalletLoadProvider = ({ children }) => {
   const saveToLocal = async (walletObj) => {
     try {
       localStorage.setItem("userWallets", JSON.stringify(walletObj));
-    } catch (e) {
-      console.error("LocalStorage save error:", e);
+    } catch (err) {
+      console.error("❌ LocalStorage save error:", err);
     }
   };
 
@@ -120,8 +137,8 @@ export const WalletLoadProvider = ({ children }) => {
       if (!stored) return null;
       const parsed = JSON.parse(stored);
       return parsed;
-    } catch (e) {
-      console.error("LocalStorage load error:", e);
+    } catch (err) {
+      console.error("❌ LocalStorage load error:", err);
       return null;
     }
   };
