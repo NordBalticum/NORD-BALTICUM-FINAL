@@ -7,15 +7,27 @@ export default function AvatarDisplay({ walletAddress, size = 64 }) {
   const [avatar, setAvatar] = useState("");
 
   useEffect(() => {
-    const saved = localStorage.getItem("user_avatar");
-    if (saved) {
-      setAvatar(saved);
-    } else if (walletAddress) {
-      const fallbackIndex = parseInt(walletAddress.slice(-2), 16) % 20;
-      const fallbackAvatar = `https://robohash.org/${walletAddress}?set=set5&size=200x200`;
-      setAvatar(fallbackAvatar);
-      localStorage.setItem("user_avatar", fallbackAvatar);
-    }
+    const loadAvatar = () => {
+      const saved = localStorage.getItem("user_avatar");
+
+      if (saved) {
+        setAvatar(saved);
+      } else if (walletAddress) {
+        const fallbackUrl = `https://robohash.org/${walletAddress}?set=set5&size=200x200`;
+        setAvatar(fallbackUrl);
+        localStorage.setItem("user_avatar", fallbackUrl);
+      } else {
+        setAvatar("/avatars/avatar1.png");
+      }
+    };
+
+    loadAvatar();
+
+    // Automatinis atnaujinimas jei pasikeičia iš kitų vietų
+    const onStorage = () => loadAvatar();
+    window.addEventListener("storage", onStorage);
+
+    return () => window.removeEventListener("storage", onStorage);
   }, [walletAddress]);
 
   return (
