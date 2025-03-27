@@ -97,7 +97,7 @@
   .navbar {
     width: calc(100% - 20px);
     height: 64px;
-    bottom: 10px;
+    bottom: 20px; /* BUVO 10px, DABAR 20px – pakelta aukščiau */
     padding: 0 10px;
     border-radius: 18px;
   }
