@@ -3,7 +3,9 @@
 import React, { useEffect, useState } from "react";
 import styles from "./avatarpicker.module.css";
 
-const avatarList = Array.from({ length: 20 }, (_, i) => `/avatars/avatar${i + 1}.png`);
+const avatarList = Array.from({ length: 20 }, (_, i) =>
+  `https://avatars.githubusercontent.com/u/${10000 + i}?v=4`
+);
 
 export default function AvatarModalPicker({ onClose, onSelect }) {
   const [selected, setSelected] = useState(null);
@@ -23,7 +25,11 @@ export default function AvatarModalPicker({ onClose, onSelect }) {
     <div className={styles.modalBackdrop}>
       <div className={styles.modal}>
         <h3 className={styles.title}>Choose your Avatar</h3>
-        <img src={selected || avatarList[0]} className={styles.mainAvatar} alt="Selected Avatar" />
+        <img
+          src={selected || avatarList[0]}
+          className={styles.mainAvatar}
+          alt="Selected Avatar"
+        />
         <div className={styles.grid}>
           {avatarList.map((avatar) => (
             <img
