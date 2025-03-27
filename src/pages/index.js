@@ -13,10 +13,8 @@ import { useMagicLink } from "@/contexts/MagicLinkContext";
 export default function Home() {
   const router = useRouter();
 
-  // Pagrindinis kontekstas
   const { user: authUser, signInWithEmail, loginWithGoogle, sessionReady } = useAuth();
   const { user: fallbackUser, loadingUser } = useMagicLink();
-
   const user = authUser || fallbackUser;
 
   const [email, setEmail] = useState("");
@@ -24,7 +22,7 @@ export default function Home() {
   const [message, setMessage] = useState("");
   const logoRef = useRef(null);
 
-  // === Logo tilt efektas
+  // === Tilt efektas logotipui
   useEffect(() => {
     const logo = logoRef.current;
     if (!logo) return;
@@ -39,7 +37,7 @@ export default function Home() {
     };
 
     const resetTilt = () => {
-      logo.style.transform = "rotateX(0deg) rotateY(0deg) scale(1)";
+      if (logo) logo.style.transform = "rotateX(0deg) rotateY(0deg) scale(1)";
     };
 
     const parent = logo?.parentNode;
@@ -52,14 +50,14 @@ export default function Home() {
     };
   }, []);
 
-  // === Automatinis nukreipimas jei jau prisijungęs
+  // === Automatinis redirect kai jau prisijungęs
   useEffect(() => {
     if (sessionReady && user) {
       router.push("/dashboard");
     }
   }, [sessionReady, user]);
 
-  // === Magic Link login
+  // === Magic Link el. pašto login
   const handleEmailLogin = async (e) => {
     e.preventDefault();
     if (!email.trim()) return setMessage("❌ Please enter a valid email.");
