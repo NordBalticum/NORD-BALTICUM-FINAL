@@ -1,10 +1,9 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
-import styles from "@/styles/dashboard.module.css";
 import { useRouter } from "next/navigation";
-import { useMagicLink } from "@/contexts/MagicLinkContext";
-import { useBalance } from "@/contexts/BalanceContext";
+import styles from "@/styles/dashboard.module.css";
+import { useAuth } from "@/contexts/AuthContext";
 import StarsBackground from "@/components/StarsBackground";
 import Image from "next/image";
 import BottomNavigation from "@/components/BottomNavigation";
@@ -20,28 +19,25 @@ const networksData = [
 
 export default function Dashboard() {
   const router = useRouter();
-  const { user, wallet } = useMagicLink();
-  const { balances } = useBalance();
-  const address = wallet?.address || "";
-
-  const [cachedBalances, setCachedBalances] = useState({});
+  const { user, wallet, balances, sessionReady } = useAuth();
   const [totalEUR, setTotalEUR] = useState("0.00");
 
   useEffect(() => {
-    if (!user || !address) router.push("/");
-  }, [user, address]);
+    if (!user || !wallet?.address) {
+      router.push("/");
+    }
+  }, [user, wallet]);
 
   useEffect(() => {
-    const total = Object.values(balances)
+    const total = Object.values(balances || {})
       .reduce((sum, b) => sum + parseFloat(b.eur || 0), 0)
       .toFixed(2);
-    setCachedBalances(balances);
     setTotalEUR(total);
   }, [balances]);
 
   const networks = useMemo(() => networksData, []);
 
-  if (!user || !address) return null;
+  if (!sessionReady || !user || !wallet?.address) return null;
 
   return (
     <div className={styles.container}>
@@ -49,7 +45,7 @@ export default function Dashboard() {
 
       <div className={styles.dashboardWrapper}>
         <div className={styles.avatarCenter}>
-          <AvatarDisplay walletAddress={wallet?.address} size={92} />
+          <AvatarDisplay walletAddress={wallet.address} size={92} />
         </div>
 
         <div className={styles.totalValueContainer}>
@@ -59,7 +55,7 @@ export default function Dashboard() {
 
         <div className={styles.assetList}>
           {networks.map((net) => {
-            const bal = cachedBalances[net.symbol] || { amount: "0.0000", eur: "0.00" };
+            const bal = balances[net.symbol] || { amount: "0.0000", eur: "0.00" };
             return (
               <div
                 key={net.symbol}
