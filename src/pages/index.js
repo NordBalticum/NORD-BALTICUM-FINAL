@@ -8,25 +8,17 @@ import StarsBackground from "@/components/StarsBackground";
 
 // Kontekstai
 import { useAuth } from "@/contexts/AuthContext";
-import { useWebAuthn } from "@/contexts/WebAuthnContext";
 import { useMagicLink } from "@/contexts/MagicLinkContext";
 
 export default function Home() {
   const router = useRouter();
-
-  // Pagrindinis kontekstas
-  const { user: authUser, biometricEmail, signInWithEmail, loginWithGoogle, sessionReady } = useAuth();
-
-  // Atsarginis kontekstas (tik jei AuthContext dar neparuoštas)
-  const { user: magicUser, loadingUser } = useMagicLink();
-
-  const { loginWebAuthn, registerWebAuthn } = useWebAuthn();
+  const { user: authUser, signInWithEmail, loginWithGoogle, sessionReady } = useAuth();
+  const { user: magicUser } = useMagicLink();
 
   const user = authUser || magicUser;
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState("idle");
   const [message, setMessage] = useState("");
-  const [autoLoginTried, setAutoLoginTried] = useState(false);
   const logoRef = useRef(null);
 
   // === 3D Tilt Logo Animation
@@ -66,27 +58,6 @@ export default function Home() {
     }
   }, [sessionReady, user]);
 
-  // === Auto biometric login
-  useEffect(() => {
-    const autoLogin = async () => {
-      if (!user && biometricEmail && !autoLoginTried && !loadingUser) {
-        setAutoLoginTried(true);
-        setStatus("sending");
-        setMessage("⏳ Attempting biometric login...");
-        try {
-          const success = await loginWebAuthn(biometricEmail);
-          setMessage(success ? "✅ Biometric login successful." : "❌ Biometric login failed.");
-        } catch (err) {
-          console.error("Biometric login error:", err);
-          setMessage("❌ Biometric login error.");
-        } finally {
-          setStatus("idle");
-        }
-      }
-    };
-    autoLogin();
-  }, [user, biometricEmail, autoLoginTried, loadingUser]);
-
   // === Email login
   const handleEmailLogin = async (e) => {
     e.preventDefault();
@@ -95,8 +66,6 @@ export default function Home() {
     setMessage("⏳ Sending Magic Link...");
     try {
       await signInWithEmail(email.trim());
-      await registerWebAuthn(email.trim());
-      localStorage.setItem("biometric_user", email.trim());
       setMessage("✅ Check your inbox for the Magic Link.");
       setEmail("");
     } catch (err) {
@@ -122,22 +91,6 @@ export default function Home() {
     }
   };
 
-  // === Manual biometric login
-  const handleBiometricLogin = async () => {
-    if (!biometricEmail) return setMessage("❌ No biometric session found.");
-    setStatus("sending");
-    setMessage("⏳ Biometric login...");
-    try {
-      const success = await loginWebAuthn(biometricEmail);
-      setMessage(success ? "✅ Biometric login successful." : "❌ Biometric login failed.");
-    } catch (err) {
-      console.error("Biometric login error:", err);
-      setMessage("❌ Biometric login error.");
-    } finally {
-      setStatus("idle");
-    }
-  };
-
   return (
     <>
       <StarsBackground />
@@ -157,7 +110,7 @@ export default function Home() {
 
           <section className={styles.loginBox}>
             <h1 className={styles.title}>Welcome to NordBalticum</h1>
-            <p className={styles.subtitle}>Login with Email, Google or Biometrics</p>
+            <p className={styles.subtitle}>Login with Email or Google</p>
 
             <form onSubmit={handleEmailLogin} className={styles.form}>
               <input
@@ -188,19 +141,6 @@ export default function Home() {
               />
               Login with Google
             </button>
-
-            {biometricEmail && (
-              <>
-                <div className={styles.divider}>or</div>
-                <button
-                  onClick={handleBiometricLogin}
-                  className={styles.biometricButton}
-                  disabled={status === "sending"}
-                >
-                  Login with Biometrics
-                </button>
-              </>
-            )}
 
             {message && <p className={styles.message}>{message}</p>}
           </section>
