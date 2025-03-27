@@ -3,11 +3,18 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import styles from "@/styles/dashboard.module.css";
-import { useAuth } from "@/contexts/AuthContext";
 import StarsBackground from "@/components/StarsBackground";
 import Image from "next/image";
 import BottomNavigation from "@/components/BottomNavigation";
 import AvatarDisplay from "@/components/AvatarDisplay";
+
+// Pagrindinis AuthContext (visa sistema)
+import { useAuth } from "@/contexts/AuthContext";
+
+// Atsarginiai kontekstai (MagicLink, Wallet, Balances)
+import { useMagicLink } from "@/contexts/MagicLinkContext";
+import { useWalletLoad } from "@/contexts/WalletLoadContext";
+import { useBalance } from "@/contexts/BalanceContext";
 
 const networksData = [
   { name: "BNB Smart Chain", symbol: "BNB", logo: "https://cryptologos.cc/logos/bnb-bnb-logo.png", route: "/bnb" },
@@ -19,14 +26,31 @@ const networksData = [
 
 export default function Dashboard() {
   const router = useRouter();
-  const { user, wallet, balances, sessionReady } = useAuth();
+
+  // Primary from AuthContext
+  const {
+    user: authUser,
+    wallet: authWallet,
+    balances: authBalances,
+    sessionReady,
+  } = useAuth();
+
+  // Optional fallback if AuthContext fails
+  const { user: magicUser } = useMagicLink();
+  const { wallets: fallbackWallet } = useWalletLoad();
+  const { balances: fallbackBalances } = useBalance();
+
+  const user = authUser || magicUser;
+  const wallet = authWallet || fallbackWallet;
+  const balances = authBalances || fallbackBalances;
+
   const [totalEUR, setTotalEUR] = useState("0.00");
 
   useEffect(() => {
     if (!user || !wallet?.address) {
       router.push("/");
     }
-  }, [user, wallet]);
+  }, [user, wallet, router]);
 
   useEffect(() => {
     const total = Object.values(balances || {})
