@@ -165,12 +165,12 @@
 
 @media (max-width: 768px) {
   .avatarCenter {
-    margin-top: 88px; /* Idealiai išlaikytas */
+    margin-top: 88px; /* Puikiai išlaikytas pozicijos viršus */
   }
 
   .dashboardWrapper {
     padding: 20px 18px 80px;
-    transform: scale(0.96) translateY(-7%); /* FINAL: pakelta dar +2% */
+    transform: scale(0.96) translateY(-9%); /* Galutinis pakėlimas */
     transform-origin: top center;
   }
 
