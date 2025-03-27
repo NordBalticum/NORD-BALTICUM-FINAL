@@ -3,6 +3,7 @@
 import "@/styles/globals.css";
 import "@/styles/theme.css";
 import { MagicLinkProvider } from "@/contexts/MagicLinkContext";
+import { WalletLoadProvider } from "@/contexts/WalletLoadContext";
 import { WebAuthnProvider } from "@/contexts/WebAuthnContext";
 import { BalanceProvider } from "@/contexts/BalanceContext";
 import Layout from "@/components/Layout";
@@ -20,23 +21,22 @@ export default function App({ Component, pageProps }) {
         />
         <meta name="theme-color" content="#0A1F44" />
         <link rel="icon" href="/icons/logo.png" />
-
-        {/* Custom font */}
         <link
           href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap"
           rel="stylesheet"
         />
       </Head>
 
-      {/* Providers */}
       <MagicLinkProvider>
-        <WebAuthnProvider>
-          <BalanceProvider>
-            <Layout>
-              <Component {...pageProps} />
-            </Layout>
-          </BalanceProvider>
-        </WebAuthnProvider>
+        <WalletLoadProvider>
+          <WebAuthnProvider>
+            <BalanceProvider>
+              <Layout>
+                <Component {...pageProps} />
+              </Layout>
+            </BalanceProvider>
+          </WebAuthnProvider>
+        </WalletLoadProvider>
       </MagicLinkProvider>
     </React.StrictMode>
   );
