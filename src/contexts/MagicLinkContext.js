@@ -3,43 +3,43 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
 
-// === Supabase klientas
+// Initialize Supabase client
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 );
 
-export const MagicLinkContext = createContext();
+const MagicLinkContext = createContext();
 
 export const MagicLinkProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loadingUser, setLoadingUser] = useState(true);
 
-  // === Inicializuojam naudotoją
+  // Load user session on mount
   useEffect(() => {
-    const init = async () => {
+    const loadSession = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         setUser(session?.user || null);
-      } catch (err) {
-        console.error("❌ Session init error:", err.message);
+      } catch (error) {
+        console.error("❌ Failed to initialize session:", error.message);
       } finally {
         setLoadingUser(false);
       }
     };
 
-    init();
+    loadSession();
 
-    const { data: listener } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
-        setUser(session?.user || null);
-      }
-    );
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user || null);
+    });
 
-    return () => listener?.subscription?.unsubscribe();
+    return () => {
+      listener?.subscription?.unsubscribe();
+    };
   }, []);
 
-  // === OTP login
+  // Magic Link (OTP) Login
   const signInWithEmail = async (email) => {
     try {
       const { error } = await supabase.auth.signInWithOtp({
@@ -47,31 +47,33 @@ export const MagicLinkProvider = ({ children }) => {
         options: { shouldCreateUser: true },
       });
       if (error) throw new Error(error.message);
-    } catch (err) {
-      console.error("❌ Magic Link login error:", err.message);
-      throw err;
+    } catch (error) {
+      console.error("❌ Magic Link login error:", error.message);
+      throw error;
     }
   };
 
-  // === Google OAuth login
+  // Google OAuth Login
   const loginWithGoogle = async () => {
     try {
-      const { error } = await supabase.auth.signInWithOAuth({ provider: "google" });
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+      });
       if (error) throw new Error(error.message);
-    } catch (err) {
-      console.error("❌ Google login error:", err.message);
-      throw err;
+    } catch (error) {
+      console.error("❌ Google login error:", error.message);
+      throw error;
     }
   };
 
-  // === Logout
+  // Logout
   const logout = async () => {
     try {
       await supabase.auth.signOut();
       setUser(null);
       localStorage.removeItem("userWallets");
-    } catch (err) {
-      console.error("❌ Logout error:", err.message);
+    } catch (error) {
+      console.error("❌ Logout error:", error.message);
     }
   };
 
