@@ -1,55 +1,77 @@
-/* === BOTTOM NAVIGATION – NordBalticum Web3 Ultra UI === */
-
-.bottomNav {
+.navbar {
   position: fixed;
-  bottom: 5.5vh;
-  left: 50%;
-  transform: translateX(-50%);
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 22px;
-  backdrop-filter: blur(18px) saturate(180%);
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: var(--nav-height, 72px);
+  background: rgba(8, 12, 24, 0.92);
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
   display: flex;
   justify-content: space-around;
   align-items: center;
-  padding: 12px clamp(12px, 5vw, 24px);
-  box-shadow: 0 0 36px rgba(0, 0, 0, 0.3), 0 0 18px rgba(0, 100, 255, 0.15);
-  z-index: 999;
-  width: clamp(90%, 94vw, 640px);
-  transition: all 0.4s ease;
+  z-index: 9999;
+  backdrop-filter: blur(16px) saturate(160%);
+  box-shadow: 0 -2px 18px rgba(0, 0, 0, 0.25);
+  padding: 0 12px;
 }
 
-.navButton {
+.navItem {
+  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  font-size: clamp(12px, 2vw, 14px);
-  font-weight: 600;
-  color: #ffffffcc;
-  background: transparent;
-  border: none;
-  outline: none;
-  cursor: pointer;
-  padding: 6px 8px;
-  border-radius: 12px;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.8rem;
+  text-decoration: none;
   transition: all 0.3s ease;
+  padding: 8px 0;
+  border-radius: 16px;
 }
 
-.navButton:hover {
-  background: rgba(255, 255, 255, 0.07);
-  box-shadow: 0 0 8px rgba(255, 255, 255, 0.15);
-  transform: scale(1.05);
+.navItem:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: white;
+  transform: translateY(-2px) scale(1.03);
 }
 
 .active {
-  background: rgba(255, 255, 255, 0.12);
-  color: #ffffff;
-  box-shadow: 0 0 18px rgba(255, 255, 255, 0.3), 0 0 18px rgba(0, 200, 255, 0.3);
-  transform: scale(1.12);
+  color: #ffd700;
+  font-weight: 700;
+  background: rgba(255, 255, 255, 0.04);
+  box-shadow: 0 0 12px rgba(255, 215, 0, 0.2);
+  backdrop-filter: blur(4px);
 }
 
 .icon {
-  font-size: clamp(16px, 3vw, 20px);
-  margin-bottom: 4px;
-  color: #fff;
+  font-size: 1.2rem;
+  margin-bottom: 2px;
+}
+
+.label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  font-family: var(--font-crypto, "Courier New", monospace);
+  text-shadow: 0 0 4px rgba(255, 255, 255, 0.06);
+}
+
+/* === Extra responsive polish === */
+@media (max-width: 420px) {
+  .label {
+    font-size: 0.62rem;
+  }
+  .icon {
+    font-size: 1.05rem;
+  }
+}
+
+@media (min-width: 1440px) {
+  .label {
+    font-size: 0.75rem;
+  }
+  .icon {
+    font-size: 1.35rem;
+  }
 }
