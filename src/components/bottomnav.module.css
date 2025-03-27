@@ -69,11 +69,11 @@
 }
 
 .active .icon {
-  color: black !important; /* Ikonai juoda spalva */
+  color: black !important;
 }
 
 .active .label {
-  color: black !important; /* Tekstui juoda spalva */
+  color: black !important;
 }
 
 .icon {
@@ -92,7 +92,6 @@
   color: white;
 }
 
-/* === ANIMATIONS === */
 @keyframes fadeInUp {
   from {
     opacity: 0;
@@ -104,12 +103,11 @@
   }
 }
 
-/* === Responsive Polishing === */
 @media (max-width: 420px) {
   .navbar {
     width: calc(100% - 20px);
     height: 64px;
-    bottom: 48px; /* Pakelta iki max kaip matosi ekrane */
+    bottom: 50px; /* FINAL: tobulas pakėlimas +2% */
     padding: 0 10px;
     border-radius: 18px;
   }
