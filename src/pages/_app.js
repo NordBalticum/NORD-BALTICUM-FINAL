@@ -2,13 +2,14 @@
 
 import "@/styles/globals.css";
 import "@/styles/theme.css";
+import React from "react";
+import Head from "next/head";
+import Layout from "@/components/Layout";
 import { MagicLinkProvider } from "@/contexts/MagicLinkContext";
 import { WalletLoadProvider } from "@/contexts/WalletLoadContext";
 import { WebAuthnProvider } from "@/contexts/WebAuthnContext";
 import { BalanceProvider } from "@/contexts/BalanceContext";
-import Layout from "@/components/Layout";
-import Head from "next/head";
-import React from "react";
+import { AuthProvider } from "@/contexts/AuthContext"; // Nauja: bendras junginys
 
 export default function App({ Component, pageProps }) {
   return (
@@ -31,9 +32,11 @@ export default function App({ Component, pageProps }) {
         <WalletLoadProvider>
           <WebAuthnProvider>
             <BalanceProvider>
-              <Layout>
-                <Component {...pageProps} />
-              </Layout>
+              <AuthProvider>
+                <Layout>
+                  <Component {...pageProps} />
+                </Layout>
+              </AuthProvider>
             </BalanceProvider>
           </WebAuthnProvider>
         </WalletLoadProvider>
