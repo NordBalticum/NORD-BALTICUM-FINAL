@@ -14,7 +14,6 @@ export default function SettingsPage() {
 
   const [emailInput, setEmailInput] = useState("");
   const [walletAddress, setWalletAddress] = useState("");
-  const [confirmDelete, setConfirmDelete] = useState(false);
   const [showAvatarModal, setShowAvatarModal] = useState(false);
   const [avatarKey, setAvatarKey] = useState(Date.now());
 
@@ -27,11 +26,6 @@ export default function SettingsPage() {
     const { error } = await supabase.auth.updateUser({ email: emailInput });
     if (error) alert("Error: " + error.message);
     else alert("Magic Link has been sent to your new email.");
-  };
-
-  const handleDeleteRequest = () => {
-    if (!confirmDelete) return setConfirmDelete(true);
-    alert("Account deletion request sent. (mock)");
   };
 
   const clearBiometric = () => {
@@ -68,7 +62,11 @@ export default function SettingsPage() {
       <div className={styles.box}>
         <h2 className={styles.heading}>Profile Settings</h2>
 
-        <div className={styles.avatarContainer} onClick={() => setShowAvatarModal(true)} title="Click to change avatar">
+        <div
+          className={styles.avatarContainer}
+          onClick={() => setShowAvatarModal(true)}
+          title="Click to change avatar"
+        >
           <AvatarDisplay walletAddress={wallet?.address} size={80} key={avatarKey} />
           <p className={styles.avatarText}>Change Avatar</p>
         </div>
@@ -109,15 +107,6 @@ export default function SettingsPage() {
           />
           <button className={styles.button} onClick={handleChangeEmail}>
             Send Magic Link
-          </button>
-        </div>
-
-        <hr />
-
-        <div className={styles.section}>
-          <h4>Account Deletion</h4>
-          <button className={styles.danger} onClick={handleDeleteRequest}>
-            {confirmDelete ? "Confirm Deletion?" : "Request Deletion"}
           </button>
         </div>
 
