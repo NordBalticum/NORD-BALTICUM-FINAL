@@ -1,5 +1,3 @@
-/* === DASHBOARD MODULE – NordBalticum Web3 Final 9999x Upgrade === */
-
 .container {
   position: fixed;
   top: 50%;
@@ -10,10 +8,8 @@
   background: radial-gradient(circle at center, #0a122a 15%, #1b2370 65%, #2b37ff 100%);
   overflow: hidden;
   user-select: none;
-  -webkit-font-smoothing: antialiased;
   scroll-behavior: smooth;
-  touch-action: manipulation;
-  transition: var(--transition);
+  -webkit-font-smoothing: antialiased;
   z-index: 1;
 }
 
@@ -30,209 +26,176 @@
   pointer-events: none;
 }
 
-.globalWrapper {
-  position: relative;
-  width: 100%;
-  max-width: var(--max-width);
-  height: 100%;
+/* === LOGO (viršuje kampe) === */
+.logoFixed {
+  position: absolute;
+  top: 28px;
+  left: 28px;
+  z-index: 10;
   display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
   align-items: center;
-  gap: clamp(32px, 4vw, 64px);
-  padding: clamp(16px, 4vw, 64px);
-  padding-bottom: 96px;
-  box-sizing: border-box;
-  z-index: 2;
-  transform: translateY(2.5%);
-  transition: var(--transition);
-  overflow: hidden;
-}
-
-.logoWrapper {
-  display: flex;
   justify-content: center;
-  align-items: center;
-  animation: fadeInDown 0.6s ease-in-out;
-  perspective: 1000px;
-  transform-style: preserve-3d;
 }
-
-.logo {
-  display: block;
-  max-width: clamp(220px, 42vw, 340px);
-  height: auto;
-  transition: transform 0.4s ease;
+.logoMini {
+  width: 56px;
+  height: 56px;
+  opacity: 0.85;
+  filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.08));
+  transition: transform 0.3s ease;
 }
-
-.logo:hover {
+.logoMini:hover {
   transform: scale(1.07);
 }
 
-/* === TOTAL VALUE === */
-.totalBalanceBox {
+/* === AVATAR CENTRE === */
+.avatarCenter {
+  margin-top: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeInDown 0.8s ease;
+}
+.avatarCenter img {
+  width: 92px;
+  height: 92px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 0 18px rgba(255, 255, 255, 0.08);
+}
+
+/* === WRAPPER === */
+.dashboardWrapper {
+  position: relative;
+  width: 100%;
+  max-width: 1024px;
+  margin: 0 auto;
+  padding: 24px clamp(16px, 4vw, 48px) 96px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(24px, 3.5vh, 52px);
+  z-index: 2;
+}
+
+/* === TOTAL BALANCE === */
+.totalValueContainer {
   text-align: center;
-  animation: fadeInDown 0.5s ease-in-out;
 }
-
 .totalLabel {
+  font-size: 0.9rem;
   font-weight: 500;
-  opacity: 0.75;
-  margin-bottom: 6px;
+  opacity: 0.7;
   letter-spacing: 1px;
-  font-size: clamp(14px, 2vw, 18px);
 }
-
 .totalValue {
-  font-weight: 700;
+  font-size: clamp(28px, 5vw, 38px);
+  font-weight: 800;
   background: linear-gradient(90deg, #ffffff, #ffd700);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   text-shadow: 0 0 12px rgba(255, 255, 255, 0.25);
-  font-size: clamp(28px, 3vw, 36px);
 }
 
-/* === NETWORK ASSET LIST === */
+/* === NETWORK LIST === */
 .assetList {
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  animation: fadeInUp 0.5s ease-in-out;
+  gap: 18px;
+  animation: fadeInUp 0.7s ease;
 }
-
 .assetItem {
   background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 24px;
-  padding: 20px 28px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 22px;
+  padding: 18px 24px;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  transition: 0.3s ease;
   backdrop-filter: blur(22px) saturate(160%);
-  box-shadow: 0 0 28px rgba(0, 0, 0, 0.07);
-  transition: all 0.3s ease;
+  box-shadow: 0 0 24px rgba(0, 0, 0, 0.1);
   cursor: pointer;
 }
-
 .assetItem:hover {
   transform: scale(1.02);
-  box-shadow: 0 0 32px rgba(0, 255, 200, 0.18);
+  box-shadow: 0 0 32px rgba(0, 255, 200, 0.2);
 }
-
-.assetItem:active {
-  transform: scale(0.98);
-}
-
 .assetLeft {
   display: flex;
   align-items: center;
   gap: 16px;
 }
-
 .assetLogo {
-  width: 42px;
-  height: 42px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   background: white;
   padding: 4px;
   object-fit: contain;
-  box-shadow: 0 0 6px rgba(255, 255, 255, 0.3);
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.25);
 }
-
-.assetText {
+.assetInfo {
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  line-height: 1.1;
 }
-
 .assetSymbol {
   font-weight: 700;
-  font-size: clamp(16px, 2vw, 20px);
-  line-height: 1;
+  font-size: 1.05rem;
 }
-
 .assetName {
+  font-size: 0.85rem;
   opacity: 0.65;
-  font-weight: 400;
-  font-size: clamp(12px, 1.5vw, 13px);
 }
-
-.assetBalance {
+.assetRight {
+  text-align: right;
   display: flex;
   flex-direction: column;
-  text-align: right;
-  font-weight: 600;
-  font-size: clamp(16px, 2vw, 20px);
-  line-height: 1.3;
+  gap: 4px;
 }
-
+.assetAmount {
+  font-weight: 600;
+  font-size: 1rem;
+}
 .assetEur {
-  font-size: 14px;
+  font-size: 0.82rem;
   opacity: 0.6;
-  margin-top: 4px;
 }
 
 /* === ANIMATIONS === */
 @keyframes fadeInDown {
-  from { opacity: 0; transform: translateY(-20px); }
+  from { opacity: 0; transform: translateY(-24px); }
   to { opacity: 1; transform: translateY(0); }
 }
-
 @keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(20px); }
+  from { opacity: 0; transform: translateY(24px); }
   to { opacity: 1; transform: translateY(0); }
 }
-
 
 /* === MEDIA === */
 @media (max-width: 768px) {
-  .container {
-    height: 100vh;
-    overflow: hidden;
-    padding: 0;
+  .avatarCenter {
+    margin-top: 72px;
   }
-
-  .globalWrapper {
-    transform: scale(0.755) translateY(-1.5%);
-    transform-origin: top center;
-    padding: 0 clamp(12px, 4vw, 24px) 96px;
-    overflow: visible; /* <=== ČIA MAGIJA */
+  .dashboardWrapper {
+    padding: 16px 18px 80px;
+    transform: scale(0.95);
   }
-
-  .assetList {
-    overflow: visible !important; /* Jeigu būtų papildomas scrollas */
-  }
-
-  .assetItem {
-    padding: 18px 22px;
-    overflow: visible;
-  }
-
   .assetLogo {
-    width: 38px;
-    height: 38px;
+    width: 34px;
+    height: 34px;
   }
-
-  .bottomNav {
-    position: fixed;
-    bottom: clamp(4.5vh, 5.5vh, 6vh);
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 999;
+  .assetSymbol {
+    font-size: 0.95rem;
   }
-
-  .logo {
-    max-width: 75vw;
-    margin-top: clamp(10px, 2vh, 28px);
-    filter: none !important;
+  .assetName {
+    font-size: 0.75rem;
   }
-
-  .logoWrapper {
-    margin-bottom: clamp(14px, 3vh, 28px);
+  .assetAmount {
+    font-size: 0.95rem;
   }
-
-  .totalBalanceBox {
-    margin-bottom: clamp(14px, 3vh, 28px);
+  .assetEur {
+    font-size: 0.75rem;
   }
 }
