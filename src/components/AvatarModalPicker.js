@@ -1,10 +1,10 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import styles from "./avatarpicker.module.css";
+import styles from "./avatar.module.css";
 
 const avatarList = Array.from({ length: 20 }, (_, i) =>
-  `https://avatars.githubusercontent.com/u/${10000 + i}?v=4`
+  `https://api.multiavatar.com/3d/avatar-${i + 1}.svg`
 );
 
 export default function AvatarModalPicker({ onClose, onSelect }) {
@@ -25,11 +25,7 @@ export default function AvatarModalPicker({ onClose, onSelect }) {
     <div className={styles.modalBackdrop}>
       <div className={styles.modal}>
         <h3 className={styles.title}>Choose your Avatar</h3>
-        <img
-          src={selected || avatarList[0]}
-          className={styles.mainAvatar}
-          alt="Selected Avatar"
-        />
+        <img src={selected || avatarList[0]} className={styles.mainAvatar} alt="Selected Avatar" />
         <div className={styles.grid}>
           {avatarList.map((avatar) => (
             <img
