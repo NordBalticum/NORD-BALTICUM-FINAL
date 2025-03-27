@@ -1,0 +1,23 @@
+"use client";
+
+import React from "react";
+import styles from "@/components/avatarpicker.module.css"; // Susikurk arba pritaikyk stilius
+
+const AvatarAutoPicker = ({ walletAddress, size = 64 }) => {
+  if (!walletAddress) return null;
+
+  const index = parseInt(walletAddress.slice(-2), 16) % 20; // 0–19
+  const avatarSrc = `/avatars/avatar_${index + 1}.png`; // Failai turi būti įdėti į public/avatars/
+
+  return (
+    <img
+      src={avatarSrc}
+      alt="User Avatar"
+      width={size}
+      height={size}
+      className={styles.avatar}
+    />
+  );
+};
+
+export default AvatarAutoPicker;
