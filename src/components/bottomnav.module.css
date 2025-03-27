@@ -62,7 +62,7 @@
 
 .active {
   background: white;
-  color: black;
+  color: black; /* Tekstas juodas – dabar matomas aiškiai */
   font-weight: 700;
   box-shadow: 0 0 14px rgba(255, 255, 255, 0.2);
   backdrop-filter: blur(4px);
@@ -99,7 +99,7 @@
   .navbar {
     width: calc(100% - 20px);
     height: 64px;
-    bottom: 40px; /* FINAL: Pakelta aukščiau +6px */
+    bottom: 40px; /* FINAL: pakelta maksimaliai +6px */
     padding: 0 10px;
     border-radius: 18px;
   }
