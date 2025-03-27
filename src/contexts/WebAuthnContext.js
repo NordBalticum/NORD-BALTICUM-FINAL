@@ -101,10 +101,36 @@ export const WebAuthnProvider = ({ children }) => {
     }
   };
 
-  // === Remove biometric session ===
+  // === Clear local session if needed ===
   const clearBiometricSession = () => {
     localStorage.removeItem("biometric_user");
   };
+
+  // === Try auto biometric login on load ===
+  useEffect(() => {
+    const tryBiometricLogin = async () => {
+      const savedEmail = localStorage.getItem("biometric_user");
+      if (savedEmail && !authUser) {
+        console.log("➡️ Trying automatic biometric login...");
+        const success = await loginWebAuthn(savedEmail);
+        if (!success) clearBiometricSession();
+      }
+    };
+
+    if (webauthnReady) {
+      tryBiometricLogin();
+    }
+  }, [webauthnReady]);
+
+  // === Auto-register biometrics on first login (MagicLink, OAuth etc) ===
+  useEffect(() => {
+    if (authUser) {
+      const alreadyRegistered = localStorage.getItem("biometric_user");
+      if (!alreadyRegistered) {
+        registerWebAuthn(authUser.email);
+      }
+    }
+  }, [authUser]);
 
   return (
     <WebAuthnContext.Provider
