@@ -184,6 +184,8 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
+
+/* === MEDIA === */
 @media (max-width: 768px) {
   .container {
     height: 100vh;
@@ -192,7 +194,7 @@
   }
 
   .globalWrapper {
-    transform: scale(0.76) translateY(-7%);
+    transform: scale(0.76) translateY(-4%);
     transform-origin: top center;
     padding: 0 clamp(12px, 4vw, 24px) 96px;
     overflow: hidden;
@@ -217,11 +219,15 @@
 
   .logo {
     max-width: 75vw;
-    margin-top: -3vh;
+    margin-top: clamp(8px, 1.5vh, 24px); /* Logo nuleistas gražiai */
     filter: none !important;
   }
 
   .logoWrapper {
-    margin-bottom: clamp(12px, 3vh, 24px);
+    margin-bottom: clamp(14px, 2.8vh, 26px); /* Idealus tarpas iki Total Value */
+  }
+
+  .totalBalanceBox {
+    margin-bottom: clamp(12px, 3vh, 24px); /* Balansas prieš assetus */
   }
 }
