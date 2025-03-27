@@ -10,23 +10,31 @@ import StarsBackground from "@/components/StarsBackground";
 
 export default function Home() {
   const router = useRouter();
+
   const {
     user,
     biometricEmail,
     signInWithEmail,
     loginWithGoogle,
   } = useAuth();
-  const { registerWebAuthn, loginWebAuthn } = useWebAuthn();
+
+  const {
+    registerWebAuthn,
+    loginWebAuthn,
+  } = useWebAuthn();
 
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState("idle");
   const [message, setMessage] = useState("");
   const [autoLoginTried, setAutoLoginTried] = useState(false);
+
   const logoRef = useRef(null);
 
-  // === 3D Tilt Logo Animation
+  // === 3D Logo Hover Effect
   useEffect(() => {
     const logo = logoRef.current;
+    if (!logo) return;
+
     const handleMouseMove = (e) => {
       const rect = logo.getBoundingClientRect();
       const x = e.clientX - rect.left;
@@ -37,14 +45,20 @@ export default function Home() {
       const rotateY = ((x - centerX) / centerX) * 4;
       logo.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.05)`;
     };
+
     const resetTilt = () => {
-      logo.style.transform = "rotateX(0deg) rotateY(0deg) scale(1)";
+      if (logo) {
+        logo.style.transform = "rotateX(0deg) rotateY(0deg) scale(1)";
+      }
     };
-    logo?.parentNode?.addEventListener("mousemove", handleMouseMove);
-    logo?.parentNode?.addEventListener("mouseleave", resetTilt);
+
+    const parent = logo.parentNode;
+    parent?.addEventListener("mousemove", handleMouseMove);
+    parent?.addEventListener("mouseleave", resetTilt);
+
     return () => {
-      logo?.parentNode?.removeEventListener("mousemove", handleMouseMove);
-      logo?.parentNode?.removeEventListener("mouseleave", resetTilt);
+      parent?.removeEventListener("mousemove", handleMouseMove);
+      parent?.removeEventListener("mouseleave", resetTilt);
     };
   }, []);
 
@@ -53,28 +67,29 @@ export default function Home() {
     if (user) router.push("/dashboard");
   }, [user]);
 
-  // === Auto biometric login
+  // === Auto WebAuthn Login
   useEffect(() => {
-    const autoLogin = async () => {
+    const attemptBiometricLogin = async () => {
       if (!user && biometricEmail && !autoLoginTried) {
         setAutoLoginTried(true);
         setStatus("sending");
-        setMessage("⏳ Logging in with biometrics...");
+        setMessage("⏳ Attempting biometric login...");
         try {
           const success = await loginWebAuthn(biometricEmail);
           if (!success) throw new Error("Biometric login failed.");
           setMessage("✅ Biometric login successful.");
         } catch (err) {
-          console.error("Biometric auto-login error:", err);
-          setMessage("❌ Biometric auto-login failed.");
+          console.error("Biometric login error:", err);
+          setMessage("❌ Biometric login failed.");
         } finally {
           setStatus("idle");
         }
       }
     };
-    autoLogin();
-  }, [user, biometricEmail, autoLoginTried]);
+    attemptBiometricLogin();
+  }, [user, biometricEmail, autoLoginTried, loginWebAuthn]);
 
+  // === Email Login Handler
   const handleEmailLogin = async (e) => {
     e.preventDefault();
     if (!email.trim()) return setMessage("❌ Please enter a valid email.");
@@ -85,15 +100,16 @@ export default function Home() {
       await registerWebAuthn(email.trim());
       localStorage.setItem("biometric_user", email.trim());
       setMessage("✅ Check your inbox for the Magic Link.");
+      setEmail("");
     } catch (err) {
       console.error("Email login error:", err);
       setMessage("❌ Failed to send Magic Link.");
     } finally {
       setStatus("idle");
-      setEmail("");
     }
   };
 
+  // === Google Login Handler
   const handleGoogleLogin = async () => {
     setStatus("sending");
     setMessage("⏳ Logging in with Google...");
@@ -108,6 +124,7 @@ export default function Home() {
     }
   };
 
+  // === Biometric Button Login Handler
   const handleBiometricLogin = async () => {
     if (!biometricEmail) return setMessage("❌ No biometric session found.");
     setStatus("sending");
@@ -159,8 +176,18 @@ export default function Home() {
               </button>
             </form>
 
-            <button onClick={handleGoogleLogin} className={styles.googleButton} disabled={status === "sending"}>
-              <Image src="/icons/google-logo.png" alt="Google" width={20} height={20} className={styles.googleLogo} />
+            <button
+              onClick={handleGoogleLogin}
+              className={styles.googleButton}
+              disabled={status === "sending"}
+            >
+              <Image
+                src="/icons/google-logo.png"
+                alt="Google"
+                width={20}
+                height={20}
+                className={styles.googleLogo}
+              />
               Login with Google
             </button>
 
