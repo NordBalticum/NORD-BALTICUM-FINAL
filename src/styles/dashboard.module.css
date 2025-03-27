@@ -165,12 +165,12 @@
 
 @media (max-width: 768px) {
   .avatarCenter {
-    margin-top: 88px; /* BUVO 48px – dabar normaliai žemiau ekrano pradžios */
+    margin-top: 88px; /* Paliekam idealiai po ekrano pradžia */
   }
 
   .dashboardWrapper {
     padding: 20px 18px 80px;
-    transform: scale(0.96) translateY(-4%);
+    transform: scale(0.96) translateY(-5%); /* Pakelta 1% daugiau */
     transform-origin: top center;
   }
 
