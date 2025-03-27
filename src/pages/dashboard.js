@@ -5,14 +5,16 @@ import styles from "@/styles/dashboard.module.css";
 import { useRouter } from "next/navigation";
 import { useMagicLink } from "@/contexts/MagicLinkContext";
 import { useBalance } from "@/contexts/BalanceContext";
+import StarsBackground from "@/components/StarsBackground";
 import Image from "next/image";
+import BottomNavigation from "@/components/BottomNavigation";
 
 const networksData = [
-  { name: "BNB Smart Chain", symbol: "BNB", logo: "https://cryptologos.cc/logos/bnb-bnb-logo.png" },
-  { name: "BSC Testnet", symbol: "TBNB", logo: "https://cryptologos.cc/logos/binance-coin-bnb-logo.png" },
-  { name: "Ethereum", symbol: "ETH", logo: "https://cryptologos.cc/logos/ethereum-eth-logo.png" },
-  { name: "Polygon", symbol: "POL", logo: "https://cryptologos.cc/logos/polygon-matic-logo.png" },
-  { name: "Avalanche", symbol: "AVAX", logo: "https://cryptologos.cc/logos/avalanche-avax-logo.png" },
+  { name: "BNB Smart Chain", symbol: "BNB", logo: "https://cryptologos.cc/logos/bnb-bnb-logo.png", route: "/bnb" },
+  { name: "BSC Testnet", symbol: "TBNB", logo: "https://cryptologos.cc/logos/binance-coin-bnb-logo.png", route: "/tbnb" },
+  { name: "Ethereum", symbol: "ETH", logo: "https://cryptologos.cc/logos/ethereum-eth-logo.png", route: "/eth" },
+  { name: "Polygon", symbol: "POL", logo: "https://cryptologos.cc/logos/polygon-matic-logo.png", route: "/pol" },
+  { name: "Avalanche", symbol: "AVAX", logo: "https://cryptologos.cc/logos/avalanche-avax-logo.png", route: "/avax" },
 ];
 
 export default function Dashboard() {
@@ -42,34 +44,43 @@ export default function Dashboard() {
 
   return (
     <div className={styles.container}>
+      <StarsBackground />
       <div className={styles.globalWrapper}>
+        {/* LOGO */}
         <div className={styles.logoWrapper}>
           <Image
             src="/icons/logo.svg"
             alt="NordBalticum"
-            width={180}
-            height={60}
+            width={220}
+            height={72}
             className={styles.logo}
             priority
           />
         </div>
 
+        {/* TOTAL VALUE */}
         <div className={styles.totalBalanceBox}>
           <div className={styles.totalLabel}>TOTAL VALUE</div>
           <div className={styles.totalValue}>€ {totalEUR}</div>
         </div>
 
+        {/* WALLET CARDS */}
         <div className={styles.assetList}>
           {networks.map((net) => {
             const bal = cachedBalances[net.symbol] || { amount: "0.0000", eur: "0.00" };
             return (
-              <div key={net.symbol} className={styles.assetItem}>
+              <div
+                key={net.symbol}
+                className={styles.assetItem}
+                onClick={() => router.push(net.route)}
+                style={{ cursor: "pointer" }}
+              >
                 <div className={styles.assetLeft}>
                   <Image
                     src={net.logo}
                     alt={net.symbol}
-                    width={36}
-                    height={36}
+                    width={40}
+                    height={40}
                     className={styles.assetLogo}
                     loading="eager"
                     unoptimized
@@ -88,6 +99,8 @@ export default function Dashboard() {
           })}
         </div>
       </div>
+
+      <BottomNavigation />
     </div>
   );
 }
