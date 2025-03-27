@@ -194,7 +194,7 @@
   }
 
   .globalWrapper {
-    transform: scale(0.76) translateY(-4%);
+    transform: scale(0.755) translateY(-1.5%);
     transform-origin: top center;
     padding: 0 clamp(12px, 4vw, 24px) 96px;
     overflow: hidden;
@@ -211,7 +211,7 @@
 
   .bottomNav {
     position: fixed;
-    bottom: clamp(4vh, 5.5vh, 7vh);
+    bottom: clamp(4.5vh, 5.5vh, 6vh);
     left: 50%;
     transform: translateX(-50%);
     z-index: 999;
@@ -219,15 +219,15 @@
 
   .logo {
     max-width: 75vw;
-    margin-top: clamp(8px, 1.5vh, 24px); /* Logo nuleistas gražiai */
+    margin-top: clamp(10px, 2vh, 28px); /* Logotipas dar biški žemyn */
     filter: none !important;
   }
 
   .logoWrapper {
-    margin-bottom: clamp(14px, 2.8vh, 26px); /* Idealus tarpas iki Total Value */
+    margin-bottom: clamp(14px, 3vh, 28px); /* Tobulas tarpas iki value */
   }
 
   .totalBalanceBox {
-    margin-bottom: clamp(12px, 3vh, 24px); /* Balansas prieš assetus */
+    margin-bottom: clamp(14px, 3vh, 28px); /* Tarpas iki asset lentelių */
   }
 }
