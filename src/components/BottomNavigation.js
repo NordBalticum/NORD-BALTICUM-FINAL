@@ -5,40 +5,40 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   FaWallet,
-  FaClock,
-  FaArrowDown,
   FaArrowUp,
-  FaCog,
+  FaArrowDown,
+  FaClock,
+  FaUserCircle,
 } from "react-icons/fa";
-import styles from "./bottomnavigation.module.css";
+import styles from "@/components/bottomnav.module.css";
 
-const BottomNavigation = () => {
+const navItems = [
+  { path: "/dashboard", icon: <FaWallet />, label: "Wallet" },
+  { path: "/send", icon: <FaArrowUp />, label: "Send" },
+  { path: "/receive", icon: <FaArrowDown />, label: "Receive" },
+  { path: "/history", icon: <FaClock />, label: "History" },
+  { path: "/settings", icon: <FaUserCircle />, label: "Settings" },
+];
+
+export default function BottomNavigation() {
   const pathname = usePathname();
-
-  const navItems = [
-    { href: "/dashboard", icon: <FaWallet />, label: "Wallet" },
-    { href: "/send", icon: <FaArrowUp />, label: "Send" },
-    { href: "/receive", icon: <FaArrowDown />, label: "Receive" },
-    { href: "/history", icon: <FaClock />, label: "History" },
-    { href: "/settings", icon: <FaCog />, label: "Settings" },
-  ];
 
   return (
     <nav
-      className={styles.bottomNav}
+      className={styles.navbar}
       role="navigation"
       aria-label="Bottom Navigation Bar"
     >
-      {navItems.map(({ href, icon, label }) => {
-        const isActive = pathname === href;
+      {navItems.map(({ path, icon, label }) => {
+        const isActive = pathname === path;
         return (
-          <Link href={href} key={href} passHref legacyBehavior>
+          <Link key={path} href={path} passHref legacyBehavior>
             <button
               type="button"
-              className={`${styles.navButton} ${isActive ? styles.active : ""}`}
+              className={`${styles.navItem} ${isActive ? styles.active : ""}`}
               aria-label={label}
             >
-              <span className={styles.icon}>{icon}</span>
+              <div className={styles.icon}>{icon}</div>
               <span className={styles.label}>{label}</span>
             </button>
           </Link>
@@ -46,6 +46,4 @@ const BottomNavigation = () => {
       })}
     </nav>
   );
-};
-
-export default BottomNavigation;
+}
