@@ -1,25 +1,21 @@
-"use client";
-
 import "@/styles/globals.css";
 import "@/styles/theme.css";
 import React from "react";
 import Head from "next/head";
-import Layout from "@/components/Layout";
+
 import { MagicLinkProvider } from "@/contexts/MagicLinkContext";
 import { WalletLoadProvider } from "@/contexts/WalletLoadContext";
 import { WebAuthnProvider } from "@/contexts/WebAuthnContext";
 import { BalanceProvider } from "@/contexts/BalanceContext";
-import { AuthProvider } from "@/contexts/AuthContext"; // Nauja: bendras junginys
+import { AuthProvider } from "@/contexts/AuthContext"; // <- jungia viską
+import Layout from "@/components/Layout";
 
 export default function App({ Component, pageProps }) {
   return (
     <React.StrictMode>
       <Head>
         <title>NordBalticum</title>
-        <meta
-          name="viewport"
-          content="width=device-width, initial-scale=1.0, user-scalable=no"
-        />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
         <meta name="theme-color" content="#0A1F44" />
         <link rel="icon" href="/icons/logo.png" />
         <link
@@ -28,11 +24,11 @@ export default function App({ Component, pageProps }) {
         />
       </Head>
 
-      <MagicLinkProvider>
+      <MagicLinkProvider> {/* <- PRIVALOMAS */}
         <WalletLoadProvider>
           <WebAuthnProvider>
             <BalanceProvider>
-              <AuthProvider>
+              <AuthProvider> {/* <- čia jungiam viską */}
                 <Layout>
                   <Component {...pageProps} />
                 </Layout>
