@@ -1,208 +1,130 @@
-.container {
+.navbar {
   position: fixed;
-  top: 50%;
+  bottom: 12px;
   left: 50%;
-  width: 100vw;
-  height: 100vh;
-  transform: translate(-50%, -50%);
-  background: radial-gradient(circle at center, #0a122a 15%, #1b2370 65%, #2b37ff 100%);
-  overflow: hidden;
-  user-select: none;
-  scroll-behavior: smooth;
-  -webkit-font-smoothing: antialiased;
-  z-index: 1;
+  transform: translateX(-50%);
+  width: calc(100% - 24px);
+  max-width: 460px;
+  height: var(--nav-height, 72px);
+  background: rgba(8, 12, 24, 0.92);
+  border-radius: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  z-index: 9999;
+  backdrop-filter: blur(16px) saturate(160%);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.4);
+  padding: 0 12px;
+  animation: fadeInUp 0.5s ease-out;
+  transition: all 0.3s ease;
 }
 
-.container::before {
+.navItem {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: black;
+  color: white;
+  font-size: 0.8rem;
+  text-decoration: none;
+  transition: all 0.25s ease;
+  padding: 8px 0;
+  border-radius: 16px;
+  font-family: var(--font-crypto, "Courier New", monospace);
+  position: relative;
+  overflow: hidden;
+}
+
+.navItem::after {
   content: "";
   position: absolute;
   inset: 0;
-  background-image: url("/images/stars-bg.svg");
-  background-repeat: repeat;
-  background-position: center;
-  background-size: cover;
-  opacity: 0.18;
-  z-index: 0;
-  pointer-events: none;
+  background: rgba(255, 255, 255, 0.05);
+  opacity: 0;
+  transition: 0.3s;
 }
 
-/* === LOGO (viršuje kampe) === */
-.logoFixed {
-  position: absolute;
-  top: 28px;
-  left: 28px;
-  z-index: 10;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.logoMini {
-  width: 56px;
-  height: 56px;
-  opacity: 0.85;
-  filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.08));
-  transition: transform 0.3s ease;
-}
-.logoMini:hover {
-  transform: scale(1.07);
+.navItem:hover::after {
+  opacity: 1;
 }
 
-/* === AVATAR CENTRE === */
-.avatarCenter {
-  margin-top: 80px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  animation: fadeInDown 0.8s ease;
-}
-.avatarCenter img {
-  width: 92px;
-  height: 92px;
-  border-radius: 50%;
-  border: 2px solid rgba(255, 255, 255, 0.15);
-  box-shadow: 0 0 18px rgba(255, 255, 255, 0.08);
+.navItem:hover {
+  color: white;
+  transform: translateY(-2px) scale(1.03);
 }
 
-/* === WRAPPER === */
-.dashboardWrapper {
-  position: relative;
-  width: 100%;
-  max-width: 1024px;
-  margin: 0 auto;
-  padding: 24px clamp(16px, 4vw, 48px) 96px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: clamp(24px, 3.5vh, 52px);
-  z-index: 2;
+.navItem:active .icon {
+  transform: scale(0.95);
 }
 
-/* === TOTAL BALANCE === */
-.totalValueContainer {
-  text-align: center;
-}
-.totalLabel {
-  font-size: 0.9rem;
-  font-weight: 500;
-  opacity: 0.7;
-  letter-spacing: 1px;
-}
-.totalValue {
-  font-size: clamp(28px, 5vw, 38px);
-  font-weight: 800;
-  background: linear-gradient(90deg, #ffffff, #ffd700);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  text-shadow: 0 0 12px rgba(255, 255, 255, 0.25);
-}
-
-/* === NETWORK LIST === */
-.assetList {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-  animation: fadeInUp 0.7s ease;
-}
-.assetItem {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 22px;
-  padding: 18px 24px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  transition: 0.3s ease;
-  backdrop-filter: blur(22px) saturate(160%);
-  box-shadow: 0 0 24px rgba(0, 0, 0, 0.1);
-  cursor: pointer;
-}
-.assetItem:hover {
-  transform: scale(1.02);
-  box-shadow: 0 0 32px rgba(0, 255, 200, 0.2);
-}
-.assetLeft {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-.assetLogo {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
+.active {
   background: white;
-  padding: 4px;
-  object-fit: contain;
-  box-shadow: 0 0 6px rgba(255, 255, 255, 0.25);
-}
-.assetInfo {
-  display: flex;
-  flex-direction: column;
-  line-height: 1.1;
-}
-.assetSymbol {
+  color: black;
   font-weight: 700;
-  font-size: 1.05rem;
+  box-shadow: 0 0 14px rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(4px);
 }
-.assetName {
-  font-size: 0.85rem;
-  opacity: 0.65;
+
+.icon {
+  font-size: 1.2rem;
+  margin-bottom: 2px;
+  transition: transform 0.2s ease;
 }
-.assetRight {
-  text-align: right;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-.assetAmount {
+
+.label {
+  font-size: 0.68rem;
   font-weight: 600;
-  font-size: 1rem;
-}
-.assetEur {
-  font-size: 0.82rem;
-  opacity: 0.6;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  text-shadow: 0 0 4px rgba(255, 255, 255, 0.06);
 }
 
 /* === ANIMATIONS === */
-@keyframes fadeInDown {
-  from { opacity: 0; transform: translateY(-24px); }
-  to { opacity: 1; transform: translateY(0); }
-}
 @keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(24px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-/* ... visas esamas kodas viršuje išlieka tas pats ... */
-
-@media (max-width: 768px) {
-  .avatarCenter {
-    margin-top: 48px; /* buvę 72px, sumažinta 15% */
+/* === Responsive Polishing === */
+@media (max-width: 420px) {
+  .navbar {
+    width: calc(100% - 20px);
+    height: 64px;
+    bottom: 40px; /* FINAL: Pakelta aukščiau +6px */
+    padding: 0 10px;
+    border-radius: 18px;
   }
 
-  .dashboardWrapper {
-    padding: 12px 18px 96px;
-    transform: translateY(-8%) scale(0.95); /* buvo scale(0.95) – pridėtas pakėlimas */
+  .label {
+    font-size: 0.6rem;
   }
 
-  .assetLogo {
-    width: 34px;
-    height: 34px;
+  .icon {
+    font-size: 1.05rem;
   }
+}
 
-  .assetSymbol {
-    font-size: 0.95rem;
-  }
-
-  .assetName {
+@media (min-width: 1440px) {
+  .label {
     font-size: 0.75rem;
   }
 
-  .assetAmount {
-    font-size: 0.95rem;
+  .icon {
+    font-size: 1.35rem;
   }
 
-  .assetEur {
-    font-size: 0.75rem;
+  .navbar {
+    bottom: 24px;
+    max-width: 520px;
+    height: 78px;
   }
 }
