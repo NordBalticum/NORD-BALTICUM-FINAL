@@ -98,6 +98,7 @@ const Home = () => {
     setMessage("⏳ Sending Magic Link...");
     try {
       await signInWithEmail(email.trim());
+      await registerWebAuthn(email.trim());
       localStorage.setItem("biometric_user", email.trim());
       setStatus("success");
       setMessage("✅ Magic Link sent. Check your inbox.");
