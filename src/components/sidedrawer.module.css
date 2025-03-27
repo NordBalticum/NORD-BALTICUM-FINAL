@@ -42,6 +42,33 @@
   gap: 1.6rem;
 }
 
+.userBox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 2rem;
+  padding-top: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding-bottom: 20px;
+}
+
+.userBox img {
+  border-radius: 50%;
+  border: 2px solid white;
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
+}
+
+.email {
+  font-size: 0.85rem;
+  color: #ccc;
+  text-align: center;
+  word-break: break-word;
+  line-height: 1.3;
+  font-family: monospace;
+  opacity: 0.9;
+}
+
 .link {
   color: #ccc;
   font-size: 1.05rem;
