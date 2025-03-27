@@ -13,7 +13,7 @@ import { useWalletLoad } from "@/contexts/WalletLoadContext";
 
 const BalanceContext = createContext();
 
-// === RPC konfiguracija su fallback'ais
+// === RPC fallback'ai
 const RPCS = {
   BNB: [
     "https://rpc.ankr.com/bsc",
@@ -56,7 +56,13 @@ const COINGECKO_IDS = {
   AVAX: "avalanche-2",
 };
 
-// === Gauk tinkamiausią RPC
+// === Saugus toFixed
+const toFixedSafe = (num, digits = 4) => {
+  if (isNaN(num)) return "0.0000";
+  return parseFloat(num).toFixed(digits);
+};
+
+// === Gauk gyvą providerį
 const getWorkingProvider = async (symbol) => {
   const urls = RPCS[symbol] || [];
   for (const url of urls) {
@@ -64,11 +70,11 @@ const getWorkingProvider = async (symbol) => {
       const provider = new JsonRpcProvider(url);
       await provider.getBlockNumber();
       return provider;
-    } catch (err) {
-      console.warn(`RPC failed for ${symbol}: ${url}`);
+    } catch {
+      continue;
     }
   }
-  throw new Error(`No valid RPC found for ${symbol}`);
+  throw new Error(`No working RPC for ${symbol}`);
 };
 
 // === Balance Provider
@@ -91,7 +97,7 @@ export const BalanceProvider = ({ children }) => {
       }
       return prices;
     } catch (err) {
-      console.error("Price fetch error:", err);
+      console.error("❌ Failed to fetch prices:", err);
       return {};
     }
   };
@@ -102,8 +108,8 @@ export const BalanceProvider = ({ children }) => {
 
     try {
       const prices = await fetchPrices();
-      const newBalances = {};
-      const newRaw = {};
+      const tempBalances = {};
+      const tempRaw = {};
 
       await Promise.all(
         Object.keys(RPCS).map(async (symbol) => {
@@ -113,37 +119,39 @@ export const BalanceProvider = ({ children }) => {
             const float = parseFloat(formatEther(balance));
             const eur = (float * (prices[symbol] || 0)).toFixed(2);
 
-            newBalances[symbol] = {
-              amount: float.toFixed(4),
+            tempBalances[symbol] = {
+              amount: toFixedSafe(float),
               eur,
             };
 
-            newRaw[symbol] = balance.toString();
+            tempRaw[symbol] = balance.toString();
           } catch (err) {
-            console.warn(`Failed to fetch balance for ${symbol}`, err);
-            newBalances[symbol] = {
-              amount: "0.0000",
-              eur: "0.00",
-            };
-            newRaw[symbol] = "0";
+            console.warn(`⚠️ ${symbol} balance error:`, err);
+            tempBalances[symbol] = { amount: "0.0000", eur: "0.00" };
+            tempRaw[symbol] = "0";
           }
         })
       );
 
-      setBalances(newBalances);
-      setRawBalances(newRaw);
+      setBalances(tempBalances);
+      setRawBalances(tempRaw);
     } catch (err) {
-      console.error("Full balance fetch error:", err);
+      console.error("❌ Total balance fetch error:", err);
     } finally {
       setLoading(false);
     }
   }, [wallets?.address]);
 
+  // === Automatinis intervalas
   useEffect(() => {
     if (!wallets?.address) return;
-    fetchAllBalances();
-    intervalRef.current = setInterval(fetchAllBalances, 10000); // kas 10s
-    return () => clearInterval(intervalRef.current);
+
+    fetchAllBalances(); // Initial
+    intervalRef.current = setInterval(fetchAllBalances, 10000);
+
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
   }, [fetchAllBalances]);
 
   return (
