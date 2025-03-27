@@ -1,0 +1,44 @@
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 24px;
+}
+
+.bioButton {
+  background: black;
+  color: white;
+  padding: 12px 20px;
+  border-radius: 16px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  border: 2px solid white;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: all 0.3s ease;
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.08);
+}
+
+.bioButton:hover {
+  background: white;
+  color: black;
+  box-shadow: 0 0 16px rgba(255, 255, 255, 0.2);
+}
+
+.bioButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.icon {
+  filter: brightness(1.3);
+}
+
+.message {
+  margin-top: 12px;
+  font-size: 0.75rem;
+  color: #ccc;
+  text-align: center;
+  max-width: 280px;
+}
