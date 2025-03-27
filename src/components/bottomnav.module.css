@@ -1,6 +1,6 @@
 .navbar {
   position: fixed;
-  bottom: 12px; /* Pakelta aukštyn nuo ekrano apačios */
+  bottom: 12px;
   left: 50%;
   transform: translateX(-50%);
   width: calc(100% - 24px);
@@ -16,6 +16,8 @@
   backdrop-filter: blur(16px) saturate(160%);
   box-shadow: 0 12px 36px rgba(0, 0, 0, 0.4);
   padding: 0 12px;
+  animation: fadeInUp 0.5s ease-out;
+  transition: all 0.3s ease;
 }
 
 .navItem {
@@ -27,13 +29,28 @@
   color: rgba(255, 255, 255, 0.7);
   font-size: 0.8rem;
   text-decoration: none;
-  transition: all 0.3s ease;
+  transition: all 0.25s ease;
   padding: 8px 0;
   border-radius: 16px;
+  font-family: var(--font-crypto, "Courier New", monospace);
+  position: relative;
+  overflow: hidden;
+}
+
+.navItem::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.05);
+  opacity: 0;
+  transition: 0.3s;
+}
+
+.navItem:hover::after {
+  opacity: 1;
 }
 
 .navItem:hover {
-  background: rgba(255, 255, 255, 0.05);
   color: white;
   transform: translateY(-2px) scale(1.03);
 }
@@ -49,6 +66,7 @@
 .icon {
   font-size: 1.2rem;
   margin-bottom: 2px;
+  transition: transform 0.2s ease;
 }
 
 .label {
@@ -56,21 +74,36 @@
   font-weight: 600;
   letter-spacing: 0.3px;
   text-transform: uppercase;
-  font-family: var(--font-crypto, "Courier New", monospace);
   text-shadow: 0 0 4px rgba(255, 255, 255, 0.06);
 }
 
-/* === Extra responsive polish === */
+.navItem:active .icon {
+  transform: scale(0.95);
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* === Responsive Polishing === */
 @media (max-width: 420px) {
   .navbar {
     width: calc(100% - 20px);
     height: 64px;
     bottom: 10px;
     padding: 0 10px;
+    border-radius: 18px;
   }
 
   .label {
-    font-size: 0.62rem;
+    font-size: 0.6rem;
   }
 
   .icon {
@@ -89,5 +122,7 @@
 
   .navbar {
     bottom: 20px;
+    max-width: 520px;
+    height: 78px;
   }
 }
