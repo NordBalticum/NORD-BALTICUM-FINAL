@@ -8,27 +8,24 @@ import React, {
   useCallback,
   useRef,
 } from "react";
-import {
-  JsonRpcProvider,
-  formatEther,
-} from "ethers";
-import { useMagicLink } from "@/contexts/MagicLinkContext";
+import { JsonRpcProvider, formatEther } from "ethers";
+import { useWalletLoad } from "@/contexts/WalletLoadContext";
 
 const BalanceContext = createContext();
 
-// ✅ Visi RPC – 4 fallback'ai kiekvienam tinklui
+// === RPC konfiguracija su fallback'ais
 const RPCS = {
   BNB: [
     "https://rpc.ankr.com/bsc",
-    "https://bsc.publicnode.com",
     "https://bsc-dataseed.binance.org",
+    "https://bsc.publicnode.com",
     "https://1rpc.io/bnb",
   ],
   TBNB: [
     "https://rpc.ankr.com/bsc_testnet_chapel",
-    "https://bsc-testnet.publicnode.com",
     "https://data-seed-prebsc-1-s1.binance.org:8545",
     "https://data-seed-prebsc-2-s2.binance.org:8545",
+    "https://bsc-testnet.publicnode.com",
   ],
   ETH: [
     "https://eth.llamarpc.com",
@@ -39,8 +36,8 @@ const RPCS = {
   POL: [
     "https://polygon-rpc.com",
     "https://rpc.ankr.com/polygon",
-    "https://1rpc.io/matic",
     "https://polygon-bor.publicnode.com",
+    "https://1rpc.io/matic",
   ],
   AVAX: [
     "https://api.avax.network/ext/bc/C/rpc",
@@ -50,8 +47,8 @@ const RPCS = {
   ],
 };
 
-// ✅ CoinGecko ID mapping
-const priceSymbols = {
+// === CoinGecko simboliai
+const COINGECKO_IDS = {
   BNB: "binancecoin",
   TBNB: "binancecoin",
   ETH: "ethereum",
@@ -59,8 +56,8 @@ const priceSymbols = {
   AVAX: "avalanche-2",
 };
 
-// ✅ Gauna pirmą veikiantį provider'į
-const getProvider = async (symbol) => {
+// === Gauk tinkamiausią RPC
+const getWorkingProvider = async (symbol) => {
   const urls = RPCS[symbol] || [];
   for (const url of urls) {
     try {
@@ -68,14 +65,15 @@ const getProvider = async (symbol) => {
       await provider.getBlockNumber();
       return provider;
     } catch (err) {
-      console.warn(`⚠️ Provider failed: ${url}`);
+      console.warn(`RPC failed for ${symbol}: ${url}`);
     }
   }
-  throw new Error(`❌ No working RPC provider for ${symbol}`);
+  throw new Error(`No valid RPC found for ${symbol}`);
 };
 
+// === Balance Provider
 export const BalanceProvider = ({ children }) => {
-  const { wallet } = useMagicLink();
+  const { wallets } = useWalletLoad();
   const [balances, setBalances] = useState({});
   const [rawBalances, setRawBalances] = useState({});
   const [loading, setLoading] = useState(false);
@@ -84,63 +82,67 @@ export const BalanceProvider = ({ children }) => {
 
   const fetchPrices = async () => {
     try {
-      const ids = Object.values(priceSymbols).join(",");
+      const ids = Object.values(COINGECKO_IDS).join(",");
       const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=eur`);
       const data = await res.json();
       const prices = {};
-      for (const [symbol, id] of Object.entries(priceSymbols)) {
+      for (const [symbol, id] of Object.entries(COINGECKO_IDS)) {
         prices[symbol] = data[id]?.eur || 0;
       }
       return prices;
     } catch (err) {
-      console.error("❌ Failed to fetch prices:", err);
+      console.error("Price fetch error:", err);
       return {};
     }
   };
 
   const fetchAllBalances = useCallback(async () => {
-    if (!wallet?.address) return;
+    if (!wallets?.address) return;
     setLoading(true);
 
     try {
       const prices = await fetchPrices();
-      const tempBalances = {};
-      const tempRaw = {};
+      const newBalances = {};
+      const newRaw = {};
 
       await Promise.all(
         Object.keys(RPCS).map(async (symbol) => {
           try {
-            const provider = await getProvider(symbol);
-            const raw = await provider.getBalance(wallet.address);
-            const formatted = parseFloat(formatEther(raw));
-            const price = prices[symbol] || 0;
+            const provider = await getWorkingProvider(symbol);
+            const balance = await provider.getBalance(wallets.address);
+            const float = parseFloat(formatEther(balance));
+            const eur = (float * (prices[symbol] || 0)).toFixed(2);
 
-            tempRaw[symbol] = raw.toString();
-            tempBalances[symbol] = {
-              amount: formatted.toFixed(4),
-              eur: (formatted * price).toFixed(2),
+            newBalances[symbol] = {
+              amount: float.toFixed(4),
+              eur,
             };
+
+            newRaw[symbol] = balance.toString();
           } catch (err) {
-            console.error(`❌ Balance error for ${symbol}:`, err);
-            tempRaw[symbol] = "0";
-            tempBalances[symbol] = { amount: "0.0000", eur: "0.00" };
+            console.warn(`Failed to fetch balance for ${symbol}`, err);
+            newBalances[symbol] = {
+              amount: "0.0000",
+              eur: "0.00",
+            };
+            newRaw[symbol] = "0";
           }
         })
       );
 
-      setRawBalances(tempRaw);
-      setBalances(tempBalances);
+      setBalances(newBalances);
+      setRawBalances(newRaw);
     } catch (err) {
-      console.error("❌ Unexpected balance fetch error:", err);
+      console.error("Full balance fetch error:", err);
     } finally {
       setLoading(false);
     }
-  }, [wallet?.address]);
+  }, [wallets?.address]);
 
   useEffect(() => {
-    if (!wallet?.address) return;
+    if (!wallets?.address) return;
     fetchAllBalances();
-    intervalRef.current = setInterval(fetchAllBalances, 6000);
+    intervalRef.current = setInterval(fetchAllBalances, 10000); // kas 10s
     return () => clearInterval(intervalRef.current);
   }, [fetchAllBalances]);
 
