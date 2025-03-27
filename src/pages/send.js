@@ -1,7 +1,9 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
+import { useAuth } from "@/contexts/AuthContext";
 import { useMagicLink } from "@/contexts/MagicLinkContext";
 import BottomNavigation from "@/components/BottomNavigation";
 import styles from "@/styles/swipe.module.css";
@@ -17,7 +19,7 @@ const networks = [
     name: "BSC Testnet",
     symbol: "TBNB",
     route: "/tbnb",
-    icon: "https://cryptologos.cc/logos/bnb-bnb-logo.png",
+    icon: "https://cryptologos.cc/logos/binance-coin-bnb-logo.png",
   },
   {
     name: "Ethereum",
@@ -36,16 +38,26 @@ const networks = [
     symbol: "AVAX",
     route: "/avax",
     icon: "https://cryptologos.cc/logos/avalanche-avax-logo.png",
-  }
+  },
 ];
 
 export default function Send() {
-  const { user } = useMagicLink();
   const router = useRouter();
+
+  // Kontekstai
+  const { user: authUser, sessionReady } = useAuth();
+  const { user: fallbackUser } = useMagicLink();
+
+  const user = authUser || fallbackUser;
+
   const [selected, setSelected] = useState(0);
   const [receiver, setReceiver] = useState("");
   const [amount, setAmount] = useState("");
   const [showModal, setShowModal] = useState(false);
+
+  useEffect(() => {
+    if (sessionReady && !user) router.push("/");
+  }, [sessionReady, user, router]);
 
   const handleSend = () => {
     if (!receiver || !amount) return alert("Please enter both address and amount.");
@@ -54,10 +66,12 @@ export default function Send() {
 
   const confirmSend = () => {
     setShowModal(false);
-    router.push(networks[selected].route);
+    router.push(networks[selected].route); // nukreipia į pasirinkto tinklo puslapį (pvz.: /bnb)
   };
 
-  if (!user) return <div className={styles.loading}>Loading Wallet...</div>;
+  if (!user) {
+    return <div className={styles.loading}>Loading Wallet...</div>;
+  }
 
   return (
     <div className="globalContainer">
@@ -69,14 +83,21 @@ export default function Send() {
           {networks.map((net, index) => (
             <div
               key={net.symbol}
-              className={styles.walletCard}
+              className={`${styles.walletCard} ${selected === index ? styles.selected : ""}`}
               onClick={() => setSelected(index)}
             >
               <div className={styles.walletHeader}>
                 <span className={styles.walletName}>{net.name}</span>
                 <span className={styles.walletBalance}>0.0000 {net.symbol}</span>
               </div>
-              <img src={net.icon} alt={net.symbol} className={styles.icon} />
+              <Image
+                src={net.icon}
+                alt={net.symbol}
+                width={48}
+                height={48}
+                className={styles.icon}
+                unoptimized
+              />
             </div>
           ))}
         </div>
@@ -96,7 +117,7 @@ export default function Send() {
             onChange={(e) => setAmount(e.target.value)}
             className={styles.inputField}
           />
-          <p>Estimated Fee: 0.003 {networks[selected].symbol}</p>
+          <p className={styles.feeInfo}>Estimated Fee: 0.003 {networks[selected].symbol}</p>
           <button onClick={handleSend} className={styles.confirmButton}>
             SEND
           </button>
@@ -116,10 +137,7 @@ export default function Send() {
             <button className={styles.modalButton} onClick={confirmSend}>
               Confirm
             </button>
-            <button
-              className={`${styles.modalButton} ${styles.cancel}`}
-              onClick={() => setShowModal(false)}
-            >
+            <button className={`${styles.modalButton} ${styles.cancel}`} onClick={() => setShowModal(false)}>
               Cancel
             </button>
           </div>
