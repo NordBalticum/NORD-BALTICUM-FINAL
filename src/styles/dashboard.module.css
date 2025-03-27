@@ -195,7 +195,14 @@
   100% { transform: translateY(0%) rotateX(0deg) rotateY(0deg); }
 }
 
+/* === ✅ MEDIA RESPONSIVE FINAL PATCH – NordBalticum Mobile Ultra UX === */
 @media (max-width: 768px) {
+  html, body {
+    overflow: hidden !important;
+    touch-action: none !important;
+    overscroll-behavior: none;
+  }
+
   .container {
     height: 100vh;
     overflow: hidden;
@@ -203,7 +210,7 @@
   }
 
   .globalWrapper {
-    transform: scale(0.80) translateY(-4%);
+    transform: scale(0.80) translateY(7%);
     transform-origin: top center;
     padding: 0 16px 96px;
     overflow: hidden;
@@ -216,5 +223,14 @@
   .assetLogo {
     width: 38px;
     height: 38px;
+  }
+
+  /* Pakeltas BottomNavigation per Z-Axis + Margin Fix */
+  .bottomNav {
+    position: fixed;
+    bottom: 3.2vh;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 999;
   }
 }
