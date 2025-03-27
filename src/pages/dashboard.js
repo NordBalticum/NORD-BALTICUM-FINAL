@@ -8,6 +8,7 @@ import { useBalance } from "@/contexts/BalanceContext";
 import StarsBackground from "@/components/StarsBackground";
 import Image from "next/image";
 import BottomNavigation from "@/components/BottomNavigation";
+import AvatarDisplay from "@/components/AvatarDisplay";
 
 const networksData = [
   { name: "BNB Smart Chain", symbol: "BNB", logo: "https://cryptologos.cc/logos/bnb-bnb-logo.png", route: "/bnb" },
@@ -45,26 +46,34 @@ export default function Dashboard() {
   return (
     <div className={styles.container}>
       <StarsBackground />
-      <div className={styles.globalWrapper}>
-        {/* LOGO */}
-        <div className={styles.logoWrapper}>
+
+      {/* Global content wrapper */}
+      <div className={styles.dashboardWrapper}>
+        
+        {/* Small logo top-left */}
+        <div className={styles.logoFixed}>
           <Image
-            src="/icons/logo.svg"
+            src="/icons/logo-small.svg"
             alt="NordBalticum"
-            width={220}
-            height={72}
-            className={styles.logo}
+            width={64}
+            height={64}
+            className={styles.logoMini}
             priority
           />
         </div>
 
-        {/* TOTAL VALUE */}
-        <div className={styles.totalBalanceBox}>
-          <div className={styles.totalLabel}>TOTAL VALUE</div>
-          <div className={styles.totalValue}>€ {totalEUR}</div>
+        {/* Avatar in center */}
+        <div className={styles.avatarCenter}>
+          <AvatarDisplay walletAddress={wallet?.address} size={92} />
         </div>
 
-        {/* WALLET CARDS */}
+        {/* TOTAL VALUE */}
+        <div className={styles.totalValueContainer}>
+          <p className={styles.totalLabel}>Total Value</p>
+          <p className={styles.totalValue}>€ {totalEUR}</p>
+        </div>
+
+        {/* NETWORK BALANCES */}
         <div className={styles.assetList}>
           {networks.map((net) => {
             const bal = cachedBalances[net.symbol] || { amount: "0.0000", eur: "0.00" };
@@ -73,26 +82,27 @@ export default function Dashboard() {
                 key={net.symbol}
                 className={styles.assetItem}
                 onClick={() => router.push(net.route)}
-                style={{ cursor: "pointer" }}
+                title={`Open ${net.name}`}
               >
                 <div className={styles.assetLeft}>
                   <Image
                     src={net.logo}
                     alt={net.symbol}
-                    width={40}
-                    height={40}
+                    width={42}
+                    height={42}
                     className={styles.assetLogo}
-                    loading="eager"
                     unoptimized
                   />
-                  <div className={styles.assetText}>
-                    <div className={styles.assetSymbol}>{net.symbol}</div>
-                    <div className={styles.assetName}>{net.name}</div>
+                  <div className={styles.assetInfo}>
+                    <span className={styles.assetSymbol}>{net.symbol}</span>
+                    <span className={styles.assetName}>{net.name}</span>
                   </div>
                 </div>
-                <div className={styles.assetBalance}>
-                  {bal.amount} {net.symbol}
-                  <div className={styles.assetEur}>€ {bal.eur}</div>
+                <div className={styles.assetRight}>
+                  <span className={styles.assetAmount}>
+                    {bal.amount} {net.symbol}
+                  </span>
+                  <span className={styles.assetEur}>€ {bal.eur}</span>
                 </div>
               </div>
             );
