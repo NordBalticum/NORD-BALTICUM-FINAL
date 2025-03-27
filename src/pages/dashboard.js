@@ -8,10 +8,8 @@ import Image from "next/image";
 import BottomNavigation from "@/components/BottomNavigation";
 import AvatarDisplay from "@/components/AvatarDisplay";
 
-// Pagrindinis kontekstas
+// Kontekstai
 import { useAuth } from "@/contexts/AuthContext";
-
-// Fallback kontekstai
 import { useMagicLink } from "@/contexts/MagicLinkContext";
 import { useWalletLoad } from "@/contexts/WalletLoadContext";
 import { useBalance } from "@/contexts/BalanceContext";
@@ -27,12 +25,13 @@ const networksData = [
 export default function Dashboard() {
   const router = useRouter();
 
+  // Kontekstai
   const { user: authUser, wallet: authWallet, balances: authBalances, sessionReady } = useAuth();
-  const { user: magicUser } = useMagicLink();
+  const { user: fallbackUser } = useMagicLink();
   const { wallets: fallbackWallet } = useWalletLoad();
   const { balances: fallbackBalances } = useBalance();
 
-  const user = authUser || magicUser;
+  const user = authUser || fallbackUser;
   const wallet = authWallet || fallbackWallet;
   const balances = authBalances || fallbackBalances;
 
@@ -40,7 +39,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (!user || !wallet?.address) router.push("/");
-  }, [user, wallet]);
+  }, [user, wallet, router]);
 
   useEffect(() => {
     const total = Object.values(balances || {}).reduce(
