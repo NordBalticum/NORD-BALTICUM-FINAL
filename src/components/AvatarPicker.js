@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import styles from "./AvatarPicker.module.css";
+import styles from "@/components/avatarpicker.module.css";
 
 const avatars = Array.from({ length: 20 }, (_, i) => `/avatars/avatar${i + 1}.png`);
 
