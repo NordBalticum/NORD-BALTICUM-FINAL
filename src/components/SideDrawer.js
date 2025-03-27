@@ -15,24 +15,34 @@ export default function SideDrawer() {
 
   const toggleDrawer = () => setOpen(!open);
 
+  const handleSignOut = async () => {
+    try {
+      await signOut();             // ✅ Atsijungiam
+      setOpen(false);              // ✅ Uždaro drawer
+      router.push("/");            // ✅ Redirect į homepage
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
+  };
+
   const navItems = [
     { label: "Dashboard", path: "/dashboard" },
     { label: "Send", path: "/send" },
     { label: "Receive", path: "/receive" },
-    { label: "Transactions", path: "/transactions" },
+    { label: "History", path: "/history" },
   ];
 
   if (pathname === "/") return null;
 
   return (
     <>
-      <div className={styles.hamburger} onClick={toggleDrawer}>
+      <div className={styles.hamburger} onClick={toggleDrawer} aria-label="Open menu">
         <FaBars size={22} />
       </div>
 
-      <aside className={`${styles.drawer} ${open ? styles.open : ""}`}>
+      <aside className={`${styles.drawer} ${open ? styles.open : ""}`} role="navigation">
         <div className={styles.drawerHeader}>
-          <FaTimes className={styles.closeIcon} onClick={toggleDrawer} />
+          <FaTimes className={styles.closeIcon} onClick={toggleDrawer} aria-label="Close menu" />
         </div>
 
         <nav className={styles.nav}>
@@ -46,7 +56,7 @@ export default function SideDrawer() {
               {item.label}
             </Link>
           ))}
-          <button className={styles.logout} onClick={signOut}>Sign Out</button>
+          <button className={styles.logout} onClick={handleSignOut}>Sign Out</button>
         </nav>
       </aside>
 
