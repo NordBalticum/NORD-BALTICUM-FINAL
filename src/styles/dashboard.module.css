@@ -197,11 +197,16 @@
     transform: scale(0.755) translateY(-1.5%);
     transform-origin: top center;
     padding: 0 clamp(12px, 4vw, 24px) 96px;
-    overflow: hidden;
+    overflow: visible; /* <=== ČIA MAGIJA */
+  }
+
+  .assetList {
+    overflow: visible !important; /* Jeigu būtų papildomas scrollas */
   }
 
   .assetItem {
     padding: 18px 22px;
+    overflow: visible;
   }
 
   .assetLogo {
@@ -219,15 +224,15 @@
 
   .logo {
     max-width: 75vw;
-    margin-top: clamp(10px, 2vh, 28px); /* Logotipas dar biški žemyn */
+    margin-top: clamp(10px, 2vh, 28px);
     filter: none !important;
   }
 
   .logoWrapper {
-    margin-bottom: clamp(14px, 3vh, 28px); /* Tobulas tarpas iki value */
+    margin-bottom: clamp(14px, 3vh, 28px);
   }
 
   .totalBalanceBox {
-    margin-bottom: clamp(14px, 3vh, 28px); /* Tarpas iki asset lentelių */
+    margin-bottom: clamp(14px, 3vh, 28px);
   }
 }
