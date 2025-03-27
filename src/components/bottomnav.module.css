@@ -62,16 +62,25 @@
 
 .active {
   background: white;
-  color: black; /* Tekstas juodas – dabar matomas aiškiai */
+  color: black;
   font-weight: 700;
   box-shadow: 0 0 14px rgba(255, 255, 255, 0.2);
   backdrop-filter: blur(4px);
+}
+
+.active .icon {
+  color: black !important; /* Ikonai juoda spalva */
+}
+
+.active .label {
+  color: black !important; /* Tekstui juoda spalva */
 }
 
 .icon {
   font-size: 1.2rem;
   margin-bottom: 2px;
   transition: transform 0.2s ease;
+  color: white;
 }
 
 .label {
@@ -80,6 +89,7 @@
   letter-spacing: 0.3px;
   text-transform: uppercase;
   text-shadow: 0 0 4px rgba(255, 255, 255, 0.06);
+  color: white;
 }
 
 /* === ANIMATIONS === */
@@ -99,7 +109,7 @@
   .navbar {
     width: calc(100% - 20px);
     height: 64px;
-    bottom: 40px; /* FINAL: pakelta maksimaliai +6px */
+    bottom: 48px; /* Pakelta iki max kaip matosi ekrane */
     padding: 0 10px;
     border-radius: 18px;
   }
