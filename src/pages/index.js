@@ -2,19 +2,27 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/contexts/AuthContext";
-import { useWebAuthn } from "@/contexts/WebAuthnContext";
-import { useMagicLink } from "@/contexts/MagicLinkContext";
 import Image from "next/image";
 import styles from "@/styles/index.module.css";
 import StarsBackground from "@/components/StarsBackground";
 
+// Kontekstai
+import { useAuth } from "@/contexts/AuthContext";
+import { useWebAuthn } from "@/contexts/WebAuthnContext";
+import { useMagicLink } from "@/contexts/MagicLinkContext";
+
 export default function Home() {
   const router = useRouter();
-  const { user, biometricEmail, signInWithEmail, loginWithGoogle } = useAuth();
-  const { loginWebAuthn, registerWebAuthn } = useWebAuthn();
-  const { loadingUser } = useMagicLink();
 
+  // Pagrindinis kontekstas
+  const { user: authUser, biometricEmail, signInWithEmail, loginWithGoogle, sessionReady } = useAuth();
+
+  // Atsarginis kontekstas (tik jei AuthContext dar neparuoštas)
+  const { user: magicUser, loadingUser } = useMagicLink();
+
+  const { loginWebAuthn, registerWebAuthn } = useWebAuthn();
+
+  const user = authUser || magicUser;
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState("idle");
   const [message, setMessage] = useState("");
@@ -38,7 +46,7 @@ export default function Home() {
     };
 
     const resetTilt = () => {
-      if (logo) logo.style.transform = "rotateX(0deg) rotateY(0deg) scale(1)";
+      logo.style.transform = "rotateX(0deg) rotateY(0deg) scale(1)";
     };
 
     const parent = logo?.parentNode;
@@ -53,10 +61,12 @@ export default function Home() {
 
   // === Redirect if logged in
   useEffect(() => {
-    if (user) router.push("/dashboard");
-  }, [user]);
+    if (sessionReady && user) {
+      router.push("/dashboard");
+    }
+  }, [sessionReady, user]);
 
-  // === Auto Biometric Login
+  // === Auto biometric login
   useEffect(() => {
     const autoLogin = async () => {
       if (!user && biometricEmail && !autoLoginTried && !loadingUser) {
@@ -77,6 +87,7 @@ export default function Home() {
     autoLogin();
   }, [user, biometricEmail, autoLoginTried, loadingUser]);
 
+  // === Email login
   const handleEmailLogin = async (e) => {
     e.preventDefault();
     if (!email.trim()) return setMessage("❌ Please enter a valid email.");
@@ -96,6 +107,7 @@ export default function Home() {
     }
   };
 
+  // === Google login
   const handleGoogleLogin = async () => {
     setStatus("sending");
     setMessage("⏳ Logging in with Google...");
@@ -110,6 +122,7 @@ export default function Home() {
     }
   };
 
+  // === Manual biometric login
   const handleBiometricLogin = async () => {
     if (!biometricEmail) return setMessage("❌ No biometric session found.");
     setStatus("sending");
