@@ -36,6 +36,18 @@ export default function SettingsPage() {
     window.location.reload();
   };
 
+  const enableBiometric = () => {
+    if (!user?.email) return;
+    localStorage.setItem("biometric_user", user.email);
+    alert("Biometric login enabled.");
+    window.location.reload();
+  };
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(walletAddress);
+    alert("Wallet address copied!");
+  };
+
   const handleLogout = async () => {
     await logout();
     router.replace("/");
@@ -48,8 +60,13 @@ export default function SettingsPage() {
         <h2 className={styles.heading}>Profile Settings</h2>
 
         <p><strong>Email:</strong> {user?.email}</p>
-        <p><strong>Wallet Address:</strong><br />{walletAddress || "Unavailable"}</p>
-        <p>
+
+        <div className={styles.walletBox} onClick={handleCopy} title="Click to copy">
+          <span><strong>Wallet Address:</strong></span>
+          <span className={styles.walletAddress}>{walletAddress || "Unavailable"}</span>
+        </div>
+
+        <div>
           <strong>Biometric Login:</strong>{" "}
           {biometricEmail ? (
             <>
@@ -59,9 +76,11 @@ export default function SettingsPage() {
               </button>
             </>
           ) : (
-            "Not Active"
+            <button className={styles.smallButton} onClick={enableBiometric}>
+              Enable Biometric Login
+            </button>
           )}
-        </p>
+        </div>
 
         <hr />
 
