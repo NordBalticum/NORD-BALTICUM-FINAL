@@ -4,33 +4,24 @@ import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { useWebAuthn } from "@/contexts/WebAuthnContext";
+import { useMagicLink } from "@/contexts/MagicLinkContext";
 import Image from "next/image";
 import styles from "@/styles/index.module.css";
 import StarsBackground from "@/components/StarsBackground";
 
 export default function Home() {
   const router = useRouter();
-
-  const {
-    user,
-    biometricEmail,
-    signInWithEmail,
-    loginWithGoogle,
-  } = useAuth();
-
-  const {
-    registerWebAuthn,
-    loginWebAuthn,
-  } = useWebAuthn();
+  const { user, biometricEmail, signInWithEmail, loginWithGoogle } = useAuth();
+  const { loginWebAuthn, registerWebAuthn } = useWebAuthn();
+  const { loadingUser } = useMagicLink();
 
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState("idle");
   const [message, setMessage] = useState("");
   const [autoLoginTried, setAutoLoginTried] = useState(false);
-
   const logoRef = useRef(null);
 
-  // === 3D Logo Hover Effect
+  // === 3D Tilt Logo Animation
   useEffect(() => {
     const logo = logoRef.current;
     if (!logo) return;
@@ -47,12 +38,10 @@ export default function Home() {
     };
 
     const resetTilt = () => {
-      if (logo) {
-        logo.style.transform = "rotateX(0deg) rotateY(0deg) scale(1)";
-      }
+      if (logo) logo.style.transform = "rotateX(0deg) rotateY(0deg) scale(1)";
     };
 
-    const parent = logo.parentNode;
+    const parent = logo?.parentNode;
     parent?.addEventListener("mousemove", handleMouseMove);
     parent?.addEventListener("mouseleave", resetTilt);
 
@@ -67,29 +56,27 @@ export default function Home() {
     if (user) router.push("/dashboard");
   }, [user]);
 
-  // === Auto WebAuthn Login
+  // === Auto Biometric Login
   useEffect(() => {
-    const attemptBiometricLogin = async () => {
-      if (!user && biometricEmail && !autoLoginTried) {
+    const autoLogin = async () => {
+      if (!user && biometricEmail && !autoLoginTried && !loadingUser) {
         setAutoLoginTried(true);
         setStatus("sending");
         setMessage("⏳ Attempting biometric login...");
         try {
           const success = await loginWebAuthn(biometricEmail);
-          if (!success) throw new Error("Biometric login failed.");
-          setMessage("✅ Biometric login successful.");
+          setMessage(success ? "✅ Biometric login successful." : "❌ Biometric login failed.");
         } catch (err) {
           console.error("Biometric login error:", err);
-          setMessage("❌ Biometric login failed.");
+          setMessage("❌ Biometric login error.");
         } finally {
           setStatus("idle");
         }
       }
     };
-    attemptBiometricLogin();
-  }, [user, biometricEmail, autoLoginTried, loginWebAuthn]);
+    autoLogin();
+  }, [user, biometricEmail, autoLoginTried, loadingUser]);
 
-  // === Email Login Handler
   const handleEmailLogin = async (e) => {
     e.preventDefault();
     if (!email.trim()) return setMessage("❌ Please enter a valid email.");
@@ -109,7 +96,6 @@ export default function Home() {
     }
   };
 
-  // === Google Login Handler
   const handleGoogleLogin = async () => {
     setStatus("sending");
     setMessage("⏳ Logging in with Google...");
@@ -124,7 +110,6 @@ export default function Home() {
     }
   };
 
-  // === Biometric Button Login Handler
   const handleBiometricLogin = async () => {
     if (!biometricEmail) return setMessage("❌ No biometric session found.");
     setStatus("sending");
