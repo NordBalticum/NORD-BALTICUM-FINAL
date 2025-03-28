@@ -25,10 +25,10 @@ const networksData = [
 export default function Dashboard() {
   const router = useRouter();
 
-  const { user: authUser, wallet: authWallet, balances: authBalances, loadingUser, loadingWallets } = useAuth();
-  const { user: magicUser, loadingUser: loadingMagic } = useMagicLink();
-  const { wallets: walletLoad, loadingWallets: loadingWallet } = useWalletLoad();
-  const { balances: balanceState, loading: loadingBalances } = useBalance();
+  const { user: authUser, wallet: authWallet, balances: authBalances } = useAuth();
+  const { user: magicUser } = useMagicLink();
+  const { wallets: walletLoad } = useWalletLoad();
+  const { balances: balanceState } = useBalance();
 
   const user = authUser || magicUser;
   const wallet = authWallet || walletLoad;
@@ -37,15 +37,6 @@ export default function Dashboard() {
   const [totalEUR, setTotalEUR] = useState("0.00");
   const networks = useMemo(() => networksData, []);
 
-  // Loader check
-  const isLoading =
-    loadingUser ||
-    loadingMagic ||
-    loadingWallets ||
-    loadingWallet ||
-    loadingBalances;
-
-  // Skaičiuojam bendrą vertę kai turim balansus
   useEffect(() => {
     const total = Object.values(balances || {}).reduce((sum, b) => {
       const eur = parseFloat(b?.eur || 0);
@@ -54,28 +45,16 @@ export default function Dashboard() {
     setTotalEUR(total.toFixed(2));
   }, [balances]);
 
-  // Rodyti loader tik jei tikrai krauna
-  if (isLoading || !user || !wallet?.address) {
-    return (
-      <div className={styles.loadingContainer}>
-        <StarsBackground />
-        <div className={styles.loaderBox}>
-          <div className={styles.spinner}></div>
-          <p className={styles.loadingText}>Loading your dashboard...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Pilnas dashboard UI
   return (
     <div className={styles.container}>
       <StarsBackground />
 
       <div className={styles.dashboardWrapper}>
-        <div className={styles.avatarCenter}>
-          <AvatarDisplay walletAddress={wallet.address} size={92} />
-        </div>
+        {wallet?.address && (
+          <div className={styles.avatarCenter}>
+            <AvatarDisplay walletAddress={wallet.address} size={92} />
+          </div>
+        )}
 
         <div className={styles.totalValueContainer}>
           <p className={styles.totalLabel}>Total Value</p>
