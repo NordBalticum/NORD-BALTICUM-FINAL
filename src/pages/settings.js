@@ -2,18 +2,15 @@
 
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useGenerateWallet } from "@/contexts/GenerateWalletContext";
 import { useRouter } from "next/navigation";
 import StarsBackground from "@/components/StarsBackground";
 import AvatarModalPicker from "@/components/AvatarModalPicker";
 import AvatarDisplay from "@/components/AvatarDisplay";
 import SuccessModal from "@/components/SuccessModal";
 import styles from "@/styles/settings.module.css";
-import { Wallet } from "ethers";
 
 export default function SettingsPage() {
-  const { user, wallet, logout, supabase, refreshBalances } = useAuth();
-  const { generateOneWalletForAllNetworks } = useGenerateWallet();
+  const { user, wallet, logout, supabase } = useAuth();
   const router = useRouter();
 
   const [emailInput, setEmailInput] = useState("");
@@ -21,7 +18,6 @@ export default function SettingsPage() {
   const [showAvatarModal, setShowAvatarModal] = useState(false);
   const [avatarKey, setAvatarKey] = useState(Date.now());
   const [success, setSuccess] = useState(false);
-  const [walletSuccess, setWalletSuccess] = useState(false);
 
   useEffect(() => {
     if (wallet?.address) setWalletAddress(wallet.address);
@@ -48,49 +44,6 @@ export default function SettingsPage() {
     setAvatarKey(Date.now());
     setShowAvatarModal(false);
     setSuccess(true);
-  };
-
-  const handleGenerateNewWallet = async () => {
-    if (!user?.email || !user?.id) return alert("No user session found.");
-
-    // Tikrinam ar email patvirtintas
-    const isEmailVerified = user?.email_confirmed_at !== null;
-    if (!isEmailVerified) {
-      return alert("Please confirm your email address before generating a new wallet. Check your inbox.");
-    }
-
-    const confirm = window.confirm("Are you sure you want to generate a new wallet? Your current one will be deleted.");
-    if (!confirm) return;
-
-    try {
-      const newWallets = generateOneWalletForAllNetworks();
-      const first = Object.values(newWallets)[0];
-
-      // 1. Ištrinti seną įrašą
-      await supabase.from("wallets").delete().eq("email", user.email);
-
-      // 2. Įrašyti naują
-      await supabase.from("wallets").insert({
-        user_id: user.id,
-        email: user.email,
-        bsc: first.address,
-        tbnb: first.address,
-        eth: first.address,
-        pol: first.address,
-        avax: first.address,
-      });
-
-      // 3. Atnaujinti lokalų state
-      localStorage.setItem("userWallets", JSON.stringify(newWallets));
-      setWalletAddress(first.address);
-      setWalletSuccess(true);
-
-      // 4. Refresh balance
-      await refreshBalances?.();
-    } catch (err) {
-      console.error("❌ Wallet generation error:", err.message);
-      alert("Failed to generate new wallet.");
-    }
   };
 
   return (
@@ -133,15 +86,6 @@ export default function SettingsPage() {
 
         <hr />
 
-        <div className={styles.section}>
-          <h4>Generate New Wallet</h4>
-          <button className={styles.dangerButton} onClick={handleGenerateNewWallet}>
-            Generate New Wallet
-          </button>
-        </div>
-
-        <hr />
-
         <button className={styles.logout} onClick={handleLogout}>
           Log Out
         </button>
@@ -158,13 +102,6 @@ export default function SettingsPage() {
         <SuccessModal
           message="Avatar updated successfully!"
           onClose={() => setSuccess(false)}
-        />
-      )}
-
-      {walletSuccess && (
-        <SuccessModal
-          message="New wallet generated successfully!"
-          onClose={() => setWalletSuccess(false)}
         />
       )}
     </div>
