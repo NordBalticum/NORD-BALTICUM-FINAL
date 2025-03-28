@@ -9,10 +9,8 @@ import StarsBackground from "@/components/StarsBackground";
 import BottomNavigation from "@/components/BottomNavigation";
 import AvatarDisplay from "@/components/AvatarDisplay";
 
-import { useAuth } from "@/contexts/AuthContext";
 import { useMagicLink } from "@/contexts/MagicLinkContext";
-import { useWalletLoad } from "@/contexts/WalletLoadContext";
-import { useBalance } from "@/contexts/BalanceContext";
+import { useWallet } from "@/contexts/WalletContext";
 
 const networksData = [
   { name: "BNB Smart Chain", symbol: "BNB", logo: "https://cryptologos.cc/logos/bnb-bnb-logo.png", route: "/bnb" },
@@ -24,18 +22,13 @@ const networksData = [
 
 export default function Dashboard() {
   const router = useRouter();
-
-  const { user: authUser, wallet: authWallet, balances: authBalances } = useAuth();
-  const { user: magicUser } = useMagicLink();
-  const { wallets: walletLoad } = useWalletLoad();
-  const { balances: balanceState } = useBalance();
-
-  const user = authUser || magicUser;
-  const wallet = authWallet || walletLoad;
-  const balances = authBalances || balanceState;
+  const { user, loadingUser } = useMagicLink();
+  const { wallet, balances, loadingWallet } = useWallet();
 
   const [totalEUR, setTotalEUR] = useState("0.00");
   const networks = useMemo(() => networksData, []);
+
+  const isLoading = loadingUser || loadingWallet;
 
   useEffect(() => {
     const total = Object.values(balances || {}).reduce((sum, b) => {
@@ -44,6 +37,18 @@ export default function Dashboard() {
     }, 0);
     setTotalEUR(total.toFixed(2));
   }, [balances]);
+
+  if (isLoading) {
+    return (
+      <div className={styles.loadingContainer}>
+        <StarsBackground />
+        <div className={styles.loaderBox}>
+          <div className={styles.spinner}></div>
+          <p className={styles.loadingText}>Loading your dashboard...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.container}>
