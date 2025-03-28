@@ -12,6 +12,7 @@ import { useMagicLink } from "@/contexts/MagicLinkContext";
 import { useWalletLoad } from "@/contexts/WalletLoadContext";
 import { useBalance } from "@/contexts/BalanceContext";
 
+// Supabase klientas (naudojamas fallback'ui)
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -29,21 +30,26 @@ export const AuthProvider = ({ children }) => {
   } = useMagicLink();
 
   const { wallets, loadingWallets } = useWalletLoad();
-  const { balances, loading: loadingBalances, refreshBalances } = useBalance();
+  const {
+    balances,
+    loading: loadingBalances,
+    refreshBalances,
+  } = useBalance();
 
   const [sessionReady, setSessionReady] = useState(false);
   const wasLoggedInRef = useRef(false);
 
-  // ✅ Reaguojam į Supabase AUTH įvykius (LOGIN / LOGOUT)
+  // ✅ Reaguojam į Supabase auth įvykius
   useEffect(() => {
     const { data: subscription } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        const isRoot = typeof window !== "undefined" && window.location.pathname === "/";
+        const isRoot =
+          typeof window !== "undefined" && window.location.pathname === "/";
 
         if (event === "SIGNED_OUT" || !session?.user) {
           console.warn("⚠️ Session ended or user signed out.");
-          localStorage.removeItem("userWallets");
           wasLoggedInRef.current = false;
+          localStorage.removeItem("userWallets");
 
           if (!isRoot) {
             window.location.replace("/");
@@ -59,10 +65,12 @@ export const AuthProvider = ({ children }) => {
       }
     );
 
-    return () => subscription?.unsubscribe?.();
+    return () => {
+      subscription?.unsubscribe?.();
+    };
   }, [refreshBalances]);
 
-  // ✅ Automatinis readiness statusas (kai viskas pilnai užkrauta)
+  // ✅ Automatinis readiness tikrinimas (viskas užkrauta)
   useEffect(() => {
     const ready =
       !loadingUser &&
