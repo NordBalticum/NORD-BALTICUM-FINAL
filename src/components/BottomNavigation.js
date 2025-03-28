@@ -24,18 +24,16 @@ export default function BottomNavigation() {
   const pathname = usePathname();
 
   return (
-    <nav
-      className={styles.navbar}
-      role="navigation"
-      aria-label="Bottom Navigation Bar"
-    >
+    <nav className={styles.navbar} role="navigation" aria-label="Bottom Navigation">
       {navItems.map(({ path, icon, label }) => {
         const isActive = pathname === path;
+
         return (
-          <Link key={path} href={path} passHref legacyBehavior>
+          <Link key={path} href={path}>
             <button
               type="button"
               className={`${styles.navItem} ${isActive ? styles.active : ""}`}
+              aria-current={isActive ? "page" : undefined}
               aria-label={label}
             >
               <div className={styles.icon}>{icon}</div>
