@@ -6,40 +6,47 @@ import { useMagicLink } from "./MagicLinkContext";
 
 const WalletLoadContext = createContext();
 
-// Supabase klientas
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 );
 
-// Konteksto tiekėjas
 export const WalletLoadProvider = ({ children }) => {
   const { user } = useMagicLink();
   const [wallets, setWallets] = useState(null);
+  const [walletsReady, setWalletsReady] = useState(false);
   const [loadingWallets, setLoadingWallets] = useState(true);
 
   useEffect(() => {
     const loadWallet = async () => {
-      if (!user?.email) return setLoadingWallets(false);
+      if (!user?.email) {
+        setLoadingWallets(false);
+        setWalletsReady(true);
+        return;
+      }
 
       setLoadingWallets(true);
 
       try {
-        // 1. Tikrinam localStorage cache
-        const cached = localStorage.getItem("userWallets");
-        if (cached) {
-          try {
-            const parsed = JSON.parse(cached);
-            setWallets(parsed);
-            setLoadingWallets(false);
-            return;
-          } catch (err) {
-            console.warn("⚠️ Netinkamas localStorage formatas, trinu...");
-            localStorage.removeItem("userWallets");
+        // 1. LOCALSTORAGE
+        if (typeof window !== "undefined") {
+          const cached = localStorage.getItem("userWallets");
+          if (cached) {
+            try {
+              const parsed = JSON.parse(cached);
+              setWallets(parsed);
+              if (process.env.NODE_ENV === "development") console.log("✅ Piniginė iš localStorage.");
+              setLoadingWallets(false);
+              setWalletsReady(true);
+              return;
+            } catch {
+              console.warn("⚠️ Netinkamas localStorage formatas – valoma.");
+              localStorage.removeItem("userWallets");
+            }
           }
         }
 
-        // 2. Gaunam iš Supabase DB
+        // 2. SUPABASE DB
         const { data, error } = await supabase
           .from("wallets")
           .select("*")
@@ -50,6 +57,7 @@ export const WalletLoadProvider = ({ children }) => {
           console.warn("⚠️ Piniginė nerasta Supabase DB.");
           setWallets(null);
           setLoadingWallets(false);
+          setWalletsReady(true);
           return;
         }
 
@@ -65,12 +73,16 @@ export const WalletLoadProvider = ({ children }) => {
         };
 
         setWallets(walletObj);
-        localStorage.setItem("userWallets", JSON.stringify(walletObj));
+        if (typeof window !== "undefined") {
+          localStorage.setItem("userWallets", JSON.stringify(walletObj));
+        }
+        if (process.env.NODE_ENV === "development") console.log("✅ Piniginė įkelta iš Supabase.");
       } catch (err) {
-        console.error("❌ Klaida kraunant piniginę:", err.message);
+        console.error("❌ Klaida kraunant piniginę:", err?.message || err);
         setWallets(null);
       } finally {
         setLoadingWallets(false);
+        setWalletsReady(true);
       }
     };
 
@@ -78,7 +90,7 @@ export const WalletLoadProvider = ({ children }) => {
   }, [user]);
 
   return (
-    <WalletLoadContext.Provider value={{ wallets, loadingWallets }}>
+    <WalletLoadContext.Provider value={{ wallets, loadingWallets, walletsReady }}>
       {children}
     </WalletLoadContext.Provider>
   );
