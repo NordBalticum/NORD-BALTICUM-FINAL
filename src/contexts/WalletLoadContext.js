@@ -1,106 +1,55 @@
+// src/contexts/WalletLoadContext.js
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { createClient } from "@supabase/supabase-js";
-import { useMagicLink } from "./MagicLinkContext";
+import { supabase } from "@/lib/supabaseClient";
+import { useAuth } from "./AuthContext";
 
 const WalletLoadContext = createContext();
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-);
-
-export const WalletLoadProvider = ({ children }) => {
-  const { user } = useMagicLink();
+export function WalletLoadProvider({ children }) {
+  const { user } = useAuth();
   const [wallets, setWallets] = useState(null);
-  const [walletsReady, setWalletsReady] = useState(false);
   const [loadingWallets, setLoadingWallets] = useState(true);
 
   useEffect(() => {
-    const loadWallet = async () => {
-      if (!user?.email) {
+    const fetchWallets = async () => {
+      if (!user) {
         setWallets(null);
         setLoadingWallets(false);
-        setWalletsReady(true);
         return;
       }
 
-      setLoadingWallets(true);
-
       try {
-        // ✅ 1. LOCAL STORAGE
-        if (typeof window !== "undefined") {
-          const cached = localStorage.getItem("userWallets");
-          if (cached) {
-            try {
-              const parsed = JSON.parse(cached);
-              setWallets(parsed);
-              if (process.env.NODE_ENV === "development") {
-                console.log("✅ Wallet loaded from localStorage.");
-              }
-              setLoadingWallets(false);
-              setWalletsReady(true);
-              return;
-            } catch {
-              console.warn("⚠️ Corrupted localStorage – clearing...");
-              localStorage.removeItem("userWallets");
-            }
-          }
-        }
-
-        // ✅ 2. SUPABASE
         const { data, error } = await supabase
           .from("wallets")
           .select("*")
-          .eq("email", user.email)
+          .eq("user_id", user.id)
           .single();
 
         if (error || !data) {
-          console.warn("⚠️ Wallet not found in Supabase.");
+          console.warn("⚠️ Wallet nerastas arba klaida:", error?.message);
           setWallets(null);
-          setLoadingWallets(false);
-          setWalletsReady(true);
-          return;
-        }
-
-        const walletObj = {
-          address: data.bsc,
-          networks: {
-            bsc: data.bsc,
-            tbnb: data.tbnb,
-            eth: data.eth,
-            pol: data.pol,
-            avax: data.avax,
-          },
-        };
-
-        setWallets(walletObj);
-
-        if (typeof window !== "undefined") {
-          localStorage.setItem("userWallets", JSON.stringify(walletObj));
-        }
-
-        if (process.env.NODE_ENV === "development") {
-          console.log("✅ Wallet loaded from Supabase.");
+        } else {
+          console.log("✅ Wallet sėkmingai užkrautas:", data.address);
+          setWallets(data);
         }
       } catch (err) {
-        console.error("❌ Error loading wallet:", err?.message || err);
+        console.error("❌ Wallet fetch klaida:", err.message);
         setWallets(null);
       } finally {
         setLoadingWallets(false);
-        setWalletsReady(true);
       }
     };
 
-    loadWallet();
+    fetchWallets();
   }, [user]);
 
   return (
-    <WalletLoadContext.Provider value={{ wallets, loadingWallets, walletsReady }}>
+    <WalletLoadContext.Provider value={{ wallets, loadingWallets }}>
       {children}
     </WalletLoadContext.Provider>
   );
-};
+}
 
 export const useWalletLoad = () => useContext(WalletLoadContext);
