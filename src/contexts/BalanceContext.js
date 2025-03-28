@@ -88,6 +88,7 @@ export const BalanceProvider = ({ children }) => {
       const res = await fetch(
         `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=eur`
       );
+      if (!res.ok) throw new Error("CoinGecko error");
       const data = await res.json();
       const prices = {};
       for (const [symbol, id] of Object.entries(COINGECKO_IDS)) {
@@ -95,8 +96,14 @@ export const BalanceProvider = ({ children }) => {
       }
       return prices;
     } catch (err) {
-      console.error("❌ Failed to fetch prices:", err);
-      return {};
+      console.error("❌ Failed to fetch prices:", err?.message || err);
+      return {
+        BNB: 0,
+        TBNB: 0,
+        ETH: 0,
+        POL: 0,
+        AVAX: 0,
+      };
     }
   };
 
@@ -144,8 +151,8 @@ export const BalanceProvider = ({ children }) => {
   useEffect(() => {
     if (!wallets?.address) return;
 
-    fetchAllBalances();
-    intervalRef.current = setInterval(fetchAllBalances, 10000);
+    fetchAllBalances(); // Pirmas užkrovimas
+    intervalRef.current = setInterval(fetchAllBalances, 10000); // Kas 10s
 
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
