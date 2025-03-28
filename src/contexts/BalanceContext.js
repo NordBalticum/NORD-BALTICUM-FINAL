@@ -13,41 +13,14 @@ import { useWalletLoad } from "@/contexts/WalletLoadContext";
 
 const BalanceContext = createContext();
 
-// === RPC fallback'ai
 const RPCS = {
-  BNB: [
-    "https://rpc.ankr.com/bsc",
-    "https://bsc-dataseed.binance.org",
-    "https://bsc.publicnode.com",
-    "https://1rpc.io/bnb",
-  ],
-  TBNB: [
-    "https://rpc.ankr.com/bsc_testnet_chapel",
-    "https://data-seed-prebsc-1-s1.binance.org:8545",
-    "https://data-seed-prebsc-2-s2.binance.org:8545",
-    "https://bsc-testnet.publicnode.com",
-  ],
-  ETH: [
-    "https://eth.llamarpc.com",
-    "https://rpc.ankr.com/eth",
-    "https://cloudflare-eth.com",
-    "https://1rpc.io/eth",
-  ],
-  POL: [
-    "https://polygon-rpc.com",
-    "https://rpc.ankr.com/polygon",
-    "https://polygon-bor.publicnode.com",
-    "https://1rpc.io/matic",
-  ],
-  AVAX: [
-    "https://api.avax.network/ext/bc/C/rpc",
-    "https://rpc.ankr.com/avalanche",
-    "https://avax.meowrpc.com",
-    "https://avalanche-c-chain.publicnode.com",
-  ],
+  BNB: [ /* ... */ ],
+  TBNB: [ /* ... */ ],
+  ETH: [ /* ... */ ],
+  POL: [ /* ... */ ],
+  AVAX: [ /* ... */ ],
 };
 
-// === CoinGecko simboliai
 const COINGECKO_IDS = {
   BNB: "binancecoin",
   TBNB: "binancecoin",
@@ -56,13 +29,11 @@ const COINGECKO_IDS = {
   AVAX: "avalanche-2",
 };
 
-// === Saugus toFixed
 const toFixedSafe = (num, digits = 4) => {
-  if (isNaN(num)) return "0.0000";
-  return parseFloat(num).toFixed(digits);
+  const n = parseFloat(num);
+  return isNaN(n) ? "0.0000" : n.toFixed(digits);
 };
 
-// === Gauk gyvą providerį
 const getWorkingProvider = async (symbol) => {
   const urls = RPCS[symbol] || [];
   for (const url of urls) {
@@ -70,14 +41,11 @@ const getWorkingProvider = async (symbol) => {
       const provider = new JsonRpcProvider(url);
       await provider.getBlockNumber();
       return provider;
-    } catch {
-      continue;
-    }
+    } catch {}
   }
   throw new Error(`No working RPC for ${symbol}`);
 };
 
-// === Balance Provider
 export const BalanceProvider = ({ children }) => {
   const { wallets } = useWalletLoad();
   const [balances, setBalances] = useState({});
@@ -142,17 +110,16 @@ export const BalanceProvider = ({ children }) => {
     }
   }, [wallets?.address]);
 
-  // === Automatinis intervalas
   useEffect(() => {
     if (!wallets?.address) return;
 
-    fetchAllBalances(); // Initial
+    fetchAllBalances();
     intervalRef.current = setInterval(fetchAllBalances, 10000);
 
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [fetchAllBalances]);
+  }, [fetchAllBalances, wallets?.address]);
 
   return (
     <BalanceContext.Provider
