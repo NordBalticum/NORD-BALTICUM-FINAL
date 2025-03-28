@@ -1,127 +1,109 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
-
+import React, { useEffect, useState } from "react";
+import { motion } from "framer-motion";
 import { useMagicLink } from "@/contexts/MagicLinkContext";
-import { useWallet } from "@/contexts/WalletContext";
-import { supabase } from "@/lib/supabaseClient";
-
+import { supabase } from "@/lib/supabase";
 import BottomNavigation from "@/components/BottomNavigation";
 import styles from "@/styles/history.module.css";
 
-export default function HistoryPage() {
-  const router = useRouter();
+export default function History() {
   const { user } = useMagicLink();
-  const { wallet } = useWallet();
-
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState("all");
 
-  // Redirect if not logged in
   useEffect(() => {
-    if (!user) router.push("/");
+    if (user?.email) {
+      fetchTransactions();
+    }
   }, [user]);
 
-  // Fetch transactions from Supabase
-  useEffect(() => {
-    const fetchTransactions = async () => {
-      if (!user?.email) return;
+  const fetchTransactions = async () => {
+    try {
       setLoading(true);
-      try {
-        const { data, error } = await supabase
-          .from("transactions")
-          .select("*")
-          .eq("sender_email", user.email)
-          .order("date", { ascending: false });
+      const { data, error } = await supabase
+        .from("transactions")
+        .select("*")
+        .or(`sender_email.eq.${user.email},receiver_email.eq.${user.email}`)
+        .order("created_at", { ascending: false });
 
-        if (error) throw error;
-        setTransactions(data || []);
-      } catch (err) {
-        console.error("❌ Error fetching transactions:", err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
+      if (error) throw error;
+      setTransactions(data);
+    } catch (err) {
+      console.error("❌ Klaida gaunant transakcijas:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    fetchTransactions();
-  }, [user]);
-
-  // Filter transactions by type
-  const filteredTransactions = useMemo(() => {
-    if (filter === "all") return transactions;
-    return transactions.filter((tx) => tx.type === filter);
-  }, [transactions, filter]);
-
-  if (!user) return null;
+  const transactionVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0 },
+  };
 
   return (
     <div className="globalContainer">
       <div className={styles.wrapper}>
-        <h1 className={styles.title}>Transaction History</h1>
-        <p className={styles.subtext}>All your recent blockchain activity</p>
-
-        <div className={styles.filters}>
-          {["all", "send", "receive", "stake"].map((f) => (
-            <button
-              key={f}
-              className={`${styles.filterBtn} ${filter === f ? styles.active : ""}`}
-              onClick={() => setFilter(f)}
-            >
-              {f.toUpperCase()}
-            </button>
-          ))}
-        </div>
+        <h1 className={styles.title}>TRANSAKCIJŲ ISTORIJA</h1>
+        <p className={styles.subtext}>Jūsų naujausia veikla</p>
 
         {loading ? (
-          <p className={styles.loading}>Loading your transactions...</p>
-        ) : filteredTransactions.length > 0 ? (
-          <div className={styles.list}>
-            {filteredTransactions.map((tx, index) => (
-              <div key={index} className={styles.card}>
-                <div className={styles.row}>
-                  <span className={styles.label}>Type:</span>
-                  <span className={styles.value}>{tx.type}</span>
-                </div>
-                <div className={styles.row}>
-                  <span className={styles.label}>Amount:</span>
-                  <span className={styles.value}>
-                    {tx.amount} {tx.currency}
+          <div className={styles.loading}>Kraunama istorija...</div>
+        ) : transactions.length === 0 ? (
+          <div className={styles.loading}>Transakcijų nėra.</div>
+        ) : (
+          <div className={styles.transactionList}>
+            {transactions.map((tx, index) => (
+              <motion.div
+                key={tx.tx_hash}
+                className={styles.transactionCard}
+                variants={transactionVariants}
+                initial="hidden"
+                animate="visible"
+                transition={{ duration: 0.3, delay: index * 0.1 }}
+              >
+                <div className={styles.transactionHeader}>
+                  <span className={styles.transactionType}>
+                    {tx.type.toUpperCase()} • {tx.network}
                   </span>
-                </div>
-                <div className={styles.row}>
-                  <span className={styles.label}>To:</span>
-                  <span className={styles.value}>
-                    {tx.receiver_address || "—"}
-                  </span>
-                </div>
-                <div className={styles.row}>
-                  <span className={styles.label}>Status:</span>
                   <span
                     className={
-                      tx.status === "success" ? styles.success : styles.pending
+                      tx.type === "receive"
+                        ? styles.transactionAmountReceive
+                        : styles.transactionAmountSend
                     }
                   >
-                    {tx.status}
+                    {tx.type === "receive" ? "+" : "-"}
+                    {tx.amount} {tx.network}
                   </span>
                 </div>
-                <div className={styles.row}>
-                  <span className={styles.label}>Date:</span>
-                  <span className={styles.value}>
-                    {new Date(tx.date).toLocaleDateString()}{" "}
-                    {new Date(tx.date).toLocaleTimeString()}
-                  </span>
-                </div>
-                <div className={styles.row}>
-                  <span className={styles.label}>Hash:</span>
-                  <span className={styles.value}>{tx.tx_hash}</span>
-                </div>
-              </div>
+
+                <p className={styles.transactionDetail}>
+                  <strong>{tx.type === "receive" ? "Nuo:" : "Kam:"}</strong>{" "}
+                  {tx.type === "receive"
+                    ? `${tx.sender.slice(0, 6)}...${tx.sender.slice(-4)}`
+                    : `${tx.receiver.slice(0, 6)}...${tx.receiver.slice(-4)}`}
+                </p>
+
+                <p className={styles.transactionDetail}>
+                  <strong>Mokestis:</strong> {tx.fee} {tx.network}
+                </p>
+
+                <p className={styles.transactionDate}>
+                  {new Date(tx.created_at).toLocaleString()}
+                </p>
+
+                <a
+                  href={`https://bscscan.com/tx/${tx.tx_hash}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={styles.transactionLink}
+                >
+                  Peržiūrėti transakciją
+                </a>
+              </motion.div>
             ))}
           </div>
-        ) : (
-          <p className={styles.empty}>No transactions found.</p>
         )}
       </div>
 
