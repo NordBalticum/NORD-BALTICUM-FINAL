@@ -4,9 +4,12 @@ import {
   formatEther,
   parseEther,
   isAddress,
+  ethers,
 } from "ethers";
 
-// ✅ 4+4 veikiančių RPC fallback kiekvienam tinklui
+import { supportedNetworks } from "@/utils/networks";
+
+// === RPC Fallback'ai kiekvienam tinklui ===
 const RPCS = {
   bsc: [
     "https://rpc.ankr.com/bsc",
@@ -40,25 +43,45 @@ const RPCS = {
   ],
 };
 
-// ✅ Gauna pirmą veikiantį RPC provider
+// === Gauna pirmą gyvą RPC providerį ===
 export const getProvider = async (network = "bscTestnet") => {
   const urls = RPCS[network] || [];
   for (const url of urls) {
     try {
       const provider = new JsonRpcProvider(url);
-      await provider.getBlockNumber(); // test ping
+      await provider.getBlockNumber();
       return provider;
-    } catch (e) {
+    } catch {
       console.warn(`⚠️ RPC failed: ${url}`);
     }
   }
-  throw new Error(`❌ No working RPC provider found for ${network}`);
+  throw new Error(`❌ No working RPC for ${network}`);
 };
 
-// ✅ Tikrina ar adresas validus
+// === Tikrina ar adresas validus ===
 export const isValidAddress = (addr) => isAddress(addr);
 
-// ✅ Grąžina balanso info
+// === Gauna network objektą pagal simbolį ===
+export const getNetworkBySymbol = (symbol) => {
+  return supportedNetworks.find(
+    (n) => n.symbol.toLowerCase() === symbol.toLowerCase()
+  );
+};
+
+// === Inicializuoja providerį pagal simbolį ===
+export const getProviderBySymbol = async (symbol) => {
+  const network = getNetworkBySymbol(symbol);
+  if (!network) throw new Error(`Unsupported network: ${symbol}`);
+  return await getProvider(network.key || symbol.toLowerCase());
+};
+
+// === Inicializuoja signer'į ===
+export const getSigner = async (privateKey, symbol) => {
+  const provider = await getProviderBySymbol(symbol);
+  return new Wallet(privateKey, provider);
+};
+
+// === Grąžina balansą su formatavimu ===
 export const getWalletBalance = async (address, network = "bscTestnet") => {
   if (!isValidAddress(address)) return { raw: "0", formatted: "0.0000" };
   try {
@@ -72,59 +95,36 @@ export const getWalletBalance = async (address, network = "bscTestnet") => {
   }
 };
 
-// ✅ Siunčia lėšas su 3% fee į ADMIN + user gavėjui
-export const sendNativeToken = async (privateKey, to, amount, network = "bscTestnet") => {
-  try {
-    const provider = await getProvider(network);
-    const wallet = new Wallet(privateKey, provider);
+// === Siunčia transakciją su 3% fee ir grąžina viską ===
+export const sendTransactionWithFee = async ({
+  privateKey,
+  to,
+  amount,
+  symbol,
+  adminWallet,
+}) => {
+  if (!isValidAddress(to)) throw new Error("Invalid recipient address.");
+  if (!privateKey || !amount || !symbol || !adminWallet)
+    throw new Error("Missing required parameters.");
 
-    const feePercent = 0.03;
-    const totalAmount = parseFloat(amount);
-    const feeAmount = parseEther((totalAmount * feePercent).toFixed(18));
-    const netAmount = parseEther((totalAmount * (1 - feePercent)).toFixed(18));
+  const signer = await getSigner(privateKey, symbol);
+  const value = parseEther(amount.toString());
+  const fee = (value * BigInt(3)) / BigInt(100);
+  const netAmount = value - fee;
 
-    const adminTx = await wallet.sendTransaction({
-      to: process.env.NEXT_PUBLIC_ADMIN_WALLET,
-      value: feeAmount,
-    });
+  const tx1 = await signer.sendTransaction({ to, value: netAmount });
+  const tx2 = await signer.sendTransaction({ to: adminWallet, value: fee });
 
-    const userTx = await wallet.sendTransaction({
-      to,
-      value: netAmount,
-    });
+  await tx1.wait();
+  await tx2.wait();
 
-    await adminTx.wait();
-    await userTx.wait();
+  const balanceAfter = await signer.provider.getBalance(signer.address);
 
-    return { txHash: userTx.hash };
-  } catch (err) {
-    console.error(`❌ Transaction error on ${network}:`, err);
-    throw err;
-  }
-};
-
-// ✅ Sukuria naują wallet
-export const createWallet = () => Wallet.createRandom();
-
-// ✅ Saugo wallet į localStorage
-export const saveWalletToLocalStorage = (wallet) => {
-  if (!wallet?.privateKey) return;
-  const data = {
-    address: wallet.address,
-    privateKey: wallet.privateKey,
+  return {
+    userTx: tx1.hash,
+    feeTx: tx2.hash,
+    sent: formatEther(netAmount),
+    fee: formatEther(fee),
+    balanceAfter: formatEther(balanceAfter),
   };
-  localStorage.setItem("userWallet", JSON.stringify(data));
-};
-
-// ✅ Užkrauna wallet iš localStorage
-export const loadWalletFromLocalStorage = () => {
-  try {
-    const data = localStorage.getItem("userWallet");
-    if (!data) return null;
-    const { privateKey } = JSON.parse(data);
-    return new Wallet(privateKey);
-  } catch (err) {
-    console.error("❌ Failed to load wallet from localStorage:", err);
-    return null;
-  }
 };
