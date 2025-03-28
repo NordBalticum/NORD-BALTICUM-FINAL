@@ -66,9 +66,11 @@ const getWorkingProvider = async (symbol) => {
       const provider = new JsonRpcProvider(url);
       await provider.getBlockNumber();
       return provider;
-    } catch {}
+    } catch {
+      continue;
+    }
   }
-  throw new Error(`No working RPC for ${symbol}`);
+  throw new Error(`❌ No working RPC for ${symbol}`);
 };
 
 export const BalanceProvider = ({ children }) => {
@@ -76,13 +78,16 @@ export const BalanceProvider = ({ children }) => {
   const [balances, setBalances] = useState({});
   const [rawBalances, setRawBalances] = useState({});
   const [loading, setLoading] = useState(false);
+  const [balancesReady, setBalancesReady] = useState(false);
   const [selectedNetwork, setSelectedNetwork] = useState("BNB");
   const intervalRef = useRef(null);
 
   const fetchPrices = async () => {
     try {
       const ids = Object.values(COINGECKO_IDS).join(",");
-      const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=eur`);
+      const res = await fetch(
+        `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=eur`
+      );
       const data = await res.json();
       const prices = {};
       for (const [symbol, id] of Object.entries(COINGECKO_IDS)) {
@@ -119,7 +124,7 @@ export const BalanceProvider = ({ children }) => {
 
             tempRaw[symbol] = balance.toString();
           } catch (err) {
-            console.warn(`⚠️ ${symbol} balance error:`, err);
+            console.warn(`⚠️ ${symbol} balance error:`, err?.message || err);
             tempBalances[symbol] = { amount: "0.0000", eur: "0.00" };
             tempRaw[symbol] = "0";
           }
@@ -128,8 +133,9 @@ export const BalanceProvider = ({ children }) => {
 
       setBalances(tempBalances);
       setRawBalances(tempRaw);
+      setBalancesReady(true);
     } catch (err) {
-      console.error("❌ Total balance fetch error:", err);
+      console.error("❌ Total balance fetch error:", err?.message || err);
     } finally {
       setLoading(false);
     }
@@ -138,7 +144,7 @@ export const BalanceProvider = ({ children }) => {
   useEffect(() => {
     if (!wallets?.address) return;
 
-    fetchAllBalances(); // Init
+    fetchAllBalances();
     intervalRef.current = setInterval(fetchAllBalances, 10000);
 
     return () => {
@@ -152,6 +158,7 @@ export const BalanceProvider = ({ children }) => {
         balances,
         rawBalances,
         loading,
+        balancesReady,
         selectedNetwork,
         setSelectedNetwork,
         refreshBalances: fetchAllBalances,
