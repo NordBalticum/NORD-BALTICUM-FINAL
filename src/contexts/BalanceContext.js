@@ -14,11 +14,36 @@ import { useWalletLoad } from "@/contexts/WalletLoadContext";
 const BalanceContext = createContext();
 
 const RPCS = {
-  BNB: [ /* ... */ ],
-  TBNB: [ /* ... */ ],
-  ETH: [ /* ... */ ],
-  POL: [ /* ... */ ],
-  AVAX: [ /* ... */ ],
+  BNB: [
+    "https://rpc.ankr.com/bsc",
+    "https://bsc-dataseed.binance.org",
+    "https://bsc.publicnode.com",
+    "https://1rpc.io/bnb",
+  ],
+  TBNB: [
+    "https://rpc.ankr.com/bsc_testnet_chapel",
+    "https://data-seed-prebsc-1-s1.binance.org:8545",
+    "https://data-seed-prebsc-2-s2.binance.org:8545",
+    "https://bsc-testnet.publicnode.com",
+  ],
+  ETH: [
+    "https://eth.llamarpc.com",
+    "https://rpc.ankr.com/eth",
+    "https://cloudflare-eth.com",
+    "https://1rpc.io/eth",
+  ],
+  POL: [
+    "https://polygon-rpc.com",
+    "https://rpc.ankr.com/polygon",
+    "https://polygon-bor.publicnode.com",
+    "https://1rpc.io/matic",
+  ],
+  AVAX: [
+    "https://api.avax.network/ext/bc/C/rpc",
+    "https://rpc.ankr.com/avalanche",
+    "https://avax.meowrpc.com",
+    "https://avalanche-c-chain.publicnode.com",
+  ],
 };
 
 const COINGECKO_IDS = {
@@ -113,7 +138,7 @@ export const BalanceProvider = ({ children }) => {
   useEffect(() => {
     if (!wallets?.address) return;
 
-    fetchAllBalances();
+    fetchAllBalances(); // Init
     intervalRef.current = setInterval(fetchAllBalances, 10000);
 
     return () => {
