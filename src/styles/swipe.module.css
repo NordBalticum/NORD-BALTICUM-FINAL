@@ -1,4 +1,5 @@
-/* === FULLSCREEN WRAPPER === */
+/* === NordBalticum Swipe + UI CSS === */
+
 .wrapper {
   width: 100%;
   max-width: clamp(360px, 95vw, 1920px);
@@ -12,7 +13,6 @@
   margin: 0 auto;
 }
 
-/* === TITLE + SUBTEXT === */
 .title {
   font-size: clamp(28px, 6vw, 48px);
   font-weight: 900;
@@ -36,14 +36,12 @@
   margin-top: -8px;
 }
 
-/* === ANIMACIJOS === */
 @keyframes glowTitle {
   0% { text-shadow: 0 0 10px #ffd700; }
   50% { text-shadow: 0 0 18px #fffacd; }
   100% { text-shadow: 0 0 10px #ffd700; }
 }
 
-/* === SWIPE WRAPPER === */
 .swipeWrapper {
   width: 100%;
   display: flex;
@@ -61,174 +59,36 @@
   display: none;
 }
 
-/* === WALLET CARD === */
-.walletCard {
-  min-width: clamp(260px, 75vw, 380px);
-  scroll-snap-align: start;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 24px;
-  padding: clamp(16px, 3vw, 28px);
-  backdrop-filter: blur(20px) saturate(160%);
-  box-shadow: 0 0 26px rgba(255, 255, 255, 0.05);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  color: white;
-  position: relative;
-  flex-shrink: 0;
-}
-
-.walletCard:hover {
-  transform: scale(1.03);
-  box-shadow: 0 0 48px rgba(255, 255, 255, 0.25), 0 0 64px rgba(0, 255, 200, 0.25);
-}
-
-.walletHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-}
-
-.walletName {
-  font-weight: 600;
-  font-size: clamp(14px, 3vw, 18px);
-}
-
-.walletBalance {
-  font-weight: 700;
-  font-size: clamp(16px, 3.5vw, 20px);
-  background: linear-gradient(90deg, #ffffff, #ffd700);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-/* === ICON === */
-.icon {
-  width: clamp(36px, 9vw, 54px);
-  height: clamp(36px, 9vw, 54px);
-  object-fit: contain;
-  margin-top: 12px;
-  filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.15));
-}
-
-/* === INPUT ZONA === */
-.walletActions {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  width: 100%;
-  margin-top: clamp(24px, 4vw, 48px);
-}
-
-.inputField {
-  width: 100%;
-  padding: 14px 16px;
+.card {
+  flex: 0 0 auto;
+  scroll-snap-align: center;
   background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 12px;
-  color: white;
-  font-size: 1rem;
-  outline: none;
-  transition: background 0.2s ease;
-}
-
-.inputField:focus {
-  background: rgba(255, 255, 255, 0.08);
-}
-
-/* === SEND BUTTON === */
-.confirmButton {
-  padding: 14px;
-  font-weight: 700;
-  text-transform: uppercase;
-  background: black;
-  color: white;
-  border: 2px solid white;
-  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 28px;
+  backdrop-filter: blur(16px);
+  box-shadow: 0 0 35px rgba(255, 255, 255, 0.15);
+  padding: clamp(20px, 3vw, 32px);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
   cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.confirmButton:hover {
-  background: white;
-  color: black;
-  box-shadow: 0 0 22px rgba(255, 255, 255, 0.4);
-}
-
-/* === MODAL === */
-.confirmModal {
-  position: fixed;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 95%;
-  max-width: 420px;
-  background: rgba(0, 0, 0, 0.85);
-  border: 2px solid rgba(255, 255, 255, 0.15);
-  border-radius: 18px;
-  padding: 24px;
-  color: white;
-  backdrop-filter: blur(18px);
-  z-index: 9999;
-  box-shadow: 0 0 24px rgba(0, 255, 200, 0.2);
-  animation: fadeInUp 0.35s ease;
-}
-
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translate(-50%, 12px);
-  }
-  to {
-    opacity: 1;
-    transform: translate(-50%, 0);
-  }
-}
-
-.modalTitle {
-  font-size: 1.2rem;
-  font-weight: 700;
-  margin-bottom: 12px;
-}
-
-.modalInfo {
-  font-size: 1rem;
-  opacity: 0.85;
-  margin-bottom: 18px;
-}
-
-.modalActions {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.modalButton {
-  flex: 1;
-  padding: 12px;
-  border-radius: 12px;
-  font-weight: 700;
-  text-transform: uppercase;
-  cursor: pointer;
-  border: none;
-  background: white;
-  color: black;
-}
-
-.modalButton.cancel {
-  background: transparent;
-  color: white;
-  border: 2px solid white;
-}
-
-/* === LOADING === */
-.loading {
-  font-size: 1.2rem;
-  color: white;
+  width: clamp(140px, 20vw, 220px);
   text-align: center;
-  padding-top: 120px;
-  font-family: var(--font-crypto);
+}
+
+.card:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 45px rgba(255, 255, 255, 0.25);
+}
+
+.logo {
+  width: clamp(40px, 8vw, 64px);
+  height: clamp(40px, 8vw, 64px);
+  margin: 0 auto clamp(12px, 2vw, 20px);
+  filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.5));
+}
+
+.name {
+  font-size: clamp(16px, 1.5vw, 20px);
+  color: white;
+  font-weight: 600;
+  text-shadow: 0 0 4px rgba(255, 255, 255, 0.3);
 }
