@@ -11,7 +11,6 @@ import { createClient } from "@supabase/supabase-js";
 import { useMagicLink } from "@/contexts/MagicLinkContext";
 import { useWalletLoad } from "@/contexts/WalletLoadContext";
 import { useBalance } from "@/contexts/BalanceContext";
-import { useGenerateWallet } from "@/contexts/GenerateWalletContext"; // <- Pridėtas!
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -31,11 +30,11 @@ export const AuthProvider = ({ children }) => {
 
   const { wallets, loadingWallets } = useWalletLoad();
   const { balances, loading: loadingBalances, refreshBalances } = useBalance();
-  const { generateWallet } = useGenerateWallet(); // <- Pridėta funkcija, jei reikalinga
 
   const [sessionReady, setSessionReady] = useState(false);
   const wasLoggedInRef = useRef(false);
 
+  // ✅ Supabase sesijos kontrolė
   useEffect(() => {
     const { data: subscription } = supabase.auth.onAuthStateChange(
       async (event, session) => {
@@ -62,6 +61,7 @@ export const AuthProvider = ({ children }) => {
     return () => subscription?.unsubscribe?.();
   }, [logout, refreshBalances]);
 
+  // ✅ Tikriname ar viskas užkrauta (naudotojas, wallets, balansai)
   useEffect(() => {
     const ready =
       !loadingUser &&
@@ -69,6 +69,7 @@ export const AuthProvider = ({ children }) => {
       !loadingBalances &&
       user &&
       wallets;
+
     setSessionReady(ready);
   }, [loadingUser, loadingWallets, loadingBalances, user, wallets]);
 
@@ -87,7 +88,6 @@ export const AuthProvider = ({ children }) => {
         loginWithGoogle,
         logout,
         refreshBalances,
-        generateWallet, // <- jei kažkur reikia naudoti tiesiogiai
       }}
     >
       {children}
