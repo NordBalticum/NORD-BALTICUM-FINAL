@@ -29,16 +29,12 @@ export const AuthProvider = ({ children }) => {
   } = useMagicLink();
 
   const { wallets, loadingWallets } = useWalletLoad();
-  const {
-    balances,
-    loading: loadingBalances,
-    refreshBalances,
-  } = useBalance();
+  const { balances, loading: loadingBalances, refreshBalances } = useBalance();
 
   const [sessionReady, setSessionReady] = useState(false);
   const wasLoggedInRef = useRef(false);
 
-  // ✅ Reaguojam į Supabase AUTH įvykius
+  // ✅ Reaguojam į Supabase AUTH įvykius (LOGIN / LOGOUT)
   useEffect(() => {
     const { data: subscription } = supabase.auth.onAuthStateChange(
       async (event, session) => {
@@ -66,7 +62,7 @@ export const AuthProvider = ({ children }) => {
     return () => subscription?.unsubscribe?.();
   }, [refreshBalances]);
 
-  // ✅ Automatinis sesijos readiness nustatymas
+  // ✅ Automatinis readiness statusas (kai viskas pilnai užkrauta)
   useEffect(() => {
     const ready =
       !loadingUser &&
