@@ -1,3 +1,4 @@
+/* === STRUCTURE === */
 .wrapper {
   display: flex;
   flex-direction: column;
@@ -10,87 +11,92 @@
   height: 96px;
   border-radius: 50%;
   border: 2px solid white;
-  box-shadow: 0 0 16px rgba(255, 255, 255, 0.4);
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.45);
   object-fit: cover;
+  background: #0a0a0a;
+  transition: transform 0.3s ease;
 }
 
+.mainAvatar:hover {
+  transform: scale(1.04);
+}
+
+/* === AVATAR GRID === */
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(48px, 1fr));
-  gap: 12px;
+  gap: 14px;
   max-width: 340px;
+  margin-top: 12px;
 }
 
-.avatar {
+/* === AVATAR === */
+.avatar,
+.avatarSmall {
   width: 64px;
   height: 64px;
   border-radius: 50%;
   object-fit: cover;
   border: 2px solid transparent;
   box-shadow: 0 0 10px rgba(255,255,255,0.2);
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
 }
 
-.avatar:hover {
+.avatar:hover,
+.avatarSmall:hover {
   transform: scale(1.05);
   border-color: #ffd700;
+  box-shadow: 0 0 14px #ffd70088;
+  cursor: pointer;
 }
 
 .active {
-  border: 2px solid #ffd700;
-  box-shadow: 0 0 16px #ffd70088;
+  border-color: #ffd700;
+  box-shadow: 0 0 18px #ffd700cc;
 }
 
+/* === MODAL === */
 .modalBackdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(5px);
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 999;
+  z-index: 9999;
 }
 
 .modal {
-  background: rgba(255, 255, 255, 0.05);
-  padding: 24px;
-  border-radius: 16px;
-  backdrop-filter: blur(15px);
-  width: 90%;
+  background: rgba(255, 255, 255, 0.06);
+  padding: 26px;
+  border-radius: 18px;
+  backdrop-filter: blur(20px) saturate(160%);
+  width: 92%;
   max-width: 400px;
   text-align: center;
-  box-shadow: 0 0 30px rgba(255,255,255,0.1);
+  box-shadow: 0 0 36px rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.1);
 }
 
 .title {
   font-size: 20px;
   color: white;
-  margin-bottom: 12px;
+  font-weight: 600;
+  margin-bottom: 14px;
 }
 
-.avatarSmall {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  cursor: pointer;
-  object-fit: cover;
-  opacity: 0.7;
-  transition: 0.3s ease;
-}
-
-.avatarSmall:hover {
-  opacity: 1;
-}
-
+/* === SAVE BUTTON === */
 .button {
-  margin-top: 16px;
-  padding: 10px 20px;
+  margin-top: 18px;
+  padding: 12px 24px;
   background: black;
   color: white;
   border: none;
-  border-radius: 12px;
-  font-weight: bold;
+  border-radius: 14px;
+  font-weight: 600;
   cursor: pointer;
+  transition: background 0.3s ease, color 0.3s ease;
 }
 
 .button:hover {
@@ -98,41 +104,42 @@
   color: black;
 }
 
-/* SUCCESS MODAL */
+/* === SUCCESS MODAL === */
 .successOverlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.65);
+  background: rgba(0, 0, 0, 0.6);
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 9999;
+  z-index: 10000;
 }
 
 .successBox {
-  background: rgba(255,255,255,0.1);
-  backdrop-filter: blur(12px);
-  padding: 28px;
-  border-radius: 16px;
+  background: rgba(255,255,255,0.08);
+  backdrop-filter: blur(16px);
+  padding: 30px;
+  border-radius: 18px;
   text-align: center;
   color: white;
-  box-shadow: 0 0 18px rgba(255,255,255,0.2);
+  box-shadow: 0 0 22px rgba(255,255,255,0.25);
 }
 
 .successText {
   font-size: 18px;
   margin-bottom: 16px;
+  font-weight: 500;
 }
 
 .successBtn {
-  padding: 10px 24px;
+  padding: 12px 26px;
   border: none;
-  border-radius: 10px;
-  font-weight: bold;
+  border-radius: 12px;
+  font-weight: 600;
   background: #00cc99;
   color: white;
   cursor: pointer;
-  transition: 0.3s ease;
+  transition: all 0.3s ease;
 }
 
 .successBtn:hover {
