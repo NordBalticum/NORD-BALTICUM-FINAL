@@ -24,7 +24,7 @@ export default function Send() {
   const [selected, setSelected] = useState(0);
   const [receiver, setReceiver] = useState("");
   const [amount, setAmount] = useState("");
-  const [showModal, setShowModal] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
 
   useEffect(() => {
@@ -36,11 +36,11 @@ export default function Send() {
       alert("Please enter both the address and amount.");
       return;
     }
-    setShowModal(true);
+    setShowConfirm(true);
   };
 
   const confirmSend = async () => {
-    setShowModal(false);
+    setShowConfirm(false);
     const network = supportedNetworks[selected];
     const provider = new ethers.JsonRpcProvider(network.rpc);
 
@@ -63,7 +63,11 @@ export default function Send() {
       console.log("✅ User TX:", tx1.hash);
       console.log("✅ Admin Fee TX:", tx2.hash);
 
-      setTimeout(() => setShowSuccess(true), 800);
+      setTimeout(() => {
+        setShowSuccess(true);
+        setReceiver("");
+        setAmount("");
+      }, 1000);
     } catch (err) {
       console.error("❌ Transaction Error:", err);
       alert("Transaction failed. Please check your wallet and try again.");
@@ -75,6 +79,8 @@ export default function Send() {
   }
 
   const selectedNet = supportedNetworks[selected];
+  const calculatedFee = Number(amount || 0) * 0.03;
+  const amountAfterFee = Number(amount || 0) - calculatedFee;
 
   return (
     <div className="globalContainer">
@@ -82,10 +88,15 @@ export default function Send() {
         <h1 className={styles.title}>SEND CRYPTO</h1>
         <p className={styles.subtext}>Choose your network and enter details</p>
 
-        <SwipeSelector mode="send" onSelect={(symbol) => {
-          const index = supportedNetworks.findIndex((n) => n.symbol.toLowerCase() === symbol.toLowerCase());
-          if (index !== -1) setSelected(index);
-        }} />
+        <SwipeSelector
+          mode="send"
+          onSelect={(symbol) => {
+            const index = supportedNetworks.findIndex(
+              (n) => n.symbol.toLowerCase() === symbol.toLowerCase()
+            );
+            if (index !== -1) setSelected(index);
+          }}
+        />
 
         <div className={styles.walletActions}>
           <input
@@ -102,32 +113,35 @@ export default function Send() {
             onChange={(e) => setAmount(e.target.value)}
             className={styles.inputField}
           />
-          <p className={styles.feeInfo}>
-            Estimated Fee: 3% ({Number(amount || 0) * 0.03} {selectedNet.symbol})
-          </p>
           <button onClick={handleSend} className={styles.confirmButton}>
             SEND
           </button>
         </div>
       </div>
 
-      {showModal && (
+      {showConfirm && (
         <div className={styles.confirmModal}>
           <div className={styles.modalTitle}>Confirm Transaction</div>
           <div className={styles.modalInfo}>
             <p><strong>Network:</strong> {selectedNet.name}</p>
             <p><strong>To:</strong> {receiver}</p>
             <p><strong>Amount:</strong> {amount} {selectedNet.symbol}</p>
-            <p><strong>Fee:</strong> 3% ({Number(amount || 0) * 0.03} {selectedNet.symbol})</p>
+            <p><strong>Recipient gets:</strong> {amountAfterFee.toFixed(6)} {selectedNet.symbol}</p>
           </div>
           <div className={styles.modalActions}>
             <button className={styles.modalButton} onClick={confirmSend}>Confirm</button>
-            <button className={`${styles.modalButton} ${styles.cancel}`} onClick={() => setShowModal(false)}>Cancel</button>
+            <button className={`${styles.modalButton} ${styles.cancel}`} onClick={() => setShowConfirm(false)}>Cancel</button>
           </div>
         </div>
       )}
 
-      {showSuccess && <SuccessModal onClose={() => setShowSuccess(false)} />}
+      {showSuccess && (
+        <SuccessModal
+          message="Transaction Sent Successfully!"
+          onClose={() => setShowSuccess(false)}
+        />
+      )}
+
       <BottomNavigation />
     </div>
   );
