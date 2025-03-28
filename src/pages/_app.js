@@ -1,3 +1,5 @@
+"use client";
+
 import "@/styles/globals.css";
 import "@/styles/theme.css";
 import React from "react";
@@ -7,6 +9,7 @@ import { WalletLoadProvider } from "@/contexts/WalletLoadContext";
 import { BalanceProvider } from "@/contexts/BalanceContext";
 import { GenerateWalletProvider } from "@/contexts/GenerateWalletContext";
 import { AuthProvider } from "@/contexts/AuthContext";
+
 import Layout from "@/components/Layout";
 
 export default function App({ Component, pageProps }) {
