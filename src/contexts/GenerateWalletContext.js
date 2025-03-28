@@ -1,9 +1,8 @@
 "use client";
 
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useEffect, useState } from "react";
 import { ethers } from "ethers";
 
-// Palaikomi tinklai su pavadinimais
 const SUPPORTED_NETWORKS = {
   BNB: "Binance Smart Chain",
   TBNB: "BSC Testnet",
@@ -18,53 +17,38 @@ export const GenerateWalletProvider = ({ children }) => {
   const [generatedWallets, setGeneratedWallets] = useState({});
   const [loadingGenerate, setLoadingGenerate] = useState(false);
 
-  // ✅ Vienos piniginės generavimas
-  const generateWalletForNetwork = (networkSymbol) => {
+  useEffect(() => {
+    const local = localStorage.getItem("userWallets");
+    if (local) {
+      try {
+        const parsed = JSON.parse(local);
+        setGeneratedWallets(parsed);
+      } catch {
+        console.error("❌ Failed to parse local wallet data");
+      }
+    }
+  }, []);
+
+  // ✅ Tik viena piniginė visiems tinklams
+  const generateOneWalletForAllNetworks = () => {
     try {
       const wallet = ethers.Wallet.createRandom();
-      return {
-        address: wallet.address,
-        privateKey: wallet.privateKey,
-        network: SUPPORTED_NETWORKS[networkSymbol],
-        symbol: networkSymbol,
-      };
-    } catch (err) {
-      console.error(`❌ Wallet generation error (${networkSymbol}):`, err.message);
-      return null;
-    }
-  };
-
-  // ✅ Visų tinklų piniginių generavimas
-  const generateAllWallets = () => {
-    setLoadingGenerate(true);
-    try {
       const newWallets = {};
-      for (const symbol of Object.keys(SUPPORTED_NETWORKS)) {
-        const wallet = generateWalletForNetwork(symbol);
-        if (wallet) newWallets[symbol] = wallet;
-      }
-      setGeneratedWallets(newWallets);
-      localStorage.setItem("userWallets", JSON.stringify(newWallets));
-      console.log("✅ All wallets generated and saved.");
-    } catch (err) {
-      console.error("❌ Wallet generation failed:", err.message);
-    } finally {
-      setLoadingGenerate(false);
-    }
-  };
+      Object.keys(SUPPORTED_NETWORKS).forEach((symbol) => {
+        newWallets[symbol] = {
+          address: wallet.address,
+          privateKey: wallet.privateKey,
+          symbol,
+          network: SUPPORTED_NETWORKS[symbol],
+        };
+      });
 
-  // ✅ Piniginės gavimas iš localStorage
-  const getStoredWallets = () => {
-    try {
-      const stored = localStorage.getItem("userWallets");
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        setGeneratedWallets(parsed);
-        return parsed;
-      }
-      return null;
+      localStorage.setItem("userWallets", JSON.stringify(newWallets));
+      setGeneratedWallets(newWallets);
+      console.log("✅ One wallet used for all networks");
+      return newWallets;
     } catch (err) {
-      console.error("❌ Failed to load stored wallets:", err.message);
+      console.error("❌ Wallet generation error:", err.message);
       return null;
     }
   };
@@ -74,8 +58,7 @@ export const GenerateWalletProvider = ({ children }) => {
       value={{
         generatedWallets,
         loadingGenerate,
-        generateAllWallets,
-        getStoredWallets,
+        generateOneWalletForAllNetworks,
       }}
     >
       {children}
