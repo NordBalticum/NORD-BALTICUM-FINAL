@@ -10,9 +10,9 @@ export default function StarsBackground() {
     const ctx = canvas.getContext("2d");
 
     let stars = [];
-    const numStars = 200; // ✅ Daugiau žvaigždžių, bet subtiliai paskirstytos
-    const maxSize = 1.7;  // ✅ Šiek tiek didesnės
-    const maxAlpha = 0.75; // ✅ Padidintas maksimumas
+    const numStars = 220;
+    const maxSize = 1.9;
+    const maxAlpha = 0.88;
 
     const resize = () => {
       canvas.width = window.innerWidth;
@@ -20,11 +20,11 @@ export default function StarsBackground() {
       stars = Array.from({ length: numStars }, () => ({
         x: Math.random() * canvas.width,
         y: Math.random() * canvas.height,
-        radius: Math.random() * maxSize + 0.4,
-        alpha: Math.random() * 0.55 + 0.2, // ✅ 19% ryškesnės nei tavo paskutinės
-        speedY: Math.random() * 0.08 + 0.01,
-        flicker: Math.random() * 0.03 + 0.008,
-        baseAlpha: Math.random() * 0.3 + 0.25,
+        radius: Math.random() * maxSize + 0.6,
+        alpha: Math.random() * 0.4 + 0.3,
+        speedY: Math.random() * 0.06 + 0.01,
+        flicker: Math.random() * 0.02 + 0.005,
+        baseAlpha: Math.random() * 0.2 + 0.35,
       }));
     };
 
@@ -32,13 +32,13 @@ export default function StarsBackground() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       stars.forEach((star) => {
         star.alpha += (Math.random() - 0.5) * star.flicker;
-        star.alpha = Math.max(0.08, Math.min(star.alpha, maxAlpha));
+        star.alpha = Math.max(0.1, Math.min(star.alpha, maxAlpha));
 
         ctx.beginPath();
         ctx.arc(star.x, star.y, star.radius, 0, 2 * Math.PI);
         ctx.fillStyle = `rgba(255, 255, 255, ${star.alpha})`;
-        ctx.shadowBlur = 24; // ✅ intensyvesnis glow
-        ctx.shadowColor = "rgba(255, 255, 255, 0.6)";
+        ctx.shadowBlur = 36;
+        ctx.shadowColor = `rgba(255, 255, 255, ${Math.min(1, star.alpha + 0.2)})`;
         ctx.fill();
 
         star.y += star.speedY;
@@ -66,10 +66,10 @@ export default function StarsBackground() {
         width: "100vw",
         height: "100vh",
         pointerEvents: "none",
-        opacity: 0.26, // ✅ galutinis švytėjimas – dabar bus žiauriai premium
+        opacity: 0.33,
         zIndex: 0,
         mixBlendMode: "screen",
-        filter: "blur(0.35px) contrast(120%)", // ✅ ultra smooth + ryškumo priedas
+        filter: "blur(0.28px) contrast(140%) brightness(120%)",
       }}
     />
   );
