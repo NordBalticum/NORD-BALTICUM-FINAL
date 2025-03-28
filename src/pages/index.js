@@ -5,20 +5,17 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import styles from "@/styles/index.module.css";
 import StarsBackground from "@/components/StarsBackground";
-
-// Kontekstai
 import { useAuth } from "@/contexts/AuthContext";
 import { useMagicLink } from "@/contexts/MagicLinkContext";
 
 export default function Home() {
   const router = useRouter();
-
   const { user: authUser, signInWithEmail, loginWithGoogle, sessionReady } = useAuth();
   const { user: fallbackUser, loadingUser } = useMagicLink();
   const user = authUser || fallbackUser;
 
   const [email, setEmail] = useState("");
-  const [status, setStatus] = useState("idle");
+  const [status, setStatus] = useState("idle"); // idle | sending
   const [message, setMessage] = useState("");
   const logoRef = useRef(null);
 
@@ -37,7 +34,7 @@ export default function Home() {
     };
 
     const resetTilt = () => {
-      if (logo) logo.style.transform = "rotateX(0deg) rotateY(0deg) scale(1)";
+      logo.style.transform = "rotateX(0deg) rotateY(0deg) scale(1)";
     };
 
     const parent = logo?.parentNode;
@@ -50,14 +47,12 @@ export default function Home() {
     };
   }, []);
 
-  // === Automatinis redirect kai jau prisijungęs
+  // === Redirect jei jau prisijungęs
   useEffect(() => {
-    if (sessionReady && user) {
-      router.push("/dashboard");
-    }
-  }, [sessionReady, user]);
+    if (sessionReady && user) router.push("/dashboard");
+  }, [sessionReady, user, router]);
 
-  // === Magic Link el. pašto login
+  // === Email login
   const handleEmailLogin = async (e) => {
     e.preventDefault();
     if (!email.trim()) return setMessage("❌ Please enter a valid email.");
@@ -68,7 +63,7 @@ export default function Home() {
       setMessage("✅ Check your inbox for the Magic Link.");
       setEmail("");
     } catch (err) {
-      console.error("Magic Link error:", err.message);
+      console.error("Magic Link error:", err?.message || err);
       setMessage("❌ Failed to send Magic Link.");
     } finally {
       setStatus("idle");
@@ -83,7 +78,7 @@ export default function Home() {
       await loginWithGoogle();
       setMessage("✅ Logged in with Google.");
     } catch (err) {
-      console.error("Google login error:", err.message);
+      console.error("Google login error:", err?.message || err);
       setMessage("❌ Google login failed.");
     } finally {
       setStatus("idle");
@@ -120,8 +115,15 @@ export default function Home() {
                 onChange={(e) => setEmail(e.target.value)}
                 disabled={status === "sending"}
                 autoComplete="email"
+                autoFocus
+                required
               />
-              <button type="submit" className={styles.button} disabled={status === "sending"}>
+              <button
+                type="submit"
+                className={styles.button}
+                disabled={status === "sending"}
+                aria-busy={status === "sending"}
+              >
                 {status === "sending" ? "Sending..." : "Send Magic Link"}
               </button>
             </form>
@@ -130,6 +132,7 @@ export default function Home() {
               onClick={handleGoogleLogin}
               className={styles.googleButton}
               disabled={status === "sending"}
+              aria-busy={status === "sending"}
             >
               <Image
                 src="/icons/google-logo.png"
