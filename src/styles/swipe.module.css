@@ -1,19 +1,20 @@
 /* === FULLSCREEN WRAPPER === */
 .wrapper {
   width: 100%;
-  max-width: var(--max-width);
-  padding: var(--main-padding);
+  max-width: clamp(360px, 95vw, 1920px);
+  padding: clamp(16px, 4vw, 64px);
   padding-bottom: calc(var(--nav-height) + 2rem);
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 32px;
+  gap: clamp(24px, 4vw, 48px);
+  margin: 0 auto;
 }
 
 /* === TITLE + SUBTEXT === */
 .title {
-  font-size: clamp(32px, 6vw, 48px);
+  font-size: clamp(28px, 6vw, 48px);
   font-weight: 900;
   text-align: center;
   font-family: var(--font-crypto);
@@ -26,15 +27,16 @@
 }
 
 .subtext {
-  font-size: 1.1rem;
-  color: rgba(255, 255, 255, 0.8);
+  font-size: clamp(14px, 2.5vw, 20px);
+  color: rgba(255, 255, 255, 0.85);
   text-align: center;
   font-family: var(--font-crypto);
   font-weight: 500;
   opacity: 0.85;
-  margin-top: -10px;
+  margin-top: -8px;
 }
 
+/* === ANIMACIJOS === */
 @keyframes glowTitle {
   0% { text-shadow: 0 0 10px #ffd700; }
   50% { text-shadow: 0 0 18px #fffacd; }
@@ -44,13 +46,15 @@
 /* === SWIPE WRAPPER === */
 .swipeWrapper {
   width: 100%;
+  display: flex;
+  flex-wrap: nowrap;
   overflow-x: auto;
   scroll-snap-type: x mandatory;
-  display: flex;
-  gap: 16px;
-  padding: 24px 0;
-  scrollbar-width: none;
+  gap: clamp(12px, 2vw, 20px);
+  padding: clamp(12px, 3vw, 24px) 0;
+  justify-content: flex-start;
   -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
 }
 
 .swipeWrapper::-webkit-scrollbar {
@@ -59,12 +63,12 @@
 
 /* === WALLET CARD === */
 .walletCard {
-  min-width: 300px;
+  min-width: clamp(260px, 75vw, 380px);
   scroll-snap-align: start;
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 24px;
-  padding: 20px 28px;
+  padding: clamp(16px, 3vw, 28px);
   backdrop-filter: blur(20px) saturate(160%);
   box-shadow: 0 0 26px rgba(255, 255, 255, 0.05);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
@@ -73,6 +77,7 @@
   justify-content: space-between;
   color: white;
   position: relative;
+  flex-shrink: 0;
 }
 
 .walletCard:hover {
@@ -89,38 +94,38 @@
 
 .walletName {
   font-weight: 600;
-  font-size: 1rem;
+  font-size: clamp(14px, 3vw, 18px);
 }
 
 .walletBalance {
   font-weight: 700;
-  font-size: 1.1rem;
+  font-size: clamp(16px, 3.5vw, 20px);
   background: linear-gradient(90deg, #ffffff, #ffd700);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
-/* === ICON INSIDE CARD === */
+/* === ICON === */
 .icon {
-  width: 48px;
-  height: 48px;
+  width: clamp(36px, 9vw, 54px);
+  height: clamp(36px, 9vw, 54px);
   object-fit: contain;
   margin-top: 12px;
   filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.15));
 }
 
-/* === INPUTS + BUTTON (used in /send) === */
+/* === INPUT ZONA === */
 .walletActions {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
   width: 100%;
-  margin-top: 32px;
+  margin-top: clamp(24px, 4vw, 48px);
 }
 
 .inputField {
   width: 100%;
-  padding: 12px 16px;
+  padding: 14px 16px;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 12px;
@@ -153,7 +158,7 @@
   box-shadow: 0 0 22px rgba(255, 255, 255, 0.4);
 }
 
-/* === MODAL (for send.js) === */
+/* === MODAL === */
 .confirmModal {
   position: fixed;
   bottom: 0;
