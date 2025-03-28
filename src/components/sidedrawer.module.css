@@ -5,7 +5,7 @@
   width: clamp(260px, 84vw, 340px);
   height: 100vh;
   background: rgba(15, 20, 40, 0.92);
-  box-shadow: 0 0 32px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 0 36px rgba(0, 0, 0, 0.4);
   backdrop-filter: blur(24px) saturate(160%);
   padding: 2rem 1.6rem;
   transition: left 0.33s ease-in-out;
@@ -74,6 +74,7 @@
   text-decoration: none;
   position: relative;
   transition: color 0.25s ease, transform 0.2s ease;
+  padding: 4px 0;
 }
 .link::before {
   content: "";
@@ -88,7 +89,7 @@
   transition: background 0.3s ease;
 }
 .link:hover {
-  color: #fff;
+  color: white;
   transform: scale(1.03);
 }
 .active {
