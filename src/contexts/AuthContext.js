@@ -1,107 +1,99 @@
 "use client";
 
-import React, {
-  createContext,
-  useContext,
-  useEffect,
-  useState,
-  useRef,
-} from "react";
-import { createClient } from "@supabase/supabase-js";
-import { useMagicLink } from "@/contexts/MagicLinkContext";
-import { useWalletLoad } from "@/contexts/WalletLoadContext";
-import { useBalance } from "@/contexts/BalanceContext";
-
-// Supabase klientas (naudojamas fallback'ui)
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-);
+import { createContext, useContext, useEffect, useState } from "react";
+import { supabase } from "@/lib/supabaseClient";
 
 const AuthContext = createContext();
 
-export const AuthProvider = ({ children }) => {
-  const {
-    user,
-    loadingUser,
-    signInWithEmail,
-    loginWithGoogle,
-    logout,
-  } = useMagicLink();
+export function AuthProvider({ children }) {
+  const [user, setUser] = useState(null);
+  const [wallet, setWallet] = useState(null);
+  const [balances, setBalances] = useState(null);
 
-  const { wallets, loadingWallets } = useWalletLoad();
-  const {
-    balances,
-    loading: loadingBalances,
-    refreshBalances,
-  } = useBalance();
+  const [loadingUser, setLoadingUser] = useState(true);
+  const [loadingWallets, setLoadingWallets] = useState(true);
 
-  const [sessionReady, setSessionReady] = useState(false);
-  const wasLoggedInRef = useRef(false);
-
-  // ✅ Reaguojam į Supabase auth įvykius
+  // ✅ Gaunam prisijungusį vartotoją iš Supabase
   useEffect(() => {
-    const { data: subscription } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        const isRoot =
-          typeof window !== "undefined" && window.location.pathname === "/";
+    const getUser = async () => {
+      setLoadingUser(true);
+      const {
+        data: { user },
+        error,
+      } = await supabase.auth.getUser();
 
-        if (event === "SIGNED_OUT" || !session?.user) {
-          console.warn("⚠️ Session ended or user signed out.");
-          wasLoggedInRef.current = false;
-          localStorage.removeItem("userWallets");
-
-          if (!isRoot) {
-            window.location.replace("/");
-          }
-          return;
-        }
-
-        if (event === "SIGNED_IN" && session?.user) {
-          console.log("✅ Session active. Refreshing balances...");
-          wasLoggedInRef.current = true;
-          await refreshBalances?.();
-        }
+      if (user) {
+        setUser(user);
       }
-    );
 
-    return () => {
-      subscription?.unsubscribe?.();
+      setLoadingUser(false);
     };
-  }, [refreshBalances]);
 
-  // ✅ Automatinis readiness tikrinimas (viskas užkrauta)
+    getUser();
+  }, []);
+
+  // ✅ Gaunam piniginę, kai tik turim user
   useEffect(() => {
-    const ready =
-      !loadingUser &&
-      !loadingWallets &&
-      !loadingBalances &&
-      !!user &&
-      !!wallets;
+    if (!user) return;
 
-    setSessionReady(ready);
-  }, [loadingUser, loadingWallets, loadingBalances, user, wallets]);
+    const fetchWallet = async () => {
+      setLoadingWallets(true);
+      const { data, error } = await supabase
+        .from("wallets")
+        .select("*")
+        .eq("user_id", user.id)
+        .single();
+
+      if (data) {
+        setWallet(data);
+      }
+
+      setLoadingWallets(false);
+    };
+
+    fetchWallet();
+  }, [user]);
+
+  // ✅ Gaunam balansus, kai tik turim piniginę
+  useEffect(() => {
+    if (!wallet) return;
+
+    const fetchBalances = async () => {
+      const { data, error } = await supabase
+        .from("balances")
+        .select("*")
+        .eq("wallet_id", wallet.id);
+
+      const result = {};
+
+      data?.forEach((item) => {
+        result[item.network] = {
+          amount: item.amount,
+          eur: item.eur,
+        };
+      });
+
+      setBalances(result);
+    };
+
+    fetchBalances();
+  }, [wallet]);
 
   return (
     <AuthContext.Provider
       value={{
-        supabase,
         user,
-        wallet: wallets,
+        wallet,
         balances,
-        sessionReady,
         loadingUser,
         loadingWallets,
-        loadingBalances,
-        signInWithEmail,
-        loginWithGoogle,
-        logout,
-        refreshBalances,
       }}
     >
       {children}
     </AuthContext.Provider>
   );
-};
+}
 
-export const useAuth = () => useContext(AuthContext);
+export function useAuth() {
+  return useContext(AuthContext);
+}
