@@ -29,31 +29,34 @@ export const AuthProvider = ({ children }) => {
   } = useMagicLink();
 
   const { wallets, loadingWallets } = useWalletLoad();
-  const { balances, loading: loadingBalances, refreshBalances } = useBalance();
+  const {
+    balances,
+    loading: loadingBalances,
+    refreshBalances,
+  } = useBalance();
 
   const [sessionReady, setSessionReady] = useState(false);
   const wasLoggedInRef = useRef(false);
 
-  // ✅ Supabase sesijos kontrolė
+  // ✅ Reaguojam į Supabase AUTH įvykius
   useEffect(() => {
     const { data: subscription } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        const isOnRoot = window.location.pathname === "/";
+        const isRoot = typeof window !== "undefined" && window.location.pathname === "/";
 
         if (event === "SIGNED_OUT" || !session?.user) {
           console.warn("⚠️ Session ended or user signed out.");
           localStorage.removeItem("userWallets");
           wasLoggedInRef.current = false;
 
-          if (!isOnRoot) {
-            window.location.href = "/";
+          if (!isRoot) {
+            window.location.replace("/");
           }
-
           return;
         }
 
         if (event === "SIGNED_IN" && session?.user) {
-          console.log("✅ Session started. Refreshing balances...");
+          console.log("✅ Session active. Refreshing balances...");
           wasLoggedInRef.current = true;
           await refreshBalances?.();
         }
@@ -63,14 +66,14 @@ export const AuthProvider = ({ children }) => {
     return () => subscription?.unsubscribe?.();
   }, [refreshBalances]);
 
-  // ✅ Tikriname ar viskas užkrauta (naudotojas, wallets, balansai)
+  // ✅ Automatinis sesijos readiness nustatymas
   useEffect(() => {
     const ready =
       !loadingUser &&
       !loadingWallets &&
       !loadingBalances &&
-      user &&
-      wallets;
+      !!user &&
+      !!wallets;
 
     setSessionReady(ready);
   }, [loadingUser, loadingWallets, loadingBalances, user, wallets]);
