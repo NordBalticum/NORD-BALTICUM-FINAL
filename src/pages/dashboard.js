@@ -50,11 +50,10 @@ const networksData = [
 export default function Dashboard() {
   const router = useRouter();
 
-  // Kontekstai
-  const { user: authUser, wallet: authWallet, balances: authBalances } = useAuth();
-  const { user: fallbackUser } = useMagicLink();
-  const { wallets: fallbackWallet } = useWalletLoad();
-  const { balances: fallbackBalances } = useBalance();
+  const { user: authUser, wallet: authWallet, balances: authBalances, loadingUser, loadingWallets } = useAuth();
+  const { user: fallbackUser, loadingUser: loadingMagic } = useMagicLink();
+  const { wallets: fallbackWallet, loadingWallets: loadingWallet } = useWalletLoad();
+  const { balances: fallbackBalances, loading: loadingBalances } = useBalance();
 
   const user = authUser || fallbackUser;
   const wallet = authWallet || fallbackWallet;
@@ -63,13 +62,15 @@ export default function Dashboard() {
   const [totalEUR, setTotalEUR] = useState("0.00");
   const networks = useMemo(() => networksData, []);
 
-  // ✅ Redirect jei nėra user arba piniginės
+  const loadingComplete = !loadingUser && !loadingMagic && !loadingWallets && !loadingWallet && !loadingBalances;
+
+  // ✅ Saugi redirect logika
   useEffect(() => {
-    if (!user || !wallet?.address) {
-      console.warn("❌ No user or wallet found – redirecting to login...");
+    if (loadingComplete && (!user || !wallet?.address)) {
+      console.warn("❌ No user or wallet after loading – redirecting...");
       router.replace("/");
     }
-  }, [user, wallet?.address, router]);
+  }, [loadingComplete, user, wallet?.address, router]);
 
   // ✅ Apskaičiuojam bendrą EUR vertę
   useEffect(() => {
@@ -79,6 +80,19 @@ export default function Dashboard() {
     }, 0);
     setTotalEUR(total.toFixed(2));
   }, [balances]);
+
+  // ✅ Loader
+  if (!loadingComplete) {
+    return (
+      <div className={styles.loadingContainer}>
+        <StarsBackground />
+        <div className={styles.loaderBox}>
+          <div className={styles.spinner}></div>
+          <p className={styles.loadingText}>Loading your dashboard...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.container}>
