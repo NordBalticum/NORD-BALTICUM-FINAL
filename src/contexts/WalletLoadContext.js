@@ -1,41 +1,49 @@
-// src/contexts/WalletLoadContext.js
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { supabase } from "@/lib/supabaseClient";
-import { useAuth } from "./AuthContext";
+import { createClient } from "@supabase/supabase-js";
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+);
 
 const WalletLoadContext = createContext();
 
-export function WalletLoadProvider({ children }) {
-  const { user } = useAuth();
+export const WalletLoadProvider = ({ children }) => {
   const [wallets, setWallets] = useState(null);
   const [loadingWallets, setLoadingWallets] = useState(true);
 
   useEffect(() => {
     const fetchWallets = async () => {
-      if (!user) {
-        setWallets(null);
-        setLoadingWallets(false);
-        return;
-      }
-
       try {
+        const {
+          data: { session },
+          error: sessionError,
+        } = await supabase.auth.getSession();
+
+        if (sessionError || !session?.user?.email) {
+          console.warn("⚠️ No active session or user email.");
+          setLoadingWallets(false);
+          return;
+        }
+
+        const email = session.user.email;
+
         const { data, error } = await supabase
           .from("wallets")
           .select("*")
-          .eq("user_id", user.id)
+          .eq("email", email)
           .single();
 
-        if (error || !data) {
-          console.warn("⚠️ Wallet nerastas arba klaida:", error?.message);
+        if (error) {
+          console.warn("⚠️ Wallet fetch error:", error.message);
           setWallets(null);
         } else {
-          console.log("✅ Wallet sėkmingai užkrautas:", data.address);
           setWallets(data);
         }
       } catch (err) {
-        console.error("❌ Wallet fetch klaida:", err.message);
+        console.error("❌ Wallet load error:", err?.message || err);
         setWallets(null);
       } finally {
         setLoadingWallets(false);
@@ -43,13 +51,13 @@ export function WalletLoadProvider({ children }) {
     };
 
     fetchWallets();
-  }, [user]);
+  }, []);
 
   return (
     <WalletLoadContext.Provider value={{ wallets, loadingWallets }}>
       {children}
     </WalletLoadContext.Provider>
   );
-}
+};
 
 export const useWalletLoad = () => useContext(WalletLoadContext);
