@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useState, useRef } from "react";
 import { createClient } from "@supabase/supabase-js";
 
 const MagicLinkContext = createContext();
@@ -13,15 +13,16 @@ const supabase = createClient(
 export const MagicLinkProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loadingUser, setLoadingUser] = useState(true);
+  const intervalRef = useRef(null);
 
-  // Inicializavimas ir sesijos sekimas
+  // ✅ Inicijuojam sesiją ir pridedam automatinį tikrinimą kas 10 min
   useEffect(() => {
     const initSession = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         setUser(session?.user || null);
       } catch (err) {
-        console.error("❌ Session init error:", err.message);
+        console.error("❌ Session init error:", err?.message || err);
       } finally {
         setLoadingUser(false);
       }
@@ -33,12 +34,28 @@ export const MagicLinkProvider = ({ children }) => {
       setUser(session?.user || null);
     });
 
+    // Kas 10min automatinis sesijos tikrinimas
+    intervalRef.current = setInterval(async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.user) {
+          console.warn("⚠️ Session expired – auto logout.");
+          setUser(null);
+          localStorage.removeItem("userWallets");
+          window.location.replace("/");
+        }
+      } catch (err) {
+        console.error("❌ Session check error:", err?.message || err);
+      }
+    }, 600000); // 10 minutes
+
     return () => {
       listener?.subscription?.unsubscribe?.();
+      if (intervalRef.current) clearInterval(intervalRef.current);
     };
   }, []);
 
-  // Prisijungimas su el. paštu (Magic Link)
+  // ✅ Magic Link (OTP) prisijungimas
   const signInWithEmail = async (email) => {
     try {
       const { error } = await supabase.auth.signInWithOtp({
@@ -47,32 +64,32 @@ export const MagicLinkProvider = ({ children }) => {
       });
       if (error) throw error;
     } catch (err) {
-      console.error("❌ Magic Link sign-in error:", err.message);
+      console.error("❌ Magic Link error:", err?.message || err);
       throw err;
     }
   };
 
-  // Prisijungimas su Google OAuth
+  // ✅ Google OAuth prisijungimas
   const loginWithGoogle = async () => {
     try {
       const { error } = await supabase.auth.signInWithOAuth({ provider: "google" });
       if (error) throw error;
     } catch (err) {
-      console.error("❌ Google sign-in error:", err.message);
+      console.error("❌ Google login error:", err?.message || err);
       throw err;
     }
   };
 
-  // Atsijungimas
+  // ✅ Logout
   const logout = async () => {
     try {
-      await supabase.auth.signOut();
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
       setUser(null);
       localStorage.removeItem("userWallets");
-      // Naudojam replace kad pašalintume viską iš history
       window.location.replace("/");
     } catch (err) {
-      console.error("❌ Logout error:", err.message);
+      console.error("❌ Logout failed:", err?.message || err);
     }
   };
 
