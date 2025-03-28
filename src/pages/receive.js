@@ -2,46 +2,17 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
+import QRCode from "react-qr-code";
 
 import { useMagicLink } from "@/contexts/MagicLinkContext";
 import { useWallet } from "@/contexts/WalletContext";
 
+import SwipeSelector from "@/components/SwipeSelector";
 import BottomNavigation from "@/components/BottomNavigation";
-import styles from "@/styles/swipe.module.css";
+import SuccessModal from "@/components/modals/SuccessModal";
 
-const networks = [
-  {
-    name: "BNB Smart Chain",
-    symbol: "BNB",
-    route: "/receive/bnb",
-    icon: "https://cryptologos.cc/logos/bnb-bnb-logo.png",
-  },
-  {
-    name: "BSC Testnet",
-    symbol: "TBNB",
-    route: "/receive/tbnb",
-    icon: "https://cryptologos.cc/logos/bnb-bnb-logo.png",
-  },
-  {
-    name: "Ethereum",
-    symbol: "ETH",
-    route: "/receive/eth",
-    icon: "https://cryptologos.cc/logos/ethereum-eth-logo.png",
-  },
-  {
-    name: "Polygon",
-    symbol: "POL",
-    route: "/receive/pol",
-    icon: "https://cryptologos.cc/logos/polygon-matic-logo.png",
-  },
-  {
-    name: "Avalanche",
-    symbol: "AVAX",
-    route: "/receive/avax",
-    icon: "https://cryptologos.cc/logos/avalanche-avax-logo.png",
-  },
-];
+import { supportedNetworks } from "@/utils/networks";
+import styles from "@/styles/swipe.module.css";
 
 export default function Receive() {
   const router = useRouter();
@@ -49,45 +20,83 @@ export default function Receive() {
   const { wallet } = useWallet();
 
   const [selected, setSelected] = useState(0);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     if (!user || !wallet?.address) router.push("/");
   }, [user, wallet]);
 
-  if (!user || !wallet?.address) return <div className={styles.loading}>Loading Wallet...</div>;
+  const handleCopy = () => {
+    if (!wallet?.address) return;
+    navigator.clipboard.writeText(wallet.address);
+    setCopied(true);
+    setShowSuccess(true);
+    setTimeout(() => {
+      setCopied(false);
+    }, 1000);
+  };
+
+  if (!user || !wallet?.address) {
+    return <div className={styles.loading}>Loading Wallet...</div>;
+  }
+
+  const selectedNetwork = supportedNetworks[selected];
 
   return (
     <div className="globalContainer">
       <div className={styles.wrapper}>
         <h1 className={styles.title}>RECEIVE CRYPTO</h1>
-        <p className={styles.subtext}>Choose your network to receive</p>
+        <p className={styles.subtext}>Choose your network and receive funds</p>
 
-        <div className={styles.swipeWrapper}>
-          {networks.map((net, index) => (
-            <div
-              key={net.symbol}
-              className={`${styles.walletCard} ${selected === index ? styles.selected : ""}`}
-              onClick={() => {
-                setSelected(index);
-                router.push(net.route);
+        <SwipeSelector
+          mode="receive"
+          onSelect={(symbol) => {
+            const index = supportedNetworks.findIndex(
+              (n) => n.symbol.toLowerCase() === symbol.toLowerCase()
+            );
+            if (index !== -1) setSelected(index);
+          }}
+        />
+
+        <div className={styles.walletActions}>
+          <div onClick={handleCopy} style={{ cursor: "pointer" }}>
+            <QRCode
+              value={wallet.address}
+              size={180}
+              bgColor="transparent"
+              fgColor="#ffffff"
+              style={{
+                margin: "0 auto",
+                borderRadius: "16px",
+                padding: "12px",
+                background: "rgba(255,255,255,0.04)",
+                boxShadow: "0 0 24px rgba(255,255,255,0.2)",
+                backdropFilter: "blur(12px)",
               }}
-            >
-              <div className={styles.walletHeader}>
-                <span className={styles.walletName}>{net.name}</span>
-                <span className={styles.walletBalance}>0.0000 {net.symbol}</span>
-              </div>
-              <Image
-                src={net.icon}
-                alt={net.symbol}
-                width={48}
-                height={48}
-                className={styles.icon}
-                unoptimized
-              />
-            </div>
-          ))}
+            />
+          </div>
+
+          <div
+            className={styles.inputField}
+            style={{ textAlign: "center", cursor: "pointer" }}
+            onClick={handleCopy}
+          >
+            {copied ? "Copied!" : wallet.address}
+          </div>
+
+          <p className={styles.subtext} style={{ marginTop: "12px" }}>
+            Click QR or address to copy
+          </p>
         </div>
       </div>
+
+      {showSuccess && (
+        <SuccessModal
+          message="Wallet address copied!"
+          onClose={() => setShowSuccess(false)}
+        />
+      )}
 
       <BottomNavigation />
     </div>
