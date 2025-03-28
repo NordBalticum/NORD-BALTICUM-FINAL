@@ -15,7 +15,7 @@ export const MagicLinkProvider = ({ children }) => {
   const [loadingUser, setLoadingUser] = useState(true);
   const intervalRef = useRef(null);
 
-  // ✅ Inicijuojam sesiją ir pridedam automatinį tikrinimą kas 10 min
+  // ✅ Inicijuojam sesiją ir onAuthStateChange
   useEffect(() => {
     const initSession = async () => {
       try {
@@ -34,20 +34,18 @@ export const MagicLinkProvider = ({ children }) => {
       setUser(session?.user || null);
     });
 
-    // Kas 10min automatinis sesijos tikrinimas
+    // ✅ Kas 10 min tikrina sesiją
     intervalRef.current = setInterval(async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (!session?.user) {
-          console.warn("⚠️ Session expired – auto logout.");
-          setUser(null);
-          localStorage.removeItem("userWallets");
-          window.location.replace("/");
+          console.warn("⚠️ Session expired – auto logout");
+          await logout();
         }
       } catch (err) {
-        console.error("❌ Session check error:", err?.message || err);
+        console.error("❌ Periodic session check error:", err?.message || err);
       }
-    }, 600000); // 10 minutes
+    }, 600000); // kas 10 min
 
     return () => {
       listener?.subscription?.unsubscribe?.();
@@ -55,12 +53,15 @@ export const MagicLinkProvider = ({ children }) => {
     };
   }, []);
 
-  // ✅ Magic Link (OTP) prisijungimas
+  // ✅ Prisijungimas su MagicLink
   const signInWithEmail = async (email) => {
     try {
       const { error } = await supabase.auth.signInWithOtp({
         email,
-        options: { shouldCreateUser: true },
+        options: {
+          shouldCreateUser: true,
+          emailRedirectTo: "https://nordbalticum.com/dashboard",
+        },
       });
       if (error) throw error;
     } catch (err) {
@@ -69,29 +70,23 @@ export const MagicLinkProvider = ({ children }) => {
     }
   };
 
-  // ✅ Google OAuth prisijungimas
+  // ✅ Prisijungimas su Google
   const loginWithGoogle = async () => {
-  try {
-    const redirectTo =
-      typeof window !== "undefined"
-        ? `${window.location.origin}/dashboard`
-        : undefined;
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: "https://nordbalticum.com/dashboard",
+        },
+      });
+      if (error) throw error;
+    } catch (err) {
+      console.error("❌ Google login error:", err?.message || err);
+      throw err;
+    }
+  };
 
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo,
-      },
-    });
-
-    if (error) throw error;
-  } catch (err) {
-    console.error("❌ Google login error:", err?.message || err);
-    throw err;
-  }
-};
-  
-  // ✅ Logout
+  // ✅ Logout (premium)
   const logout = async () => {
     try {
       const { error } = await supabase.auth.signOut();
