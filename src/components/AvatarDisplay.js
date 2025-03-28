@@ -13,17 +13,18 @@ export default function AvatarDisplay({ walletAddress, size = 64 }) {
       if (saved) {
         setAvatar(saved);
       } else if (walletAddress) {
-        const fallbackUrl = `https://robohash.org/${walletAddress}?set=set5&size=200x200`;
+        // Naudojam Dicebear pixel-art-neutral kaip fallback, unikalus kiekvienam naudotojui
+        const fallbackUrl = `https://api.dicebear.com/7.x/pixel-art-neutral/svg?seed=${walletAddress}`;
         setAvatar(fallbackUrl);
         localStorage.setItem("user_avatar", fallbackUrl);
       } else {
-        setAvatar("/avatars/avatar1.png");
+        // Minimalus default – jei neturim wallet
+        setAvatar("https://api.dicebear.com/7.x/pixel-art-neutral/svg?seed=anonymous");
       }
     };
 
     loadAvatar();
 
-    // Automatinis atnaujinimas jei pasikeičia iš kitų vietų
     const onStorage = () => loadAvatar();
     window.addEventListener("storage", onStorage);
 
@@ -37,6 +38,7 @@ export default function AvatarDisplay({ walletAddress, size = 64 }) {
       width={size}
       height={size}
       className={styles.avatar}
+      loading="lazy"
     />
   );
 }
