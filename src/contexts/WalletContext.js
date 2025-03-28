@@ -14,7 +14,7 @@ export function WalletProvider({ children }) {
   const [balances, setBalances] = useState({});
   const [loadingWallet, setLoadingWallet] = useState(true);
 
-  const NETWORKS = ["BNB", "ETH", "MATIC", "AVAX", "TBNB"];
+  const NETWORKS = ["BNB", "TBNB", "ETH", "MATIC", "AVAX"];
 
   useEffect(() => {
     if (loadingUser || !user) return;
@@ -23,22 +23,22 @@ export function WalletProvider({ children }) {
       setLoadingWallet(true);
 
       try {
-        // 1. Fetch wallet from Supabase
-        const { data: existing, error: fetchError } = await supabase
+        // 1. Check if wallet exists
+        const { data: existingWallet, error: walletError } = await supabase
           .from("wallets")
           .select("*")
           .eq("user_id", user.id)
           .single();
 
-        if (fetchError && fetchError.code !== "PGRST116") {
-          console.error("❌ Wallet fetch error:", fetchError.message);
+        if (walletError && walletError.code !== "PGRST116") {
+          console.error("❌ Failed to fetch wallet:", walletError.message);
           setLoadingWallet(false);
           return;
         }
 
-        let walletAddress = existing?.address;
+        let walletAddress = existingWallet?.address;
 
-        // 2. If wallet doesn't exist, create and insert
+        // 2. If not, create wallet and store it
         if (!walletAddress) {
           const newWallet = ethers.Wallet.createRandom();
           walletAddress = newWallet.address;
@@ -56,50 +56,55 @@ export function WalletProvider({ children }) {
           ]);
 
           if (insertError) {
-            console.error("❌ Wallet insert error:", insertError.message);
+            console.error("❌ Failed to insert new wallet:", insertError.message);
             setLoadingWallet(false);
             return;
           }
 
-          // 3. Create initial balances per network
+          // 3. Insert default balances for all networks
           const balanceRows = NETWORKS.map((net) => ({
             user_id: user.id,
             wallet_address: walletAddress,
-            wallet_id: null, // will be assigned automatically via Supabase trigger or follow-up
             network: net,
             amount: "0.0000",
             eur: "0.00",
           }));
 
-          await supabase.from("balances").insert(balanceRows);
+          const { error: balanceInsertError } = await supabase
+            .from("balances")
+            .insert(balanceRows);
+
+          if (balanceInsertError) {
+            console.error("❌ Failed to initialize balances:", balanceInsertError.message);
+          }
 
           console.log("✅ New wallet created and balances initialized.");
         }
 
-        // 4. Set wallet state
+        // 4. Set wallet to state
         setWallet({ address: walletAddress });
 
-        // 5. Fetch balances
+        // 5. Fetch updated balances
         const { data: balanceData, error: balanceError } = await supabase
           .from("balances")
           .select("*")
           .eq("wallet_address", walletAddress);
 
         if (balanceError) {
-          console.error("❌ Balance fetch error:", balanceError.message);
+          console.error("❌ Failed to fetch balances:", balanceError.message);
         }
 
-        const parsed = {};
-        balanceData?.forEach((b) => {
-          parsed[b.network] = {
-            amount: b.amount || "0.0000",
-            eur: b.eur || "0.00",
+        const formatted = {};
+        balanceData?.forEach((entry) => {
+          formatted[entry.network] = {
+            amount: entry.amount || "0.0000",
+            eur: entry.eur || "0.00",
           };
         });
 
-        setBalances(parsed);
+        setBalances(formatted);
       } catch (e) {
-        console.error("❌ Wallet system error:", e.message);
+        console.error("❌ Wallet context system failure:", e.message);
       }
 
       setLoadingWallet(false);
