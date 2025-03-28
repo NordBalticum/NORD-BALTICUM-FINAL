@@ -9,13 +9,13 @@ export function MagicLinkProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loadingUser, setLoadingUser] = useState(true);
 
-  // ✅ Get current user from Supabase session
+  // Fetch current user session on load
   useEffect(() => {
     const getUser = async () => {
       setLoadingUser(true);
       const { data, error } = await supabase.auth.getUser();
       if (error) {
-        console.warn("❌ Failed to fetch Supabase user:", error.message);
+        console.warn("❌ Failed to get user:", error.message);
       }
       setUser(data?.user || null);
       setLoadingUser(false);
@@ -23,37 +23,46 @@ export function MagicLinkProvider({ children }) {
 
     getUser();
 
-    // ✅ Real-time listener for login/logout changes
-    const { data: listener } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+    // Real-time listener for auth state changes
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      async (_, session) => {
         setUser(session?.user || null);
       }
     );
 
     return () => {
-      listener?.subscription?.unsubscribe();
+      authListener?.subscription?.unsubscribe();
     };
   }, []);
 
-  // ✅ Magic Link sign-in
+  // Sign in via Magic Link (Email)
   const signInWithEmail = async (email) => {
-    const { error } = await supabase.auth.signInWithOtp({ email });
-    if (error) throw new Error("Magic link error: " + error.message);
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: {
+        emailRedirectTo: `${window.location.origin}/dashboard`,
+      },
+    });
+
+    if (error) throw new Error("Magic link failed: " + error.message);
   };
 
-  // ✅ Google OAuth login
+  // Google OAuth Login
   const signInWithGoogle = async () => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: `${window.location.origin}/dashboard` },
+      options: {
+        redirectTo: `${window.location.origin}/dashboard`,
+      },
     });
-    if (error) throw new Error("Google login error: " + error.message);
+
+    if (error) throw new Error("Google sign-in failed: " + error.message);
   };
 
-  // ✅ Sign out
+  // Sign Out
   const signOut = async () => {
     const { error } = await supabase.auth.signOut();
-    if (error) throw new Error("Sign out error: " + error.message);
+    if (error) throw new Error("Sign out failed: " + error.message);
     setUser(null);
   };
 
