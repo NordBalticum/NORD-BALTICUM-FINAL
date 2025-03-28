@@ -4,15 +4,7 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 import { ethers } from "ethers";
 import { supabase } from "@/lib/supabaseClient";
 import { useAuth } from "./AuthContext";
-
-// SHA-256 hashing helper
-async function hashPrivateKey(privateKey) {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(privateKey);
-  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
-}
+import sha256 from "crypto-js/sha256";
 
 const WalletContext = createContext();
 
@@ -28,20 +20,13 @@ export function WalletProvider({ children }) {
       setLoadingWallet(true);
 
       try {
-        // 1. Check if wallet already exists in Supabase
+        // 1. Check if wallet already exists
         const { data: existing, error: fetchError } = await supabase
           .from("wallets")
           .select("*")
           .eq("user_id", user.id)
           .single();
 
-        if (fetchError && fetchError.code !== "PGRST116") {
-          console.error("❌ Error fetching wallet from Supabase:", fetchError.message);
-          setLoadingWallet(false);
-          return;
-        }
-
-        // 2. If wallet exists – use it
         if (existing) {
           setWallet({
             address: existing.address,
@@ -52,13 +37,15 @@ export function WalletProvider({ children }) {
           return;
         }
 
-        // 3. If not – generate a new wallet
+        // 2. Generate new wallet
         const newWallet = ethers.Wallet.createRandom();
         const address = newWallet.address;
         const privateKey = newWallet.privateKey;
-        const hashedKey = await hashPrivateKey(privateKey);
 
-        // 4. Insert new wallet into Supabase for all networks
+        // 3. Hash the private key (for added security)
+        const hashedKey = sha256(privateKey).toString();
+
+        // 4. Insert wallet to Supabase (assign one address to all networks)
         const { error: insertError } = await supabase.from("wallets").insert([
           {
             user_id: user.id,
@@ -69,21 +56,20 @@ export function WalletProvider({ children }) {
             matic_address: address,
             avax_address: address,
             t_address: address,
-            network: "multi",
           },
         ]);
 
         if (insertError) {
           console.error("❌ Failed to insert wallet:", insertError.message);
         } else {
-          console.log("✅ New wallet created and stored:", address);
+          console.log("✅ New wallet created:", address);
           setWallet({
             address,
-            private_key: hashedKey,
+            private_key: privateKey,
           });
         }
-      } catch (e) {
-        console.error("❌ Wallet generation error:", e.message);
+      } catch (err) {
+        console.error("❌ Wallet creation error:", err.message);
       }
 
       setLoadingWallet(false);
