@@ -11,7 +11,7 @@ import AvatarDisplay from "@/components/AvatarDisplay";
 import SuccessModal from "@/components/SuccessModal";
 
 import styles from "@/styles/settings.module.css";
-import { supabase } from "@/lib/supabaseClient";
+import { supabase } from "@/lib/supabase";
 
 export default function SettingsPage() {
   const router = useRouter();
