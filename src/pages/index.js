@@ -5,21 +5,18 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import styles from "@/styles/index.module.css";
 import StarsBackground from "@/components/StarsBackground";
-import { useAuth } from "@/contexts/AuthContext";
 import { useMagicLink } from "@/contexts/MagicLinkContext";
 
 export default function Home() {
   const router = useRouter();
-  const { user: authUser, signInWithEmail, loginWithGoogle, sessionReady } = useAuth();
-  const { user: fallbackUser, loadingUser } = useMagicLink();
-  const user = authUser || fallbackUser;
+  const { user, loadingUser, signInWithEmail, signInWithGoogle } = useMagicLink();
 
   const [email, setEmail] = useState("");
-  const [status, setStatus] = useState("idle"); // idle | sending
+  const [status, setStatus] = useState("idle");
   const [message, setMessage] = useState("");
   const logoRef = useRef(null);
 
-  // === Tilt efektas logotipui
+  // Tilt effect
   useEffect(() => {
     const logo = logoRef.current;
     if (!logo) return;
@@ -47,12 +44,14 @@ export default function Home() {
     };
   }, []);
 
-  // === Redirect jei jau prisijungęs
+  // Redirect if already logged in
   useEffect(() => {
-    if (sessionReady && user) router.push("/dashboard");
-  }, [sessionReady, user, router]);
+    if (!loadingUser && user) {
+      router.push("/dashboard");
+    }
+  }, [user, loadingUser, router]);
 
-  // === Email login
+  // Magic link email login
   const handleEmailLogin = async (e) => {
     e.preventDefault();
     if (!email.trim()) return setMessage("❌ Please enter a valid email.");
@@ -70,13 +69,12 @@ export default function Home() {
     }
   };
 
-  // === Google login
+  // Google OAuth login
   const handleGoogleLogin = async () => {
     setStatus("sending");
     setMessage("⏳ Logging in with Google...");
     try {
-      await loginWithGoogle();
-      setMessage("✅ Logged in with Google.");
+      await signInWithGoogle();
     } catch (err) {
       console.error("Google login error:", err?.message || err);
       setMessage("❌ Google login failed.");
