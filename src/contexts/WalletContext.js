@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { ethers } from "ethers";
-import { supabase } from "@/lib/supabaseClient";
+import { supabase } from "@/lib/supabase";
 import { useMagicLink } from "./MagicLinkContext";
 
 const WalletContext = createContext();
