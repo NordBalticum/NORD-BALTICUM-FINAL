@@ -20,6 +20,7 @@ export const WalletLoadProvider = ({ children }) => {
   useEffect(() => {
     const loadWallet = async () => {
       if (!user?.email) {
+        setWallets(null);
         setLoadingWallets(false);
         setWalletsReady(true);
         return;
@@ -28,25 +29,27 @@ export const WalletLoadProvider = ({ children }) => {
       setLoadingWallets(true);
 
       try {
-        // 1. LOCALSTORAGE
+        // ✅ 1. LOCAL STORAGE
         if (typeof window !== "undefined") {
           const cached = localStorage.getItem("userWallets");
           if (cached) {
             try {
               const parsed = JSON.parse(cached);
               setWallets(parsed);
-              if (process.env.NODE_ENV === "development") console.log("✅ Piniginė iš localStorage.");
+              if (process.env.NODE_ENV === "development") {
+                console.log("✅ Wallet loaded from localStorage.");
+              }
               setLoadingWallets(false);
               setWalletsReady(true);
               return;
             } catch {
-              console.warn("⚠️ Netinkamas localStorage formatas – valoma.");
+              console.warn("⚠️ Corrupted localStorage – clearing...");
               localStorage.removeItem("userWallets");
             }
           }
         }
 
-        // 2. SUPABASE DB
+        // ✅ 2. SUPABASE
         const { data, error } = await supabase
           .from("wallets")
           .select("*")
@@ -54,7 +57,7 @@ export const WalletLoadProvider = ({ children }) => {
           .single();
 
         if (error || !data) {
-          console.warn("⚠️ Piniginė nerasta Supabase DB.");
+          console.warn("⚠️ Wallet not found in Supabase.");
           setWallets(null);
           setLoadingWallets(false);
           setWalletsReady(true);
@@ -73,12 +76,16 @@ export const WalletLoadProvider = ({ children }) => {
         };
 
         setWallets(walletObj);
+
         if (typeof window !== "undefined") {
           localStorage.setItem("userWallets", JSON.stringify(walletObj));
         }
-        if (process.env.NODE_ENV === "development") console.log("✅ Piniginė įkelta iš Supabase.");
+
+        if (process.env.NODE_ENV === "development") {
+          console.log("✅ Wallet loaded from Supabase.");
+        }
       } catch (err) {
-        console.error("❌ Klaida kraunant piniginę:", err?.message || err);
+        console.error("❌ Error loading wallet:", err?.message || err);
         setWallets(null);
       } finally {
         setLoadingWallets(false);
