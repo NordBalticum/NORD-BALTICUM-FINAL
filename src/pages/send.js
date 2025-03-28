@@ -11,7 +11,9 @@ import BottomNavigation from "@/components/BottomNavigation";
 import SuccessModal from "@/components/modals/SuccessModal";
 
 import { supportedNetworks } from "@/utils/networks";
-import { sendTransactionWithFee } from "@/lib/ethers";
+import { sendTransactionWithFee, getWalletBalance } from "@/lib/ethers";
+import { supabase } from "@/lib/supabase";
+
 import styles from "@/styles/swipe.module.css";
 
 const ADMIN_WALLET = process.env.NEXT_PUBLIC_ADMIN_WALLET;
@@ -53,6 +55,28 @@ export default function Send() {
       });
 
       console.log("✅ Sent:", result.sent, "TX Hash:", result.userTx);
+
+      // Atnaujina balansą
+      const updatedBalance = await getWalletBalance(
+        wallet.address,
+        selectedNet.key || selectedNet.symbol.toLowerCase()
+      );
+      wallet.balance = updatedBalance.formatted;
+
+      // Įrašo į Supabase istoriją
+      await supabase.from("transactions").insert([
+        {
+          sender_email: user.email,
+          receiver: receiver,
+          amount: Number(result.sent),
+          fee: Number(result.fee),
+          network: selectedNet.symbol,
+          type: "send",
+          tx_hash: result.userTx,
+          status: "success",
+          created_at: new Date().toISOString(),
+        },
+      ]);
 
       setTimeout(() => {
         setShowSuccess(true);
