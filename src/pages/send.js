@@ -3,8 +3,10 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { useAuth } from "@/contexts/AuthContext";
+
 import { useMagicLink } from "@/contexts/MagicLinkContext";
+import { useWallet } from "@/contexts/WalletContext";
+
 import BottomNavigation from "@/components/BottomNavigation";
 import styles from "@/styles/swipe.module.css";
 
@@ -12,43 +14,39 @@ const networks = [
   {
     name: "BNB Smart Chain",
     symbol: "BNB",
-    route: "/bnb",
+    route: "/send/bnb",
     icon: "https://cryptologos.cc/logos/bnb-bnb-logo.png",
   },
   {
     name: "BSC Testnet",
     symbol: "TBNB",
-    route: "/tbnb",
+    route: "/send/tbnb",
     icon: "https://cryptologos.cc/logos/binance-coin-bnb-logo.png",
   },
   {
     name: "Ethereum",
     symbol: "ETH",
-    route: "/eth",
+    route: "/send/eth",
     icon: "https://cryptologos.cc/logos/ethereum-eth-logo.png",
   },
   {
     name: "Polygon",
     symbol: "POL",
-    route: "/pol",
+    route: "/send/pol",
     icon: "https://cryptologos.cc/logos/polygon-matic-logo.png",
   },
   {
     name: "Avalanche",
     symbol: "AVAX",
-    route: "/avax",
+    route: "/send/avax",
     icon: "https://cryptologos.cc/logos/avalanche-avax-logo.png",
   },
 ];
 
 export default function Send() {
   const router = useRouter();
-
-  // Kontekstai
-  const { user: authUser, sessionReady } = useAuth();
-  const { user: fallbackUser } = useMagicLink();
-
-  const user = authUser || fallbackUser;
+  const { user } = useMagicLink();
+  const { wallet } = useWallet();
 
   const [selected, setSelected] = useState(0);
   const [receiver, setReceiver] = useState("");
@@ -56,8 +54,8 @@ export default function Send() {
   const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
-    if (sessionReady && !user) router.push("/");
-  }, [sessionReady, user, router]);
+    if (!user || !wallet?.address) router.push("/");
+  }, [user, wallet]);
 
   const handleSend = () => {
     if (!receiver || !amount) return alert("Please enter both address and amount.");
@@ -66,10 +64,10 @@ export default function Send() {
 
   const confirmSend = () => {
     setShowModal(false);
-    router.push(networks[selected].route); // nukreipia į pasirinkto tinklo puslapį (pvz.: /bnb)
+    router.push(networks[selected].route); // nukreipia į pasirinkto tinklo puslapį (pvz.: /send/bnb)
   };
 
-  if (!user) {
+  if (!user || !wallet?.address) {
     return <div className={styles.loading}>Loading Wallet...</div>;
   }
 
