@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import styles from "@/styles/dashboard.module.css";
@@ -13,7 +13,7 @@ import { useMagicLink } from "@/contexts/MagicLinkContext";
 import { useWalletLoad } from "@/contexts/WalletLoadContext";
 import { useBalance } from "@/contexts/BalanceContext";
 
-const networks = [
+const networksData = [
   { name: "BNB Smart Chain", symbol: "BNB", logo: "https://cryptologos.cc/logos/bnb-bnb-logo.png", route: "/bnb" },
   { name: "BSC Testnet", symbol: "TBNB", logo: "https://cryptologos.cc/logos/binance-coin-bnb-logo.png", route: "/tbnb" },
   { name: "Ethereum", symbol: "ETH", logo: "https://cryptologos.cc/logos/ethereum-eth-logo.png", route: "/eth" },
@@ -34,30 +34,46 @@ export default function Dashboard() {
   const balances = authBalances || fallbackBalances;
 
   const [totalEUR, setTotalEUR] = useState("0.00");
+  const networks = useMemo(() => networksData, []);
 
-  // ✅ Redirect tik jei viskas pilnai užsikrovę ir trūksta user arba wallet
+  // === Redirect jei nėra sesijos arba wallet
   useEffect(() => {
-    const allLoaded = sessionReady && !loadingUser && !loadingWallets;
-    const needsRedirect = allLoaded && (!user || !wallet?.address);
-    if (needsRedirect) {
-      console.warn("❌ Neautorizuotas ar nepilna piniginė – redirect...");
+    if (sessionReady && (!user || !wallet?.address)) {
+      console.warn("❌ Unauthorized or missing wallet – redirecting...");
       router.replace("/");
     }
-  }, [sessionReady, loadingUser, loadingWallets, user, wallet, router]);
+  }, [sessionReady, user, wallet, router]);
 
-  // ✅ Apskaičiuojam total EUR kai yra balansai
+  // === Apskaičiuojam bendrą vertę
   useEffect(() => {
-    if (!balances || loadingBalances) return;
-    const total = Object.values(balances).reduce((sum, b) => {
-      const eur = parseFloat(b?.eur || 0);
-      return sum + (isNaN(eur) ? 0 : eur);
-    }, 0);
+    if (!balances) return;
+    const total = Object.values(balances).reduce(
+      (sum, b) => sum + parseFloat(b?.eur || 0),
+      0
+    );
     setTotalEUR(total.toFixed(2));
-  }, [balances, loadingBalances]);
+  }, [balances]);
 
-  // ✅ Tik kai viskas pilnai užsikrovę, tada renderinam
-  const fullyLoaded = sessionReady && user && wallet?.address && !loadingUser && !loadingWallets && !loadingBalances;
-  if (!fullyLoaded) return null;
+  // === Loader / fallback jei dar ne viskas pasiruošę
+  const fullyLoaded =
+    sessionReady &&
+    !!user &&
+    !!wallet?.address &&
+    !loadingUser &&
+    !loadingWallets &&
+    !loadingBalances;
+
+  if (!fullyLoaded) {
+    return (
+      <div className={styles.loadingContainer}>
+        <StarsBackground />
+        <div className={styles.loaderBox}>
+          <div className={styles.spinner}></div>
+          <p className={styles.loadingText}>Loading your dashboard...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.container}>
