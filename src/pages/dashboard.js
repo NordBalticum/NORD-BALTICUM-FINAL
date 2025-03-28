@@ -37,10 +37,15 @@ export default function Dashboard() {
   const [totalEUR, setTotalEUR] = useState("0.00");
   const networks = useMemo(() => networksData, []);
 
+  // Loader check
   const isLoading =
-    loadingUser || loadingMagic || loadingWallets || loadingWallet || loadingBalances;
+    loadingUser ||
+    loadingMagic ||
+    loadingWallets ||
+    loadingWallet ||
+    loadingBalances;
 
-  // Skaičiuojam bendrą EUR kai balansas jau yra
+  // Skaičiuojam bendrą vertę kai turim balansus
   useEffect(() => {
     const total = Object.values(balances || {}).reduce((sum, b) => {
       const eur = parseFloat(b?.eur || 0);
@@ -49,26 +54,14 @@ export default function Dashboard() {
     setTotalEUR(total.toFixed(2));
   }, [balances]);
 
-  // Loader kai kraunasi
-  if (isLoading) {
+  // Rodyti loader tik jei tikrai krauna
+  if (isLoading || !user || !wallet?.address) {
     return (
       <div className={styles.loadingContainer}>
         <StarsBackground />
         <div className={styles.loaderBox}>
           <div className={styles.spinner}></div>
           <p className={styles.loadingText}>Loading your dashboard...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Jei viskas užsikrovė, bet user ar wallet nėra – nerodom nieko
-  if (!user || !wallet?.address) {
-    return (
-      <div className={styles.loadingContainer}>
-        <StarsBackground />
-        <div className={styles.loaderBox}>
-          <p className={styles.loadingText}>Please login to access your wallet.</p>
         </div>
       </div>
     );
