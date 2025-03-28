@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useGenerateWallet } from "@/contexts/GenerateWalletContext";
 import { useRouter } from "next/navigation";
 import StarsBackground from "@/components/StarsBackground";
 import AvatarModalPicker from "@/components/AvatarModalPicker";
@@ -10,37 +11,9 @@ import SuccessModal from "@/components/SuccessModal";
 import styles from "@/styles/settings.module.css";
 import { Wallet } from "ethers";
 
-// AES encryption helpers
-const ENCRYPTION_SECRET = process.env.NEXT_PUBLIC_ENCRYPTION_SECRET || "nordbalticum-2024";
-const SALT = "nbc-salt";
-const encode = (str) => new TextEncoder().encode(str);
-const decode = (buf) => new TextDecoder().decode(buf);
-
-const getKey = async (password) => {
-  const keyMaterial = await window.crypto.subtle.importKey("raw", encode(password), { name: "PBKDF2" }, false, ["deriveKey"]);
-  return window.crypto.subtle.deriveKey(
-    {
-      name: "PBKDF2",
-      salt: encode(SALT),
-      iterations: 100000,
-      hash: "SHA-256",
-    },
-    keyMaterial,
-    { name: "AES-GCM", length: 256 },
-    false,
-    ["encrypt", "decrypt"]
-  );
-};
-
-const encrypt = async (text) => {
-  const iv = window.crypto.getRandomValues(new Uint8Array(12));
-  const key = await getKey(ENCRYPTION_SECRET);
-  const encrypted = await window.crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, encode(text));
-  return btoa(JSON.stringify({ iv: Array.from(iv), data: Array.from(new Uint8Array(encrypted)) }));
-};
-
 export default function SettingsPage() {
   const { user, wallet, logout, supabase, refreshBalances } = useAuth();
+  const { generateOneWalletForAllNetworks } = useGenerateWallet();
   const router = useRouter();
 
   const [emailInput, setEmailInput] = useState("");
@@ -80,40 +53,39 @@ export default function SettingsPage() {
   const handleGenerateNewWallet = async () => {
     if (!user?.email || !user?.id) return alert("No user session found.");
 
+    // Tikrinam ar email patvirtintas
     const isEmailVerified = user?.email_confirmed_at !== null;
     if (!isEmailVerified) {
       return alert("Please confirm your email address before generating a new wallet. Check your inbox.");
     }
 
-    const confirm = window.confirm("Are you sure you want to generate a new wallet? Your current one will be lost.");
+    const confirm = window.confirm("Are you sure you want to generate a new wallet? Your current one will be deleted.");
     if (!confirm) return;
 
     try {
-      const newWallet = Wallet.createRandom();
-      const encryptedKey = await encrypt(newWallet.privateKey);
+      const newWallets = generateOneWalletForAllNetworks();
+      const first = Object.values(newWallets)[0];
 
-      const newWalletObj = {
-        address: newWallet.address,
-        privateKey: encryptedKey,
-        networks: {
-          bsc: newWallet.address,
-          tbnb: newWallet.address,
-          eth: newWallet.address,
-          pol: newWallet.address,
-          avax: newWallet.address,
-        },
-      };
-
+      // 1. Ištrinti seną įrašą
       await supabase.from("wallets").delete().eq("email", user.email);
+
+      // 2. Įrašyti naują
       await supabase.from("wallets").insert({
         user_id: user.id,
         email: user.email,
-        ...newWalletObj.networks,
+        bsc: first.address,
+        tbnb: first.address,
+        eth: first.address,
+        pol: first.address,
+        avax: first.address,
       });
 
-      localStorage.setItem("userWallets", JSON.stringify(newWalletObj));
-      setWalletAddress(newWallet.address);
+      // 3. Atnaujinti lokalų state
+      localStorage.setItem("userWallets", JSON.stringify(newWallets));
+      setWalletAddress(first.address);
       setWalletSuccess(true);
+
+      // 4. Refresh balance
       await refreshBalances?.();
     } catch (err) {
       console.error("❌ Wallet generation error:", err.message);
@@ -127,7 +99,11 @@ export default function SettingsPage() {
       <div className={styles.box}>
         <h2 className={styles.heading}>Profile Settings</h2>
 
-        <div className={styles.avatarContainer} onClick={() => setShowAvatarModal(true)} title="Click to change avatar">
+        <div
+          className={styles.avatarContainer}
+          onClick={() => setShowAvatarModal(true)}
+          title="Click to change avatar"
+        >
           <AvatarDisplay walletAddress={wallet?.address} size={80} key={avatarKey} />
           <p className={styles.avatarText}>Change Avatar</p>
         </div>
@@ -172,15 +148,24 @@ export default function SettingsPage() {
       </div>
 
       {showAvatarModal && (
-        <AvatarModalPicker onClose={handleAvatarChange} onSelect={() => {}} />
+        <AvatarModalPicker
+          onClose={handleAvatarChange}
+          onSelect={() => {}}
+        />
       )}
 
       {success && (
-        <SuccessModal message="Avatar updated successfully!" onClose={() => setSuccess(false)} />
+        <SuccessModal
+          message="Avatar updated successfully!"
+          onClose={() => setSuccess(false)}
+        />
       )}
 
       {walletSuccess && (
-        <SuccessModal message="New wallet generated successfully!" onClose={() => setWalletSuccess(false)} />
+        <SuccessModal
+          message="New wallet generated successfully!"
+          onClose={() => setWalletSuccess(false)}
+        />
       )}
     </div>
   );
