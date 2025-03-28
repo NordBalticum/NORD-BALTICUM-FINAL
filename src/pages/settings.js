@@ -1,17 +1,22 @@
 "use client";
 
 import React, { useState } from "react";
-import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
+import { useMagicLink } from "@/contexts/MagicLinkContext";
+import { useWallet } from "@/contexts/WalletContext";
+
 import StarsBackground from "@/components/StarsBackground";
 import AvatarModalPicker from "@/components/AvatarModalPicker";
 import AvatarDisplay from "@/components/AvatarDisplay";
 import SuccessModal from "@/components/SuccessModal";
+
 import styles from "@/styles/settings.module.css";
+import { supabase } from "@/lib/supabaseClient";
 
 export default function SettingsPage() {
-  const { user, wallet, logout, supabase } = useAuth();
   const router = useRouter();
+  const { user, signOut } = useMagicLink();
+  const { wallet } = useWallet();
 
   const [emailInput, setEmailInput] = useState("");
   const [showAvatarModal, setShowAvatarModal] = useState(false);
@@ -22,18 +27,18 @@ export default function SettingsPage() {
     if (!emailInput) return alert("Please enter a new email.");
     const { error } = await supabase.auth.updateUser({ email: emailInput });
     if (error) alert("Error: " + error.message);
-    else alert("Magic Link has been sent to your new email.");
+    else alert("✅ Magic Link has been sent to your new email.");
   };
 
   const handleCopy = () => {
     if (wallet?.address) {
       navigator.clipboard.writeText(wallet.address);
-      alert("Wallet address copied!");
+      alert("✅ Wallet address copied to clipboard.");
     }
   };
 
   const handleLogout = async () => {
-    await logout();
+    await signOut();
     router.replace("/");
   };
 
@@ -58,7 +63,7 @@ export default function SettingsPage() {
           <p className={styles.avatarText}>Change Avatar</p>
         </div>
 
-        <p><strong>Email:</strong> {user?.email}</p>
+        <p><strong>Email:</strong> {user?.email || "Unknown"}</p>
 
         <div
           className={styles.walletBox}
