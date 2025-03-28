@@ -36,6 +36,7 @@
   font-family: var(--font-crypto, "Courier New", monospace);
   position: relative;
   overflow: hidden;
+  height: 100%;
 }
 
 .navItem::after {
@@ -56,6 +57,11 @@
   transform: translateY(-2px) scale(1.03);
 }
 
+.navItem:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
+}
+
 .navItem:active .icon {
   transform: scale(0.95);
 }
@@ -68,10 +74,7 @@
   backdrop-filter: blur(4px);
 }
 
-.active .icon {
-  color: black !important;
-}
-
+.active .icon,
 .active .label {
   color: black !important;
 }
@@ -92,6 +95,7 @@
   color: white;
 }
 
+/* Fade-in animation */
 @keyframes fadeInUp {
   from {
     opacity: 0;
@@ -103,11 +107,12 @@
   }
 }
 
+/* MOBILE OPTIMIZATION */
 @media (max-width: 420px) {
   .navbar {
     width: calc(100% - 20px);
     height: 64px;
-    bottom: 50px; /* FINAL: tobulas pakėlimas +2% */
+    bottom: 50px;
     padding: 0 10px;
     border-radius: 18px;
   }
@@ -121,6 +126,7 @@
   }
 }
 
+/* DESKTOP ULTRA */
 @media (min-width: 1440px) {
   .label {
     font-size: 0.75rem;
