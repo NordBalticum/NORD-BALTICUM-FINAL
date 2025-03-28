@@ -92,3 +92,122 @@
   font-weight: 600;
   text-shadow: 0 0 4px rgba(255, 255, 255, 0.3);
 }
+
+/* === Wallet Actions === */
+.walletActions {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+  margin-top: clamp(24px, 4vw, 48px);
+}
+
+.inputField {
+  width: 100%;
+  padding: 14px 16px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  color: white;
+  font-size: 1rem;
+  outline: none;
+  transition: background 0.2s ease;
+}
+
+.inputField:focus {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* === Confirm Button === */
+.confirmButton {
+  padding: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+  background: black;
+  color: white;
+  border: 2px solid white;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.confirmButton:hover {
+  background: white;
+  color: black;
+  box-shadow: 0 0 22px rgba(255, 255, 255, 0.4);
+}
+
+/* === Confirm Modal === */
+.confirmModal {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 95%;
+  max-width: 420px;
+  background: rgba(0, 0, 0, 0.85);
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  border-radius: 18px;
+  padding: 24px;
+  color: white;
+  backdrop-filter: blur(18px);
+  z-index: 9999;
+  box-shadow: 0 0 24px rgba(0, 255, 200, 0.2);
+  animation: fadeInUp 0.35s ease;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 12px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+.modalTitle {
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+.modalInfo {
+  font-size: 1rem;
+  opacity: 0.85;
+  margin-bottom: 18px;
+}
+
+.modalActions {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.modalButton {
+  flex: 1;
+  padding: 12px;
+  border-radius: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  cursor: pointer;
+  border: none;
+  background: white;
+  color: black;
+}
+
+.modalButton.cancel {
+  background: transparent;
+  color: white;
+  border: 2px solid white;
+}
+
+/* === Loading === */
+.loading {
+  font-size: 1.2rem;
+  color: white;
+  text-align: center;
+  padding-top: 120px;
+  font-family: var(--font-crypto);
+}
