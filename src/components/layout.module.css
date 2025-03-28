@@ -17,4 +17,17 @@
   padding: clamp(72px, 8vh, 96px) clamp(16px, 4vw, 32px) clamp(88px, 10vh, 120px);
   box-sizing: border-box;
   height: 100%;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+}
+
+/* Optional: hide default scrollbars */
+.mainContent::-webkit-scrollbar {
+  width: 0px;
+  background: transparent;
+}
+
+.mainContent {
+  scrollbar-width: none;
 }
