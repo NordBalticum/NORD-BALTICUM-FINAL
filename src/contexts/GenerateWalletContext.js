@@ -12,6 +12,7 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 );
 
+// ✅ Palaikomi tinklai (gali plėsti)
 const SUPPORTED_NETWORKS = {
   BNB: "Binance Smart Chain",
   TBNB: "BSC Testnet",
@@ -50,7 +51,7 @@ const encrypt = async (text) => {
     const encrypted = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, encode(text));
     return btoa(JSON.stringify({ iv: Array.from(iv), data: Array.from(new Uint8Array(encrypted)) }));
   } catch (err) {
-    console.error("❌ Encrypt error:", err.message);
+    console.error("❌ Encryption error:", err?.message || err);
     return null;
   }
 };
@@ -66,7 +67,7 @@ const decrypt = async (cipherText) => {
     );
     return decode(decrypted);
   } catch (err) {
-    console.error("❌ Decrypt error:", err.message);
+    console.error("❌ Decryption error:", err?.message || err);
     return null;
   }
 };
@@ -84,22 +85,22 @@ export const GenerateWalletProvider = ({ children }) => {
       }
 
       try {
-        // 1. Local cache
-        const local = localStorage.getItem("userWallets");
-        if (local) {
+        // ✅ 1. LocalStorage cache
+        const cached = localStorage.getItem("userWallets");
+        if (cached) {
           try {
-            const parsed = JSON.parse(local);
+            const parsed = JSON.parse(cached);
             setGeneratedWallets(parsed);
-            console.log("✅ Wallets loaded from localStorage.");
+            console.log("✅ Wallets loaded from cache.");
             setLoadingGenerate(false);
             return;
           } catch {
             localStorage.removeItem("userWallets");
-            console.warn("⚠️ Corrupt local cache cleared.");
+            console.warn("⚠️ Corrupted wallet cache removed.");
           }
         }
 
-        // 2. Supabase DB
+        // ✅ 2. Load from Supabase
         const { data, error } = await supabase
           .from("wallets")
           .select("*")
@@ -118,6 +119,7 @@ export const GenerateWalletProvider = ({ children }) => {
               avax: data.avax,
             },
           };
+
           setGeneratedWallets(walletObj);
           localStorage.setItem("userWallets", JSON.stringify(walletObj));
           console.log("✅ Wallets loaded from Supabase.");
@@ -125,9 +127,14 @@ export const GenerateWalletProvider = ({ children }) => {
           return;
         }
 
-        // 3. Generate new
+        // ✅ 3. Generate new wallet
         const newWallet = ethers.Wallet.createRandom();
         const encryptedKey = await encrypt(newWallet.privateKey);
+
+        if (!encryptedKey) {
+          throw new Error("Encryption failed");
+        }
+
         const walletObj = {
           address: newWallet.address,
           privateKey: encryptedKey,
@@ -157,7 +164,7 @@ export const GenerateWalletProvider = ({ children }) => {
         localStorage.setItem("userWallets", JSON.stringify(walletObj));
         console.log("✅ New wallet generated & saved.");
       } catch (err) {
-        console.error("❌ Wallet generation failed:", err.message);
+        console.error("❌ Wallet init failed:", err?.message || err);
       } finally {
         setLoadingGenerate(false);
       }
