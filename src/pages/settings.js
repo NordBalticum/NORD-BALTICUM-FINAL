@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import StarsBackground from "@/components/StarsBackground";
@@ -17,14 +17,7 @@ const encode = (str) => new TextEncoder().encode(str);
 const decode = (buf) => new TextDecoder().decode(buf);
 
 const getKey = async (password) => {
-  const keyMaterial = await window.crypto.subtle.importKey(
-    "raw",
-    encode(password),
-    { name: "PBKDF2" },
-    false,
-    ["deriveKey"]
-  );
-
+  const keyMaterial = await window.crypto.subtle.importKey("raw", encode(password), { name: "PBKDF2" }, false, ["deriveKey"]);
   return window.crypto.subtle.deriveKey(
     {
       name: "PBKDF2",
@@ -57,8 +50,6 @@ export default function SettingsPage() {
   const [success, setSuccess] = useState(false);
   const [walletSuccess, setWalletSuccess] = useState(false);
 
-  const isEmailVerified = useMemo(() => user?.email_confirmed_at !== null, [user]);
-
   useEffect(() => {
     if (wallet?.address) setWalletAddress(wallet.address);
   }, [wallet]);
@@ -89,6 +80,7 @@ export default function SettingsPage() {
   const handleGenerateNewWallet = async () => {
     if (!user?.email || !user?.id) return alert("No user session found.");
 
+    const isEmailVerified = user?.email_confirmed_at !== null;
     if (!isEmailVerified) {
       return alert("Please confirm your email address before generating a new wallet. Check your inbox.");
     }
@@ -135,11 +127,7 @@ export default function SettingsPage() {
       <div className={styles.box}>
         <h2 className={styles.heading}>Profile Settings</h2>
 
-        <div
-          className={styles.avatarContainer}
-          onClick={() => setShowAvatarModal(true)}
-          title="Click to change avatar"
-        >
+        <div className={styles.avatarContainer} onClick={() => setShowAvatarModal(true)} title="Click to change avatar">
           <AvatarDisplay walletAddress={wallet?.address} size={80} key={avatarKey} />
           <p className={styles.avatarText}>Change Avatar</p>
         </div>
@@ -150,13 +138,6 @@ export default function SettingsPage() {
           <span><strong>Wallet Address:</strong></span>
           <span className={styles.walletAddress}>{walletAddress || "Unavailable"}</span>
         </div>
-
-        {!isEmailVerified && (
-          <div className={styles.warningBox}>
-            <p><strong>Notice:</strong> Your email is not verified.</p>
-            <p>Please confirm your email address to enable wallet regeneration.</p>
-          </div>
-        )}
 
         <hr />
 
@@ -191,24 +172,15 @@ export default function SettingsPage() {
       </div>
 
       {showAvatarModal && (
-        <AvatarModalPicker
-          onClose={handleAvatarChange}
-          onSelect={() => {}}
-        />
+        <AvatarModalPicker onClose={handleAvatarChange} onSelect={() => {}} />
       )}
 
       {success && (
-        <SuccessModal
-          message="Avatar updated successfully!"
-          onClose={() => setSuccess(false)}
-        />
+        <SuccessModal message="Avatar updated successfully!" onClose={() => setSuccess(false)} />
       )}
 
       {walletSuccess && (
-        <SuccessModal
-          message="New wallet generated successfully!"
-          onClose={() => setWalletSuccess(false)}
-        />
+        <SuccessModal message="New wallet generated successfully!" onClose={() => setWalletSuccess(false)} />
       )}
     </div>
   );
