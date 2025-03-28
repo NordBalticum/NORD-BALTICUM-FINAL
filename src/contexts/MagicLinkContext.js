@@ -71,15 +71,26 @@ export const MagicLinkProvider = ({ children }) => {
 
   // ✅ Google OAuth prisijungimas
   const loginWithGoogle = async () => {
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({ provider: "google" });
-      if (error) throw error;
-    } catch (err) {
-      console.error("❌ Google login error:", err?.message || err);
-      throw err;
-    }
-  };
+  try {
+    const redirectTo =
+      typeof window !== "undefined"
+        ? `${window.location.origin}/dashboard`
+        : undefined;
 
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo,
+      },
+    });
+
+    if (error) throw error;
+  } catch (err) {
+    console.error("❌ Google login error:", err?.message || err);
+    throw err;
+  }
+};
+  
   // ✅ Logout
   const logout = async () => {
     try {
