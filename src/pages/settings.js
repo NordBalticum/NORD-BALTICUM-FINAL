@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import StarsBackground from "@/components/StarsBackground";
@@ -14,14 +14,9 @@ export default function SettingsPage() {
   const router = useRouter();
 
   const [emailInput, setEmailInput] = useState("");
-  const [walletAddress, setWalletAddress] = useState("");
   const [showAvatarModal, setShowAvatarModal] = useState(false);
   const [avatarKey, setAvatarKey] = useState(Date.now());
   const [success, setSuccess] = useState(false);
-
-  useEffect(() => {
-    if (wallet?.address) setWalletAddress(wallet.address);
-  }, [wallet]);
 
   const handleChangeEmail = async () => {
     if (!emailInput) return alert("Please enter a new email.");
@@ -31,8 +26,10 @@ export default function SettingsPage() {
   };
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(walletAddress);
-    alert("Wallet address copied!");
+    if (wallet?.address) {
+      navigator.clipboard.writeText(wallet.address);
+      alert("Wallet address copied!");
+    }
   };
 
   const handleLogout = async () => {
@@ -63,9 +60,15 @@ export default function SettingsPage() {
 
         <p><strong>Email:</strong> {user?.email}</p>
 
-        <div className={styles.walletBox} onClick={handleCopy} title="Click to copy">
+        <div
+          className={styles.walletBox}
+          onClick={handleCopy}
+          title="Click to copy"
+        >
           <span><strong>Wallet Address:</strong></span>
-          <span className={styles.walletAddress}>{walletAddress || "Unavailable"}</span>
+          <span className={styles.walletAddress}>
+            {wallet?.address || "Unavailable"}
+          </span>
         </div>
 
         <hr />
