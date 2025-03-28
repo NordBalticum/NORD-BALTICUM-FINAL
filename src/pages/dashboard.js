@@ -37,28 +37,10 @@ export default function Dashboard() {
   const [totalEUR, setTotalEUR] = useState("0.00");
   const networks = useMemo(() => networksData, []);
 
-  // ✅ Nustatom, ar VISKAS pilnai užkrauta
-  const isLoadingAll =
-    loadingUser ||
-    loadingMagic ||
-    loadingWallets ||
-    loadingWallet ||
-    loadingBalances;
+  const isLoading =
+    loadingUser || loadingMagic || loadingWallets || loadingWallet || loadingBalances;
 
-  // ✅ Tik kai užkrauta, leidžiam redirectą
-  const [initialChecked, setInitialChecked] = useState(false);
-
-  useEffect(() => {
-    if (!isLoadingAll && !initialChecked) {
-      setInitialChecked(true);
-      if (!user || !wallet?.address) {
-        console.warn("❌ Redirect: Nėra user arba wallet.");
-        router.replace("/");
-      }
-    }
-  }, [isLoadingAll, user, wallet?.address, initialChecked, router]);
-
-  // ✅ Skaičiuojam total eur
+  // Skaičiuojam bendrą EUR kai balansas jau yra
   useEffect(() => {
     const total = Object.values(balances || {}).reduce((sum, b) => {
       const eur = parseFloat(b?.eur || 0);
@@ -67,8 +49,8 @@ export default function Dashboard() {
     setTotalEUR(total.toFixed(2));
   }, [balances]);
 
-  // ✅ Rodyti loaderį kol viskas kraunasi
-  if (isLoadingAll || !initialChecked) {
+  // Loader kai kraunasi
+  if (isLoading) {
     return (
       <div className={styles.loadingContainer}>
         <StarsBackground />
@@ -80,16 +62,27 @@ export default function Dashboard() {
     );
   }
 
+  // Jei viskas užsikrovė, bet user ar wallet nėra – nerodom nieko
+  if (!user || !wallet?.address) {
+    return (
+      <div className={styles.loadingContainer}>
+        <StarsBackground />
+        <div className={styles.loaderBox}>
+          <p className={styles.loadingText}>Please login to access your wallet.</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Pilnas dashboard UI
   return (
     <div className={styles.container}>
       <StarsBackground />
 
       <div className={styles.dashboardWrapper}>
-        {wallet?.address && (
-          <div className={styles.avatarCenter}>
-            <AvatarDisplay walletAddress={wallet.address} size={92} />
-          </div>
-        )}
+        <div className={styles.avatarCenter}>
+          <AvatarDisplay walletAddress={wallet.address} size={92} />
+        </div>
 
         <div className={styles.totalValueContainer}>
           <p className={styles.totalLabel}>Total Value</p>
