@@ -1,44 +1,32 @@
-// components/SwipeSelector.js
+"use client";
 
 import React from "react";
-import { useRouter } from "next/router";
-import { motion } from "framer-motion";
-import styles from "../styles/swipe.module.css";
-import { supportedNetworks } from "../utils/networks";
+import Image from "next/image";
+import { supportedNetworks } from "@/utils/networks";
+import styles from "@/styles/swipe.module.css";
 
-const SwipeSelector = ({ mode = "send" }) => {
-  const router = useRouter();
-
-  const handleSelect = (symbol) => {
-    router.push(`/${mode}/${symbol}`);
-  };
-
+export default function SwipeSelector({ mode = "send", onSelect }) {
   return (
-    <div className={styles.wrapper}>
-      <h2 className={styles.title}>Select Network</h2>
-      <p className={styles.subtext}>
-        Swipe to choose the blockchain you want to {mode}
-      </p>
-
-      <div className={styles.swipeWrapper}>
-        {supportedNetworks.map((network) => (
-          <motion.div
-            key={network.symbol}
-            className={styles.card}
-            whileTap={{ scale: 0.97 }}
-            onClick={() => handleSelect(network.symbol)}
-          >
-            <img
-              src={network.logo}
-              alt={network.name}
-              className={styles.logo}
-            />
-            <div className={styles.name}>{network.name}</div>
-          </motion.div>
-        ))}
-      </div>
+    <div className={styles.swipeWrapper}>
+      {supportedNetworks.map((network) => (
+        <div
+          key={network.symbol}
+          className={styles.card}
+          onClick={() => onSelect(network.symbol)}
+        >
+          <Image
+            src={network.icon}
+            alt={network.symbol}
+            width={48}
+            height={48}
+            className={styles.logo}
+            unoptimized
+          />
+          <div className={styles.name}>
+            {mode === "send" ? "Send" : "Receive"} {network.symbol}
+          </div>
+        </div>
+      ))}
     </div>
   );
-};
-
-export default SwipeSelector;
+}
