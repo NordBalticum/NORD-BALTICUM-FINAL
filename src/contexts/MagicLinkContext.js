@@ -3,77 +3,76 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
 
-// Initialize Supabase client
+const MagicLinkContext = createContext();
+
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 );
 
-const MagicLinkContext = createContext();
-
 export const MagicLinkProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loadingUser, setLoadingUser] = useState(true);
 
-  // Load user session on mount
+  // Inicializavimas ir sesijos sekimas
   useEffect(() => {
-    const loadSession = async () => {
+    const initSession = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         setUser(session?.user || null);
-      } catch (error) {
-        console.error("❌ Failed to initialize session:", error.message);
+      } catch (err) {
+        console.error("❌ Session init error:", err.message);
       } finally {
         setLoadingUser(false);
       }
     };
 
-    loadSession();
+    initSession();
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user || null);
     });
 
     return () => {
-      listener?.subscription?.unsubscribe();
+      listener?.subscription?.unsubscribe?.();
     };
   }, []);
 
-  // Magic Link (OTP) Login
+  // Prisijungimas su el. paštu (Magic Link)
   const signInWithEmail = async (email) => {
     try {
       const { error } = await supabase.auth.signInWithOtp({
         email,
         options: { shouldCreateUser: true },
       });
-      if (error) throw new Error(error.message);
-    } catch (error) {
-      console.error("❌ Magic Link login error:", error.message);
-      throw error;
+      if (error) throw error;
+    } catch (err) {
+      console.error("❌ Magic Link sign-in error:", err.message);
+      throw err;
     }
   };
 
-  // Google OAuth Login
+  // Prisijungimas su Google OAuth
   const loginWithGoogle = async () => {
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-      });
-      if (error) throw new Error(error.message);
-    } catch (error) {
-      console.error("❌ Google login error:", error.message);
-      throw error;
+      const { error } = await supabase.auth.signInWithOAuth({ provider: "google" });
+      if (error) throw error;
+    } catch (err) {
+      console.error("❌ Google sign-in error:", err.message);
+      throw err;
     }
   };
 
-  // Logout
+  // Atsijungimas
   const logout = async () => {
     try {
       await supabase.auth.signOut();
       setUser(null);
       localStorage.removeItem("userWallets");
-    } catch (error) {
-      console.error("❌ Logout error:", error.message);
+      // Naudojam replace kad pašalintume viską iš history
+      window.location.replace("/");
+    } catch (err) {
+      console.error("❌ Logout error:", err.message);
     }
   };
 
