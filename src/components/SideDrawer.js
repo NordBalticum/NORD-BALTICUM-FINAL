@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/router";
-import { useMagicLink } from "@/contexts/MagicLinkContext";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/contexts/AuthContext";
 import styles from "@/components/sidedrawer.module.css";
 import AvatarDisplay from "@/components/AvatarDisplay";
 import { useState } from "react";
@@ -10,19 +10,19 @@ import { FaBars, FaTimes } from "react-icons/fa";
 
 export default function SideDrawer() {
   const router = useRouter();
-  const { pathname } = router;
-  const { logout, user, wallet } = useMagicLink();
+  const { logout, user, wallet } = useAuth(); // ✅ Naudojam AuthContext
   const [open, setOpen] = useState(false);
 
   const toggleDrawer = () => setOpen(!open);
 
   const handleLogout = async () => {
     try {
-      await logout();         // ✅ naudok tą patį logout iš MagicLinkContext
-      setOpen(false);         // ✅ uždarom drawer
-      router.replace("/");    // ✅ redirectinam iškart
-    } catch (error) {
-      console.error("Logout failed:", error);
+      await logout();
+      setOpen(false);
+      router.replace("/");
+    } catch (err) {
+      console.error("❌ Logout failed:", err.message);
+      alert("Logout failed. Please try again.");
     }
   };
 
@@ -33,17 +33,25 @@ export default function SideDrawer() {
     { label: "History", path: "/history" },
   ];
 
-  if (pathname === "/") return null;
+  if (typeof window !== "undefined" && window.location.pathname === "/") return null;
 
   return (
     <>
-      <div className={styles.hamburger} onClick={toggleDrawer} aria-label="Open menu">
+      <button className={styles.hamburger} onClick={toggleDrawer} aria-label="Open menu">
         <FaBars size={22} />
-      </div>
+      </button>
 
-      <aside className={`${styles.drawer} ${open ? styles.open : ""}`} role="navigation">
+      <aside
+        className={`${styles.drawer} ${open ? styles.open : ""}`}
+        role="navigation"
+        aria-label="Side navigation"
+      >
         <div className={styles.drawerHeader}>
-          <FaTimes className={styles.closeIcon} onClick={toggleDrawer} aria-label="Close menu" />
+          <FaTimes
+            className={styles.closeIcon}
+            onClick={toggleDrawer}
+            aria-label="Close menu"
+          />
         </div>
 
         <div className={styles.userBox}>
@@ -56,13 +64,19 @@ export default function SideDrawer() {
             <Link
               key={item.path}
               href={item.path}
-              className={`${styles.link} ${pathname === item.path ? styles.active : ""}`}
+              className={`${styles.link} ${
+                typeof window !== "undefined" && window.location.pathname === item.path
+                  ? styles.active
+                  : ""
+              }`}
               onClick={() => setOpen(false)}
             >
               {item.label}
             </Link>
           ))}
-          <button className={styles.logout} onClick={handleLogout}>Sign Out</button>
+          <button className={styles.logout} onClick={handleLogout}>
+            Sign Out
+          </button>
         </nav>
       </aside>
 
