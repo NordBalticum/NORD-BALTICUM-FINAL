@@ -3,8 +3,10 @@
 import React, { createContext, useContext, useEffect, useState, useRef } from "react";
 import { createClient } from "@supabase/supabase-js";
 
+// Kontekstas
 const MagicLinkContext = createContext();
 
+// Supabase klientas
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -15,7 +17,7 @@ export const MagicLinkProvider = ({ children }) => {
   const [loadingUser, setLoadingUser] = useState(true);
   const intervalRef = useRef(null);
 
-  // ✅ Inicijuojam sesiją ir onAuthStateChange
+  // ✅ Pradinis sesijos gavimas + realtime klausymas
   useEffect(() => {
     const initSession = async () => {
       try {
@@ -34,7 +36,7 @@ export const MagicLinkProvider = ({ children }) => {
       setUser(session?.user || null);
     });
 
-    // ✅ Kas 10 min tikrina sesiją
+    // ✅ Automatinis sesijos tikrinimas kas 10 min
     intervalRef.current = setInterval(async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
@@ -45,15 +47,15 @@ export const MagicLinkProvider = ({ children }) => {
       } catch (err) {
         console.error("❌ Periodic session check error:", err?.message || err);
       }
-    }, 600000); // kas 10 min
+    }, 600000); // 10 min
 
     return () => {
       listener?.subscription?.unsubscribe?.();
-      if (intervalRef.current) clearInterval(intervalRef.current);
+      clearInterval(intervalRef.current);
     };
   }, []);
 
-  // ✅ Prisijungimas su MagicLink
+  // ✅ MagicLink prisijungimas
   const signInWithEmail = async (email) => {
     try {
       const { error } = await supabase.auth.signInWithOtp({
@@ -70,13 +72,14 @@ export const MagicLinkProvider = ({ children }) => {
     }
   };
 
-  // ✅ Prisijungimas su Google
+  // ✅ Google OAuth prisijungimas
   const loginWithGoogle = async () => {
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          emailRedirectTo: "https://nordbalticum.com/dashboard"
+          shouldCreateUser: true,
+          emailRedirectTo: "https://nordbalticum.com/dashboard",
         },
       });
       if (error) throw error;
@@ -86,11 +89,12 @@ export const MagicLinkProvider = ({ children }) => {
     }
   };
 
-  // ✅ Logout (premium)
+  // ✅ Premium Logout
   const logout = async () => {
     try {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
+
       setUser(null);
       localStorage.removeItem("userWallets");
       window.location.replace("/");
