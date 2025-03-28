@@ -3,8 +3,9 @@
 import React, { useEffect, useState } from "react";
 import styles from "./avatar.module.css";
 
+// Nauja avatarų kolekcija: suaugusiems, rimtiems vartotojams
 const externalAvatars = Array.from({ length: 20 }, (_, i) =>
-  `https://api.dicebear.com/7.x/adventurer/svg?seed=user${i + 1}`
+  `https://api.dicebear.com/7.x/pixel-art-neutral/svg?seed=wallet${i + 1}`
 );
 
 export default function AvatarModalPicker({ onClose, onSelect }) {
@@ -25,19 +26,31 @@ export default function AvatarModalPicker({ onClose, onSelect }) {
     <div className={styles.modalBackdrop}>
       <div className={styles.modal}>
         <h3 className={styles.title}>Choose Your Avatar</h3>
-        <img src={selected || externalAvatars[0]} className={styles.mainAvatar} alt="Selected Avatar" />
+
+        <img
+          src={selected || externalAvatars[0]}
+          className={styles.mainAvatar}
+          alt="Selected Avatar"
+        />
+
         <div className={styles.grid}>
           {externalAvatars.map((avatar) => (
             <img
               key={avatar}
               src={avatar}
               alt="avatar"
-              className={`${styles.avatarSmall} ${selected === avatar ? styles.active : ""}`}
+              className={`${styles.avatarSmall} ${
+                selected === avatar ? styles.active : ""
+              }`}
               onClick={() => handlePick(avatar)}
+              loading="lazy"
             />
           ))}
         </div>
-        <button className={styles.button} onClick={onClose}>Save Avatar</button>
+
+        <button className={styles.button} onClick={onClose}>
+          Save Avatar
+        </button>
       </div>
     </div>
   );
