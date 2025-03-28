@@ -1,6 +1,12 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState, useRef } from "react";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useRef,
+} from "react";
 import { createClient } from "@supabase/supabase-js";
 
 // Kontekstas
@@ -17,7 +23,7 @@ export const MagicLinkProvider = ({ children }) => {
   const [loadingUser, setLoadingUser] = useState(true);
   const intervalRef = useRef(null);
 
-  // ✅ Pradinis sesijos gavimas + realtime klausymas
+  // ✅ Pradinis sesijos gavimas + realtime listener
   useEffect(() => {
     const initSession = async () => {
       try {
@@ -36,18 +42,18 @@ export const MagicLinkProvider = ({ children }) => {
       setUser(session?.user || null);
     });
 
-    // ✅ Automatinis sesijos tikrinimas kas 10 min
+    // ✅ Kas 10 min automatinis sesijos patikrinimas
     intervalRef.current = setInterval(async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (!session?.user) {
           console.warn("⚠️ Session expired – auto logout");
-          await logout();
+          await logout(true);
         }
       } catch (err) {
         console.error("❌ Periodic session check error:", err?.message || err);
       }
-    }, 600000); // 10 min
+    }, 600000); // kas 10 min
 
     return () => {
       listener?.subscription?.unsubscribe?.();
@@ -55,7 +61,7 @@ export const MagicLinkProvider = ({ children }) => {
     };
   }, []);
 
-  // ✅ MagicLink prisijungimas
+  // ✅ Prisijungimas su Magic Link (OTP)
   const signInWithEmail = async (email) => {
     try {
       const { error } = await supabase.auth.signInWithOtp({
@@ -67,19 +73,19 @@ export const MagicLinkProvider = ({ children }) => {
       });
       if (error) throw error;
     } catch (err) {
-      console.error("❌ Magic Link error:", err?.message || err);
+      console.error("❌ Magic Link sign-in error:", err?.message || err);
       throw err;
     }
   };
 
-  // ✅ Google OAuth prisijungimas
+  // ✅ Prisijungimas su Google OAuth
   const loginWithGoogle = async () => {
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
           shouldCreateUser: true,
-          emailRedirectTo: "https://nordbalticum.com/dashboard",
+          redirectTo: "https://nordbalticum.com/dashboard",
         },
       });
       if (error) throw error;
@@ -89,17 +95,20 @@ export const MagicLinkProvider = ({ children }) => {
     }
   };
 
-  // ✅ Premium Logout
-  const logout = async () => {
+  // ✅ Logout su optional silent režimu
+  const logout = async (silent = false) => {
     try {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
 
       setUser(null);
       localStorage.removeItem("userWallets");
-      window.location.replace("/");
+
+      if (!silent) {
+        window.location.replace("/");
+      }
     } catch (err) {
-      console.error("❌ Logout failed:", err?.message || err);
+      console.error("❌ Logout error:", err?.message || err);
     }
   };
 
