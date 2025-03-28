@@ -1,22 +1,21 @@
-/* === NordBalticum Swipe + UI CSS FINAL v1.0 === */
+/* === NordBalticum Swipe Fullscreen + Adaptive UI === */
 
 .wrapper {
-  position: relative;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  min-height: calc(100vh - 100px);
-  width: 100%;
-  max-width: 1920px;
-  padding: clamp(24px, 5vw, 64px);
-  margin: 0 auto;
+  width: 100vw;
+  height: 100vh;
+  padding: clamp(24px, 6vh, 64px) clamp(16px, 6vw, 64px);
   box-sizing: border-box;
-  transform: scale(1);
+  gap: clamp(24px, 4vw, 48px);
+  z-index: 2;
+  position: relative;
 }
 
 .title {
-  font-size: clamp(28px, 6vw, 48px);
+  font-size: clamp(28px, 6vw, 52px);
   font-weight: 900;
   text-align: center;
   font-family: var(--font-crypto);
@@ -38,13 +37,16 @@
   margin-top: -8px;
 }
 
+/* === Title Animacija === */
 @keyframes glowTitle {
   0% { text-shadow: 0 0 10px #ffd700; }
   50% { text-shadow: 0 0 18px #fffacd; }
   100% { text-shadow: 0 0 10px #ffd700; }
 }
 
+/* === Kortelių swipe === */
 .swipeWrapper {
+  width: 100%;
   display: flex;
   flex-wrap: nowrap;
   overflow-x: auto;
@@ -54,8 +56,6 @@
   justify-content: flex-start;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
-  width: 100%;
-  max-width: 100%;
 }
 
 .swipeWrapper::-webkit-scrollbar {
@@ -73,9 +73,8 @@
   padding: clamp(20px, 3vw, 32px);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
   cursor: pointer;
-  width: clamp(140px, 20vw, 220px);
+  width: clamp(140px, 22vw, 240px);
   text-align: center;
-  margin: 0 auto;
 }
 
 .card:hover {
@@ -97,13 +96,14 @@
   text-shadow: 0 0 4px rgba(255, 255, 255, 0.3);
 }
 
+/* === Wallet Actions === */
 .walletActions {
   display: flex;
   flex-direction: column;
   gap: 14px;
   width: 100%;
-  max-width: 420px;
   margin-top: clamp(24px, 4vw, 48px);
+  max-width: 460px;
 }
 
 .inputField {
@@ -122,6 +122,7 @@
   background: rgba(255, 255, 255, 0.08);
 }
 
+/* === Confirm Button === */
 .confirmButton {
   padding: 14px;
   font-weight: 700;
@@ -140,7 +141,7 @@
   box-shadow: 0 0 22px rgba(255, 255, 255, 0.4);
 }
 
-/* === Modal + Loading === */
+/* === Modal === */
 .confirmModal {
   position: fixed;
   bottom: 0;
@@ -206,6 +207,7 @@
   border: 2px solid white;
 }
 
+/* === Loading State === */
 .loading {
   font-size: 1.2rem;
   color: white;
