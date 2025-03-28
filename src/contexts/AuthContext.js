@@ -42,24 +42,26 @@ export const AuthProvider = ({ children }) => {
 
         if (event === "SIGNED_OUT" || !session?.user) {
           console.warn("⚠️ Session ended or user signed out.");
+          localStorage.removeItem("userWallets");
+          wasLoggedInRef.current = false;
 
-          if (wasLoggedInRef.current) {
-            alert("Your session has ended. Please log in again.");
-            await logout();
-            if (!isOnRoot) window.location.href = "/";
+          if (!isOnRoot) {
+            window.location.href = "/";
           }
+
+          return;
         }
 
         if (event === "SIGNED_IN" && session?.user) {
           console.log("✅ Session started. Refreshing balances...");
-          await refreshBalances?.();
           wasLoggedInRef.current = true;
+          await refreshBalances?.();
         }
       }
     );
 
     return () => subscription?.unsubscribe?.();
-  }, [logout, refreshBalances]);
+  }, [refreshBalances]);
 
   // ✅ Tikriname ar viskas užkrauta (naudotojas, wallets, balansai)
   useEffect(() => {
