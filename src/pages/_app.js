@@ -1,13 +1,12 @@
 "use client";
 
+import React from "react";
 import "@/styles/globals.css";
 import "@/styles/theme.css";
-import React from "react";
 
 import { MagicLinkProvider } from "@/contexts/MagicLinkContext";
-import { WalletLoadProvider } from "@/contexts/WalletLoadContext";
+import { WalletProvider } from "@/contexts/WalletContext";
 import { BalanceProvider } from "@/contexts/BalanceContext";
-import { GenerateWalletProvider } from "@/contexts/GenerateWalletContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 
 import Layout from "@/components/Layout";
@@ -16,17 +15,15 @@ export default function App({ Component, pageProps }) {
   return (
     <React.StrictMode>
       <MagicLinkProvider>
-        <WalletLoadProvider>
-          <BalanceProvider>
-            <GenerateWalletProvider>
-              <AuthProvider>
-                <Layout>
-                  <Component {...pageProps} />
-                </Layout>
-              </AuthProvider>
-            </GenerateWalletProvider>
-          </BalanceProvider>
-        </WalletLoadProvider>
+        <AuthProvider>
+          <WalletProvider>
+            <BalanceProvider>
+              <Layout>
+                <Component {...pageProps} />
+              </Layout>
+            </BalanceProvider>
+          </WalletProvider>
+        </AuthProvider>
       </MagicLinkProvider>
     </React.StrictMode>
   );
