@@ -1,16 +1,18 @@
-/* === NordBalticum Swipe + UI CSS === */
+/* === NordBalticum Swipe + UI CSS FINAL v1.0 === */
 
 .wrapper {
-  width: 100%;
-  max-width: clamp(360px, 95vw, 1920px);
-  padding: clamp(16px, 4vw, 64px);
-  padding-bottom: calc(var(--nav-height) + 2rem);
-  box-sizing: border-box;
+  position: relative;
   display: flex;
   flex-direction: column;
+  justify-content: center;
   align-items: center;
-  gap: clamp(24px, 4vw, 48px);
+  min-height: calc(100vh - 100px);
+  width: 100%;
+  max-width: 1920px;
+  padding: clamp(24px, 5vw, 64px);
   margin: 0 auto;
+  box-sizing: border-box;
+  transform: scale(1);
 }
 
 .title {
@@ -43,7 +45,6 @@
 }
 
 .swipeWrapper {
-  width: 100%;
   display: flex;
   flex-wrap: nowrap;
   overflow-x: auto;
@@ -53,6 +54,8 @@
   justify-content: flex-start;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
+  width: 100%;
+  max-width: 100%;
 }
 
 .swipeWrapper::-webkit-scrollbar {
@@ -72,6 +75,7 @@
   cursor: pointer;
   width: clamp(140px, 20vw, 220px);
   text-align: center;
+  margin: 0 auto;
 }
 
 .card:hover {
@@ -93,12 +97,12 @@
   text-shadow: 0 0 4px rgba(255, 255, 255, 0.3);
 }
 
-/* === Wallet Actions === */
 .walletActions {
   display: flex;
   flex-direction: column;
   gap: 14px;
   width: 100%;
+  max-width: 420px;
   margin-top: clamp(24px, 4vw, 48px);
 }
 
@@ -118,7 +122,6 @@
   background: rgba(255, 255, 255, 0.08);
 }
 
-/* === Confirm Button === */
 .confirmButton {
   padding: 14px;
   font-weight: 700;
@@ -137,7 +140,7 @@
   box-shadow: 0 0 22px rgba(255, 255, 255, 0.4);
 }
 
-/* === Confirm Modal === */
+/* === Modal + Loading === */
 .confirmModal {
   position: fixed;
   bottom: 0;
@@ -203,7 +206,6 @@
   border: 2px solid white;
 }
 
-/* === Loading === */
 .loading {
   font-size: 1.2rem;
   color: white;
