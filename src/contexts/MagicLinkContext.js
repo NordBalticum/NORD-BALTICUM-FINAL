@@ -7,47 +7,48 @@ const MagicLinkContext = createContext();
 
 export function MagicLinkProvider({ children }) {
   const [user, setUser] = useState(null);
-  const [loadingUser, setLoadingUser] = useState(true);
+  const [loading, setLoading] = useState(true);
 
-  // Fetch current user session on load
+  // ✅ Initial session fetch & real-time auth state listener
   useEffect(() => {
-    const getUser = async () => {
-      setLoadingUser(true);
-      const { data, error } = await supabase.auth.getUser();
+    const initSession = async () => {
+      setLoading(true);
+
+      const {
+        data: { user },
+        error,
+      } = await supabase.auth.getUser();
+
       if (error) {
-        console.warn("❌ Failed to get user:", error.message);
+        console.warn("❌ Error fetching user:", error.message);
       }
-      setUser(data?.user || null);
-      setLoadingUser(false);
+
+      setUser(user || null);
+      setLoading(false);
     };
 
-    getUser();
+    initSession();
 
-    // Real-time listener for auth state changes
-    const { data: authListener } = supabase.auth.onAuthStateChange(
-      async (_, session) => {
+    const { data: listener } = supabase.auth.onAuthStateChange(
+      async (_event, session) => {
         setUser(session?.user || null);
       }
     );
 
     return () => {
-      authListener?.subscription?.unsubscribe();
+      listener?.subscription?.unsubscribe();
     };
   }, []);
 
-  // Sign in via Magic Link (Email)
+  // ✅ Sign in via Magic Link (OTP)
   const signInWithEmail = async (email) => {
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: {
-        emailRedirectTo: `${window.location.origin}/dashboard`,
-      },
-    });
-
-    if (error) throw new Error("Magic link failed: " + error.message);
+    const { error } = await supabase.auth.signInWithOtp({ email });
+    if (error) {
+      throw new Error("Magic Link error: " + error.message);
+    }
   };
 
-  // Google OAuth Login
+  // ✅ Sign in via Google OAuth
   const signInWithGoogle = async () => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
@@ -56,13 +57,17 @@ export function MagicLinkProvider({ children }) {
       },
     });
 
-    if (error) throw new Error("Google sign-in failed: " + error.message);
+    if (error) {
+      throw new Error("Google login error: " + error.message);
+    }
   };
 
-  // Sign Out
+  // ✅ Sign out
   const signOut = async () => {
     const { error } = await supabase.auth.signOut();
-    if (error) throw new Error("Sign out failed: " + error.message);
+    if (error) {
+      throw new Error("Logout error: " + error.message);
+    }
     setUser(null);
   };
 
@@ -70,7 +75,7 @@ export function MagicLinkProvider({ children }) {
     <MagicLinkContext.Provider
       value={{
         user,
-        loadingUser,
+        loadingUser: loading,
         signInWithEmail,
         signInWithGoogle,
         signOut,
