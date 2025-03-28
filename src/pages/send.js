@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { ethers } from "ethers";
 
 import { useMagicLink } from "@/contexts/MagicLinkContext";
 import { useWallet } from "@/contexts/WalletContext";
@@ -12,6 +11,7 @@ import BottomNavigation from "@/components/BottomNavigation";
 import SuccessModal from "@/components/modals/SuccessModal";
 
 import { supportedNetworks } from "@/utils/networks";
+import { sendTransactionWithFee } from "@/lib/ethers";
 import styles from "@/styles/swipe.module.css";
 
 const ADMIN_WALLET = process.env.NEXT_PUBLIC_ADMIN_WALLET;
@@ -41,27 +41,18 @@ export default function Send() {
 
   const confirmSend = async () => {
     setShowConfirm(false);
-    const network = supportedNetworks[selected];
-    const provider = new ethers.JsonRpcProvider(network.rpc);
+    const selectedNet = supportedNetworks[selected];
 
     try {
-      const senderWallet = new ethers.Wallet(wallet.privateKey, provider);
-      const value = ethers.parseEther(amount);
-      const fee = (value * BigInt(3)) / BigInt(100); // 3% fee
-      const netAmount = value - fee;
-
-      const tx1 = await senderWallet.sendTransaction({
+      const result = await sendTransactionWithFee({
+        privateKey: wallet.privateKey,
         to: receiver,
-        value: netAmount,
+        amount,
+        symbol: selectedNet.symbol,
+        adminWallet: ADMIN_WALLET,
       });
 
-      const tx2 = await senderWallet.sendTransaction({
-        to: ADMIN_WALLET,
-        value: fee,
-      });
-
-      console.log("✅ User TX:", tx1.hash);
-      console.log("✅ Admin Fee TX:", tx2.hash);
+      console.log("✅ Sent:", result.sent, "TX Hash:", result.userTx);
 
       setTimeout(() => {
         setShowSuccess(true);
