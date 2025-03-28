@@ -1,7 +1,15 @@
 "use client";
 
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useState, useEffect } from "react";
 import { ethers } from "ethers";
+import { createClient } from "@supabase/supabase-js";
+import { useMagicLink } from "./MagicLinkContext";
+
+const GenerateWalletContext = createContext();
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+);
 
 const SUPPORTED_NETWORKS = {
   BNB: "Binance Smart Chain",
@@ -11,9 +19,7 @@ const SUPPORTED_NETWORKS = {
   AVAX: "Avalanche",
 };
 
-const GenerateWalletContext = createContext();
-
-// === AES ENCRYPTION ===
+// AES
 const ENCRYPTION_SECRET = process.env.NEXT_PUBLIC_ENCRYPTION_SECRET || "nordbalticum-2024";
 const SALT = "nbc-salt";
 
@@ -60,68 +66,88 @@ const decrypt = async (cipherText) => {
 };
 
 export const GenerateWalletProvider = ({ children }) => {
+  const { user } = useMagicLink();
   const [generatedWallets, setGeneratedWallets] = useState({});
-  const [loadingGenerate, setLoadingGenerate] = useState(false);
+  const [loadingGenerate, setLoadingGenerate] = useState(true);
 
-  // ✅ Vienos piniginės generavimas
-  const generateWalletForNetwork = async (networkSymbol) => {
-    try {
-      const wallet = ethers.Wallet.createRandom();
-      const encryptedKey = await encrypt(wallet.privateKey);
-      return {
-        address: wallet.address,
+  useEffect(() => {
+    const initializeWallets = async () => {
+      if (!user?.email || !user?.id) return setLoadingGenerate(false);
+
+      // 1. Check localStorage
+      const cached = localStorage.getItem("userWallets");
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached);
+          setGeneratedWallets(parsed);
+          setLoadingGenerate(false);
+          return;
+        } catch {
+          localStorage.removeItem("userWallets");
+        }
+      }
+
+      // 2. Try loading from Supabase
+      const { data } = await supabase
+        .from("wallets")
+        .select("*")
+        .eq("email", user.email)
+        .single();
+
+      if (data) {
+        const walletObj = {
+          address: data.bsc,
+          privateKey: null, // Optional, could decrypt if needed
+          networks: {
+            bsc: data.bsc,
+            tbnb: data.tbnb,
+            eth: data.eth,
+            pol: data.pol,
+            avax: data.avax,
+          },
+        };
+        setGeneratedWallets(walletObj);
+        localStorage.setItem("userWallets", JSON.stringify(walletObj));
+        setLoadingGenerate(false);
+        return;
+      }
+
+      // 3. Generate new wallets if not found
+      const newWallet = ethers.Wallet.createRandom();
+      const encryptedKey = await encrypt(newWallet.privateKey);
+
+      const walletObj = {
+        address: newWallet.address,
         privateKey: encryptedKey,
-        network: SUPPORTED_NETWORKS[networkSymbol],
-        symbol: networkSymbol,
+        networks: {
+          bsc: newWallet.address,
+          tbnb: newWallet.address,
+          eth: newWallet.address,
+          pol: newWallet.address,
+          avax: newWallet.address,
+        },
       };
-    } catch (err) {
-      console.error(`❌ Wallet generation error (${networkSymbol}):`, err.message);
-      return null;
-    }
-  };
 
-  // ✅ Visų tinklų piniginių generavimas
-  const generateAllWallets = async () => {
-    setLoadingGenerate(true);
-    try {
-      const newWallets = {};
-      for (const symbol of Object.keys(SUPPORTED_NETWORKS)) {
-        const wallet = await generateWalletForNetwork(symbol);
-        if (wallet) newWallets[symbol] = wallet;
-      }
-      setGeneratedWallets(newWallets);
-      localStorage.setItem("userWallets", JSON.stringify(newWallets));
-      console.log("✅ All wallets generated and encrypted.");
-    } catch (err) {
-      console.error("❌ Wallet generation failed:", err.message);
-    } finally {
+      await supabase.from("wallets").insert({
+        user_id: user.id,
+        email: user.email,
+        ...walletObj.networks,
+        private_key_encrypted: encryptedKey,
+      });
+
+      localStorage.setItem("userWallets", JSON.stringify(walletObj));
+      setGeneratedWallets(walletObj);
       setLoadingGenerate(false);
-    }
-  };
+    };
 
-  // ✅ Iš localStorage gauti sugeneruotas pinigines
-  const getStoredWallets = () => {
-    try {
-      const stored = localStorage.getItem("userWallets");
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        setGeneratedWallets(parsed);
-        return parsed;
-      }
-      return null;
-    } catch (err) {
-      console.error("❌ Failed to load stored wallets:", err.message);
-      return null;
-    }
-  };
+    initializeWallets();
+  }, [user]);
 
   return (
     <GenerateWalletContext.Provider
       value={{
         generatedWallets,
         loadingGenerate,
-        generateAllWallets,
-        getStoredWallets,
         encrypt,
         decrypt,
       }}
