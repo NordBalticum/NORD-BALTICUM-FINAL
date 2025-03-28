@@ -25,7 +25,6 @@ const networksData = [
 export default function Dashboard() {
   const router = useRouter();
 
-  // Kontekstai
   const { user: authUser, wallet: authWallet, balances: authBalances, loadingUser, loadingWallets } = useAuth();
   const { user: magicUser, loadingUser: loadingMagic } = useMagicLink();
   const { wallets: walletLoad, loadingWallets: loadingWallet } = useWalletLoad();
@@ -38,7 +37,7 @@ export default function Dashboard() {
   const [totalEUR, setTotalEUR] = useState("0.00");
   const networks = useMemo(() => networksData, []);
 
-  // ✅ Tikrinam ar VISKAS UŽSISIKROVĖ
+  // ✅ Nustatom, ar VISKAS pilnai užkrauta
   const isLoadingAll =
     loadingUser ||
     loadingMagic ||
@@ -46,15 +45,20 @@ export default function Dashboard() {
     loadingWallet ||
     loadingBalances;
 
-  // ✅ Saugus redirectas tik kai viskas užsikrovė
-  useEffect(() => {
-    if (!isLoadingAll && (!user || !wallet?.address)) {
-      console.warn("❌ Vartotojas neprisijungęs arba piniginės nėra – redirect...");
-      router.replace("/");
-    }
-  }, [isLoadingAll, user, wallet?.address, router]);
+  // ✅ Tik kai užkrauta, leidžiam redirectą
+  const [initialChecked, setInitialChecked] = useState(false);
 
-  // ✅ Skaičiuojam bendrą EUR vertę
+  useEffect(() => {
+    if (!isLoadingAll && !initialChecked) {
+      setInitialChecked(true);
+      if (!user || !wallet?.address) {
+        console.warn("❌ Redirect: Nėra user arba wallet.");
+        router.replace("/");
+      }
+    }
+  }, [isLoadingAll, user, wallet?.address, initialChecked, router]);
+
+  // ✅ Skaičiuojam total eur
   useEffect(() => {
     const total = Object.values(balances || {}).reduce((sum, b) => {
       const eur = parseFloat(b?.eur || 0);
@@ -63,8 +67,8 @@ export default function Dashboard() {
     setTotalEUR(total.toFixed(2));
   }, [balances]);
 
-  // ✅ Loader
-  if (isLoadingAll) {
+  // ✅ Rodyti loaderį kol viskas kraunasi
+  if (isLoadingAll || !initialChecked) {
     return (
       <div className={styles.loadingContainer}>
         <StarsBackground />
