@@ -6,6 +6,7 @@ import { createClient } from "@supabase/supabase-js";
 import { useMagicLink } from "./MagicLinkContext";
 
 const GenerateWalletContext = createContext();
+
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -19,7 +20,7 @@ const SUPPORTED_NETWORKS = {
   AVAX: "Avalanche",
 };
 
-// AES
+// === AES ENCRYPTION ===
 const ENCRYPTION_SECRET = process.env.NEXT_PUBLIC_ENCRYPTION_SECRET || "nordbalticum-2024";
 const SALT = "nbc-salt";
 
@@ -43,10 +44,15 @@ const getKey = async (password) => {
 };
 
 const encrypt = async (text) => {
-  const iv = crypto.getRandomValues(new Uint8Array(12));
-  const key = await getKey(ENCRYPTION_SECRET);
-  const encrypted = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, encode(text));
-  return btoa(JSON.stringify({ iv: Array.from(iv), data: Array.from(new Uint8Array(encrypted)) }));
+  try {
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const key = await getKey(ENCRYPTION_SECRET);
+    const encrypted = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, encode(text));
+    return btoa(JSON.stringify({ iv: Array.from(iv), data: Array.from(new Uint8Array(encrypted)) }));
+  } catch (err) {
+    console.error("❌ Encrypt error:", err.message);
+    return null;
+  }
 };
 
 const decrypt = async (cipherText) => {
@@ -60,7 +66,7 @@ const decrypt = async (cipherText) => {
     );
     return decode(decrypted);
   } catch (err) {
-    console.error("❌ Decryption failed:", err.message);
+    console.error("❌ Decrypt error:", err.message);
     return null;
   }
 };
@@ -71,76 +77,93 @@ export const GenerateWalletProvider = ({ children }) => {
   const [loadingGenerate, setLoadingGenerate] = useState(true);
 
   useEffect(() => {
-    const initializeWallets = async () => {
-      if (!user?.email || !user?.id) return setLoadingGenerate(false);
-
-      // 1. Check localStorage
-      const cached = localStorage.getItem("userWallets");
-      if (cached) {
-        try {
-          const parsed = JSON.parse(cached);
-          setGeneratedWallets(parsed);
-          setLoadingGenerate(false);
-          return;
-        } catch {
-          localStorage.removeItem("userWallets");
-        }
-      }
-
-      // 2. Try loading from Supabase
-      const { data } = await supabase
-        .from("wallets")
-        .select("*")
-        .eq("email", user.email)
-        .single();
-
-      if (data) {
-        const walletObj = {
-          address: data.bsc,
-          privateKey: null, // Optional, could decrypt if needed
-          networks: {
-            bsc: data.bsc,
-            tbnb: data.tbnb,
-            eth: data.eth,
-            pol: data.pol,
-            avax: data.avax,
-          },
-        };
-        setGeneratedWallets(walletObj);
-        localStorage.setItem("userWallets", JSON.stringify(walletObj));
+    const initWallets = async () => {
+      if (!user?.email || !user?.id) {
         setLoadingGenerate(false);
         return;
       }
 
-      // 3. Generate new wallets if not found
-      const newWallet = ethers.Wallet.createRandom();
-      const encryptedKey = await encrypt(newWallet.privateKey);
+      try {
+        // 1. Local cache
+        const local = localStorage.getItem("userWallets");
+        if (local) {
+          try {
+            const parsed = JSON.parse(local);
+            setGeneratedWallets(parsed);
+            console.log("✅ Wallets loaded from localStorage.");
+            setLoadingGenerate(false);
+            return;
+          } catch {
+            localStorage.removeItem("userWallets");
+            console.warn("⚠️ Corrupt local cache cleared.");
+          }
+        }
 
-      const walletObj = {
-        address: newWallet.address,
-        privateKey: encryptedKey,
-        networks: {
-          bsc: newWallet.address,
-          tbnb: newWallet.address,
-          eth: newWallet.address,
-          pol: newWallet.address,
-          avax: newWallet.address,
-        },
-      };
+        // 2. Supabase DB
+        const { data, error } = await supabase
+          .from("wallets")
+          .select("*")
+          .eq("email", user.email)
+          .single();
 
-      await supabase.from("wallets").insert({
-        user_id: user.id,
-        email: user.email,
-        ...walletObj.networks,
-        private_key_encrypted: encryptedKey,
-      });
+        if (data && !error) {
+          const walletObj = {
+            address: data.bsc,
+            privateKey: null,
+            networks: {
+              bsc: data.bsc,
+              tbnb: data.tbnb,
+              eth: data.eth,
+              pol: data.pol,
+              avax: data.avax,
+            },
+          };
+          setGeneratedWallets(walletObj);
+          localStorage.setItem("userWallets", JSON.stringify(walletObj));
+          console.log("✅ Wallets loaded from Supabase.");
+          setLoadingGenerate(false);
+          return;
+        }
 
-      localStorage.setItem("userWallets", JSON.stringify(walletObj));
-      setGeneratedWallets(walletObj);
-      setLoadingGenerate(false);
+        // 3. Generate new
+        const newWallet = ethers.Wallet.createRandom();
+        const encryptedKey = await encrypt(newWallet.privateKey);
+        const walletObj = {
+          address: newWallet.address,
+          privateKey: encryptedKey,
+          networks: {
+            bsc: newWallet.address,
+            tbnb: newWallet.address,
+            eth: newWallet.address,
+            pol: newWallet.address,
+            avax: newWallet.address,
+          },
+        };
+
+        const insert = await supabase.from("wallets").insert({
+          user_id: user.id,
+          email: user.email,
+          ...walletObj.networks,
+          private_key_encrypted: encryptedKey,
+        });
+
+        if (insert.error) {
+          console.error("❌ Supabase insert error:", insert.error.message);
+          setLoadingGenerate(false);
+          return;
+        }
+
+        setGeneratedWallets(walletObj);
+        localStorage.setItem("userWallets", JSON.stringify(walletObj));
+        console.log("✅ New wallet generated & saved.");
+      } catch (err) {
+        console.error("❌ Wallet generation failed:", err.message);
+      } finally {
+        setLoadingGenerate(false);
+      }
     };
 
-    initializeWallets();
+    initWallets();
   }, [user]);
 
   return (
