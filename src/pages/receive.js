@@ -3,12 +3,12 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+
+import { useMagicLink } from "@/contexts/MagicLinkContext";
+import { useWallet } from "@/contexts/WalletContext";
+
 import BottomNavigation from "@/components/BottomNavigation";
 import styles from "@/styles/swipe.module.css";
-
-// Kontekstai
-import { useAuth } from "@/contexts/AuthContext";
-import { useMagicLink } from "@/contexts/MagicLinkContext";
 
 const networks = [
   {
@@ -45,19 +45,16 @@ const networks = [
 
 export default function Receive() {
   const router = useRouter();
+  const { user } = useMagicLink();
+  const { wallet } = useWallet();
 
-  // Kontekstai
-  const { user: authUser, sessionReady } = useAuth();
-  const { user: fallbackUser } = useMagicLink();
-
-  const user = authUser || fallbackUser;
   const [selected, setSelected] = useState(0);
 
   useEffect(() => {
-    if (sessionReady && !user) router.push("/");
-  }, [sessionReady, user, router]);
+    if (!user || !wallet?.address) router.push("/");
+  }, [user, wallet]);
 
-  if (!user) return <div className={styles.loading}>Loading Wallet...</div>;
+  if (!user || !wallet?.address) return <div className={styles.loading}>Loading Wallet...</div>;
 
   return (
     <div className="globalContainer">
