@@ -2,26 +2,29 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/contexts/AuthContext";
+
 import { useMagicLink } from "@/contexts/MagicLinkContext";
+import { useWallet } from "@/contexts/WalletContext";
+import { supabase } from "@/lib/supabaseClient";
+
 import BottomNavigation from "@/components/BottomNavigation";
 import styles from "@/styles/history.module.css";
 
 export default function HistoryPage() {
   const router = useRouter();
-  const { user: authUser, supabase } = useAuth();
-  const { user: fallbackUser } = useMagicLink();
+  const { user } = useMagicLink();
+  const { wallet } = useWallet();
 
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("all");
 
-  const user = authUser || fallbackUser;
-
+  // Redirect if not logged in
   useEffect(() => {
     if (!user) router.push("/");
   }, [user]);
 
+  // Fetch transactions from Supabase
   useEffect(() => {
     const fetchTransactions = async () => {
       if (!user?.email) return;
@@ -30,21 +33,22 @@ export default function HistoryPage() {
         const { data, error } = await supabase
           .from("transactions")
           .select("*")
-          .eq("user_email", user.email)
+          .eq("sender_email", user.email)
           .order("date", { ascending: false });
 
         if (error) throw error;
         setTransactions(data || []);
       } catch (err) {
-        console.error("❌ Supabase fetch error:", err.message);
+        console.error("❌ Error fetching transactions:", err.message);
       } finally {
         setLoading(false);
       }
     };
 
     fetchTransactions();
-  }, [user, supabase]);
+  }, [user]);
 
+  // Filter transactions by type
   const filteredTransactions = useMemo(() => {
     if (filter === "all") return transactions;
     return transactions.filter((tx) => tx.type === filter);
@@ -88,7 +92,9 @@ export default function HistoryPage() {
                 </div>
                 <div className={styles.row}>
                   <span className={styles.label}>To:</span>
-                  <span className={styles.value}>{tx.to}</span>
+                  <span className={styles.value}>
+                    {tx.receiver_address || "—"}
+                  </span>
                 </div>
                 <div className={styles.row}>
                   <span className={styles.label}>Status:</span>
