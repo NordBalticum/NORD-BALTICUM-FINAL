@@ -15,64 +15,46 @@ import { useWalletLoad } from "@/contexts/WalletLoadContext";
 import { useBalance } from "@/contexts/BalanceContext";
 
 const networksData = [
-  {
-    name: "BNB Smart Chain",
-    symbol: "BNB",
-    logo: "https://cryptologos.cc/logos/bnb-bnb-logo.png",
-    route: "/bnb",
-  },
-  {
-    name: "BSC Testnet",
-    symbol: "TBNB",
-    logo: "https://cryptologos.cc/logos/binance-coin-bnb-logo.png",
-    route: "/tbnb",
-  },
-  {
-    name: "Ethereum",
-    symbol: "ETH",
-    logo: "https://cryptologos.cc/logos/ethereum-eth-logo.png",
-    route: "/eth",
-  },
-  {
-    name: "Polygon",
-    symbol: "POL",
-    logo: "https://cryptologos.cc/logos/polygon-matic-logo.png",
-    route: "/pol",
-  },
-  {
-    name: "Avalanche",
-    symbol: "AVAX",
-    logo: "https://cryptologos.cc/logos/avalanche-avax-logo.png",
-    route: "/avax",
-  },
+  { name: "BNB Smart Chain", symbol: "BNB", logo: "https://cryptologos.cc/logos/bnb-bnb-logo.png", route: "/bnb" },
+  { name: "BSC Testnet", symbol: "TBNB", logo: "https://cryptologos.cc/logos/binance-coin-bnb-logo.png", route: "/tbnb" },
+  { name: "Ethereum", symbol: "ETH", logo: "https://cryptologos.cc/logos/ethereum-eth-logo.png", route: "/eth" },
+  { name: "Polygon", symbol: "POL", logo: "https://cryptologos.cc/logos/polygon-matic-logo.png", route: "/pol" },
+  { name: "Avalanche", symbol: "AVAX", logo: "https://cryptologos.cc/logos/avalanche-avax-logo.png", route: "/avax" },
 ];
 
 export default function Dashboard() {
   const router = useRouter();
 
+  // Kontekstai
   const { user: authUser, wallet: authWallet, balances: authBalances, loadingUser, loadingWallets } = useAuth();
-  const { user: fallbackUser, loadingUser: loadingMagic } = useMagicLink();
-  const { wallets: fallbackWallet, loadingWallets: loadingWallet } = useWalletLoad();
-  const { balances: fallbackBalances, loading: loadingBalances } = useBalance();
+  const { user: magicUser, loadingUser: loadingMagic } = useMagicLink();
+  const { wallets: walletLoad, loadingWallets: loadingWallet } = useWalletLoad();
+  const { balances: balanceState, loading: loadingBalances } = useBalance();
 
-  const user = authUser || fallbackUser;
-  const wallet = authWallet || fallbackWallet;
-  const balances = authBalances || fallbackBalances;
+  const user = authUser || magicUser;
+  const wallet = authWallet || walletLoad;
+  const balances = authBalances || balanceState;
 
   const [totalEUR, setTotalEUR] = useState("0.00");
   const networks = useMemo(() => networksData, []);
 
-  const loadingComplete = !loadingUser && !loadingMagic && !loadingWallets && !loadingWallet && !loadingBalances;
+  // ✅ Tikrinam ar VISKAS UŽSISIKROVĖ
+  const isLoadingAll =
+    loadingUser ||
+    loadingMagic ||
+    loadingWallets ||
+    loadingWallet ||
+    loadingBalances;
 
-  // ✅ Saugi redirect logika
+  // ✅ Saugus redirectas tik kai viskas užsikrovė
   useEffect(() => {
-    if (loadingComplete && (!user || !wallet?.address)) {
-      console.warn("❌ No user or wallet after loading – redirecting...");
+    if (!isLoadingAll && (!user || !wallet?.address)) {
+      console.warn("❌ Vartotojas neprisijungęs arba piniginės nėra – redirect...");
       router.replace("/");
     }
-  }, [loadingComplete, user, wallet?.address, router]);
+  }, [isLoadingAll, user, wallet?.address, router]);
 
-  // ✅ Apskaičiuojam bendrą EUR vertę
+  // ✅ Skaičiuojam bendrą EUR vertę
   useEffect(() => {
     const total = Object.values(balances || {}).reduce((sum, b) => {
       const eur = parseFloat(b?.eur || 0);
@@ -82,7 +64,7 @@ export default function Dashboard() {
   }, [balances]);
 
   // ✅ Loader
-  if (!loadingComplete) {
+  if (isLoadingAll) {
     return (
       <div className={styles.loadingContainer}>
         <StarsBackground />
