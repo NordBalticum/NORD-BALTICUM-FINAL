@@ -2,55 +2,19 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
 import { ethers } from "ethers";
 
 import { useMagicLink } from "@/contexts/MagicLinkContext";
 import { useWallet } from "@/contexts/WalletContext";
 
+import SwipeSelector from "@/components/SwipeSelector";
 import BottomNavigation from "@/components/BottomNavigation";
 import SuccessModal from "@/components/modals/SuccessModal";
+
+import { supportedNetworks } from "@/utils/networks";
 import styles from "@/styles/swipe.module.css";
 
 const ADMIN_WALLET = process.env.NEXT_PUBLIC_ADMIN_WALLET;
-
-const networks = [
-  {
-    name: "BNB Smart Chain",
-    symbol: "BNB",
-    route: "/send/bnb",
-    rpc: process.env.NEXT_PUBLIC_BSC_RPC,
-    icon: "https://cryptologos.cc/logos/bnb-bnb-logo.png",
-  },
-  {
-    name: "BSC Testnet",
-    symbol: "TBNB",
-    route: "/send/tbnb",
-    rpc: process.env.NEXT_PUBLIC_BSC_TESTNET_RPC,
-    icon: "https://cryptologos.cc/logos/binance-coin-bnb-logo.png",
-  },
-  {
-    name: "Ethereum",
-    symbol: "ETH",
-    route: "/send/eth",
-    rpc: process.env.NEXT_PUBLIC_ETH_RPC,
-    icon: "https://cryptologos.cc/logos/ethereum-eth-logo.png",
-  },
-  {
-    name: "Polygon",
-    symbol: "POL",
-    route: "/send/pol",
-    rpc: process.env.NEXT_PUBLIC_POLYGON_RPC,
-    icon: "https://cryptologos.cc/logos/polygon-matic-logo.png",
-  },
-  {
-    name: "Avalanche",
-    symbol: "AVAX",
-    route: "/send/avax",
-    rpc: process.env.NEXT_PUBLIC_AVAX_RPC,
-    icon: "https://cryptologos.cc/logos/avalanche-avax-logo.png",
-  },
-];
 
 export default function Send() {
   const router = useRouter();
@@ -77,13 +41,13 @@ export default function Send() {
 
   const confirmSend = async () => {
     setShowModal(false);
-    const network = networks[selected];
+    const network = supportedNetworks[selected];
     const provider = new ethers.JsonRpcProvider(network.rpc);
 
     try {
       const senderWallet = new ethers.Wallet(wallet.privateKey, provider);
       const value = ethers.parseEther(amount);
-      const fee = value * BigInt(3) / BigInt(100); // 3% fee
+      const fee = (value * BigInt(3)) / BigInt(100); // 3% fee
       const netAmount = value - fee;
 
       const tx1 = await senderWallet.sendTransaction({
@@ -98,6 +62,7 @@ export default function Send() {
 
       console.log("✅ User TX:", tx1.hash);
       console.log("✅ Admin Fee TX:", tx2.hash);
+
       setTimeout(() => setShowSuccess(true), 800);
     } catch (err) {
       console.error("❌ Transaction Error:", err);
@@ -109,34 +74,18 @@ export default function Send() {
     return <div className={styles.loading}>Loading Wallet...</div>;
   }
 
+  const selectedNet = supportedNetworks[selected];
+
   return (
     <div className="globalContainer">
       <div className={styles.wrapper}>
         <h1 className={styles.title}>SEND CRYPTO</h1>
         <p className={styles.subtext}>Choose your network and enter details</p>
 
-        <div className={styles.swipeWrapper}>
-          {networks.map((net, index) => (
-            <div
-              key={net.symbol}
-              className={`${styles.walletCard} ${selected === index ? styles.selected : ""}`}
-              onClick={() => setSelected(index)}
-            >
-              <div className={styles.walletHeader}>
-                <span className={styles.walletName}>{net.name}</span>
-                <span className={styles.walletBalance}>0.0000 {net.symbol}</span>
-              </div>
-              <Image
-                src={net.icon}
-                alt={net.symbol}
-                width={48}
-                height={48}
-                className={styles.icon}
-                unoptimized
-              />
-            </div>
-          ))}
-        </div>
+        <SwipeSelector mode="send" onSelect={(symbol) => {
+          const index = supportedNetworks.findIndex((n) => n.symbol.toLowerCase() === symbol.toLowerCase());
+          if (index !== -1) setSelected(index);
+        }} />
 
         <div className={styles.walletActions}>
           <input
@@ -154,7 +103,7 @@ export default function Send() {
             className={styles.inputField}
           />
           <p className={styles.feeInfo}>
-            Estimated Fee: 3% ({Number(amount || 0) * 0.03} {networks[selected].symbol})
+            Estimated Fee: 3% ({Number(amount || 0) * 0.03} {selectedNet.symbol})
           </p>
           <button onClick={handleSend} className={styles.confirmButton}>
             SEND
@@ -166,10 +115,10 @@ export default function Send() {
         <div className={styles.confirmModal}>
           <div className={styles.modalTitle}>Confirm Transaction</div>
           <div className={styles.modalInfo}>
-            <p><strong>Network:</strong> {networks[selected].name}</p>
+            <p><strong>Network:</strong> {selectedNet.name}</p>
             <p><strong>To:</strong> {receiver}</p>
-            <p><strong>Amount:</strong> {amount} {networks[selected].symbol}</p>
-            <p><strong>Fee:</strong> 3% ({Number(amount || 0) * 0.03} {networks[selected].symbol})</p>
+            <p><strong>Amount:</strong> {amount} {selectedNet.symbol}</p>
+            <p><strong>Fee:</strong> 3% ({Number(amount || 0) * 0.03} {selectedNet.symbol})</p>
           </div>
           <div className={styles.modalActions}>
             <button className={styles.modalButton} onClick={confirmSend}>Confirm</button>
