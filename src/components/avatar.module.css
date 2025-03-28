@@ -116,13 +116,25 @@
 }
 
 .successBox {
-  background: rgba(255,255,255,0.08);
-  backdrop-filter: blur(16px);
-  padding: 30px;
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(15px) saturate(180%);
+  padding: 32px;
   border-radius: 18px;
   text-align: center;
   color: white;
-  box-shadow: 0 0 22px rgba(255,255,255,0.25);
+  box-shadow: 0 0 30px rgba(255, 255, 255, 0.18);
+  animation: popup 0.35s ease;
+}
+
+@keyframes popup {
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 .successText {
