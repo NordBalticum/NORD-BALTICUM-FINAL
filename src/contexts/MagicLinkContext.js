@@ -76,7 +76,7 @@ export const MagicLinkProvider = ({ children }) => {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: "https://nordbalticum.com/dashboard",
+          emailRedirectTo: "https://nordbalticum.com/dashboard"
         },
       });
       if (error) throw error;
