@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { useWallet } from "./WalletContext";
 
@@ -12,45 +12,52 @@ export function BalanceProvider({ children }) {
   const [balances, setBalances] = useState({});
   const [loadingBalances, setLoadingBalances] = useState(true);
 
-  useEffect(() => {
-    if (loadingWallet || !wallet?.id) return;
+  const fetchBalances = useCallback(async () => {
+    if (!wallet?.id) return;
 
-    const fetchBalances = async () => {
-      setLoadingBalances(true);
+    setLoadingBalances(true);
 
-      try {
-        const { data, error } = await supabase
-          .from("balances")
-          .select("*")
-          .eq("wallet_id", wallet.id);
+    try {
+      const { data, error } = await supabase
+        .from("balances")
+        .select("*")
+        .eq("wallet_id", wallet.id);
 
-        if (error) {
-          console.error("❌ Failed to fetch balances:", error.message);
-          setLoadingBalances(false);
-          return;
-        }
-
-        const parsed = {};
-        data?.forEach((b) => {
-          parsed[b.network] = {
-            amount: b.amount || "0.0000",
-            eur: b.eur || "0.00",
-          };
-        });
-
-        setBalances(parsed);
-      } catch (err) {
-        console.error("❌ Balance fetch error:", err.message);
+      if (error) {
+        console.error("❌ Failed to fetch balances:", error.message);
+        return;
       }
 
-      setLoadingBalances(false);
-    };
+      const parsed = {};
+      for (const b of data || []) {
+        parsed[b.network] = {
+          amount: b.amount ?? "0.0000",
+          eur: b.eur ?? "0.00",
+        };
+      }
 
-    fetchBalances();
-  }, [wallet, loadingWallet]);
+      setBalances(parsed);
+    } catch (err) {
+      console.error("❌ Unexpected error fetching balances:", err.message);
+    } finally {
+      setLoadingBalances(false);
+    }
+  }, [wallet?.id]);
+
+  useEffect(() => {
+    if (!loadingWallet && wallet?.id) {
+      fetchBalances();
+    }
+  }, [wallet?.id, loadingWallet, fetchBalances]);
 
   return (
-    <BalanceContext.Provider value={{ balances, loading: loadingBalances }}>
+    <BalanceContext.Provider
+      value={{
+        balances,
+        loading: loadingBalances,
+        refreshBalances: fetchBalances, // galėsi naudoti: refreshBalances()
+      }}
+    >
       {children}
     </BalanceContext.Provider>
   );
