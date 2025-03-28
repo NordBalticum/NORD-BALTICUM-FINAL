@@ -1,20 +1,19 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import styles from "@/styles/dashboard.module.css";
 import StarsBackground from "@/components/StarsBackground";
-import Image from "next/image";
 import BottomNavigation from "@/components/BottomNavigation";
 import AvatarDisplay from "@/components/AvatarDisplay";
 
-// Kontekstai
 import { useAuth } from "@/contexts/AuthContext";
 import { useMagicLink } from "@/contexts/MagicLinkContext";
 import { useWalletLoad } from "@/contexts/WalletLoadContext";
 import { useBalance } from "@/contexts/BalanceContext";
 
-const networksData = [
+const networks = [
   { name: "BNB Smart Chain", symbol: "BNB", logo: "https://cryptologos.cc/logos/bnb-bnb-logo.png", route: "/bnb" },
   { name: "BSC Testnet", symbol: "TBNB", logo: "https://cryptologos.cc/logos/binance-coin-bnb-logo.png", route: "/tbnb" },
   { name: "Ethereum", symbol: "ETH", logo: "https://cryptologos.cc/logos/ethereum-eth-logo.png", route: "/eth" },
@@ -25,11 +24,10 @@ const networksData = [
 export default function Dashboard() {
   const router = useRouter();
 
-  // Kontekstai
   const { user: authUser, wallet: authWallet, balances: authBalances, sessionReady } = useAuth();
-  const { user: fallbackUser } = useMagicLink();
-  const { wallets: fallbackWallet } = useWalletLoad();
-  const { balances: fallbackBalances } = useBalance();
+  const { user: fallbackUser, loadingUser } = useMagicLink();
+  const { wallets: fallbackWallet, loadingWallets } = useWalletLoad();
+  const { balances: fallbackBalances, loading: loadingBalances } = useBalance();
 
   const user = authUser || fallbackUser;
   const wallet = authWallet || fallbackWallet;
@@ -37,21 +35,29 @@ export default function Dashboard() {
 
   const [totalEUR, setTotalEUR] = useState("0.00");
 
+  // ✅ Redirect tik jei viskas pilnai užsikrovę ir trūksta user arba wallet
   useEffect(() => {
-    if (!user || !wallet?.address) router.push("/");
-  }, [user, wallet, router]);
+    const allLoaded = sessionReady && !loadingUser && !loadingWallets;
+    const needsRedirect = allLoaded && (!user || !wallet?.address);
+    if (needsRedirect) {
+      console.warn("❌ Neautorizuotas ar nepilna piniginė – redirect...");
+      router.replace("/");
+    }
+  }, [sessionReady, loadingUser, loadingWallets, user, wallet, router]);
 
+  // ✅ Apskaičiuojam total EUR kai yra balansai
   useEffect(() => {
-    const total = Object.values(balances || {}).reduce(
-      (sum, b) => sum + parseFloat(b?.eur || 0),
-      0
-    );
+    if (!balances || loadingBalances) return;
+    const total = Object.values(balances).reduce((sum, b) => {
+      const eur = parseFloat(b?.eur || 0);
+      return sum + (isNaN(eur) ? 0 : eur);
+    }, 0);
     setTotalEUR(total.toFixed(2));
-  }, [balances]);
+  }, [balances, loadingBalances]);
 
-  const networks = useMemo(() => networksData, []);
-
-  if ((!sessionReady && !wallet?.address) || !user) return null;
+  // ✅ Tik kai viskas pilnai užsikrovę, tada renderinam
+  const fullyLoaded = sessionReady && user && wallet?.address && !loadingUser && !loadingWallets && !loadingBalances;
+  if (!fullyLoaded) return null;
 
   return (
     <div className={styles.container}>
@@ -79,7 +85,7 @@ export default function Dashboard() {
                 <div className={styles.assetLeft}>
                   <Image
                     src={net.logo}
-                    alt={net.symbol}
+                    alt={`${net.symbol} Logo`}
                     width={42}
                     height={42}
                     className={styles.assetLogo}
