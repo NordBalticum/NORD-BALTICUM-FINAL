@@ -4,10 +4,9 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
 import { useMagicLink } from "./MagicLinkContext";
 
-// Kontekstas
 const WalletLoadContext = createContext();
 
-// Supabase
+// Supabase klientas
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -21,12 +20,26 @@ export const WalletLoadProvider = ({ children }) => {
 
   useEffect(() => {
     const loadWallet = async () => {
-      if (!user?.email) return;
+      if (!user?.email) return setLoadingWallets(false);
 
       setLoadingWallets(true);
 
       try {
-        // 1. Bandome gauti iš DB
+        // 1. Tikrinam localStorage cache
+        const cached = localStorage.getItem("userWallets");
+        if (cached) {
+          try {
+            const parsed = JSON.parse(cached);
+            setWallets(parsed);
+            setLoadingWallets(false);
+            return;
+          } catch (err) {
+            console.warn("⚠️ Netinkamas localStorage formatas, trinu...");
+            localStorage.removeItem("userWallets");
+          }
+        }
+
+        // 2. Gaunam iš Supabase DB
         const { data, error } = await supabase
           .from("wallets")
           .select("*")
@@ -34,8 +47,9 @@ export const WalletLoadProvider = ({ children }) => {
           .single();
 
         if (error || !data) {
-          console.warn("⚠️ Wallet not found in DB");
-          setWallets(null); // nekurti naujo!
+          console.warn("⚠️ Piniginė nerasta Supabase DB.");
+          setWallets(null);
+          setLoadingWallets(false);
           return;
         }
 
@@ -53,7 +67,8 @@ export const WalletLoadProvider = ({ children }) => {
         setWallets(walletObj);
         localStorage.setItem("userWallets", JSON.stringify(walletObj));
       } catch (err) {
-        console.error("❌ Failed to load wallet:", err.message);
+        console.error("❌ Klaida kraunant piniginę:", err.message);
+        setWallets(null);
       } finally {
         setLoadingWallets(false);
       }
