@@ -1,5 +1,33 @@
-/* === HISTORY MODULE STYLES – NordBalticum === */
+/* === GLOBAL FULLSCREEN CONTAINER – MAXIMUM BANKING UI === */
+.globalContainer {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: calc(100vw - 160px);
+  height: calc(100vh - 160px);
+  transform: translate(-50%, -50%);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding-inline: clamp(16px, 4vw, 64px);
+  background: radial-gradient(ellipse at center, var(--primary-bg) 25%, var(--primary-bg-dark) 100%) !important;
+  background-size: cover;
+  background-position: center;
+  box-sizing: border-box;
+  transition: var(--transition);
+  overflow: visible;
+  z-index: 1;
+}
 
+@media (max-width: 768px) {
+  .globalContainer {
+    transform: scale(0.75) translateY(6%);
+    transform-origin: top center;
+    padding-inline: clamp(8px, 5vw, 24px);
+  }
+}
+
+/* === WRAPPER === */
 .wrapper {
   width: 100%;
   max-width: 100%;
@@ -14,6 +42,7 @@
   overflow-y: auto;
 }
 
+/* === TITLES === */
 .title {
   font-size: clamp(28px, 6vw, 48px);
   font-weight: 900;
@@ -42,6 +71,7 @@
   margin-top: -8px;
 }
 
+/* === TRANSACTION LIST === */
 .transactionList {
   width: 100%;
   max-width: 560px;
@@ -66,6 +96,7 @@
   box-shadow: 0 0 35px rgba(255, 255, 255, 0.25);
 }
 
+/* === TRANSACTION TEXT === */
 .transactionHeader {
   display: flex;
   justify-content: space-between;
@@ -118,6 +149,7 @@
   opacity: 0.9;
 }
 
+/* === LOADING === */
 .loading {
   font-size: 1.2rem;
   color: white;
