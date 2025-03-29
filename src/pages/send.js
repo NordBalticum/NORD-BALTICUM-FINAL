@@ -94,64 +94,63 @@ export default function Send() {
   const amountAfterFee = Number(amount || 0) - calculatedFee;
 
   return (
-    <div className="globalContainer">
-      <div className={styles.wrapper}>
-        <h1 className={styles.title}>SEND CRYPTO</h1>
-        <p className={styles.subtext}>Choose your network and enter details</p>
+  <main className="globalContainer">
+    <div className={styles.wrapper}>
+      <h1 className={styles.title}>SEND CRYPTO</h1>
+      <p className={styles.subtext}>Choose your network and enter details</p>
 
-        <SwipeSelector
-          mode="send"
-          onSelect={(symbol) => {
-            const index = supportedNetworks.findIndex(
-              (n) => n.symbol.toLowerCase() === symbol.toLowerCase()
-            );
-            if (index !== -1) setSelected(index);
-          }}
+      <SwipeSelector
+        mode="send"
+        onSelect={(symbol) => {
+          const index = supportedNetworks.findIndex(
+            (n) => n.symbol.toLowerCase() === symbol.toLowerCase()
+          );
+          if (index !== -1) setSelected(index);
+        }}
+      />
+
+      <div className={styles.walletActions}>
+        <input
+          type="text"
+          placeholder="Receiver address"
+          value={receiver}
+          onChange={(e) => setReceiver(e.target.value)}
+          className={styles.inputField}
         />
+        <input
+          type="number"
+          placeholder="Amount"
+          value={amount}
+          onChange={(e) => setAmount(e.target.value)}
+          className={styles.inputField}
+        />
+        <button onClick={handleSend} className={styles.confirmButton}>
+          SEND
+        </button>
+      </div>
+    </div>
 
-        <div className={styles.walletActions}>
-          <input
-            type="text"
-            placeholder="Receiver address"
-            value={receiver}
-            onChange={(e) => setReceiver(e.target.value)}
-            className={styles.inputField}
-          />
-          <input
-            type="number"
-            placeholder="Amount"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            className={styles.inputField}
-          />
-          <button onClick={handleSend} className={styles.confirmButton}>
-            SEND
-          </button>
+    {showConfirm && (
+      <div className={styles.confirmModal}>
+        <div className={styles.modalTitle}>Confirm Transaction</div>
+        <div className={styles.modalInfo}>
+          <p><strong>Network:</strong> {selectedNet.name}</p>
+          <p><strong>To:</strong> {receiver}</p>
+          <p><strong>Amount:</strong> {amount} {selectedNet.symbol}</p>
+          <p><strong>Recipient gets:</strong> {amountAfterFee.toFixed(6)} {selectedNet.symbol}</p>
+        </div>
+        <div className={styles.modalActions}>
+          <button className={styles.modalButton} onClick={confirmSend}>Confirm</button>
+          <button className={`${styles.modalButton} ${styles.cancel}`} onClick={() => setShowConfirm(false)}>Cancel</button>
         </div>
       </div>
+    )}
 
-      {showConfirm && (
-        <div className={styles.confirmModal}>
-          <div className={styles.modalTitle}>Confirm Transaction</div>
-          <div className={styles.modalInfo}>
-            <p><strong>Network:</strong> {selectedNet.name}</p>
-            <p><strong>To:</strong> {receiver}</p>
-            <p><strong>Amount:</strong> {amount} {selectedNet.symbol}</p>
-            <p><strong>Recipient gets:</strong> {amountAfterFee.toFixed(6)} {selectedNet.symbol}</p>
-          </div>
-          <div className={styles.modalActions}>
-            <button className={styles.modalButton} onClick={confirmSend}>Confirm</button>
-            <button className={`${styles.modalButton} ${styles.cancel}`} onClick={() => setShowConfirm(false)}>Cancel</button>
-          </div>
-        </div>
-      )}
-
-      {showSuccess && (
-        <SuccessModal
-          message="Transaction Sent Successfully!"
-          onClose={() => setShowSuccess(false)}
-        />
-      )}
-    </div>
-  );
-}
+    {showSuccess && (
+      <SuccessModal
+        message="Transaction Sent Successfully!"
+        onClose={() => setShowSuccess(false)}
+      />
+    )}
+  </main>
+);
