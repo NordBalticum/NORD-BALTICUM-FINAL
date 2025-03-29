@@ -1,3 +1,16 @@
+.main {
+  width: 100vw;
+  height: 100vh;
+  max-width: 100vw;
+  max-height: 100vh;
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: inherit;
+}
+
 .globalContainer {
   position: fixed;
   top: 50%;
@@ -72,8 +85,8 @@
 .walletActions {
   display: flex;
   flex-direction: column;
-  align-items: center; /* nauja */
-  text-align: center;  /* nauja */
+  align-items: center;
+  text-align: center;
   gap: 16px;
   width: 100%;
   max-width: 480px;
