@@ -12,7 +12,7 @@ import BottomNavigation from "@/components/BottomNavigation";
 import SuccessModal from "@/components/modals/SuccessModal";
 
 import { supportedNetworks } from "@/utils/networks";
-import styles from "@/styles/swipe.module.css";
+import styles from "@/styles/receive.module.css";
 
 export default function Receive() {
   const router = useRouter();
