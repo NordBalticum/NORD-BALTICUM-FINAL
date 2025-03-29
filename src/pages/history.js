@@ -2,8 +2,10 @@
 
 import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
+
 import { useMagicLink } from "@/contexts/MagicLinkContext";
 import { supabase } from "@/lib/supabase";
+
 import BottomNavigation from "@/components/BottomNavigation";
 import styles from "@/styles/history.module.css";
 
@@ -13,9 +15,7 @@ export default function History() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (user?.email) {
-      fetchTransactions();
-    }
+    if (user?.email) fetchTransactions();
   }, [user]);
 
   const fetchTransactions = async () => {
@@ -36,7 +36,7 @@ export default function History() {
     }
   };
 
-  const transactionVariants = {
+  const variants = {
     hidden: { opacity: 0, y: 20 },
     visible: { opacity: 1, y: 0 },
   };
@@ -53,14 +53,14 @@ export default function History() {
           <div className={styles.loading}>Transakcijų nėra.</div>
         ) : (
           <div className={styles.transactionList}>
-            {transactions.map((tx, index) => (
+            {transactions.map((tx, i) => (
               <motion.div
                 key={tx.tx_hash}
                 className={styles.transactionCard}
-                variants={transactionVariants}
+                variants={variants}
                 initial="hidden"
                 animate="visible"
-                transition={{ duration: 0.3, delay: index * 0.1 }}
+                transition={{ duration: 0.3, delay: i * 0.07 }}
               >
                 <div className={styles.transactionHeader}>
                   <span className={styles.transactionType}>
@@ -81,8 +81,8 @@ export default function History() {
                 <p className={styles.transactionDetail}>
                   <strong>{tx.type === "receive" ? "Nuo:" : "Kam:"}</strong>{" "}
                   {tx.type === "receive"
-                    ? `${tx.sender.slice(0, 6)}...${tx.sender.slice(-4)}`
-                    : `${tx.receiver.slice(0, 6)}...${tx.receiver.slice(-4)}`}
+                    ? `${tx.sender?.slice(0, 6)}...${tx.sender?.slice(-4)}`
+                    : `${tx.receiver?.slice(0, 6)}...${tx.receiver?.slice(-4)}`}
                 </p>
 
                 <p className={styles.transactionDetail}>
@@ -90,7 +90,7 @@ export default function History() {
                 </p>
 
                 <p className={styles.transactionDate}>
-                  {new Date(tx.created_at).toLocaleString()}
+                  {new Date(tx.created_at).toLocaleString("lt-LT")}
                 </p>
 
                 <a
