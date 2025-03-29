@@ -5,8 +5,6 @@ import { motion } from "framer-motion";
 
 import { useMagicLink } from "@/contexts/MagicLinkContext";
 import { supabase } from "@/lib/supabase";
-import BottomNavigation from "@/components/BottomNavigation";
-
 import styles from "@/styles/history.module.css";
 
 export default function History() {
@@ -42,7 +40,7 @@ export default function History() {
   };
 
   return (
-    <div className={styles.container}>
+    <div className="container">
       <div className={styles.wrapper}>
         <h1 className={styles.title}>TRANSAKCIJŲ ISTORIJA</h1>
         <p className={styles.subtext}>Jūsų naujausia veikla</p>
@@ -106,8 +104,6 @@ export default function History() {
           </div>
         )}
       </div>
-
-      <BottomNavigation />
     </div>
   );
 }
