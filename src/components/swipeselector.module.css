@@ -1,5 +1,50 @@
-/* === NordBalticum Swipe Selector — Premium CSS === */
+/* === GLOBAL FULLSCREEN CONTAINER FIX — MAXIMUM BANKING UI === */
+.globalContainer {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: calc(100vw - 160px);
+  height: calc(100vh - 160px);
+  transform: translate(-50%, -50%);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding-inline: clamp(16px, 4vw, 64px);
+  background: radial-gradient(ellipse at center, var(--primary-bg) 25%, var(--primary-bg-dark) 100%) !important;
+  background-size: cover;
+  background-position: center;
+  box-sizing: border-box;
+  transition: var(--transition);
+  overflow: visible;
+  z-index: 1;
+}
 
+/* === RESPONSIVE MEDIA FIX === */
+@media (max-width: 768px) {
+  .globalContainer {
+    transform: scale(0.75) translateY(6%);
+    transform-origin: top center;
+    padding-inline: clamp(8px, 5vw, 24px);
+  }
+}
+
+/* === INNER CONTENT WRAPPER === */
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  gap: clamp(24px, 3vw, 48px);
+  width: 100%;
+  max-width: 100%;
+  height: 100%;
+  padding: clamp(24px, 4vw, 64px);
+  box-sizing: border-box;
+  position: relative;
+  overflow: hidden;
+}
+
+/* === SWIPE SELECTOR ZONA === */
 .swipeWrapper {
   width: 100%;
   display: flex;
@@ -28,6 +73,7 @@
   padding: 12px 0;
 }
 
+/* === SWIPE KORTELĖS === */
 .card {
   flex: 0 0 auto;
   scroll-snap-align: center;
