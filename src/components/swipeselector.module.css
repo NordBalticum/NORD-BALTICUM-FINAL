@@ -1,12 +1,14 @@
 .selectorContainer {
   width: 100%;
-  max-width: 560px;
-  margin: 0 auto;
+  max-width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 0;
-  overflow: visible;
+  justify-content: center;
+  padding-inline: clamp(16px, 5vw, 48px);
+  padding-top: clamp(12px, 3vw, 24px);
+  overflow: hidden;
+  z-index: 1;
 }
 
 .swipeWrapper {
@@ -15,11 +17,11 @@
   flex-wrap: nowrap;
   overflow-x: auto;
   scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  gap: clamp(16px, 3vw, 32px);
   justify-content: center;
   align-items: center;
-  gap: clamp(16px, 3vw, 32px);
-  padding-block: clamp(12px, 2vw, 24px);
-  -webkit-overflow-scrolling: touch;
+  padding-block: clamp(12px, 2.5vw, 20px);
   scrollbar-width: none;
 }
 
@@ -36,7 +38,7 @@
   backdrop-filter: blur(20px);
   box-shadow: 0 0 30px rgba(255, 255, 255, 0.15);
   padding: clamp(20px, 2.5vw, 32px);
-  width: clamp(120px, 18vw, 220px);
+  width: clamp(120px, 20vw, 220px);
   text-align: center;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
   cursor: pointer;
