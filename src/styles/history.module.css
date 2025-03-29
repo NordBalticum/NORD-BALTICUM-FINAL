@@ -1,0 +1,138 @@
+/* === HISTORY MODULE STYLES – NordBalticum === */
+
+.wrapper {
+  width: 100%;
+  max-width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  padding: clamp(24px, 4vw, 64px);
+  gap: clamp(24px, 3vw, 48px);
+  box-sizing: border-box;
+  overflow-y: auto;
+}
+
+.title {
+  font-size: clamp(28px, 6vw, 48px);
+  font-weight: 900;
+  text-align: center;
+  font-family: var(--font-crypto);
+  background: linear-gradient(to right, #ffcc00, #ffffff, #ffcc00);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 0 16px var(--gold-glow);
+  animation: glowTitle 2.5s infinite ease-in-out;
+}
+
+@keyframes glowTitle {
+  0% { text-shadow: 0 0 10px #ffd700; }
+  50% { text-shadow: 0 0 20px #fffacd; }
+  100% { text-shadow: 0 0 10px #ffd700; }
+}
+
+.subtext {
+  font-size: clamp(14px, 2.5vw, 20px);
+  color: rgba(255, 255, 255, 0.85);
+  text-align: center;
+  font-family: var(--font-crypto);
+  font-weight: 500;
+  opacity: 0.85;
+  margin-top: -8px;
+}
+
+.transactionList {
+  width: 100%;
+  max-width: 560px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding-bottom: 80px;
+}
+
+.transactionCard {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 18px;
+  padding: 20px;
+  box-shadow: 0 0 24px rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(14px);
+  transition: all 0.3s ease;
+  animation: fadeIn 0.3s ease;
+}
+
+.transactionCard:hover {
+  box-shadow: 0 0 35px rgba(255, 255, 255, 0.25);
+}
+
+.transactionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+.transactionType {
+  font-size: 1rem;
+  color: white;
+  text-transform: uppercase;
+  font-family: var(--font-crypto);
+  letter-spacing: 0.5px;
+}
+
+.transactionAmountSend {
+  color: #ff7070;
+  font-weight: bold;
+}
+
+.transactionAmountReceive {
+  color: #90ff90;
+  font-weight: bold;
+}
+
+.transactionDetail {
+  font-size: 0.9rem;
+  opacity: 0.85;
+  margin-top: 4px;
+}
+
+.transactionDate {
+  font-size: 0.8rem;
+  opacity: 0.65;
+  margin-top: 6px;
+}
+
+.transactionLink {
+  margin-top: 12px;
+  display: inline-block;
+  font-size: 0.85rem;
+  color: var(--white-gold);
+  text-decoration: underline;
+  font-weight: 600;
+  transition: opacity 0.2s ease;
+}
+
+.transactionLink:hover {
+  opacity: 0.9;
+}
+
+.loading {
+  font-size: 1.2rem;
+  color: white;
+  text-align: center;
+  font-family: var(--font-crypto);
+  margin-top: 80px;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
