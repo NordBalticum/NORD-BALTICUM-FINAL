@@ -1,20 +1,49 @@
-/* === RECEIVE MODULE STYLES – NordBalticum === */
+/* === GLOBAL FULLSCREEN CONTAINER – MAXIMUM BANKING UI === */
+.globalContainer {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: calc(100vw - 160px);
+  height: calc(100vh - 160px);
+  transform: translate(-50%, -50%);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding-inline: clamp(16px, 4vw, 64px);
+  background: radial-gradient(ellipse at center, var(--primary-bg) 25%, var(--primary-bg-dark) 100%) !important;
+  background-size: cover;
+  background-position: center;
+  box-sizing: border-box;
+  transition: var(--transition);
+  overflow: visible;
+  z-index: 1;
+}
 
+@media (max-width: 768px) {
+  .globalContainer {
+    transform: scale(0.75) translateY(6%);
+    transform-origin: top center;
+    padding-inline: clamp(8px, 5vw, 24px);
+  }
+}
+
+/* === WRAPPER – RECEIVE PAGE === */
 .wrapper {
-  width: 100%;
-  max-width: 100%;
-  height: 100%;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
   align-items: center;
-  padding: clamp(24px, 4vw, 64px);
   gap: clamp(24px, 3vw, 48px);
+  width: 100%;
+  max-width: 100%;
+  height: 100%;
+  padding: clamp(24px, 4vw, 64px);
   box-sizing: border-box;
   position: relative;
   overflow: hidden;
 }
 
+/* === TITLE + SUBTEXT === */
 .title {
   font-size: clamp(28px, 6vw, 48px);
   font-weight: 900;
@@ -39,10 +68,11 @@
   text-align: center;
   font-family: var(--font-crypto);
   font-weight: 500;
-  opacity: 0.85;
   margin-top: -8px;
+  opacity: 0.85;
 }
 
+/* === WALLET ACTIONS === */
 .walletActions {
   display: flex;
   flex-direction: column;
@@ -54,7 +84,7 @@
   justify-content: center;
 }
 
-/* === Address input box === */
+/* === ADDRESS INPUT BOX === */
 .inputField {
   width: 100%;
   padding: 14px 16px;
@@ -67,9 +97,10 @@
   transition: background 0.2s ease;
   word-break: break-all;
   user-select: all;
+  text-align: center;
 }
 
-/* === QR code styles === */
+/* === QR CODE CONTAINER === */
 .qrContainer {
   cursor: pointer;
   padding: 12px;
@@ -79,7 +110,7 @@
   box-shadow: 0 0 24px rgba(255, 255, 255, 0.2);
 }
 
-/* === Loading === */
+/* === LOADING === */
 .loading {
   font-size: 1.2rem;
   color: white;
