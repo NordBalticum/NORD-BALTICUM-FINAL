@@ -1,11 +1,12 @@
 .selectorContainer {
   width: 100%;
-  max-width: 560px;
-  margin: 0 auto;
+  max-width: 100%; /* buvo 560px – keičiam į 100% */
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 12px 0;
+  justify-content: center; /* nauja */
+  padding: clamp(8px, 2vw, 16px) 0;
+  box-sizing: border-box;
 }
 
 .swipeWrapper {
@@ -14,12 +15,13 @@
   flex-wrap: nowrap;
   overflow-x: auto;
   scroll-snap-type: x mandatory;
-  justify-content: center;
+  justify-content: flex-start; /* svarbu! kad būtų pradžia, o ne centras */
   align-items: center;
   gap: clamp(16px, 3vw, 32px);
-  padding: clamp(12px, 3vw, 24px) 0;
+  padding: clamp(12px, 3vw, 24px);
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
+  box-sizing: border-box;
 }
 
 .swipeWrapper::-webkit-scrollbar {
@@ -36,6 +38,7 @@
   box-shadow: 0 0 30px rgba(255, 255, 255, 0.15);
   padding: clamp(20px, 2.5vw, 32px);
   width: clamp(120px, 18vw, 220px);
+  min-width: 140px; /* garantuoja, kad nebus mažiau nei tilps logotipas */
   text-align: center;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
   cursor: pointer;
