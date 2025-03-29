@@ -8,7 +8,6 @@ import { useMagicLink } from "@/contexts/MagicLinkContext";
 import { useWallet } from "@/contexts/WalletContext";
 
 import SwipeSelector from "@/components/SwipeSelector";
-import BottomNavigation from "@/components/BottomNavigation";
 import SuccessModal from "@/components/modals/SuccessModal";
 
 import { supportedNetworks } from "@/utils/networks";
@@ -97,8 +96,6 @@ export default function Receive() {
           onClose={() => setShowSuccess(false)}
         />
       )}
-
-      <BottomNavigation />
     </div>
   );
 }
