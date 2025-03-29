@@ -94,8 +94,9 @@ export default function Send() {
   const amountAfterFee = Number(amount || 0) - calculatedFee;
 
   return (
-    <>
-      <div className="globalContainer">
+  <>
+    <main className={styles.main}>
+      <div className={styles.globalContainer}>
         <div className={styles.wrapper}>
           <h1 className={styles.title}>SEND CRYPTO</h1>
           <p className={styles.subtext}>Choose your network and enter details</p>
@@ -154,6 +155,6 @@ export default function Send() {
           onClose={() => setShowSuccess(false)}
         />
       )}
-    </>
-  );
-}
+    </main>
+  </>
+);
