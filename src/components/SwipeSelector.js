@@ -5,7 +5,7 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 
 import { supportedNetworks } from "@/utils/networks";
-import styles from "@/styles/swipeSelector.module.css";
+import styles from "@/components/swipeselector.module.css";
 
 export default function SwipeSelector({ mode = "send", onSelect }) {
   const containerRef = useRef(null);
