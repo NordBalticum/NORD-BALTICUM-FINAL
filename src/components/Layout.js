@@ -12,9 +12,9 @@ export default function Layout({ children }) {
   return (
     <div className={styles.layoutWrapper}>
       {!hideUI && <SideDrawer />}
-      <div className={styles.mainContent}>
+      <main className={styles.mainContent}>
         {children}
-      </div>
+      </main>
       {!hideUI && <BottomNav />}
     </div>
   );
