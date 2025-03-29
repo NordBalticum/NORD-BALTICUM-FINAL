@@ -1,4 +1,3 @@
-/* === GLOBAL FULLSCREEN CONTAINER === */
 .container {
   position: fixed;
   top: 50%;
@@ -6,19 +5,19 @@
   width: calc(100vw - 160px);
   height: calc(100vh - 160px);
   transform: translate(-50%, -50%);
-  background: radial-gradient(ellipse at center, var(--primary-bg) 25%, var(--primary-bg-dark) 100%) !important;
-  background-size: cover;
-  background-position: center;
   display: flex;
   justify-content: center;
   align-items: center;
   padding-inline: clamp(16px, 4vw, 64px);
+  background: radial-gradient(ellipse at center, var(--primary-bg) 25%, var(--primary-bg-dark) 100%) !important;
+  background-size: cover;
+  background-position: center;
   box-sizing: border-box;
-  overflow: hidden;
+  transition: var(--transition);
+  overflow: visible;
   z-index: 1;
 }
 
-/* === RESPONSIVE FIX === */
 @media (max-width: 768px) {
   .container {
     transform: scale(0.75) translateY(6%);
@@ -27,8 +26,7 @@
   }
 }
 
-/* === CENTERED WRAPPER === */
-.centerWrapper {
+.wrapper {
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
@@ -39,10 +37,10 @@
   height: 100%;
   padding: clamp(24px, 4vw, 64px);
   box-sizing: border-box;
-  overflow-y: auto;
+  position: relative;
+  overflow: hidden;
 }
 
-/* === TITLE === */
 .title {
   font-size: clamp(28px, 6vw, 48px);
   font-weight: 900;
@@ -71,7 +69,6 @@
   margin-top: -8px;
 }
 
-/* === TRANSACTION BLOCK === */
 .transactionList {
   width: 100%;
   max-width: 560px;
