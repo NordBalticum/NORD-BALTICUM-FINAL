@@ -94,39 +94,41 @@ export default function Send() {
   const amountAfterFee = Number(amount || 0) - calculatedFee;
 
   return (
-  <main className="globalContainer">
-    <div className={styles.wrapper}>
-      <h1 className={styles.title}>SEND CRYPTO</h1>
-      <p className={styles.subtext}>Choose your network and enter details</p>
+  <>
+    <div className="globalContainer">
+      <div className={styles.wrapper}>
+        <h1 className={styles.title}>SEND CRYPTO</h1>
+        <p className={styles.subtext}>Choose your network and enter details</p>
 
-      <SwipeSelector
-        mode="send"
-        onSelect={(symbol) => {
-          const index = supportedNetworks.findIndex(
-            (n) => n.symbol.toLowerCase() === symbol.toLowerCase()
-          );
-          if (index !== -1) setSelected(index);
-        }}
-      />
+        <SwipeSelector
+          mode="send"
+          onSelect={(symbol) => {
+            const index = supportedNetworks.findIndex(
+              (n) => n.symbol.toLowerCase() === symbol.toLowerCase()
+            );
+            if (index !== -1) setSelected(index);
+          }}
+        />
 
-      <div className={styles.walletActions}>
-        <input
-          type="text"
-          placeholder="Receiver address"
-          value={receiver}
-          onChange={(e) => setReceiver(e.target.value)}
-          className={styles.inputField}
-        />
-        <input
-          type="number"
-          placeholder="Amount"
-          value={amount}
-          onChange={(e) => setAmount(e.target.value)}
-          className={styles.inputField}
-        />
-        <button onClick={handleSend} className={styles.confirmButton}>
-          SEND
-        </button>
+        <div className={styles.walletActions}>
+          <input
+            type="text"
+            placeholder="Receiver address"
+            value={receiver}
+            onChange={(e) => setReceiver(e.target.value)}
+            className={styles.inputField}
+          />
+          <input
+            type="number"
+            placeholder="Amount"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            className={styles.inputField}
+          />
+          <button onClick={handleSend} className={styles.confirmButton}>
+            SEND
+          </button>
+        </div>
       </div>
     </div>
 
@@ -152,5 +154,5 @@ export default function Send() {
         onClose={() => setShowSuccess(false)}
       />
     )}
-  </main>
+  </>
 );
