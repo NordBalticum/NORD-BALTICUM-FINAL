@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-
 import { useMagicLink } from "@/contexts/MagicLinkContext";
 import { useWallet } from "@/contexts/WalletContext";
 
@@ -14,7 +13,7 @@ import { supportedNetworks } from "@/utils/networks";
 import { sendTransactionWithFee, getWalletBalance } from "@/lib/ethers";
 import { supabase } from "@/lib/supabase";
 
-import styles from "@/styles/swipe.module.css";
+import styles from "@/styles/send.module.css";
 
 const ADMIN_WALLET = process.env.NEXT_PUBLIC_ADMIN_WALLET;
 
@@ -56,14 +55,12 @@ export default function Send() {
 
       console.log("✅ Sent:", result.sent, "TX Hash:", result.userTx);
 
-      // Atnaujina balansą
       const updatedBalance = await getWalletBalance(
         wallet.address,
         selectedNet.key || selectedNet.symbol.toLowerCase()
       );
       wallet.balance = updatedBalance.formatted;
 
-      // Įrašo į Supabase istoriją
       await supabase.from("transactions").insert([
         {
           sender_email: user.email,
