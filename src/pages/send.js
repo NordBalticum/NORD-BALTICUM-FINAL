@@ -94,7 +94,7 @@ export default function Send() {
   const amountAfterFee = Number(amount || 0) - calculatedFee;
 
   return (
-    <main className={styles.main}>  {/* Corrected */}
+    <main className={styles.main}>
       <div className={styles.globalContainer}>
         <div className={styles.wrapper}>
           <h1 className={styles.title}>SEND CRYPTO</h1>
@@ -154,6 +154,6 @@ export default function Send() {
           onClose={() => setShowSuccess(false)}
         />
       )}
-    </main>  {/* Corrected */}
+    </main>
   );
 }
