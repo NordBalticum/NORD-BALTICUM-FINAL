@@ -168,3 +168,24 @@
   }
 }
 
+/* =============================== */
+/* ✅ RESPONSIVE FIX – Mobile */
+@media (max-width: 768px) {
+  .container {
+    width: 100vw;
+    height: 100vh;
+  }
+
+  .centerWrapper {
+    transform: scale(0.78) translateY(-4%);
+    transform-origin: top center;
+  }
+
+  .logoImage {
+    width: clamp(280px, 52vw, 470px);
+  }
+
+  .loginBox {
+    max-width: 94%;
+  }
+}
