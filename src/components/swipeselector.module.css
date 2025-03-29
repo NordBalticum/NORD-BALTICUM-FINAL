@@ -1,0 +1,62 @@
+/* === NordBalticum Swipe Selector — Premium CSS === */
+
+.swipeWrapper {
+  width: 100%;
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  justify-content: center;
+  align-items: center;
+  gap: clamp(16px, 3vw, 32px);
+  padding: clamp(12px, 3vw, 24px) 0;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.swipeWrapper::-webkit-scrollbar {
+  display: none;
+}
+
+.card {
+  flex: 0 0 auto;
+  scroll-snap-align: center;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 28px;
+  backdrop-filter: blur(20px);
+  box-shadow: 0 0 30px rgba(255, 255, 255, 0.15);
+  padding: clamp(20px, 2.5vw, 32px);
+  width: clamp(120px, 18vw, 220px);
+  text-align: center;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  cursor: pointer;
+}
+
+.card:hover {
+  transform: scale(1.06);
+  box-shadow: 0 0 35px rgba(255, 255, 255, 0.25);
+}
+
+.logo {
+  width: clamp(40px, 8vw, 64px);
+  height: clamp(40px, 8vw, 64px);
+  margin: 0 auto clamp(12px, 2vw, 20px);
+  filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.4));
+  object-fit: contain;
+}
+
+.name {
+  font-size: clamp(16px, 1.8vw, 20px);
+  color: white;
+  font-weight: 600;
+  font-family: var(--font-crypto);
+  letter-spacing: 0.5px;
+  text-shadow: 0 0 4px rgba(255, 255, 255, 0.3);
+}
+
+.selected {
+  border: 2px solid var(--white-gold);
+  box-shadow: 0 0 25px var(--gold-glow);
+  transform: scale(1.05);
+}
