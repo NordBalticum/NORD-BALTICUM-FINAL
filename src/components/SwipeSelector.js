@@ -7,6 +7,14 @@ import { motion } from "framer-motion";
 import { supportedNetworks } from "@/utils/networks";
 import styles from "@/styles/swipeSelector.module.css";
 
+const logoUrls = {
+  bnb: "https://cryptologos.cc/logos/bnb-bnb-logo.png",
+  eth: "https://cryptologos.cc/logos/ethereum-eth-logo.png",
+  matic: "https://cryptologos.cc/logos/polygon-matic-logo.png",
+  avax: "https://cryptologos.cc/logos/avalanche-avax-logo.png",
+  arb: "https://cryptologos.cc/logos/arbitrum-arb-logo.png",
+};
+
 export default function SwipeSelector({ mode = "send", onSelect }) {
   const containerRef = useRef(null);
 
@@ -24,28 +32,30 @@ export default function SwipeSelector({ mode = "send", onSelect }) {
 
   return (
     <div className={styles.swipeWrapper} ref={containerRef}>
-      {supportedNetworks.map((net) => (
-        <motion.div
-          key={net.symbol}
-          className={styles.card}
-          whileTap={{ scale: 0.95 }}
-          whileHover={{ scale: 1.06 }}
-          onClick={() => handleSelect(net.symbol)}
-        >
-          <Image
-            src={
-              net.icon ||
-              `https://cryptologos.cc/logos/${net.symbol.toLowerCase()}-${net.symbol.toLowerCase()}-logo.png`
-            }
-            alt={`${net.symbol} logo`}
-            width={64}
-            height={64}
-            className={styles.logo}
-            unoptimized
-          />
-          <div className={styles.name}>{net.name}</div>
-        </motion.div>
-      ))}
+      {supportedNetworks.map((net) => {
+        const symbol = net.symbol.toLowerCase();
+        const iconUrl = logoUrls[symbol] || `https://cryptologos.cc/logos/${symbol}-${symbol}-logo.png`;
+
+        return (
+          <motion.div
+            key={net.symbol}
+            className={styles.card}
+            whileTap={{ scale: 0.95 }}
+            whileHover={{ scale: 1.06 }}
+            onClick={() => handleSelect(net.symbol)}
+          >
+            <Image
+              src={iconUrl}
+              alt={`${net.symbol} logo`}
+              width={64}
+              height={64}
+              className={styles.logo}
+              unoptimized
+            />
+            <div className={styles.name}>{net.name}</div>
+          </motion.div>
+        );
+      })}
     </div>
   );
 }
