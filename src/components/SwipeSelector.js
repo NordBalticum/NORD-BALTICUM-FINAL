@@ -5,7 +5,7 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 
 import { supportedNetworks } from "@/utils/networks";
-import styles from "@/styles/swipeselector.module.css";
+import styles from "@/components/swipeselector.module.css";
 
 const logoUrls = {
   bnb: "https://cryptologos.cc/logos/bnb-bnb-logo.png",
