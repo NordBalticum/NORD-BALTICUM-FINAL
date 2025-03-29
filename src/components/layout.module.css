@@ -1,3 +1,5 @@
+/* === NordBalticum Layout Wrapper === */
+
 .layoutWrapper {
   width: 100vw;
   height: 100vh;
@@ -10,11 +12,12 @@
   background: inherit;
 }
 
+/* === Main Content — No Padding to Preserve GlobalContainer Centering === */
 .mainContent {
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: clamp(72px, 8vh, 96px) clamp(16px, 4vw, 32px) clamp(88px, 10vh, 120px);
+  padding: 0; /* <- critical fix: removes layout-induced offset */
   box-sizing: border-box;
   height: 100%;
   scroll-behavior: smooth;
@@ -22,7 +25,7 @@
   overscroll-behavior-y: contain;
 }
 
-/* Optional: hide default scrollbars */
+/* === Hide scrollbars === */
 .mainContent::-webkit-scrollbar {
   width: 0px;
   background: transparent;
