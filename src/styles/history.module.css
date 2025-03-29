@@ -20,8 +20,8 @@
 
 @media (max-width: 768px) {
   .container {
-    transform: scale(0.75) translateY(6%);
-    transform-origin: top center;
+    transform: translate(-50%, -50%);
+    transform-origin: center;
     padding-inline: clamp(8px, 5vw, 24px);
   }
 }
