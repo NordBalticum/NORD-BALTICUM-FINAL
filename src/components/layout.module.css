@@ -12,12 +12,12 @@
   background: inherit;
 }
 
-/* === Main Content — No Padding to Preserve GlobalContainer Centering === */
+/* === Main Content ā€” No Padding to Preserve GlobalContainer Centering === */
 .mainContent {
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 0; /* <- critical fix: removes layout-induced offset */
+  padding: 0;
   box-sizing: border-box;
   height: 100%;
   scroll-behavior: smooth;
