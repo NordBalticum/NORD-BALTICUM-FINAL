@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-
 import { useMagicLink } from "@/contexts/MagicLinkContext";
 import { supabase } from "@/lib/supabase";
 
@@ -42,8 +41,8 @@ export default function History() {
   };
 
   return (
-    <div className="globalContainer">
-      <div className={styles.wrapper}>
+    <div className={styles.container}>
+      <div className={styles.centerWrapper}>
         <h1 className={styles.title}>TRANSAKCIJŲ ISTORIJA</h1>
         <p className={styles.subtext}>Jūsų naujausia veikla</p>
 
