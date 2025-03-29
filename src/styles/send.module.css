@@ -1,4 +1,3 @@
-/* === GLOBAL FULLSCREEN CONTAINER — MAXIMUM BANKING UI === */
 .globalContainer {
   position: fixed;
   top: 50%;
@@ -27,7 +26,6 @@
   }
 }
 
-/* === WRAPPER — PREMIUM LAYOUT === */
 .wrapper {
   display: flex;
   flex-direction: column;
@@ -36,14 +34,13 @@
   gap: clamp(24px, 3vw, 48px);
   width: 100%;
   max-width: 100%;
-  height: 100%;
   padding: clamp(24px, 4vw, 64px);
   box-sizing: border-box;
   position: relative;
-  overflow: hidden;
+  overflow: visible;
+  flex: 1;
 }
 
-/* === TITLES === */
 .title {
   font-size: clamp(28px, 6vw, 48px);
   font-weight: 900;
@@ -72,7 +69,6 @@
   opacity: 0.85;
 }
 
-/* === WALLET INPUT & BUTTON ZONA === */
 .walletActions {
   display: flex;
   flex-direction: column;
@@ -116,7 +112,6 @@
   box-shadow: 0 0 22px var(--gold-glow);
 }
 
-/* === CONFIRM MODAL === */
 .confirmModal {
   position: fixed;
   bottom: 0;
@@ -186,7 +181,6 @@
   border: 2px solid white;
 }
 
-/* === LOADING STATE === */
 .loading {
   font-size: 1.2rem;
   color: white;
