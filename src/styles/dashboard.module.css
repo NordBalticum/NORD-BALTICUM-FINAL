@@ -1,4 +1,4 @@
-/* === DASHBOARD MODULE – NordBalticum Web3 Ultimate 33x Upgrade === */
+/* === DASHBOARD MODULE – NordBalticum Web3 Unified Ferrari Gradient === */
 
 .container {
   position: fixed;
@@ -8,6 +8,9 @@
   height: 100vh;
   transform: translate(-50%, -50%);
   background: radial-gradient(circle at center, #0a122a 15%, #1b2370 65%, #2b37ff 100%) !important;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
   user-select: none;
   scroll-behavior: smooth;
   -webkit-font-smoothing: antialiased;
@@ -162,14 +165,15 @@
   100% { text-shadow: 0 0 8px rgba(255, 255, 255, 0.15); }
 }
 
+/* === RESPONSIVE === */
 @media (max-width: 768px) {
   .avatarCenter {
-    margin-top: 88px; /* Puikiai išlaikytas pozicijos viršus */
+    margin-top: 88px;
   }
 
   .dashboardWrapper {
     padding: 20px 18px 80px;
-    transform: scale(0.96) translateY(-9%); /* Galutinis pakėlimas */
+    transform: scale(0.96) translateY(-9%);
     transform-origin: top center;
   }
 
