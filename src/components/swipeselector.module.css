@@ -1,3 +1,4 @@
+/* === SwipeSelector Container === */
 .selectorContainer {
   width: 100%;
   display: flex;
@@ -35,6 +36,8 @@
   align-items: stretch;
   padding-block: clamp(12px, 2.5vw, 20px);
   scrollbar-width: none;
+  min-width: max-content;
+  touch-action: pan-x;
 }
 
 .scrollableWrapper::-webkit-scrollbar {
@@ -65,12 +68,14 @@
   transform: scale(1.03);
 }
 
+/* === Selected Card === */
 .selected {
   border: 2px solid #ffd700;
   background: rgba(255, 255, 255, 0.06);
   transform: scale(1.05);
 }
 
+/* === Logo === */
 .logo {
   width: 64px;
   height: 64px;
@@ -79,6 +84,7 @@
   filter: brightness(1.2);
 }
 
+/* === Name Text === */
 .name {
   font-size: 15px;
   color: white;
@@ -112,7 +118,7 @@
   }
 }
 
-/* === Mini devices fix (Ultra compact) === */
+/* === Mini Devices Fix (Ultra Compact) === */
 @media screen and (max-width: 280px) {
   .card {
     width: 120px;
