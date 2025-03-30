@@ -11,6 +11,7 @@ import AvatarDisplay from "@/components/AvatarDisplay";
 import SuccessModal from "@/components/SuccessModal";
 
 import styles from "@/styles/settings.module.css";
+import background from "@/styles/background.module.css";
 import { supabase } from "@/lib/supabase";
 
 export default function SettingsPage() {
@@ -49,8 +50,9 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className={styles.container}>
+    <main className={`${styles.container} ${background.gradient}`}>
       <StarsBackground />
+
       <div className={styles.box}>
         <h2 className={styles.heading}>Profile Settings</h2>
 
@@ -59,18 +61,26 @@ export default function SettingsPage() {
           onClick={() => setShowAvatarModal(true)}
           title="Click to change avatar"
         >
-          <AvatarDisplay walletAddress={wallet?.address} size={80} key={avatarKey} />
+          <AvatarDisplay
+            walletAddress={wallet?.address}
+            size={80}
+            key={avatarKey}
+          />
           <p className={styles.avatarText}>Change Avatar</p>
         </div>
 
-        <p><strong>Email:</strong> {user?.email || "Unknown"}</p>
+        <p>
+          <strong>Email:</strong> {user?.email || "Unknown"}
+        </p>
 
         <div
           className={styles.walletBox}
           onClick={handleCopy}
           title="Click to copy"
         >
-          <span><strong>Wallet Address:</strong></span>
+          <span>
+            <strong>Wallet Address:</strong>
+          </span>
           <span className={styles.walletAddress}>
             {wallet?.address || "Unavailable"}
           </span>
@@ -100,10 +110,7 @@ export default function SettingsPage() {
       </div>
 
       {showAvatarModal && (
-        <AvatarModalPicker
-          onClose={handleAvatarChange}
-          onSelect={() => {}}
-        />
+        <AvatarModalPicker onClose={handleAvatarChange} onSelect={() => {}} />
       )}
 
       {success && (
@@ -112,6 +119,6 @@ export default function SettingsPage() {
           onClose={() => setSuccess(false)}
         />
       )}
-    </div>
+    </main>
   );
 }
