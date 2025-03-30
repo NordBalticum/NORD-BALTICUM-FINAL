@@ -1,3 +1,5 @@
+/* === SIDEDRAWER MODULE – NordBalticum Web3 Final Ultra Edition === */
+
 .drawer {
   position: fixed;
   top: 0;
@@ -5,14 +7,14 @@
   width: clamp(260px, 84vw, 340px);
   height: 100vh;
   background: rgba(15, 20, 40, 0.92);
-  box-shadow: 0 0 36px rgba(0, 0, 0, 0.4);
   backdrop-filter: blur(24px) saturate(160%);
+  box-shadow: 0 0 36px rgba(0, 0, 0, 0.4);
   padding: 2rem 1.6rem;
-  transition: left 0.33s ease-in-out;
-  z-index: 9999;
   display: flex;
   flex-direction: column;
+  transition: left 0.33s ease-in-out;
   border-right: 1px solid rgba(255, 255, 255, 0.05);
+  z-index: 9999;
 }
 
 .drawer.open {
@@ -30,6 +32,7 @@
   cursor: pointer;
   transition: transform 0.3s ease;
 }
+
 .closeIcon:hover {
   transform: rotate(90deg) scale(1.15);
 }
@@ -76,6 +79,7 @@
   transition: color 0.25s ease, transform 0.2s ease;
   padding: 4px 0;
 }
+
 .link::before {
   content: "";
   position: absolute;
@@ -88,14 +92,17 @@
   border-radius: 50%;
   transition: background 0.3s ease;
 }
+
 .link:hover {
   color: white;
   transform: scale(1.03);
 }
+
 .active {
-  color: #fff;
+  color: #ffffff;
   font-weight: 700;
 }
+
 .active::before {
   background: #ffd700;
 }
@@ -112,6 +119,7 @@
   text-transform: uppercase;
   transition: background 0.3s ease, transform 0.2s ease;
 }
+
 .logout:hover {
   background: linear-gradient(90deg, #e62323, #c71d1d);
   transform: scale(1.04);
@@ -131,6 +139,7 @@
   box-shadow: 0 0 12px rgba(255, 255, 255, 0.05);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
+
 .hamburger:hover {
   transform: scale(1.08);
   box-shadow: 0 0 14px rgba(255, 255, 255, 0.15);
