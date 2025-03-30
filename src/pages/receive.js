@@ -4,9 +4,11 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMagicLink } from "@/contexts/MagicLinkContext";
 import { useWallet } from "@/contexts/WalletContext";
-import QRCode from "react-qr-code";
-
+import StarsBackground from "@/components/StarsBackground";
 import SwipeSelector from "@/components/SwipeSelector";
+import QRCode from "react-qr-code";
+import Image from "next/image";
+
 import styles from "@/styles/receive.module.css";
 
 export default function Receive2() {
@@ -19,10 +21,6 @@ export default function Receive2() {
     if (!user || !wallet?.address) router.push("/");
   }, [user, wallet]);
 
-  if (!user || !wallet?.address) {
-    return <div className={styles.loading}>Loading Wallet...</div>;
-  }
-
   const supportedNetworks = [
     { name: "BNB Chain", symbol: "bnb", key: "bsc" },
     { name: "BNB Testnet", symbol: "tbnb", key: "bsctest" },
@@ -30,6 +28,10 @@ export default function Receive2() {
     { name: "Polygon", symbol: "pol", key: "polygon" },
     { name: "Avalanche", symbol: "avax", key: "avax" },
   ];
+
+  if (!user || !wallet?.address) {
+    return <div className={styles.loading}>Loading Wallet...</div>;
+  }
 
   const selectedNet = supportedNetworks[selected];
   const address = wallet.addresses?.[selectedNet.key];
@@ -40,8 +42,12 @@ export default function Receive2() {
 
   return (
     <main className={styles.main}>
+      <StarsBackground />
+
       <div className={styles.globalContainer}>
         <div className={styles.wrapper}>
+          <Image src="/icons/logo.svg" width={60} height={60} alt="Logo" className={styles.logoTop} />
+
           <h1 className={styles.title}>RECEIVE</h1>
           <p className={styles.subtext}>
             Choose your network to get your address
