@@ -1,3 +1,4 @@
+/* === SwipeSelector Container === */
 .selectorContainer {
   width: 100%;
   display: flex;
@@ -10,7 +11,21 @@
   z-index: 2;
 }
 
-.swipeWrapper {
+/* === Desktop Static Grid === */
+.staticWrapper {
+  display: flex;
+  flex-wrap: wrap;
+  gap: clamp(16px, 3vw, 32px);
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  max-width: 100%;
+  padding-block: clamp(12px, 2.5vw, 20px);
+  overflow: hidden;
+}
+
+/* === Mobile Scrollable Wrapper === */
+.scrollableWrapper {
   display: flex;
   flex-wrap: nowrap;
   overflow-x: auto;
@@ -18,16 +33,18 @@
   -webkit-overflow-scrolling: touch;
   scroll-behavior: smooth;
   gap: clamp(16px, 3vw, 32px);
+  justify-content: flex-start;
   align-items: stretch;
   padding-block: clamp(12px, 2.5vw, 20px);
   scrollbar-width: none;
   min-width: max-content;
 }
 
-.swipeWrapper::-webkit-scrollbar {
+.scrollableWrapper::-webkit-scrollbar {
   display: none;
 }
 
+/* === Network Card === */
 .card {
   flex: 0 0 auto;
   scroll-snap-align: center;
@@ -51,6 +68,7 @@
   transform: scale(1.03);
 }
 
+/* === Network Logo === */
 .logo {
   width: 64px;
   height: 64px;
@@ -59,6 +77,7 @@
   filter: brightness(1.2);
 }
 
+/* === Network Name === */
 .name {
   font-size: 15px;
   color: white;
@@ -67,15 +86,16 @@
   letter-spacing: 0.4px;
 }
 
+/* === Selected === */
 .selected {
   border: 2px solid #ffd700;
   background: rgba(255, 255, 255, 0.06);
   transform: scale(1.05);
 }
 
-/* === MOBILE UI UPGRADE === */
-@media screen and (max-width: 768px) {
-  .swipeWrapper {
+/* === MOBILE UPGRADE === */
+@media screen and (max-width: 1024px) {
+  .scrollableWrapper {
     padding-inline: 16px;
     gap: 20px;
     justify-content: flex-start;
@@ -96,5 +116,24 @@
 
   .name {
     font-size: 14px;
+  }
+}
+
+/* === MINIMAL SCREEN UPGRADE (iki 200px) === */
+@media screen and (max-width: 280px) {
+  .card {
+    width: 120px;
+    height: 140px;
+    padding: 12px;
+    border-radius: 18px;
+  }
+
+  .logo {
+    width: 48px;
+    height: 48px;
+  }
+
+  .name {
+    font-size: 12px;
   }
 }
