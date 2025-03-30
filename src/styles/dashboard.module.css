@@ -1,4 +1,4 @@
-/* === DASHBOARD MODULE – NordBalticum Web3 Unified Ferrari Gradient === */
+/* === DASHBOARD MODULE – NordBalticum Web3 Ferrari Gradient Unified === */
 
 .container {
   position: fixed;
@@ -7,10 +7,6 @@
   width: 100vw;
   height: 100vh;
   transform: translate(-50%, -50%);
-  background: radial-gradient(circle at center, #0a122a 15%, #1b2370 65%, #2b37ff 100%) !important;
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
   user-select: none;
   scroll-behavior: smooth;
   -webkit-font-smoothing: antialiased;
