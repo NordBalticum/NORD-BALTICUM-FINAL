@@ -88,6 +88,8 @@
   cursor: pointer;
   transition: all 0.3s ease;
   position: relative;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 .infoBox:hover {
@@ -107,18 +109,11 @@
   font-weight: 600;
   margin-top: 6px;
   font-family: var(--font-crypto);
-  word-break: break-all;
+  word-break: break-word;
   color: white;
   opacity: 0.92;
-  text-align: left;
-}
-
-.loading {
-  font-size: 1.2rem;
-  color: white;
   text-align: center;
-  padding-top: 120px;
-  font-family: var(--font-crypto);
+  width: 100%;
 }
 
 .copied {
@@ -136,34 +131,31 @@
   box-shadow: 0 0 14px rgba(255, 215, 0, 0.4);
   left: 50%;
   transform: translateX(-50%);
+  font-family: var(--font-crypto);
 }
 
 @keyframes fadeInOut {
-  0% {
-    opacity: 0;
-    transform: translate(-50%, 8px) scale(0.95);
-  }
-  10% {
-    opacity: 1;
-    transform: translate(-50%, 0px) scale(1);
-  }
-  90% {
-    opacity: 1;
-    transform: translate(-50%, 0px) scale(1);
-  }
-  100% {
-    opacity: 0;
-    transform: translate(-50%, -8px) scale(0.95);
-  }
+  0% { opacity: 0; transform: translate(-50%, 8px) scale(0.95); }
+  10% { opacity: 1; transform: translate(-50%, 0px) scale(1); }
+  90% { opacity: 1; transform: translate(-50%, 0px) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -8px) scale(0.95); }
+}
+
+.loading {
+  font-size: 1.2rem;
+  color: white;
+  text-align: center;
+  padding-top: 120px;
+  font-family: var(--font-crypto);
 }
 
 /* === MOBILE === */
 @media screen and (max-width: 768px) {
   .globalContainer {
+    transform: translate(-50%, -60%);
     width: calc(100vw - 40px);
     height: auto;
     padding: 24px 16px;
-    top: 40%;
   }
 
   .wrapper {
@@ -177,5 +169,10 @@
 
   .value {
     text-align: center;
+    font-size: 1rem;
+  }
+
+  .copied {
+    font-size: 0.85rem;
   }
 }
