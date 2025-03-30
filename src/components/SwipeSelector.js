@@ -36,38 +36,39 @@ const supportedNetworks = [
 export default function SwipeSelector({ mode = "send", onSelect }) {
   const containerRef = useRef(null);
   const [selectedSymbol, setSelectedSymbol] = useState(supportedNetworks[0].symbol);
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
-    if (window.innerWidth <= 1024 && containerRef.current) {
+    const updateSize = () => {
+      setIsMobile(window.innerWidth <= 1024);
+    };
+    updateSize();
+    window.addEventListener("resize", updateSize);
+    return () => window.removeEventListener("resize", updateSize);
+  }, []);
+
+  useEffect(() => {
+    if (isMobile && containerRef.current) {
       containerRef.current.scrollTo({ left: 0, behavior: "smooth" });
     }
-  }, []);
+  }, [isMobile]);
 
   const handleSelect = (symbol, index) => {
     setSelectedSymbol(symbol);
-    if (typeof onSelect === "function") {
-      onSelect(symbol);
-    }
+    if (typeof onSelect === "function") onSelect(symbol);
 
-    const cards = containerRef.current?.children;
-    const selectedCard = cards?.[index];
-
-    if (selectedCard && containerRef.current && window.innerWidth <= 1024) {
+    if (isMobile && containerRef.current?.children?.[index]) {
+      const card = containerRef.current.children[index];
       const offset =
-        selectedCard.offsetLeft -
-        containerRef.current.offsetWidth / 2 +
-        selectedCard.offsetWidth / 2;
-
+        card.offsetLeft - containerRef.current.offsetWidth / 2 + card.offsetWidth / 2;
       containerRef.current.scrollTo({ left: offset, behavior: "smooth" });
     }
   };
 
-  const isMobile = typeof window !== "undefined" && window.innerWidth <= 1024;
-
   return (
     <div className={styles.selectorContainer}>
       <div
-        className={`${styles.swipeWrapper} ${isMobile ? styles.scrollableWrapper : styles.staticWrapper}`}
+        className={`${isMobile ? styles.scrollableWrapper : styles.staticWrapper}`}
         ref={containerRef}
       >
         {supportedNetworks.map((net, index) => (
