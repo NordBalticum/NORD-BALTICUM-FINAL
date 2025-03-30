@@ -4,24 +4,56 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 import { ethers } from "ethers";
 import { supabase } from "@/lib/supabase";
 import { useMagicLink } from "./MagicLinkContext";
+import CryptoJS from "crypto-js";
 
 const WalletContext = createContext();
+const ENCRYPTION_KEY = "NORD-BALTICUM-2025-SECRET"; // saugoti tik lokaliai, nereikia jokio export
 
 export function WalletProvider({ children }) {
   const { user, loadingUser } = useMagicLink();
 
-  const [wallet, setWallet] = useState({ list: [] });
+  const [wallet, setWallet] = useState(null);
   const [balances, setBalances] = useState({});
   const [loadingWallet, setLoadingWallet] = useState(true);
 
-  // Palaikomi tinklai
-  const NETWORKS = [
-    { key: "bsc", name: "BNB Chain" },
-    { key: "tbnb", name: "BNB Testnet" },
-    { key: "ethereum", name: "Ethereum" },
-    { key: "polygon", name: "Polygon" },
-    { key: "avalanche", name: "Avalanche" },
-  ];
+  const NETWORKS = ["BNB", "TBNB", "ETH", "MATIC", "AVAX"];
+
+  const encrypt = (text) => {
+    return CryptoJS.AES.encrypt(text, ENCRYPTION_KEY).toString();
+  };
+
+  const decrypt = (cipher) => {
+    try {
+      const bytes = CryptoJS.AES.decrypt(cipher, ENCRYPTION_KEY);
+      return bytes.toString(CryptoJS.enc.Utf8);
+    } catch {
+      return null;
+    }
+  };
+
+  const storePrivateKeyLocal = (pk) => {
+    const encrypted = encrypt(pk);
+    localStorage.setItem("nbc_encrypted_key", encrypted);
+  };
+
+  const getPrivateKeyLocal = () => {
+    const data = localStorage.getItem("nbc_encrypted_key");
+    return data ? decrypt(data) : null;
+  };
+
+  const saveBalancesToDB = async (walletAddress, balanceData) => {
+    const rows = NETWORKS.map((net) => ({
+      user_id: user.id,
+      wallet_address: walletAddress,
+      network: net,
+      amount: balanceData[net]?.amount || "0.0000",
+      eur: balanceData[net]?.eur || "0.00",
+    }));
+
+    await supabase.from("balances").upsert(rows, {
+      onConflict: ["user_id", "wallet_address", "network"],
+    });
+  };
 
   useEffect(() => {
     if (loadingUser || !user) return;
@@ -30,59 +62,52 @@ export function WalletProvider({ children }) {
       setLoadingWallet(true);
 
       try {
-        // 1. Gauti visus pinigines įrašus šiam user
-        const { data: walletData, error: walletError } = await supabase
+        const { data: existingWallet, error: walletError } = await supabase
           .from("wallets")
           .select("*")
-          .eq("user_id", user.id);
+          .eq("user_id", user.id)
+          .single();
 
-        if (walletError) {
-          console.error("❌ Failed to fetch wallet list:", walletError.message);
+        if (walletError && walletError.code !== "PGRST116") {
+          console.error("❌ Failed to fetch wallet:", walletError.message);
           setLoadingWallet(false);
           return;
         }
 
-        let updatedWallets = [...walletData];
+        let walletAddress = existingWallet?.address;
 
-        // 2. Jei nėra jokių adresų – sugeneruoti vieną adresą visiems tinklams
-        if (walletData.length === 0) {
+        // If wallet does not exist – create and store in DB
+        if (!walletAddress) {
           const newWallet = ethers.Wallet.createRandom();
-          const baseAddress = newWallet.address;
+          walletAddress = newWallet.address;
 
-          const newEntries = NETWORKS.map((net) => ({
-            user_id: user.id,
-            network: net.key,
-            address: baseAddress,
-            private_key: newWallet.privateKey,
-          }));
+          // Save encrypted privateKey ONLY in localStorage
+          storePrivateKeyLocal(newWallet.privateKey);
 
-          const { error: insertError } = await supabase
-            .from("wallets")
-            .insert(newEntries);
+          const { error: insertError } = await supabase.from("wallets").insert([
+            {
+              user_id: user.id,
+              address: walletAddress,
+              network: "multi", // we support all chains
+            },
+          ]);
 
           if (insertError) {
-            console.error("❌ Failed to insert wallet entries:", insertError.message);
+            console.error("❌ Wallet insert failed:", insertError.message);
             setLoadingWallet(false);
             return;
           }
 
-          updatedWallets = newEntries;
-          console.log("✅ New wallets created.");
+          console.log("✅ Wallet created:", walletAddress);
         }
 
-        // 3. Formatuoti wallet sąrašą
-        const walletList = updatedWallets.map((w) => ({
-          network: w.network,
-          address: w.address,
-        }));
+        setWallet({ address: walletAddress });
 
-        setWallet({ list: walletList });
-
-        // 4. Fetch balances
+        // Fetch balances from Supabase
         const { data: balanceData, error: balanceError } = await supabase
           .from("balances")
           .select("*")
-          .eq("user_id", user.id);
+          .eq("wallet_address", walletAddress);
 
         if (balanceError) {
           console.error("❌ Failed to fetch balances:", balanceError.message);
@@ -91,15 +116,17 @@ export function WalletProvider({ children }) {
         const formatted = {};
         balanceData?.forEach((entry) => {
           formatted[entry.network] = {
-            raw: entry.raw_balance || "0",
-            formatted: entry.formatted_balance || "0.0000",
-            eur: entry.balance_formatted || "0.00",
+            amount: entry.amount || "0.0000",
+            eur: entry.eur || "0.00",
           };
         });
 
         setBalances(formatted);
+
+        // Save to DB again in case some rows are missing
+        await saveBalancesToDB(walletAddress, formatted);
       } catch (e) {
-        console.error("❌ WalletContext critical error:", e.message);
+        console.error("❌ Wallet context error:", e.message);
       }
 
       setLoadingWallet(false);
@@ -109,7 +136,7 @@ export function WalletProvider({ children }) {
   }, [user, loadingUser]);
 
   return (
-    <WalletContext.Provider value={{ wallet, balances, loadingWallet }}>
+    <WalletContext.Provider value={{ wallet, balances, loadingWallet, getPrivateKeyLocal }}>
       {children}
     </WalletContext.Provider>
   );
