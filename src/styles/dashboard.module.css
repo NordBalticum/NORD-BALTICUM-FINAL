@@ -1,4 +1,4 @@
-/* === DASHBOARD MODULE – NordBalticum Web3 Ferrari Gradient Unified FINAL === */
+/* === DASHBOARD MODULE – NordBalticum Web3 Ferrari Gradient Unified FINAL v2 === */
 
 .container {
   position: fixed;
@@ -41,9 +41,9 @@
   width: 92px;
   height: 92px;
   border-radius: 50%;
-  border: 2px solid rgba(255, 255, 255, 0.15);
-  box-shadow: 0 0 18px rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.04);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 0 18px rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
   transition: all 0.3s ease;
 }
 
@@ -68,20 +68,23 @@
 }
 
 .totalLabel {
-  font-size: 0.9rem;
+  font-size: 0.95rem;
   font-weight: 500;
-  opacity: 0.7;
+  color: white;
   letter-spacing: 1px;
+  opacity: 0.85;
+  font-family: var(--font-crypto);
 }
 
 .totalValue {
-  font-size: clamp(28px, 5vw, 38px);
+  font-size: clamp(30px, 5.5vw, 40px);
   font-weight: 800;
-  background: linear-gradient(90deg, #ffffff, #ffd700);
+  background: linear-gradient(90deg, white, #ffd700);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  text-shadow: 0 0 12px rgba(255, 255, 255, 0.25);
+  text-shadow: 0 0 16px rgba(255, 255, 255, 0.25);
   animation: pulseGlow 2.5s infinite ease-in-out;
+  font-family: var(--font-crypto);
 }
 
 /* === NETWORK LIST === */
@@ -94,8 +97,8 @@
 }
 
 .assetItem {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid white;
   border-radius: 22px;
   padding: 18px 24px;
   display: flex;
@@ -103,13 +106,13 @@
   align-items: center;
   transition: 0.3s ease;
   backdrop-filter: blur(22px) saturate(160%);
-  box-shadow: 0 0 24px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 0 28px rgba(255, 255, 255, 0.05);
   cursor: pointer;
 }
 
 .assetItem:hover {
   transform: scale(1.02);
-  box-shadow: 0 0 32px rgba(0, 255, 200, 0.2);
+  box-shadow: 0 0 36px rgba(255, 255, 255, 0.2);
 }
 
 .assetLeft {
@@ -119,13 +122,13 @@
 }
 
 .assetLogo {
-  width: 40px;
-  height: 40px;
+  width: 42px;
+  height: 42px;
   border-radius: 50%;
   background: white;
   padding: 4px;
   object-fit: contain;
-  box-shadow: 0 0 6px rgba(255, 255, 255, 0.25);
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
 }
 
 .assetInfo {
@@ -136,12 +139,16 @@
 
 .assetSymbol {
   font-weight: 700;
-  font-size: 1.05rem;
+  font-size: 1.1rem;
+  color: white;
+  font-family: var(--font-crypto);
 }
 
 .assetName {
-  font-size: 0.85rem;
-  opacity: 0.65;
+  font-size: 0.9rem;
+  opacity: 0.7;
+  color: white;
+  font-family: var(--font-crypto);
 }
 
 .assetRight {
@@ -154,11 +161,15 @@
 .assetAmount {
   font-weight: 600;
   font-size: 1rem;
+  color: white;
+  font-family: var(--font-crypto);
 }
 
 .assetEur {
-  font-size: 0.82rem;
-  opacity: 0.6;
+  font-size: 0.85rem;
+  opacity: 0.7;
+  color: white;
+  font-family: var(--font-crypto);
 }
 
 /* === ANIMATIONS === */
@@ -173,9 +184,9 @@
 }
 
 @keyframes pulseGlow {
-  0% { text-shadow: 0 0 8px rgba(255, 255, 255, 0.15); }
-  50% { text-shadow: 0 0 18px rgba(255, 255, 255, 0.4); }
-  100% { text-shadow: 0 0 8px rgba(255, 255, 255, 0.15); }
+  0% { text-shadow: 0 0 10px rgba(255, 255, 255, 0.2); }
+  50% { text-shadow: 0 0 20px rgba(255, 255, 255, 0.4); }
+  100% { text-shadow: 0 0 10px rgba(255, 255, 255, 0.2); }
 }
 
 /* === RESPONSIVE === */
@@ -196,11 +207,11 @@
   }
 
   .assetSymbol {
-    font-size: 0.95rem;
+    font-size: 1rem;
   }
 
   .assetName {
-    font-size: 0.75rem;
+    font-size: 0.8rem;
   }
 
   .assetAmount {
