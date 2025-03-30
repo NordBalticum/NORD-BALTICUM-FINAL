@@ -1,9 +1,11 @@
+/* === SEND MODULE – NordBalticum Ferrari Gradient Unified === */
+
 .main {
   width: 100vw;
   height: 100vh;
   overflow-x: hidden;
   overflow-y: auto;
-  background: radial-gradient(ellipse at center, #0a1835 0%, #01010d 100%);
+  background: radial-gradient(ellipse at center, #0a122a 15%, #1b2370 65%, #2b37ff 100%) !important;
   display: flex;
   justify-content: center;
   align-items: flex-start;
