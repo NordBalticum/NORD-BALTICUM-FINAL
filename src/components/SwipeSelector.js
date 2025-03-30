@@ -5,7 +5,6 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import styles from "@/components/swipeselector.module.css";
 
-// Hardcoded logotipų nuorodos (stabilios)
 const supportedNetworks = [
   {
     name: "BNB Testnet",
@@ -46,12 +45,19 @@ export default function SwipeSelector({ mode = "send", onSelect }) {
 
   const handleSelect = (symbol, index) => {
     setSelectedSymbol(symbol);
-    if (typeof onSelect === "function") onSelect(symbol);
+    if (typeof onSelect === "function") {
+      onSelect(symbol);
+    }
 
     const cards = containerRef.current?.children;
     const selectedCard = cards?.[index];
+
     if (selectedCard && containerRef.current) {
-      const offset = selectedCard.offsetLeft - containerRef.current.offsetWidth / 2 + selectedCard.offsetWidth / 2;
+      const offset =
+        selectedCard.offsetLeft -
+        containerRef.current.offsetWidth / 2 +
+        selectedCard.offsetWidth / 2;
+
       containerRef.current.scrollTo({ left: offset, behavior: "smooth" });
     }
   };
@@ -62,9 +68,10 @@ export default function SwipeSelector({ mode = "send", onSelect }) {
         {supportedNetworks.map((net, index) => (
           <motion.div
             key={net.symbol}
-            className={`${styles.card} ${selectedSymbol === net.symbol ? styles.selected : ""}`}
-            whileTap={{ scale: 0.95 }}
-            whileHover={{ scale: 1.06 }}
+            className={`${styles.card} ${
+              selectedSymbol === net.symbol ? styles.selected : ""
+            }`}
+            whileTap={{ scale: 0.96 }}
             onClick={() => handleSelect(net.symbol, index)}
             role="button"
             tabIndex={0}
