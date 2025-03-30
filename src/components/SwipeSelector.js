@@ -1,3 +1,4 @@
+// /components/SwipeSelector.js
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
@@ -55,12 +56,17 @@ export default function SwipeSelector({ mode = "send", onSelect }) {
 
   const handleSelect = (symbol, index) => {
     setSelectedSymbol(symbol);
-    if (typeof onSelect === "function") onSelect(symbol);
+    if (typeof onSelect === "function") {
+      onSelect(symbol);
+    }
 
     if (isMobile && containerRef.current?.children?.[index]) {
       const card = containerRef.current.children[index];
       const offset =
-        card.offsetLeft - containerRef.current.offsetWidth / 2 + card.offsetWidth / 2;
+        card.offsetLeft -
+        containerRef.current.offsetWidth / 2 +
+        card.offsetWidth / 2;
+
       containerRef.current.scrollTo({ left: offset, behavior: "smooth" });
     }
   };
@@ -68,8 +74,11 @@ export default function SwipeSelector({ mode = "send", onSelect }) {
   return (
     <div className={styles.selectorContainer}>
       <div
-        className={`${isMobile ? styles.scrollableWrapper : styles.staticWrapper}`}
+        className={
+          isMobile ? styles.scrollableWrapper : styles.staticWrapper
+        }
         ref={containerRef}
+        style={isMobile ? { touchAction: "pan-x", overflowX: "auto" } : {}}
       >
         {supportedNetworks.map((net, index) => (
           <motion.div
