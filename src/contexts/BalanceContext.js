@@ -1,13 +1,17 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { useWallet } from "./WalletContext";
 import { ethers } from "ethers";
+import { useWallet } from "./WalletContext";
+import { supabase } from "@/lib/supabase";
+import { useMagicLink } from "./MagicLinkContext";
 
 const BalanceContext = createContext();
 
 export const BalanceProvider = ({ children }) => {
   const { wallet } = useWallet();
+  const { user } = useMagicLink();
+
   const [balances, setBalances] = useState({});
   const [isLoading, setIsLoading] = useState(true);
 
@@ -16,61 +20,61 @@ export const BalanceProvider = ({ children }) => {
       key: "ethereum",
       name: "Ethereum",
       symbol: "ETH",
+      coingeckoId: "ethereum",
       rpc: [
         "https://eth.llamarpc.com",
         "https://ethereum-rpc.publicnode.com",
         "https://rpc.ankr.com/eth",
         "https://cloudflare-eth.com",
       ],
-      coingeckoId: "ethereum",
     },
     {
       key: "bsc",
       name: "BNB Chain",
       symbol: "BNB",
+      coingeckoId: "binancecoin",
       rpc: [
         "https://bsc.publicnode.com",
         "https://bsc-dataseed.binance.org",
         "https://rpc.ankr.com/bsc",
         "https://1rpc.io/bnb",
       ],
-      coingeckoId: "binancecoin",
     },
     {
       key: "polygon",
       name: "Polygon",
       symbol: "MATIC",
+      coingeckoId: "matic-network",
       rpc: [
         "https://polygon-rpc.com",
         "https://rpc.ankr.com/polygon",
         "https://polygon.llamarpc.com",
         "https://1rpc.io/matic",
       ],
-      coingeckoId: "matic-network",
     },
     {
       key: "avalanche",
       name: "Avalanche",
       symbol: "AVAX",
+      coingeckoId: "avalanche-2",
       rpc: [
         "https://api.avax.network/ext/bc/C/rpc",
         "https://rpc.ankr.com/avalanche",
         "https://1rpc.io/avax/c",
         "https://avalanche.public-rpc.com",
       ],
-      coingeckoId: "avalanche-2",
     },
     {
       key: "tbnb",
       name: "BNB Testnet",
       symbol: "tBNB",
+      coingeckoId: null, // neturi eur vertės
       rpc: [
         "https://data-seed-prebsc-1-s1.binance.org:8545/",
         "https://data-seed-prebsc-2-s1.binance.org:8545/",
         "https://endpoints.omniatech.io/v1/bsc/testnet/public",
         "https://1rpc.io/bnb-testnet",
       ],
-      coingeckoId: null, // No value in EUR
     },
   ];
 
@@ -106,10 +110,9 @@ export const BalanceProvider = ({ children }) => {
   };
 
   const updateBalances = async () => {
-    if (!wallet || !wallet.list) return;
+    if (!wallet?.list || !user?.id) return;
 
     setIsLoading(true);
-
     const exchangeRates = await fetchExchangeRates();
     const newBalances = {};
     let totalEUR = 0;
@@ -121,16 +124,30 @@ export const BalanceProvider = ({ children }) => {
 
         const balance = await fetchBalance(net.rpc, matchingWallet.address);
         const eurRate = net.coingeckoId ? exchangeRates[net.coingeckoId]?.eur || 0 : 0;
-        const balanceEUR = balance * eurRate;
+        const eurValue = balance * eurRate;
 
         newBalances[net.key] = {
-          address: matchingWallet.address,
           symbol: net.symbol,
+          address: matchingWallet.address,
           balance,
-          eur: balanceEUR.toFixed(2),
+          eur: eurValue.toFixed(2),
         };
 
-        totalEUR += balanceEUR;
+        totalEUR += eurValue;
+
+        // Supabase upsert
+        await supabase.from("balances").upsert(
+          [
+            {
+              user_id: user.id,
+              wallet_address: matchingWallet.address,
+              network: net.key.toUpperCase(),
+              amount: balance.toFixed(6),
+              eur: eurValue.toFixed(2),
+            },
+          ],
+          { onConflict: ["user_id", "wallet_address", "network"] }
+        );
       })
     );
 
