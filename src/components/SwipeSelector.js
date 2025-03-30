@@ -3,8 +3,36 @@
 import React, { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { supportedNetworks } from "@/utils/networks";
 import styles from "@/components/swipeselector.module.css";
+
+// Hardcoded logotipų nuorodos (stabilios)
+const supportedNetworks = [
+  {
+    name: "BNB Testnet",
+    symbol: "tbnb",
+    logo: "https://cryptologos.cc/logos/binance-coin-bnb-logo.png",
+  },
+  {
+    name: "BNB Chain",
+    symbol: "bnb",
+    logo: "https://cryptologos.cc/logos/binance-coin-bnb-logo.png",
+  },
+  {
+    name: "Ethereum",
+    symbol: "eth",
+    logo: "https://cryptologos.cc/logos/ethereum-eth-logo.png",
+  },
+  {
+    name: "Polygon",
+    symbol: "pol",
+    logo: "https://cryptologos.cc/logos/polygon-matic-logo.png",
+  },
+  {
+    name: "Avalanche",
+    symbol: "avax",
+    logo: "https://cryptologos.cc/logos/avalanche-avax-logo.png",
+  },
+];
 
 export default function SwipeSelector({ mode = "send", onSelect }) {
   const containerRef = useRef(null);
@@ -20,13 +48,11 @@ export default function SwipeSelector({ mode = "send", onSelect }) {
     setSelectedSymbol(symbol);
     if (typeof onSelect === "function") onSelect(symbol);
 
-    // Centruoti pasirinkta kortelę
     const cards = containerRef.current?.children;
     const selectedCard = cards?.[index];
     if (selectedCard && containerRef.current) {
-      const container = containerRef.current;
-      const offset = selectedCard.offsetLeft - container.offsetWidth / 2 + selectedCard.offsetWidth / 2;
-      container.scrollTo({ left: offset, behavior: "smooth" });
+      const offset = selectedCard.offsetLeft - containerRef.current.offsetWidth / 2 + selectedCard.offsetWidth / 2;
+      containerRef.current.scrollTo({ left: offset, behavior: "smooth" });
     }
   };
 
@@ -44,15 +70,15 @@ export default function SwipeSelector({ mode = "send", onSelect }) {
             tabIndex={0}
           >
             <Image
-              src={`https://cryptologos.cc/logos/${net.symbol.toLowerCase()}-${net.symbol.toLowerCase()}-logo.png`}
-              alt={`${net.symbol} logo`}
+              src={net.logo}
+              alt={`${net.name} logo`}
               width={64}
               height={64}
               className={styles.logo}
               unoptimized
               onError={(e) => {
                 e.target.onerror = null;
-                e.target.src = "/default-logo.png"; // Fallback jei neranda
+                e.target.src = "/default-logo.png";
               }}
             />
             <div className={styles.name}>{net.name}</div>
