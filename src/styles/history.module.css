@@ -1,3 +1,5 @@
+/* === HISTORY MODULE – NordBalticum Web3 Banking Grade === */
+
 .container {
   position: fixed;
   top: 50%;
@@ -9,7 +11,8 @@
   justify-content: center;
   align-items: center;
   padding-inline: clamp(16px, 4vw, 64px);
-  background: radial-gradient(ellipse at center, var(--primary-bg) 25%, var(--primary-bg-dark) 100%) !important;
+  background: transparent;
+  background-color: inherit;
   background-size: cover;
   background-position: center;
   box-sizing: border-box;
@@ -38,7 +41,8 @@
   padding: clamp(24px, 4vw, 64px);
   box-sizing: border-box;
   position: relative;
-  overflow: hidden;
+  overflow-y: auto;
+  z-index: 2;
 }
 
 .title {
@@ -46,17 +50,23 @@
   font-weight: 900;
   text-align: center;
   font-family: var(--font-crypto);
-  background: linear-gradient(to right, #ffcc00, #ffffff, #ffcc00);
+  background: linear-gradient(to right, #ffffff, #ffd700, #ffffff);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  text-shadow: 0 0 16px var(--gold-glow);
-  animation: glowTitle 2.5s infinite ease-in-out;
+  text-shadow: 0 0 16px rgba(255, 255, 255, 0.3);
+  animation: glowTitle 3s ease-in-out infinite;
 }
 
 @keyframes glowTitle {
-  0% { text-shadow: 0 0 10px #ffd700; }
-  50% { text-shadow: 0 0 20px #fffacd; }
-  100% { text-shadow: 0 0 10px #ffd700; }
+  0% {
+    text-shadow: 0 0 10px #fff, 0 0 20px #ffd700;
+  }
+  50% {
+    text-shadow: 0 0 18px #fffacd, 0 0 30px #ffd700;
+  }
+  100% {
+    text-shadow: 0 0 10px #fff, 0 0 20px #ffd700;
+  }
 }
 
 .subtext {
@@ -71,7 +81,7 @@
 
 .transactionList {
   width: 100%;
-  max-width: 560px;
+  max-width: 600px;
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -80,69 +90,76 @@
 
 .transactionCard {
   background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 18px;
-  padding: 20px;
-  box-shadow: 0 0 24px rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(14px);
+  border: 1px solid white;
+  border-radius: 20px;
+  padding: 22px;
+  box-shadow: 0 0 28px rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(20px);
   transition: all 0.3s ease;
   animation: fadeIn 0.3s ease;
+  color: white;
+  font-family: var(--font-crypto);
 }
 
 .transactionCard:hover {
-  box-shadow: 0 0 35px rgba(255, 255, 255, 0.25);
+  box-shadow: 0 0 45px rgba(255, 255, 255, 0.3);
+  transform: scale(1.015);
 }
 
 .transactionHeader {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
   font-weight: 600;
+  font-size: 1rem;
 }
 
 .transactionType {
-  font-size: 1rem;
   color: white;
   text-transform: uppercase;
   font-family: var(--font-crypto);
-  letter-spacing: 0.5px;
+  letter-spacing: 0.6px;
+  font-weight: 700;
 }
 
 .transactionAmountSend {
-  color: #ff7070;
-  font-weight: bold;
+  color: #ff6b6b;
+  font-weight: 700;
 }
 
 .transactionAmountReceive {
-  color: #90ff90;
-  font-weight: bold;
+  color: #9aff9a;
+  font-weight: 700;
 }
 
 .transactionDetail {
-  font-size: 0.9rem;
-  opacity: 0.85;
+  font-size: 0.95rem;
+  opacity: 0.9;
   margin-top: 4px;
 }
 
 .transactionDate {
-  font-size: 0.8rem;
-  opacity: 0.65;
+  font-size: 0.85rem;
+  opacity: 0.7;
   margin-top: 6px;
+  font-style: italic;
 }
 
 .transactionLink {
   margin-top: 12px;
   display: inline-block;
-  font-size: 0.85rem;
-  color: var(--white-gold);
+  font-size: 0.88rem;
+  color: white;
   text-decoration: underline;
   font-weight: 600;
-  transition: opacity 0.2s ease;
+  transition: all 0.3s ease;
 }
 
 .transactionLink:hover {
   opacity: 0.9;
+  color: #ffd700;
+  transform: scale(1.02);
 }
 
 .loading {
