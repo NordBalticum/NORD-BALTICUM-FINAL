@@ -1,0 +1,197 @@
+/* === TEST DASHBOARD MODULE – Unified Ferrari Gradient (2025) === */
+
+.container {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: 100vw;
+  height: 100vh;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle at center, #0a122a 15%, #1b2370 65%, #2b37ff 100%);
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
+  user-select: none;
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  z-index: 1;
+}
+
+.container::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: url("/images/stars-bg.svg");
+  background-repeat: repeat;
+  background-position: center;
+  background-size: cover;
+  opacity: 0.18;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.dashboardWrapper {
+  position: relative;
+  max-width: 1024px;
+  margin: 0 auto;
+  padding: 32px clamp(16px, 4vw, 48px) 96px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(24px, 3.5vh, 52px);
+  z-index: 2;
+}
+
+.avatarCenter {
+  margin-top: 76px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeInDown 0.8s ease;
+}
+.avatarCenter img {
+  width: 92px;
+  height: 92px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 0 18px rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+  transition: all 0.3s ease;
+}
+
+.totalValueContainer {
+  text-align: center;
+  animation: fadeInDown 0.7s ease-in-out;
+}
+.totalLabel {
+  font-size: 0.9rem;
+  font-weight: 500;
+  opacity: 0.7;
+  letter-spacing: 1px;
+}
+.totalValue {
+  font-size: clamp(28px, 5vw, 38px);
+  font-weight: 800;
+  background: linear-gradient(90deg, #ffffff, #ffd700);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 0 12px rgba(255, 255, 255, 0.25);
+  animation: pulseGlow 2.5s infinite ease-in-out;
+}
+
+.assetList {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  animation: fadeInUp 0.7s ease;
+}
+
+.assetItem {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 22px;
+  padding: 18px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: 0.3s ease;
+  backdrop-filter: blur(22px) saturate(160%);
+  box-shadow: 0 0 24px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+}
+.assetItem:hover {
+  transform: scale(1.02);
+  box-shadow: 0 0 32px rgba(255, 255, 255, 0.2);
+}
+
+.assetLeft {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.assetLogo {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: white;
+  padding: 4px;
+  object-fit: contain;
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.25);
+}
+.assetInfo {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+}
+.assetSymbol {
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+.assetName {
+  font-size: 0.85rem;
+  opacity: 0.65;
+}
+.assetRight {
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.assetAmount {
+  font-weight: 600;
+  font-size: 1rem;
+}
+.assetEur {
+  font-size: 0.82rem;
+  opacity: 0.6;
+}
+
+/* === ANIMACIJOS === */
+@keyframes fadeInDown {
+  from { opacity: 0; transform: translateY(-24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes pulseGlow {
+  0% { text-shadow: 0 0 8px rgba(255, 255, 255, 0.15); }
+  50% { text-shadow: 0 0 18px rgba(255, 255, 255, 0.4); }
+  100% { text-shadow: 0 0 8px rgba(255, 255, 255, 0.15); }
+}
+
+/* === RESPONSIVE === */
+@media (max-width: 768px) {
+  .avatarCenter {
+    margin-top: 88px;
+  }
+
+  .dashboardWrapper {
+    padding: 20px 18px 80px;
+    transform: scale(0.96) translateY(-9%);
+    transform-origin: top center;
+  }
+
+  .assetLogo {
+    width: 34px;
+    height: 34px;
+  }
+
+  .assetSymbol {
+    font-size: 0.95rem;
+  }
+
+  .assetName {
+    font-size: 0.75rem;
+  }
+
+  .assetAmount {
+    font-size: 0.95rem;
+  }
+
+  .assetEur {
+    font-size: 0.75rem;
+  }
+}
