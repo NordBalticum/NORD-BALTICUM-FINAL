@@ -28,6 +28,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 2px;
   padding: 8px 0;
   background: transparent;
   border-radius: 18px;
@@ -38,6 +39,7 @@
   position: relative;
   overflow: hidden;
   font-weight: 600;
+  min-width: 64px;
 }
 
 .navItem::after {
@@ -83,9 +85,10 @@
 
 .icon {
   font-size: 1.2rem;
-  margin-bottom: 2px;
+  margin-bottom: 1px;
   transition: transform 0.25s ease, color 0.25s ease;
   color: white;
+  line-height: 1;
 }
 
 .label {
@@ -95,6 +98,7 @@
   text-transform: uppercase;
   text-shadow: 0 0 4px rgba(255, 255, 255, 0.08);
   color: white;
+  line-height: 1;
 }
 
 /* === Fade-in Animation === */
