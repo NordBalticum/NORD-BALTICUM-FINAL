@@ -13,12 +13,11 @@ import { supportedNetworks } from "@/utils/networks";
 import { sendTransactionWithFee, getWalletBalance } from "@/lib/ethers";
 import { supabase } from "@/lib/supabase";
 
-import Image from "next/image";
 import styles from "@/styles/send.module.css";
 
 const ADMIN_WALLET = process.env.NEXT_PUBLIC_ADMIN_WALLET;
 
-export default function Send2() {
+export default function Send() {
   const router = useRouter();
   const { user } = useMagicLink();
   const { wallet } = useWallet();
@@ -34,9 +33,13 @@ export default function Send2() {
     if (!user || !wallet?.address) router.push("/");
   }, [user, wallet]);
 
+  const selectedNet = supportedNetworks[selected];
+  const calculatedFee = Number(amount || 0) * 0.03;
+  const amountAfterFee = Number(amount || 0) - calculatedFee;
+
   const handleSend = () => {
-    if (!receiver || !amount) {
-      alert("Please enter both the address and amount.");
+    if (!receiver || !amount || isNaN(amount)) {
+      alert("Please enter a valid receiver address and amount.");
       return;
     }
     setShowConfirm(true);
@@ -45,8 +48,6 @@ export default function Send2() {
   const confirmSend = async () => {
     setShowConfirm(false);
     setLoading(true);
-    const selectedNet = supportedNetworks[selected];
-
     try {
       const result = await sendTransactionWithFee({
         privateKey: wallet.privateKey,
@@ -55,12 +56,6 @@ export default function Send2() {
         symbol: selectedNet.symbol,
         adminWallet: ADMIN_WALLET,
       });
-
-      const updatedBalance = await getWalletBalance(
-        wallet.address,
-        selectedNet.key || selectedNet.symbol.toLowerCase()
-      );
-      wallet.balance = updatedBalance.formatted;
 
       await supabase.from("transactions").insert([
         {
@@ -76,22 +71,16 @@ export default function Send2() {
         },
       ]);
 
-      setTimeout(() => {
-        setShowSuccess(true);
-        setReceiver("");
-        setAmount("");
-        setLoading(false);
-      }, 1500);
+      setShowSuccess(true);
+      setReceiver("");
+      setAmount("");
     } catch (err) {
-      console.error("❌ Transaction Error:", err);
-      alert("Transaction failed. Please check your wallet and try again.");
+      console.error("❌ Transaction error:", err);
+      alert("Transaction failed. Try again later.");
+    } finally {
       setLoading(false);
     }
   };
-
-  const selectedNet = supportedNetworks[selected];
-  const calculatedFee = Number(amount || 0) * 0.03;
-  const amountAfterFee = Number(amount || 0) - calculatedFee;
 
   if (!user || !wallet?.address) {
     return <div className={styles.loading}>Loading Wallet...</div>;
@@ -102,8 +91,6 @@ export default function Send2() {
       <StarsBackground />
 
       <div className={styles.wrapper}>
-        <Image src="/icons/logo.svg" width={64} height={64} alt="Logo" className={styles.logoTop} />
-
         <h1 className={styles.title}>SEND CRYPTO</h1>
         <p className={styles.subtext}>Choose your network and enter details</p>
 
