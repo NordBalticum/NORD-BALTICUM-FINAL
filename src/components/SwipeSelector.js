@@ -3,7 +3,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
-
 import { supportedNetworks } from "@/utils/networks";
 import styles from "@/components/swipeselector.module.css";
 
@@ -18,12 +17,10 @@ export default function SwipeSelector({ mode = "send", onSelect }) {
   }, []);
 
   const handleSelect = (symbol, index) => {
-    if (typeof onSelect === "function") {
-      onSelect(symbol);
-    }
     setSelectedSymbol(symbol);
+    if (typeof onSelect === "function") onSelect(symbol);
 
-    // Scroll selected into center view
+    // Centruoti pasirinkta kortelę
     const cards = containerRef.current?.children;
     const selectedCard = cards?.[index];
     if (selectedCard && containerRef.current) {
@@ -47,15 +44,16 @@ export default function SwipeSelector({ mode = "send", onSelect }) {
             tabIndex={0}
           >
             <Image
-              src={
-                net.icon ||
-                `https://cryptologos.cc/logos/${net.symbol.toLowerCase()}-${net.symbol.toLowerCase()}-logo.png`
-              }
+              src={`https://cryptologos.cc/logos/${net.symbol.toLowerCase()}-${net.symbol.toLowerCase()}-logo.png`}
               alt={`${net.symbol} logo`}
               width={64}
               height={64}
               className={styles.logo}
               unoptimized
+              onError={(e) => {
+                e.target.onerror = null;
+                e.target.src = "/default-logo.png"; // Fallback jei neranda
+              }}
             />
             <div className={styles.name}>{net.name}</div>
           </motion.div>
