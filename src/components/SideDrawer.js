@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { useMagicLink } from "@/contexts/MagicLinkContext";
@@ -12,7 +12,6 @@ import styles from "@/components/sidedrawer.module.css";
 export default function SideDrawer() {
   const router = useRouter();
   const pathname = usePathname();
-
   const { user, signOut } = useMagicLink();
   const { wallet } = useWallet();
 
@@ -30,6 +29,18 @@ export default function SideDrawer() {
       alert("Logout failed. Please try again.");
     }
   };
+
+  // Prevent scroll lag and improve open animation smoothness
+  useEffect(() => {
+    if (open) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "auto";
+    }
+    return () => {
+      document.body.style.overflow = "auto";
+    };
+  }, [open]);
 
   const navItems = [
     { label: "Dashboard", path: "/dashboard" },
@@ -72,7 +83,7 @@ export default function SideDrawer() {
 
         <nav className={styles.nav}>
           {navItems.map((item) => (
-            <Link key={item.path} href={item.path}>
+            <Link key={item.path} href={item.path} legacyBehavior>
               <a
                 className={`${styles.link} ${pathname === item.path ? styles.active : ""}`}
                 onClick={() => setOpen(false)}
