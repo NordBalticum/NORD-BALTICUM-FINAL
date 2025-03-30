@@ -3,5 +3,16 @@
     "env": {
       "NODE_ENV": "production"
     }
-  }
+  },
+  "headers": [
+    {
+      "source": "/(.*).css",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store"
+        }
+      ]
+    }
+  ]
 }
