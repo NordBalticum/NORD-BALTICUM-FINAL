@@ -32,7 +32,7 @@ export default function Receive() {
 
   const address = wallet?.addresses?.eth;
 
-  const copyAddress = () => {
+  const handleCopy = () => {
     if (address) {
       navigator.clipboard.writeText(address);
       setCopied(true);
@@ -51,16 +51,16 @@ export default function Receive() {
       <div className={styles.globalContainer}>
         <div className={styles.wrapper}>
           <h1 className={styles.title}>RECEIVE</h1>
-          <p className={styles.subtext}>Your Ethereum receiving address</p>
+          <p className={styles.subtext}>Your MultiNetwork Receiving Address</p>
 
-          <div className={styles.qrContainer} onClick={copyAddress}>
+          <div className={styles.qrContainer} onClick={handleCopy}>
             <QRCode
               value={address || ""}
               size={180}
               bgColor="transparent"
               fgColor="#ffffff"
             />
-            {copied && <div className={styles.copied}>Copied!</div>}
+            {copied && <div className={styles.copied}>Wallet Address Copied</div>}
           </div>
 
           <div className={styles.infoBoxes}>
@@ -69,10 +69,9 @@ export default function Receive() {
               <div className={styles.value}>€ {balanceEUR}</div>
             </div>
 
-            <div className={styles.infoBox} onClick={copyAddress}>
-              <div className={styles.label}>Wallet Address</div>
+            <div className={styles.infoBox} onClick={handleCopy}>
               <div className={styles.value}>{address}</div>
-              {copied && <div className={styles.copied}>Copied!</div>}
+              {copied && <div className={styles.copied}>Wallet Address Copied</div>}
             </div>
           </div>
         </div>
