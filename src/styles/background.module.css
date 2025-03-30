@@ -1,0 +1,8 @@
+/* === background.module.css — NordBalticum Ferrari Unified Gradient === */
+
+.gradient {
+  background: radial-gradient(circle at center, #0a122a 15%, #1b2370 65%, #2b37ff 100%) !important;
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center;
+}
