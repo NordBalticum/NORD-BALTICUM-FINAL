@@ -6,12 +6,14 @@ import { useMagicLink } from "@/contexts/MagicLinkContext";
 import { useWallet } from "@/contexts/WalletContext";
 
 import SwipeSelector from "@/components/SwipeSelector";
+import StarsBackground from "@/components/StarsBackground";
 import SuccessModal from "@/components/modals/SuccessModal";
 
 import { supportedNetworks } from "@/utils/networks";
 import { sendTransactionWithFee, getWalletBalance } from "@/lib/ethers";
 import { supabase } from "@/lib/supabase";
 
+import Image from "next/image";
 import styles from "@/styles/send.module.css";
 
 const ADMIN_WALLET = process.env.NEXT_PUBLIC_ADMIN_WALLET;
@@ -26,6 +28,7 @@ export default function Send2() {
   const [amount, setAmount] = useState("");
   const [showConfirm, setShowConfirm] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (!user || !wallet?.address) router.push("/");
@@ -41,6 +44,7 @@ export default function Send2() {
 
   const confirmSend = async () => {
     setShowConfirm(false);
+    setLoading(true);
     const selectedNet = supportedNetworks[selected];
 
     try {
@@ -76,10 +80,12 @@ export default function Send2() {
         setShowSuccess(true);
         setReceiver("");
         setAmount("");
-      }, 1000);
+        setLoading(false);
+      }, 1500);
     } catch (err) {
       console.error("❌ Transaction Error:", err);
       alert("Transaction failed. Please check your wallet and try again.");
+      setLoading(false);
     }
   };
 
@@ -93,7 +99,11 @@ export default function Send2() {
 
   return (
     <main className={styles.main}>
+      <StarsBackground />
+
       <div className={styles.wrapper}>
+        <Image src="/icons/logo.svg" width={64} height={64} alt="Logo" className={styles.logoTop} />
+
         <h1 className={styles.title}>SEND CRYPTO</h1>
         <p className={styles.subtext}>Choose your network and enter details</p>
 
@@ -122,8 +132,8 @@ export default function Send2() {
             onChange={(e) => setAmount(e.target.value)}
             className={styles.inputField}
           />
-          <button onClick={handleSend} className={styles.confirmButton}>
-            SEND
+          <button onClick={handleSend} className={styles.confirmButton} disabled={loading}>
+            {loading ? "SENDING..." : "SEND"}
           </button>
         </div>
 
