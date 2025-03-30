@@ -2,16 +2,17 @@
   width: 100vw;
   height: 100vh;
   overflow: hidden;
-  position: relative;
   background: radial-gradient(ellipse at center, #0a1835 0%, #01010d 100%);
   display: flex;
   justify-content: center;
   align-items: center;
+  position: relative;
+  z-index: 0;
 }
 
 .wrapper {
   width: 100%;
-  max-width: 560px;
+  max-width: 600px;
   padding: clamp(24px, 4vw, 64px);
   display: flex;
   flex-direction: column;
@@ -20,22 +21,16 @@
   text-align: center;
   position: relative;
   z-index: 5;
-}
-
-.logoTop {
-  width: 58px;
-  height: auto;
-  margin-bottom: -8px;
+  margin-top: -40px;
 }
 
 .title {
   font-size: clamp(28px, 6vw, 48px);
   font-weight: 900;
   font-family: var(--font-crypto);
-  background: linear-gradient(to right, #ffd700, #ffffff, #ffd700);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  text-shadow: 0 0 16px var(--gold-glow);
+  color: #ffd700;
+  letter-spacing: 0.5px;
+  text-shadow: 0 0 4px rgba(255, 255, 255, 0.15);
 }
 
 .subtext {
@@ -43,6 +38,7 @@
   color: rgba(255, 255, 255, 0.85);
   font-weight: 500;
   font-family: var(--font-crypto);
+  margin-top: -12px;
 }
 
 .walletActions {
@@ -50,14 +46,15 @@
   flex-direction: column;
   gap: 16px;
   width: 100%;
+  margin-top: 8px;
 }
 
 .inputField {
   width: 100%;
   padding: 14px 16px;
   background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
   color: white;
   font-size: 1rem;
   font-family: var(--font-crypto);
@@ -66,7 +63,7 @@
 }
 
 .inputField:focus {
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.07);
 }
 
 .confirmButton {
@@ -85,7 +82,6 @@
 .confirmButton:hover {
   background: white;
   color: black;
-  box-shadow: 0 0 22px var(--gold-glow);
 }
 
 .confirmModal {
@@ -102,7 +98,6 @@
   color: white;
   backdrop-filter: blur(18px);
   z-index: 9999;
-  box-shadow: 0 0 24px rgba(0, 255, 200, 0.2);
 }
 
 .modalTitle {
@@ -139,7 +134,7 @@
   background: white;
   color: black;
   font-family: var(--font-crypto);
-  transition: var(--transition);
+  transition: all 0.3s ease;
 }
 
 .modalButton.cancel {
@@ -154,4 +149,10 @@
   text-align: center;
   padding-top: 120px;
   font-family: var(--font-crypto);
+}
+
+/* Allow swipe selector overflow */
+.selectorContainer {
+  width: 110%;
+  transform: translateX(-5%);
 }
