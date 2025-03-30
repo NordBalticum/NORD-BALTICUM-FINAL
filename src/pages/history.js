@@ -5,7 +5,10 @@ import { motion } from "framer-motion";
 
 import { useMagicLink } from "@/contexts/MagicLinkContext";
 import { supabase } from "@/lib/supabase";
+
 import styles from "@/styles/history.module.css";
+import background from "@/styles/background.module.css";
+import StarsBackground from "@/components/StarsBackground";
 
 export default function History() {
   const { user } = useMagicLink();
@@ -28,7 +31,7 @@ export default function History() {
       if (error) throw error;
       setTransactions(data);
     } catch (err) {
-      console.error("❌ Klaida gaunant transakcijas:", err);
+      console.error("❌ Error fetching transactions:", err);
     } finally {
       setLoading(false);
     }
@@ -40,25 +43,27 @@ export default function History() {
   };
 
   return (
-    <div className="container">
+    <main className={`${styles.container} ${background.gradient}`}>
+      <StarsBackground />
+
       <div className={styles.wrapper}>
-        <h1 className={styles.title}>TRANSAKCIJŲ ISTORIJA</h1>
-        <p className={styles.subtext}>Jūsų naujausia veikla</p>
+        <h1 className={styles.title}>TRANSACTION HISTORY</h1>
+        <p className={styles.subtext}>Your latest crypto activity</p>
 
         {loading ? (
-          <div className={styles.loading}>Kraunama istorija...</div>
+          <div className={styles.loading}>Loading your transactions...</div>
         ) : transactions.length === 0 ? (
-          <div className={styles.loading}>Transakcijų nėra.</div>
+          <div className={styles.loading}>No transactions found.</div>
         ) : (
           <div className={styles.transactionList}>
             {transactions.map((tx, i) => (
               <motion.div
-                key={tx.tx_hash}
+                key={tx.tx_hash + i}
                 className={styles.transactionCard}
                 variants={variants}
                 initial="hidden"
                 animate="visible"
-                transition={{ duration: 0.3, delay: i * 0.07 }}
+                transition={{ duration: 0.35, delay: i * 0.08 }}
               >
                 <div className={styles.transactionHeader}>
                   <span className={styles.transactionType}>
@@ -77,18 +82,24 @@ export default function History() {
                 </div>
 
                 <p className={styles.transactionDetail}>
-                  <strong>{tx.type === "receive" ? "Nuo:" : "Kam:"}</strong>{" "}
+                  <strong>{tx.type === "receive" ? "From:" : "To:"}</strong>{" "}
                   {tx.type === "receive"
                     ? `${tx.sender?.slice(0, 6)}...${tx.sender?.slice(-4)}`
                     : `${tx.receiver?.slice(0, 6)}...${tx.receiver?.slice(-4)}`}
                 </p>
 
                 <p className={styles.transactionDetail}>
-                  <strong>Mokestis:</strong> {tx.fee} {tx.network}
+                  <strong>Fee:</strong> {tx.fee} {tx.network}
                 </p>
 
                 <p className={styles.transactionDate}>
-                  {new Date(tx.created_at).toLocaleString("lt-LT")}
+                  {new Date(tx.created_at).toLocaleString("en-US", {
+                    year: "numeric",
+                    month: "short",
+                    day: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
                 </p>
 
                 <a
@@ -97,13 +108,13 @@ export default function History() {
                   rel="noopener noreferrer"
                   className={styles.transactionLink}
                 >
-                  Peržiūrėti transakciją
+                  View on BscScan
                 </a>
               </motion.div>
             ))}
           </div>
         )}
       </div>
-    </div>
+    </main>
   );
 }
