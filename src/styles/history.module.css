@@ -1,47 +1,39 @@
-/* === HISTORY MODULE – NordBalticum Web3 Banking Grade === */
+/* === HISTORY MODULE – NordBalticum Web3 Fullscreen Ultra Bank Grade === */
 
 .container {
   position: fixed;
   top: 50%;
   left: 50%;
-  width: calc(100vw - 160px);
-  height: calc(100vh - 160px);
+  width: 100vw;
+  height: 100vh;
   transform: translate(-50%, -50%);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding-inline: clamp(16px, 4vw, 64px);
   background: transparent;
   background-color: inherit;
   background-size: cover;
   background-position: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: clamp(16px, 5vw, 64px);
   box-sizing: border-box;
-  transition: var(--transition);
-  overflow: visible;
+  overflow: hidden;
   z-index: 1;
 }
 
-@media (max-width: 768px) {
-  .container {
-    transform: translate(-50%, -50%);
-    transform-origin: center;
-    padding-inline: clamp(8px, 5vw, 24px);
-  }
-}
-
 .wrapper {
+  width: calc(100vw - 160px);
+  height: calc(100vh - 160px);
+  max-width: 960px;
+  padding: clamp(24px, 5vw, 64px);
+  background: transparent;
+  backdrop-filter: none;
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  justify-content: flex-start;
   align-items: center;
-  gap: clamp(24px, 3vw, 48px);
-  width: 100%;
-  max-width: 100%;
-  height: 100%;
-  padding: clamp(24px, 4vw, 64px);
-  box-sizing: border-box;
-  position: relative;
   overflow-y: auto;
+  overflow-x: hidden;
+  gap: clamp(24px, 4vh, 48px);
   z-index: 2;
 }
 
@@ -58,15 +50,9 @@
 }
 
 @keyframes glowTitle {
-  0% {
-    text-shadow: 0 0 10px #fff, 0 0 20px #ffd700;
-  }
-  50% {
-    text-shadow: 0 0 18px #fffacd, 0 0 30px #ffd700;
-  }
-  100% {
-    text-shadow: 0 0 10px #fff, 0 0 20px #ffd700;
-  }
+  0% { text-shadow: 0 0 10px #fff, 0 0 20px #ffd700; }
+  50% { text-shadow: 0 0 18px #fffacd, 0 0 30px #ffd700; }
+  100% { text-shadow: 0 0 10px #fff, 0 0 20px #ffd700; }
 }
 
 .subtext {
@@ -76,7 +62,7 @@
   font-family: var(--font-crypto);
   font-weight: 500;
   opacity: 0.85;
-  margin-top: -8px;
+  margin-top: -6px;
 }
 
 .transactionList {
@@ -178,5 +164,30 @@
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@media (max-width: 768px) {
+  .wrapper {
+    width: calc(100vw - 48px);
+    height: auto;
+    padding: 24px 16px 120px;
+    gap: 32px;
+  }
+
+  .transactionCard {
+    padding: 18px;
+  }
+
+  .transactionType {
+    font-size: 0.95rem;
+  }
+
+  .transactionDetail {
+    font-size: 0.9rem;
+  }
+
+  .transactionLink {
+    font-size: 0.85rem;
   }
 }
