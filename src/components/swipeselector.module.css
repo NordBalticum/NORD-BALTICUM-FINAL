@@ -14,25 +14,22 @@
 /* === Arrow Buttons (Mobile only) === */
 .arrows {
   display: flex;
-  justify-content: space-between;
-  width: 100%;
-  max-width: 340px;
-  margin-bottom: 12px;
-  gap: 24px;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 16px;
 }
 
 .arrowBtn {
-  flex: 1;
-  font-size: 20px;
-  font-weight: bold;
+  font-size: 14px;
+  padding: 4px 12px;
+  font-weight: 600;
   background: transparent;
   border: 2px solid white;
   color: white;
-  padding: 8px 0;
-  border-radius: 12px;
+  border-radius: 10px;
   cursor: pointer;
   font-family: var(--font-crypto);
-  transition: all 0.3s ease;
+  transition: all 0.25s ease;
 }
 
 .arrowBtn:hover {
@@ -40,7 +37,7 @@
   color: black;
 }
 
-/* Tik mobiliems */
+/* Rodyklės tik mobiliems */
 @media screen and (min-width: 1025px) {
   .arrows {
     display: none;
@@ -104,14 +101,12 @@
   transform: scale(1.03);
 }
 
-/* === Selected Card === */
 .selected {
   border: 2px solid #ffd700;
   background: rgba(255, 255, 255, 0.06);
   transform: scale(1.05);
 }
 
-/* === Logo === */
 .logo {
   width: 64px;
   height: 64px;
@@ -120,7 +115,6 @@
   filter: brightness(1.2);
 }
 
-/* === Name Text === */
 .name {
   font-size: 15px;
   color: white;
@@ -154,7 +148,7 @@
   }
 }
 
-/* === Mini Devices Fix (Ultra Compact) === */
+/* === Ultra Compact Devices Fix === */
 @media screen and (max-width: 280px) {
   .card {
     width: 120px;
