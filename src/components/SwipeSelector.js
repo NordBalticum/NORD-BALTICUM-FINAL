@@ -40,25 +40,25 @@ export default function SwipeSelector({ mode = "send", onSelect }) {
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
-    const updateSize = () => {
-      setIsMobile(window.innerWidth <= 1024);
-    };
+    const updateSize = () => setIsMobile(window.innerWidth <= 1024);
     updateSize();
     window.addEventListener("resize", updateSize);
     return () => window.removeEventListener("resize", updateSize);
   }, []);
 
-  useEffect(() => {
-    if (isMobile && containerRef.current) {
-      containerRef.current.scrollTo({ left: 0, behavior: "smooth" });
-    }
-  }, [isMobile]);
+  const handleScroll = (direction) => {
+    if (!containerRef.current) return;
+    const scrollAmount = 180;
+    const current = containerRef.current.scrollLeft;
+    containerRef.current.scrollTo({
+      left: direction === "left" ? current - scrollAmount : current + scrollAmount,
+      behavior: "smooth",
+    });
+  };
 
   const handleSelect = (symbol, index) => {
     setSelectedSymbol(symbol);
-    if (typeof onSelect === "function") {
-      onSelect(symbol);
-    }
+    if (typeof onSelect === "function") onSelect(symbol);
 
     if (isMobile && containerRef.current?.children?.[index]) {
       const card = containerRef.current.children[index];
@@ -73,19 +73,21 @@ export default function SwipeSelector({ mode = "send", onSelect }) {
 
   return (
     <div className={styles.selectorContainer}>
+      {isMobile && (
+        <div className={styles.arrows}>
+          <button onClick={() => handleScroll("left")} className={styles.arrowBtn}>←</button>
+          <button onClick={() => handleScroll("right")} className={styles.arrowBtn}>→</button>
+        </div>
+      )}
       <div
-        className={
-          isMobile ? styles.scrollableWrapper : styles.staticWrapper
-        }
+        className={isMobile ? styles.scrollableWrapper : styles.staticWrapper}
         ref={containerRef}
         style={isMobile ? { touchAction: "pan-x", overflowX: "auto" } : {}}
       >
         {supportedNetworks.map((net, index) => (
           <motion.div
             key={net.symbol}
-            className={`${styles.card} ${
-              selectedSymbol === net.symbol ? styles.selected : ""
-            }`}
+            className={`${styles.card} ${selectedSymbol === net.symbol ? styles.selected : ""}`}
             whileTap={{ scale: 0.96 }}
             onClick={() => handleSelect(net.symbol, index)}
             role="button"
