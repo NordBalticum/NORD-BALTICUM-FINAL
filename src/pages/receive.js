@@ -6,7 +6,6 @@ import { useMagicLink } from "@/contexts/MagicLinkContext";
 import { useWallet } from "@/contexts/WalletContext";
 import { getWalletBalance } from "@/lib/ethers";
 import QRCode from "react-qr-code";
-
 import StarsBackground from "@/components/StarsBackground";
 import styles from "@/styles/receive.module.css";
 
@@ -16,6 +15,7 @@ export default function Receive() {
   const { wallet } = useWallet();
 
   const [balanceEUR, setBalanceEUR] = useState("0.00");
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     if (!user || !wallet?.address) router.push("/");
@@ -33,7 +33,11 @@ export default function Receive() {
   const address = wallet?.addresses?.eth;
 
   const copyAddress = () => {
-    if (address) navigator.clipboard.writeText(address);
+    if (address) {
+      navigator.clipboard.writeText(address);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
   };
 
   if (!user || !wallet?.address) {
@@ -56,6 +60,7 @@ export default function Receive() {
               bgColor="transparent"
               fgColor="#ffffff"
             />
+            {copied && <div className={styles.copied}>Copied!</div>}
           </div>
 
           <div className={styles.infoBoxes}>
@@ -67,10 +72,11 @@ export default function Receive() {
             <div className={styles.infoBox} onClick={copyAddress}>
               <div className={styles.label}>Wallet Address</div>
               <div className={styles.value}>{address}</div>
+              {copied && <div className={styles.copied}>Copied!</div>}
             </div>
           </div>
         </div>
       </div>
     </main>
   );
-}
+              }
