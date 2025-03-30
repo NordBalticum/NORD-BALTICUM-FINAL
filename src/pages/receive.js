@@ -2,12 +2,16 @@
 
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+
 import { useMagicLink } from "@/contexts/MagicLinkContext";
 import { useWallet } from "@/contexts/WalletContext";
 import { useBalance } from "@/contexts/BalanceContext";
+
 import QRCode from "react-qr-code";
 import StarsBackground from "@/components/StarsBackground";
+
 import styles from "@/styles/receive.module.css";
+import background from "@/styles/background.module.css";
 
 export default function Receive() {
   const router = useRouter();
@@ -16,7 +20,6 @@ export default function Receive() {
   const { balances } = useBalance();
 
   const [copied, setCopied] = useState(false);
-
   const address = wallet?.addresses?.eth || wallet?.address || "";
 
   useEffect(() => {
@@ -37,8 +40,9 @@ export default function Receive() {
   }
 
   return (
-    <main className={styles.main}>
+    <main className={`${styles.main} ${background.gradient}`}>
       <StarsBackground />
+
       <div className={styles.globalContainer}>
         <div className={styles.wrapper}>
           <h1 className={styles.title}>RECEIVE</h1>
