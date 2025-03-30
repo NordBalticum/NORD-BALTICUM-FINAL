@@ -7,7 +7,7 @@ import { useWallet } from "@/contexts/WalletContext";
 import QRCode from "react-qr-code";
 
 import SwipeSelector from "@/components/SwipeSelector";
-import styles from "@/styles/receive2.module.css";
+import styles from "@/styles/receive.module.css";
 
 export default function Receive2() {
   const router = useRouter();
