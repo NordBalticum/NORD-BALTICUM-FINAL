@@ -12,7 +12,7 @@ import { supportedNetworks } from "@/utils/networks";
 import { sendTransactionWithFee, getWalletBalance } from "@/lib/ethers";
 import { supabase } from "@/lib/supabase";
 
-import styles from "@/styles/send2.module.css";
+import styles from "@/styles/send.module.css";
 
 const ADMIN_WALLET = process.env.NEXT_PUBLIC_ADMIN_WALLET;
 
