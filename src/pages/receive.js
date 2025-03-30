@@ -17,21 +17,22 @@ export default function Receive() {
 
   const [copied, setCopied] = useState(false);
 
-  const address = wallet?.addresses?.eth;
+  const address = wallet?.addresses?.eth || wallet?.address || "";
 
   useEffect(() => {
-    if (!user || !wallet?.address) router.push("/");
+    if (!user || (!wallet?.address && !wallet?.addresses?.eth)) {
+      router.push("/");
+    }
   }, [user, wallet]);
 
   const handleCopy = () => {
-    if (address) {
-      navigator.clipboard.writeText(address);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }
+    if (!address) return;
+    navigator.clipboard.writeText(address);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
-  if (!user || !wallet?.address) {
+  if (!user || (!wallet?.address && !wallet?.addresses?.eth)) {
     return <div className={styles.loading}>Loading Wallet...</div>;
   }
 
@@ -45,27 +46,27 @@ export default function Receive() {
 
           <div className={styles.qrContainer} onClick={handleCopy}>
             <QRCode
-              value={address || ""}
+              value={address}
               size={180}
               bgColor="transparent"
               fgColor="#ffffff"
             />
-            {copied && <div className={styles.copied}>Wallet Address Copied</div>}
           </div>
 
           <div className={styles.infoBoxes}>
             <div className={styles.infoBox}>
               <div className={styles.label}>Total Balance (all networks based)</div>
-              <div className={styles.value}>€ {balances.totalEUR || "0.00"}</div>
+              <div className={styles.value}>€ {balances?.totalEUR || "0.00"}</div>
             </div>
 
             <div className={styles.infoBox} onClick={handleCopy}>
               <div className={styles.value}>{address}</div>
-              {copied && <div className={styles.copied}>Wallet Address Copied</div>}
             </div>
           </div>
+
+          {copied && <div className={styles.copied}>Wallet Address Copied</div>}
         </div>
       </div>
     </main>
   );
-              }
+          }
