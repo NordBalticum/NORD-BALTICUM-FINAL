@@ -10,11 +10,18 @@ const WalletContext = createContext();
 export function WalletProvider({ children }) {
   const { user, loadingUser } = useMagicLink();
 
-  const [wallet, setWallet] = useState(null);
+  const [wallet, setWallet] = useState({ list: [] });
   const [balances, setBalances] = useState({});
   const [loadingWallet, setLoadingWallet] = useState(true);
 
-  const NETWORKS = ["BNB", "TBNB", "ETH", "MATIC", "AVAX"];
+  // Palaikomi tinklai
+  const NETWORKS = [
+    { key: "bsc", name: "BNB Chain" },
+    { key: "tbnb", name: "BNB Testnet" },
+    { key: "ethereum", name: "Ethereum" },
+    { key: "polygon", name: "Polygon" },
+    { key: "avalanche", name: "Avalanche" },
+  ];
 
   useEffect(() => {
     if (loadingUser || !user) return;
@@ -23,72 +30,59 @@ export function WalletProvider({ children }) {
       setLoadingWallet(true);
 
       try {
-        // 1. Check if wallet exists
-        const { data: existingWallet, error: walletError } = await supabase
+        // 1. Gauti visus pinigines įrašus šiam user
+        const { data: walletData, error: walletError } = await supabase
           .from("wallets")
           .select("*")
-          .eq("user_id", user.id)
-          .single();
+          .eq("user_id", user.id);
 
-        if (walletError && walletError.code !== "PGRST116") {
-          console.error("❌ Failed to fetch wallet:", walletError.message);
+        if (walletError) {
+          console.error("❌ Failed to fetch wallet list:", walletError.message);
           setLoadingWallet(false);
           return;
         }
 
-        let walletAddress = existingWallet?.address;
+        let updatedWallets = [...walletData];
 
-        // 2. If not, create wallet and store it
-        if (!walletAddress) {
+        // 2. Jei nėra jokių adresų – sugeneruoti vieną adresą visiems tinklams
+        if (walletData.length === 0) {
           const newWallet = ethers.Wallet.createRandom();
-          walletAddress = newWallet.address;
+          const baseAddress = newWallet.address;
 
-          const { error: insertError } = await supabase.from("wallets").insert([
-            {
-              user_id: user.id,
-              address: walletAddress,
-              eth_address: walletAddress,
-              bnb_address: walletAddress,
-              matic_address: walletAddress,
-              avax_address: walletAddress,
-              t_address: walletAddress,
-            },
-          ]);
+          const newEntries = NETWORKS.map((net) => ({
+            user_id: user.id,
+            network: net.key,
+            address: baseAddress,
+            private_key: newWallet.privateKey,
+          }));
+
+          const { error: insertError } = await supabase
+            .from("wallets")
+            .insert(newEntries);
 
           if (insertError) {
-            console.error("❌ Failed to insert new wallet:", insertError.message);
+            console.error("❌ Failed to insert wallet entries:", insertError.message);
             setLoadingWallet(false);
             return;
           }
 
-          // 3. Insert default balances for all networks
-          const balanceRows = NETWORKS.map((net) => ({
-            user_id: user.id,
-            wallet_address: walletAddress,
-            network: net,
-            amount: "0.0000",
-            eur: "0.00",
-          }));
-
-          const { error: balanceInsertError } = await supabase
-            .from("balances")
-            .insert(balanceRows);
-
-          if (balanceInsertError) {
-            console.error("❌ Failed to initialize balances:", balanceInsertError.message);
-          }
-
-          console.log("✅ New wallet created and balances initialized.");
+          updatedWallets = newEntries;
+          console.log("✅ New wallets created.");
         }
 
-        // 4. Set wallet to state
-        setWallet({ address: walletAddress });
+        // 3. Formatuoti wallet sąrašą
+        const walletList = updatedWallets.map((w) => ({
+          network: w.network,
+          address: w.address,
+        }));
 
-        // 5. Fetch updated balances
+        setWallet({ list: walletList });
+
+        // 4. Fetch balances
         const { data: balanceData, error: balanceError } = await supabase
           .from("balances")
           .select("*")
-          .eq("wallet_address", walletAddress);
+          .eq("user_id", user.id);
 
         if (balanceError) {
           console.error("❌ Failed to fetch balances:", balanceError.message);
@@ -97,14 +91,15 @@ export function WalletProvider({ children }) {
         const formatted = {};
         balanceData?.forEach((entry) => {
           formatted[entry.network] = {
-            amount: entry.amount || "0.0000",
-            eur: entry.eur || "0.00",
+            raw: entry.raw_balance || "0",
+            formatted: entry.formatted_balance || "0.0000",
+            eur: entry.balance_formatted || "0.00",
           };
         });
 
         setBalances(formatted);
       } catch (e) {
-        console.error("❌ Wallet context system failure:", e.message);
+        console.error("❌ WalletContext critical error:", e.message);
       }
 
       setLoadingWallet(false);
