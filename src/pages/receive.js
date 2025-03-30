@@ -6,12 +6,11 @@ import { useMagicLink } from "@/contexts/MagicLinkContext";
 import { useWallet } from "@/contexts/WalletContext";
 import { getWalletBalance } from "@/lib/ethers";
 import QRCode from "react-qr-code";
-import Image from "next/image";
 
 import StarsBackground from "@/components/StarsBackground";
 import styles from "@/styles/receive.module.css";
 
-export default function Receive2() {
+export default function Receive() {
   const router = useRouter();
   const { user } = useMagicLink();
   const { wallet } = useWallet();
@@ -47,14 +46,6 @@ export default function Receive2() {
 
       <div className={styles.globalContainer}>
         <div className={styles.wrapper}>
-          <Image
-            src="/icons/logo.svg"
-            width={64}
-            height={64}
-            alt="Logo"
-            className={styles.logoTop}
-          />
-
           <h1 className={styles.title}>RECEIVE</h1>
           <p className={styles.subtext}>Your Ethereum receiving address</p>
 
@@ -69,7 +60,7 @@ export default function Receive2() {
 
           <div className={styles.infoBoxes}>
             <div className={styles.infoBox}>
-              <div className={styles.label}>Total Balance (est)</div>
+              <div className={styles.label}>Total Balance (all networks based)</div>
               <div className={styles.value}>€ {balanceEUR}</div>
             </div>
 
