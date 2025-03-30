@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 
 import styles from "@/styles/dashboard.module.css";
+import background from "@/styles/background.module.css";
+
 import StarsBackground from "@/components/StarsBackground";
 import BottomNavigation from "@/components/BottomNavigation";
 import AvatarDisplay from "@/components/AvatarDisplay";
@@ -13,11 +15,36 @@ import { useMagicLink } from "@/contexts/MagicLinkContext";
 import { useWallet } from "@/contexts/WalletContext";
 
 const networksData = [
-  { name: "BNB Smart Chain", symbol: "BNB", logo: "https://cryptologos.cc/logos/bnb-bnb-logo.png", route: "/bnb" },
-  { name: "BSC Testnet", symbol: "TBNB", logo: "https://cryptologos.cc/logos/binance-coin-bnb-logo.png", route: "/tbnb" },
-  { name: "Ethereum", symbol: "ETH", logo: "https://cryptologos.cc/logos/ethereum-eth-logo.png", route: "/eth" },
-  { name: "Polygon", symbol: "POL", logo: "https://cryptologos.cc/logos/polygon-matic-logo.png", route: "/pol" },
-  { name: "Avalanche", symbol: "AVAX", logo: "https://cryptologos.cc/logos/avalanche-avax-logo.png", route: "/avax" },
+  {
+    name: "BNB Smart Chain",
+    symbol: "BNB",
+    logo: "https://cryptologos.cc/logos/bnb-bnb-logo.png",
+    route: "/bnb",
+  },
+  {
+    name: "BSC Testnet",
+    symbol: "TBNB",
+    logo: "https://cryptologos.cc/logos/binance-coin-bnb-logo.png",
+    route: "/tbnb",
+  },
+  {
+    name: "Ethereum",
+    symbol: "ETH",
+    logo: "https://cryptologos.cc/logos/ethereum-eth-logo.png",
+    route: "/eth",
+  },
+  {
+    name: "Polygon",
+    symbol: "POL",
+    logo: "https://cryptologos.cc/logos/polygon-matic-logo.png",
+    route: "/pol",
+  },
+  {
+    name: "Avalanche",
+    symbol: "AVAX",
+    logo: "https://cryptologos.cc/logos/avalanche-avax-logo.png",
+    route: "/avax",
+  },
 ];
 
 export default function Dashboard() {
@@ -28,7 +55,11 @@ export default function Dashboard() {
   const [totalEUR, setTotalEUR] = useState("0.00");
   const networks = useMemo(() => networksData, []);
 
-  const isLoading = loadingUser || loadingWallet;
+  useEffect(() => {
+    if (!user || !wallet?.address) {
+      router.push("/");
+    }
+  }, [user, wallet]);
 
   useEffect(() => {
     const total = Object.values(balances || {}).reduce((sum, b) => {
@@ -38,20 +69,8 @@ export default function Dashboard() {
     setTotalEUR(total.toFixed(2));
   }, [balances]);
 
-  if (isLoading) {
-    return (
-      <div className={styles.loadingContainer}>
-        <StarsBackground />
-        <div className={styles.loaderBox}>
-          <div className={styles.spinner}></div>
-          <p className={styles.loadingText}>Loading your dashboard...</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className={styles.container}>
+    <main className={`${styles.container} ${background.gradient}`}>
       <StarsBackground />
 
       <div className={styles.dashboardWrapper}>
@@ -68,7 +87,11 @@ export default function Dashboard() {
 
         <div className={styles.assetList}>
           {networks.map((net) => {
-            const bal = balances?.[net.symbol] || { amount: "0.0000", eur: "0.00" };
+            const bal = balances?.[net.symbol] || {
+              amount: "0.0000",
+              eur: "0.00",
+            };
+
             return (
               <div
                 key={net.symbol}
@@ -89,6 +112,7 @@ export default function Dashboard() {
                     <span className={styles.assetName}>{net.name}</span>
                   </div>
                 </div>
+
                 <div className={styles.assetRight}>
                   <span className={styles.assetAmount}>
                     {bal.amount} {net.symbol}
@@ -102,6 +126,6 @@ export default function Dashboard() {
       </div>
 
       <BottomNavigation />
-    </div>
+    </main>
   );
 }
