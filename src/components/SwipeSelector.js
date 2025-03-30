@@ -15,7 +15,7 @@ const supportedNetworks = [
 
 export default function SwipeSelector({ mode = "send", onSelect }) {
   const containerRef = useRef(null);
-  const [selectedIndex, setSelectedIndex] = useState(2); // ETH by default
+  const [selectedIndex, setSelectedIndex] = useState(2); // Default to Ethereum
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -26,7 +26,7 @@ export default function SwipeSelector({ mode = "send", onSelect }) {
   }, []);
 
   useEffect(() => {
-    if (onSelect) onSelect(supportedNetworks[selectedIndex].symbol);
+    onSelect?.(supportedNetworks[selectedIndex].symbol);
     if (isMobile && containerRef.current) {
       const card = containerRef.current.children[selectedIndex];
       if (card) {
@@ -38,18 +38,12 @@ export default function SwipeSelector({ mode = "send", onSelect }) {
   }, [selectedIndex, isMobile]);
 
   const handleSelect = (index) => setSelectedIndex(index);
-
-  const goLeft = () => {
-    if (selectedIndex > 0) setSelectedIndex((prev) => prev - 1);
-  };
-
-  const goRight = () => {
-    if (selectedIndex < supportedNetworks.length - 1) setSelectedIndex((prev) => prev + 1);
-  };
+  const goLeft = () => selectedIndex > 0 && setSelectedIndex((prev) => prev - 1);
+  const goRight = () => selectedIndex < supportedNetworks.length - 1 && setSelectedIndex((prev) => prev + 1);
 
   return (
     <div className={styles.selectorContainer}>
-      {/* Arrows for Mobile Only */}
+      {/* Mobile Arrows */}
       <div className={styles.arrows}>
         <button className={styles.arrowBtn} onClick={goLeft}>←</button>
         <button className={styles.arrowBtn} onClick={goRight}>→</button>
@@ -63,9 +57,7 @@ export default function SwipeSelector({ mode = "send", onSelect }) {
         {supportedNetworks.map((net, index) => (
           <motion.div
             key={net.symbol}
-            className={`${styles.card} ${
-              selectedIndex === index ? styles.selected : ""
-            }`}
+            className={`${styles.card} ${selectedIndex === index ? styles.selected : ""}`}
             whileTap={{ scale: 0.96 }}
             onClick={() => handleSelect(index)}
             role="button"
