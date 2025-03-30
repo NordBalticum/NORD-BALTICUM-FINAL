@@ -15,7 +15,7 @@ const supportedNetworks = [
 
 export default function SwipeSelector({ mode = "send", onSelect }) {
   const containerRef = useRef(null);
-  const [selectedIndex, setSelectedIndex] = useState(2); // Default: Ethereum
+  const [selectedIndex, setSelectedIndex] = useState(2); // Default to Ethereum
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -27,10 +27,7 @@ export default function SwipeSelector({ mode = "send", onSelect }) {
 
   useEffect(() => {
     onSelect?.(supportedNetworks[selectedIndex].symbol);
-
-    if (isMobile && containerRef.current) {
-      scrollToCenter(selectedIndex);
-    }
+    if (isMobile) scrollToCenter(selectedIndex);
   }, [selectedIndex, isMobile]);
 
   const scrollToCenter = (index) => {
@@ -42,9 +39,7 @@ export default function SwipeSelector({ mode = "send", onSelect }) {
     }
   };
 
-  const handleSelect = (index) => {
-    setSelectedIndex(index);
-  };
+  const handleSelect = (index) => setSelectedIndex(index);
 
   const goLeft = () => {
     if (selectedIndex > 0) {
@@ -64,10 +59,10 @@ export default function SwipeSelector({ mode = "send", onSelect }) {
 
   return (
     <div className={styles.selectorContainer}>
-      {/* Mobile Arrows */}
+      {/* Arrows (Mobile Only) */}
       <div className={styles.arrows}>
-        <button className={styles.arrowBtn} onClick={goLeft}>←</button>
-        <button className={styles.arrowBtn} onClick={goRight}>→</button>
+        <button className={styles.arrowBtn} onClick={goLeft}>&#x2190;</button>
+        <button className={styles.arrowBtn} onClick={goRight}>&#x2192;</button>
       </div>
 
       <div
@@ -91,10 +86,6 @@ export default function SwipeSelector({ mode = "send", onSelect }) {
               height={64}
               className={styles.logo}
               unoptimized
-              onError={(e) => {
-                e.target.onerror = null;
-                e.target.src = "/default-logo.png";
-              }}
             />
             <div className={styles.name}>{net.name}</div>
           </motion.div>
