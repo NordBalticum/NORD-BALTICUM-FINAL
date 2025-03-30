@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMagicLink } from "@/contexts/MagicLinkContext";
 import { useWallet } from "@/contexts/WalletContext";
-import { getWalletBalance } from "@/lib/ethers";
+import { useBalance } from "@/contexts/BalanceContext";
 import QRCode from "react-qr-code";
 import StarsBackground from "@/components/StarsBackground";
 import styles from "@/styles/receive.module.css";
@@ -13,24 +13,15 @@ export default function Receive() {
   const router = useRouter();
   const { user } = useMagicLink();
   const { wallet } = useWallet();
+  const { balances } = useBalance();
 
-  const [balanceEUR, setBalanceEUR] = useState("0.00");
   const [copied, setCopied] = useState(false);
+
+  const address = wallet?.addresses?.eth;
 
   useEffect(() => {
     if (!user || !wallet?.address) router.push("/");
   }, [user, wallet]);
-
-  useEffect(() => {
-    if (wallet?.address && wallet?.addresses?.eth) {
-      getWalletBalance(wallet.address, "eth").then((res) => {
-        const fakeEur = parseFloat(res.formatted || "0") * 2400;
-        setBalanceEUR(fakeEur.toFixed(2));
-      });
-    }
-  }, [wallet]);
-
-  const address = wallet?.addresses?.eth;
 
   const handleCopy = () => {
     if (address) {
@@ -47,7 +38,6 @@ export default function Receive() {
   return (
     <main className={styles.main}>
       <StarsBackground />
-
       <div className={styles.globalContainer}>
         <div className={styles.wrapper}>
           <h1 className={styles.title}>RECEIVE</h1>
@@ -66,7 +56,7 @@ export default function Receive() {
           <div className={styles.infoBoxes}>
             <div className={styles.infoBox}>
               <div className={styles.label}>Total Balance (all networks based)</div>
-              <div className={styles.value}>€ {balanceEUR}</div>
+              <div className={styles.value}>€ {balances.totalEUR || "0.00"}</div>
             </div>
 
             <div className={styles.infoBox} onClick={handleCopy}>
