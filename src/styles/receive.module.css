@@ -2,10 +2,11 @@
   width: 100vw;
   height: 100vh;
   overflow: hidden;
-  background: inherit;
+  background: radial-gradient(ellipse at center, #0a1835 0%, #01010d 100%);
   display: flex;
   justify-content: center;
   align-items: center;
+  position: relative;
 }
 
 .globalContainer {
@@ -19,13 +20,11 @@
   justify-content: center;
   align-items: center;
   padding-inline: clamp(16px, 4vw, 64px);
-  background: radial-gradient(ellipse at center, var(--primary-bg) 25%, var(--primary-bg-dark) 100%) !important;
-  background-size: cover;
-  background-position: center;
+  background: transparent;
   box-sizing: border-box;
   transition: var(--transition);
   overflow: visible;
-  z-index: 1;
+  z-index: 2;
 }
 
 .wrapper {
@@ -41,6 +40,13 @@
   position: relative;
   overflow: visible;
   flex: 1;
+  z-index: 5;
+}
+
+.logoTop {
+  width: 58px;
+  height: auto;
+  margin-bottom: -8px;
 }
 
 .title {
@@ -68,7 +74,6 @@
   font-family: var(--font-crypto);
   font-weight: 500;
   margin-top: -8px;
-  opacity: 0.85;
 }
 
 .qrContainer {
