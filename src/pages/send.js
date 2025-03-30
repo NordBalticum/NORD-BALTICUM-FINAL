@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+
 import { useMagicLink } from "@/contexts/MagicLinkContext";
 import { useWallet } from "@/contexts/WalletContext";
 
@@ -10,10 +11,11 @@ import StarsBackground from "@/components/StarsBackground";
 import SuccessModal from "@/components/modals/SuccessModal";
 
 import { supportedNetworks } from "@/utils/networks";
-import { sendTransactionWithFee, getWalletBalance } from "@/lib/ethers";
+import { sendTransactionWithFee } from "@/lib/ethers";
 import { supabase } from "@/lib/supabase";
 
 import styles from "@/styles/send.module.css";
+import background from "@/styles/background.module.css";
 
 const ADMIN_WALLET = process.env.NEXT_PUBLIC_ADMIN_WALLET;
 
@@ -48,6 +50,7 @@ export default function Send() {
   const confirmSend = async () => {
     setShowConfirm(false);
     setLoading(true);
+
     try {
       const result = await sendTransactionWithFee({
         privateKey: wallet.privateKey,
@@ -87,7 +90,7 @@ export default function Send() {
   }
 
   return (
-    <main className={styles.main}>
+    <main className={`${styles.main} ${background.gradient}`}>
       <StarsBackground />
 
       <div className={styles.wrapper}>
@@ -119,7 +122,11 @@ export default function Send() {
             onChange={(e) => setAmount(e.target.value)}
             className={styles.inputField}
           />
-          <button onClick={handleSend} className={styles.confirmButton} disabled={loading}>
+          <button
+            onClick={handleSend}
+            className={styles.confirmButton}
+            disabled={loading}
+          >
             {loading ? "SENDING..." : "SEND"}
           </button>
         </div>
@@ -128,14 +135,30 @@ export default function Send() {
           <div className={styles.confirmModal}>
             <div className={styles.modalTitle}>Confirm Transaction</div>
             <div className={styles.modalInfo}>
-              <p><strong>Network:</strong> {selectedNet.name}</p>
-              <p><strong>To:</strong> {receiver}</p>
-              <p><strong>Amount:</strong> {amount} {selectedNet.symbol}</p>
-              <p><strong>Recipient gets:</strong> {amountAfterFee.toFixed(6)} {selectedNet.symbol}</p>
+              <p>
+                <strong>Network:</strong> {selectedNet.name}
+              </p>
+              <p>
+                <strong>To:</strong> {receiver}
+              </p>
+              <p>
+                <strong>Amount:</strong> {amount} {selectedNet.symbol}
+              </p>
+              <p>
+                <strong>Recipient gets:</strong>{" "}
+                {amountAfterFee.toFixed(6)} {selectedNet.symbol}
+              </p>
             </div>
             <div className={styles.modalActions}>
-              <button className={styles.modalButton} onClick={confirmSend}>Confirm</button>
-              <button className={`${styles.modalButton} ${styles.cancel}`} onClick={() => setShowConfirm(false)}>Cancel</button>
+              <button className={styles.modalButton} onClick={confirmSend}>
+                Confirm
+              </button>
+              <button
+                className={`${styles.modalButton} ${styles.cancel}`}
+                onClick={() => setShowConfirm(false)}
+              >
+                Cancel
+              </button>
             </div>
           </div>
         )}
