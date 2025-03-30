@@ -1,9 +1,11 @@
+/* === RECEIVE MODULE – NordBalticum Ferrari Gradient Unified === */
+
 .main {
   width: 100vw;
   height: 100vh;
   min-height: calc(100vh - 160px);
   overflow: hidden;
-  background: radial-gradient(ellipse at center, #0a1835 0%, #01010d 100%);
+  background: radial-gradient(ellipse at center, #0a122a 15%, #1b2370 65%, #2b37ff 100%) !important;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -135,10 +137,22 @@
 }
 
 @keyframes fadeInOut {
-  0% { opacity: 0; transform: translate(-50%, 8px) scale(0.95); }
-  10% { opacity: 1; transform: translate(-50%, 0px) scale(1); }
-  90% { opacity: 1; transform: translate(-50%, 0px) scale(1); }
-  100% { opacity: 0; transform: translate(-50%, -8px) scale(0.95); }
+  0% {
+    opacity: 0;
+    transform: translate(-50%, 8px) scale(0.95);
+  }
+  10% {
+    opacity: 1;
+    transform: translate(-50%, 0px) scale(1);
+  }
+  90% {
+    opacity: 1;
+    transform: translate(-50%, 0px) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -8px) scale(0.95);
+  }
 }
 
 .loading {
