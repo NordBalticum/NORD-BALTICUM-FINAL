@@ -190,4 +190,9 @@
   .transactionLink {
     font-size: 0.85rem;
   }
+
+  /* === Pakeliam TRANSACTION HISTORY per 5% TIK MOBILE === */
+  .title {
+    margin-top: -5vh;
+  }
 }
