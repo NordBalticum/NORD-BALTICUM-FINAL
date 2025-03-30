@@ -11,6 +11,42 @@
   z-index: 2;
 }
 
+/* === Arrow Buttons (Mobile only) === */
+.arrows {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 340px;
+  margin-bottom: 12px;
+  gap: 24px;
+}
+
+.arrowBtn {
+  flex: 1;
+  font-size: 20px;
+  font-weight: bold;
+  background: transparent;
+  border: 2px solid white;
+  color: white;
+  padding: 8px 0;
+  border-radius: 12px;
+  cursor: pointer;
+  font-family: var(--font-crypto);
+  transition: all 0.3s ease;
+}
+
+.arrowBtn:hover {
+  background: white;
+  color: black;
+}
+
+/* Tik mobiliems */
+@media screen and (min-width: 1025px) {
+  .arrows {
+    display: none;
+  }
+}
+
 /* === Desktop Grid === */
 .staticWrapper {
   display: flex;
