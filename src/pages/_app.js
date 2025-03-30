@@ -6,6 +6,7 @@ import "@/styles/theme.css";
 
 import { MagicLinkProvider } from "@/contexts/MagicLinkContext";
 import { WalletProvider } from "@/contexts/WalletContext";
+import { BalanceProvider } from "@/contexts/BalanceContext";
 
 import Layout from "@/components/Layout";
 
@@ -14,9 +15,11 @@ export default function App({ Component, pageProps }) {
     <React.StrictMode>
       <MagicLinkProvider>
         <WalletProvider>
-          <Layout>
-            <Component {...pageProps} />
-          </Layout>
+          <BalanceProvider>
+            <Layout>
+              <Component {...pageProps} />
+            </Layout>
+          </BalanceProvider>
         </WalletProvider>
       </MagicLinkProvider>
     </React.StrictMode>
