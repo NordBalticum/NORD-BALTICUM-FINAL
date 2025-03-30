@@ -1,4 +1,4 @@
-/* === DASHBOARD MODULE – NordBalticum Web3 Ferrari Gradient Unified === */
+/* === DASHBOARD MODULE – NordBalticum Web3 Ferrari Gradient Unified FINAL === */
 
 .container {
   position: fixed;
@@ -7,6 +7,8 @@
   width: 100vw;
   height: 100vh;
   transform: translate(-50%, -50%);
+  background: inherit;
+  background-color: transparent;
   user-select: none;
   scroll-behavior: smooth;
   -webkit-font-smoothing: antialiased;
@@ -34,6 +36,7 @@
   justify-content: center;
   animation: fadeInDown 0.8s ease;
 }
+
 .avatarCenter img {
   width: 92px;
   height: 92px;
@@ -63,12 +66,14 @@
   text-align: center;
   animation: fadeInDown 0.7s ease-in-out;
 }
+
 .totalLabel {
   font-size: 0.9rem;
   font-weight: 500;
   opacity: 0.7;
   letter-spacing: 1px;
 }
+
 .totalValue {
   font-size: clamp(28px, 5vw, 38px);
   font-weight: 800;
@@ -87,6 +92,7 @@
   gap: 18px;
   animation: fadeInUp 0.7s ease;
 }
+
 .assetItem {
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -100,15 +106,18 @@
   box-shadow: 0 0 24px rgba(0, 0, 0, 0.1);
   cursor: pointer;
 }
+
 .assetItem:hover {
   transform: scale(1.02);
   box-shadow: 0 0 32px rgba(0, 255, 200, 0.2);
 }
+
 .assetLeft {
   display: flex;
   align-items: center;
   gap: 16px;
 }
+
 .assetLogo {
   width: 40px;
   height: 40px;
@@ -118,29 +127,35 @@
   object-fit: contain;
   box-shadow: 0 0 6px rgba(255, 255, 255, 0.25);
 }
+
 .assetInfo {
   display: flex;
   flex-direction: column;
   line-height: 1.1;
 }
+
 .assetSymbol {
   font-weight: 700;
   font-size: 1.05rem;
 }
+
 .assetName {
   font-size: 0.85rem;
   opacity: 0.65;
 }
+
 .assetRight {
   text-align: right;
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
+
 .assetAmount {
   font-weight: 600;
   font-size: 1rem;
 }
+
 .assetEur {
   font-size: 0.82rem;
   opacity: 0.6;
@@ -151,10 +166,12 @@
   from { opacity: 0; transform: translateY(-24px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
 @keyframes fadeInUp {
   from { opacity: 0; transform: translateY(24px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
 @keyframes pulseGlow {
   0% { text-shadow: 0 0 8px rgba(255, 255, 255, 0.15); }
   50% { text-shadow: 0 0 18px rgba(255, 255, 255, 0.4); }
