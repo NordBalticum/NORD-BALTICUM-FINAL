@@ -63,6 +63,7 @@
   margin-top: clamp(12px, 3vw, 24px);
   transition: transform 0.2s ease;
   cursor: pointer;
+  position: relative;
 }
 
 .qrContainer:hover {
@@ -86,6 +87,7 @@
   color: white;
   cursor: pointer;
   transition: all 0.3s ease;
+  position: relative;
 }
 
 .infoBox:hover {
@@ -119,12 +121,49 @@
   font-family: var(--font-crypto);
 }
 
-/* MEDIA QUERY – MOBILE LOVE */
+.copied {
+  position: absolute;
+  top: -36px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #ffd700;
+  background: rgba(255, 255, 255, 0.07);
+  padding: 6px 14px;
+  border-radius: 12px;
+  backdrop-filter: blur(12px);
+  animation: fadeInOut 2s ease forwards;
+  z-index: 10;
+  box-shadow: 0 0 14px rgba(255, 215, 0, 0.4);
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+@keyframes fadeInOut {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, 8px) scale(0.95);
+  }
+  10% {
+    opacity: 1;
+    transform: translate(-50%, 0px) scale(1);
+  }
+  90% {
+    opacity: 1;
+    transform: translate(-50%, 0px) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -8px) scale(0.95);
+  }
+}
+
+/* === MOBILE === */
 @media screen and (max-width: 768px) {
   .globalContainer {
     width: calc(100vw - 40px);
     height: auto;
     padding: 24px 16px;
+    top: 40%;
   }
 
   .wrapper {
