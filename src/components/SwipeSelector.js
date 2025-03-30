@@ -38,7 +38,7 @@ export default function SwipeSelector({ mode = "send", onSelect }) {
   const [selectedSymbol, setSelectedSymbol] = useState(supportedNetworks[0].symbol);
 
   useEffect(() => {
-    if (containerRef.current) {
+    if (window.innerWidth <= 1024 && containerRef.current) {
       containerRef.current.scrollTo({ left: 0, behavior: "smooth" });
     }
   }, []);
@@ -52,7 +52,7 @@ export default function SwipeSelector({ mode = "send", onSelect }) {
     const cards = containerRef.current?.children;
     const selectedCard = cards?.[index];
 
-    if (selectedCard && containerRef.current) {
+    if (selectedCard && containerRef.current && window.innerWidth <= 1024) {
       const offset =
         selectedCard.offsetLeft -
         containerRef.current.offsetWidth / 2 +
@@ -62,9 +62,14 @@ export default function SwipeSelector({ mode = "send", onSelect }) {
     }
   };
 
+  const isMobile = typeof window !== "undefined" && window.innerWidth <= 1024;
+
   return (
     <div className={styles.selectorContainer}>
-      <div className={styles.swipeWrapper} ref={containerRef}>
+      <div
+        className={`${styles.swipeWrapper} ${isMobile ? styles.scrollableWrapper : styles.staticWrapper}`}
+        ref={containerRef}
+      >
         {supportedNetworks.map((net, index) => (
           <motion.div
             key={net.symbol}
