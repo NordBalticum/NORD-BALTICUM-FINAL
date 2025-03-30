@@ -166,6 +166,7 @@
 @media (max-width: 768px) {
   .container {
     padding: 0;
+    transform: translate(-50%, -52%); /* Pakeltas per 5% */
   }
 
   .box {
