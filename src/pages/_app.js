@@ -1,8 +1,8 @@
 "use client";
 
 import React from "react";
-import "@/styles/globals.css";
 import "@/styles/theme.css";
+import "@/styles/globals.css";
 
 import { MagicLinkProvider } from "@/contexts/MagicLinkContext";
 import { WalletProvider } from "@/contexts/WalletContext";
