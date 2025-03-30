@@ -4,41 +4,42 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMagicLink } from "@/contexts/MagicLinkContext";
 import { useWallet } from "@/contexts/WalletContext";
-import StarsBackground from "@/components/StarsBackground";
-import SwipeSelector from "@/components/SwipeSelector";
+import { getWalletBalance } from "@/lib/ethers";
 import QRCode from "react-qr-code";
 import Image from "next/image";
 
+import StarsBackground from "@/components/StarsBackground";
 import styles from "@/styles/receive.module.css";
 
 export default function Receive2() {
   const router = useRouter();
   const { user } = useMagicLink();
   const { wallet } = useWallet();
-  const [selected, setSelected] = useState(0);
+
+  const [balanceEUR, setBalanceEUR] = useState("0.00");
 
   useEffect(() => {
     if (!user || !wallet?.address) router.push("/");
   }, [user, wallet]);
 
-  const supportedNetworks = [
-    { name: "BNB Chain", symbol: "bnb", key: "bsc" },
-    { name: "BNB Testnet", symbol: "tbnb", key: "bsctest" },
-    { name: "Ethereum", symbol: "eth", key: "eth" },
-    { name: "Polygon", symbol: "pol", key: "polygon" },
-    { name: "Avalanche", symbol: "avax", key: "avax" },
-  ];
+  useEffect(() => {
+    if (wallet?.address && wallet?.addresses?.eth) {
+      getWalletBalance(wallet.address, "eth").then((res) => {
+        const fakeEur = parseFloat(res.formatted || "0") * 2400;
+        setBalanceEUR(fakeEur.toFixed(2));
+      });
+    }
+  }, [wallet]);
 
-  if (!user || !wallet?.address) {
-    return <div className={styles.loading}>Loading Wallet...</div>;
-  }
-
-  const selectedNet = supportedNetworks[selected];
-  const address = wallet.addresses?.[selectedNet.key];
+  const address = wallet?.addresses?.eth;
 
   const copyAddress = () => {
     if (address) navigator.clipboard.writeText(address);
   };
+
+  if (!user || !wallet?.address) {
+    return <div className={styles.loading}>Loading Wallet...</div>;
+  }
 
   return (
     <main className={styles.main}>
@@ -46,34 +47,36 @@ export default function Receive2() {
 
       <div className={styles.globalContainer}>
         <div className={styles.wrapper}>
-          <Image src="/icons/logo.svg" width={60} height={60} alt="Logo" className={styles.logoTop} />
-
-          <h1 className={styles.title}>RECEIVE</h1>
-          <p className={styles.subtext}>
-            Choose your network to get your address
-          </p>
-
-          <SwipeSelector
-            mode="receive"
-            onSelect={(symbol) => {
-              const index = supportedNetworks.findIndex(
-                (n) => n.symbol.toLowerCase() === symbol.toLowerCase()
-              );
-              if (index !== -1) setSelected(index);
-            }}
+          <Image
+            src="/icons/logo.svg"
+            width={64}
+            height={64}
+            alt="Logo"
+            className={styles.logoTop}
           />
 
-          <div className={styles.qrContainer}>
+          <h1 className={styles.title}>RECEIVE</h1>
+          <p className={styles.subtext}>Your Ethereum receiving address</p>
+
+          <div className={styles.qrContainer} onClick={copyAddress}>
             <QRCode
               value={address || ""}
               size={180}
               bgColor="transparent"
               fgColor="#ffffff"
             />
-            <div className={styles.address}>{address}</div>
-            <button className={styles.copyButton} onClick={copyAddress}>
-              COPY ADDRESS
-            </button>
+          </div>
+
+          <div className={styles.infoBoxes}>
+            <div className={styles.infoBox}>
+              <div className={styles.label}>Total Balance (est)</div>
+              <div className={styles.value}>€ {balanceEUR}</div>
+            </div>
+
+            <div className={styles.infoBox} onClick={copyAddress}>
+              <div className={styles.label}>Wallet Address</div>
+              <div className={styles.value}>{address}</div>
+            </div>
           </div>
         </div>
       </div>
