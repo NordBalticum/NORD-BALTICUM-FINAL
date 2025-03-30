@@ -16,12 +16,12 @@
   overflow-x: auto;
   scroll-snap-type: x mandatory;
   -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
   gap: clamp(16px, 3vw, 32px);
   align-items: stretch;
   padding-block: clamp(12px, 2.5vw, 20px);
   scrollbar-width: none;
   min-width: max-content;
-  scroll-behavior: smooth;
 }
 
 .swipeWrapper::-webkit-scrollbar {
@@ -71,4 +71,30 @@
   border: 2px solid #ffd700;
   background: rgba(255, 255, 255, 0.06);
   transform: scale(1.05);
+}
+
+/* === MOBILE UI UPGRADE === */
+@media screen and (max-width: 768px) {
+  .swipeWrapper {
+    padding-inline: 16px;
+    gap: 20px;
+    justify-content: flex-start;
+  }
+
+  .card {
+    width: 140px;
+    height: 160px;
+    padding: 16px;
+    border-radius: 20px;
+  }
+
+  .logo {
+    width: 56px;
+    height: 56px;
+    margin-bottom: 10px;
+  }
+
+  .name {
+    font-size: 14px;
+  }
 }
