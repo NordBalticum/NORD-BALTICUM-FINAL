@@ -162,8 +162,12 @@
   padding-bottom: 12px;
 }
 
-/* === FULLY RESPONSIVE SCALING === */
-@media screen and (max-width: 480px) {
+/* === MOBILE ADJUSTMENTS – Push down 15% === */
+@media screen and (max-width: 768px) {
+  .main {
+    transform: translateY(15%);
+  }
+
   .wrapper {
     padding: 16px;
     gap: 24px;
