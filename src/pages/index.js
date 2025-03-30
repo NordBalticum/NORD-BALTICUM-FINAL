@@ -3,7 +3,9 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+
 import styles from "@/styles/index.module.css";
+import background from "@/styles/background.module.css";
 import StarsBackground from "@/components/StarsBackground";
 import { useMagicLink } from "@/contexts/MagicLinkContext";
 
@@ -14,9 +16,9 @@ export default function Home() {
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState("idle");
   const [message, setMessage] = useState("");
+
   const logoRef = useRef(null);
 
-  // Tilt effect
   useEffect(() => {
     const logo = logoRef.current;
     if (!logo) return;
@@ -44,19 +46,18 @@ export default function Home() {
     };
   }, []);
 
-  // Redirect if already logged in
   useEffect(() => {
     if (!loadingUser && user) {
       router.push("/dashboard");
     }
   }, [user, loadingUser, router]);
 
-  // Magic link email login
   const handleEmailLogin = async (e) => {
     e.preventDefault();
     if (!email.trim()) return setMessage("❌ Please enter a valid email.");
     setStatus("sending");
     setMessage("⏳ Sending Magic Link...");
+
     try {
       await signInWithEmail(email.trim());
       setMessage("✅ Check your inbox for the Magic Link.");
@@ -69,10 +70,10 @@ export default function Home() {
     }
   };
 
-  // Google OAuth login
   const handleGoogleLogin = async () => {
     setStatus("sending");
     setMessage("⏳ Logging in with Google...");
+
     try {
       await signInWithGoogle();
     } catch (err) {
@@ -86,7 +87,7 @@ export default function Home() {
   return (
     <>
       <StarsBackground />
-      <main className={styles.container}>
+      <main className={`${styles.container} ${background.gradient}`}>
         <div className={styles.centerWrapper}>
           <div className={styles.logoContainer}>
             <Image
