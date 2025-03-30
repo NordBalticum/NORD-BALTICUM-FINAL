@@ -1,7 +1,3 @@
-/* === INDEX PAGE – NordBalticum Web3 Login (999999x Final Perfection Diamond Tilt Pulse) === */
-
-/* =============================== */
-/* ✅ CONTAINER – Ultra Balanced Centering */
 .container {
   position: fixed;
   top: 50%;
@@ -9,41 +5,27 @@
   width: 100vw;
   height: 100vh;
   transform: translate(-50%, -50%);
-  background: var(--bg-gradient);
   display: flex;
   justify-content: center;
   align-items: center;
+  background: var(--bg-gradient);
   padding-inline: clamp(16px, 4vw, 64px);
   box-sizing: border-box;
-  user-select: none;
-  scroll-behavior: smooth;
-  -webkit-font-smoothing: antialiased;
-  touch-action: manipulation;
-  transition: var(--transition);
-  margin: 0;
   z-index: 1;
   overflow: visible;
 }
 
-/* =============================== */
-/* ✅ CENTER WRAPPER – lifted 5% up */
 .centerWrapper {
   width: 100%;
   max-width: 100vw;
-  padding-inline: clamp(16px, 4vw, 64px);
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   gap: clamp(32px, 4vw, 64px);
-  box-sizing: border-box;
-  animation: fadeIn 0.6s ease-in-out;
-  transition: var(--transition);
   transform: translateY(-5%);
 }
 
-/* =============================== */
-/* ✅ LOGO CONTAINER – pushed 5% down + 3D tilt */
 .logoContainer {
   transform: translateY(5%);
   margin-bottom: clamp(24px, 4vh, 64px);
@@ -52,66 +34,51 @@
   align-items: center;
   animation: fadeInDown 0.6s ease-in-out, tiltGlow 6s infinite ease-in-out;
   perspective: 1000px;
-  transform-style: preserve-3d;
 }
 
-/* =============================== */
-/* ✅ LOGO IMAGE – 77% HD + glow sync */
 .logoImage {
   width: clamp(470px, 52vw, 640px);
   height: auto;
   transition: transform 0.4s ease, box-shadow 0.4s ease;
-  filter: drop-shadow(0 0 24px rgba(0, 255, 200, 0.25)) drop-shadow(0 0 48px rgba(0, 255, 200, 0.18));
-  transform-style: preserve-3d;
-  will-change: transform;
+  filter: drop-shadow(0 0 24px rgba(255, 255, 255, 0.2));
 }
 
 .logoImage:hover {
   transform: scale(1.07);
-  filter: drop-shadow(0 0 38px rgba(0, 255, 200, 0.35)) drop-shadow(0 0 72px rgba(0, 255, 200, 0.28));
+  filter: drop-shadow(0 0 38px rgba(255, 255, 255, 0.4));
 }
 
-/* =============================== */
-/* ✅ TEXTS – centered & premium */
 .title {
   font-size: clamp(2.2rem, 5vw, 2.8rem);
   font-weight: 700;
-  color: var(--primary-text);
-  margin-bottom: 0.5rem;
-  text-shadow: 0 0 6px rgba(255, 255, 255, 0.2);
+  color: white;
   text-align: center;
+  text-shadow: 0 0 6px rgba(255, 255, 255, 0.3);
 }
 
 .subtitle {
   font-size: clamp(1rem, 1.5vw, 1.25rem);
-  color: rgba(255, 255, 255, 0.65);
-  margin-bottom: 2rem;
+  color: rgba(255, 255, 255, 0.7);
   font-weight: 500;
   text-align: center;
+  margin-bottom: 2rem;
 }
 
-/* =============================== */
-/* ✅ LOGIN BOX – Diamond Neon Pulse */
 .loginBox {
   width: 100%;
-  max-width: clamp(640px, 64vw, 860px); /* ✅ PC – wide & luxury look */
-  background: var(--glass-bg);
-  backdrop-filter: var(--glass-blur);
+  max-width: clamp(640px, 64vw, 860px);
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(24px);
   border-radius: 22px;
   padding: clamp(32px, 5vw, 52px);
-  border: 2px solid rgba(0, 255, 200, 0.35);
+  border: 2px solid rgba(255, 255, 255, 0.25);
   animation: fadeIn 0.8s ease-in-out, neonPulse 3.4s infinite ease-in-out;
-  text-align: center;
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-top: clamp(-12px, -2vh, 0);
-  position: relative;
-  z-index: 2;
+  text-align: center;
 }
 
-/* =============================== */
-/* ✅ FORM */
 .form {
   width: 100%;
   display: flex;
@@ -119,13 +86,11 @@
   gap: 1.2rem;
 }
 
-/* =============================== */
-/* ✅ INPUT FIELD – adaptive size */
 .input {
   width: 100%;
   padding: 14px 18px;
   font-size: 1rem;
-  color: var(--primary-text);
+  color: white;
   background: rgba(255, 255, 255, 0.05);
   border: 2px solid rgba(255, 255, 255, 0.25);
   border-radius: 16px;
@@ -134,60 +99,53 @@
 
 .input:focus {
   outline: none;
-  border-color: var(--accent-color);
-  background: rgba(255, 255, 255, 0.09);
-  box-shadow: 0 0 12px rgba(0, 255, 200, 0.25);
+  border-color: white;
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.4);
 }
 
-/* =============================== */
-/* ✅ LOGIN BUTTON */
 .button {
   width: 100%;
   padding: 14px 22px;
   border-radius: 14px;
-  background: #000000;
-  color: var(--primary-text);
+  background: black;
+  color: white;
   font-weight: 700;
   font-size: 1rem;
-  border: 2px solid #ffffff;
+  border: 2px solid white;
   cursor: pointer;
-  text-transform: uppercase;
   transition: all 0.25s ease;
-  box-shadow: 0 0 18px rgba(255, 255, 255, 0.08);
+  text-transform: uppercase;
 }
 
 .button:hover {
-  background: var(--primary-text);
-  color: #000000;
+  background: white;
+  color: black;
   transform: scale(1.06);
-  box-shadow: 0 0 22px rgba(255, 255, 255, 0.5);
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
 }
 
-/* =============================== */
-/* ✅ GOOGLE LOGIN WITH ICON */
 .googleButton {
   margin-top: 10px;
   width: 100%;
   display: flex;
-  align-items: center;
   justify-content: center;
+  align-items: center;
   gap: 12px;
   padding: 14px 22px;
   font-weight: 700;
   font-size: 1rem;
   border-radius: 14px;
-  background: #ffffff;
-  color: #000000;
-  text-transform: uppercase;
-  border: none;
+  background: white;
+  color: black;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 0 18px rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.2);
 }
 
 .googleButton:hover {
   transform: scale(1.05);
-  box-shadow: 0 0 24px var(--white-gold);
+  box-shadow: 0 0 22px rgba(255, 255, 255, 0.6);
 }
 
 .googleLogo {
@@ -195,97 +153,72 @@
   height: 22px;
 }
 
-/* =============================== */
-/* ✅ BIOMETRIC BUTTON */
-.biometricButton {
-  margin-top: 12px;
-  background: black;
-  color: white;
-  border: 2px solid white;
-  padding: 14px;
-  border-radius: 16px;
-  font-size: 1rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  cursor: pointer;
-  transition: all 0.25s ease;
-}
-
-.biometricButton:hover {
-  transform: scale(1.05);
-  box-shadow: 0 0 18px var(--white-gold);
-}
-
-/* =============================== */
-/* ✅ DIVIDER & MESSAGE */
-.divider {
-  color: rgba(255, 255, 255, 0.5);
-  text-align: center;
-  margin: 16px 0;
-}
-
 .message {
   margin-top: 1rem;
   font-size: 0.95rem;
   font-weight: 600;
-  color: var(--accent-color);
-  text-shadow: 0 0 4px rgba(0, 255, 200, 0.3);
+  color: white;
+  text-shadow: 0 0 4px rgba(255, 255, 255, 0.4);
   animation: fadeMessage 0.5s ease-in-out;
 }
 
-/* =============================== */
-/* ✅ ANIMATIONS */
-@keyframes fadeMessage {
-  0% { transform: scale(0.92); opacity: 0; }
-  60% { transform: scale(1.02); opacity: 1; }
-  100% { transform: scale(1); }
-}
-
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(20px) scale(0.98); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 @keyframes fadeInDown {
-  from { opacity: 0; transform: translateY(-20px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeMessage {
+  0% {
+    transform: scale(0.92);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.02);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 @keyframes neonPulse {
-  0% {
-    box-shadow: 0 0 16px rgba(0, 255, 200, 0.25), 0 0 32px rgba(0, 255, 200, 0.12);
-    border-color: rgba(0, 255, 200, 0.35);
+  0%, 100% {
+    border-color: rgba(255, 255, 255, 0.25);
+    box-shadow: 0 0 16px rgba(255, 255, 255, 0.1);
   }
   50% {
-    box-shadow: 0 0 24px rgba(0, 255, 200, 0.45), 0 0 48px rgba(0, 255, 200, 0.2);
-    border-color: rgba(0, 255, 200, 0.5);
-  }
-  100% {
-    box-shadow: 0 0 16px rgba(0, 255, 200, 0.25), 0 0 32px rgba(0, 255, 200, 0.12);
-    border-color: rgba(0, 255, 200, 0.35);
+    border-color: rgba(255, 255, 255, 0.5);
+    box-shadow: 0 0 32px rgba(255, 255, 255, 0.2);
   }
 }
 
 @keyframes tiltGlow {
-  0% {
+  0%, 100% {
     transform: translateY(5%) rotateX(0deg) rotateY(0deg);
   }
   50% {
     transform: translateY(5%) rotateX(2deg) rotateY(2deg);
   }
-  100% {
-    transform: translateY(5%) rotateX(0deg) rotateY(0deg);
-  }
 }
 
-/* =============================== */
-/* ✅ RESPONSIVE FIX – Mobile */
 @media (max-width: 768px) {
-  .container {
-    width: 100vw;
-    height: 100vh;
-  }
-
   .centerWrapper {
     transform: scale(0.78) translateY(-4%);
     transform-origin: top center;
