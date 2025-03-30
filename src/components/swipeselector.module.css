@@ -8,7 +8,7 @@
   justify-content: center;
   padding-inline: clamp(16px, 5vw, 48px);
   padding-top: clamp(12px, 3vw, 24px);
-  overflow: visible; /* Fix: leidžia kortelėms išeiti už ribų */
+  overflow: visible;
   z-index: 2;
 }
 
@@ -21,8 +21,8 @@
   scroll-snap-type: x mandatory;
   -webkit-overflow-scrolling: touch;
   gap: clamp(16px, 3vw, 32px);
-  justify-content: flex-start;
-  align-items: center;
+  justify-content: center;
+  align-items: stretch;
   padding-block: clamp(12px, 2.5vw, 20px);
   scrollbar-width: none;
 }
@@ -35,49 +35,51 @@
 .card {
   flex: 0 0 auto;
   scroll-snap-align: center;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.07);
   border-radius: 28px;
-  backdrop-filter: blur(20px) saturate(160%);
-  box-shadow: 0 0 30px rgba(255, 255, 255, 0.08);
-  padding: clamp(20px, 2.5vw, 32px);
-  width: clamp(120px, 20vw, 220px);
+  backdrop-filter: blur(20px) saturate(180%);
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.08);
+  padding: 20px;
+  width: 160px;
+  height: 180px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
   text-align: center;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
   cursor: pointer;
-  transform: scale(1);
-  opacity: 0.95;
 }
 
 .card:hover {
-  transform: scale(1.07);
-  box-shadow: 0 0 38px rgba(255, 255, 255, 0.25);
+  transform: scale(1.06);
+  box-shadow: 0 0 30px rgba(255, 255, 255, 0.15);
 }
 
-/* === Network Logo === */
+/* === Logo Container === */
 .logo {
-  width: clamp(44px, 7vw, 72px);
-  height: clamp(44px, 7vw, 72px);
-  margin: 0 auto clamp(12px, 2vw, 20px);
-  filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.35));
+  width: 64px;
+  height: 64px;
+  margin-bottom: 14px;
   object-fit: contain;
-  transition: filter 0.3s ease;
+  filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.3));
 }
 
 /* === Network Name === */
 .name {
-  font-size: clamp(16px, 1.8vw, 20px);
+  font-size: 15px;
   color: white;
-  font-weight: 600;
   font-family: var(--font-crypto);
-  letter-spacing: 0.5px;
-  text-shadow: 0 0 4px rgba(255, 255, 255, 0.3);
+  font-weight: 600;
+  text-shadow: 0 0 2px rgba(255, 255, 255, 0.2);
+  letter-spacing: 0.4px;
 }
 
-/* === Selected Network === */
+/* === Selected Card Highlight === */
 .selected {
   border: 2px solid #ffd700;
-  box-shadow: 0 0 35px rgba(255, 215, 0, 0.6);
+  box-shadow: 0 0 22px rgba(255, 215, 0, 0.45);
   transform: scale(1.05);
-  opacity: 1;
+  background: rgba(255, 255, 255, 0.05);
 }
