@@ -1,4 +1,3 @@
-// /components/SwipeSelector.js
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
@@ -7,36 +6,16 @@ import { motion } from "framer-motion";
 import styles from "@/components/swipeselector.module.css";
 
 const supportedNetworks = [
-  {
-    name: "BNB Testnet",
-    symbol: "tbnb",
-    logo: "https://cryptologos.cc/logos/binance-coin-bnb-logo.png",
-  },
-  {
-    name: "BNB Chain",
-    symbol: "bnb",
-    logo: "https://cryptologos.cc/logos/binance-coin-bnb-logo.png",
-  },
-  {
-    name: "Ethereum",
-    symbol: "eth",
-    logo: "https://cryptologos.cc/logos/ethereum-eth-logo.png",
-  },
-  {
-    name: "Polygon",
-    symbol: "pol",
-    logo: "https://cryptologos.cc/logos/polygon-matic-logo.png",
-  },
-  {
-    name: "Avalanche",
-    symbol: "avax",
-    logo: "https://cryptologos.cc/logos/avalanche-avax-logo.png",
-  },
+  { name: "BNB Testnet", symbol: "tbnb", logo: "https://cryptologos.cc/logos/binance-coin-bnb-logo.png" },
+  { name: "BNB Chain", symbol: "bnb", logo: "https://cryptologos.cc/logos/binance-coin-bnb-logo.png" },
+  { name: "Ethereum", symbol: "eth", logo: "https://cryptologos.cc/logos/ethereum-eth-logo.png" },
+  { name: "Polygon", symbol: "pol", logo: "https://cryptologos.cc/logos/polygon-matic-logo.png" },
+  { name: "Avalanche", symbol: "avax", logo: "https://cryptologos.cc/logos/avalanche-avax-logo.png" },
 ];
 
 export default function SwipeSelector({ mode = "send", onSelect }) {
   const containerRef = useRef(null);
-  const [selectedSymbol, setSelectedSymbol] = useState(supportedNetworks[0].symbol);
+  const [selectedIndex, setSelectedIndex] = useState(2); // ETH by default
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -46,39 +25,36 @@ export default function SwipeSelector({ mode = "send", onSelect }) {
     return () => window.removeEventListener("resize", updateSize);
   }, []);
 
-  const handleScroll = (direction) => {
-    if (!containerRef.current) return;
-    const scrollAmount = 180;
-    const current = containerRef.current.scrollLeft;
-    containerRef.current.scrollTo({
-      left: direction === "left" ? current - scrollAmount : current + scrollAmount,
-      behavior: "smooth",
-    });
+  useEffect(() => {
+    if (onSelect) onSelect(supportedNetworks[selectedIndex].symbol);
+    if (isMobile && containerRef.current) {
+      const card = containerRef.current.children[selectedIndex];
+      if (card) {
+        const offset =
+          card.offsetLeft - containerRef.current.offsetWidth / 2 + card.offsetWidth / 2;
+        containerRef.current.scrollTo({ left: offset, behavior: "smooth" });
+      }
+    }
+  }, [selectedIndex, isMobile]);
+
+  const handleSelect = (index) => setSelectedIndex(index);
+
+  const goLeft = () => {
+    if (selectedIndex > 0) setSelectedIndex((prev) => prev - 1);
   };
 
-  const handleSelect = (symbol, index) => {
-    setSelectedSymbol(symbol);
-    if (typeof onSelect === "function") onSelect(symbol);
-
-    if (isMobile && containerRef.current?.children?.[index]) {
-      const card = containerRef.current.children[index];
-      const offset =
-        card.offsetLeft -
-        containerRef.current.offsetWidth / 2 +
-        card.offsetWidth / 2;
-
-      containerRef.current.scrollTo({ left: offset, behavior: "smooth" });
-    }
+  const goRight = () => {
+    if (selectedIndex < supportedNetworks.length - 1) setSelectedIndex((prev) => prev + 1);
   };
 
   return (
     <div className={styles.selectorContainer}>
-      {isMobile && (
-        <div className={styles.arrows}>
-          <button onClick={() => handleScroll("left")} className={styles.arrowBtn}>←</button>
-          <button onClick={() => handleScroll("right")} className={styles.arrowBtn}>→</button>
-        </div>
-      )}
+      {/* Arrows for Mobile Only */}
+      <div className={styles.arrows}>
+        <button className={styles.arrowBtn} onClick={goLeft}>←</button>
+        <button className={styles.arrowBtn} onClick={goRight}>→</button>
+      </div>
+
       <div
         className={isMobile ? styles.scrollableWrapper : styles.staticWrapper}
         ref={containerRef}
@@ -87,9 +63,11 @@ export default function SwipeSelector({ mode = "send", onSelect }) {
         {supportedNetworks.map((net, index) => (
           <motion.div
             key={net.symbol}
-            className={`${styles.card} ${selectedSymbol === net.symbol ? styles.selected : ""}`}
+            className={`${styles.card} ${
+              selectedIndex === index ? styles.selected : ""
+            }`}
             whileTap={{ scale: 0.96 }}
-            onClick={() => handleSelect(net.symbol, index)}
+            onClick={() => handleSelect(index)}
             role="button"
             tabIndex={0}
           >
