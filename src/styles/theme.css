@@ -1,4 +1,4 @@
-/* === THEME.CSS — NordBalticum Ferrari Ultra Final (2025+) === */
+/* === THEME.CSS — NordBalticum Ferrari Ultra Final (Unified Background) === */
 
 /* =============================== */
 /* ✅ GOOGLE FONTAS               */
@@ -9,12 +9,7 @@
 /* ✅ GLOBALUS BACKGROUND         */
 /* =============================== */
 body {
-  background: radial-gradient(
-    ellipse at center,
-    oklch(45% 0.25 250) 0%,
-    oklch(30% 0.22 270) 40%,
-    oklch(15% 0.18 280) 100%
-  );
+  background: radial-gradient(circle at center, #0a122a 15%, #1b2370 65%, #2b37ff 100%);
   background-size: cover;
   background-repeat: no-repeat;
   background-position: center;
@@ -61,7 +56,6 @@ h1, h2, h3, h4, h5, h6, p, span, label {
   box-shadow: 0 0 24px var(--white-gold);
 }
 
-/* ✅ Glow Pulse efektas */
 .buttonBase::after {
   content: '';
   position: absolute;
@@ -111,6 +105,7 @@ input:focus, textarea:focus {
   filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.2));
   transition: transform 0.4s ease, filter 0.4s ease;
 }
+
 .logoImage:hover {
   transform: scale(1.06);
   filter: drop-shadow(0 0 32px rgba(255, 255, 255, 0.4));
@@ -130,40 +125,40 @@ input:focus, textarea:focus {
   animation: moveGradient 6s ease infinite;
 }
 
+/* =============================== */
+/* ✅ ANIMACIJOS                  */
+/* =============================== */
 @keyframes moveGradient {
   0%   { background-position: 0% 50%; }
   50%  { background-position: 100% 50%; }
   100% { background-position: 0% 50%; }
 }
 
-/* =============================== */
-/* ✅ ANIMACIJOS                  */
-/* =============================== */
 @keyframes pulseGlow {
   0%, 100% { transform: scale(1); opacity: 0.2; }
-  50% { transform: scale(1.1); opacity: 0.5; }
+  50%      { transform: scale(1.1); opacity: 0.5; }
 }
 
 @keyframes glowWaves {
-  0% { transform: scale(1) rotate(0deg); }
-  50% { transform: scale(1.02) rotate(180deg); }
+  0%   { transform: scale(1) rotate(0deg); }
+  50%  { transform: scale(1.02) rotate(180deg); }
   100% { transform: scale(1) rotate(360deg); }
 }
 
 @keyframes fadeMessage {
-  0% { transform: scale(0.92); opacity: 0; }
-  60% { transform: scale(1.02); opacity: 1; }
+  0%   { transform: scale(0.92); opacity: 0; }
+  60%  { transform: scale(1.02); opacity: 1; }
   100% { transform: scale(1); }
 }
 
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(20px) scale(0.98); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 @keyframes fadeInDown {
   from { opacity: 0; transform: translateY(-20px); }
-  to { opacity: 1; transform: translateY(0); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 /* =============================== */
