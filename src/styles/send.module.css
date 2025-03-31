@@ -87,35 +87,42 @@
   color: black;
 }
 
-.confirmModal {
+.overlay {
   position: fixed;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 95%;
-  max-width: 420px;
-  background: rgba(0, 0, 0, 0.85);
-  border: 2px solid rgba(255, 255, 255, 0.15);
-  border-radius: 18px;
-  padding: 24px;
-  color: white;
-  backdrop-filter: blur(18px);
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   z-index: 9999;
+  padding: 20px;
+}
+
+.confirmModal {
+  background: rgba(15, 20, 40, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 2rem;
+  border-radius: 18px;
+  box-shadow: 0 0 24px rgba(255, 255, 255, 0.1);
+  width: 100%;
+  max-width: 460px;
+  color: white;
+  text-align: left;
 }
 
 .modalTitle {
-  font-size: 1.2rem;
+  font-size: 1.3rem;
   font-weight: 700;
-  margin-bottom: 12px;
-  text-align: center;
+  margin-bottom: 1rem;
+  color: #ffd700;
   font-family: var(--font-crypto);
+  text-align: center;
 }
 
-.modalInfo {
-  font-size: 1rem;
-  opacity: 0.85;
-  margin-bottom: 18px;
-  text-align: left;
+.modalInfo p {
+  margin: 6px 0;
+  font-size: 0.95rem;
   line-height: 1.4;
   font-family: var(--font-crypto);
 }
@@ -123,27 +130,30 @@
 .modalActions {
   display: flex;
   justify-content: space-between;
-  gap: 12px;
+  margin-top: 1.5rem;
+  gap: 1rem;
 }
 
 .modalButton {
   flex: 1;
-  padding: 12px;
-  border-radius: 12px;
-  font-weight: 700;
-  text-transform: uppercase;
-  cursor: pointer;
+  background: linear-gradient(to right, #00c6ff, #0072ff);
   border: none;
-  background: white;
-  color: black;
+  padding: 10px;
+  color: white;
+  font-weight: bold;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: transform 0.2s ease, background 0.2s ease;
   font-family: var(--font-crypto);
-  transition: all 0.3s ease;
+  text-transform: uppercase;
+}
+
+.modalButton:hover {
+  transform: scale(1.05);
 }
 
 .modalButton.cancel {
-  background: transparent;
-  color: white;
-  border: 2px solid white;
+  background: linear-gradient(to right, #ff3c3c, #c71d1d);
 }
 
 .loading {
@@ -154,7 +164,6 @@
   font-family: var(--font-crypto);
 }
 
-/* === FIX SwipeSelector overflow === */
 .selectorContainer {
   width: 100%;
   max-width: 100%;
@@ -162,7 +171,7 @@
   padding-bottom: 12px;
 }
 
-/* === FULLY RESPONSIVE SCALING === */
+/* === RESPONSIVE FIXES === */
 @media screen and (max-width: 480px) {
   .wrapper {
     padding: 16px;
