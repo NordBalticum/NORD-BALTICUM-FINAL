@@ -8,16 +8,18 @@ import CryptoJS from "crypto-js";
 
 const WalletContext = createContext();
 const ENCRYPTION_KEY = "NORD-BALTICUM-2025-SECRET";
-
 const NETWORKS = ["BNB", "TBNB", "ETH", "MATIC", "AVAX"];
 
 export function WalletProvider({ children }) {
   const { user, loadingUser } = useMagicLink();
+
   const [wallet, setWallet] = useState(null);
-  const [balances, setBalances] = useState({});
   const [loadingWallet, setLoadingWallet] = useState(true);
 
-  const encrypt = (text) => CryptoJS.AES.encrypt(text, ENCRYPTION_KEY).toString();
+  // === Encryption utils ===
+  const encrypt = (text) =>
+    CryptoJS.AES.encrypt(text, ENCRYPTION_KEY).toString();
+
   const decrypt = (cipher) => {
     try {
       const bytes = CryptoJS.AES.decrypt(cipher, ENCRYPTION_KEY);
@@ -46,24 +48,7 @@ export function WalletProvider({ children }) {
     }
   };
 
-  const saveBalancesToDB = async (walletAddress, rawData) => {
-    const rows = NETWORKS.map((net) => ({
-      user_id: user.id,
-      wallet_address: walletAddress,
-      network: net,
-      amount: rawData?.[net]?.amount || "0.00000",
-      eur: rawData?.[net]?.eur || "0.00",
-    }));
-
-    try {
-      await supabase.from("balances").upsert(rows, {
-        onConflict: ["user_id", "wallet_address", "network"],
-      });
-    } catch (e) {
-      console.error("❌ Failed to upsert balances:", e.message);
-    }
-  };
-
+  // === Supabase Wallet DB logic ===
   const fetchOrCreateWallet = async () => {
     const { data, error } = await supabase
       .from("wallets")
@@ -72,7 +57,6 @@ export function WalletProvider({ children }) {
       .single();
 
     if (error && error.code !== "PGRST116") throw error;
-
     if (data?.address) return data;
 
     const newWallet = ethers.Wallet.createRandom();
@@ -91,28 +75,6 @@ export function WalletProvider({ children }) {
     return { address: newWallet.address };
   };
 
-  const loadBalances = async (walletAddress) => {
-    const { data, error } = await supabase
-      .from("balances")
-      .select("*")
-      .eq("wallet_address", walletAddress);
-
-    if (error) {
-      console.error("❌ Failed to load balances:", error.message);
-      return {};
-    }
-
-    const formatted = {};
-    data.forEach((entry) => {
-      formatted[entry.network] = {
-        amount: entry.amount || "0.00000",
-        eur: entry.eur || "0.00",
-      };
-    });
-
-    return formatted;
-  };
-
   const getNetworkList = (address) => {
     return NETWORKS.map((net) => ({
       network: net,
@@ -120,6 +82,7 @@ export function WalletProvider({ children }) {
     }));
   };
 
+  // === Initialize Wallet on load ===
   useEffect(() => {
     if (!user || loadingUser) return;
 
@@ -129,15 +92,10 @@ export function WalletProvider({ children }) {
         const walletData = await fetchOrCreateWallet();
         const address = walletData.address;
 
-        const currentBalances = await loadBalances(address);
-        await saveBalancesToDB(address, currentBalances);
-
         setWallet({
           address,
           list: getNetworkList(address),
         });
-
-        setBalances(currentBalances);
       } catch (e) {
         console.error("❌ WalletContext error:", e.message);
       } finally {
@@ -152,7 +110,6 @@ export function WalletProvider({ children }) {
     <WalletContext.Provider
       value={{
         wallet,
-        balances,
         loadingWallet,
         getPrivateKeyLocal,
       }}
