@@ -48,7 +48,8 @@ export const useBalance = () => {
 
       await Promise.all(
         wallet.list.map(async ({ network, address }) => {
-          const { formatted } = await getWalletBalance(address, network.toLowerCase());
+          const lowerNet = network.toLowerCase();
+          const { formatted } = await getWalletBalance(address, lowerNet);
           const eur = (parseFloat(formatted) * prices[network] || 0).toFixed(2);
           results[network] = {
             address,
@@ -56,14 +57,16 @@ export const useBalance = () => {
             eur,
           };
 
-          // Upsert į supabase (nebūtina – optional)
-          await supabase.from("balances").upsert([{
-            user_id: user.id,
-            wallet_address: address,
-            network,
-            amount: formatted,
-            eur,
-          }], {
+          // Supabase balansų saugojimas (optional)
+          await supabase.from("balances").upsert([
+            {
+              user_id: user.id,
+              wallet_address: address,
+              network,
+              amount: formatted,
+              eur,
+            },
+          ], {
             onConflict: ["user_id", "wallet_address", "network"],
           });
         })
@@ -85,7 +88,7 @@ export const useBalance = () => {
   useEffect(() => {
     if (wallet?.list?.length && user?.id) {
       refresh();
-      const interval = setInterval(refresh, 20000); // 20s refresh
+      const interval = setInterval(refresh, 20000);
       return () => clearInterval(interval);
     }
   }, [wallet, user]);
