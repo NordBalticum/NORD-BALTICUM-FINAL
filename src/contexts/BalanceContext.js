@@ -67,8 +67,8 @@ export const BalanceProvider = ({ children }) => {
     {
       key: "tbnb",
       name: "BNB Testnet",
-      symbol: "tBNB",
-      coingeckoId: null, // neturi eur vertės
+      symbol: "TBNB",
+      coingeckoId: null,
       rpc: [
         "https://data-seed-prebsc-1-s1.binance.org:8545/",
         "https://data-seed-prebsc-2-s1.binance.org:8545/",
@@ -98,55 +98,59 @@ export const BalanceProvider = ({ children }) => {
       .map((net) => net.coingeckoId)
       .join(",");
 
-    const url = `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=eur`;
-
     try {
-      const response = await fetch(url);
-      return await response.json();
+      const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=eur`);
+      return await res.json();
     } catch (err) {
-      console.error("Failed to fetch exchange rates:", err);
+      console.error("❌ CoinGecko fetch error:", err.message);
       return {};
     }
   };
 
   const updateBalances = async () => {
-    if (!wallet?.list || !user?.id) return;
+    if (!wallet?.address || !user?.id) return;
 
     setIsLoading(true);
-    const exchangeRates = await fetchExchangeRates();
+
+    const rates = await fetchExchangeRates();
     const newBalances = {};
     let totalEUR = 0;
 
     await Promise.all(
       networks.map(async (net) => {
-        const matchingWallet = wallet.list.find((w) => w.network === net.key);
-        if (!matchingWallet?.address) return;
+        const address = wallet.address;
+        if (!address) return;
 
-        const balance = await fetchBalance(net.rpc, matchingWallet.address);
-        const eurRate = net.coingeckoId ? exchangeRates[net.coingeckoId]?.eur || 0 : 0;
-        const eurValue = balance * eurRate;
+        const bal = await fetchBalance(net.rpc, address);
+        const eurRate = net.coingeckoId ? rates?.[net.coingeckoId]?.eur || 0 : 0;
+        const eurValue = bal * eurRate;
 
-        newBalances[net.key] = {
+        const formattedAmount = bal.toFixed(5);
+        const formattedEUR = eurValue.toFixed(2);
+
+        newBalances[net.symbol] = {
           symbol: net.symbol,
-          address: matchingWallet.address,
-          balance,
-          eur: eurValue.toFixed(2),
+          network: net.key,
+          balance: formattedAmount,
+          eur: formattedEUR,
+          address,
         };
 
         totalEUR += eurValue;
 
-        // Supabase upsert
         await supabase.from("balances").upsert(
           [
             {
               user_id: user.id,
-              wallet_address: matchingWallet.address,
+              wallet_address: address,
               network: net.key.toUpperCase(),
-              amount: balance.toFixed(6),
-              eur: eurValue.toFixed(2),
+              amount: formattedAmount,
+              eur: formattedEUR,
             },
           ],
-          { onConflict: ["user_id", "wallet_address", "network"] }
+          {
+            onConflict: ["user_id", "wallet_address", "network"],
+          }
         );
       })
     );
