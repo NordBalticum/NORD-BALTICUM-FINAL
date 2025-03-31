@@ -27,6 +27,7 @@ export default function Send() {
   const [showConfirm, setShowConfirm] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [balance, setBalance] = useState("0.00000");
 
   const selectedNet = supportedNetworks[selected];
   const calculatedFee = Number(amount || 0) * 0.03;
@@ -35,6 +36,29 @@ export default function Send() {
   useEffect(() => {
     if (!user || !wallet?.address) router.push("/");
   }, [user, wallet]);
+
+  useEffect(() => {
+    const loadBalance = async () => {
+      try {
+        const currentAddress = wallet?.list?.find(
+          (w) => w.network.toLowerCase() === selectedNet.symbol.toLowerCase()
+        )?.address || wallet?.address;
+
+        if (currentAddress) {
+          const { formatted } = await sendTransactionWithFee.getWalletBalance(
+            currentAddress,
+            selectedNet.symbol.toLowerCase()
+          );
+          setBalance(formatted);
+        }
+      } catch (err) {
+        console.warn("❌ Failed to fetch balance:", err.message);
+        setBalance("0.00000");
+      }
+    };
+
+    loadBalance();
+  }, [selected, wallet]);
 
   const handleSend = () => {
     if (!receiver || !amount || isNaN(amount)) {
@@ -110,6 +134,10 @@ export default function Send() {
             if (index !== -1) setSelected(index);
           }}
         />
+
+        <p className={styles.balanceInfo}>
+          Balance: {balance} {selectedNet.symbol}
+        </p>
 
         <div className={styles.walletActions}>
           <input
