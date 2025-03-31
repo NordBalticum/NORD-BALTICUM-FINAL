@@ -3,17 +3,17 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
+
 import { useMagicLink } from "@/contexts/MagicLinkContext";
-import { useWallet } from "@/contexts/WalletContext";
 import AvatarDisplay from "@/components/AvatarDisplay";
+
 import { FaBars, FaTimes } from "react-icons/fa";
 import styles from "@/components/sidedrawer.module.css";
 
 export default function SideDrawer() {
   const router = useRouter();
   const pathname = usePathname();
-  const { user, signOut } = useMagicLink();
-  const { wallet } = useWallet();
+  const { user, wallet, signOut } = useMagicLink();
 
   const [open, setOpen] = useState(false);
 
@@ -30,7 +30,6 @@ export default function SideDrawer() {
     }
   };
 
-  // Prevent scroll lag and improve open animation smoothness
   useEffect(() => {
     if (open) {
       document.body.style.overflow = "hidden";
@@ -47,6 +46,7 @@ export default function SideDrawer() {
     { label: "Send", path: "/send" },
     { label: "Receive", path: "/receive" },
     { label: "History", path: "/history" },
+    { label: "Settings", path: "/settings" },
   ];
 
   if (pathname === "/") return null;
@@ -85,7 +85,9 @@ export default function SideDrawer() {
           {navItems.map((item) => (
             <Link key={item.path} href={item.path} legacyBehavior>
               <a
-                className={`${styles.link} ${pathname === item.path ? styles.active : ""}`}
+                className={`${styles.link} ${
+                  pathname === item.path ? styles.active : ""
+                }`}
                 onClick={() => setOpen(false)}
               >
                 {item.label}
