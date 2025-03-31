@@ -10,11 +10,12 @@ const ENCRYPTION_KEY = "NORD-BALTICUM-2025-SECRET";
 
 export function MagicLinkProvider({ children }) {
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
   const [wallet, setWallet] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  // === AES šifravimas ===
+  // === AES šifravimas / dešifravimas ===
   const encrypt = (text) => CryptoJS.AES.encrypt(text, ENCRYPTION_KEY).toString();
+
   const decrypt = (cipher) => {
     try {
       const bytes = CryptoJS.AES.decrypt(cipher, ENCRYPTION_KEY);
@@ -61,8 +62,17 @@ export function MagicLinkProvider({ children }) {
 
     if (error && error.code !== "PGRST116") throw error;
 
-    if (data?.address) return data.address;
+    if (data?.address) {
+      // Jei adresas jau yra, bet neturim localStorage private key – sukurti naują
+      if (!getPrivateKey()) {
+        console.warn("⚠️ Missing local private key. Generating new...");
+        const newWallet = ethers.Wallet.createRandom();
+        storePrivateKey(newWallet.privateKey);
+      }
+      return data.address;
+    }
 
+    // Sukuria naują piniginę
     const newWallet = ethers.Wallet.createRandom();
     storePrivateKey(newWallet.privateKey);
 
@@ -79,35 +89,45 @@ export function MagicLinkProvider({ children }) {
     return newWallet.address;
   };
 
-  // === Sesijos ir auth listeneris ===
+  // === Sesijos ir piniginės init ===
   useEffect(() => {
-    const initSession = async () => {
+    const init = async () => {
       setLoading(true);
 
-      const {
-        data: { user },
-        error,
-      } = await supabase.auth.getUser();
-
+      const { data, error } = await supabase.auth.getUser();
       if (error) console.warn("❌ Error fetching user:", error.message);
 
-      setUser(user || null);
-      setLoading(false);
+      const fetchedUser = data?.user || null;
+      setUser(fetchedUser);
 
-      if (user?.id) {
-        const addr = await getOrCreateWallet(user.id);
-        setWallet({ address: addr });
+      if (fetchedUser?.id) {
+        try {
+          const address = await getOrCreateWallet(fetchedUser.id);
+          setWallet({ address });
+        } catch (e) {
+          console.error("❌ Wallet setup failed:", e.message);
+        }
       }
+
+      setLoading(false);
     };
 
-    initSession();
+    init();
 
     const { data: listener } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
-        setUser(session?.user || null);
-        if (session?.user?.id) {
-          const addr = await getOrCreateWallet(session.user.id);
-          setWallet({ address: addr });
+        const loggedUser = session?.user || null;
+        setUser(loggedUser);
+
+        if (loggedUser?.id) {
+          try {
+            const address = await getOrCreateWallet(loggedUser.id);
+            setWallet({ address });
+          } catch (e) {
+            console.error("❌ Wallet reload failed:", e.message);
+          }
+        } else {
+          setWallet(null);
         }
       }
     );
