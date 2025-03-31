@@ -17,35 +17,35 @@ import { useBalance } from "@/contexts/BalanceContext";
 
 const networksData = [
   {
-    key: "bsc",
+    key: "BNB",
     name: "BNB Smart Chain",
     symbol: "BNB",
     logo: "https://cryptologos.cc/logos/bnb-bnb-logo.png",
     route: "/bnb",
   },
   {
-    key: "tbnb",
+    key: "TBNB",
     name: "BSC Testnet",
     symbol: "TBNB",
     logo: "https://cryptologos.cc/logos/binance-coin-bnb-logo.png",
     route: "/tbnb",
   },
   {
-    key: "ethereum",
+    key: "ETH",
     name: "Ethereum",
     symbol: "ETH",
     logo: "https://cryptologos.cc/logos/ethereum-eth-logo.png",
     route: "/eth",
   },
   {
-    key: "polygon",
+    key: "MATIC",
     name: "Polygon",
     symbol: "POL",
     logo: "https://cryptologos.cc/logos/polygon-matic-logo.png",
     route: "/pol",
   },
   {
-    key: "avalanche",
+    key: "AVAX",
     name: "Avalanche",
     symbol: "AVAX",
     logo: "https://cryptologos.cc/logos/avalanche-avax-logo.png",
@@ -69,11 +69,15 @@ export default function Dashboard() {
   }, [user, wallet]);
 
   useEffect(() => {
-    const total = Object.values(balances || {}).reduce((sum, b) => {
-      const eur = parseFloat(b?.eur || 0);
-      return sum + (isNaN(eur) ? 0 : eur);
-    }, 0);
-    setTotalEUR(total.toFixed(2));
+    if (balances?.totalEUR) {
+      setTotalEUR(balances.totalEUR);
+    } else {
+      const total = Object.values(balances || {}).reduce((sum, b) => {
+        const eur = parseFloat(b?.eur || 0);
+        return sum + (isNaN(eur) ? 0 : eur);
+      }, 0);
+      setTotalEUR(total.toFixed(2));
+    }
   }, [balances]);
 
   return (
@@ -95,7 +99,7 @@ export default function Dashboard() {
         <div className={styles.assetList}>
           {networks.map((net) => {
             const bal = balances?.[net.key] || {
-              balance: 0,
+              balance: "0.00000",
               eur: "0.00",
             };
 
