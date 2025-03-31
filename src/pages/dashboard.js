@@ -13,7 +13,8 @@ import AvatarDisplay from "@/components/AvatarDisplay";
 
 import { useMagicLink } from "@/contexts/MagicLinkContext";
 import { useWallet } from "@/contexts/WalletContext";
-import { useBalance } from "@/contexts/BalanceContext";
+import { getWalletBalance } from "@/lib/ethers";
+import { fetchPrices } from "@/utils/fetchPrices"; // naudok jei turi, jei ne – įmesim atskirai
 
 const networksData = [
   {
@@ -40,7 +41,7 @@ const networksData = [
   {
     key: "MATIC",
     name: "Polygon",
-    symbol: "POL",
+    symbol: "MATIC",
     logo: "https://cryptologos.cc/logos/polygon-matic-logo.png",
     route: "/pol",
   },
@@ -55,30 +56,55 @@ const networksData = [
 
 export default function Dashboard() {
   const router = useRouter();
-  const { user, loadingUser } = useMagicLink();
+  const { user } = useMagicLink();
   const { wallet } = useWallet();
-  const { balances, isLoading } = useBalance();
 
+  const [balances, setBalances] = useState({});
   const [totalEUR, setTotalEUR] = useState("0.00");
+
   const networks = useMemo(() => networksData, []);
 
   useEffect(() => {
-    if (!user || !wallet?.address) {
-      router.push("/");
-    }
+    if (!user || !wallet?.address) router.push("/");
   }, [user, wallet]);
 
   useEffect(() => {
-    if (balances?.totalEUR) {
-      setTotalEUR(balances.totalEUR);
-    } else {
-      const total = Object.values(balances || {}).reduce((sum, b) => {
-        const eur = parseFloat(b?.eur || 0);
-        return sum + (isNaN(eur) ? 0 : eur);
-      }, 0);
+    const load = async () => {
+      if (!wallet?.address) return;
+
+      const prices = await fetchPrices(); // eur kainos
+      const updated = {};
+      let total = 0;
+
+      await Promise.all(
+        networks.map(async (net) => {
+          try {
+            const { formatted } = await getWalletBalance(wallet.address, net.key.toLowerCase());
+            const price = prices?.[net.symbol.toLowerCase()] || 0;
+            const eur = (parseFloat(formatted) * price).toFixed(2);
+            updated[net.key] = {
+              balance: formatted,
+              eur,
+            };
+            total += parseFloat(eur);
+          } catch (err) {
+            console.warn(`❌ ${net.symbol} balance failed`, err.message);
+            updated[net.key] = {
+              balance: "0.00000",
+              eur: "0.00",
+            };
+          }
+        })
+      );
+
+      setBalances(updated);
       setTotalEUR(total.toFixed(2));
-    }
-  }, [balances]);
+    };
+
+    load();
+    const interval = setInterval(load, 20000);
+    return () => clearInterval(interval);
+  }, [wallet]);
 
   return (
     <main className={`${styles.container} ${background.gradient}`}>
