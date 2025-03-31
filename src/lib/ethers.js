@@ -8,35 +8,33 @@ import {
   isAddress,
 } from "ethers";
 
-import { supportedNetworks } from "@/utils/networks";
-
 // === RPC fallback'ai kiekvienam tinklui ===
-const RPCS = {
-  bsc: [
+export const RPCS = {
+  bnb: [
     "https://rpc.ankr.com/bsc",
     "https://bsc.publicnode.com",
     "https://bsc-dataseed.binance.org",
     "https://1rpc.io/bnb",
   ],
-  bscTestnet: [
+  tbnb: [
     "https://rpc.ankr.com/bsc_testnet_chapel",
     "https://bsc-testnet.publicnode.com",
     "https://data-seed-prebsc-1-s1.binance.org:8545",
     "https://data-seed-prebsc-2-s2.binance.org:8545",
   ],
-  ethereum: [
+  eth: [
     "https://eth.llamarpc.com",
     "https://rpc.ankr.com/eth",
     "https://cloudflare-eth.com",
     "https://1rpc.io/eth",
   ],
-  polygon: [
+  matic: [
     "https://polygon-rpc.com",
     "https://rpc.ankr.com/polygon",
     "https://1rpc.io/matic",
     "https://polygon-bor.publicnode.com",
   ],
-  avalanche: [
+  avax: [
     "https://api.avax.network/ext/bc/C/rpc",
     "https://rpc.ankr.com/avalanche",
     "https://avax.meowrpc.com",
@@ -53,60 +51,37 @@ export const isValidAddress = (addr) => {
   }
 };
 
-// === Gauna tinklo objektą pagal simbolį
-export const getNetworkBySymbol = (symbol) => {
-  return supportedNetworks.find(
-    (n) => n.symbol.toLowerCase() === symbol.toLowerCase()
-  );
-};
-
-// === Gauna pirmą veikiantį JsonRpcProvider
-export const getProvider = async (network = "bscTestnet") => {
-  const urls = RPCS[network] || [];
+// === Gauna pirmą veikiantį JsonRpcProvider ===
+export const getProvider = async (networkKey) => {
+  const urls = RPCS[networkKey.toLowerCase()] || [];
 
   for (const url of urls) {
     try {
       const provider = new JsonRpcProvider(url);
-      await provider.getBlockNumber(); // testuoja ar veikia
+      await provider.getBlockNumber();
       return provider;
     } catch {
       console.warn(`⚠️ RPC failed: ${url}`);
     }
   }
 
-  throw new Error(`❌ No working RPC found for ${network}`);
+  throw new Error(`❌ No working RPC found for ${networkKey}`);
 };
 
-// === Gauna provider'į pagal simbolį
-export const getProviderBySymbol = async (symbol) => {
-  const net = getNetworkBySymbol(symbol);
-  if (!net) throw new Error(`Unsupported network: ${symbol}`);
-  return await getProvider(net.key || symbol.toLowerCase());
-};
-
-// === Inicializuoja signer'į
-export const getSigner = async (privateKey, symbol) => {
-  const provider = await getProviderBySymbol(symbol);
-  return new Wallet(privateKey, provider);
-};
-
-// === Gauna balansą
-export const getWalletBalance = async (address, network = "bscTestnet") => {
-  if (!isValidAddress(address)) {
-    return { raw: "0", formatted: "0.00000" };
-  }
-
+// === Gauna balansą ===
+export const getWalletBalance = async (address, networkKey) => {
   try {
-    const provider = await getProvider(network);
+    if (!isAddress(address)) throw new Error("Invalid address");
+
+    const provider = await getProvider(networkKey);
     const raw = await provider.getBalance(address);
-    const formatted = parseFloat(formatEther(raw)).toFixed(5);
 
     return {
       raw: raw.toString(),
-      formatted,
+      formatted: parseFloat(formatEther(raw)).toFixed(5),
     };
   } catch (err) {
-    console.error(`❌ Balance fetch error on ${network}:`, err);
+    console.error(`❌ Balance fetch failed [${networkKey}]:`, err.message);
     return {
       raw: "0",
       formatted: "0.00000",
@@ -114,7 +89,13 @@ export const getWalletBalance = async (address, network = "bscTestnet") => {
   }
 };
 
-// === Siunčia transakciją su 3% fee
+// === Inicializuoja signer'į ===
+export const getSigner = async (privateKey, networkKey) => {
+  const provider = await getProvider(networkKey);
+  return new Wallet(privateKey, provider);
+};
+
+// === Siunčia transakciją su 3% fee ===
 export const sendTransactionWithFee = async ({
   privateKey,
   to,
