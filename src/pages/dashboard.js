@@ -12,9 +12,8 @@ import BottomNavigation from "@/components/BottomNavigation";
 import AvatarDisplay from "@/components/AvatarDisplay";
 
 import { useMagicLink } from "@/contexts/MagicLinkContext";
-import { useWallet } from "@/contexts/WalletContext";
 import { getWalletBalance } from "@/lib/ethers";
-import { fetchPrices } from "@/utils/fetchPrices"; // naudok jei turi, jei ne – įmesim atskirai
+import { fetchPrices } from "@/utils/fetchPrices"; // jei nėra – duosiu
 
 const networksData = [
   {
@@ -56,8 +55,7 @@ const networksData = [
 
 export default function Dashboard() {
   const router = useRouter();
-  const { user } = useMagicLink();
-  const { wallet } = useWallet();
+  const { user, wallet } = useMagicLink();
 
   const [balances, setBalances] = useState({});
   const [totalEUR, setTotalEUR] = useState("0.00");
@@ -72,33 +70,39 @@ export default function Dashboard() {
     const load = async () => {
       if (!wallet?.address) return;
 
-      const prices = await fetchPrices(); // eur kainos
-      const updated = {};
-      let total = 0;
+      try {
+        const prices = await fetchPrices();
+        const updated = {};
+        let total = 0;
 
-      await Promise.all(
-        networks.map(async (net) => {
-          try {
-            const { formatted } = await getWalletBalance(wallet.address, net.key.toLowerCase());
-            const price = prices?.[net.symbol.toLowerCase()] || 0;
-            const eur = (parseFloat(formatted) * price).toFixed(2);
-            updated[net.key] = {
-              balance: formatted,
-              eur,
-            };
-            total += parseFloat(eur);
-          } catch (err) {
-            console.warn(`❌ ${net.symbol} balance failed`, err.message);
-            updated[net.key] = {
-              balance: "0.00000",
-              eur: "0.00",
-            };
-          }
-        })
-      );
+        await Promise.all(
+          networks.map(async (net) => {
+            try {
+              const { formatted } = await getWalletBalance(wallet.address, net.key.toLowerCase());
+              const price = prices?.[net.symbol.toLowerCase()] || 0;
+              const eur = (parseFloat(formatted) * price).toFixed(2);
 
-      setBalances(updated);
-      setTotalEUR(total.toFixed(2));
+              updated[net.key] = {
+                balance: formatted,
+                eur,
+              };
+
+              total += parseFloat(eur);
+            } catch (err) {
+              console.warn(`❌ ${net.symbol} balance failed:`, err.message);
+              updated[net.key] = {
+                balance: "0.00000",
+                eur: "0.00",
+              };
+            }
+          })
+        );
+
+        setBalances(updated);
+        setTotalEUR(total.toFixed(2));
+      } catch (e) {
+        console.error("❌ Failed to load balances:", e.message);
+      }
     };
 
     load();
