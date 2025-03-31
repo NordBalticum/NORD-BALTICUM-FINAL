@@ -42,13 +42,29 @@ const RPCS = {
   ],
 };
 
-// === Gauna pirmą gyvą RPC providerį ===
+// === Tikrina ar adresas validus ===
+export const isValidAddress = (addr) => {
+  try {
+    return isAddress(addr);
+  } catch {
+    return false;
+  }
+};
+
+// === Gauna tinklo objektą pagal simbolį
+export const getNetworkBySymbol = (symbol) => {
+  return supportedNetworks.find(
+    (n) => n.symbol.toLowerCase() === symbol.toLowerCase()
+  );
+};
+
+// === Gauna gyvą RPC Providerį iš fallback sąrašo
 export const getProvider = async (network = "bscTestnet") => {
   const urls = RPCS[network] || [];
   for (const url of urls) {
     try {
       const provider = new JsonRpcProvider(url);
-      await provider.getBlockNumber(); // Tikrina ar veikia
+      await provider.getBlockNumber(); // patikrina ar veikia
       return provider;
     } catch {
       console.warn(`⚠️ RPC failed: ${url}`);
@@ -57,32 +73,23 @@ export const getProvider = async (network = "bscTestnet") => {
   throw new Error(`❌ No working RPC found for ${network}`);
 };
 
-// === Tikrina ar adresas validus ===
-export const isValidAddress = (addr) => isAddress(addr);
-
-// === Gauna network info pagal simbolį ===
-export const getNetworkBySymbol = (symbol) => {
-  return supportedNetworks.find(
-    (n) => n.symbol.toLowerCase() === symbol.toLowerCase()
-  );
-};
-
-// === Gauna providerį pagal simbolį ===
+// === Gauna providerį pagal simbolį
 export const getProviderBySymbol = async (symbol) => {
   const net = getNetworkBySymbol(symbol);
   if (!net) throw new Error(`Unsupported network: ${symbol}`);
   return await getProvider(net.key || symbol.toLowerCase());
 };
 
-// === Inicializuoja signer su provider ===
+// === Inicializuoja signer su provideriu
 export const getSigner = async (privateKey, symbol) => {
   const provider = await getProviderBySymbol(symbol);
   return new Wallet(privateKey, provider);
 };
 
-// === Grąžina balansą su formatavimu ===
+// === Gauna balansą
 export const getWalletBalance = async (address, network = "bscTestnet") => {
   if (!isValidAddress(address)) return { raw: "0", formatted: "0.00000" };
+
   try {
     const provider = await getProvider(network);
     const raw = await provider.getBalance(address);
@@ -97,7 +104,7 @@ export const getWalletBalance = async (address, network = "bscTestnet") => {
   }
 };
 
-// === Siunčia transakciją su 3% fee ===
+// === Siunčia transakciją su 3% fee
 export const sendTransactionWithFee = async ({
   privateKey,
   to,
@@ -114,7 +121,7 @@ export const sendTransactionWithFee = async ({
 
   const weiAmount = parseEther(amount.toString());
 
-  const fee = weiAmount * BigInt(3) / BigInt(100);
+  const fee = weiAmount * 3n / 100n;
   const userAmount = weiAmount - fee;
 
   const tx1 = await signer.sendTransaction({ to, value: userAmount });
