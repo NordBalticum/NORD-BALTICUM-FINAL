@@ -4,16 +4,13 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 import { useMagicLink } from "@/contexts/MagicLinkContext";
-import { useWallet } from "@/contexts/WalletContext";
-import { useBalance } from "@/contexts/BalanceContext";
+import { sendTransactionWithFee, isValidAddress } from "@/lib/ethers";
+import { supportedNetworks } from "@/utils/networks";
+import { supabase } from "@/lib/supabase";
 
 import SwipeSelector from "@/components/SwipeSelector";
 import StarsBackground from "@/components/StarsBackground";
 import SuccessModal from "@/components/modals/SuccessModal";
-
-import { supportedNetworks } from "@/utils/networks";
-import { sendTransactionWithFee } from "@/lib/ethers";
-import { supabase } from "@/lib/supabase";
 
 import styles from "@/styles/send.module.css";
 import background from "@/styles/background.module.css";
@@ -22,9 +19,7 @@ const ADMIN_WALLET = process.env.NEXT_PUBLIC_ADMIN_WALLET;
 
 export default function Send() {
   const router = useRouter();
-  const { user } = useMagicLink();
-  const { wallet, getPrivateKeyLocal } = useWallet();
-  const { refreshBalances } = useBalance();
+  const { user, wallet, getPrivateKey } = useMagicLink();
 
   const [selected, setSelected] = useState(0);
   const [receiver, setReceiver] = useState("");
@@ -33,17 +28,21 @@ export default function Send() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    if (!user || !wallet?.list) router.push("/");
-  }, [user, wallet]);
-
   const selectedNet = supportedNetworks[selected];
   const calculatedFee = Number(amount || 0) * 0.03;
   const amountAfterFee = Number(amount || 0) - calculatedFee;
 
+  useEffect(() => {
+    if (!user || !wallet?.address) router.push("/");
+  }, [user, wallet]);
+
   const handleSend = () => {
     if (!receiver || !amount || isNaN(amount)) {
-      alert("Please enter a valid receiver address and amount.");
+      alert("Please enter a valid address and amount.");
+      return;
+    }
+    if (!isValidAddress(receiver)) {
+      alert("Invalid wallet address.");
       return;
     }
     setShowConfirm(true);
@@ -54,16 +53,8 @@ export default function Send() {
     setLoading(true);
 
     try {
-      const privateKey = getPrivateKeyLocal();
+      const privateKey = getPrivateKey();
       if (!privateKey) throw new Error("Private key not found");
-
-      const currentWallet = wallet.list.find(
-        (w) => w.network.toLowerCase() === selectedNet.symbol.toLowerCase()
-      );
-
-      if (!currentWallet || !currentWallet.address) {
-        throw new Error("Wallet address not found for selected network");
-      }
 
       const result = await sendTransactionWithFee({
         privateKey,
@@ -87,19 +78,18 @@ export default function Send() {
         },
       ]);
 
-      await refreshBalances();
       setShowSuccess(true);
       setReceiver("");
       setAmount("");
     } catch (err) {
-      console.error("❌ Transaction error:", err.message || err);
-      alert("Transaction failed. Try again later.");
+      console.error("❌ Send failed:", err.message);
+      alert("Transaction failed. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
-  if (!user || !wallet?.list) {
+  if (!user || !wallet?.address) {
     return <div className={styles.loading}>Loading Wallet...</div>;
   }
 
