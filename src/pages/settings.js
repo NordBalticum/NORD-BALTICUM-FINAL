@@ -3,7 +3,6 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMagicLink } from "@/contexts/MagicLinkContext";
-import { useWallet } from "@/contexts/WalletContext";
 
 import StarsBackground from "@/components/StarsBackground";
 import AvatarModalPicker from "@/components/AvatarModalPicker";
@@ -16,8 +15,7 @@ import { supabase } from "@/lib/supabase";
 
 export default function SettingsPage() {
   const router = useRouter();
-  const { user, signOut } = useMagicLink();
-  const { wallet } = useWallet();
+  const { user, wallet, signOut } = useMagicLink();
 
   const [emailInput, setEmailInput] = useState("");
   const [showAvatarModal, setShowAvatarModal] = useState(false);
@@ -27,7 +25,7 @@ export default function SettingsPage() {
   const handleChangeEmail = async () => {
     if (!emailInput) return alert("Please enter a new email.");
     const { error } = await supabase.auth.updateUser({ email: emailInput });
-    if (error) alert("Error: " + error.message);
+    if (error) alert("❌ Error: " + error.message);
     else alert("✅ Magic Link has been sent to your new email.");
   };
 
@@ -49,6 +47,10 @@ export default function SettingsPage() {
     setSuccess(true);
   };
 
+  if (!user || !wallet?.address) {
+    return <div className={styles.loading}>Loading Profile...</div>;
+  }
+
   return (
     <main className={`${styles.container} ${background.gradient}`}>
       <StarsBackground />
@@ -62,7 +64,7 @@ export default function SettingsPage() {
           title="Click to change avatar"
         >
           <AvatarDisplay
-            walletAddress={wallet?.address}
+            walletAddress={wallet.address}
             size={80}
             key={avatarKey}
           />
@@ -70,7 +72,7 @@ export default function SettingsPage() {
         </div>
 
         <p>
-          <strong>Email:</strong> {user?.email || "Unknown"}
+          <strong>Email:</strong> {user.email || "Unknown"}
         </p>
 
         <div
@@ -82,7 +84,7 @@ export default function SettingsPage() {
             <strong>Wallet Address:</strong>
           </span>
           <span className={styles.walletAddress}>
-            {wallet?.address || "Unavailable"}
+            {wallet.address}
           </span>
         </div>
 
