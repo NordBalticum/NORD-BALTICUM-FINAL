@@ -8,36 +8,47 @@ import CryptoJS from "crypto-js";
 
 const WalletContext = createContext();
 const ENCRYPTION_KEY = "NORD-BALTICUM-2025-SECRET";
-
 const NETWORKS = ["BNB", "TBNB", "ETH", "MATIC", "AVAX"];
 
 export function WalletProvider({ children }) {
   const { user, loadingUser } = useMagicLink();
+
   const [wallet, setWallet] = useState(null);
   const [balances, setBalances] = useState({});
   const [loadingWallet, setLoadingWallet] = useState(true);
 
+  // === Encryption utils ===
   const encrypt = (text) => CryptoJS.AES.encrypt(text, ENCRYPTION_KEY).toString();
   const decrypt = (cipher) => {
     try {
       const bytes = CryptoJS.AES.decrypt(cipher, ENCRYPTION_KEY);
       return bytes.toString(CryptoJS.enc.Utf8);
-    } catch {
+    } catch (err) {
+      console.warn("❌ Decryption failed.");
       return null;
     }
   };
 
   const storePrivateKeyLocal = (pk) => {
     if (!pk) return;
-    const encrypted = encrypt(pk);
-    localStorage.setItem("nbc_encrypted_key", encrypted);
+    try {
+      const encrypted = encrypt(pk);
+      localStorage.setItem("nbc_encrypted_key", encrypted);
+    } catch (e) {
+      console.error("❌ Failed to store key:", e.message);
+    }
   };
 
   const getPrivateKeyLocal = () => {
-    const cipher = localStorage.getItem("nbc_encrypted_key");
-    return cipher ? decrypt(cipher) : null;
+    try {
+      const cipher = localStorage.getItem("nbc_encrypted_key");
+      return cipher ? decrypt(cipher) : null;
+    } catch {
+      return null;
+    }
   };
 
+  // === DB upsert ===
   const saveBalancesToDB = async (walletAddress, rawData) => {
     const rows = NETWORKS.map((net) => ({
       user_id: user.id,
@@ -47,9 +58,13 @@ export function WalletProvider({ children }) {
       eur: rawData?.[net]?.eur || "0.00",
     }));
 
-    await supabase.from("balances").upsert(rows, {
-      onConflict: ["user_id", "wallet_address", "network"],
-    });
+    try {
+      await supabase.from("balances").upsert(rows, {
+        onConflict: ["user_id", "wallet_address", "network"],
+      });
+    } catch (e) {
+      console.error("❌ Failed to upsert balances:", e.message);
+    }
   };
 
   const fetchOrCreateWallet = async () => {
@@ -86,21 +101,22 @@ export function WalletProvider({ children }) {
       .eq("wallet_address", walletAddress);
 
     if (error) {
-      console.error("❌ Balance fetch failed:", error.message);
+      console.error("❌ Failed to load balances:", error.message);
       return {};
     }
 
-    const result = {};
+    const formatted = {};
     data.forEach((entry) => {
-      result[entry.network] = {
+      formatted[entry.network] = {
         amount: entry.amount || "0.00000",
         eur: entry.eur || "0.00",
       };
     });
 
-    return result;
+    return formatted;
   };
 
+  // === INIT on load ===
   useEffect(() => {
     if (!user || loadingUser) return;
 
