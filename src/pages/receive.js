@@ -2,44 +2,58 @@
 
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import QRCode from "react-qr-code";
 
 import { useMagicLink } from "@/contexts/MagicLinkContext";
-import { useWallet } from "@/contexts/WalletContext";
-import { useBalance } from "@/contexts/BalanceContext";
+import { fetchPrices } from "@/utils/fetchPrices";
+import { getWalletBalance } from "@/lib/ethers";
 
-import QRCode from "react-qr-code";
 import StarsBackground from "@/components/StarsBackground";
-
 import styles from "@/styles/receive.module.css";
 import background from "@/styles/background.module.css";
 
 export default function Receive() {
   const router = useRouter();
-  const { user } = useMagicLink();
-  const { wallet } = useWallet();
-  const { balances } = useBalance();
+  const { user, wallet } = useMagicLink();
 
   const [copied, setCopied] = useState(false);
+  const [totalEUR, setTotalEUR] = useState("0.00");
 
-  const ethWallet = wallet?.list?.find((w) => w.network.toLowerCase() === "eth");
-  const defaultWallet = wallet?.list?.[0];
-  const address = ethWallet?.address || defaultWallet?.address || wallet?.address || "";
+  const address = wallet?.address || "";
 
   useEffect(() => {
     if (!user || !address) {
       router.push("/");
+      return;
     }
+
+    const loadBalances = async () => {
+      try {
+        const prices = await fetchPrices();
+        let total = 0;
+
+        const chains = ["BNB", "TBNB", "ETH", "MATIC", "AVAX"];
+        for (const net of chains) {
+          const { formatted } = await getWalletBalance(address, net.toLowerCase());
+          const price = prices[net] || 0;
+          total += parseFloat(formatted) * price;
+        }
+
+        setTotalEUR(total.toFixed(2));
+      } catch (err) {
+        console.error("❌ Failed to load balances:", err.message);
+        setTotalEUR("0.00");
+      }
+    };
+
+    loadBalances();
   }, [user, address]);
 
   const handleCopy = () => {
     if (!address) return;
-    try {
-      navigator.clipboard.writeText(address);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch (e) {
-      console.error("❌ Copy failed:", e.message);
-    }
+    navigator.clipboard.writeText(address);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   if (!user || !address) {
@@ -56,18 +70,13 @@ export default function Receive() {
           <p className={styles.subtext}>Your MultiNetwork Receiving Address</p>
 
           <div className={styles.qrContainer} onClick={handleCopy}>
-            <QRCode
-              value={address}
-              size={180}
-              bgColor="transparent"
-              fgColor="#ffffff"
-            />
+            <QRCode value={address} size={180} bgColor="transparent" fgColor="#ffffff" />
           </div>
 
           <div className={styles.infoBoxes}>
             <div className={styles.infoBox}>
               <div className={styles.label}>Total Balance (All Networks)</div>
-              <div className={styles.value}>€ {balances?.totalEUR || "0.00"}</div>
+              <div className={styles.value}>€ {totalEUR}</div>
             </div>
 
             <div className={styles.infoBox} onClick={handleCopy}>
