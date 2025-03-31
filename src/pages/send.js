@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 
 import { useMagicLink } from "@/contexts/MagicLinkContext";
 import { useWallet } from "@/contexts/WalletContext";
+import { useBalance } from "@/contexts/BalanceContext";
 
 import SwipeSelector from "@/components/SwipeSelector";
 import StarsBackground from "@/components/StarsBackground";
@@ -22,7 +23,8 @@ const ADMIN_WALLET = process.env.NEXT_PUBLIC_ADMIN_WALLET;
 export default function Send() {
   const router = useRouter();
   const { user } = useMagicLink();
-  const { wallet } = useWallet();
+  const { wallet, getPrivateKeyLocal } = useWallet();
+  const { refreshBalances } = useBalance();
 
   const [selected, setSelected] = useState(0);
   const [receiver, setReceiver] = useState("");
@@ -32,7 +34,7 @@ export default function Send() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!user || !wallet?.address) router.push("/");
+    if (!user || !wallet?.list) router.push("/");
   }, [user, wallet]);
 
   const selectedNet = supportedNetworks[selected];
@@ -52,8 +54,19 @@ export default function Send() {
     setLoading(true);
 
     try {
+      const privateKey = getPrivateKeyLocal();
+      if (!privateKey) throw new Error("Private key not found");
+
+      const currentWallet = wallet.list.find(
+        (w) => w.network.toLowerCase() === selectedNet.symbol.toLowerCase()
+      );
+
+      if (!currentWallet || !currentWallet.address) {
+        throw new Error("Wallet address not found for selected network");
+      }
+
       const result = await sendTransactionWithFee({
-        privateKey: wallet.privateKey,
+        privateKey,
         to: receiver,
         amount,
         symbol: selectedNet.symbol,
@@ -63,7 +76,7 @@ export default function Send() {
       await supabase.from("transactions").insert([
         {
           sender_email: user.email,
-          receiver: receiver,
+          receiver,
           amount: Number(result.sent),
           fee: Number(result.fee),
           network: selectedNet.symbol,
@@ -74,18 +87,19 @@ export default function Send() {
         },
       ]);
 
+      await refreshBalances();
       setShowSuccess(true);
       setReceiver("");
       setAmount("");
     } catch (err) {
-      console.error("❌ Transaction error:", err);
+      console.error("❌ Transaction error:", err.message || err);
       alert("Transaction failed. Try again later.");
     } finally {
       setLoading(false);
     }
   };
 
-  if (!user || !wallet?.address) {
+  if (!user || !wallet?.list) {
     return <div className={styles.loading}>Loading Wallet...</div>;
   }
 
