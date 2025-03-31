@@ -2,13 +2,12 @@
 
 import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-
 import { useMagicLink } from "@/contexts/MagicLinkContext";
 import { supabase } from "@/lib/supabase";
 
+import StarsBackground from "@/components/StarsBackground";
 import styles from "@/styles/history.module.css";
 import background from "@/styles/background.module.css";
-import StarsBackground from "@/components/StarsBackground";
 
 export default function History() {
   const { user } = useMagicLink();
@@ -31,7 +30,7 @@ export default function History() {
       if (error) throw error;
       setTransactions(data);
     } catch (err) {
-      console.error("❌ Error fetching transactions:", err);
+      console.error("❌ Error fetching transactions:", err.message);
     } finally {
       setLoading(false);
     }
@@ -84,8 +83,8 @@ export default function History() {
                 <p className={styles.transactionDetail}>
                   <strong>{tx.type === "receive" ? "From:" : "To:"}</strong>{" "}
                   {tx.type === "receive"
-                    ? `${tx.sender?.slice(0, 6)}...${tx.sender?.slice(-4)}`
-                    : `${tx.receiver?.slice(0, 6)}...${tx.receiver?.slice(-4)}`}
+                    ? truncateAddress(tx.sender)
+                    : truncateAddress(tx.receiver)}
                 </p>
 
                 <p className={styles.transactionDetail}>
@@ -117,4 +116,10 @@ export default function History() {
       </div>
     </main>
   );
+}
+
+// Helper funkcija adresui trumpinti
+function truncateAddress(addr) {
+  if (!addr) return "Unknown";
+  return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
 }
