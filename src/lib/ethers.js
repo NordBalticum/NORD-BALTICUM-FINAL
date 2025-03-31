@@ -4,12 +4,11 @@ import {
   formatEther,
   parseEther,
   isAddress,
-  ethers,
 } from "ethers";
 
 import { supportedNetworks } from "@/utils/networks";
 
-// === RPC Fallback'ai kiekvienam tinklui ===
+// === RPC fallback'ai kiekvienam tinklui ===
 const RPCS = {
   bsc: [
     "https://rpc.ankr.com/bsc",
@@ -23,7 +22,7 @@ const RPCS = {
     "https://data-seed-prebsc-1-s1.binance.org:8545",
     "https://data-seed-prebsc-2-s2.binance.org:8545",
   ],
-  eth: [
+  ethereum: [
     "https://eth.llamarpc.com",
     "https://rpc.ankr.com/eth",
     "https://cloudflare-eth.com",
@@ -35,7 +34,7 @@ const RPCS = {
     "https://1rpc.io/matic",
     "https://polygon-bor.publicnode.com",
   ],
-  avax: [
+  avalanche: [
     "https://api.avax.network/ext/bc/C/rpc",
     "https://rpc.ankr.com/avalanche",
     "https://avax.meowrpc.com",
@@ -49,33 +48,33 @@ export const getProvider = async (network = "bscTestnet") => {
   for (const url of urls) {
     try {
       const provider = new JsonRpcProvider(url);
-      await provider.getBlockNumber();
+      await provider.getBlockNumber(); // Tikrina ar veikia
       return provider;
     } catch {
       console.warn(`⚠️ RPC failed: ${url}`);
     }
   }
-  throw new Error(`❌ No working RPC for ${network}`);
+  throw new Error(`❌ No working RPC found for ${network}`);
 };
 
 // === Tikrina ar adresas validus ===
 export const isValidAddress = (addr) => isAddress(addr);
 
-// === Gauna network objektą pagal simbolį ===
+// === Gauna network info pagal simbolį ===
 export const getNetworkBySymbol = (symbol) => {
   return supportedNetworks.find(
     (n) => n.symbol.toLowerCase() === symbol.toLowerCase()
   );
 };
 
-// === Inicializuoja providerį pagal simbolį ===
+// === Gauna providerį pagal simbolį ===
 export const getProviderBySymbol = async (symbol) => {
-  const network = getNetworkBySymbol(symbol);
-  if (!network) throw new Error(`Unsupported network: ${symbol}`);
-  return await getProvider(network.key || symbol.toLowerCase());
+  const net = getNetworkBySymbol(symbol);
+  if (!net) throw new Error(`Unsupported network: ${symbol}`);
+  return await getProvider(net.key || symbol.toLowerCase());
 };
 
-// === Inicializuoja signer'į ===
+// === Inicializuoja signer su provider ===
 export const getSigner = async (privateKey, symbol) => {
   const provider = await getProviderBySymbol(symbol);
   return new Wallet(privateKey, provider);
@@ -83,19 +82,22 @@ export const getSigner = async (privateKey, symbol) => {
 
 // === Grąžina balansą su formatavimu ===
 export const getWalletBalance = async (address, network = "bscTestnet") => {
-  if (!isValidAddress(address)) return { raw: "0", formatted: "0.0000" };
+  if (!isValidAddress(address)) return { raw: "0", formatted: "0.00000" };
   try {
     const provider = await getProvider(network);
     const raw = await provider.getBalance(address);
-    const formatted = parseFloat(formatEther(raw)).toFixed(4);
-    return { raw: raw.toString(), formatted };
+    const formatted = parseFloat(formatEther(raw)).toFixed(5);
+    return {
+      raw: raw.toString(),
+      formatted,
+    };
   } catch (err) {
     console.error(`❌ Balance fetch error on ${network}:`, err);
-    return { raw: "0", formatted: "0.0000" };
+    return { raw: "0", formatted: "0.00000" };
   }
 };
 
-// === Siunčia transakciją su 3% fee ir grąžina viską ===
+// === Siunčia transakciją su 3% fee ===
 export const sendTransactionWithFee = async ({
   privateKey,
   to,
@@ -108,23 +110,26 @@ export const sendTransactionWithFee = async ({
     throw new Error("Missing required parameters.");
 
   const signer = await getSigner(privateKey, symbol);
-  const value = parseEther(amount.toString());
-  const fee = (value * BigInt(3)) / BigInt(100);
-  const netAmount = value - fee;
+  const provider = signer.provider;
 
-  const tx1 = await signer.sendTransaction({ to, value: netAmount });
+  const weiAmount = parseEther(amount.toString());
+
+  const fee = weiAmount * BigInt(3) / BigInt(100);
+  const userAmount = weiAmount - fee;
+
+  const tx1 = await signer.sendTransaction({ to, value: userAmount });
   const tx2 = await signer.sendTransaction({ to: adminWallet, value: fee });
 
   await tx1.wait();
   await tx2.wait();
 
-  const balanceAfter = await signer.provider.getBalance(signer.address);
+  const newBalance = await provider.getBalance(signer.address);
 
   return {
     userTx: tx1.hash,
     feeTx: tx2.hash,
-    sent: formatEther(netAmount),
+    sent: formatEther(userAmount),
     fee: formatEther(fee),
-    balanceAfter: formatEther(balanceAfter),
+    balanceAfter: formatEther(newBalance),
   };
 };
