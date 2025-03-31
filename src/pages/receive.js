@@ -20,22 +20,29 @@ export default function Receive() {
   const { balances } = useBalance();
 
   const [copied, setCopied] = useState(false);
-  const address = wallet?.addresses?.eth || wallet?.address || "";
+
+  const ethWallet = wallet?.list?.find((w) => w.network.toLowerCase() === "eth");
+  const defaultWallet = wallet?.list?.[0];
+  const address = ethWallet?.address || defaultWallet?.address || wallet?.address || "";
 
   useEffect(() => {
-    if (!user || (!wallet?.address && !wallet?.addresses?.eth)) {
+    if (!user || !address) {
       router.push("/");
     }
-  }, [user, wallet]);
+  }, [user, address]);
 
   const handleCopy = () => {
     if (!address) return;
-    navigator.clipboard.writeText(address);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    try {
+      navigator.clipboard.writeText(address);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (e) {
+      console.error("❌ Copy failed:", e.message);
+    }
   };
 
-  if (!user || (!wallet?.address && !wallet?.addresses?.eth)) {
+  if (!user || !address) {
     return <div className={styles.loading}>Loading Wallet...</div>;
   }
 
@@ -59,7 +66,7 @@ export default function Receive() {
 
           <div className={styles.infoBoxes}>
             <div className={styles.infoBox}>
-              <div className={styles.label}>Total Balance (all networks based)</div>
+              <div className={styles.label}>Total Balance (All Networks)</div>
               <div className={styles.value}>€ {balances?.totalEUR || "0.00"}</div>
             </div>
 
