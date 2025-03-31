@@ -132,33 +132,26 @@ export default function Send() {
         </div>
 
         {showConfirm && (
-          <div className={styles.confirmModal}>
-            <div className={styles.modalTitle}>Confirm Transaction</div>
-            <div className={styles.modalInfo}>
-              <p>
-                <strong>Network:</strong> {selectedNet.name}
-              </p>
-              <p>
-                <strong>To:</strong> {receiver}
-              </p>
-              <p>
-                <strong>Amount:</strong> {amount} {selectedNet.symbol}
-              </p>
-              <p>
-                <strong>Recipient gets:</strong>{" "}
-                {amountAfterFee.toFixed(6)} {selectedNet.symbol}
-              </p>
-            </div>
-            <div className={styles.modalActions}>
-              <button className={styles.modalButton} onClick={confirmSend}>
-                Confirm
-              </button>
-              <button
-                className={`${styles.modalButton} ${styles.cancel}`}
-                onClick={() => setShowConfirm(false)}
-              >
-                Cancel
-              </button>
+          <div className={styles.overlay}>
+            <div className={styles.confirmModal}>
+              <div className={styles.modalTitle}>Confirm Transaction</div>
+              <div className={styles.modalInfo}>
+                <p><strong>Network:</strong> {selectedNet.name}</p>
+                <p><strong>To:</strong> {receiver}</p>
+                <p><strong>Amount:</strong> {amount} {selectedNet.symbol}</p>
+                <p><strong>Recipient gets:</strong> {amountAfterFee.toFixed(6)} {selectedNet.symbol}</p>
+              </div>
+              <div className={styles.modalActions}>
+                <button className={styles.modalButton} onClick={confirmSend}>
+                  Confirm
+                </button>
+                <button
+                  className={`${styles.modalButton} ${styles.cancel}`}
+                  onClick={() => setShowConfirm(false)}
+                >
+                  Cancel
+                </button>
+              </div>
             </div>
           </div>
         )}
