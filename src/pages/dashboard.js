@@ -13,33 +13,39 @@ import AvatarDisplay from "@/components/AvatarDisplay";
 
 import { useMagicLink } from "@/contexts/MagicLinkContext";
 import { useWallet } from "@/contexts/WalletContext";
+import { useBalance } from "@/contexts/BalanceContext";
 
 const networksData = [
   {
+    key: "bsc",
     name: "BNB Smart Chain",
     symbol: "BNB",
     logo: "https://cryptologos.cc/logos/bnb-bnb-logo.png",
     route: "/bnb",
   },
   {
+    key: "tbnb",
     name: "BSC Testnet",
     symbol: "TBNB",
     logo: "https://cryptologos.cc/logos/binance-coin-bnb-logo.png",
     route: "/tbnb",
   },
   {
+    key: "ethereum",
     name: "Ethereum",
     symbol: "ETH",
     logo: "https://cryptologos.cc/logos/ethereum-eth-logo.png",
     route: "/eth",
   },
   {
+    key: "polygon",
     name: "Polygon",
     symbol: "POL",
     logo: "https://cryptologos.cc/logos/polygon-matic-logo.png",
     route: "/pol",
   },
   {
+    key: "avalanche",
     name: "Avalanche",
     symbol: "AVAX",
     logo: "https://cryptologos.cc/logos/avalanche-avax-logo.png",
@@ -50,7 +56,8 @@ const networksData = [
 export default function Dashboard() {
   const router = useRouter();
   const { user, loadingUser } = useMagicLink();
-  const { wallet, balances, loadingWallet } = useWallet();
+  const { wallet } = useWallet();
+  const { balances, isLoading } = useBalance();
 
   const [totalEUR, setTotalEUR] = useState("0.00");
   const networks = useMemo(() => networksData, []);
@@ -87,14 +94,14 @@ export default function Dashboard() {
 
         <div className={styles.assetList}>
           {networks.map((net) => {
-            const bal = balances?.[net.symbol] || {
-              amount: "0.0000",
+            const bal = balances?.[net.key] || {
+              balance: 0,
               eur: "0.00",
             };
 
             return (
               <div
-                key={net.symbol}
+                key={net.key}
                 className={styles.assetItem}
                 onClick={() => router.push(net.route)}
               >
@@ -115,7 +122,7 @@ export default function Dashboard() {
 
                 <div className={styles.assetRight}>
                   <span className={styles.assetAmount}>
-                    {bal.amount} {net.symbol}
+                    {parseFloat(bal.balance || 0).toFixed(5)} {net.symbol}
                   </span>
                   <span className={styles.assetEur}>€ {bal.eur}</span>
                 </div>
