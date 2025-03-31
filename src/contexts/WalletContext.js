@@ -8,16 +8,15 @@ import CryptoJS from "crypto-js";
 
 const WalletContext = createContext();
 const ENCRYPTION_KEY = "NORD-BALTICUM-2025-SECRET";
+
 const NETWORKS = ["BNB", "TBNB", "ETH", "MATIC", "AVAX"];
 
 export function WalletProvider({ children }) {
   const { user, loadingUser } = useMagicLink();
-
   const [wallet, setWallet] = useState(null);
   const [balances, setBalances] = useState({});
   const [loadingWallet, setLoadingWallet] = useState(true);
 
-  // === Encryption utils ===
   const encrypt = (text) => CryptoJS.AES.encrypt(text, ENCRYPTION_KEY).toString();
   const decrypt = (cipher) => {
     try {
@@ -30,7 +29,6 @@ export function WalletProvider({ children }) {
   };
 
   const storePrivateKeyLocal = (pk) => {
-    if (!pk) return;
     try {
       const encrypted = encrypt(pk);
       localStorage.setItem("nbc_encrypted_key", encrypted);
@@ -48,7 +46,6 @@ export function WalletProvider({ children }) {
     }
   };
 
-  // === DB upsert ===
   const saveBalancesToDB = async (walletAddress, rawData) => {
     const rows = NETWORKS.map((net) => ({
       user_id: user.id,
@@ -116,7 +113,13 @@ export function WalletProvider({ children }) {
     return formatted;
   };
 
-  // === INIT on load ===
+  const getNetworkList = (address) => {
+    return NETWORKS.map((net) => ({
+      network: net,
+      address,
+    }));
+  };
+
   useEffect(() => {
     if (!user || loadingUser) return;
 
@@ -124,12 +127,17 @@ export function WalletProvider({ children }) {
       setLoadingWallet(true);
       try {
         const walletData = await fetchOrCreateWallet();
-        setWallet({ address: walletData.address });
+        const address = walletData.address;
 
-        const currentBalances = await loadBalances(walletData.address);
+        const currentBalances = await loadBalances(address);
+        await saveBalancesToDB(address, currentBalances);
+
+        setWallet({
+          address,
+          list: getNetworkList(address),
+        });
+
         setBalances(currentBalances);
-
-        await saveBalancesToDB(walletData.address, currentBalances);
       } catch (e) {
         console.error("❌ WalletContext error:", e.message);
       } finally {
