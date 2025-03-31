@@ -1,3 +1,4 @@
+// src/utils/fetchBalancesForAllChains.js
 import { ethers } from "ethers";
 import { supabase } from "@/lib/supabase";
 
@@ -19,31 +20,29 @@ const priceSymbols = {
   AVAX: "avalanche-2",
 };
 
-// === Gauk visų tinklų balansus vienu metu
-export async function fetchBalancesForAllChains(walletList = [], userId) {
+// === Gauk balansus iš visų adresų tiesiogiai iš RPC
+export async function fetchBalancesForAllChains(walletList = [], userId = null) {
   const prices = await fetchPrices();
   const balances = {};
 
   await Promise.all(
-    walletList.map(async (wallet) => {
+    walletList.map(async ({ network, address }) => {
+      const symbol = network?.toUpperCase();
+      const rpc = rpcURLs[symbol];
+
+      if (!symbol || !rpc || !address) return;
+
       try {
-        const symbol = wallet.network?.toUpperCase();
-        const rpc = rpcURLs[symbol];
-        const address = wallet.address;
-
-        if (!rpc || !address || !symbol) return;
-
         const provider = new ethers.providers.JsonRpcProvider(rpc);
-        const raw = await provider.getBalance(address);
-        const formatted = parseFloat(ethers.utils.formatEther(raw));
-        const eurPrice = prices[priceSymbols[symbol]] || 0;
+        const balance = await provider.getBalance(address);
+        const formatted = parseFloat(ethers.utils.formatEther(balance));
+        const eurRate = prices[priceSymbols[symbol]] || 0;
 
         const amount = formatted.toFixed(5);
-        const eur = (formatted * eurPrice).toFixed(2);
+        const eur = (formatted * eurRate).toFixed(2);
 
         balances[symbol] = { address, amount, eur };
 
-        // Supabase upsert
         if (userId) {
           await supabase.from("balances").upsert(
             [{
@@ -57,13 +56,12 @@ export async function fetchBalancesForAllChains(walletList = [], userId) {
           );
         }
       } catch (err) {
-        const fallbackSymbol = wallet.network?.toUpperCase();
-        balances[fallbackSymbol] = {
-          address: wallet.address,
+        console.warn(`⚠️ [${symbol}] balance RPC error:`, err.message);
+        balances[symbol] = {
+          address,
           amount: "0.00000",
           eur: "0.00",
         };
-        console.warn(`❌ Balance fetch failed for ${wallet.network}:`, err.message);
       }
     })
   );
@@ -71,7 +69,7 @@ export async function fetchBalancesForAllChains(walletList = [], userId) {
   return balances;
 }
 
-// === Kainos iš CoinGecko
+// === Gauk kainas iš CoinGecko
 async function fetchPrices() {
   try {
     const ids = Object.values(priceSymbols).join(",");
@@ -83,7 +81,7 @@ async function fetchPrices() {
       return acc;
     }, {});
   } catch (err) {
-    console.error("❌ CoinGecko price fetch failed:", err.message);
+    console.error("❌ CoinGecko fetch failed:", err.message);
     return {};
   }
 }
