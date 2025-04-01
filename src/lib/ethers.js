@@ -6,7 +6,7 @@ import {
   isAddress,
 } from "ethers";
 
-// === Universalūs RPC fallback'ai ===
+// === RPC fallback'ai kiekvienam tinklui ===
 const RPCS = {
   bnb: [
     "https://rpc.ankr.com/bsc",
@@ -40,7 +40,7 @@ const RPCS = {
   ],
 };
 
-// === Validacijos helperis ===
+// === Tikrina ar adresas validus ===
 export const isValidAddress = (addr) => {
   try {
     return isAddress(addr);
@@ -49,30 +49,30 @@ export const isValidAddress = (addr) => {
   }
 };
 
-// === Universalus Provider su fallback'ais ===
+// === Grąžina pirmą gyvą provider'į ===
 export const getProvider = async (networkKey) => {
   const urls = RPCS[networkKey.toLowerCase()] || [];
 
   for (const url of urls) {
     try {
       const provider = new JsonRpcProvider(url);
-      await provider.getBlockNumber();
+      await provider.getBlockNumber(); // testuoja RPC gyvybingumą
       return provider;
     } catch {
-      console.warn(`⚠️ RPC fallback failed: ${url}`);
+      console.warn(`⚠️ RPC failed: ${url}`);
     }
   }
 
-  throw new Error(`❌ No working RPC available for ${networkKey}`);
+  throw new Error(`❌ No working RPC found for ${networkKey}`);
 };
 
-// === Grąžina signer'į su provideriu ===
+// === Signer generatorius iš privateKey ===
 export const getSigner = async (privateKey, networkKey) => {
   const provider = await getProvider(networkKey);
   return new Wallet(privateKey, provider);
 };
 
-// === Balanso užklausa ir formatavimas ===
+// === Wallet balanso gavimas ===
 export const getWalletBalance = async (address, networkKey) => {
   try {
     if (!isValidAddress(address)) throw new Error("Invalid address");
@@ -85,7 +85,7 @@ export const getWalletBalance = async (address, networkKey) => {
       formatted: parseFloat(formatEther(raw)).toFixed(5),
     };
   } catch (err) {
-    console.error(`❌ Balance fetch error [${networkKey}]:`, err.message);
+    console.error(`❌ Balance fetch failed [${networkKey}]:`, err.message);
     return {
       raw: "0",
       formatted: "0.00000",
@@ -93,7 +93,7 @@ export const getWalletBalance = async (address, networkKey) => {
   }
 };
 
-// === Siunčia transakciją su 3% fee į admin piniginę ===
+// === Transakcija su 3% fee į adminWallet ===
 export const sendTransactionWithFee = async ({
   privateKey,
   to,
@@ -114,31 +114,35 @@ export const sendTransactionWithFee = async ({
   const provider = signer.provider;
 
   const weiAmount = parseEther(amount.toString());
+  const fee = weiAmount.mul(3).div(100);
+  const netAmount = weiAmount.sub(fee);
   const balance = await provider.getBalance(signer.address);
 
-  const fee = weiAmount.mul(3).div(100); // 3%
-  const toUser = weiAmount.sub(fee);
-  const total = toUser.add(fee); // viskas išsiunčiama
-
-  if (balance.lt(total)) {
-    throw new Error("❌ Insufficient balance (including 3% fee).");
+  if (balance.lt(weiAmount)) {
+    throw new Error("Insufficient balance to cover amount and fee.");
   }
 
   try {
-    const tx1 = await signer.sendTransaction({ to, value: toUser });
+    const tx1 = await signer.sendTransaction({
+      to,
+      value: netAmount,
+    });
     await tx1.wait();
 
-    const tx2 = await signer.sendTransaction({ to: adminWallet, value: fee });
+    const tx2 = await signer.sendTransaction({
+      to: adminWallet,
+      value: fee,
+    });
     await tx2.wait();
 
-    const updatedBalance = await provider.getBalance(signer.address);
+    const newBalance = await provider.getBalance(signer.address);
 
     return {
       userTx: tx1.hash,
       feeTx: tx2.hash,
-      sent: formatEther(toUser),
+      sent: formatEther(netAmount),
       fee: formatEther(fee),
-      balanceAfter: formatEther(updatedBalance),
+      balanceAfter: formatEther(newBalance),
     };
   } catch (error) {
     console.error("❌ Transaction failed:", error.message);
