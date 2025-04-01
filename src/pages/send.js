@@ -29,15 +29,16 @@ export default function Send() {
   const [selected, setSelected] = useState(0);
   const [receiver, setReceiver] = useState("");
   const [amount, setAmount] = useState("");
-  const [showConfirm, setShowConfirm] = useState(false);
-  const [showSuccess, setShowSuccess] = useState(false);
-  const [loading, setLoading] = useState(false);
   const [balance, setBalance] = useState("0.00000");
   const [balanceEUR, setBalanceEUR] = useState("0.00");
   const [errorMessage, setErrorMessage] = useState("");
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const selectedNet = supportedNetworks[selected];
   const networkKey = selectedNet.symbol.toLowerCase();
+
   const calculatedFee = Number(amount || 0) * 0.03;
   const amountAfterFee = Number(amount || 0) - calculatedFee;
 
@@ -45,15 +46,14 @@ export default function Send() {
     if (!user || !wallet?.address) {
       router.push("/");
     }
-  }, [user, wallet]);
+  }, [user, wallet, router]);
 
   useEffect(() => {
     const loadBalance = async () => {
       try {
         const currentAddress =
-          wallet?.list?.find(
-            (w) => w.network.toLowerCase() === networkKey
-          )?.address || wallet?.address;
+          wallet?.list?.find((w) => w.network.toLowerCase() === networkKey)?.address ||
+          wallet?.address;
 
         if (!currentAddress) throw new Error("Address not found");
 
@@ -78,18 +78,15 @@ export default function Send() {
     setErrorMessage("");
 
     if (!receiver || !amount || isNaN(amount)) {
-      setErrorMessage("❌ Please enter a valid address and amount.");
-      return;
+      return setErrorMessage("❌ Please enter a valid address and amount.");
     }
 
     if (!isValidAddress(receiver)) {
-      setErrorMessage("❌ Invalid wallet address.");
-      return;
+      return setErrorMessage("❌ Invalid wallet address.");
     }
 
     if (Number(amount) <= 0 || Number(amount) > Number(balance)) {
-      setErrorMessage("❌ Insufficient balance or invalid amount.");
-      return;
+      return setErrorMessage("❌ Insufficient balance or invalid amount.");
     }
 
     setShowConfirm(true);
@@ -160,8 +157,8 @@ export default function Send() {
         />
 
         <div className={styles.balanceInfo}>
-          <p style={{ color: "#ffffff" }}>
-            Balance: {balance} {selectedNet.symbol} (~€ {balanceEUR})
+          <p>
+            Balance: <strong>{balance}</strong> {selectedNet.symbol} (~€ {balanceEUR})
           </p>
         </div>
 
