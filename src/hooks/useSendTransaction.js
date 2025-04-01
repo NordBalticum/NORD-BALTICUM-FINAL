@@ -2,7 +2,11 @@
 
 import { useState } from "react";
 import { useMagicLink } from "@/contexts/MagicLinkContext";
-import { sendTransactionWithFee, isValidAddress } from "@/lib/ethers";
+import {
+  sendTransactionWithFee,
+  isValidAddress,
+  getMaxSendableAmount,
+} from "@/lib/ethers";
 import { supabase } from "@/lib/supabase";
 
 export const useSendTransaction = () => {
@@ -34,8 +38,16 @@ export const useSendTransaction = () => {
         throw new Error("❌ Missing symbol.");
       }
 
-      const networkKey = symbol.toLowerCase();
       const privateKey = getPrivateKey();
+      const networkKey = symbol.toLowerCase();
+
+      // === Patikrinam ar vartotojas netauko per daug (MetaMask style)
+      const maxSendable = await getMaxSendableAmount(privateKey, networkKey);
+      if (Number(amount) > Number(maxSendable)) {
+        throw new Error(
+          `❌ You can send up to ${maxSendable} ${symbol} including fee & gas.`
+        );
+      }
 
       const fromAddress =
         wallet.list?.find((w) => w.network.toLowerCase() === networkKey)?.address ||
@@ -54,11 +66,10 @@ export const useSendTransaction = () => {
         metadata,
       });
 
-      // DB logging
       await supabase.from("transactions").insert([
         {
           user_id: user.id,
-          wallet_id: null, // galima papildyti jei reikės
+          wallet_id: null,
           type: metadata?.type || "send",
           to_address: to,
           from_address: fromAddress,
