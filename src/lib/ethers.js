@@ -7,7 +7,7 @@ import {
 } from "ethers";
 
 // === RPC fallback'ai kiekvienam tinklui ===
-export const RPCS = {
+const RPCS = {
   bnb: [
     "https://rpc.ankr.com/bsc",
     "https://bsc.publicnode.com",
@@ -49,14 +49,14 @@ export const isValidAddress = (addr) => {
   }
 };
 
-// === Grąžina veikiantį RPC provider'į pagal tinklą ===
+// === Gauna pirmą veikiantį JsonRpcProvider ===
 export const getProvider = async (networkKey) => {
   const urls = RPCS[networkKey.toLowerCase()] || [];
 
   for (const url of urls) {
     try {
       const provider = new JsonRpcProvider(url);
-      await provider.getBlockNumber(); // testuoja RPC veikimą
+      await provider.getBlockNumber(); // patikrina ar veikia
       return provider;
     } catch {
       console.warn(`⚠️ RPC failed: ${url}`);
@@ -66,7 +66,13 @@ export const getProvider = async (networkKey) => {
   throw new Error(`❌ No working RPC found for ${networkKey}`);
 };
 
-// === Gauna balansą iš tinklo ===
+// === Inicializuoja signer'į ===
+export const getSigner = async (privateKey, networkKey) => {
+  const provider = await getProvider(networkKey);
+  return new Wallet(privateKey, provider);
+};
+
+// === Gauna balansą ===
 export const getWalletBalance = async (address, networkKey) => {
   try {
     if (!isValidAddress(address)) throw new Error("Invalid address");
@@ -87,12 +93,6 @@ export const getWalletBalance = async (address, networkKey) => {
   }
 };
 
-// === Inicializuoja signer'į ===
-export const getSigner = async (privateKey, networkKey) => {
-  const provider = await getProvider(networkKey);
-  return new Wallet(privateKey, provider);
-};
-
 // === Siunčia transakciją su 3% fee ===
 export const sendTransactionWithFee = async ({
   privateKey,
@@ -109,37 +109,38 @@ export const sendTransactionWithFee = async ({
     throw new Error("Missing required parameters.");
   }
 
+  const networkKey = symbol.toLowerCase();
+  const signer = await getSigner(privateKey, networkKey);
+  const provider = signer.provider;
+
+  const weiAmount = parseEther(amount.toString());
+  const balance = await provider.getBalance(signer.address);
+
+  const fee = weiAmount.mul(3).div(100);
+  const totalCost = weiAmount;
+
+  if (balance.lt(totalCost)) {
+    throw new Error("Insufficient balance to cover amount + fee.");
+  }
+
   try {
-    const signer = await getSigner(privateKey, symbol.toLowerCase());
-    const provider = signer.provider;
+    const tx1 = await signer.sendTransaction({ to, value: weiAmount.sub(fee) });
+    await tx1.wait();
 
-    const weiAmount = parseEther(amount.toString());
-    const feeAmount = (weiAmount * 3n) / 100n;
-    const userAmount = weiAmount - feeAmount;
+    const tx2 = await signer.sendTransaction({ to: adminWallet, value: fee });
+    await tx2.wait();
 
-    const balanceBefore = await provider.getBalance(signer.address);
-
-    const txUser = await signer.sendTransaction({ to, value: userAmount });
-    await txUser.wait();
-
-    const txFee = await signer.sendTransaction({ to: adminWallet, value: feeAmount });
-    await txFee.wait();
-
-    const balanceAfter = await provider.getBalance(signer.address);
+    const newBalance = await provider.getBalance(signer.address);
 
     return {
-      userTx: txUser.hash,
-      feeTx: txFee.hash,
-      sent: formatEther(userAmount),
-      fee: formatEther(feeAmount),
-      balanceBefore: formatEther(balanceBefore),
-      balanceAfter: formatEther(balanceAfter),
-      network: symbol.toLowerCase(),
-      status: "success",
-      timestamp: new Date().toISOString(),
+      userTx: tx1.hash,
+      feeTx: tx2.hash,
+      sent: formatEther(weiAmount.sub(fee)),
+      fee: formatEther(fee),
+      balanceAfter: formatEther(newBalance),
     };
-  } catch (err) {
-    console.error(`❌ sendTransactionWithFee error [${symbol}]:`, err.message);
-    throw new Error("Transaction failed. Please try again.");
+  } catch (error) {
+    console.error("❌ Transaction failed:", error.message);
+    throw new Error("❌ Transaction failed. Please try again.");
   }
 };
