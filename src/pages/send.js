@@ -61,7 +61,8 @@ export default function Send() {
       setBalanceEUR(eur);
 
       const max = await getMaxSendableAmount(getPrivateKey(), networkKey);
-      setMaxSendable(max);
+      console.log("Max Sendable:", max); // Debug line
+      setMaxSendable(max);  // Ensure this value is correctly assigned
     } catch (err) {
       console.warn("❌ Balance fetch failed:", err.message);
       setBalance("0.00000");
