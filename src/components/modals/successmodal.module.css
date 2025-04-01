@@ -1,0 +1,78 @@
+/* successModal.module.css */
+
+.modalBackdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(10, 15, 30, 0.85);
+  backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.modalContainer {
+  background: linear-gradient(145deg, rgba(20, 30, 50, 0.95), rgba(10, 15, 25, 0.95));
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 24px;
+  padding: 32px 24px;
+  max-width: 400px;
+  width: 90%;
+  box-shadow: 0 0 25px rgba(255, 255, 255, 0.08);
+  color: #fff;
+  text-align: center;
+  animation: fadeInScale 0.4s ease;
+}
+
+.title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+.message {
+  font-size: 1rem;
+  opacity: 0.85;
+  margin-bottom: 20px;
+  line-height: 1.5;
+}
+
+.txHash {
+  font-size: 0.9rem;
+  background-color: rgba(255, 255, 255, 0.06);
+  padding: 10px;
+  border-radius: 12px;
+  word-break: break-all;
+  margin-bottom: 20px;
+}
+
+.closeButton {
+  background: #000;
+  color: #fff;
+  border: 1px solid #fff;
+  padding: 10px 22px;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.closeButton:hover {
+  background: #fff;
+  color: #000;
+  box-shadow: 0 0 12px #fff;
+}
+
+@keyframes fadeInScale {
+  0% {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
