@@ -4,7 +4,11 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 import { useMagicLink } from "@/contexts/MagicLinkContext";
-import { getWalletBalance, sendTransactionWithFee, isValidAddress } from "@/lib/ethers";
+import {
+  getWalletBalance,
+  sendTransactionWithFee,
+  isValidAddress,
+} from "@/lib/ethers";
 import { supportedNetworks } from "@/utils/networks";
 import { supabase } from "@/lib/supabase";
 import { fetchPrices } from "@/utils/fetchPrices";
@@ -30,8 +34,10 @@ export default function Send() {
   const [loading, setLoading] = useState(false);
   const [balance, setBalance] = useState("0.00000");
   const [balanceEUR, setBalanceEUR] = useState("0.00");
+  const [errorMessage, setErrorMessage] = useState("");
 
   const selectedNet = supportedNetworks[selected];
+  const networkKey = selectedNet.symbol.toLowerCase();
   const calculatedFee = Number(amount || 0) * 0.03;
   const amountAfterFee = Number(amount || 0) - calculatedFee;
 
@@ -42,11 +48,14 @@ export default function Send() {
   useEffect(() => {
     const loadBalance = async () => {
       try {
-        const currentAddress = wallet?.list?.find(
-          (w) => w.network.toLowerCase() === selectedNet.symbol.toLowerCase()
-        )?.address || wallet?.address;
+        const currentAddress =
+          wallet?.list?.find(
+            (w) => w.network.toLowerCase() === networkKey
+          )?.address || wallet?.address;
 
-        const { formatted } = await getWalletBalance(currentAddress, selectedNet.symbol.toLowerCase());
+        if (!currentAddress) throw new Error("Address not found for selected network");
+
+        const { formatted } = await getWalletBalance(currentAddress, networkKey);
         setBalance(formatted);
 
         const prices = await fetchPrices();
@@ -64,20 +73,30 @@ export default function Send() {
   }, [selected, wallet]);
 
   const handleSend = () => {
+    setErrorMessage("");
+
     if (!receiver || !amount || isNaN(amount)) {
-      alert("Please enter a valid address and amount.");
+      setErrorMessage("❌ Please enter a valid address and amount.");
       return;
     }
+
     if (!isValidAddress(receiver)) {
-      alert("Invalid wallet address.");
+      setErrorMessage("❌ Invalid wallet address.");
       return;
     }
+
+    if (Number(amount) <= 0 || Number(amount) > Number(balance)) {
+      setErrorMessage("❌ Insufficient balance or invalid amount.");
+      return;
+    }
+
     setShowConfirm(true);
   };
 
   const confirmSend = async () => {
     setShowConfirm(false);
     setLoading(true);
+    setErrorMessage("");
 
     try {
       const privateKey = getPrivateKey();
@@ -87,7 +106,7 @@ export default function Send() {
         privateKey,
         to: receiver,
         amount,
-        symbol: selectedNet.symbol,
+        symbol: networkKey,
         adminWallet: ADMIN_WALLET,
       });
 
@@ -110,7 +129,7 @@ export default function Send() {
       setAmount("");
     } catch (err) {
       console.error("❌ Send failed:", err.message);
-      alert("Transaction failed. Please try again.");
+      setErrorMessage("❌ Transaction failed. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -151,6 +170,7 @@ export default function Send() {
             value={receiver}
             onChange={(e) => setReceiver(e.target.value)}
             className={styles.inputField}
+            autoComplete="off"
           />
           <input
             type="number"
@@ -158,7 +178,9 @@ export default function Send() {
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
             className={styles.inputField}
+            autoComplete="off"
           />
+          {errorMessage && <p className={styles.error}>{errorMessage}</p>}
           <button
             onClick={handleSend}
             className={styles.confirmButton}
