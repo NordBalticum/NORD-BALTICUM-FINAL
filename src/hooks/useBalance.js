@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { useMagicLink } from "@/contexts/MagicLinkContext";
 import { getWalletBalance } from "@/lib/ethers";
 import { supabase } from "@/lib/supabase";
@@ -16,7 +16,9 @@ const priceSymbols = {
 const fetchPrices = async () => {
   try {
     const ids = Object.values(priceSymbols).join(",");
-    const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=eur`);
+    const res = await fetch(
+      `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=eur`
+    );
     const data = await res.json();
 
     return Object.entries(priceSymbols).reduce((acc, [symbol, id]) => {
@@ -35,12 +37,15 @@ export const useBalance = () => {
   const [balances, setBalances] = useState({});
   const [isLoading, setIsLoading] = useState(true);
   const isFetching = useRef(false);
+  const controller = useRef(null);
 
-  const refresh = async () => {
+  const refresh = useCallback(async () => {
     if (!wallet?.list || !user?.id || isFetching.current) return;
 
     isFetching.current = true;
     setIsLoading(true);
+    controller.current?.abort();
+    controller.current = new AbortController();
 
     try {
       const prices = await fetchPrices();
@@ -48,50 +53,67 @@ export const useBalance = () => {
 
       await Promise.all(
         wallet.list.map(async ({ network, address }) => {
-          const lowerNet = network.toLowerCase();
-          const { formatted } = await getWalletBalance(address, lowerNet);
-          const eur = (parseFloat(formatted) * prices[network] || 0).toFixed(2);
-          results[network] = {
-            address,
-            amount: formatted,
-            eur,
-          };
+          try {
+            const lowerNet = network.toLowerCase();
+            const { formatted } = await getWalletBalance(address, lowerNet);
 
-          // Supabase balansų saugojimas (optional)
-          await supabase.from("balances").upsert([
-            {
-              user_id: user.id,
-              wallet_address: address,
-              network,
+            const price = prices?.[network] || 0;
+            const eur = (parseFloat(formatted) * price).toFixed(2);
+
+            results[network] = {
+              address,
               amount: formatted,
-              eur,
-            },
-          ], {
-            onConflict: ["user_id", "wallet_address", "network"],
-          });
+              eur: isNaN(eur) ? "0.00" : eur,
+            };
+
+            await supabase.from("balances").upsert(
+              [
+                {
+                  user_id: user.id,
+                  wallet_address: address,
+                  network,
+                  amount: formatted,
+                  eur,
+                  updated_at: new Date().toISOString(),
+                },
+              ],
+              {
+                onConflict: ["user_id", "wallet_address", "network"],
+              }
+            );
+          } catch (err) {
+            console.warn(`❌ Balance error [${network}]:`, err.message);
+            results[network] = {
+              address,
+              amount: "0.00000",
+              eur: "0.00",
+            };
+          }
         })
       );
 
-      // Total EUR
-      const total = Object.values(results).reduce((sum, b) => sum + parseFloat(b.eur), 0);
-      results.totalEUR = total.toFixed(2);
+      const total = Object.values(results).reduce((sum, b) => {
+        const val = parseFloat(b.eur);
+        return sum + (isNaN(val) ? 0 : val);
+      }, 0);
 
+      results.totalEUR = total.toFixed(2);
       setBalances(results);
     } catch (err) {
-      console.error("❌ Failed to fetch balances:", err.message);
+      console.error("❌ Failed to refresh balances:", err.message);
     } finally {
       setIsLoading(false);
       isFetching.current = false;
     }
-  };
+  }, [wallet, user]);
 
   useEffect(() => {
     if (wallet?.list?.length && user?.id) {
       refresh();
-      const interval = setInterval(refresh, 20000);
+      const interval = setInterval(refresh, 30000);
       return () => clearInterval(interval);
     }
-  }, [wallet, user]);
+  }, [wallet, user, refresh]);
 
   return { balances, isLoading, refresh };
 };
