@@ -1,6 +1,12 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useCallback,
+} from "react";
 import { supabase } from "@/lib/supabase";
 import CryptoJS from "crypto-js";
 import { ethers } from "ethers";
@@ -14,8 +20,10 @@ export function MagicLinkProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const [sessionChecked, setSessionChecked] = useState(false);
 
-  // === AES šifravimas / dešifravimas ===
-  const encrypt = (text) => CryptoJS.AES.encrypt(text, ENCRYPTION_KEY).toString();
+  // === Encrypt/Decrypt ===
+  const encrypt = (text) =>
+    CryptoJS.AES.encrypt(text, ENCRYPTION_KEY).toString();
+
   const decrypt = (cipher) => {
     try {
       const bytes = CryptoJS.AES.decrypt(cipher, ENCRYPTION_KEY);
@@ -25,7 +33,7 @@ export function MagicLinkProvider({ children }) {
     }
   };
 
-  // === LocalStorage Private Key valdymas ===
+  // === LocalStorage ===
   const storePrivateKey = (pk) => {
     try {
       const encrypted = encrypt(pk);
@@ -54,8 +62,8 @@ export function MagicLinkProvider({ children }) {
     }
   };
 
-  // === Wallet registracija / gavimas iš DB ===
-  const getOrCreateWallet = async (userId) => {
+  // === Wallet ===
+  const getOrCreateWallet = useCallback(async (userId) => {
     try {
       const { data, error } = await supabase
         .from("wallets")
@@ -90,37 +98,32 @@ export function MagicLinkProvider({ children }) {
       console.error("❌ Wallet error:", err.message);
       return null;
     }
-  };
+  }, []);
 
-  // === Inicijuoja vartotojo sesiją ===
-  const initSession = async () => {
+  // === Session ===
+  const initSession = useCallback(async () => {
     setLoading(true);
-
     try {
       const { data, error } = await supabase.auth.getUser();
-      if (error) {
-        console.warn("❌ Auth fetch error:", error.message);
+      if (error || !data?.user) {
         setUser(null);
         setWallet(null);
         return;
       }
 
-      const currentUser = data?.user || null;
-      setUser(currentUser);
+      setUser(data.user);
 
-      if (currentUser?.id) {
-        const address = await getOrCreateWallet(currentUser.id);
-        if (address) setWallet({ address });
-      } else {
-        setWallet(null);
-      }
+      const address = await getOrCreateWallet(data.user.id);
+      if (address) setWallet({ address });
     } catch (err) {
       console.error("❌ Session init error:", err.message);
+      setUser(null);
+      setWallet(null);
     } finally {
       setLoading(false);
       setSessionChecked(true);
     }
-  };
+  }, [getOrCreateWallet]);
 
   useEffect(() => {
     initSession();
@@ -139,18 +142,15 @@ export function MagicLinkProvider({ children }) {
       }
     );
 
-    return () => {
-      listener?.subscription?.unsubscribe();
-    };
-  }, []);
+    return () => listener?.subscription?.unsubscribe();
+  }, [initSession, getOrCreateWallet]);
 
-  // === MagicLink prisijungimas ===
+  // === Auth Methods ===
   const signInWithEmail = async (email) => {
     const { error } = await supabase.auth.signInWithOtp({ email });
     if (error) throw new Error("Magic Link error: " + error.message);
   };
 
-  // === Google OAuth login ===
   const signInWithGoogle = async () => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
@@ -161,7 +161,6 @@ export function MagicLinkProvider({ children }) {
     if (error) throw new Error("Google login error: " + error.message);
   };
 
-  // === Logout ===
   const signOut = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) throw new Error("Logout error: " + error.message);
@@ -175,8 +174,8 @@ export function MagicLinkProvider({ children }) {
     <MagicLinkContext.Provider
       value={{
         user,
-        loadingUser: loading || !sessionChecked,
         wallet,
+        loadingUser: loading || !sessionChecked,
         signInWithEmail,
         signInWithGoogle,
         signOut,
