@@ -12,12 +12,10 @@ export function MagicLinkProvider({ children }) {
   const [user, setUser] = useState(null);
   const [wallet, setWallet] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [initialized, setInitialized] = useState(false);
+  const [sessionChecked, setSessionChecked] = useState(false);
 
   // === AES šifravimas / dešifravimas ===
-  const encrypt = (text) =>
-    CryptoJS.AES.encrypt(text, ENCRYPTION_KEY).toString();
-
+  const encrypt = (text) => CryptoJS.AES.encrypt(text, ENCRYPTION_KEY).toString();
   const decrypt = (cipher) => {
     try {
       const bytes = CryptoJS.AES.decrypt(cipher, ENCRYPTION_KEY);
@@ -27,6 +25,7 @@ export function MagicLinkProvider({ children }) {
     }
   };
 
+  // === LocalStorage Private Key valdymas ===
   const storePrivateKey = (pk) => {
     try {
       const encrypted = encrypt(pk);
@@ -48,7 +47,6 @@ export function MagicLinkProvider({ children }) {
   const getWalletAddress = () => {
     const pk = getPrivateKey();
     if (!pk) return null;
-
     try {
       return new ethers.Wallet(pk).address;
     } catch {
@@ -56,63 +54,71 @@ export function MagicLinkProvider({ children }) {
     }
   };
 
+  // === Wallet registracija / gavimas iš DB ===
   const getOrCreateWallet = async (userId) => {
-    const { data, error } = await supabase
-      .from("wallets")
-      .select("*")
-      .eq("user_id", userId)
-      .single();
+    try {
+      const { data, error } = await supabase
+        .from("wallets")
+        .select("*")
+        .eq("user_id", userId)
+        .single();
 
-    if (error && error.code !== "PGRST116") throw error;
+      if (error && error.code !== "PGRST116") throw error;
 
-    if (data?.address) {
-      if (!getPrivateKey()) {
-        console.warn("⚠️ Missing local private key. Generating new...");
-        const newWallet = ethers.Wallet.createRandom();
-        storePrivateKey(newWallet.privateKey);
+      if (data?.address) {
+        if (!getPrivateKey()) {
+          const newWallet = ethers.Wallet.createRandom();
+          storePrivateKey(newWallet.privateKey);
+        }
+        return data.address;
       }
-      return data.address;
+
+      const newWallet = ethers.Wallet.createRandom();
+      storePrivateKey(newWallet.privateKey);
+
+      const { error: insertError } = await supabase.from("wallets").insert([
+        {
+          user_id: userId,
+          address: newWallet.address,
+          network: "multi",
+        },
+      ]);
+
+      if (insertError) throw insertError;
+      return newWallet.address;
+    } catch (err) {
+      console.error("❌ Wallet error:", err.message);
+      return null;
     }
-
-    const newWallet = ethers.Wallet.createRandom();
-    storePrivateKey(newWallet.privateKey);
-
-    const { error: insertError } = await supabase.from("wallets").insert([
-      {
-        user_id: userId,
-        address: newWallet.address,
-        network: "multi",
-      },
-    ]);
-
-    if (insertError) throw insertError;
-
-    return newWallet.address;
   };
 
+  // === Inicijuoja vartotojo sesiją ===
   const initSession = async () => {
     setLoading(true);
 
     try {
       const { data, error } = await supabase.auth.getUser();
-      if (error) console.warn("❌ Error fetching user:", error.message);
+      if (error) {
+        console.warn("❌ Auth fetch error:", error.message);
+        setUser(null);
+        setWallet(null);
+        return;
+      }
 
-      const fetchedUser = data?.user || null;
-      setUser(fetchedUser);
+      const currentUser = data?.user || null;
+      setUser(currentUser);
 
-      if (fetchedUser?.id) {
-        try {
-          const address = await getOrCreateWallet(fetchedUser.id);
-          setWallet({ address });
-        } catch (e) {
-          console.error("❌ Wallet setup failed:", e.message);
-        }
+      if (currentUser?.id) {
+        const address = await getOrCreateWallet(currentUser.id);
+        if (address) setWallet({ address });
+      } else {
+        setWallet(null);
       }
     } catch (err) {
-      console.error("❌ Critical auth error:", err.message);
+      console.error("❌ Session init error:", err.message);
     } finally {
       setLoading(false);
-      setInitialized(true);
+      setSessionChecked(true);
     }
   };
 
@@ -121,18 +127,12 @@ export function MagicLinkProvider({ children }) {
 
     const { data: listener } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
-        if (!initialized) return;
-
         const loggedUser = session?.user || null;
         setUser(loggedUser);
 
         if (loggedUser?.id) {
-          try {
-            const address = await getOrCreateWallet(loggedUser.id);
-            setWallet({ address });
-          } catch (e) {
-            console.error("❌ Wallet reload failed:", e.message);
-          }
+          const address = await getOrCreateWallet(loggedUser.id);
+          if (address) setWallet({ address });
         } else {
           setWallet(null);
         }
@@ -142,13 +142,15 @@ export function MagicLinkProvider({ children }) {
     return () => {
       listener?.subscription?.unsubscribe();
     };
-  }, [initialized]);
+  }, []);
 
+  // === MagicLink prisijungimas ===
   const signInWithEmail = async (email) => {
     const { error } = await supabase.auth.signInWithOtp({ email });
     if (error) throw new Error("Magic Link error: " + error.message);
   };
 
+  // === Google OAuth login ===
   const signInWithGoogle = async () => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
@@ -159,6 +161,7 @@ export function MagicLinkProvider({ children }) {
     if (error) throw new Error("Google login error: " + error.message);
   };
 
+  // === Logout ===
   const signOut = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) throw new Error("Logout error: " + error.message);
@@ -172,7 +175,7 @@ export function MagicLinkProvider({ children }) {
     <MagicLinkContext.Provider
       value={{
         user,
-        loadingUser: loading,
+        loadingUser: loading || !sessionChecked,
         wallet,
         signInWithEmail,
         signInWithGoogle,
