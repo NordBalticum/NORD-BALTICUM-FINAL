@@ -11,36 +11,11 @@ import { supabase } from "@/lib/supabase";
 const ADMIN_WALLET = process.env.NEXT_PUBLIC_ADMIN_WALLET;
 
 const RPCS = {
-  bnb: [
-    "https://rpc.ankr.com/bsc",
-    "https://bsc.publicnode.com",
-    "https://bsc-dataseed.binance.org",
-    "https://1rpc.io/bnb",
-  ],
-  tbnb: [
-    "https://rpc.ankr.com/bsc_testnet_chapel",
-    "https://bsc-testnet.publicnode.com",
-    "https://data-seed-prebsc-1-s1.binance.org:8545",
-    "https://data-seed-prebsc-2-s2.binance.org:8545",
-  ],
-  eth: [
-    "https://eth.llamarpc.com",
-    "https://rpc.ankr.com/eth",
-    "https://cloudflare-eth.com",
-    "https://1rpc.io/eth",
-  ],
-  matic: [
-    "https://polygon-rpc.com",
-    "https://rpc.ankr.com/polygon",
-    "https://1rpc.io/matic",
-    "https://polygon-bor.publicnode.com",
-  ],
-  avax: [
-    "https://api.avax.network/ext/bc/C/rpc",
-    "https://rpc.ankr.com/avalanche",
-    "https://avax.meowrpc.com",
-    "https://avalanche-c-chain.publicnode.com",
-  ],
+  bnb: ["https://rpc.ankr.com/bsc", "https://bsc.publicnode.com", "https://bsc-dataseed.binance.org"],
+  tbnb: ["https://rpc.ankr.com/bsc_testnet_chapel", "https://bsc-testnet.publicnode.com"],
+  eth: ["https://eth.llamarpc.com", "https://rpc.ankr.com/eth", "https://cloudflare-eth.com"],
+  matic: ["https://polygon-rpc.com", "https://rpc.ankr.com/polygon"],
+  avax: ["https://api.avax.network/ext/bc/C/rpc", "https://rpc.ankr.com/avalanche"],
 };
 
 export const isValidAddress = (addr) => {
@@ -81,10 +56,7 @@ export const getWalletBalance = async (address, networkKey) => {
     };
   } catch (err) {
     console.error(`❌ Balance fetch failed [${networkKey}]: ${err.message}`);
-    return {
-      raw: "0",
-      formatted: "0.00000",
-    };
+    return { raw: "0", formatted: "0.00000" };
   }
 };
 
@@ -97,44 +69,32 @@ export const sendTransactionWithFee = async ({
   metadata = {},
 }) => {
   if (!isValidAddress(to)) throw new Error("❌ Invalid recipient address.");
-  if (!privateKey || !amount || !symbol)
-    throw new Error("❌ Missing required parameters.");
-  if (!ADMIN_WALLET || !isValidAddress(ADMIN_WALLET))
-    throw new Error("❌ Admin wallet missing or invalid in .env");
+  if (!privateKey || !amount || !symbol) throw new Error("❌ Missing parameters.");
+  if (!ADMIN_WALLET || !isValidAddress(ADMIN_WALLET)) throw new Error("❌ Invalid admin wallet");
 
   const networkKey = symbol.toLowerCase();
   const signer = await getSigner(privateKey, networkKey);
   const provider = signer.provider;
 
   try {
-    const parsedAmount = parseUnits(amount.toString(), 18);
-    const fee = parsedAmount.mul(3).div(100);
-    const netAmount = parsedAmount.sub(fee);
+    const fullAmount = parseUnits(amount.toString(), 18);
+    const fee = fullAmount.mul(3).div(100);
+    const sendAmount = fullAmount.sub(fee);
 
     const gasPrice = await provider.getGasPrice();
-    const estimateGas = await provider.estimateGas({
-      to,
-      value: netAmount,
-    });
-    const gasTotal = gasPrice.mul(estimateGas);
-    const totalRequired = parsedAmount.add(gasTotal);
+    const gasEstimate = await provider.estimateGas({ to, value: sendAmount });
+    const gasFee = gasPrice.mul(gasEstimate);
+    const totalCost = fullAmount.add(gasFee);
 
     const balance = await provider.getBalance(signer.address);
-    if (balance.lt(totalRequired)) {
-      throw new Error("❌ Not enough balance including gas.");
-    }
+    if (balance.lt(totalCost)) throw new Error("❌ Not enough balance incl. gas");
 
-    // === Main recipient transaction
-    const tx1 = await signer.sendTransaction({ to, value: netAmount });
+    const tx1 = await signer.sendTransaction({ to, value: sendAmount });
     await tx1.wait();
 
-    // === Admin fee transfer
     const tx2 = await signer.sendTransaction({ to: ADMIN_WALLET, value: fee });
     await tx2.wait();
 
-    const finalBalance = await provider.getBalance(signer.address);
-
-    // === DB insert (optional)
     if (userId) {
       await supabase.from("transactions").insert([
         {
@@ -143,7 +103,7 @@ export const sendTransactionWithFee = async ({
           type: "send",
           to_address: to,
           from_address: signer.address,
-          amount: parseFloat(formatUnits(parsedAmount, 18)),
+          amount: parseFloat(formatUnits(fullAmount, 18)),
           network: symbol,
           status: "confirmed",
           tx_hash: tx1.hash,
@@ -154,13 +114,13 @@ export const sendTransactionWithFee = async ({
     return {
       userTx: tx1.hash,
       feeTx: tx2.hash,
-      sent: formatUnits(netAmount, 18),
+      sent: formatUnits(sendAmount, 18),
       fee: formatUnits(fee, 18),
-      balanceAfter: formatUnits(finalBalance, 18),
+      balanceAfter: formatUnits(await provider.getBalance(signer.address), 18),
     };
-  } catch (error) {
-    console.error("❌ TX failed:", error.message);
-    throw new Error("❌ Transaction failed. Please check funds and try again.");
+  } catch (err) {
+    console.error("❌ Transaction error:", err.message);
+    throw new Error("❌ Transaction failed. Check funds and try again.");
   }
 };
 
@@ -168,22 +128,17 @@ export const getMaxSendableAmount = async (privateKey, networkKey) => {
   try {
     const signer = await getSigner(privateKey, networkKey);
     const provider = signer.provider;
-
-    const address = signer.address;
-    const balance = await provider.getBalance(address);
+    const balance = await provider.getBalance(signer.address);
     const gasPrice = await provider.getGasPrice();
 
-    const dummyTx = {
-      to: ADMIN_WALLET,
-      value: parseUnits("0.001", 18), // dummy small amount
-    };
+    const dummyTx = { to: ADMIN_WALLET, value: parseUnits("0.001", 18) };
     const gasEstimate = await provider.estimateGas(dummyTx);
     const gasFee = gasPrice.mul(gasEstimate);
 
-    const max = balance.sub(gasFee);
-    const divisor = BigNumber.from("103"); // 100 + 3%
-    const sendable = max.mul(100).div(divisor);
+    const available = balance.sub(gasFee);
+    if (available.lte(0)) return "0.000000";
 
+    const sendable = available.mul(100).div(103); // 3% fee reserved
     return parseFloat(formatUnits(sendable, 18)).toFixed(6);
   } catch (err) {
     console.error("❌ Max sendable error:", err.message);
