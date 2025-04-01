@@ -6,7 +6,11 @@ import { useRouter } from "next/navigation";
 import { useMagicLink } from "@/contexts/MagicLinkContext";
 import { useSendTransaction } from "@/hooks/useSendTransaction";
 import { useBalance } from "@/hooks/useBalance";
-import { getWalletBalance, isValidAddress } from "@/lib/ethers";
+import {
+  getWalletBalance,
+  getMaxSendableAmount,
+  isValidAddress,
+} from "@/lib/ethers";
 import { supportedNetworks } from "@/utils/networks";
 import { fetchPrices } from "@/utils/fetchPrices";
 
@@ -21,7 +25,7 @@ const ADMIN_WALLET = process.env.NEXT_PUBLIC_ADMIN_WALLET;
 
 export default function Send() {
   const router = useRouter();
-  const { user, wallet } = useMagicLink();
+  const { user, wallet, getPrivateKey } = useMagicLink();
   const { send, loading, error, success } = useSendTransaction();
   const { refresh: refreshBalance } = useBalance();
 
@@ -29,6 +33,7 @@ export default function Send() {
   const [receiver, setReceiver] = useState("");
   const [amount, setAmount] = useState("");
   const [balance, setBalance] = useState("0.00000");
+  const [maxSendable, setMaxSendable] = useState("0.00000");
   const [balanceEUR, setBalanceEUR] = useState("0.00");
   const [showConfirm, setShowConfirm] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -57,10 +62,14 @@ export default function Send() {
       const price = prices[selectedNet.symbol] || 0;
       const eur = (parseFloat(formatted) * price).toFixed(2);
       setBalanceEUR(eur);
+
+      const max = await getMaxSendableAmount(getPrivateKey(), networkKey);
+      setMaxSendable(max);
     } catch (err) {
       console.warn("❌ Balance fetch failed:", err.message);
       setBalance("0.00000");
       setBalanceEUR("0.00");
+      setMaxSendable("0.00000");
     }
   };
 
@@ -79,8 +88,8 @@ export default function Send() {
       return alert("❌ Invalid wallet address.");
     }
 
-    if (Number(amount) <= 0 || Number(amount) > Number(balance)) {
-      return alert("❌ Insufficient balance or invalid amount.");
+    if (Number(amount) <= 0 || Number(amount) > Number(maxSendable)) {
+      return alert(`❌ Max you can send (incl. fee): ${maxSendable}`);
     }
 
     setShowConfirm(true);
@@ -94,7 +103,6 @@ export default function Send() {
       to: trimmedAddress,
       amount,
       symbol: selectedNet.symbol,
-      adminWallet: ADMIN_WALLET,
       metadata: { type: "send" },
     });
 
@@ -118,7 +126,7 @@ export default function Send() {
 
       <div className={styles.wrapper}>
         <h1 className={styles.title}>SEND CRYPTO</h1>
-        <p className={styles.subtext}>Choose your network and enter details</p>
+        <p className={styles.subtext}>Transfer your crypto securely & instantly</p>
 
         <SwipeSelector
           mode="send"
@@ -130,9 +138,12 @@ export default function Send() {
           }}
         />
 
-        <div className={styles.balanceInfo}>
-          <p>
-            Balance: <strong>{balance}</strong> {selectedNet.symbol} (~€ {balanceEUR})
+        <div className={styles.balanceTable}>
+          <p className={styles.whiteText}>
+            Total Balance: <strong>{balance}</strong> {selectedNet.symbol} (~€ {balanceEUR})
+          </p>
+          <p className={styles.whiteText}>
+            Max Sendable: <strong>{maxSendable}</strong> {selectedNet.symbol} (incl. gas + 3% fee)
           </p>
         </div>
 
@@ -147,15 +158,15 @@ export default function Send() {
           />
           <input
             type="number"
-            placeholder="Amount"
+            placeholder="Amount to send"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
             className={styles.inputField}
             autoComplete="off"
           />
           <p className={styles.feeBreakdown}>
-            Recipient will get <strong>{amountAfterFee.toFixed(6)} {selectedNet.symbol}</strong>{" "}
-            | <span title="3% admin fee will be deducted.">Includes 3% fee</span>
+            Recipient receives <strong>{amountAfterFee.toFixed(6)} {selectedNet.symbol}</strong>
+            <br />Includes 3% fee & gas reserved.
           </p>
           {error && <p className={styles.error}>❌ {error}</p>}
           <button
@@ -163,19 +174,19 @@ export default function Send() {
             className={styles.confirmButton}
             disabled={loading}
           >
-            {loading ? "SENDING..." : "SEND"}
+            {loading ? "SENDING..." : "SEND NOW"}
           </button>
         </div>
 
         {showConfirm && (
           <div className={styles.overlay}>
             <div className={styles.confirmModal}>
-              <div className={styles.modalTitle}>Confirm Transaction</div>
+              <div className={styles.modalTitle}>Final Confirmation</div>
               <div className={styles.modalInfo}>
                 <p><strong>Network:</strong> {selectedNet.name}</p>
                 <p><strong>To:</strong> {receiver}</p>
-                <p><strong>Amount:</strong> {amount} {selectedNet.symbol}</p>
-                <p><strong>Recipient gets:</strong> {amountAfterFee.toFixed(6)} {selectedNet.symbol}</p>
+                <p><strong>Send:</strong> {amount} {selectedNet.symbol}</p>
+                <p><strong>Gets:</strong> {amountAfterFee.toFixed(6)} {selectedNet.symbol}</p>
               </div>
               <div className={styles.modalActions}>
                 <button className={styles.modalButton} onClick={confirmSend}>Confirm</button>
@@ -187,7 +198,7 @@ export default function Send() {
 
         {showSuccess && (
           <SuccessModal
-            message="Transaction Sent Successfully!"
+            message="Transaction completed!"
             txHash={success.userTx}
             networkKey={networkKey}
             onClose={() => setShowSuccess(false)}
