@@ -4,10 +4,11 @@ import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 
+import { useMagicLink } from "@/contexts/MagicLinkContext";
+import StarsBackground from "@/components/StarsBackground";
+
 import styles from "@/styles/index.module.css";
 import background from "@/styles/background.module.css";
-import StarsBackground from "@/components/StarsBackground";
-import { useMagicLink } from "@/contexts/MagicLinkContext";
 
 export default function Home() {
   const router = useRouter();
@@ -16,9 +17,9 @@ export default function Home() {
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState("idle");
   const [message, setMessage] = useState("");
-
   const logoRef = useRef(null);
 
+  // === Logo 3D tilt efektas ===
   useEffect(() => {
     const logo = logoRef.current;
     if (!logo) return;
@@ -36,7 +37,7 @@ export default function Home() {
       logo.style.transform = "rotateX(0deg) rotateY(0deg) scale(1)";
     };
 
-    const parent = logo?.parentNode;
+    const parent = logo.parentNode;
     parent?.addEventListener("mousemove", handleMouseMove);
     parent?.addEventListener("mouseleave", resetTilt);
 
@@ -46,15 +47,21 @@ export default function Home() {
     };
   }, []);
 
+  // === Redirect jei prisijungęs ===
   useEffect(() => {
     if (!loadingUser && user) {
       router.push("/dashboard");
     }
   }, [user, loadingUser, router]);
 
+  // === Email Magic Link login ===
   const handleEmailLogin = async (e) => {
     e.preventDefault();
-    if (!email.trim()) return setMessage("❌ Please enter a valid email.");
+
+    if (!email.trim()) {
+      setMessage("❌ Please enter a valid email.");
+      return;
+    }
 
     setStatus("sending");
     setMessage("⏳ Sending Magic Link...");
@@ -71,6 +78,7 @@ export default function Home() {
     }
   };
 
+  // === Google OAuth login ===
   const handleGoogleLogin = async () => {
     setStatus("sending");
     setMessage("⏳ Logging in with Google...");
