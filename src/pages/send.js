@@ -4,9 +4,10 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 import { useMagicLink } from "@/contexts/MagicLinkContext";
-import { sendTransactionWithFee, isValidAddress } from "@/lib/ethers";
+import { getWalletBalance, sendTransactionWithFee, isValidAddress } from "@/lib/ethers";
 import { supportedNetworks } from "@/utils/networks";
 import { supabase } from "@/lib/supabase";
+import { fetchPrices } from "@/utils/fetchPrices";
 
 import SwipeSelector from "@/components/SwipeSelector";
 import StarsBackground from "@/components/StarsBackground";
@@ -28,6 +29,7 @@ export default function Send() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
   const [balance, setBalance] = useState("0.00000");
+  const [balanceEUR, setBalanceEUR] = useState("0.00");
 
   const selectedNet = supportedNetworks[selected];
   const calculatedFee = Number(amount || 0) * 0.03;
@@ -44,16 +46,17 @@ export default function Send() {
           (w) => w.network.toLowerCase() === selectedNet.symbol.toLowerCase()
         )?.address || wallet?.address;
 
-        if (currentAddress) {
-          const { formatted } = await sendTransactionWithFee.getWalletBalance(
-            currentAddress,
-            selectedNet.symbol.toLowerCase()
-          );
-          setBalance(formatted);
-        }
+        const { formatted } = await getWalletBalance(currentAddress, selectedNet.symbol.toLowerCase());
+        setBalance(formatted);
+
+        const prices = await fetchPrices();
+        const price = prices[selectedNet.symbol] || 0;
+        const eur = (parseFloat(formatted) * price).toFixed(2);
+        setBalanceEUR(eur);
       } catch (err) {
-        console.warn("❌ Failed to fetch balance:", err.message);
+        console.warn("❌ Balance fetch failed:", err.message);
         setBalance("0.00000");
+        setBalanceEUR("0.00");
       }
     };
 
@@ -135,9 +138,11 @@ export default function Send() {
           }}
         />
 
-        <p className={styles.balanceInfo}>
-          Balance: {balance} {selectedNet.symbol}
-        </p>
+        <div className={styles.balanceInfo}>
+          <p style={{ color: "#ffffff" }}>
+            Balance: {balance} {selectedNet.symbol} (~€ {balanceEUR})
+          </p>
+        </div>
 
         <div className={styles.walletActions}>
           <input
