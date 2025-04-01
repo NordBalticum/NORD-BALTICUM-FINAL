@@ -13,7 +13,7 @@ import AvatarDisplay from "@/components/AvatarDisplay";
 
 import { useMagicLink } from "@/contexts/MagicLinkContext";
 import { getWalletBalance } from "@/lib/ethers";
-import { fetchPrices } from "@/utils/fetchPrices"; // jei nėra – duosiu
+import { fetchPrices } from "@/utils/fetchPrices";
 
 const networksData = [
   {
@@ -63,11 +63,13 @@ export default function Dashboard() {
   const networks = useMemo(() => networksData, []);
 
   useEffect(() => {
-    if (!user || !wallet?.address) router.push("/");
-  }, [user, wallet]);
+    if (!user || !wallet?.address) {
+      router.push("/");
+    }
+  }, [user, wallet, router]);
 
   useEffect(() => {
-    const load = async () => {
+    const loadBalances = async () => {
       if (!wallet?.address) return;
 
       try {
@@ -100,15 +102,15 @@ export default function Dashboard() {
 
         setBalances(updated);
         setTotalEUR(total.toFixed(2));
-      } catch (e) {
-        console.error("❌ Failed to load balances:", e.message);
+      } catch (err) {
+        console.error("❌ Failed to load balances:", err.message);
       }
     };
 
-    load();
-    const interval = setInterval(load, 20000);
+    loadBalances();
+    const interval = setInterval(loadBalances, 30000);
     return () => clearInterval(interval);
-  }, [wallet]);
+  }, [wallet, networks]);
 
   return (
     <main className={`${styles.container} ${background.gradient}`}>
@@ -122,13 +124,13 @@ export default function Dashboard() {
         )}
 
         <div className={styles.totalValueContainer}>
-          <p className={styles.totalLabel}>Total Value</p>
+          <p className={styles.totalLabel}>Total Portfolio Value</p>
           <p className={styles.totalValue}>€ {totalEUR}</p>
         </div>
 
         <div className={styles.assetList}>
           {networks.map((net) => {
-            const bal = balances?.[net.key] || {
+            const bal = balances[net.key] || {
               balance: "0.00000",
               eur: "0.00",
             };
@@ -156,7 +158,7 @@ export default function Dashboard() {
 
                 <div className={styles.assetRight}>
                   <span className={styles.assetAmount}>
-                    {parseFloat(bal.balance || 0).toFixed(5)} {net.symbol}
+                    {parseFloat(bal.balance).toFixed(5)} {net.symbol}
                   </span>
                   <span className={styles.assetEur}>€ {bal.eur}</span>
                 </div>
