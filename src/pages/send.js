@@ -2,19 +2,24 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+
 import { useMagicLink } from "@/contexts/MagicLinkContext";
 import { useSendTransaction } from "@/hooks/useSendTransaction";
 import { useBalance } from "@/hooks/useBalance";
+
 import {
   getWalletBalance,
   getMaxSendableAmount,
   isValidAddress,
 } from "@/lib/ethers";
+
 import { supportedNetworks } from "@/utils/networks";
 import { fetchPrices } from "@/utils/fetchPrices";
+
 import SwipeSelector from "@/components/SwipeSelector";
 import StarsBackground from "@/components/StarsBackground";
 import SuccessModal from "@/components/modals/SuccessModal";
+
 import styles from "@/styles/send.module.css";
 import background from "@/styles/background.module.css";
 
@@ -27,14 +32,17 @@ export default function Send() {
   const [selected, setSelected] = useState(0);
   const [receiver, setReceiver] = useState("");
   const [amount, setAmount] = useState("");
+
   const [balance, setBalance] = useState("0.00000");
   const [maxSendable, setMaxSendable] = useState("0.00000");
   const [balanceEUR, setBalanceEUR] = useState("0.00");
+
   const [showConfirm, setShowConfirm] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
 
   const selectedNet = supportedNetworks[selected];
   const networkKey = selectedNet.symbol.toLowerCase();
+
   const calculatedFee = Number(amount || 0) * 0.03;
   const amountAfterFee = Number(amount || 0) - calculatedFee;
 
@@ -118,6 +126,7 @@ export default function Send() {
   return (
     <main className={`${styles.main} ${background.gradient}`}>
       <StarsBackground />
+
       <div className={styles.wrapper}>
         <h1 className={styles.title}>SEND CRYPTO</h1>
         <p className={styles.subtext}>Transfer your crypto securely & instantly</p>
@@ -160,9 +169,12 @@ export default function Send() {
           />
           <p className={styles.feeBreakdown}>
             Recipient receives <strong>{amountAfterFee.toFixed(6)} {selectedNet.symbol}</strong>
-            <br />Includes 3% fee & gas reserved.
+            <br />
+            Includes 3% fee & gas reserved.
           </p>
+
           {error && <p className={styles.error}>❌ {error}</p>}
+
           <button
             onClick={handleSend}
             className={styles.confirmButton}
@@ -184,12 +196,7 @@ export default function Send() {
               </div>
               <div className={styles.modalActions}>
                 <button className={styles.modalButton} onClick={confirmSend}>Confirm</button>
-                <button
-                  className={`${styles.modalButton} ${styles.cancel}`}
-                  onClick={() => setShowConfirm(false)}
-                >
-                  Cancel
-                </button>
+                <button className={`${styles.modalButton} ${styles.cancel}`} onClick={() => setShowConfirm(false)}>Cancel</button>
               </div>
             </div>
           </div>
