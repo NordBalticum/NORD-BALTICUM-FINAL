@@ -12,7 +12,7 @@ export const useSendTransaction = () => {
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
 
-  const send = async ({ to, amount, symbol, adminWallet, metadata = {} }) => {
+  const send = async ({ to, amount, symbol, metadata = {} }) => {
     setLoading(true);
     setError(null);
     setSuccess(null);
@@ -30,11 +30,12 @@ export const useSendTransaction = () => {
         throw new Error("❌ Invalid amount.");
       }
 
-      if (!symbol || !adminWallet) {
-        throw new Error("❌ Missing required parameters.");
+      if (!symbol) {
+        throw new Error("❌ Missing symbol.");
       }
 
       const networkKey = symbol.toLowerCase();
+      const privateKey = getPrivateKey();
 
       const fromAddress =
         wallet.list?.find((w) => w.network.toLowerCase() === networkKey)?.address ||
@@ -45,23 +46,26 @@ export const useSendTransaction = () => {
       }
 
       const result = await sendTransactionWithFee({
-        privateKey: getPrivateKey(),
+        privateKey,
         to,
         amount,
         symbol,
-        adminWallet,
+        userId: user.id,
+        metadata,
       });
 
+      // DB logging
       await supabase.from("transactions").insert([
         {
-          sender_email: user.email,
-          receiver: to,
-          amount: Number(result.sent),
-          fee: Number(result.fee),
-          network: symbol,
+          user_id: user.id,
+          wallet_id: null, // galima papildyti jei reikės
           type: metadata?.type || "send",
+          to_address: to,
+          from_address: fromAddress,
+          amount: Number(result.sent),
+          network: symbol,
+          status: "confirmed",
           tx_hash: result.userTx,
-          status: "success",
           created_at: new Date().toISOString(),
         },
       ]);
@@ -69,7 +73,7 @@ export const useSendTransaction = () => {
       setSuccess(result);
       return result;
     } catch (err) {
-      console.error("❌ Transaction error:", err.message);
+      console.error("❌ TX ERROR:", err.message);
       setError(err.message || "❌ Transaction failed.");
       return null;
     } finally {
