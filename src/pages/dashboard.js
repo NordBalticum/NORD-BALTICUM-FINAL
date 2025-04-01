@@ -55,7 +55,7 @@ const networksData = [
 
 export default function Dashboard() {
   const router = useRouter();
-  const { user, wallet } = useMagicLink();
+  const { user, wallet, loadingUser } = useMagicLink();
 
   const [balances, setBalances] = useState({});
   const [totalEUR, setTotalEUR] = useState("0.00");
@@ -63,10 +63,10 @@ export default function Dashboard() {
   const networks = useMemo(() => networksData, []);
 
   useEffect(() => {
-    if (!user || !wallet?.address) {
+    if (!loadingUser && (!user || !wallet?.address)) {
       router.push("/");
     }
-  }, [user, wallet, router]);
+  }, [user, wallet, loadingUser, router]);
 
   useEffect(() => {
     const loadBalances = async () => {
@@ -111,6 +111,10 @@ export default function Dashboard() {
     const interval = setInterval(loadBalances, 30000);
     return () => clearInterval(interval);
   }, [wallet, networks]);
+
+  if (loadingUser) {
+    return <div className={styles.loading}>Loading...</div>;
+  }
 
   return (
     <main className={`${styles.container} ${background.gradient}`}>
