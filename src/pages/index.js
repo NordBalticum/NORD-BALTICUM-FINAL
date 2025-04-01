@@ -55,6 +55,7 @@ export default function Home() {
   const handleEmailLogin = async (e) => {
     e.preventDefault();
     if (!email.trim()) return setMessage("❌ Please enter a valid email.");
+
     setStatus("sending");
     setMessage("⏳ Sending Magic Link...");
 
