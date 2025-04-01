@@ -18,8 +18,6 @@ import SuccessModal from "@/components/modals/SuccessModal";
 import styles from "@/styles/send.module.css";
 import background from "@/styles/background.module.css";
 
-const ADMIN_WALLET = process.env.NEXT_PUBLIC_ADMIN_WALLET;
-
 export default function Send() {
   const router = useRouter();
   const { user, wallet, getPrivateKey } = useMagicLink();
@@ -56,13 +54,12 @@ export default function Send() {
       setBalance(formatted);
 
       const prices = await fetchPrices();
-      const price = prices[selectedNet.symbol] || 0;
+      const price = prices[selectedNet.symbol.toUpperCase()] || 0;
       const eur = (parseFloat(formatted) * price).toFixed(2);
       setBalanceEUR(eur);
 
       const max = await getMaxSendableAmount(getPrivateKey(), networkKey);
-      console.log("Max Sendable:", max); // Debug line
-      setMaxSendable(max);  // Ensure this value is correctly assigned
+      setMaxSendable(max);
     } catch (err) {
       console.warn("❌ Balance fetch failed:", err.message);
       setBalance("0.00000");
@@ -187,7 +184,12 @@ export default function Send() {
               </div>
               <div className={styles.modalActions}>
                 <button className={styles.modalButton} onClick={confirmSend}>Confirm</button>
-                <button className={`${styles.modalButton} ${styles.cancel}`} onClick={() => setShowConfirm(false)}>Cancel</button>
+                <button
+                  className={`${styles.modalButton} ${styles.cancel}`}
+                  onClick={() => setShowConfirm(false)}
+                >
+                  Cancel
+                </button>
               </div>
             </div>
           </div>
