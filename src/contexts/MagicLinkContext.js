@@ -24,9 +24,7 @@ export function MagicLinkProvider({ children }) {
   const [sessionChecked, setSessionChecked] = useState(false);
 
   // === AES encryption ===
-  const encrypt = (text) =>
-    CryptoJS.AES.encrypt(text, ENCRYPTION_KEY).toString();
-
+  const encrypt = (text) => CryptoJS.AES.encrypt(text, ENCRYPTION_KEY).toString();
   const decrypt = (cipher) => {
     try {
       const bytes = CryptoJS.AES.decrypt(cipher, ENCRYPTION_KEY);
@@ -65,9 +63,10 @@ export function MagicLinkProvider({ children }) {
     }
   };
 
-  // === DB wallet logic ===
+  // === Gauti arba sukurti piniginę ===
   const getOrCreateWallet = useCallback(async (userId) => {
     try {
+      // 1. Bandome iš Supabase
       const { data, error } = await supabase
         .from("wallets")
         .select("address, private_key_encrypted")
@@ -76,14 +75,16 @@ export function MagicLinkProvider({ children }) {
 
       if (error && error.code !== "PGRST116") throw error;
 
+      // 2. Jeigu rado piniginę DB
       if (data?.address && data?.private_key_encrypted) {
-        if (!getPrivateKey()) {
-          const decrypted = decrypt(data.private_key_encrypted);
-          if (decrypted) storePrivateKey(decrypted);
+        const decrypted = decrypt(data.private_key_encrypted);
+        if (decrypted && !getPrivateKey()) {
+          storePrivateKey(decrypted);
         }
         return { address: data.address };
       }
 
+      // 3. Jei nėra – tik tada generuoja naują
       const newWallet = ethers.Wallet.createRandom();
       const encryptedKey = encrypt(newWallet.privateKey);
       storePrivateKey(newWallet.privateKey);
@@ -100,12 +101,12 @@ export function MagicLinkProvider({ children }) {
       if (insertError) throw insertError;
       return { address: newWallet.address };
     } catch (err) {
-      console.error("❌ Wallet error:", err.message);
+      console.error("❌ Wallet init error:", err.message);
       return null;
     }
   }, []);
 
-  // === Session logic ===
+  // === Prisijungimo sesijos paleidimas ===
   const initSession = useCallback(async () => {
     setLoading(true);
     try {
@@ -117,10 +118,13 @@ export function MagicLinkProvider({ children }) {
       }
 
       setUser(data.user);
+
       const walletData = await getOrCreateWallet(data.user.id);
-      if (walletData?.address) setWallet(walletData);
+      if (walletData?.address) {
+        setWallet(walletData);
+      }
     } catch (err) {
-      console.error("❌ Session init error:", err.message);
+      console.error("❌ Session error:", err.message);
       setUser(null);
       setWallet(null);
     } finally {
@@ -129,6 +133,7 @@ export function MagicLinkProvider({ children }) {
     }
   }, [getOrCreateWallet]);
 
+  // === AuthStateChange + Auto refresh ===
   useEffect(() => {
     initSession();
 
@@ -155,7 +160,7 @@ export function MagicLinkProvider({ children }) {
           router.push("/");
         }
       });
-    }, 10 * 60 * 1000); // kas 10min auto logout
+    }, 10 * 60 * 1000);
 
     return () => {
       listener?.subscription?.unsubscribe();
@@ -163,7 +168,7 @@ export function MagicLinkProvider({ children }) {
     };
   }, [initSession, getOrCreateWallet, router]);
 
-  // === Auto-redirect į dashboard ===
+  // === Auto redirect į dashboard jei prisijungęs ===
   useEffect(() => {
     if (!loading && sessionChecked && user && wallet?.address) {
       if (window.location.pathname === "/") {
@@ -172,7 +177,7 @@ export function MagicLinkProvider({ children }) {
     }
   }, [loading, sessionChecked, user, wallet, router]);
 
-  // === Auth ===
+  // === Login / Logout funkcijos ===
   const signInWithEmail = async (email) => {
     const { error } = await supabase.auth.signInWithOtp({ email });
     if (error) throw new Error("Magic Link error: " + error.message);
@@ -181,9 +186,7 @@ export function MagicLinkProvider({ children }) {
   const signInWithGoogle = async () => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: {
-        redirectTo: `${window.location.origin}/dashboard`,
-      },
+      options: { redirectTo: `${window.location.origin}/dashboard` },
     });
     if (error) throw new Error("Google login error: " + error.message);
   };
