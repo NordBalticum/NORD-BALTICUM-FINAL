@@ -22,9 +22,8 @@ export function MagicLinkProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const [sessionChecked, setSessionChecked] = useState(false);
 
-  // === Encrypt / Decrypt utils
-  const encrypt = (text) =>
-    CryptoJS.AES.encrypt(text, ENCRYPTION_KEY).toString();
+  // === Encryption ===
+  const encrypt = (text) => CryptoJS.AES.encrypt(text, ENCRYPTION_KEY).toString();
   const decrypt = (cipher) => {
     try {
       const bytes = CryptoJS.AES.decrypt(cipher, ENCRYPTION_KEY);
@@ -34,7 +33,7 @@ export function MagicLinkProvider({ children }) {
     }
   };
 
-  // === LocalStorage handling
+  // === LocalStorage ===
   const storePrivateKey = (pk) => {
     try {
       const encrypted = encrypt(pk);
@@ -43,6 +42,7 @@ export function MagicLinkProvider({ children }) {
       console.error("❌ Store PK error:", err.message);
     }
   };
+
   const getPrivateKey = () => {
     try {
       const cipher = localStorage.getItem("nbc_private_key");
@@ -61,9 +61,10 @@ export function MagicLinkProvider({ children }) {
     }
   };
 
-  // === Wallet fetch or create (by email)
+  // === Wallet: create or fetch by email ===
   const getOrCreateWallet = useCallback(async (email) => {
     if (!email) return null;
+
     try {
       const { data, error } = await supabase
         .from("wallets")
@@ -91,7 +92,6 @@ export function MagicLinkProvider({ children }) {
         };
       }
 
-      // === Create new wallet if none found
       const newWallet = ethers.Wallet.createRandom();
       const encryptedKey = encrypt(newWallet.privateKey);
       storePrivateKey(newWallet.privateKey);
@@ -123,7 +123,7 @@ export function MagicLinkProvider({ children }) {
     }
   }, []);
 
-  // === Sesijos inicijavimas
+  // === Init Session ===
   const initSession = useCallback(async () => {
     setLoading(true);
     try {
@@ -149,7 +149,7 @@ export function MagicLinkProvider({ children }) {
     }
   }, [getOrCreateWallet]);
 
-  // === Supabase auth state listener
+  // === Auth Events ===
   useEffect(() => {
     initSession();
 
@@ -167,16 +167,15 @@ export function MagicLinkProvider({ children }) {
       }
     );
 
-    const interval = setInterval(() => {
-      supabase.auth.getSession().then(({ data: { session } }) => {
-        if (!session) {
-          setUser(null);
-          setWallet(null);
-          localStorage.removeItem("nbc_private_key");
-          router.push("/");
-        }
-      });
-    }, 600_000); // kas 10 min
+    const interval = setInterval(async () => {
+      const { data } = await supabase.auth.getSession();
+      if (!data?.session) {
+        setUser(null);
+        setWallet(null);
+        localStorage.removeItem("nbc_private_key");
+        router.push("/");
+      }
+    }, 600_000);
 
     return () => {
       listener?.subscription?.unsubscribe();
@@ -184,13 +183,16 @@ export function MagicLinkProvider({ children }) {
     };
   }, [initSession, getOrCreateWallet, router]);
 
+  // === Auto-redirect to dashboard
   useEffect(() => {
     if (!loading && sessionChecked && user?.email && wallet?.address) {
-      if (window.location.pathname === "/") router.push("/dashboard");
+      if (window.location.pathname === "/") {
+        router.push("/dashboard");
+      }
     }
   }, [loading, sessionChecked, user, wallet, router]);
 
-  // === Login / Logout
+  // === Auth Methods ===
   const signInWithEmail = async (email) => {
     const { error } = await supabase.auth.signInWithOtp({ email });
     if (error) throw new Error("Magic Link error: " + error.message);
@@ -199,7 +201,9 @@ export function MagicLinkProvider({ children }) {
   const signInWithGoogle = async () => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: `${window.location.origin}/dashboard` },
+      options: {
+        redirectTo: `${window.location.origin}/dashboard`,
+      },
     });
     if (error) throw new Error("Google login error: " + error.message);
   };
