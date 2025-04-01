@@ -20,8 +20,10 @@ export function MagicLinkProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const [sessionChecked, setSessionChecked] = useState(false);
 
-  // AES encryption helpers
-  const encrypt = (text) => CryptoJS.AES.encrypt(text, ENCRYPTION_KEY).toString();
+  // === AES encryption helpers ===
+  const encrypt = (text) =>
+    CryptoJS.AES.encrypt(text, ENCRYPTION_KEY).toString();
+
   const decrypt = (cipher) => {
     try {
       const bytes = CryptoJS.AES.decrypt(cipher, ENCRYPTION_KEY);
@@ -31,7 +33,7 @@ export function MagicLinkProvider({ children }) {
     }
   };
 
-  // Local storage helpers
+  // === Local storage helpers ===
   const storePrivateKey = (pk) => {
     try {
       const encrypted = encrypt(pk);
@@ -60,36 +62,42 @@ export function MagicLinkProvider({ children }) {
     }
   };
 
+  // === Supabase wallet logic ===
   const getOrCreateWallet = useCallback(async (userId) => {
     try {
       const { data, error } = await supabase
         .from("wallets")
-        .select("*")
+        .select("address, private_key_encrypted")
         .eq("user_id", userId)
         .single();
 
       if (error && error.code !== "PGRST116") throw error;
 
-      if (data?.address) {
+      // Jei duomenys yra
+      if (data?.address && data?.private_key_encrypted) {
         if (!getPrivateKey()) {
-          const newWallet = ethers.Wallet.createRandom();
-          storePrivateKey(newWallet.privateKey);
+          const decrypted = decrypt(data.private_key_encrypted);
+          if (decrypted) storePrivateKey(decrypted);
         }
         return { address: data.address };
       }
 
+      // Naujas wallet
       const newWallet = ethers.Wallet.createRandom();
+      const encryptedKey = encrypt(newWallet.privateKey);
       storePrivateKey(newWallet.privateKey);
 
       const { error: insertError } = await supabase.from("wallets").insert([
         {
           user_id: userId,
           address: newWallet.address,
+          private_key_encrypted: encryptedKey,
           network: "multi",
         },
       ]);
 
       if (insertError) throw insertError;
+
       return { address: newWallet.address };
     } catch (err) {
       console.error("❌ Wallet error:", err.message);
@@ -97,6 +105,7 @@ export function MagicLinkProvider({ children }) {
     }
   }, []);
 
+  // === Session ===
   const initSession = useCallback(async () => {
     setLoading(true);
     try {
@@ -120,12 +129,15 @@ export function MagicLinkProvider({ children }) {
     }
   }, [getOrCreateWallet]);
 
+  // === Effect to init session and listen auth changes ===
   useEffect(() => {
     initSession();
+
     const { data: listener } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
         const loggedUser = session?.user || null;
         setUser(loggedUser);
+
         if (loggedUser?.id) {
           const walletData = await getOrCreateWallet(loggedUser.id);
           if (walletData?.address) setWallet(walletData);
@@ -134,9 +146,11 @@ export function MagicLinkProvider({ children }) {
         }
       }
     );
+
     return () => listener?.subscription?.unsubscribe();
   }, [initSession, getOrCreateWallet]);
 
+  // === Auth ===
   const signInWithEmail = async (email) => {
     const { error } = await supabase.auth.signInWithOtp({ email });
     if (error) throw new Error("Magic Link error: " + error.message);
