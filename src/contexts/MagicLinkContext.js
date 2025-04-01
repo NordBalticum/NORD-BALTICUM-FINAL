@@ -11,6 +11,7 @@ import { supabase } from "@/lib/supabase";
 import CryptoJS from "crypto-js";
 import { ethers } from "ethers";
 import { useRouter } from "next/navigation";
+import { getWalletBalance } from "@/lib/ethers";
 
 const MagicLinkContext = createContext();
 const ENCRYPTION_KEY = "NORD-BALTICUM-2025-SECRET";
@@ -22,9 +23,12 @@ export function MagicLinkProvider({ children }) {
   const [wallet, setWallet] = useState(null);
   const [loading, setLoading] = useState(true);
   const [sessionChecked, setSessionChecked] = useState(false);
+  const [balances, setBalances] = useState({});
 
-  // === AES encryption ===
-  const encrypt = (text) => CryptoJS.AES.encrypt(text, ENCRYPTION_KEY).toString();
+  // === AES ENCRYPTION ===
+  const encrypt = (text) =>
+    CryptoJS.AES.encrypt(text, ENCRYPTION_KEY).toString();
+
   const decrypt = (cipher) => {
     try {
       const bytes = CryptoJS.AES.decrypt(cipher, ENCRYPTION_KEY);
@@ -34,7 +38,7 @@ export function MagicLinkProvider({ children }) {
     }
   };
 
-  // === LocalStorage helpers ===
+  // === LOCALSTORAGE ===
   const storePrivateKey = (pk) => {
     try {
       const encrypted = encrypt(pk);
@@ -63,10 +67,9 @@ export function MagicLinkProvider({ children }) {
     }
   };
 
-  // === Gauti arba sukurti piniginę ===
+  // === WALLET FETCH/CREATE ===
   const getOrCreateWallet = useCallback(async (userId) => {
     try {
-      // 1. Bandome iš Supabase
       const { data, error } = await supabase
         .from("wallets")
         .select("address, private_key_encrypted")
@@ -75,16 +78,20 @@ export function MagicLinkProvider({ children }) {
 
       if (error && error.code !== "PGRST116") throw error;
 
-      // 2. Jeigu rado piniginę DB
       if (data?.address && data?.private_key_encrypted) {
         const decrypted = decrypt(data.private_key_encrypted);
         if (decrypted && !getPrivateKey()) {
           storePrivateKey(decrypted);
         }
-        return { address: data.address };
+        return {
+          address: data.address,
+          list: ["bnb", "tbnb", "eth", "matic", "avax"].map((n) => ({
+            network: n,
+            address: data.address,
+          })),
+        };
       }
 
-      // 3. Jei nėra – tik tada generuoja naują
       const newWallet = ethers.Wallet.createRandom();
       const encryptedKey = encrypt(newWallet.privateKey);
       storePrivateKey(newWallet.privateKey);
@@ -99,14 +106,32 @@ export function MagicLinkProvider({ children }) {
       ]);
 
       if (insertError) throw insertError;
-      return { address: newWallet.address };
+
+      return {
+        address: newWallet.address,
+        list: ["bnb", "tbnb", "eth", "matic", "avax"].map((n) => ({
+          network: n,
+          address: newWallet.address,
+        })),
+      };
     } catch (err) {
-      console.error("❌ Wallet init error:", err.message);
+      console.error("❌ Wallet error:", err.message);
       return null;
     }
   }, []);
 
-  // === Prisijungimo sesijos paleidimas ===
+  // === BALANCES FETCH ===
+  const fetchBalances = useCallback(async (walletData) => {
+    if (!walletData?.list) return;
+    const result = {};
+    for (const item of walletData.list) {
+      const { formatted } = await getWalletBalance(item.address, item.network);
+      result[item.network] = formatted;
+    }
+    setBalances(result);
+  }, []);
+
+  // === INIT SESSION ===
   const initSession = useCallback(async () => {
     setLoading(true);
     try {
@@ -118,10 +143,10 @@ export function MagicLinkProvider({ children }) {
       }
 
       setUser(data.user);
-
       const walletData = await getOrCreateWallet(data.user.id);
       if (walletData?.address) {
         setWallet(walletData);
+        await fetchBalances(walletData);
       }
     } catch (err) {
       console.error("❌ Session error:", err.message);
@@ -131,9 +156,9 @@ export function MagicLinkProvider({ children }) {
       setLoading(false);
       setSessionChecked(true);
     }
-  }, [getOrCreateWallet]);
+  }, [getOrCreateWallet, fetchBalances]);
 
-  // === AuthStateChange + Auto refresh ===
+  // === AUTH + SESSION VALIDATION ===
   useEffect(() => {
     initSession();
 
@@ -144,7 +169,10 @@ export function MagicLinkProvider({ children }) {
 
         if (loggedUser?.id) {
           const walletData = await getOrCreateWallet(loggedUser.id);
-          if (walletData?.address) setWallet(walletData);
+          if (walletData?.address) {
+            setWallet(walletData);
+            await fetchBalances(walletData);
+          }
         } else {
           setWallet(null);
         }
@@ -160,15 +188,15 @@ export function MagicLinkProvider({ children }) {
           router.push("/");
         }
       });
-    }, 10 * 60 * 1000);
+    }, 2 * 60 * 1000); // Every 2 min
 
     return () => {
       listener?.subscription?.unsubscribe();
       clearInterval(interval);
     };
-  }, [initSession, getOrCreateWallet, router]);
+  }, [initSession, getOrCreateWallet, fetchBalances, router]);
 
-  // === Auto redirect į dashboard jei prisijungęs ===
+  // === AUTO REDIRECT ===
   useEffect(() => {
     if (!loading && sessionChecked && user && wallet?.address) {
       if (window.location.pathname === "/") {
@@ -177,7 +205,7 @@ export function MagicLinkProvider({ children }) {
     }
   }, [loading, sessionChecked, user, wallet, router]);
 
-  // === Login / Logout funkcijos ===
+  // === AUTH ===
   const signInWithEmail = async (email) => {
     const { error } = await supabase.auth.signInWithOtp({ email });
     if (error) throw new Error("Magic Link error: " + error.message);
@@ -186,7 +214,9 @@ export function MagicLinkProvider({ children }) {
   const signInWithGoogle = async () => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: `${window.location.origin}/dashboard` },
+      options: {
+        redirectTo: `${window.location.origin}/dashboard`,
+      },
     });
     if (error) throw new Error("Google login error: " + error.message);
   };
@@ -205,12 +235,14 @@ export function MagicLinkProvider({ children }) {
       value={{
         user,
         wallet,
+        balances,
         loadingUser: loading || !sessionChecked,
         signInWithEmail,
         signInWithGoogle,
         signOut,
         getPrivateKey,
         getWalletAddress,
+        refreshBalances: () => fetchBalances(wallet),
       }}
     >
       {children}
