@@ -21,8 +21,7 @@ export function MagicLinkProvider({ children }) {
   const [sessionChecked, setSessionChecked] = useState(false);
 
   // === AES encryption helpers ===
-  const encrypt = (text) =>
-    CryptoJS.AES.encrypt(text, ENCRYPTION_KEY).toString();
+  const encrypt = (text) => CryptoJS.AES.encrypt(text, ENCRYPTION_KEY).toString();
 
   const decrypt = (cipher) => {
     try {
@@ -73,7 +72,6 @@ export function MagicLinkProvider({ children }) {
 
       if (error && error.code !== "PGRST116") throw error;
 
-      // Jei duomenys yra
       if (data?.address && data?.private_key_encrypted) {
         if (!getPrivateKey()) {
           const decrypted = decrypt(data.private_key_encrypted);
@@ -82,7 +80,6 @@ export function MagicLinkProvider({ children }) {
         return { address: data.address };
       }
 
-      // Naujas wallet
       const newWallet = ethers.Wallet.createRandom();
       const encryptedKey = encrypt(newWallet.privateKey);
       storePrivateKey(newWallet.privateKey);
@@ -97,7 +94,6 @@ export function MagicLinkProvider({ children }) {
       ]);
 
       if (insertError) throw insertError;
-
       return { address: newWallet.address };
     } catch (err) {
       console.error("❌ Wallet error:", err.message);
@@ -129,7 +125,6 @@ export function MagicLinkProvider({ children }) {
     }
   }, [getOrCreateWallet]);
 
-  // === Effect to init session and listen auth changes ===
   useEffect(() => {
     initSession();
 
@@ -147,8 +142,30 @@ export function MagicLinkProvider({ children }) {
       }
     );
 
-    return () => listener?.subscription?.unsubscribe();
+    const interval = setInterval(() => {
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (!session) {
+          setUser(null);
+          setWallet(null);
+          localStorage.removeItem("nbc_private_key");
+          window.location.href = "/";
+        }
+      });
+    }, 10 * 60 * 1000); // Kas 10 minučių tikrinimas
+
+    return () => {
+      listener?.subscription?.unsubscribe();
+      clearInterval(interval);
+    };
   }, [initSession, getOrCreateWallet]);
+
+  useEffect(() => {
+    if (!loading && sessionChecked && user && wallet?.address) {
+      if (window.location.pathname === "/") {
+        window.location.href = "/dashboard";
+      }
+    }
+  }, [loading, sessionChecked, user, wallet]);
 
   // === Auth ===
   const signInWithEmail = async (email) => {
