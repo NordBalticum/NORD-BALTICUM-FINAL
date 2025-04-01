@@ -10,18 +10,22 @@ import React, {
 import { supabase } from "@/lib/supabase";
 import CryptoJS from "crypto-js";
 import { ethers } from "ethers";
+import { useRouter } from "next/navigation";
 
 const MagicLinkContext = createContext();
 const ENCRYPTION_KEY = "NORD-BALTICUM-2025-SECRET";
 
 export function MagicLinkProvider({ children }) {
+  const router = useRouter();
+
   const [user, setUser] = useState(null);
   const [wallet, setWallet] = useState(null);
   const [loading, setLoading] = useState(true);
   const [sessionChecked, setSessionChecked] = useState(false);
 
-  // === AES encryption helpers ===
-  const encrypt = (text) => CryptoJS.AES.encrypt(text, ENCRYPTION_KEY).toString();
+  // === AES encryption ===
+  const encrypt = (text) =>
+    CryptoJS.AES.encrypt(text, ENCRYPTION_KEY).toString();
 
   const decrypt = (cipher) => {
     try {
@@ -32,7 +36,7 @@ export function MagicLinkProvider({ children }) {
     }
   };
 
-  // === Local storage helpers ===
+  // === LocalStorage helpers ===
   const storePrivateKey = (pk) => {
     try {
       const encrypted = encrypt(pk);
@@ -61,7 +65,7 @@ export function MagicLinkProvider({ children }) {
     }
   };
 
-  // === Supabase wallet logic ===
+  // === DB wallet logic ===
   const getOrCreateWallet = useCallback(async (userId) => {
     try {
       const { data, error } = await supabase
@@ -101,7 +105,7 @@ export function MagicLinkProvider({ children }) {
     }
   }, []);
 
-  // === Session ===
+  // === Session logic ===
   const initSession = useCallback(async () => {
     setLoading(true);
     try {
@@ -148,24 +152,25 @@ export function MagicLinkProvider({ children }) {
           setUser(null);
           setWallet(null);
           localStorage.removeItem("nbc_private_key");
-          window.location.href = "/";
+          router.push("/");
         }
       });
-    }, 10 * 60 * 1000); // Kas 10 minučių tikrinimas
+    }, 10 * 60 * 1000); // kas 10min auto logout
 
     return () => {
       listener?.subscription?.unsubscribe();
       clearInterval(interval);
     };
-  }, [initSession, getOrCreateWallet]);
+  }, [initSession, getOrCreateWallet, router]);
 
+  // === Auto-redirect į dashboard ===
   useEffect(() => {
     if (!loading && sessionChecked && user && wallet?.address) {
       if (window.location.pathname === "/") {
-        window.location.href = "/dashboard";
+        router.push("/dashboard");
       }
     }
-  }, [loading, sessionChecked, user, wallet]);
+  }, [loading, sessionChecked, user, wallet, router]);
 
   // === Auth ===
   const signInWithEmail = async (email) => {
@@ -189,6 +194,7 @@ export function MagicLinkProvider({ children }) {
     setUser(null);
     setWallet(null);
     localStorage.removeItem("nbc_private_key");
+    router.push("/");
   };
 
   return (
