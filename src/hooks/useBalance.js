@@ -5,7 +5,6 @@ import { useMagicLink } from "@/contexts/MagicLinkContext";
 import { getWalletBalance } from "@/lib/ethers";
 import { supabase } from "@/lib/supabase";
 
-// Mape susiejame kripto simbolius su jų Coingecko ID
 const priceSymbols = {
   BNB: "binancecoin",
   TBNB: "binancecoin",
@@ -14,7 +13,6 @@ const priceSymbols = {
   AVAX: "avalanche-2",
 };
 
-// Kainų paėmimas iš CoinGecko API
 const fetchPrices = async () => {
   try {
     const ids = Object.values(priceSymbols).join(",");
@@ -24,7 +22,7 @@ const fetchPrices = async () => {
     const data = await res.json();
 
     return Object.entries(priceSymbols).reduce((acc, [symbol, id]) => {
-      acc[symbol] = data?.[id]?.eur || 0; // Jei kaina negaunama, priskiriame 0
+      acc[symbol] = data?.[id]?.eur || 0;
       return acc;
     }, {});
   } catch (e) {
@@ -33,17 +31,15 @@ const fetchPrices = async () => {
   }
 };
 
-// Custom hookas balansų paėmimui
 export const useBalance = () => {
-  const { wallet, user } = useMagicLink(); // Pasiimame informaciją apie wallet ir user
+  const { wallet, user } = useMagicLink();
   const [balances, setBalances] = useState({});
   const [isLoading, setIsLoading] = useState(true);
-  const isFetching = useRef(false); // Norint patikrinti, ar jau nevykdoma užklausa
+  const isFetching = useRef(false);
   const controller = useRef(null);
 
-  // Refresh funkcija, kurios metu atnaujiname balansus
   const refresh = useCallback(async () => {
-    if (!wallet?.list || !user?.id || isFetching.current) return;
+    if (!wallet?.list || !user?.email || isFetching.current) return;
 
     isFetching.current = true;
     setIsLoading(true);
@@ -51,41 +47,37 @@ export const useBalance = () => {
     controller.current = new AbortController();
 
     try {
-      const prices = await fetchPrices(); // Gaukime kainas iš API
-      const results = {}; // Rezultatai, kuriuos laikysime
+      const prices = await fetchPrices();
+      const results = {};
 
-      // Atliekame užklausas kiekvienam wallet
       await Promise.all(
         wallet.list.map(async ({ network, address }) => {
           try {
             const lowerNet = network.toLowerCase();
-            const { formatted } = await getWalletBalance(address, lowerNet); // Gaukite balansą
+            const { formatted } = await getWalletBalance(address, lowerNet);
 
-            // Kaina ir konvertavimas į EUR
-            const price = prices?.[network] || 0;
+            const price = prices?.[network.toUpperCase()] || 0;
             const eur = (parseFloat(formatted) * price).toFixed(2);
 
-            // Užpildome rezultatus
             results[network] = {
               address,
               amount: formatted,
               eur: isNaN(eur) ? "0.00" : eur,
             };
 
-            // Sinchronizuojame balansą su Supabase duomenų baze
             await supabase.from("balances").upsert(
               [
                 {
-                  user_id: user.id,
-                  wallet_address: address,
+                  email: user.email,
                   network,
+                  wallet_address: address,
                   amount: formatted,
                   eur,
                   updated_at: new Date().toISOString(),
                 },
               ],
               {
-                onConflict: ["user_id", "wallet_address", "network"], // Jei jau egzistuoja - atnaujina
+                onConflict: ["email", "wallet_address", "network"],
               }
             );
           } catch (err) {
@@ -99,13 +91,11 @@ export const useBalance = () => {
         })
       );
 
-      // Apskaičiuojame bendrą EUR sumą
       const total = Object.values(results).reduce((sum, b) => {
         const val = parseFloat(b.eur);
         return sum + (isNaN(val) ? 0 : val);
       }, 0);
 
-      // Rezultatų atnaujinimas
       results.totalEUR = total.toFixed(2);
       setBalances(results);
     } catch (err) {
@@ -116,14 +106,13 @@ export const useBalance = () => {
     }
   }, [wallet, user]);
 
-  // Periodiškai atnaujiname kas 30 sekundžių
   useEffect(() => {
-    if (wallet?.list?.length && user?.id) {
-      refresh(); // Pirmas atnaujinimas
-      const interval = setInterval(refresh, 30000); // 30 sek intervalas
-      return () => clearInterval(interval); // Grąžinimas su intervalų valdymu
+    if (wallet?.list?.length && user?.email) {
+      refresh();
+      const interval = setInterval(refresh, 30000);
+      return () => clearInterval(interval);
     }
   }, [wallet, user, refresh]);
 
-  return { balances, isLoading, refresh }; // Grąžinimas
+  return { balances, isLoading, refresh };
 };
