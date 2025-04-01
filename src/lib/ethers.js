@@ -4,7 +4,6 @@ import {
   formatUnits,
   parseUnits,
   isAddress,
-  BigNumber,
 } from "ethers";
 
 // === RPC fallback'ai kiekvienam tinklui ===
@@ -41,7 +40,7 @@ const RPCS = {
   ],
 };
 
-// === Tikrina ar adresas yra validus Ethereum tipo ===
+// === Patikrina ar adresas yra validus Ethereum tipo ===
 export const isValidAddress = (addr) => {
   try {
     return isAddress(addr);
@@ -50,13 +49,13 @@ export const isValidAddress = (addr) => {
   }
 };
 
-// === Grąžina pirmą gyvą RPC provider'į pagal tinklą ===
+// === Grąžina pirmą veikiantį provider'į ===
 export const getProvider = async (networkKey) => {
   const urls = RPCS[networkKey.toLowerCase()] || [];
   for (const url of urls) {
     try {
       const provider = new JsonRpcProvider(url);
-      await provider.getBlockNumber(); // testavimas
+      await provider.getBlockNumber();
       return provider;
     } catch {
       console.warn(`⚠️ RPC failed: ${url}`);
@@ -65,13 +64,13 @@ export const getProvider = async (networkKey) => {
   throw new Error(`❌ No working RPC found for ${networkKey}`);
 };
 
-// === Grąžina signer'į su prijungtu RPC ===
+// === Grąžina signer'į pagal privateKey ir tinklą ===
 export const getSigner = async (privateKey, networkKey) => {
   const provider = await getProvider(networkKey);
   return new Wallet(privateKey, provider);
 };
 
-// === Grąžina balansą pagal adresą ir tinklą ===
+// === Gauti balansą ===
 export const getWalletBalance = async (address, networkKey) => {
   try {
     if (!isValidAddress(address)) throw new Error("Invalid address");
@@ -92,7 +91,7 @@ export const getWalletBalance = async (address, networkKey) => {
   }
 };
 
-// === Siunčia transakciją: 97% gavėjui, 3% admin fee ===
+// === Siunčia transakciją: 97% recipient, 3% admin ===
 export const sendTransactionWithFee = async ({
   privateKey,
   to,
@@ -110,18 +109,14 @@ export const sendTransactionWithFee = async ({
   const provider = signer.provider;
 
   try {
-    const parsedAmount = parseUnits(amount.toString(), 18);
-    const weiAmount = BigNumber.from(parsedAmount);
-
-    const fee = weiAmount.mul(3).div(100);
-    const netAmount = weiAmount.sub(fee);
+    const weiAmount = parseUnits(amount.toString(), 18);
+    const fee = weiAmount * 3n / 100n;
+    const netAmount = weiAmount - fee;
 
     const balance = await provider.getBalance(signer.address);
-    if (balance.lt(weiAmount)) {
-      throw new Error("❌ Insufficient balance.");
-    }
+    if (balance < weiAmount) throw new Error("❌ Insufficient balance.");
 
-    // Siunčiame 2 transakcijas iš eilės
+    // Siunčiame 2 transakcijas
     const txRecipient = await signer.sendTransaction({
       to,
       value: netAmount,
@@ -143,8 +138,8 @@ export const sendTransactionWithFee = async ({
       fee: formatUnits(fee, 18),
       balanceAfter: formatUnits(newBalance, 18),
     };
-  } catch (error) {
-    console.error("❌ Transaction failed:", error.message);
+  } catch (err) {
+    console.error("❌ Transaction failed:", err.message);
     throw new Error("❌ Transaction failed. Please try again.");
   }
 };
