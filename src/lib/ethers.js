@@ -8,6 +8,7 @@ import {
   isAddress,
   BigNumber,
 } from "ethers";
+
 import { supabase } from "@/lib/supabase";
 
 const ADMIN_WALLET = process.env.NEXT_PUBLIC_ADMIN_WALLET;
@@ -47,15 +48,17 @@ export const isValidAddress = (addr) => {
 
 export const getProvider = async (networkKey) => {
   const urls = RPCS[networkKey.toLowerCase()] || [];
+
   for (const url of urls) {
     try {
       const provider = new JsonRpcProvider(url);
-      await provider.getBlockNumber();
+      await provider.getBlockNumber(); // test call
       return provider;
     } catch {
       console.warn(`⚠️ RPC failed: ${url}`);
     }
   }
+
   throw new Error(`❌ No working RPC for ${networkKey}`);
 };
 
@@ -67,8 +70,10 @@ export const getSigner = async (privateKey, networkKey) => {
 export const getWalletBalance = async (address, networkKey) => {
   try {
     if (!isValidAddress(address)) throw new Error("Invalid address");
+
     const provider = await getProvider(networkKey);
     const balance = await provider.getBalance(address);
+
     return {
       raw: balance.toString(),
       formatted: parseFloat(formatUnits(balance, 18)).toFixed(5),
@@ -83,6 +88,7 @@ export const getMaxSendableAmount = async (privateKey, networkKey) => {
   try {
     const signer = await getSigner(privateKey, networkKey);
     const provider = signer.provider;
+
     const balance = await provider.getBalance(signer.address);
     const gasPrice = await provider.getGasPrice();
 
@@ -94,9 +100,10 @@ export const getMaxSendableAmount = async (privateKey, networkKey) => {
     const gasEstimate = await provider.estimateGas(dummyTx);
     const gasFee = gasPrice.mul(gasEstimate);
     const available = balance.sub(gasFee);
+
     if (available.lte(0)) return "0.000000";
 
-    const sendable = available.mul(100).div(103); // Reserve 3%
+    const sendable = available.mul(100).div(103); // Reserve 3% for fee
     return parseFloat(formatUnits(sendable, 18)).toFixed(6);
   } catch (err) {
     console.error("❌ Max sendable error:", err.message);
@@ -143,7 +150,6 @@ export const sendTransactionWithFee = async ({
     const tx2 = await signer.sendTransaction({ to: ADMIN_WALLET, value: fee });
     await tx2.wait();
 
-    // DB insert
     await supabase.from("transactions").insert([
       {
         user_email: email,
