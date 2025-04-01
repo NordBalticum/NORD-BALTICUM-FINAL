@@ -35,7 +35,6 @@ export default function Send() {
 
   const selectedNet = supportedNetworks[selected];
   const networkKey = selectedNet.symbol.toLowerCase();
-
   const calculatedFee = Number(amount || 0) * 0.03;
   const amountAfterFee = Number(amount || 0) - calculatedFee;
 
@@ -155,8 +154,8 @@ export default function Send() {
             autoComplete="off"
           />
           <p className={styles.feeBreakdown}>
-            Recipient will get <strong>{amountAfterFee.toFixed(6)} {selectedNet.symbol}</strong>
-            {" "} | <span title="3% admin fee will be deducted.">Includes 3% fee</span>
+            Recipient will get <strong>{amountAfterFee.toFixed(6)} {selectedNet.symbol}</strong>{" "}
+            | <span title="3% admin fee will be deducted.">Includes 3% fee</span>
           </p>
           {error && <p className={styles.error}>❌ {error}</p>}
           <button
@@ -179,21 +178,14 @@ export default function Send() {
                 <p><strong>Recipient gets:</strong> {amountAfterFee.toFixed(6)} {selectedNet.symbol}</p>
               </div>
               <div className={styles.modalActions}>
-                <button className={styles.modalButton} onClick={confirmSend}>
-                  Confirm
-                </button>
-                <button
-                  className={`${styles.modalButton} ${styles.cancel}`}
-                  onClick={() => setShowConfirm(false)}
-                >
-                  Cancel
-                </button>
+                <button className={styles.modalButton} onClick={confirmSend}>Confirm</button>
+                <button className={`${styles.modalButton} ${styles.cancel}`} onClick={() => setShowConfirm(false)}>Cancel</button>
               </div>
             </div>
           </div>
         )}
 
-        {success && (
+        {showSuccess && (
           <SuccessModal
             message="Transaction Sent Successfully!"
             txHash={success.userTx}
