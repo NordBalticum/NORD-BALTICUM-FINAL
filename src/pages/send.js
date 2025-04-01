@@ -41,12 +41,12 @@ export default function Send() {
   const calculatedFee = Number(amount || 0) * 0.03;
   const amountAfterFee = Number(amount || 0) - calculatedFee;
 
-  // Session auth redirect
   useEffect(() => {
-    if (!user || !wallet?.address) router.push("/");
+    if (!user || !wallet?.address) {
+      router.push("/");
+    }
   }, [user, wallet]);
 
-  // Load balance
   useEffect(() => {
     const loadBalance = async () => {
       try {
@@ -55,7 +55,7 @@ export default function Send() {
             (w) => w.network.toLowerCase() === networkKey
           )?.address || wallet?.address;
 
-        if (!currentAddress) throw new Error("Wallet address not found");
+        if (!currentAddress) throw new Error("Address not found");
 
         const { formatted } = await getWalletBalance(currentAddress, networkKey);
         setBalance(formatted);
@@ -71,10 +71,9 @@ export default function Send() {
       }
     };
 
-    if (user && wallet) loadBalance();
+    loadBalance();
   }, [selected, wallet]);
 
-  // Validate and show confirm
   const handleSend = () => {
     setErrorMessage("");
 
@@ -88,20 +87,14 @@ export default function Send() {
       return;
     }
 
-    if (Number(amount) <= 0) {
-      setErrorMessage("❌ Amount must be greater than 0.");
-      return;
-    }
-
-    if (Number(amount) > Number(balance)) {
-      setErrorMessage("❌ Insufficient balance.");
+    if (Number(amount) <= 0 || Number(amount) > Number(balance)) {
+      setErrorMessage("❌ Insufficient balance or invalid amount.");
       return;
     }
 
     setShowConfirm(true);
   };
 
-  // Send transaction
   const confirmSend = async () => {
     setShowConfirm(false);
     setLoading(true);
