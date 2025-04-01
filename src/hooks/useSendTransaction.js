@@ -7,7 +7,6 @@ import {
   isValidAddress,
   getMaxSendableAmount,
 } from "@/lib/ethers";
-import { supabase } from "@/lib/supabase";
 
 export const useSendTransaction = () => {
   const { user, wallet, getPrivateKey } = useMagicLink();
@@ -22,8 +21,9 @@ export const useSendTransaction = () => {
     setSuccess(null);
 
     try {
-      if (!user || !wallet || !getPrivateKey()) {
-        throw new Error("❌ Wallet not ready.");
+      // === Saugumo ir paruošimo patikra
+      if (!user?.email || !wallet || !getPrivateKey()) {
+        throw new Error("❌ Wallet not ready or email missing.");
       }
 
       if (!isValidAddress(to)) {
@@ -41,14 +41,13 @@ export const useSendTransaction = () => {
       const privateKey = getPrivateKey();
       const networkKey = symbol.toLowerCase();
 
-      // === Patikrinam ar vartotojas netauko per daug (MetaMask style)
+      // === Max sendable limit
       const maxSendable = await getMaxSendableAmount(privateKey, networkKey);
       if (Number(amount) > Number(maxSendable)) {
-        throw new Error(
-          `❌ You can send up to ${maxSendable} ${symbol} including fee & gas.`
-        );
+        throw new Error(`❌ Max you can send (incl. fee): ${maxSendable} ${symbol}`);
       }
 
+      // === Vartotojo išėjimo adresas (naudojamas vizualizacijai, ne TX)
       const fromAddress =
         wallet.list?.find((w) => w.network.toLowerCase() === networkKey)?.address ||
         wallet.address;
@@ -57,30 +56,17 @@ export const useSendTransaction = () => {
         throw new Error("❌ Sender address not found.");
       }
 
+      // === Atlikti transakciją per ethers.js logiką
       const result = await sendTransactionWithFee({
         privateKey,
         to,
         amount,
         symbol,
-        userId: user.id,
+        email: user.email,
         metadata,
       });
 
-      await supabase.from("transactions").insert([
-        {
-          user_id: user.id,
-          wallet_id: null,
-          type: metadata?.type || "send",
-          to_address: to,
-          from_address: fromAddress,
-          amount: Number(result.sent),
-          network: symbol,
-          status: "confirmed",
-          tx_hash: result.userTx,
-          created_at: new Date().toISOString(),
-        },
-      ]);
-
+      // === Grąžinti sėkmingą rezultatą
       setSuccess(result);
       return result;
     } catch (err) {
