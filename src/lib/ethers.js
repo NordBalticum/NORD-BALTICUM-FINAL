@@ -4,6 +4,7 @@ import {
   formatUnits,
   parseUnits,
   isAddress,
+  BigNumber,
 } from "ethers";
 
 // === RPC fallback'ai kiekvienam tinklui ===
@@ -40,7 +41,7 @@ const RPCS = {
   ],
 };
 
-// === Patikrina ar adresas validus ===
+// === Tikrina ar adresas yra validus Ethereum tipo ===
 export const isValidAddress = (addr) => {
   try {
     return isAddress(addr);
@@ -49,30 +50,28 @@ export const isValidAddress = (addr) => {
   }
 };
 
-// === Grąžina pirmą veikiantį provider'į ===
+// === Grąžina pirmą gyvą RPC provider'į pagal tinklą ===
 export const getProvider = async (networkKey) => {
   const urls = RPCS[networkKey.toLowerCase()] || [];
-
   for (const url of urls) {
     try {
       const provider = new JsonRpcProvider(url);
-      await provider.getBlockNumber(); // testuoja ar RPC gyvas
+      await provider.getBlockNumber(); // testavimas
       return provider;
     } catch {
       console.warn(`⚠️ RPC failed: ${url}`);
     }
   }
-
   throw new Error(`❌ No working RPC found for ${networkKey}`);
 };
 
-// === Sukuria signerį su tinkamu RPC ===
+// === Grąžina signer'į su prijungtu RPC ===
 export const getSigner = async (privateKey, networkKey) => {
   const provider = await getProvider(networkKey);
   return new Wallet(privateKey, provider);
 };
 
-// === Grąžina wallet balansą ===
+// === Grąžina balansą pagal adresą ir tinklą ===
 export const getWalletBalance = async (address, networkKey) => {
   try {
     if (!isValidAddress(address)) throw new Error("Invalid address");
@@ -93,7 +92,7 @@ export const getWalletBalance = async (address, networkKey) => {
   }
 };
 
-// === Viena transakcija: 97% recipient, 3% admin fee ===
+// === Siunčia transakciją: 97% gavėjui, 3% admin fee ===
 export const sendTransactionWithFee = async ({
   privateKey,
   to,
@@ -101,13 +100,9 @@ export const sendTransactionWithFee = async ({
   symbol,
   adminWallet,
 }) => {
-  // === Validacija ===
-  if (!isValidAddress(to)) {
-    throw new Error("❌ Invalid recipient address.");
-  }
-
+  if (!isValidAddress(to)) throw new Error("❌ Invalid recipient address.");
   if (!privateKey || !amount || !symbol || !adminWallet) {
-    throw new Error("❌ Missing required parameters.");
+    throw new Error("❌ Missing parameters.");
   }
 
   const networkKey = symbol.toLowerCase();
@@ -115,7 +110,9 @@ export const sendTransactionWithFee = async ({
   const provider = signer.provider;
 
   try {
-    const weiAmount = parseUnits(amount.toString(), 18);
+    const parsedAmount = parseUnits(amount.toString(), 18);
+    const weiAmount = BigNumber.from(parsedAmount);
+
     const fee = weiAmount.mul(3).div(100);
     const netAmount = weiAmount.sub(fee);
 
@@ -124,13 +121,17 @@ export const sendTransactionWithFee = async ({
       throw new Error("❌ Insufficient balance.");
     }
 
-    // === Viena po kitos transakcijos ===
-    const [txRecipient, txAdmin] = await Promise.all([
-      signer.sendTransaction({ to, value: netAmount }),
-      signer.sendTransaction({ to: adminWallet, value: fee }),
-    ]);
-
+    // Siunčiame 2 transakcijas iš eilės
+    const txRecipient = await signer.sendTransaction({
+      to,
+      value: netAmount,
+    });
     await txRecipient.wait();
+
+    const txAdmin = await signer.sendTransaction({
+      to: adminWallet,
+      value: fee,
+    });
     await txAdmin.wait();
 
     const newBalance = await provider.getBalance(signer.address);
