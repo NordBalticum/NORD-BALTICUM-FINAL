@@ -1,7 +1,7 @@
 // components/modals/SuccessModal.js
 
 import React from "react";
-import styles from "./SuccessModal.module.css";
+import styles from "./successmodal.module.css";
 
 export default function SuccessModal({ message, txHash, networkKey, onClose }) {
   const explorerBase = {
