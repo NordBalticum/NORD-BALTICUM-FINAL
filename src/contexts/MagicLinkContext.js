@@ -12,9 +12,11 @@ export function MagicLinkProvider({ children }) {
   const [user, setUser] = useState(null);
   const [wallet, setWallet] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [initialized, setInitialized] = useState(false);
 
   // === AES šifravimas / dešifravimas ===
-  const encrypt = (text) => CryptoJS.AES.encrypt(text, ENCRYPTION_KEY).toString();
+  const encrypt = (text) =>
+    CryptoJS.AES.encrypt(text, ENCRYPTION_KEY).toString();
 
   const decrypt = (cipher) => {
     try {
@@ -46,6 +48,7 @@ export function MagicLinkProvider({ children }) {
   const getWalletAddress = () => {
     const pk = getPrivateKey();
     if (!pk) return null;
+
     try {
       return new ethers.Wallet(pk).address;
     } catch {
@@ -63,7 +66,6 @@ export function MagicLinkProvider({ children }) {
     if (error && error.code !== "PGRST116") throw error;
 
     if (data?.address) {
-      // Jei adresas jau yra, bet neturim localStorage private key – sukurti naują
       if (!getPrivateKey()) {
         console.warn("⚠️ Missing local private key. Generating new...");
         const newWallet = ethers.Wallet.createRandom();
@@ -72,7 +74,6 @@ export function MagicLinkProvider({ children }) {
       return data.address;
     }
 
-    // Sukuria naują piniginę
     const newWallet = ethers.Wallet.createRandom();
     storePrivateKey(newWallet.privateKey);
 
@@ -89,11 +90,10 @@ export function MagicLinkProvider({ children }) {
     return newWallet.address;
   };
 
-  // === Sesijos ir piniginės init ===
-  useEffect(() => {
-    const init = async () => {
-      setLoading(true);
+  const initSession = async () => {
+    setLoading(true);
 
+    try {
       const { data, error } = await supabase.auth.getUser();
       if (error) console.warn("❌ Error fetching user:", error.message);
 
@@ -108,14 +108,21 @@ export function MagicLinkProvider({ children }) {
           console.error("❌ Wallet setup failed:", e.message);
         }
       }
-
+    } catch (err) {
+      console.error("❌ Critical auth error:", err.message);
+    } finally {
       setLoading(false);
-    };
+      setInitialized(true);
+    }
+  };
 
-    init();
+  useEffect(() => {
+    initSession();
 
     const { data: listener } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
+        if (!initialized) return;
+
         const loggedUser = session?.user || null;
         setUser(loggedUser);
 
@@ -135,15 +142,13 @@ export function MagicLinkProvider({ children }) {
     return () => {
       listener?.subscription?.unsubscribe();
     };
-  }, []);
+  }, [initialized]);
 
-  // === Magic Link login ===
   const signInWithEmail = async (email) => {
     const { error } = await supabase.auth.signInWithOtp({ email });
     if (error) throw new Error("Magic Link error: " + error.message);
   };
 
-  // === Google OAuth login ===
   const signInWithGoogle = async () => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
@@ -154,7 +159,6 @@ export function MagicLinkProvider({ children }) {
     if (error) throw new Error("Google login error: " + error.message);
   };
 
-  // === Atsijungimas ===
   const signOut = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) throw new Error("Logout error: " + error.message);
