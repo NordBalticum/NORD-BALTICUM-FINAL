@@ -1,8 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-
 import { useMagicLink } from "@/contexts/MagicLinkContext";
 import { useSendTransaction } from "@/hooks/useSendTransaction";
 import { useBalance } from "@/hooks/useBalance";
@@ -13,11 +12,9 @@ import {
 } from "@/lib/ethers";
 import { supportedNetworks } from "@/utils/networks";
 import { fetchPrices } from "@/utils/fetchPrices";
-
 import SwipeSelector from "@/components/SwipeSelector";
 import StarsBackground from "@/components/StarsBackground";
 import SuccessModal from "@/components/modals/SuccessModal";
-
 import styles from "@/styles/send.module.css";
 import background from "@/styles/background.module.css";
 
@@ -123,7 +120,6 @@ export default function Send() {
   return (
     <main className={`${styles.main} ${background.gradient}`}>
       <StarsBackground />
-
       <div className={styles.wrapper}>
         <h1 className={styles.title}>SEND CRYPTO</h1>
         <p className={styles.subtext}>Transfer your crypto securely & instantly</p>
