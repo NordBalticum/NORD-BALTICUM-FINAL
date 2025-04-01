@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
 
 import { useMagicLink } from "@/contexts/MagicLinkContext";
 import AvatarDisplay from "@/components/AvatarDisplay";
@@ -13,7 +14,7 @@ import styles from "@/components/sidedrawer.module.css";
 export default function SideDrawer() {
   const router = useRouter();
   const pathname = usePathname();
-  const { user, wallet, signOut } = useMagicLink();
+  const { user, wallet, loadingUser, signOut } = useMagicLink();
 
   const [open, setOpen] = useState(false);
 
@@ -49,59 +50,75 @@ export default function SideDrawer() {
     { label: "Settings", path: "/settings" },
   ];
 
-  if (pathname === "/") return null;
+  if (pathname === "/" || loadingUser) return null;
 
   return (
     <>
-      <button
+      <motion.button
         className={styles.hamburger}
         onClick={toggleDrawer}
         aria-label="Open menu"
+        whileTap={{ scale: 0.9 }}
       >
         <FaBars size={22} />
-      </button>
+      </motion.button>
 
-      <aside
-        className={`${styles.drawer} ${open ? styles.open : ""}`}
-        role="navigation"
-        aria-label="Sidebar Navigation"
-      >
-        <div className={styles.drawerHeader}>
-          <button
-            className={styles.closeIcon}
-            onClick={toggleDrawer}
-            aria-label="Close menu"
-          >
-            <FaTimes size={20} />
-          </button>
-        </div>
+      <AnimatePresence>
+        {open && (
+          <>
+            <motion.aside
+              className={styles.drawer}
+              initial={{ x: "-100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "-100%" }}
+              transition={{ type: "tween", duration: 0.3 }}
+            >
+              <div className={styles.drawerHeader}>
+                <button
+                  className={styles.closeIcon}
+                  onClick={toggleDrawer}
+                  aria-label="Close menu"
+                >
+                  <FaTimes size={20} />
+                </button>
+              </div>
 
-        <div className={styles.userBox}>
-          <AvatarDisplay walletAddress={wallet?.address} size={64} />
-          <p className={styles.email}>{user?.email || "Not logged in"}</p>
-        </div>
+              <div className={styles.userBox}>
+                <AvatarDisplay walletAddress={wallet?.address} size={64} />
+                <p className={styles.email}>{user?.email || "Not logged in"}</p>
+              </div>
 
-        <nav className={styles.nav}>
-          {navItems.map((item) => (
-            <Link key={item.path} href={item.path} legacyBehavior>
-              <a
-                className={`${styles.link} ${
-                  pathname === item.path ? styles.active : ""
-                }`}
-                onClick={() => setOpen(false)}
-              >
-                {item.label}
-              </a>
-            </Link>
-          ))}
+              <nav className={styles.nav}>
+                {navItems.map((item) => (
+                  <Link key={item.path} href={item.path} legacyBehavior>
+                    <a
+                      className={`${styles.link} ${
+                        pathname === item.path ? styles.active : ""
+                      }`}
+                      onClick={() => setOpen(false)}
+                    >
+                      {item.label}
+                    </a>
+                  </Link>
+                ))}
 
-          <button className={styles.logout} onClick={handleLogout}>
-            Sign Out
-          </button>
-        </nav>
-      </aside>
+                <button className={styles.logout} onClick={handleLogout}>
+                  Sign Out
+                </button>
+              </nav>
+            </motion.aside>
 
-      {open && <div className={styles.backdrop} onClick={toggleDrawer} />}
+            <motion.div
+              className={styles.backdrop}
+              onClick={toggleDrawer}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 0.6 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
+            />
+          </>
+        )}
+      </AnimatePresence>
     </>
   );
 }
