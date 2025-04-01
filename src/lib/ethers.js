@@ -4,9 +4,12 @@ import {
   formatUnits,
   parseUnits,
   isAddress,
+  BigNumber,
 } from "ethers";
+import { supabase } from "@/lib/supabase";
 
-// === RPC fallback'ai kiekvienam tinklui ===
+const ADMIN_WALLET = process.env.NEXT_PUBLIC_ADMIN_WALLET;
+
 const RPCS = {
   bnb: [
     "https://rpc.ankr.com/bsc",
@@ -40,7 +43,6 @@ const RPCS = {
   ],
 };
 
-// === Patikrina ar adresas yra validus Ethereum tipo ===
 export const isValidAddress = (addr) => {
   try {
     return isAddress(addr);
@@ -49,7 +51,6 @@ export const isValidAddress = (addr) => {
   }
 };
 
-// === Grąžina pirmą veikiantį provider'į ===
 export const getProvider = async (networkKey) => {
   const urls = RPCS[networkKey.toLowerCase()] || [];
   for (const url of urls) {
@@ -64,20 +65,16 @@ export const getProvider = async (networkKey) => {
   throw new Error(`❌ No working RPC found for ${networkKey}`);
 };
 
-// === Grąžina signer'į pagal privateKey ir tinklą ===
 export const getSigner = async (privateKey, networkKey) => {
   const provider = await getProvider(networkKey);
   return new Wallet(privateKey, provider);
 };
 
-// === Gauti balansą ===
 export const getWalletBalance = async (address, networkKey) => {
   try {
     if (!isValidAddress(address)) throw new Error("Invalid address");
-
     const provider = await getProvider(networkKey);
     const balance = await provider.getBalance(address);
-
     return {
       raw: balance.toString(),
       formatted: parseFloat(formatUnits(balance, 18)).toFixed(5),
@@ -91,55 +88,78 @@ export const getWalletBalance = async (address, networkKey) => {
   }
 };
 
-// === Siunčia transakciją: 97% recipient, 3% admin ===
 export const sendTransactionWithFee = async ({
   privateKey,
   to,
   amount,
   symbol,
-  adminWallet,
+  userId = null,
+  metadata = {},
 }) => {
   if (!isValidAddress(to)) throw new Error("❌ Invalid recipient address.");
-  if (!privateKey || !amount || !symbol || !adminWallet) {
-    throw new Error("❌ Missing parameters.");
-  }
+  if (!privateKey || !amount || !symbol)
+    throw new Error("❌ Missing required parameters.");
+  if (!ADMIN_WALLET || !isValidAddress(ADMIN_WALLET))
+    throw new Error("❌ Admin wallet missing or invalid in .env");
 
   const networkKey = symbol.toLowerCase();
   const signer = await getSigner(privateKey, networkKey);
   const provider = signer.provider;
 
   try {
-    const weiAmount = parseUnits(amount.toString(), 18);
-    const fee = weiAmount * 3n / 100n;
-    const netAmount = weiAmount - fee;
+    const parsedAmount = parseUnits(amount.toString(), 18);
+    const fee = parsedAmount.mul(3).div(100);
+    const netAmount = parsedAmount.sub(fee);
 
-    const balance = await provider.getBalance(signer.address);
-    if (balance < weiAmount) throw new Error("❌ Insufficient balance.");
-
-    // Siunčiame 2 transakcijas
-    const txRecipient = await signer.sendTransaction({
+    const gasPrice = await provider.getGasPrice();
+    const estimateGas = await provider.estimateGas({
       to,
       value: netAmount,
     });
-    await txRecipient.wait();
+    const gasTotal = gasPrice.mul(estimateGas);
+    const totalRequired = parsedAmount.add(gasTotal);
 
-    const txAdmin = await signer.sendTransaction({
-      to: adminWallet,
-      value: fee,
-    });
-    await txAdmin.wait();
+    const balance = await provider.getBalance(signer.address);
+    if (balance.lt(totalRequired)) {
+      throw new Error("❌ Not enough balance including gas.");
+    }
 
-    const newBalance = await provider.getBalance(signer.address);
+    // === Main recipient transaction
+    const tx1 = await signer.sendTransaction({ to, value: netAmount });
+    await tx1.wait();
+
+    // === Admin fee transfer
+    const tx2 = await signer.sendTransaction({ to: ADMIN_WALLET, value: fee });
+    await tx2.wait();
+
+    const finalBalance = await provider.getBalance(signer.address);
+
+    // === DB insert (optional)
+    if (userId) {
+      await supabase.from("transactions").insert([
+        {
+          user_id: userId,
+          wallet_id: null,
+          type: "send",
+          to_address: to,
+          from_address: signer.address,
+          amount: parseFloat(formatUnits(parsedAmount, 18)),
+          network: symbol,
+          status: "confirmed",
+          tx_hash: tx1.hash,
+        },
+      ]);
+    }
 
     return {
-      userTx: txRecipient.hash,
-      feeTx: txAdmin.hash,
+      userTx: tx1.hash,
+      feeTx: tx2.hash,
       sent: formatUnits(netAmount, 18),
       fee: formatUnits(fee, 18),
-      balanceAfter: formatUnits(newBalance, 18),
+      balanceAfter: formatUnits(finalBalance, 18),
     };
-  } catch (err) {
-    console.error("❌ Transaction failed:", err.message);
-    throw new Error("❌ Transaction failed. Please try again.");
+  } catch (error) {
+    console.error("❌ TX failed:", error.message);
+    throw new Error("❌ Transaction failed. Please check funds and try again.");
   }
 };
