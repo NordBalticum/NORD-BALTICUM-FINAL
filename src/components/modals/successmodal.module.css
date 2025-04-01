@@ -1,77 +1,112 @@
-/* successModal.module.css */
-
-.modalBackdrop {
+.overlay {
   position: fixed;
   top: 0;
   left: 0;
   width: 100vw;
   height: 100vh;
-  background: rgba(10, 15, 30, 0.85);
-  backdrop-filter: blur(10px);
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(6px);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 9999;
 }
 
-.modalContainer {
-  background: linear-gradient(145deg, rgba(20, 30, 50, 0.95), rgba(10, 15, 25, 0.95));
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 24px;
-  padding: 32px 24px;
+.modal {
+  background: #0e0e0e;
+  border-radius: 20px;
+  padding: 30px;
   max-width: 400px;
   width: 90%;
-  box-shadow: 0 0 25px rgba(255, 255, 255, 0.08);
-  color: #fff;
   text-align: center;
-  animation: fadeInScale 0.4s ease;
+  box-shadow: 0 0 25px rgba(255, 215, 0, 0.25);
+  animation: fadeIn 0.4s ease-in-out;
 }
 
 .title {
-  font-size: 1.5rem;
-  font-weight: 700;
-  margin-bottom: 12px;
+  font-size: 1.8rem;
+  font-weight: bold;
+  color: #fff;
+  margin-bottom: 10px;
 }
 
 .message {
-  font-size: 1rem;
-  opacity: 0.85;
+  color: #ccc;
   margin-bottom: 20px;
-  line-height: 1.5;
 }
 
-.txHash {
+.txContainer {
+  background: #161616;
+  border-radius: 10px;
+  padding: 10px 15px;
+  margin: 15px 0;
+}
+
+.txLabel {
   font-size: 0.9rem;
-  background-color: rgba(255, 255, 255, 0.06);
-  padding: 10px;
-  border-radius: 12px;
+  color: #aaa;
+  margin-bottom: 5px;
+}
+
+.txBox {
+  background: #111;
+  border: 1px solid #333;
+  padding: 8px 12px;
+  border-radius: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #fff;
+  font-size: 0.9rem;
   word-break: break-all;
-  margin-bottom: 20px;
+}
+
+.copyButton {
+  background: #222;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.copyButton:hover {
+  background: #444;
+}
+
+.explorerLink {
+  display: inline-block;
+  margin-top: 10px;
+  color: #ffd700;
+  text-decoration: underline;
+  font-size: 0.9rem;
 }
 
 .closeButton {
+  margin-top: 25px;
+  padding: 10px 20px;
+  font-size: 1rem;
   background: #000;
   color: #fff;
-  border: 1px solid #fff;
-  padding: 10px 22px;
-  border-radius: 12px;
-  font-weight: 600;
+  border: 2px solid #fff;
+  border-radius: 10px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: 0.2s ease;
 }
 
 .closeButton:hover {
   background: #fff;
   color: #000;
-  box-shadow: 0 0 12px #fff;
 }
 
-@keyframes fadeInScale {
-  0% {
+@keyframes fadeIn {
+  from {
     opacity: 0;
-    transform: scale(0.9);
+    transform: scale(0.92);
   }
-  100% {
+  to {
     opacity: 1;
     transform: scale(1);
   }
