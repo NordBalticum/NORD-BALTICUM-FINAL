@@ -17,16 +17,14 @@ const ENCRYPTION_KEY = "NORD-BALTICUM-2025-SECRET";
 
 export function MagicLinkProvider({ children }) {
   const router = useRouter();
-
   const [user, setUser] = useState(null);
   const [wallet, setWallet] = useState(null);
   const [loading, setLoading] = useState(true);
   const [sessionChecked, setSessionChecked] = useState(false);
 
-  // === Encryption utils ===
+  // === Encrypt / Decrypt utils
   const encrypt = (text) =>
     CryptoJS.AES.encrypt(text, ENCRYPTION_KEY).toString();
-
   const decrypt = (cipher) => {
     try {
       const bytes = CryptoJS.AES.decrypt(cipher, ENCRYPTION_KEY);
@@ -36,16 +34,15 @@ export function MagicLinkProvider({ children }) {
     }
   };
 
-  // === LocalStorage ===
+  // === LocalStorage handling
   const storePrivateKey = (pk) => {
     try {
       const encrypted = encrypt(pk);
       localStorage.setItem("nbc_private_key", encrypted);
     } catch (err) {
-      console.error("❌ Failed to store key:", err.message);
+      console.error("❌ Store PK error:", err.message);
     }
   };
-
   const getPrivateKey = () => {
     try {
       const cipher = localStorage.getItem("nbc_private_key");
@@ -57,31 +54,31 @@ export function MagicLinkProvider({ children }) {
 
   const getWalletAddress = () => {
     const pk = getPrivateKey();
-    if (!pk) return null;
     try {
-      return new ethers.Wallet(pk).address;
+      return pk ? new ethers.Wallet(pk).address : null;
     } catch {
       return null;
     }
   };
 
-  // === DB piniginės gavimas arba sukūrimas ===
-  const getOrCreateWallet = useCallback(async (userId) => {
+  // === Wallet fetch or create (by email)
+  const getOrCreateWallet = useCallback(async (email) => {
+    if (!email) return null;
     try {
       const { data, error } = await supabase
         .from("wallets")
         .select("address, private_key_encrypted")
-        .eq("user_id", userId)
+        .eq("email", email)
         .single();
 
       if (error && error.code !== "PGRST116") throw error;
 
       if (data?.address && data?.private_key_encrypted) {
-        const localPk = getPrivateKey();
-        if (!localPk) {
+        if (!getPrivateKey()) {
           const decrypted = decrypt(data.private_key_encrypted);
           if (decrypted) storePrivateKey(decrypted);
         }
+
         return {
           address: data.address,
           list: [
@@ -94,14 +91,14 @@ export function MagicLinkProvider({ children }) {
         };
       }
 
-      // Jei nerasta DB – generuoja
+      // === Create new wallet if none found
       const newWallet = ethers.Wallet.createRandom();
       const encryptedKey = encrypt(newWallet.privateKey);
       storePrivateKey(newWallet.privateKey);
 
       const { error: insertError } = await supabase.from("wallets").insert([
         {
-          user_id: userId,
+          email,
           address: newWallet.address,
           private_key_encrypted: encryptedKey,
           network: "multi",
@@ -126,20 +123,22 @@ export function MagicLinkProvider({ children }) {
     }
   }, []);
 
-  // === Sesijos paleidimas ===
+  // === Sesijos inicijavimas
   const initSession = useCallback(async () => {
     setLoading(true);
     try {
       const { data, error } = await supabase.auth.getUser();
-      if (error || !data?.user) {
+      const currentUser = data?.user;
+
+      if (error || !currentUser) {
         setUser(null);
         setWallet(null);
         return;
       }
 
-      setUser(data.user);
-      const walletData = await getOrCreateWallet(data.user.id);
-      if (walletData?.address) setWallet(walletData);
+      setUser(currentUser);
+      const walletData = await getOrCreateWallet(currentUser.email);
+      if (walletData) setWallet(walletData);
     } catch (err) {
       console.error("❌ Session error:", err.message);
       setUser(null);
@@ -150,18 +149,18 @@ export function MagicLinkProvider({ children }) {
     }
   }, [getOrCreateWallet]);
 
-  // === Auth + timeout listeneriai ===
+  // === Supabase auth state listener
   useEffect(() => {
     initSession();
 
     const { data: listener } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
-        const loggedUser = session?.user || null;
-        setUser(loggedUser);
+        const currentUser = session?.user || null;
+        setUser(currentUser);
 
-        if (loggedUser?.id) {
-          const walletData = await getOrCreateWallet(loggedUser.id);
-          if (walletData?.address) setWallet(walletData);
+        if (currentUser?.email) {
+          const walletData = await getOrCreateWallet(currentUser.email);
+          if (walletData) setWallet(walletData);
         } else {
           setWallet(null);
         }
@@ -177,7 +176,7 @@ export function MagicLinkProvider({ children }) {
           router.push("/");
         }
       });
-    }, 1000 * 60 * 10); // 10 min
+    }, 600_000); // kas 10 min
 
     return () => {
       listener?.subscription?.unsubscribe();
@@ -185,16 +184,13 @@ export function MagicLinkProvider({ children }) {
     };
   }, [initSession, getOrCreateWallet, router]);
 
-  // === Auto redirect į dashboard jei prisijungęs ===
   useEffect(() => {
-    if (!loading && sessionChecked && user && wallet?.address) {
-      if (window.location.pathname === "/") {
-        router.push("/dashboard");
-      }
+    if (!loading && sessionChecked && user?.email && wallet?.address) {
+      if (window.location.pathname === "/") router.push("/dashboard");
     }
   }, [loading, sessionChecked, user, wallet, router]);
 
-  // === Login / Logout ===
+  // === Login / Logout
   const signInWithEmail = async (email) => {
     const { error } = await supabase.auth.signInWithOtp({ email });
     if (error) throw new Error("Magic Link error: " + error.message);
@@ -203,9 +199,7 @@ export function MagicLinkProvider({ children }) {
   const signInWithGoogle = async () => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: {
-        redirectTo: `${window.location.origin}/dashboard`,
-      },
+      options: { redirectTo: `${window.location.origin}/dashboard` },
     });
     if (error) throw new Error("Google login error: " + error.message);
   };
