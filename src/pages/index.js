@@ -17,9 +17,9 @@ export default function Home() {
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState("idle");
   const [message, setMessage] = useState("");
+
   const logoRef = useRef(null);
 
-  // === Logo 3D tilt efektas ===
   useEffect(() => {
     const logo = logoRef.current;
     if (!logo) return;
@@ -47,14 +47,12 @@ export default function Home() {
     };
   }, []);
 
-  // === Redirect jei prisijungęs ===
   useEffect(() => {
     if (!loadingUser && user) {
       router.push("/dashboard");
     }
   }, [user, loadingUser, router]);
 
-  // === Email Magic Link login ===
   const handleEmailLogin = async (e) => {
     e.preventDefault();
 
@@ -78,7 +76,6 @@ export default function Home() {
     }
   };
 
-  // === Google OAuth login ===
   const handleGoogleLogin = async () => {
     setStatus("sending");
     setMessage("⏳ Logging in with Google...");
