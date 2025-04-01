@@ -163,3 +163,30 @@ export const sendTransactionWithFee = async ({
     throw new Error("❌ Transaction failed. Please check funds and try again.");
   }
 };
+
+export const getMaxSendableAmount = async (privateKey, networkKey) => {
+  try {
+    const signer = await getSigner(privateKey, networkKey);
+    const provider = signer.provider;
+
+    const address = signer.address;
+    const balance = await provider.getBalance(address);
+    const gasPrice = await provider.getGasPrice();
+
+    const dummyTx = {
+      to: ADMIN_WALLET,
+      value: parseUnits("0.001", 18), // dummy small amount
+    };
+    const gasEstimate = await provider.estimateGas(dummyTx);
+    const gasFee = gasPrice.mul(gasEstimate);
+
+    const max = balance.sub(gasFee);
+    const divisor = BigNumber.from("103"); // 100 + 3%
+    const sendable = max.mul(100).div(divisor);
+
+    return parseFloat(formatUnits(sendable, 18)).toFixed(6);
+  } catch (err) {
+    console.error("❌ Max sendable error:", err.message);
+    return "0.000000";
+  }
+};
