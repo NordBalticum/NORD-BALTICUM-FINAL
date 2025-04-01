@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import styles from "@/styles/successmodal.module.css";
+import styles from "./successmodal.module.css";
 
 const explorers = {
   bnb: "https://bscscan.com/tx/",
