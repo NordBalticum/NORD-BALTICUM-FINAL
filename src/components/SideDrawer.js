@@ -4,8 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import Image from "next/image";
-import { FaTimes } from "react-icons/fa";
+import { FaTimes, FaBars } from "react-icons/fa"; // pridėta FaBars
 import { useMagicLink } from "@/contexts/MagicLinkContext";
 import { useWallet } from "@/contexts/WalletContext";
 import { utils } from "ethers";
@@ -60,13 +59,7 @@ export default function SideDrawer() {
         onClick={toggleDrawer}
         aria-label="Open menu"
       >
-        <Image
-          src="/icons/hamburger.svg"
-          alt="Menu"
-          width={26}
-          height={26}
-          priority
-        />
+        <FaBars size={22} />
       </button>
 
       <AnimatePresence>
@@ -94,13 +87,6 @@ export default function SideDrawer() {
               </div>
 
               <div className={styles.userBox}>
-                <Image
-                  src="/icons/logo.svg"
-                  alt="NordBalticum Logo"
-                  width={220}
-                  height={80}
-                  priority
-                />
                 <p className={styles.email}>{user?.email}</p>
 
                 <div
