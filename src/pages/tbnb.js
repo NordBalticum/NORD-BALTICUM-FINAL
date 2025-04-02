@@ -4,7 +4,8 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 
-import { useSystem } from "@/contexts/SystemContext";
+import { useMagicLink } from "@/contexts/MagicLinkContext";
+import { useWallet } from "@/contexts/WalletContext";
 import { supabase } from "@/utils/supabaseClient";
 import { getWalletBalance } from "@/lib/ethers.js";
 import { fetchPrices } from "@/utils/fetchPrices";
@@ -14,21 +15,22 @@ import styles from "@/styles/network.module.css";
 
 export default function TBNBPage() {
   const router = useRouter();
-  const { user, wallet } = useSystem();
+  const { user } = useMagicLink();
+  const { publicKey } = useWallet();
 
   const [balance, setBalance] = useState("0.00000");
   const [eur, setEur] = useState("0.00");
   const [latestTx, setLatestTx] = useState(null);
 
   useEffect(() => {
-    if (!user?.email || !wallet?.address) {
+    if (!user?.email || !publicKey) {
       router.push("/");
       return;
     }
 
     const loadBalance = async () => {
       try {
-        const { formatted } = await getWalletBalance(wallet.address, "tbnb");
+        const { formatted } = await getWalletBalance(publicKey, "tbnb");
         const prices = await fetchPrices();
         const price = prices?.TBNB || prices?.BNB || 0;
         const eurValue = (parseFloat(formatted) * price).toFixed(2);
@@ -68,7 +70,7 @@ export default function TBNBPage() {
 
     loadBalance();
     fetchLastTx();
-  }, [user, wallet]);
+  }, [user, publicKey]);
 
   return (
     <main className={`${styles.container} ${background.gradient}`}>
