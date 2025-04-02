@@ -5,8 +5,6 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 
 import { useMagicLink } from "@/contexts/MagicLinkContext";
-import { useWallet } from "@/contexts/WalletContext";
-import { supabase } from "@/utils/supabaseClient";
 import { getWalletBalance } from "@/lib/ethers.js";
 import { fetchPrices } from "@/utils/fetchPrices";
 
@@ -15,8 +13,7 @@ import styles from "@/styles/network.module.css";
 
 export default function TBNBPage() {
   const router = useRouter();
-  const { user } = useMagicLink();
-  const { publicKey } = useWallet();
+  const { user, publicKey } = useMagicLink();
 
   const [balance, setBalance] = useState("0.00000");
   const [eur, setEur] = useState("0.00");
@@ -38,56 +35,36 @@ export default function TBNBPage() {
         setBalance(formatted);
         setEur(eurValue);
       } catch (err) {
-        console.error("❌ Failed to fetch balance:", err.message);
+        console.error("Failed to fetch balance:", err.message);
       }
     };
 
     const fetchLastTx = async () => {
       try {
-        const { data, error } = await supabase
-          .from("transactions")
-          .select("*")
-          .eq("network", "tbnb")
-          .eq("sender_email", user.email)
-          .order("created_at", { ascending: false })
-          .limit(1);
+        const response = await fetch(`/api/transactions?network=tbnb&email=${user.email}`);
+        const { transactions } = await response.json();
 
-        if (error) throw error;
-
-        if (data?.length > 0) {
-          const tx = data[0];
+        if (transactions?.length) {
+          const tx = transactions[0];
           setLatestTx({
-            to: truncate(tx.receiver_email || tx.to_address),
+            to: truncate(tx.to_address, 10),
             amount: parseFloat(tx.amount).toFixed(5),
-            hash: truncate(tx.transaction_hash || tx.tx_hash, 10),
             status: tx.status || "success",
           });
         }
       } catch (err) {
-        console.error("❌ Failed to fetch latest transaction:", err.message);
+        console.error("Failed to fetch latest transaction:", err.message);
       }
     };
 
     loadBalance();
     fetchLastTx();
-  }, [user, publicKey]);
+  }, [user, publicKey, router]);
 
   return (
     <main className={`${styles.container} ${background.gradient}`}>
-      <StarsBackground />
-
       <div className={styles.wrapper}>
         <h1 className={styles.title}>BSC Testnet (TBNB)</h1>
-
-        <div className={styles.chartSection}>
-          <iframe
-            className={styles.chartFrame}
-            src="https://www.tradingview.com/widgetembed/?frameElementId=tradingview_12345&symbol=BINANCE:BNBUSDT&interval=15&theme=dark&style=1&locale=en"
-            frameBorder="0"
-            allowTransparency="true"
-            scrolling="no"
-          />
-        </div>
 
         <div className={styles.balanceCard}>
           <div className={styles.assetLeft}>
@@ -97,7 +74,6 @@ export default function TBNBPage() {
               width={42}
               height={42}
               className={styles.assetLogo}
-              unoptimized
             />
             <div className={styles.assetInfo}>
               <span className={styles.assetSymbol}>TBNB</span>
@@ -111,15 +87,6 @@ export default function TBNBPage() {
           </div>
         </div>
 
-        <div className={styles.buttonRow}>
-          <button className={styles.sendBtn} onClick={() => router.push("/send")}>
-            SEND
-          </button>
-          <button className={styles.receiveBtn} onClick={() => router.push("/receive")}>
-            RECEIVE
-          </button>
-        </div>
-
         <div className={styles.txSection}>
           <h2 className={styles.txTitle}>Last Transaction</h2>
           {latestTx ? (
@@ -127,7 +94,6 @@ export default function TBNBPage() {
               <p><strong>To:</strong> {latestTx.to}</p>
               <p><strong>Amount:</strong> {latestTx.amount} TBNB</p>
               <p><strong>Status:</strong> {latestTx.status}</p>
-              <p><strong>Hash:</strong> {latestTx.hash}</p>
             </div>
           ) : (
             <div className={styles.txBox}>No recent transaction</div>
@@ -138,7 +104,7 @@ export default function TBNBPage() {
   );
 }
 
-// === Helper funkcija adresui trumpinti
+// Helper function to truncate strings
 function truncate(str, len = 6) {
   if (!str || str.length <= len * 2) return str;
   return `${str.slice(0, len)}...${str.slice(-len)}`;
