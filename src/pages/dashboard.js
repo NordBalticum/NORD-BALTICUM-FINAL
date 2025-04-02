@@ -3,9 +3,8 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-
-import { useMagicLink } from "@/contexts/MagicLinkContext";
-import { useWallet } from "@/contexts/WalletContext";
+import { useMagicLink } from "@/system/MagicLinkContext";
+import { useWallet } from "@/system/WalletContext";
 
 import styles from "@/styles/dashboard.module.css";
 import background from "@/styles/background.module.css";
@@ -29,13 +28,13 @@ const networkNames = {
 export default function Dashboard() {
   const router = useRouter();
   const { user } = useMagicLink();
-  const { walletAddress, balances, refreshBalances } = useWallet();
+  const { wallet, balances, refreshBalances } = useWallet();
 
   const [totalEUR, setTotalEUR] = useState("0.00");
   const [activeNetwork, setActiveNetwork] = useState("bsc");
 
   useEffect(() => {
-    if (user && walletAddress) {
+    if (user && wallet) {
       refreshBalances()
         .then((balances) => {
           const total = balances.reduce((acc, balance) => acc + parseFloat(balance.eur || 0), 0);
@@ -43,9 +42,9 @@ export default function Dashboard() {
         })
         .catch((err) => console.error("Failed to refresh balances:", err));
     } else {
-      router.push("/");
+      router.replace("/");
     }
-  }, [user, walletAddress, refreshBalances, router]);
+  }, [user, wallet, refreshBalances, router]);
 
   const networkRoutes = {
     bsc: "/bnb",
@@ -60,14 +59,12 @@ export default function Dashboard() {
     router.push(networkRoutes[symbol] || "/send");
   };
 
-  if (!user || !walletAddress) {
+  if (!user || !wallet) {
     return <div className={styles.loading}>Loading Wallet...</div>;
   }
 
   return (
     <main className={`${styles.container} ${background.gradient}`}>
-      <StarsBackground />
-
       <div className={styles.globalWrapper}>
         <div className={styles.header}>
           <Image
