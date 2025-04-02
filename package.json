@@ -17,7 +17,7 @@
     "react-qr-code": "2.0.15",
     "framer-motion": "12.5.0",
     "react-select": "5.10.1",
-    "crypto-js": "4.2.0",
+    "crypto-js": "4.2.0"
   },
   "devDependencies": {
     "eslint": "9.23.0",
