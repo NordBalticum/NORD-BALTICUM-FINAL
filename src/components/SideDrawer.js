@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { FaTimes, FaBars } from "react-icons/fa"; // pridėta FaBars
+import { FaTimes, FaBars } from "react-icons/fa";
 import { useMagicLink } from "@/contexts/MagicLinkContext";
 import { useWallet } from "@/contexts/WalletContext";
 import { utils } from "ethers";
@@ -53,7 +53,6 @@ export default function SideDrawer() {
 
   return (
     <>
-      {/* Hamburger Icon (Left Top) */}
       <button
         className={styles.hamburger}
         onClick={toggleDrawer}
@@ -72,7 +71,6 @@ export default function SideDrawer() {
               exit={{ opacity: 0 }}
               onClick={toggleDrawer}
             />
-
             <motion.aside
               className={`${styles.drawer} ${open ? styles.open : ""}`}
               initial={{ x: "-100%" }}
@@ -82,15 +80,15 @@ export default function SideDrawer() {
             >
               <div className={styles.drawerHeader}>
                 <button className={styles.closeIcon} onClick={toggleDrawer}>
-                  <FaTimes size={22} />
+                  <FaTimes size={20} />
                 </button>
               </div>
 
               <div className={styles.userBox}>
-                <p className={styles.email}>{user?.email}</p>
+                <p className={styles.email}>{user.email}</p>
 
                 <div
-                  className={styles.walletBox}
+                  title="Click to copy"
                   onClick={() => {
                     if (utils.isAddress(walletAddress)) {
                       navigator.clipboard.writeText(walletAddress);
@@ -98,6 +96,7 @@ export default function SideDrawer() {
                       setTimeout(() => setCopied(false), 1600);
                     }
                   }}
+                  className={styles.walletBox}
                 >
                   {copied && (
                     <motion.div
