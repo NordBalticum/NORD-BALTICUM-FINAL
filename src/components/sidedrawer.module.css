@@ -1,26 +1,83 @@
-/* === SIDEDRAWER – NordBalticum Web3 Bank-Grade Ultra Final === */
+/* === SIDEDRAWER MODULE – NordBalticum FINAL v3 === */
 
 .hamburger {
   position: fixed;
   top: clamp(16px, 3vw, 24px);
   left: clamp(16px, 3vw, 24px);
   z-index: 99999;
-  padding: 8px;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(12px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 12px;
-  backdrop-filter: blur(14px);
-  box-shadow: 0 0 12px rgba(255, 255, 255, 0.06);
+  cursor: pointer;
+  color: white;
+  box-shadow: 0 0 14px rgba(255, 255, 255, 0.08);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .hamburger:hover {
-  transform: scale(1.1);
-  box-shadow: 0 0 18px rgba(255, 255, 255, 0.12);
+  transform: scale(1.12);
+  box-shadow: 0 0 18px rgba(255, 255, 255, 0.15);
 }
 
-/* === Wallet Box with Glow, Blur and Interaction === */
+.drawer {
+  position: fixed;
+  top: 0;
+  left: -100%;
+  width: clamp(260px, 84vw, 340px);
+  height: 100vh;
+  background: rgba(15, 20, 40, 0.92);
+  backdrop-filter: blur(24px) saturate(160%);
+  box-shadow: 0 0 36px rgba(0, 0, 0, 0.4);
+  padding: 2rem 1.6rem;
+  display: flex;
+  flex-direction: column;
+  transition: left 0.33s ease-in-out;
+  border-right: 1px solid rgba(255, 255, 255, 0.05);
+  z-index: 9999;
+}
+
+.drawer.open {
+  left: 0;
+}
+
+.drawerHeader {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.closeIcon {
+  font-size: 1.6rem;
+  color: white;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+}
+
+.closeIcon:hover {
+  transform: rotate(90deg) scale(1.15);
+}
+
+.userBox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 1rem;
+  padding: 12px 0 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.email {
+  font-size: 0.88rem;
+  color: #ccc;
+  text-align: center;
+  word-break: break-word;
+  line-height: 1.4;
+  font-family: "Share Tech Mono", monospace;
+  opacity: 0.9;
+}
+
 .walletBox {
   margin-top: 16px;
   padding: 12px 16px;
@@ -57,7 +114,6 @@
   letter-spacing: 0.5px;
 }
 
-/* === Copied tooltip === */
 .copiedText {
   position: absolute;
   top: -24px;
@@ -72,18 +128,10 @@
   font-weight: 500;
   z-index: 2;
   pointer-events: none;
-  white-space: nowrap;
-}
-
-/* === Navigation Section === */
-.navSection {
-  margin-top: 32px;
-  display: flex;
-  flex-direction: column;
-  gap: 1.4rem;
 }
 
 .nav {
+  margin-top: 32px;
   display: flex;
   flex-direction: column;
   gap: 1.2rem;
@@ -127,7 +175,7 @@
 }
 
 .logout {
-  margin-top: auto;
+  margin-top: 10vh;
   width: 100%;
   background: linear-gradient(90deg, #ff3c3c, #e62323);
   border: none;
