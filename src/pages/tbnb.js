@@ -4,9 +4,9 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 
-import { useMagicLink } from "@/contexts/MagicLinkContext";
+import { useSystem } from "@/contexts/SystemContext";
 import { supabase } from "@/utils/supabaseClient";
-import { getWalletBalance } from "@/lib/ethers";
+import { getWalletBalance } from "@/lib/ethers.js";
 import { fetchPrices } from "@/utils/fetchPrices";
 
 import StarsBackground from "@/components/StarsBackground";
@@ -15,7 +15,7 @@ import styles from "@/styles/network.module.css";
 
 export default function TBNBPage() {
   const router = useRouter();
-  const { user, wallet } = useMagicLink();
+  const { user, wallet } = useSystem();
 
   const [balance, setBalance] = useState("0.00000");
   const [eur, setEur] = useState("0.00");
@@ -31,7 +31,7 @@ export default function TBNBPage() {
       try {
         const { formatted } = await getWalletBalance(wallet.address, "tbnb");
         const prices = await fetchPrices();
-        const price = prices?.TBNB || 0;
+        const price = prices?.TBNB || prices?.BNB || 0;
         const eurValue = (parseFloat(formatted) * price).toFixed(2);
 
         setBalance(formatted);
@@ -46,8 +46,8 @@ export default function TBNBPage() {
         const { data, error } = await supabase
           .from("transactions")
           .select("*")
-          .eq("network", "TBNB")
-          .eq("user_email", user.email)
+          .eq("network", "tbnb")
+          .eq("sender_email", user.email)
           .order("created_at", { ascending: false })
           .limit(1);
 
@@ -56,10 +56,10 @@ export default function TBNBPage() {
         if (data?.length > 0) {
           const tx = data[0];
           setLatestTx({
-            to: truncate(tx.to_address),
+            to: truncate(tx.receiver_email || tx.to_address),
             amount: parseFloat(tx.amount).toFixed(5),
-            hash: truncate(tx.tx_hash, 10),
-            status: tx.status,
+            hash: truncate(tx.transaction_hash || tx.tx_hash, 10),
+            status: tx.status || "success",
           });
         }
       } catch (err) {
