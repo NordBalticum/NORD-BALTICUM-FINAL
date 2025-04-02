@@ -7,9 +7,10 @@ import { motion, AnimatePresence } from "framer-motion";
 
 import { useMagicLink } from "@/contexts/MagicLinkContext";
 import { useWallet } from "@/contexts/WalletContext";
-import AvatarDisplay from "@/components/AvatarDisplay";
 
+import AvatarDisplay from "@/components/AvatarDisplay";
 import { FaBars, FaTimes } from "react-icons/fa";
+
 import styles from "@/components/sidedrawer.module.css";
 
 export default function SideDrawer() {
@@ -33,9 +34,10 @@ export default function SideDrawer() {
   };
 
   useEffect(() => {
-    if (open) document.body.style.overflow = "hidden";
-    else document.body.style.overflow = "auto";
-    return () => (document.body.style.overflow = "auto");
+    document.body.style.overflow = open ? "hidden" : "auto";
+    return () => {
+      document.body.style.overflow = "auto";
+    };
   }, [open]);
 
   const navItems = [
@@ -46,7 +48,7 @@ export default function SideDrawer() {
     { label: "Settings", path: "/settings" },
   ];
 
-  // Nepasiekiamas drawer jei neprisijungęs
+  // Slėpti jei neprisijungęs arba kraunasi
   if (!user || loading) return null;
 
   return (
@@ -88,10 +90,7 @@ export default function SideDrawer() {
               <nav className={styles.nav}>
                 {navItems.map((item) => (
                   <Link key={item.path} href={item.path} legacyBehavior>
-                    <a
-                      className={styles.link}
-                      onClick={() => setOpen(false)}
-                    >
+                    <a className={styles.link} onClick={() => setOpen(false)}>
                       {item.label}
                     </a>
                   </Link>
