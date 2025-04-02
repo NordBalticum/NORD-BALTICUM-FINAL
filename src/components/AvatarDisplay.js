@@ -8,27 +8,32 @@ export default function AvatarDisplay({ walletAddress, size = 64 }) {
 
   useEffect(() => {
     const loadAvatar = () => {
-      const saved = localStorage.getItem("user_avatar");
+      const stored = localStorage.getItem("user_avatar");
 
-      if (saved) {
-        setAvatar(saved);
-      } else if (walletAddress) {
-        // Naudojam Dicebear pixel-art-neutral kaip fallback, unikalus kiekvienam naudotojui
-        const fallbackUrl = `https://api.dicebear.com/7.x/pixel-art-neutral/svg?seed=${walletAddress}`;
-        setAvatar(fallbackUrl);
-        localStorage.setItem("user_avatar", fallbackUrl);
-      } else {
-        // Minimalus default – jei neturim wallet
-        setAvatar("https://api.dicebear.com/7.x/pixel-art-neutral/svg?seed=anonymous");
+      // Jei jau turim avatarą localStorage
+      if (stored) {
+        setAvatar(stored);
+        return;
       }
+
+      // Jei turim wallet address – generuojam unikalų
+      if (walletAddress) {
+        const generated = `https://api.dicebear.com/7.x/pixel-art-neutral/svg?seed=${walletAddress}`;
+        localStorage.setItem("user_avatar", generated);
+        setAvatar(generated);
+        return;
+      }
+
+      // Visiškas fallback
+      setAvatar("https://api.dicebear.com/7.x/pixel-art-neutral/svg?seed=anonymous");
     };
 
     loadAvatar();
 
-    const onStorage = () => loadAvatar();
-    window.addEventListener("storage", onStorage);
+    const handleStorage = () => loadAvatar();
+    window.addEventListener("storage", handleStorage);
 
-    return () => window.removeEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", handleStorage);
   }, [walletAddress]);
 
   return (
@@ -39,6 +44,8 @@ export default function AvatarDisplay({ walletAddress, size = 64 }) {
       height={size}
       className={styles.avatar}
       loading="lazy"
+      draggable={false}
+      referrerPolicy="no-referrer"
     />
   );
 }
