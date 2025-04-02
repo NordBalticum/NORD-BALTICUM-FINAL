@@ -9,7 +9,6 @@ import { supabase } from "@/utils/supabaseClient";
 import { getWalletBalance } from "@/lib/ethers.js";
 import { fetchPrices } from "@/utils/fetchPrices";
 
-import StarsBackground from "@/components/StarsBackground";
 import background from "@/styles/background.module.css";
 import styles from "@/styles/network.module.css";
 
