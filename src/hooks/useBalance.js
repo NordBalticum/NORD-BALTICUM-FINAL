@@ -10,7 +10,7 @@ const NETWORKS = ["ethereum", "bsc", "polygon", "avalanche", "tbnb"];
 
 const priceSymbols = {
   bsc: "binancecoin",
-  tbnb: "binancecoin", // testnet, bet ta pati kaina
+  tbnb: "binancecoin", // Testnet naudoja tą pačią kainą
   ethereum: "ethereum",
   polygon: "matic-network",
   avalanche: "avalanche-2",
