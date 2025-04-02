@@ -19,7 +19,7 @@
     "react-select": "5.10.1",
     "crypto-js": "4.2.0",
     "clsx": "2.1.1",
-    "motion-dom": "2.0.0"
+    "motion-dom": "12.6.1"
   },
   "devDependencies": {
     "eslint": "9.23.0",
