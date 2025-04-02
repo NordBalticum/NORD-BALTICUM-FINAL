@@ -17,42 +17,43 @@ export const MagicLinkProvider = ({ children }) => {
       : "https://nordbalticum.com";
 
   useEffect(() => {
-    const init = async () => {
+    const getSession = async () => {
       const {
         data: { session },
+        error,
       } = await supabase.auth.getSession();
 
-      const currentUser = session?.user || null;
-      setUser(currentUser);
-
-      if (!currentUser) {
-        router.push("/");
+      if (error) {
+        console.error("Session error:", error.message);
+        setUser(null);
+      } else {
+        setUser(session?.user || null);
       }
 
       setLoading(false);
     };
 
-    init();
+    getSession();
 
     const { data: subscription } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
         const currentUser = session?.user || null;
         setUser(currentUser);
-
-        if (!currentUser) {
-          router.push("/");
-        }
       }
     );
 
     return () => subscription?.unsubscribe();
-  }, [router]);
+  }, []);
 
   const signInWithMagicLink = async (email) => {
     const { error } = await supabase.auth.signInWithOtp({
       email,
-      options: { shouldCreateUser: true },
+      options: {
+        shouldCreateUser: true,
+        emailRedirectTo: `${origin}/dashboard`,
+      },
     });
+
     if (error) throw error;
   };
 
@@ -63,15 +64,15 @@ export const MagicLinkProvider = ({ children }) => {
         redirectTo: `${origin}/dashboard`,
       },
     });
+
     if (error) throw error;
   };
 
   const signOut = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) console.error("Supabase signOut error:", error.message);
-
     setUser(null);
-    router.push("/");
+    router.replace("/");
   };
 
   return (
