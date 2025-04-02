@@ -1,122 +1,148 @@
 "use client";
 
-import React, {
-  createContext,
-  useContext,
-  useEffect,
-  useState,
-  useCallback,
-} from "react";
-import { useRouter } from "next/navigation";
-import { supabase } from "@/utils/supabaseClient";
+import React, { createContext, useState, useEffect, useContext } from "react";
+import { supabase } from "@/utils/SupabaseClient";
 import { ethers } from "ethers";
-import CryptoJS from "crypto-js";
 
 const MagicLinkContext = createContext();
 
 export const MagicLinkProvider = ({ children }) => {
-  const router = useRouter();
-
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [publicKey, setPublicKey] = useState(null);
-  const [privateKey, setPrivateKey] = useState(null);
 
-  const ENCRYPTION_KEY = "nordbalticum_super_safe_512bit"; // fallback key
-  const SUPPORTED_NETWORKS = ["bsc", "tbnb", "eth", "polygon", "avax"];
+  useEffect(() => {
+    const loadUserSession = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error) {
+          console.error("Failed to get session:", error);
+          setUser(null);
+          setLoading(false);
+          return;
+        }
 
-  const fetchSession = useCallback(async () => {
-    const { data } = await supabase.auth.getSession();
-    const sessionUser = data?.session?.user || null;
-    setUser(sessionUser);
-    setLoading(false);
-    if (!sessionUser && typeof window !== "undefined") {
-      router.replace("/");
-    }
-  }, [router]);
+        if (session?.user) {
+          setUser(session.user);
+          await ensureWalletsExist(session.user.email);
+        } else {
+          setUser(null);
+        }
+      } catch (err) {
+        console.error("Unexpected error fetching session:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const ensureWallet = useCallback(async (email) => {
-    const { data } = await supabase
-      .from("wallets")
-      .select("encrypted_private_key")
-      .eq("email", email)
-      .limit(1);
+    loadUserSession();
 
-    if (data?.length > 0) {
-      const decrypted = CryptoJS.AES.decrypt(
-        data[0].encrypted_private_key,
-        ENCRYPTION_KEY
-      ).toString(CryptoJS.enc.Utf8);
+    const { data: subscription } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user || null);
+      if (session?.user) {
+        ensureWalletsExist(session.user.email);
+      }
+    });
 
-      if (!decrypted || decrypted.length < 30) return;
-
-      setPrivateKey(decrypted);
-      setPublicKey(new ethers.Wallet(decrypted).address);
-      return;
-    }
-
-    const newWallet = ethers.Wallet.createRandom();
-    const encrypted = CryptoJS.AES.encrypt(
-      newWallet.privateKey,
-      ENCRYPTION_KEY
-    ).toString();
-
-    const inserts = SUPPORTED_NETWORKS.map((network) => ({
-      email,
-      network,
-      address: newWallet.address,
-      encrypted_private_key: encrypted,
-      created_at: new Date().toISOString(),
-    }));
-
-    await supabase.from("wallets").insert(inserts);
-    setPrivateKey(newWallet.privateKey);
-    setPublicKey(newWallet.address);
+    return () => {
+      subscription?.unsubscribe();
+    };
   }, []);
 
-  const loginWithEmail = async (email) => {
-    const { error } = await supabase.auth.signInWithOtp({ email });
-    if (error) throw new Error(error.message);
+  const ensureWalletsExist = async (email) => {
+    try {
+      // Check if wallets exist for the user
+      const { data: wallets, error } = await supabase
+        .from("wallets")
+        .select("bnb_address, tbnb_address, eth_address, matic_address, avax_address")
+        .eq("email", email);
+
+      if (error) {
+        console.error("Error fetching wallets:", error);
+        return;
+      }
+
+      // If no wallets found or any are missing, generate them
+      if (!wallets.length || wallets.some(wallet => !wallet.bnb_address || !wallet.tbnb_address || !wallet.eth_address || !wallet.matic_address || !wallet.avax_address)) {
+        const wallet = ethers.Wallet.createRandom();
+        const walletData = {
+          email,
+          bnb_address: wallet.address,
+          tbnb_address: wallet.address,
+          eth_address: wallet.address,
+          matic_address: wallet.address,
+          avax_address: wallet.address
+        };
+
+        const { error: insertError } = await supabase
+          .from("wallets")
+          .insert(walletData);
+
+        if (insertError) {
+          console.error("Error creating wallets:", insertError);
+        }
+      }
+    } catch (err) {
+      console.error("Unexpected error in ensureWalletsExist:", err);
+    }
   };
 
-  const loginWithGoogle = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-    });
-    if (error) throw new Error(error.message);
+  const signInWithMagicLink = async (email) => {
+    try {
+      if (!email) throw new Error("Email is required.");
+      const { error } = await supabase.auth.signInWithOtp({ email });
+      if (error) {
+        throw error;
+      }
+    } catch (err) {
+      console.error("Error signing in with Magic Link:", err);
+      throw err;
+    }
   };
 
-  const logout = async () => {
-    await supabase.auth.signOut();
-    setUser(null);
-    setPrivateKey(null);
-    setPublicKey(null);
-    router.replace("/");
+  const signInWithGoogle = async () => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({ provider: "google" });
+      if (error) {
+        throw error;
+      }
+    } catch (err) {
+      console.error("Error signing in with Google:", err);
+      throw err;
+    }
   };
 
-  useEffect(() => {
-    fetchSession();
-  }, [fetchSession]);
-
-  useEffect(() => {
-    if (user?.email) ensureWallet(user.email);
-  }, [user, ensureWallet]);
+  const signOut = async () => {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        throw error;
+      }
+      setUser(null);
+    } catch (err) {
+      console.error("Error signing out:", err);
+      throw err;
+    }
+  };
 
   return (
     <MagicLinkContext.Provider
       value={{
         user,
         loading,
-        publicKey,
-        privateKey,
-        loginWithEmail,
-        loginWithGoogle,
-        logout,
+        signInWithMagicLink,
+        signInWithGoogle,
+        signOut,
       }}
     >
-      {!loading && children}
+      {children}
     </MagicLinkContext.Provider>
   );
 };
 
-export const useMagicLink = () => useContext(MagicLinkContext);
+export const useMagicLink = () => {
+  const context = useContext(MagicLinkContext);
+  if (!context) {
+    throw new Error("useMagicLink must be used within a MagicLinkProvider");
+  }
+  return context;
+};
