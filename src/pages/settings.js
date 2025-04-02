@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 
 import { useSystem } from "@/contexts/SystemContext";
 
-import StarsBackground from "@/components/StarsBackground";
 import AvatarDisplay from "@/components/AvatarDisplay";
 import AvatarModalPicker from "@/components/AvatarModalPicker";
 import SuccessModal from "@/components/SuccessModal";
