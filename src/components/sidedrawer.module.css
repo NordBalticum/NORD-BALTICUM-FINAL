@@ -42,8 +42,8 @@
   flex-direction: column;
   align-items: center;
   gap: 10px;
-  margin-bottom: 1.4rem;
-  padding: 12px 0 20px;
+  margin-bottom: 1rem;
+  padding: 12px 0 16px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
@@ -64,10 +64,10 @@
 }
 
 .nav {
-  margin-top: 1.2rem; /* sumažinta kad būtų aukščiau */
+  margin-top: 0.4rem; /* dar labiau pakelta į viršų */
   display: flex;
   flex-direction: column;
-  gap: 1.4rem;
+  gap: 1.2rem;
 }
 
 .link {
@@ -108,16 +108,18 @@
 }
 
 .logout {
-  margin-top: 1.8rem; /* nebe auto, kad būtų virš bottom nav */
+  margin-top: 10vh; /* pakelta ~10% nuo dugno */
+  width: 100%;
   background: linear-gradient(90deg, #ff3c3c, #e62323);
   border: none;
   color: white;
   font-weight: 600;
-  padding: 12px 0;
-  border-radius: 14px;
+  padding: 12px 20px;
+  border-radius: 12px;
   cursor: pointer;
   text-transform: uppercase;
   transition: background 0.3s ease, transform 0.2s ease;
+  text-align: center;
 }
 
 .logout:hover {
