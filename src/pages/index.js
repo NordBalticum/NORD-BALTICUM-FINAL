@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 
@@ -20,7 +20,7 @@ export default function Home() {
 
   const logoRef = useRef(null);
 
-  // Animate logo tilt
+  // === Tilt logo animacija
   useEffect(() => {
     const logo = logoRef.current;
     if (!logo) return;
@@ -48,7 +48,7 @@ export default function Home() {
     };
   }, []);
 
-  // Redirect if already logged in
+  // === Redirect jei jau prisijungęs
   useEffect(() => {
     if (!loadingUser && user) {
       router.push("/dashboard");
@@ -97,13 +97,12 @@ export default function Home() {
       <StarsBackground />
       <main className={`${styles.container} ${background.gradient}`}>
         <div className={styles.centerWrapper}>
-          <div className={styles.logoContainer}>
+          <div className={styles.logoContainer} ref={logoRef}>
             <Image
               src="/icons/logo.svg"
               alt="NordBalticum Logo"
-              width={260}
-              height={260}
-              ref={logoRef}
+              width={240}
+              height={240}
               className={styles.logoImage}
               priority
             />
@@ -122,7 +121,6 @@ export default function Home() {
                 onChange={(e) => setEmail(e.target.value)}
                 disabled={status === "sending"}
                 autoComplete="email"
-                autoFocus
                 required
               />
               <button
