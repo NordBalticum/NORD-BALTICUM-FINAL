@@ -6,21 +6,19 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 
 import { useMagicLink } from "@/contexts/MagicLinkContext";
-import AvatarDisplay from "@/components/AvatarDisplay";
 import { FaBars, FaTimes } from "react-icons/fa";
-
 import styles from "@/components/sidedrawer.module.css";
 
 export default function SideDrawer() {
   const router = useRouter();
-  const { user, logout } = useMagicLink();
+  const { user, signOut, wallet } = useMagicLink();
 
   const [open, setOpen] = useState(false);
   const toggleDrawer = () => setOpen((prev) => !prev);
 
   const handleLogout = async () => {
     try {
-      await logout();
+      await signOut();
       setOpen(false);
       router.replace("/");
     } catch (err) {
@@ -59,55 +57,30 @@ export default function SideDrawer() {
 
       <AnimatePresence>
         {open && (
-          <>
-            <motion.aside
-              className={styles.drawer}
-              initial={{ x: "-100%" }}
-              animate={{ x: 0 }}
-              exit={{ x: "-100%" }}
-              transition={{ type: "tween", duration: 0.3 }}
-            >
-              <div className={styles.drawerHeader}>
-                <button
-                  className={styles.closeIcon}
-                  onClick={toggleDrawer}
-                  aria-label="Close menu"
-                >
-                  <FaTimes size={20} />
-                </button>
-              </div>
-
-              <div className={styles.userBox}>
-                <AvatarDisplay
-                  walletAddress={user.email}
-                  size={64}
-                />
-                <p className={styles.email}>{user?.email}</p>
-              </div>
-
-              <nav className={styles.nav}>
-                {navItems.map((item) => (
-                  <Link key={item.path} href={item.path} legacyBehavior>
-                    <a className={styles.link} onClick={() => setOpen(false)}>
-                      {item.label}
-                    </a>
-                  </Link>
-                ))}
-                <button className={styles.logout} onClick={handleLogout}>
-                  Sign Out
-                </button>
-              </nav>
-            </motion.aside>
-
-            <motion.div
-              className={styles.backdrop}
-              onClick={toggleDrawer}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 0.6 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.3 }}
-            />
-          </>
+          <motion.aside
+            className={styles.drawer}
+            initial={{ x: "-100%" }}
+            animate={{ x: 0 }}
+            exit={{ x: "-100%" }}
+            transition={{ type: "tween", duration: 0.3 }}
+          >
+            <div className={styles.drawerHeader}>
+              <button className={styles.closeIcon} onClick={toggleDrawer}>
+                <FaTimes size={22} />
+              </button>
+              <p className={styles.address}>{wallet?.address}</p>
+            </div>
+            <nav className={styles.nav}>
+              {navItems.map((item) => (
+                <Link key={item.label} href={item.path} onClick={() => setOpen(false)}>
+                  {item.label}
+                </Link>
+              ))}
+            </nav>
+            <button className={styles.logout} onClick={handleLogout}>
+              Logout
+            </button>
+          </motion.aside>
         )}
       </AnimatePresence>
     </>
