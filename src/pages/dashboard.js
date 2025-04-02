@@ -1,3 +1,5 @@
+// src/app/dashboard.js
+
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
@@ -6,6 +8,7 @@ import Image from "next/image";
 
 import { useMagicLink } from "@/contexts/MagicLinkContext";
 import { useBalance } from "@/hooks/useBalance";
+
 import StarsBackground from "@/components/StarsBackground";
 
 import styles from "@/styles/dashboard.module.css";
@@ -52,7 +55,9 @@ export default function Dashboard() {
   const [totalEUR, setTotalEUR] = useState("0.00");
 
   useEffect(() => {
-    if (!user || !wallet?.address) router.push("/");
+    if (!user || !wallet?.address) {
+      router.push("/");
+    }
   }, [user, wallet, router]);
 
   useEffect(() => {
@@ -94,6 +99,7 @@ export default function Dashboard() {
         <div className={styles.assetGrid}>
           {networks.map((net) => {
             const bal = balances[net.symbol] || { amount: "0.00000", eur: "0.00" };
+
             return (
               <div
                 key={net.symbol}
@@ -109,14 +115,15 @@ export default function Dashboard() {
                     className={styles.assetLogo}
                     unoptimized
                   />
-                  <div>
-                    <div className={styles.assetSymbol}>{net.symbol}</div>
-                    <div className={styles.assetName}>{net.name}</div>
+                  <div className={styles.assetInfo}>
+                    <span className={styles.assetSymbol}>{net.symbol}</span>
+                    <span className={styles.assetName}>{net.name}</span>
                   </div>
                 </div>
+
                 <div className={styles.assetRight}>
-                  <div className={styles.assetAmount}>{bal.amount} {net.symbol}</div>
-                  <div className={styles.assetEUR}>~€ {bal.eur}</div>
+                  <span className={styles.assetAmount}>{bal.amount} {net.symbol}</span>
+                  <span className={styles.assetEur}>~€ {bal.eur}</span>
                 </div>
               </div>
             );
