@@ -28,60 +28,59 @@ const fetchBalance = async (providerUrl, address) => {
     const balance = await provider.getBalance(address);
     return parseFloat(ethers.utils.formatEther(balance));
   } catch (err) {
-    console.error(`Fetch balance failed for ${address}:`, err);
+    console.error(`❌ Balance fetch failed (${address}):`, err);
     return 0;
   }
 };
 
 const fetchRates = async () => {
   try {
-    const url = `https://api.coingecko.com/api/v3/simple/price?ids=${Object.values(coinMap).join(
-      ","
-    )}&vs_currencies=eur,usd`;
+    const ids = Object.values(coinMap).join(",");
+    const url = `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=eur,usd`;
     const res = await fetch(url);
+    if (!res.ok) throw new Error("Rate limit or fetch error");
     return await res.json();
   } catch (err) {
-    console.error("Coingecko fetch failed:", err);
-    return {};
+    console.error("❌ Coingecko error:", err);
+    return {}; // prevent crash in case of failure
   }
 };
 
 export const BalanceProvider = ({ children }) => {
   const { wallet } = useWallet();
   const [balances, setBalances] = useState(null);
-  const [rates, setRates] = useState(null);
+  const [rates, setRates] = useState({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
     if (!wallet || !wallet.bnb) return;
 
-    let interval;
-
-    const loadBalances = async () => {
+    const load = async () => {
+      setLoading(true);
       try {
-        const result = {};
-        const rateData = await fetchRates();
+        const newBalances = {};
+        const currentRates = await fetchRates();
 
         for (const net of Object.keys(RPC)) {
-          const address = wallet[net];
-          if (address) {
-            const balance = await fetchBalance(RPC[net], address);
-            result[net] = balance;
+          const addr = wallet[net];
+          if (addr) {
+            const amount = await fetchBalance(RPC[net], addr);
+            newBalances[net] = amount;
           }
         }
 
-        setBalances(result);
-        setRates(rateData);
+        setBalances(newBalances);
+        setRates(currentRates);
       } catch (err) {
-        console.error("Balance fetch error:", err);
+        console.error("❌ loadBalances error:", err);
       } finally {
         setLoading(false);
       }
     };
 
-    loadBalances();
-    interval = setInterval(loadBalances, 30000); // Refresh every 30s
-
+    load();
+    const interval = setInterval(load, 30000);
     return () => clearInterval(interval);
   }, [wallet]);
 
