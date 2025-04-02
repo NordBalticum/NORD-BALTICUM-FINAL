@@ -1,218 +1,93 @@
 "use client";
 
-import React, {
-  createContext,
-  useContext,
-  useEffect,
-  useState,
-  useCallback,
-} from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase";
-import CryptoJS from "crypto-js";
-import { ethers } from "ethers";
 
-const MagicLinkContext = createContext();
-const ENCRYPTION_KEY = "NORD-BALTICUM-2025-SECRET";
+import { useMagicLink } from "@/contexts/MagicLinkContext";
+import { useWalletCheck } from "@/contexts/WalletCheckContext";
+import { useWallet } from "@/contexts/WalletContext";
+import { useBalance } from "@/hooks/useBalance";
 
-export function MagicLinkProvider({ children }) {
+import StarsBackground from "@/components/StarsBackground";
+import styles from "@/styles/dashboard.module.css";
+import background from "@/styles/background.module.css";
+
+export default function Dashboard() {
   const router = useRouter();
-  const [user, setUser] = useState(null);
-  const [wallet, setWallet] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [sessionChecked, setSessionChecked] = useState(false);
-
-  const encrypt = (text) =>
-    CryptoJS.AES.encrypt(text, ENCRYPTION_KEY).toString();
-
-  const decrypt = (cipher) => {
-    try {
-      const bytes = CryptoJS.AES.decrypt(cipher, ENCRYPTION_KEY);
-      return bytes.toString(CryptoJS.enc.Utf8);
-    } catch {
-      return null;
-    }
-  };
-
-  const storePrivateKey = (pk) => {
-    try {
-      const encrypted = encrypt(pk);
-      localStorage.setItem("nbc_private_key", encrypted);
-    } catch (err) {
-      console.error("❌ Store PK error:", err.message);
-    }
-  };
-
-  const getPrivateKey = () => {
-    try {
-      const cipher = localStorage.getItem("nbc_private_key");
-      return cipher ? decrypt(cipher) : null;
-    } catch {
-      return null;
-    }
-  };
-
-  const getWalletAddress = () => {
-    const pk = getPrivateKey();
-    try {
-      return pk ? new ethers.Wallet(pk).address : null;
-    } catch {
-      return null;
-    }
-  };
-
-  const getOrCreateWallet = useCallback(async (email) => {
-    if (!email) return null;
-
-    try {
-      const { data, error } = await supabase
-        .from("wallets")
-        .select("address, private_key_encrypted")
-        .eq("email", email)
-        .single();
-
-      if (error && error.code !== "PGRST116") throw error;
-
-      if (data?.address && data?.private_key_encrypted) {
-        if (!getPrivateKey()) {
-          const decrypted = decrypt(data.private_key_encrypted);
-          if (decrypted) storePrivateKey(decrypted);
-        }
-
-        return {
-          address: data.address,
-          list: ["bnb", "tbnb", "eth", "matic", "avax"].map((net) => ({
-            network: net,
-            address: data.address,
-          })),
-        };
-      }
-
-      const newWallet = ethers.Wallet.createRandom();
-      const encryptedKey = encrypt(newWallet.privateKey);
-      storePrivateKey(newWallet.privateKey);
-
-      const { error: insertError } = await supabase.from("wallets").insert([
-        {
-          email,
-          address: newWallet.address,
-          private_key_encrypted: encryptedKey,
-          network: "multi",
-        },
-      ]);
-
-      if (insertError) throw insertError;
-
-      return {
-        address: newWallet.address,
-        list: ["bnb", "tbnb", "eth", "matic", "avax"].map((net) => ({
-          network: net,
-          address: newWallet.address,
-        })),
-      };
-    } catch (err) {
-      console.error("❌ Wallet error:", err.message);
-      return null;
-    }
-  }, []);
-
-  const initSession = useCallback(async () => {
-    setLoading(true);
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const currentUser = session?.user || null;
-
-      if (!currentUser?.email) {
-        setUser(null);
-        setWallet(null);
-        return;
-      }
-
-      setUser(currentUser);
-      const walletData = await getOrCreateWallet(currentUser.email);
-      if (walletData) setWallet(walletData);
-    } catch (err) {
-      console.error("❌ Session error:", err.message);
-      setUser(null);
-      setWallet(null);
-    } finally {
-      setLoading(false);
-      setSessionChecked(true);
-    }
-  }, [getOrCreateWallet]);
+  const { user, loading } = useMagicLink();
+  const { walletReady } = useWalletCheck();
+  const { publicKey, balance, activeNetwork, changeNetwork } = useWallet();
+  const { balances, isLoading: balanceLoading, refresh } = useBalance();
 
   useEffect(() => {
-    initSession();
-
-    const { data: listener } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
-        const currentUser = session?.user || null;
-
-        if (currentUser?.email) {
-          setUser(currentUser);
-          const walletData = await getOrCreateWallet(currentUser.email);
-          if (walletData) setWallet(walletData);
-        } else {
-          setUser(null);
-          setWallet(null);
-          localStorage.removeItem("nbc_private_key");
-        }
-      }
-    );
-
-    return () => {
-      listener?.subscription?.unsubscribe();
-    };
-  }, [initSession, getOrCreateWallet]);
-
-  useEffect(() => {
-    if (!loading && sessionChecked && user?.email && wallet?.address) {
-      if (window.location.pathname === "/") {
-        router.replace("/dashboard");
-      }
+    if (!loading && !user) {
+      router.push("/");
     }
-  }, [loading, sessionChecked, user, wallet, router]);
+  }, [loading, user, router]);
 
-  const signInWithEmail = async (email) => {
-    const { error } = await supabase.auth.signInWithOtp({ email });
-    if (error) throw new Error("Magic Link error: " + error.message);
+  const handleNetworkChange = (e) => {
+    changeNetwork(e.target.value);
+    refresh();
   };
 
-  const signInWithGoogle = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: `${window.location.origin}/dashboard`,
-      },
-    });
-    if (error) throw new Error("Google login error: " + error.message);
-  };
-
-  const signOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) throw new Error("Logout error: " + error.message);
-    setUser(null);
-    setWallet(null);
-    localStorage.removeItem("nbc_private_key");
-    router.replace("/");
-  };
+  if (!user || !walletReady || loading) {
+    return <div className={styles.loading}>Loading dashboard...</div>;
+  }
 
   return (
-    <MagicLinkContext.Provider
-      value={{
-        user,
-        wallet,
-        loadingUser: loading || !sessionChecked,
-        signInWithEmail,
-        signInWithGoogle,
-        signOut,
-        getPrivateKey,
-        getWalletAddress,
-      }}
-    >
-      {children}
-    </MagicLinkContext.Provider>
+    <main className={`${styles.main} ${background.gradient}`}>
+      <StarsBackground />
+
+      <div className={styles.wrapper}>
+        <h1 className={styles.title}>Welcome back</h1>
+        <p className={styles.subtext}>Wallet connected with email: <strong>{user.email}</strong></p>
+
+        <section className={styles.card}>
+          <h2 className={styles.cardTitle}>Active Wallet</h2>
+          <p className={styles.label}>Network:</p>
+          <select
+            value={activeNetwork}
+            onChange={handleNetworkChange}
+            className={styles.dropdown}
+          >
+            <option value="bsc">BNB Chain</option>
+            <option value="eth">Ethereum</option>
+            <option value="matic">Polygon</option>
+            <option value="avax">Avalanche</option>
+            <option value="tbnb">BNB Testnet</option>
+          </select>
+
+          <p className={styles.label}>Wallet Address:</p>
+          <p className={styles.address}>{publicKey || "N/A"}</p>
+
+          <p className={styles.label}>Balance:</p>
+          <p className={styles.balance}>
+            {balance} {activeNetwork.toUpperCase()}
+          </p>
+        </section>
+
+        <section className={styles.card}>
+          <h2 className={styles.cardTitle}>Your Balances</h2>
+
+          {balanceLoading ? (
+            <p>Refreshing balances...</p>
+          ) : (
+            <div className={styles.balanceTable}>
+              {["bsc", "eth", "matic", "avax", "tbnb"].map((net) => (
+                <div key={net} className={styles.balanceRow}>
+                  <p>{net.toUpperCase()}</p>
+                  <p>{balances[net]?.amount || "0.00000"}</p>
+                  <p>€ {balances[net]?.eur || "0.00"}</p>
+                </div>
+              ))}
+              <div className={styles.totalRow}>
+                <strong>Total (EUR)</strong>
+                <strong>€ {balances?.totalEUR || "0.00"}</strong>
+              </div>
+            </div>
+          )}
+        </section>
+      </div>
+    </main>
   );
 }
-
-export const useMagicLink = () => useContext(MagicLinkContext);
