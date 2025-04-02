@@ -25,7 +25,7 @@ import background from "@/styles/background.module.css";
 
 export default function Send() {
   const router = useRouter();
-  const { user, wallet, getPrivateKey } = useMagicLink();
+  const { user } = useMagicLink();
   const { send, loading, error, success } = useSendTransaction();
   const { refresh: refreshBalance } = useBalance();
 
@@ -47,18 +47,12 @@ export default function Send() {
   const amountAfterFee = Number(amount || 0) - calculatedFee;
 
   useEffect(() => {
-    if (!user || !wallet?.address) router.push("/");
-  }, [user, wallet, router]);
+    if (!user) router.push("/");
+  }, [user, router]);
 
   const loadBalance = async () => {
     try {
-      const currentAddress =
-        wallet?.list?.find((w) => w.network.toLowerCase() === networkKey)?.address ||
-        wallet?.address;
-
-      if (!currentAddress) throw new Error("Address not found");
-
-      const { formatted } = await getWalletBalance(currentAddress, networkKey);
+      const { formatted } = await getWalletBalance(user?.wallet_address, networkKey);
       setBalance(formatted);
 
       const prices = await fetchPrices();
@@ -66,7 +60,7 @@ export default function Send() {
       const eur = (parseFloat(formatted) * price).toFixed(2);
       setBalanceEUR(eur);
 
-      const max = await getMaxSendableAmount(getPrivateKey(), networkKey);
+      const max = await getMaxSendableAmount(user.privateKey, networkKey);
       setMaxSendable(max);
     } catch (err) {
       console.warn("❌ Balance fetch failed:", err.message);
@@ -78,7 +72,7 @@ export default function Send() {
 
   useEffect(() => {
     loadBalance();
-  }, [selected, wallet]);
+  }, [selected, user]);
 
   const handleSend = () => {
     const trimmedAddress = receiver.trim();
@@ -119,7 +113,7 @@ export default function Send() {
     }
   };
 
-  if (!user || !wallet?.address) {
+  if (!user) {
     return <div className={styles.loading}>Loading Wallet...</div>;
   }
 
@@ -196,7 +190,12 @@ export default function Send() {
               </div>
               <div className={styles.modalActions}>
                 <button className={styles.modalButton} onClick={confirmSend}>Confirm</button>
-                <button className={`${styles.modalButton} ${styles.cancel}`} onClick={() => setShowConfirm(false)}>Cancel</button>
+                <button
+                  className={`${styles.modalButton} ${styles.cancel}`}
+                  onClick={() => setShowConfirm(false)}
+                >
+                  Cancel
+                </button>
               </div>
             </div>
           </div>
