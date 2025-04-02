@@ -48,6 +48,11 @@ export const MagicLinkProvider = ({ children }) => {
   const [wallet, setWallet] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  const origin =
+    typeof window !== "undefined" && window.location.origin
+      ? window.location.origin
+      : "https://nordbalticum.com";
+
   useEffect(() => {
     const init = async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -58,6 +63,7 @@ export const MagicLinkProvider = ({ children }) => {
         await loadOrCreateWallet(currentUser.email);
         router.push("/dashboard");
       }
+
       setLoading(false);
     };
 
@@ -96,10 +102,31 @@ export const MagicLinkProvider = ({ children }) => {
 
   const signInWithMagicLink = async (email) => {
     try {
-      const { error } = await supabase.auth.signInWithOtp({ email, options: { shouldCreateUser: true } });
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+          shouldCreateUser: true,
+        },
+      });
       if (error) throw error;
     } catch (err) {
       console.error("Magic Link error:", err);
+      throw err;
+    }
+  };
+
+  const signInWithGoogle = async () => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${origin}/dashboard`,
+        },
+      });
+      if (error) throw error;
+    } catch (err) {
+      console.error("Google OAuth error:", err);
+      throw err;
     }
   };
 
@@ -171,6 +198,7 @@ export const MagicLinkProvider = ({ children }) => {
         wallet,
         loading,
         signInWithMagicLink,
+        signInWithGoogle,
         signOut,
         fetchUserWallet,
         fetchUserBalances,
