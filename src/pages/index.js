@@ -6,7 +6,6 @@ import Image from "next/image";
 
 import { useMagicLink } from "@/contexts/MagicLinkContext";
 import { useWalletCheck } from "@/contexts/WalletCheckContext";
-
 import StarsBackground from "@/components/StarsBackground";
 
 import styles from "@/styles/index.module.css";
@@ -23,7 +22,7 @@ export default function Home() {
 
   const logoRef = useRef(null);
 
-  // Animacija logotipui
+  // Logo tilt animacija
   useEffect(() => {
     const logo = logoRef.current;
     if (!logo) return;
@@ -51,15 +50,16 @@ export default function Home() {
     };
   }, []);
 
-  // Jei jau yra prisijungęs ir wallet sukurtas
+  // Redirect tik kai visiškai paruoštas user ir wallet
   useEffect(() => {
     if (!loading && user && walletReady) {
-      router.push("/dashboard");
+      router.replace("/dashboard");
     }
   }, [user, loading, walletReady, router]);
 
   const handleEmailLogin = async (e) => {
     e.preventDefault();
+
     if (!email.trim()) {
       setMessage("❌ Please enter a valid email.");
       return;
