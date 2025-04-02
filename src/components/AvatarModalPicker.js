@@ -3,23 +3,24 @@
 import React, { useEffect, useState } from "react";
 import styles from "./avatar.module.css";
 
-// Nauja avatarų kolekcija: suaugusiems, rimtiems vartotojams
+// Rimta, suaugusiems skirta avatarų kolekcija
 const externalAvatars = Array.from({ length: 20 }, (_, i) =>
   `https://api.dicebear.com/7.x/pixel-art-neutral/svg?seed=wallet${i + 1}`
 );
 
 export default function AvatarModalPicker({ onClose, onSelect }) {
-  const [selected, setSelected] = useState(null);
+  const [selected, setSelected] = useState("");
 
   useEffect(() => {
     const saved = localStorage.getItem("user_avatar");
     if (saved) setSelected(saved);
+    else setSelected(externalAvatars[0]);
   }, []);
 
-  const handlePick = (avatar) => {
-    setSelected(avatar);
-    localStorage.setItem("user_avatar", avatar);
-    if (onSelect) onSelect(avatar);
+  const handlePick = (avatarUrl) => {
+    setSelected(avatarUrl);
+    localStorage.setItem("user_avatar", avatarUrl);
+    if (onSelect) onSelect(avatarUrl);
   };
 
   return (
@@ -27,23 +28,25 @@ export default function AvatarModalPicker({ onClose, onSelect }) {
       <div className={styles.modal}>
         <h3 className={styles.title}>Choose Your Avatar</h3>
 
-        <img
-          src={selected || externalAvatars[0]}
-          className={styles.mainAvatar}
-          alt="Selected Avatar"
-        />
+        <div className={styles.mainPreview}>
+          <img
+            src={selected}
+            alt="Selected Avatar"
+            className={styles.mainAvatar}
+            draggable={false}
+          />
+        </div>
 
         <div className={styles.grid}>
           {externalAvatars.map((avatar) => (
             <img
               key={avatar}
               src={avatar}
-              alt="avatar"
-              className={`${styles.avatarSmall} ${
-                selected === avatar ? styles.active : ""
-              }`}
+              alt="Avatar Option"
+              className={`${styles.avatarSmall} ${selected === avatar ? styles.active : ""}`}
               onClick={() => handlePick(avatar)}
               loading="lazy"
+              draggable={false}
             />
           ))}
         </div>
