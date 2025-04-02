@@ -4,31 +4,33 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import QRCode from "react-qr-code";
 
-import { useSystem } from "@/contexts/SystemContext";
+import { useMagicLink } from "@/contexts/MagicLinkContext";
+import { useWallet } from "@/contexts/WalletContext";
 
 import styles from "@/styles/receive.module.css";
 import background from "@/styles/background.module.css";
 
 export default function Receive() {
   const router = useRouter();
-  const { user, wallet, loading, totalEUR } = useSystem();
+  const { user } = useMagicLink();
+  const { publicKey, totalEUR } = useWallet();
 
   const [copied, setCopied] = useState(false);
 
   const handleCopy = () => {
-    if (!wallet?.address) return;
-    navigator.clipboard.writeText(wallet.address);
+    if (!publicKey) return;
+    navigator.clipboard.writeText(publicKey);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
   useEffect(() => {
-    if (!user || !wallet) {
+    if (!user || !publicKey) {
       router.replace("/");
     }
-  }, [user, wallet, router]);
+  }, [user, publicKey, router]);
 
-  if (!user || !wallet || loading) {
+  if (!user || !publicKey) {
     return <div className={styles.loading}>Loading Wallet...</div>;
   }
 
@@ -43,7 +45,7 @@ export default function Receive() {
 
           <div className={styles.qrContainer} onClick={handleCopy}>
             <QRCode
-              value={wallet.address}
+              value={publicKey}
               size={180}
               bgColor="transparent"
               fgColor="#ffffff"
@@ -57,7 +59,7 @@ export default function Receive() {
             </div>
 
             <div className={styles.infoBox} onClick={handleCopy}>
-              <div className={styles.value}>{wallet.address}</div>
+              <div className={styles.value}>{publicKey}</div>
             </div>
           </div>
 
