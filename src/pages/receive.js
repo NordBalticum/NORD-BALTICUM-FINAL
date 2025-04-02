@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import QRCode from "react-qr-code";
 
 import { useMagicLink } from "@/contexts/MagicLinkContext";
+import { useWallet } from "@/contexts/WalletContext";
 import { fetchPrices } from "@/utils/fetchPrices";
 import { getWalletBalance } from "@/lib/ethers";
 
@@ -14,15 +15,14 @@ import background from "@/styles/background.module.css";
 
 export default function Receive() {
   const router = useRouter();
-  const { user, wallet } = useMagicLink();
+  const { user } = useMagicLink();
+  const { publicKey } = useWallet();
 
   const [copied, setCopied] = useState(false);
   const [totalEUR, setTotalEUR] = useState("0.00");
 
-  const address = wallet?.address || "";
-
   useEffect(() => {
-    if (!user || !address) {
+    if (!user || !publicKey) {
       router.push("/");
       return;
     }
@@ -32,10 +32,10 @@ export default function Receive() {
         const prices = await fetchPrices();
         let total = 0;
 
-        const chains = ["BNB", "TBNB", "ETH", "MATIC", "AVAX"];
-        for (const net of chains) {
-          const { formatted } = await getWalletBalance(address, net.toLowerCase());
-          const price = prices[net] || 0;
+        const networks = ["bnb", "tbnb", "eth", "matic", "avax"];
+        for (const net of networks) {
+          const { formatted } = await getWalletBalance(publicKey, net);
+          const price = prices[net.toUpperCase()] || 0;
           total += parseFloat(formatted) * price;
         }
 
@@ -47,16 +47,16 @@ export default function Receive() {
     };
 
     loadBalances();
-  }, [user, address]);
+  }, [user, publicKey]);
 
   const handleCopy = () => {
-    if (!address) return;
-    navigator.clipboard.writeText(address);
+    if (!publicKey) return;
+    navigator.clipboard.writeText(publicKey);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
-  if (!user || !address) {
+  if (!user || !publicKey) {
     return <div className={styles.loading}>Loading Wallet...</div>;
   }
 
@@ -70,7 +70,7 @@ export default function Receive() {
           <p className={styles.subtext}>Your MultiNetwork Receiving Address</p>
 
           <div className={styles.qrContainer} onClick={handleCopy}>
-            <QRCode value={address} size={180} bgColor="transparent" fgColor="#ffffff" />
+            <QRCode value={publicKey} size={180} bgColor="transparent" fgColor="#ffffff" />
           </div>
 
           <div className={styles.infoBoxes}>
@@ -80,7 +80,7 @@ export default function Receive() {
             </div>
 
             <div className={styles.infoBox} onClick={handleCopy}>
-              <div className={styles.value}>{address}</div>
+              <div className={styles.value}>{publicKey}</div>
             </div>
           </div>
 
