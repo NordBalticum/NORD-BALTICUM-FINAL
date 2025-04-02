@@ -9,7 +9,7 @@ import background from "@/styles/background.module.css";
 
 export default function Home() {
   const router = useRouter();
-  const { user, signInWithMagicLink, signInWithGoogle, signOut } = useMagicLink();
+  const { user, signInWithMagicLink, signInWithGoogle } = useMagicLink();
 
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState("idle");
@@ -19,7 +19,7 @@ export default function Home() {
     e.preventDefault();
     setMessage("");
 
-    if (!email) {
+    if (!email || !email.includes("@")) {
       setMessage("Please enter a valid email.");
       return;
     }
@@ -29,8 +29,8 @@ export default function Home() {
       await signInWithMagicLink(email);
       setMessage("Check your inbox for the Magic Link.");
     } catch (err) {
-      console.error(err);
-      setMessage("Failed to send Magic Link.");
+      console.error("Magic Link Error:", err);
+      setMessage("Failed to send Magic Link. Try again.");
     } finally {
       setStatus("idle");
     }
@@ -41,8 +41,8 @@ export default function Home() {
       setStatus("loading");
       await signInWithGoogle();
     } catch (err) {
-      console.error("Google Auth failed:", err);
-      setMessage("Google login failed. Make sure the OAuth credentials are correct.");
+      console.error("Google Auth Error:", err);
+      setMessage("Google login failed.");
     } finally {
       setStatus("idle");
     }
