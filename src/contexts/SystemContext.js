@@ -21,7 +21,13 @@ const RPCS = {
   avalanche: "https://api.avax.network/ext/bc/C/rpc",
 };
 
-const NETWORKS = Object.keys(RPCS);
+const COINGECKO_IDS = {
+  ethereum: "ethereum",
+  bsc: "binancecoin",
+  tbnb: "binancecoin",
+  polygon: "matic-network",
+  avalanche: "avalanche-2",
+};
 
 const SystemContext = createContext();
 
@@ -32,6 +38,7 @@ export const SystemProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [wallet, setWallet] = useState(null);
   const [balance, setBalance] = useState("0.00000");
+  const [totalEUR, setTotalEUR] = useState("0.00");
   const [activeNetwork, setActiveNetwork] = useState("bsc");
 
   const getProvider = (network) =>
@@ -48,16 +55,11 @@ export const SystemProvider = ({ children }) => {
   const createWalletIfNeeded = useCallback(async () => {
     if (!user?.email) return;
 
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from("wallets")
-      .select("*")
+      .select("encrypted_private_key")
       .eq("email", user.email)
       .limit(1);
-
-    if (error) {
-      console.error("❌ Wallet fetch error:", error.message);
-      return;
-    }
 
     if (!data || data.length === 0) {
       const newWallet = ethers.Wallet.createRandom();
@@ -66,7 +68,7 @@ export const SystemProvider = ({ children }) => {
         process.env.NEXT_PUBLIC_ENCRYPTION_KEY || "default_key"
       ).toString();
 
-      const inserts = NETWORKS.map((network) => ({
+      const inserts = Object.keys(RPCS).map((network) => ({
         email: user.email,
         network,
         address: newWallet.address,
@@ -74,49 +76,94 @@ export const SystemProvider = ({ children }) => {
         created_at: new Date().toISOString(),
       }));
 
-      const { error: insertError } = await supabase
-        .from("wallets")
-        .insert(inserts);
-
-      if (insertError) {
-        console.error("❌ Wallet insert error:", insertError.message);
-      }
+      await supabase.from("wallets").insert(inserts);
     }
   }, [user]);
 
   const loadWallet = useCallback(async () => {
     if (!user?.email) return;
 
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from("wallets")
       .select("*")
       .eq("email", user.email)
       .eq("network", activeNetwork)
       .maybeSingle();
 
-    if (error || !data?.encrypted_private_key) {
-      console.error("❌ Wallet load error:", error?.message);
-      return;
-    }
+    if (!data?.encrypted_private_key) return;
 
     const decrypted = CryptoJS.AES.decrypt(
       data.encrypted_private_key,
       process.env.NEXT_PUBLIC_ENCRYPTION_KEY || "default_key"
     ).toString(CryptoJS.enc.Utf8);
 
-    if (!decrypted || decrypted.length < 30) {
-      console.error("❌ Decryption failed.");
-      return;
-    }
+    if (!decrypted || decrypted.length < 30) return;
 
     const provider = getProvider(activeNetwork);
     const instance = new ethers.Wallet(decrypted, provider);
     setWallet(instance);
   }, [user, activeNetwork]);
 
+  const fetchPrices = async () => {
+    try {
+      const ids = Object.values(COINGECKO_IDS).join(",");
+      const res = await fetch(
+        `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=eur`
+      );
+      const data = await res.json();
+      return Object.entries(COINGECKO_IDS).reduce((acc, [net, id]) => {
+        acc[net] = data?.[id]?.eur || 0;
+        return acc;
+      }, {});
+    } catch (e) {
+      console.error("❌ Price fetch failed:", e.message);
+      return {};
+    }
+  };
+
+  const refreshAllBalances = useCallback(async () => {
+    if (!user?.email || !wallet?.address) return;
+    try {
+      const prices = await fetchPrices();
+      const results = [];
+
+      await Promise.all(
+        Object.keys(RPCS).map(async (network) => {
+          try {
+            const provider = new ethers.providers.JsonRpcProvider(RPCS[network]);
+            const balanceRaw = await provider.getBalance(wallet.address);
+            const amount = ethers.utils.formatEther(balanceRaw);
+            const eur = (parseFloat(amount) * prices[network]).toFixed(2);
+
+            results.push({
+              email: user.email,
+              network,
+              wallet_address: wallet.address,
+              amount,
+              eur,
+              updated_at: new Date().toISOString(),
+            });
+          } catch (err) {
+            console.warn(`❌ Balance error [${network}]:`, err.message);
+          }
+        })
+      );
+
+      if (results.length > 0) {
+        await supabase.from("balances").upsert(results, {
+          onConflict: ["email", "wallet_address", "network"],
+        });
+
+        const total = results.reduce((sum, b) => sum + parseFloat(b.eur || 0), 0);
+        setTotalEUR(total.toFixed(2));
+      }
+    } catch (err) {
+      console.error("❌ Failed to refresh balances:", err.message);
+    }
+  }, [user, wallet]);
+
   const fetchBalance = useCallback(async () => {
     if (!wallet) return;
-
     try {
       const bal = await wallet.getBalance();
       setBalance(ethers.utils.formatEther(bal));
@@ -158,9 +205,7 @@ export const SystemProvider = ({ children }) => {
   };
 
   const loginWithGoogle = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-    });
+    const { error } = await supabase.auth.signInWithOAuth({ provider: "google" });
     if (error) throw new Error(error.message);
   };
 
@@ -183,6 +228,14 @@ export const SystemProvider = ({ children }) => {
     fetchBalance();
   }, [wallet, fetchBalance]);
 
+  useEffect(() => {
+    if (wallet && user?.email) {
+      refreshAllBalances();
+      const interval = setInterval(refreshAllBalances, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [wallet, user, refreshAllBalances]);
+
   return (
     <SystemContext.Provider
       value={{
@@ -190,12 +243,14 @@ export const SystemProvider = ({ children }) => {
         loading,
         wallet,
         balance,
+        totalEUR,
         activeNetwork,
         setActiveNetwork,
         sendCrypto,
         loginWithEmail,
         loginWithGoogle,
         logout,
+        refreshAllBalances,
       }}
     >
       {!loading && children}
