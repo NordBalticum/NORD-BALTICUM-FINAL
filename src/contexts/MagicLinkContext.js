@@ -7,7 +7,6 @@ import { Wallet } from "ethers";
 
 export const MagicLinkContext = createContext();
 
-// AES šifravimui – slaptažodžio raktas
 const ENCRYPTION_SECRET = process.env.NEXT_PUBLIC_ENCRYPTION_SECRET || "fallback-secret";
 
 const encode = (str) => new TextEncoder().encode(str);
@@ -32,22 +31,14 @@ const getKey = async (password) => {
 const encrypt = async (text) => {
   const iv = window.crypto.getRandomValues(new Uint8Array(12));
   const key = await getKey(ENCRYPTION_SECRET);
-  const encrypted = await window.crypto.subtle.encrypt(
-    { name: "AES-GCM", iv },
-    key,
-    encode(text)
-  );
+  const encrypted = await window.crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, encode(text));
   return btoa(JSON.stringify({ iv: Array.from(iv), data: Array.from(new Uint8Array(encrypted)) }));
 };
 
 const decrypt = async (ciphertext) => {
   const { iv, data } = JSON.parse(atob(ciphertext));
   const key = await getKey(ENCRYPTION_SECRET);
-  const decrypted = await window.crypto.subtle.decrypt(
-    { name: "AES-GCM", iv: new Uint8Array(iv) },
-    key,
-    new Uint8Array(data)
-  );
+  const decrypted = await window.crypto.subtle.decrypt({ name: "AES-GCM", iv: new Uint8Array(iv) }, key, new Uint8Array(data));
   return decode(decrypted);
 };
 
@@ -64,15 +55,7 @@ export const MagicLinkProvider = ({ children }) => {
       setUser(currentUser);
 
       if (currentUser) {
-        const localWallet = await loadWalletFromStorage();
-        if (localWallet) {
-          setWallet(localWallet);
-        } else {
-          const newWallet = Wallet.createRandom();
-          await saveWalletToStorage(newWallet);
-          setWallet(newWallet);
-          await saveWalletToDatabase(currentUser.email, newWallet.address);
-        }
+        await loadOrCreateWallet(currentUser.email);
         router.push("/dashboard");
       }
       setLoading(false);
@@ -86,15 +69,7 @@ export const MagicLinkProvider = ({ children }) => {
         setUser(currentUser);
 
         if (currentUser) {
-          const localWallet = await loadWalletFromStorage();
-          if (localWallet) {
-            setWallet(localWallet);
-          } else {
-            const newWallet = Wallet.createRandom();
-            await saveWalletToStorage(newWallet);
-            setWallet(newWallet);
-            await saveWalletToDatabase(currentUser.email, newWallet.address);
-          }
+          await loadOrCreateWallet(currentUser.email);
           router.push("/dashboard");
         } else {
           setWallet(null);
@@ -106,6 +81,18 @@ export const MagicLinkProvider = ({ children }) => {
 
     return () => subscription?.unsubscribe();
   }, [router]);
+
+  const loadOrCreateWallet = async (email) => {
+    const localWallet = await loadWalletFromStorage();
+    if (localWallet) {
+      setWallet(localWallet);
+    } else {
+      const newWallet = Wallet.createRandom();
+      await saveWalletToStorage(newWallet);
+      await saveWalletToDatabase(email, newWallet.address);
+      setWallet(newWallet);
+    }
+  };
 
   const signInWithMagicLink = async (email) => {
     try {
@@ -127,10 +114,7 @@ export const MagicLinkProvider = ({ children }) => {
   const saveWalletToStorage = async (wallet) => {
     if (!wallet?.privateKey) return;
     const encryptedKey = await encrypt(wallet.privateKey);
-    const data = {
-      address: wallet.address,
-      privateKey: encryptedKey,
-    };
+    const data = { address: wallet.address, privateKey: encryptedKey };
     localStorage.setItem("userWallet", JSON.stringify(data));
   };
 
@@ -149,11 +133,35 @@ export const MagicLinkProvider = ({ children }) => {
 
   const saveWalletToDatabase = async (email, address) => {
     try {
-      const { error } = await supabase.from("wallets").upsert({ email, bnb_address: address }, { onConflict: ["email"] });
+      const { error } = await supabase
+        .from("wallets")
+        .upsert({ user_email: email, bnb_address: address }, { onConflict: ["user_email"] });
       if (error) console.error("Supabase DB error:", error.message);
     } catch (err) {
       console.error("Supabase wallet save error:", err);
     }
+  };
+
+  const fetchUserWallet = async (email) => {
+    const { data, error } = await supabase
+      .from("wallets")
+      .select("*")
+      .eq("user_email", email)
+      .single();
+    if (error) return null;
+    return data;
+  };
+
+  const fetchUserBalances = async (email) => {
+    const { data, error } = await supabase
+      .from("balances")
+      .select("*")
+      .eq("user_email", email);
+    if (error) {
+      console.error("Balances fetch error:", error.message);
+      return [];
+    }
+    return data;
   };
 
   return (
@@ -164,6 +172,8 @@ export const MagicLinkProvider = ({ children }) => {
         loading,
         signInWithMagicLink,
         signOut,
+        fetchUserWallet,
+        fetchUserBalances,
       }}
     >
       {children}
