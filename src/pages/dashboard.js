@@ -4,7 +4,6 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMagicLink } from "@/contexts/MagicLinkContext";
 import styles from "@/styles/dashboard.module.css";
-import background from "@/styles/background.module.css";
 
 const networkLogos = {
   bsc: "https://cryptologos.cc/logos/bnb-bnb-logo.png",
@@ -24,48 +23,26 @@ const networkNames = {
 
 export default function Dashboard() {
   const router = useRouter();
-  const { user, wallet } = useMagicLink();
+  const { user, fetchUserBalances } = useMagicLink();
 
   const [balances, setBalances] = useState([]);
   const [totalEUR, setTotalEUR] = useState("0.00");
 
   useEffect(() => {
-    if (!user || !wallet) {
+    if (user) {
+      fetchUserBalances(user.email).then((data) => {
+        setBalances(data);
+        const total = data.reduce((sum, item) => sum + parseFloat(item.eur || 0), 0);
+        setTotalEUR(total.toFixed(2));
+      });
+    } else {
       router.replace("/");
-      return;
     }
-
-    const fetchBalances = async () => {
-      try {
-        const response = await fetch(`/api/balances?email=${encodeURIComponent(user.email)}`);
-        const data = await response.json();
-        if (Array.isArray(data)) {
-          setBalances(data);
-          const total = data.reduce((sum, item) => sum + parseFloat(item.eur || 0), 0);
-          setTotalEUR(total.toFixed(2));
-        }
-      } catch (err) {
-        console.error("Failed to load balances:", err);
-        setTotalEUR("0.00");
-      }
-    };
-
-    fetchBalances();
-  }, [user, wallet, router]);
-
-  const networkRoutes = {
-    bsc: "/bnb",
-    tbnb: "/tbnb",
-    ethereum: "/eth",
-    polygon: "/matic",
-    avalanche: "/avax",
-  };
+  }, [user]);
 
   const handleCardClick = (symbol) => {
-    router.push(networkRoutes[symbol] || "/send");
+    router.push(`/${symbol}`);
   };
-
-  if (!user || !wallet) return null;
 
   return (
     <main className={styles.container}>
@@ -94,7 +71,9 @@ export default function Dashboard() {
                     className={styles.assetLogo}
                   />
                   <div className={styles.assetInfo}>
-                    <span className={styles.assetSymbol}>{bal.network.toUpperCase()}</span>
+                    <span className={styles.assetSymbol}>
+                      {bal.network.toUpperCase()}
+                    </span>
                     <span className={styles.assetName}>
                       {networkNames[bal.network] || bal.network}
                     </span>
@@ -103,10 +82,10 @@ export default function Dashboard() {
 
                 <div className={styles.assetRight}>
                   <span className={styles.assetAmount}>
-                    {parseFloat(bal.amount).toFixed(5)}
+                    {parseFloat(bal.balance).toFixed(5)}
                   </span>
                   <span className={styles.assetEur}>
-                    € {parseFloat(bal.eur).toFixed(2)}
+                    € {parseFloat(bal.eur || 0).toFixed(2)}
                   </span>
                 </div>
               </div>
