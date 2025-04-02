@@ -4,8 +4,8 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { FaBars, FaTimes } from "react-icons/fa";
 import Image from "next/image";
+import { FaTimes } from "react-icons/fa";
 import { useMagicLink } from "@/contexts/MagicLinkContext";
 import { useWallet } from "@/contexts/WalletContext";
 import { utils } from "ethers";
@@ -20,7 +20,7 @@ export default function SideDrawer() {
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  const toggleDrawer = () => setOpen((prev) => !prev);
+  const toggleDrawer = () => setOpen(!open);
 
   const handleLogout = async () => {
     try {
@@ -29,13 +29,11 @@ export default function SideDrawer() {
       router.replace("/");
     } catch (err) {
       console.error("❌ Logout failed:", err.message);
-      alert("Logout failed. Please try again.");
     }
   };
 
-  const walletAddress = wallet?.bnb && utils.isAddress(wallet.bnb)
-    ? wallet.bnb
-    : "No wallet";
+  const walletAddress =
+    wallet?.bnb && utils.isAddress(wallet.bnb) ? wallet.bnb : "No wallet";
 
   useEffect(() => {
     document.body.style.overflow = open ? "hidden" : "auto";
@@ -56,14 +54,20 @@ export default function SideDrawer() {
 
   return (
     <>
-      <motion.button
+      {/* Hamburger Icon (Left Top) */}
+      <button
         className={styles.hamburger}
         onClick={toggleDrawer}
         aria-label="Open menu"
-        whileTap={{ scale: 0.9 }}
       >
-        <FaBars size={22} />
-      </motion.button>
+        <Image
+          src="/icons/hamburger.svg"
+          alt="Menu"
+          width={26}
+          height={26}
+          priority
+        />
+      </button>
 
       <AnimatePresence>
         {open && (
@@ -75,6 +79,7 @@ export default function SideDrawer() {
               exit={{ opacity: 0 }}
               onClick={toggleDrawer}
             />
+
             <motion.aside
               className={`${styles.drawer} ${open ? styles.open : ""}`}
               initial={{ x: "-100%" }}
@@ -83,11 +88,7 @@ export default function SideDrawer() {
               transition={{ type: "tween", duration: 0.33 }}
             >
               <div className={styles.drawerHeader}>
-                <button
-                  className={styles.closeIcon}
-                  onClick={toggleDrawer}
-                  aria-label="Close menu"
-                >
+                <button className={styles.closeIcon} onClick={toggleDrawer}>
                   <FaTimes size={22} />
                 </button>
               </div>
@@ -96,23 +97,14 @@ export default function SideDrawer() {
                 <Image
                   src="/icons/logo.svg"
                   alt="NordBalticum Logo"
-                  width={240}
+                  width={220}
                   height={80}
                   priority
-                  style={{
-                    marginBottom: "18px",
-                    borderRadius: "50%",
-                    border: "2px solid rgba(255,255,255,0.15)",
-                    padding: "8px",
-                    background:
-                      "radial-gradient(circle at center, rgba(255,255,255,0.06), transparent)",
-                    boxShadow: "0 0 28px rgba(255,255,255,0.08)",
-                  }}
                 />
                 <p className={styles.email}>{user?.email}</p>
 
                 <div
-                  title="Click to copy"
+                  className={styles.walletBox}
                   onClick={() => {
                     if (utils.isAddress(walletAddress)) {
                       navigator.clipboard.writeText(walletAddress);
@@ -120,7 +112,6 @@ export default function SideDrawer() {
                       setTimeout(() => setCopied(false), 1600);
                     }
                   }}
-                  className={styles.walletBox}
                 >
                   {copied && (
                     <motion.div
@@ -137,30 +128,24 @@ export default function SideDrawer() {
                 </div>
               </div>
 
-              <div className={styles.navSection}>
-                <nav className={styles.nav}>
-                  {navItems.map((item) => (
-                    <Link
-                      key={item.label}
-                      href={item.path}
-                      onClick={() => setOpen(false)}
-                      className={`${styles.link} ${
-                        pathname === item.path ? styles.active : ""
-                      }`}
-                    >
-                      {item.label}
-                    </Link>
-                  ))}
-                </nav>
+              <nav className={styles.nav}>
+                {navItems.map((item) => (
+                  <Link
+                    key={item.label}
+                    href={item.path}
+                    onClick={() => setOpen(false)}
+                    className={`${styles.link} ${
+                      pathname === item.path ? styles.active : ""
+                    }`}
+                  >
+                    {item.label}
+                  </Link>
+                ))}
+              </nav>
 
-                <button
-                  className={styles.logout}
-                  onClick={handleLogout}
-                  title="Logout"
-                >
-                  Logout
-                </button>
-              </div>
+              <button className={styles.logout} onClick={handleLogout}>
+                Logout
+              </button>
             </motion.aside>
           </>
         )}
