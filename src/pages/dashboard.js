@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo } from "react";
+import React, { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 
@@ -10,51 +10,69 @@ import StarsBackground from "@/components/StarsBackground";
 import styles from "@/styles/dashboard.module.css";
 import background from "@/styles/background.module.css";
 
-const networksData = [
-  {
-    name: "BNB Smart Chain",
-    symbol: "bsc",
-    route: "/bnb",
-    logo: "https://cryptologos.cc/logos/bnb-bnb-logo.png",
-  },
-  {
-    name: "BSC Testnet",
-    symbol: "tbnb",
-    route: "/tbnb",
-    logo: "https://cryptologos.cc/logos/binance-coin-bnb-logo.png",
-  },
-  {
-    name: "Ethereum",
-    symbol: "ethereum",
-    route: "/eth",
-    logo: "https://cryptologos.cc/logos/ethereum-eth-logo.png",
-  },
-  {
-    name: "Polygon",
-    symbol: "polygon",
-    route: "/matic",
-    logo: "https://cryptologos.cc/logos/polygon-matic-logo.png",
-  },
-  {
-    name: "Avalanche",
-    symbol: "avalanche",
-    route: "/avax",
-    logo: "https://cryptologos.cc/logos/avalanche-avax-logo.png",
-  },
-];
+const networkLogos = {
+  bsc: "https://cryptologos.cc/logos/bnb-bnb-logo.png",
+  tbnb: "https://cryptologos.cc/logos/binance-coin-bnb-logo.png",
+  ethereum: "https://cryptologos.cc/logos/ethereum-eth-logo.png",
+  polygon: "https://cryptologos.cc/logos/polygon-matic-logo.png",
+  avalanche: "https://cryptologos.cc/logos/avalanche-avax-logo.png",
+};
+
+const networkNames = {
+  bsc: "BNB Smart Chain",
+  tbnb: "BSC Testnet",
+  ethereum: "Ethereum",
+  polygon: "Polygon",
+  avalanche: "Avalanche",
+};
 
 export default function Dashboard() {
   const router = useRouter();
-  const { user, wallet, loading, balance } = useSystem();
+  const {
+    user,
+    wallet,
+    loading,
+    totalEUR,
+    refreshAllBalances,
+    activeNetwork,
+    setActiveNetwork,
+  } = useSystem();
 
-  const networks = useMemo(() => networksData, []);
-  const total = balance || "0.00";
+  const [balances, setBalances] = React.useState([]);
 
   useEffect(() => {
     if (!user || !wallet) {
       router.replace("/");
+    } else {
+      fetchLatest();
     }
-  }, [user, wallet, router]);
+  }, [user, wallet]);
+
+  const fetchLatest = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("balances")
+        .select("*")
+        .eq("email", user.email);
+
+      if (!error && data) setBalances(data);
+    } catch (err) {
+      console.error("❌ Failed to load balances:", err.message);
+    }
+  };
+
+  const networkRoutes = {
+  bsc: "/bnb",
+  tbnb: "/tbnb",
+  ethereum: "/eth",
+  polygon: "/matic",
+  avalanche: "/avax",
+};
+
+const handleCardClick = (symbol) => {
+  setActiveNetwork(symbol);
+  router.push(networkRoutes[symbol] || "/send");
+};
 
   if (!user || !wallet || loading) {
     return <div className={styles.loading}>Loading Wallet...</div>;
@@ -78,20 +96,20 @@ export default function Dashboard() {
 
         <div className={styles.totalBox}>
           <p className={styles.totalLabel}>Total Wallet Value</p>
-          <h2 className={styles.totalValue}>€ {total}</h2>
+          <h2 className={styles.totalValue}>€ {totalEUR}</h2>
         </div>
 
         <div className={styles.assetGrid}>
-          {networks.map((net) => (
+          {balances.map((bal) => (
             <div
-              key={net.symbol}
+              key={bal.network}
               className={styles.assetCard}
-              onClick={() => router.push(net.route)}
+              onClick={() => handleCardClick(bal.network)}
             >
               <div className={styles.assetLeft}>
                 <Image
-                  src={net.logo}
-                  alt={`${net.symbol} logo`}
+                  src={networkLogos[bal.network]}
+                  alt={`${bal.network} logo`}
                   width={42}
                   height={42}
                   className={styles.assetLogo}
@@ -99,17 +117,21 @@ export default function Dashboard() {
                 />
                 <div className={styles.assetInfo}>
                   <span className={styles.assetSymbol}>
-                    {net.symbol.toUpperCase()}
+                    {bal.network.toUpperCase()}
                   </span>
-                  <span className={styles.assetName}>{net.name}</span>
+                  <span className={styles.assetName}>
+                    {networkNames[bal.network] || bal.network}
+                  </span>
                 </div>
               </div>
 
               <div className={styles.assetRight}>
                 <span className={styles.assetAmount}>
-                  — {net.symbol.toUpperCase()}
+                  {parseFloat(bal.amount).toFixed(4)}
                 </span>
-                <span className={styles.assetEur}>—</span>
+                <span className={styles.assetEur}>
+                  € {parseFloat(bal.eur).toFixed(2)}
+                </span>
               </div>
             </div>
           ))}
