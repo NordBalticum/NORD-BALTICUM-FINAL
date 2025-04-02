@@ -1,5 +1,3 @@
-// src/contexts/WalletContext.js
-
 "use client";
 
 import { createContext, useContext, useEffect, useState, useCallback } from "react";
@@ -13,23 +11,24 @@ const WalletContext = createContext();
 const RPC_URLS = {
   ethereum: [
     "https://eth.llamarpc.com",
-    "https://rpc.ankr.com/eth"
+    "https://rpc.ankr.com/eth",
   ],
   bsc: [
     "https://bsc-dataseed.binance.org",
-    "https://rpc.ankr.com/bsc"
+    "https://rpc.ankr.com/bsc",
+  ],
+  tbnb: [
+    "https://rpc.ankr.com/bsc_testnet_chapel",
+    "https://bsc-testnet.publicnode.com",
+    "https://data-seed-prebsc-1-s1.binance.org:8545",
   ],
   polygon: [
     "https://polygon-rpc.com",
-    "https://rpc.ankr.com/polygon"
+    "https://rpc.ankr.com/polygon",
   ],
   avalanche: [
     "https://api.avax.network/ext/bc/C/rpc",
-    "https://rpc.ankr.com/avalanche"
-  ],
-  base: [
-    "https://mainnet.base.org",
-    "https://developer-access-mainnet.base.org"
+    "https://rpc.ankr.com/avalanche",
   ],
 };
 
@@ -69,7 +68,9 @@ export const WalletProvider = ({ children }) => {
         process.env.NEXT_PUBLIC_ENCRYPTION_KEY || "default_key"
       ).toString(CryptoJS.enc.Utf8);
 
-      if (!decrypted || decrypted.length < 30) throw new Error("❌ Decryption failed.");
+      if (!decrypted || decrypted.length < 30) {
+        throw new Error("❌ Decryption failed.");
+      }
 
       const provider = getProvider(activeNetwork);
       const loadedWallet = new ethers.Wallet(decrypted, provider);
