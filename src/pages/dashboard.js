@@ -9,11 +9,13 @@ import BalancesCard from "@/components/BalancesCard";
 
 export default function Dashboard() {
   const router = useRouter();
-  const { user } = useMagicLink();
+  const { user, loading } = useMagicLink();
 
   useEffect(() => {
-    if (!user) router.replace("/");
-  }, [user, router]);
+    if (!loading && !user) {
+      router.replace("/");
+    }
+  }, [user, loading, router]);
 
   return (
     <main className={styles.container}>
