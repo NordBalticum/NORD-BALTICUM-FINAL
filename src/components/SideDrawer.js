@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { FaBars, FaTimes } from "react-icons/fa";
+import Image from "next/image";
 
 import { useMagicLink } from "@/contexts/MagicLinkContext";
 import styles from "@/components/sidedrawer.module.css";
@@ -53,7 +54,6 @@ export default function SideDrawer() {
 
   return (
     <>
-      {/* Hamburger icon */}
       <motion.button
         className={styles.hamburger}
         onClick={toggleDrawer}
@@ -63,7 +63,6 @@ export default function SideDrawer() {
         <FaBars size={22} />
       </motion.button>
 
-      {/* Side drawer */}
       <AnimatePresence>
         {open && (
           <>
@@ -88,6 +87,14 @@ export default function SideDrawer() {
               </div>
 
               <div className={styles.userBox}>
+                <Image
+                  src="/icons/logo.svg"
+                  alt="NordBalticum Logo"
+                  width={160}
+                  height={54}
+                  priority
+                  style={{ marginBottom: "14px" }}
+                />
                 <p className={styles.email}>
                   {user?.email || "no@email.com"}
                 </p>
