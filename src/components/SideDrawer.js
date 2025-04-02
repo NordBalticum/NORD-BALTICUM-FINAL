@@ -52,8 +52,8 @@ export default function SideDrawer() {
     { label: "Settings", path: "/settings" },
   ];
 
-  const walletAddress = wallet?.bnb_address || wallet?.address || "No wallet";
-
+  const walletAddress = wallet?.bnb || "No wallet";
+  
   if (!user) return null;
 
   return (
