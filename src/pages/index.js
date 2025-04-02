@@ -20,7 +20,7 @@ export default function Home() {
 
   const logoRef = useRef(null);
 
-  // Logo animacija
+  // Animate logo tilt
   useEffect(() => {
     const logo = logoRef.current;
     if (!logo) return;
@@ -48,7 +48,7 @@ export default function Home() {
     };
   }, []);
 
-  // Redirect jei jau prisijungęs
+  // Redirect if already logged in
   useEffect(() => {
     if (!loadingUser && user) {
       router.push("/dashboard");
