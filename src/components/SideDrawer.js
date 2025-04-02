@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 
 import { useMagicLink } from "@/contexts/MagicLinkContext";
-import { useWallet } from "@/contexts/WalletContext";
 import AvatarDisplay from "@/components/AvatarDisplay";
 import { FaBars, FaTimes } from "react-icons/fa";
 
@@ -15,7 +14,6 @@ import styles from "@/components/sidedrawer.module.css";
 export default function SideDrawer() {
   const router = useRouter();
   const { user, logout } = useMagicLink();
-  const { publicKey } = useWallet();
 
   const [open, setOpen] = useState(false);
   const toggleDrawer = () => setOpen((prev) => !prev);
@@ -81,7 +79,7 @@ export default function SideDrawer() {
 
               <div className={styles.userBox}>
                 <AvatarDisplay
-                  walletAddress={publicKey || "0x0000"}
+                  walletAddress={user.email}
                   size={64}
                 />
                 <p className={styles.email}>{user?.email}</p>
