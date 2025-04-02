@@ -2,30 +2,32 @@
 
 import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { useMagicLink } from "@/contexts/MagicLinkContext";
 import { supabase } from "@/utils/supabaseClient";
+
+import { useSystem } from "@/contexts/SystemContext";
 
 import StarsBackground from "@/components/StarsBackground";
 import styles from "@/styles/history.module.css";
 import background from "@/styles/background.module.css";
 
 export default function History() {
-  const { user } = useMagicLink();
+  const { user, wallet } = useSystem();
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (user?.email) fetchTransactions();
-  }, [user]);
+    if (user?.email && wallet?.address) fetchTransactions();
+  }, [user, wallet]);
 
   const fetchTransactions = async () => {
     try {
       setLoading(true);
-
       const { data, error } = await supabase
         .from("transactions")
         .select("*")
-        .or(`user_email.eq.${user.email},to_address.eq.${user.email}`)
+        .or(
+          `sender_email.eq.${user.email},receiver_email.eq.${user.email},wallet_address.eq.${wallet.address}`
+        )
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -39,11 +41,11 @@ export default function History() {
 
   const getExplorerURL = (hash, network) => {
     const baseURLs = {
-      bnb: "https://bscscan.com/tx/",
+      bsc: "https://bscscan.com/tx/",
       tbnb: "https://testnet.bscscan.com/tx/",
-      eth: "https://etherscan.io/tx/",
-      matic: "https://polygonscan.com/tx/",
-      avax: "https://snowtrace.io/tx/",
+      ethereum: "https://etherscan.io/tx/",
+      polygon: "https://polygonscan.com/tx/",
+      avalanche: "https://snowtrace.io/tx/",
     };
     return baseURLs[network?.toLowerCase()] + hash;
   };
