@@ -62,12 +62,14 @@ export default function Dashboard() {
 
   const networks = useMemo(() => networksData, []);
 
+  // Redirect if not authenticated
   useEffect(() => {
     if (!loadingUser && (!user || !wallet?.address)) {
       router.replace("/");
     }
   }, [user, wallet, loadingUser, router]);
 
+  // Load balances and prices
   useEffect(() => {
     const loadBalances = async () => {
       if (!wallet?.address) return;
@@ -112,7 +114,7 @@ export default function Dashboard() {
     return () => clearInterval(interval);
   }, [wallet, networks]);
 
-  if (loadingUser) {
+  if (loadingUser || !user || !wallet?.address) {
     return <div className={styles.loading}>Loading...</div>;
   }
 
@@ -121,11 +123,9 @@ export default function Dashboard() {
       <StarsBackground />
 
       <div className={styles.dashboardWrapper}>
-        {wallet?.address && (
-          <div className={styles.avatarCenter}>
-            <AvatarDisplay walletAddress={wallet.address} size={92} />
-          </div>
-        )}
+        <div className={styles.avatarCenter}>
+          <AvatarDisplay walletAddress={wallet.address} size={92} />
+        </div>
 
         <div className={styles.totalValueContainer}>
           <p className={styles.totalLabel}>Total Portfolio Value</p>
