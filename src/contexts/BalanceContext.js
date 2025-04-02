@@ -21,10 +21,15 @@ const fetchBalance = async (providerUrl, address) => {
 };
 
 const fetchRates = async () => {
-  const url =
-    "https://api.coingecko.com/api/v3/simple/price?ids=ethereum,binancecoin,polygon,avalanche-2&vs_currencies=eur,usd";
-  const res = await fetch(url);
-  return await res.json();
+  try {
+    const url =
+      "https://api.coingecko.com/api/v3/simple/price?ids=ethereum,binancecoin,polygon,avalanche-2&vs_currencies=eur,usd";
+    const res = await fetch(url);
+    return await res.json();
+  } catch (err) {
+    console.error("Coingecko fetch failed:", err);
+    return {};
+  }
 };
 
 export const BalanceProvider = ({ children }) => {
@@ -34,7 +39,10 @@ export const BalanceProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!wallet) return;
+    if (!wallet || !wallet.bnb) {
+      console.log("Wallet not ready for balance fetch.");
+      return;
+    }
 
     const loadBalances = async () => {
       try {
@@ -44,7 +52,8 @@ export const BalanceProvider = ({ children }) => {
         for (const net of networks) {
           const address = wallet[net];
           if (address) {
-            result[net] = await fetchBalance(RPC[net], address);
+            const balance = await fetchBalance(RPC[net], address);
+            result[net] = balance;
           }
         }
 
@@ -70,7 +79,7 @@ export const BalanceProvider = ({ children }) => {
       avax: "avalanche-2",
     };
 
-    const coin = coinMap[symbol];
+    const coin = coinMap[symbol] || "";
     const eurRate = rates?.[coin]?.eur || 0;
     const usdRate = rates?.[coin]?.usd || 0;
 
