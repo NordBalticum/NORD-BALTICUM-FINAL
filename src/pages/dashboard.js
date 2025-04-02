@@ -64,7 +64,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (!loadingUser && (!user || !wallet?.address)) {
-      router.push("/");
+      router.replace("/");
     }
   }, [user, wallet, loadingUser, router]);
 
