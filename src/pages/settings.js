@@ -1,12 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
+
 import { useMagicLink } from "@/contexts/MagicLinkContext";
-
-import AvatarDisplay from "@/components/AvatarDisplay";
-import SuccessModal from "@/components/SuccessModal";
-
 import styles from "@/styles/settings.module.css";
 import background from "@/styles/background.module.css";
 
@@ -15,30 +13,34 @@ export default function SettingsPage() {
   const { user, logout, fetchUserWallet, updateEmail } = useMagicLink();
 
   const [emailInput, setEmailInput] = useState("");
-  const [success, setSuccess] = useState(false);
-  const [walletAddress, setWalletAddress] = useState(null);
+  const [walletAddress, setWalletAddress] = useState("");
 
-  React.useEffect(() => {
-    if (user) {
-      fetchUserWallet(user.email).then(setWalletAddress).catch(console.error);
+  useEffect(() => {
+    if (user?.email) {
+      fetchUserWallet(user.email)
+        .then((addr) => setWalletAddress(addr || "Wallet not found"))
+        .catch(console.error);
     }
   }, [user, fetchUserWallet]);
 
   const handleChangeEmail = async () => {
-    if (!emailInput.trim()) return alert("Please enter a new email.");
+    if (!emailInput.trim()) {
+      alert("Please enter a new email.");
+      return;
+    }
 
     const result = await updateEmail(emailInput.trim());
     if (result.success) {
-      alert("✅ Magic Link has been sent to your new email.");
+      alert("✅ Magic Link sent to new email.");
     } else {
       alert("❌ Error: " + result.message);
     }
   };
 
-  const handleCopy = () => {
-    if (walletAddress) {
+  const handleCopyWallet = () => {
+    if (walletAddress && walletAddress !== "Wallet not found") {
       navigator.clipboard.writeText(walletAddress);
-      alert("✅ Wallet address copied to clipboard.");
+      alert("✅ Wallet address copied.");
     }
   };
 
@@ -47,31 +49,34 @@ export default function SettingsPage() {
     router.replace("/");
   };
 
-  if (!user || !walletAddress) {
-    return <div className={styles.loading}>Loading Profile...</div>;
-  }
+  if (!user) return <div className={styles.loading}>Loading profile...</div>;
 
   return (
     <main className={`${styles.container} ${background.gradient}`}>
       <div className={styles.box}>
-        <h2 className={styles.heading}>Profile Settings</h2>
+        <Image
+          src="/icons/logo.svg"
+          alt="NordBalticum Logo"
+          width={220}
+          height={80}
+          priority
+          className={styles.logo}
+        />
 
-        <div className={styles.avatarContainer}>
-          <AvatarDisplay walletAddress={walletAddress} size={80} />
-          <p className={styles.avatarText}>Avatar</p>
+        <div
+          className={styles.walletBox}
+          onClick={handleCopyWallet}
+          title="Click to copy wallet address"
+        >
+          <p className={styles.walletLabel}>Your Wallet:</p>
+          <p className={styles.walletAddress}>{walletAddress}</p>
         </div>
-
-        <p><strong>Email:</strong> {user.email}</p>
-
-        <div className={styles.walletBox} onClick={handleCopy} title="Click to copy">
-          <span><strong>Wallet Address:</strong></span>
-          <span className={styles.walletAddress}>{walletAddress}</span>
-        </div>
-
-        <hr />
 
         <div className={styles.section}>
           <h4>Change Email</h4>
+          <p className={styles.currentEmail}>
+            Current: <strong>{user.email}</strong>
+          </p>
           <input
             type="email"
             placeholder="New email address"
@@ -84,19 +89,10 @@ export default function SettingsPage() {
           </button>
         </div>
 
-        <hr />
-
         <button className={styles.logout} onClick={handleLogout}>
           Log Out
         </button>
       </div>
-
-      {success && (
-        <SuccessModal
-          message="Email updated successfully!"
-          onClose={() => setSuccess(false)}
-        />
-      )}
     </main>
   );
 }
