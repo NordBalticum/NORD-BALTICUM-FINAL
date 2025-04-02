@@ -3,7 +3,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { useSystem } from "@/contexts/SystemContext";
+import { useMagicLink } from "@/contexts/MagicLinkContext";
+import { useWallet } from "@/contexts/WalletContext";
 
 import styles from "@/styles/index.module.css";
 import background from "@/styles/background.module.css";
@@ -12,11 +13,13 @@ export default function Home() {
   const router = useRouter();
   const {
     user,
-    wallet,
-    loading,
     loginWithEmail,
     loginWithGoogle,
-  } = useSystem();
+  } = useMagicLink();
+  const {
+    walletAddress,
+    initializeWallet,
+  } = useWallet();
 
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState("idle");
@@ -53,10 +56,10 @@ export default function Home() {
 
   // Redirect if logged in
   useEffect(() => {
-    if (!loading && user && wallet) {
+    if (user && walletAddress) {
       router.replace("/dashboard");
     }
-  }, [user, wallet, loading, router]);
+  }, [user, walletAddress, router]);
 
   const handleEmailLogin = async (e) => {
     e.preventDefault();
