@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useMagicLink } from "@/contexts/MagicLinkContext";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/utils/supabaseClient";
 
 import StarsBackground from "@/components/StarsBackground";
 import styles from "@/styles/history.module.css";
@@ -21,10 +21,11 @@ export default function History() {
   const fetchTransactions = async () => {
     try {
       setLoading(true);
+
       const { data, error } = await supabase
         .from("transactions")
         .select("*")
-        .or(`sender_email.eq.${user.email},receiver_email.eq.${user.email}`)
+        .or(`user_email.eq.${user.email},to_address.eq.${user.email}`)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -34,6 +35,17 @@ export default function History() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const getExplorerURL = (hash, network) => {
+    const baseURLs = {
+      bnb: "https://bscscan.com/tx/",
+      tbnb: "https://testnet.bscscan.com/tx/",
+      eth: "https://etherscan.io/tx/",
+      matic: "https://polygonscan.com/tx/",
+      avax: "https://snowtrace.io/tx/",
+    };
+    return baseURLs[network?.toLowerCase()] + hash;
   };
 
   const variants = {
@@ -62,11 +74,11 @@ export default function History() {
                 variants={variants}
                 initial="hidden"
                 animate="visible"
-                transition={{ duration: 0.35, delay: i * 0.08 }}
+                transition={{ duration: 0.35, delay: i * 0.07 }}
               >
                 <div className={styles.transactionHeader}>
                   <span className={styles.transactionType}>
-                    {tx.type.toUpperCase()} • {tx.network}
+                    {tx.type?.toUpperCase()} • {tx.network?.toUpperCase()}
                   </span>
                   <span
                     className={
@@ -76,19 +88,19 @@ export default function History() {
                     }
                   >
                     {tx.type === "receive" ? "+" : "-"}
-                    {tx.amount} {tx.network}
+                    {tx.amount} {tx.network?.toUpperCase()}
                   </span>
                 </div>
 
                 <p className={styles.transactionDetail}>
                   <strong>{tx.type === "receive" ? "From:" : "To:"}</strong>{" "}
                   {tx.type === "receive"
-                    ? truncateAddress(tx.sender)
-                    : truncateAddress(tx.receiver)}
+                    ? truncateAddress(tx.from_address)
+                    : truncateAddress(tx.to_address)}
                 </p>
 
                 <p className={styles.transactionDetail}>
-                  <strong>Fee:</strong> {tx.fee} {tx.network}
+                  <strong>Fee:</strong> {tx.fee || "0"} {tx.network}
                 </p>
 
                 <p className={styles.transactionDate}>
@@ -101,14 +113,16 @@ export default function History() {
                   })}
                 </p>
 
-                <a
-                  href={`https://bscscan.com/tx/${tx.tx_hash}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={styles.transactionLink}
-                >
-                  View on BscScan
-                </a>
+                {tx.tx_hash && (
+                  <a
+                    href={getExplorerURL(tx.tx_hash, tx.network)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={styles.transactionLink}
+                  >
+                    View on Explorer
+                  </a>
+                )}
               </motion.div>
             ))}
           </div>
@@ -118,8 +132,8 @@ export default function History() {
   );
 }
 
-// Helper funkcija adresui trumpinti
+// Helper
 function truncateAddress(addr) {
-  if (!addr) return "Unknown";
+  if (!addr || typeof addr !== "string") return "Unknown";
   return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
 }
