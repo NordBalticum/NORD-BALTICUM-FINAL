@@ -8,82 +8,42 @@ const MagicLinkContext = createContext();
 
 export const MagicLinkProvider = ({ children }) => {
   const router = useRouter();
-
   const [user, setUser] = useState(null);
   const [loadingUser, setLoadingUser] = useState(true);
 
-  // Pradinis user fetch
   useEffect(() => {
-    const getUser = async () => {
-      setLoadingUser(true);
-      const { data, error } = await supabase.auth.getSession();
-
-      if (error) {
-        console.error("❌ Session fetch error:", error.message);
-        setUser(null);
-        setLoadingUser(false);
-        return;
-      }
-
-      if (data?.session?.user) {
-        const fullUser = data.session.user;
-        setUser(fullUser);
-      } else {
-        setUser(null);
-      }
-
+    const fetchSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setUser(session?.user || null);
       setLoadingUser(false);
     };
 
-    getUser();
+    fetchSession();
 
     const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
-      if (session?.user) {
-        setUser(session.user);
-        router.replace("/dashboard");
-      } else {
-        setUser(null);
-        router.replace("/");
-      }
+      setUser(session?.user || null);
     });
 
-    return () => {
-      listener?.subscription?.unsubscribe();
-    };
-  }, [router]);
+    return () => listener?.subscription?.unsubscribe();
+  }, []);
 
-  const loginWithEmail = async (email) => {
-    setLoadingUser(true);
-    const { error } = await supabase.auth.signInWithOtp({ email });
-    if (error) console.error("MagicLink error:", error.message);
-    setLoadingUser(false);
+  const signInWithEmail = async (email) => {
+    await supabase.auth.signInWithOtp({ email });
   };
 
-  const loginWithGoogle = async () => {
-    setLoadingUser(true);
-    const { error } = await supabase.auth.signInWithOAuth({ provider: "google" });
-    if (error) console.error("Google login error:", error.message);
-    setLoadingUser(false);
+  const signInWithGoogle = async () => {
+    await supabase.auth.signInWithOAuth({ provider: "google" });
   };
 
-  const logout = async () => {
+  const signOut = async () => {
     await supabase.auth.signOut();
     setUser(null);
     router.replace("/");
   };
 
   return (
-    <MagicLinkContext.Provider
-      value={{
-        user,
-        setUser,
-        loginWithEmail,
-        loginWithGoogle,
-        logout,
-        loadingUser,
-      }}
-    >
-      {!loadingUser && children}
+    <MagicLinkContext.Provider value={{ user, loadingUser, signInWithEmail, signInWithGoogle, signOut }}>
+      {children}
     </MagicLinkContext.Provider>
   );
 };
