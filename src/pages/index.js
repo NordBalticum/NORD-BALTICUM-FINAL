@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 
 import { useMagicLink } from "@/contexts/MagicLinkContext";
+import { useWalletCheck } from "@/contexts/WalletCheckContext";
+
 import StarsBackground from "@/components/StarsBackground";
 
 import styles from "@/styles/index.module.css";
@@ -12,7 +14,8 @@ import background from "@/styles/background.module.css";
 
 export default function Home() {
   const router = useRouter();
-  const { user, loadingUser, signInWithEmail, signInWithGoogle } = useMagicLink();
+  const { user, loading, loginWithEmail, loginWithGoogle } = useMagicLink();
+  const { walletReady } = useWalletCheck();
 
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState("idle");
@@ -20,7 +23,7 @@ export default function Home() {
 
   const logoRef = useRef(null);
 
-  // Logo tilt efektas
+  // Animacija logotipui
   useEffect(() => {
     const logo = logoRef.current;
     if (!logo) return;
@@ -48,17 +51,15 @@ export default function Home() {
     };
   }, []);
 
-  // Redirect jei prisijungęs ir wallet sukurtas
+  // Jei jau yra prisijungęs ir wallet sukurtas
   useEffect(() => {
-    const hasWallet = user?.wallet_address || user?.wallet?.address;
-    if (!loadingUser && user && hasWallet) {
+    if (!loading && user && walletReady) {
       router.push("/dashboard");
     }
-  }, [user, loadingUser, router]);
+  }, [user, loading, walletReady, router]);
 
   const handleEmailLogin = async (e) => {
     e.preventDefault();
-
     if (!email.trim()) {
       setMessage("❌ Please enter a valid email.");
       return;
@@ -68,7 +69,7 @@ export default function Home() {
     setMessage("⏳ Sending Magic Link...");
 
     try {
-      await signInWithEmail(email.trim());
+      await loginWithEmail(email.trim());
       setMessage("✅ Check your inbox for the Magic Link.");
       setEmail("");
     } catch (err) {
@@ -84,7 +85,7 @@ export default function Home() {
     setMessage("⏳ Logging in with Google...");
 
     try {
-      await signInWithGoogle();
+      await loginWithGoogle();
     } catch (err) {
       console.error("Google login error:", err?.message || err);
       setMessage("❌ Google login failed.");
@@ -123,7 +124,6 @@ export default function Home() {
                 onChange={(e) => setEmail(e.target.value)}
                 disabled={status === "sending"}
                 autoComplete="email"
-                autoFocus
                 required
               />
               <button
