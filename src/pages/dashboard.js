@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 
 import { useMagicLink } from "@/contexts/MagicLinkContext";
+import { useWalletCheck } from "@/contexts/WalletCheckContext";
 import { useBalance } from "@/hooks/useBalance";
 import StarsBackground from "@/components/StarsBackground";
 
@@ -46,14 +47,17 @@ const networksData = [
 
 export default function Dashboard() {
   const router = useRouter();
-  const { user, wallet } = useMagicLink();
+  const { user } = useMagicLink();
+  const { walletReady } = useWalletCheck();
   const { balances, isLoading } = useBalance();
 
   const [totalEUR, setTotalEUR] = useState("0.00");
 
   useEffect(() => {
-    if (!user || !wallet?.address) router.push("/");
-  }, [user, wallet, router]);
+    if (!user || !walletReady) {
+      router.push("/");
+    }
+  }, [user, walletReady, router]);
 
   useEffect(() => {
     const total = Object.values(balances)
@@ -66,7 +70,7 @@ export default function Dashboard() {
 
   const networks = useMemo(() => networksData, []);
 
-  if (!user || !wallet?.address) {
+  if (!user || !walletReady) {
     return <div className={styles.loading}>Loading Wallet...</div>;
   }
 
