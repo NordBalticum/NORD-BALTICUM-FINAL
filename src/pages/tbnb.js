@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 
 import { useMagicLink } from "@/contexts/MagicLinkContext";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/utils/supabaseClient";
 import { getWalletBalance } from "@/lib/ethers";
 import { fetchPrices } from "@/utils/fetchPrices";
 
@@ -22,7 +22,7 @@ export default function TBNBPage() {
   const [latestTx, setLatestTx] = useState(null);
 
   useEffect(() => {
-    if (!user || !wallet?.address) {
+    if (!user?.email || !wallet?.address) {
       router.push("/");
       return;
     }
@@ -47,15 +47,16 @@ export default function TBNBPage() {
           .from("transactions")
           .select("*")
           .eq("network", "TBNB")
-          .eq("sender_email", user.email)
+          .eq("user_email", user.email)
           .order("created_at", { ascending: false })
           .limit(1);
 
         if (error) throw error;
+
         if (data?.length > 0) {
           const tx = data[0];
           setLatestTx({
-            to: truncate(tx.receiver),
+            to: truncate(tx.to_address),
             amount: parseFloat(tx.amount).toFixed(5),
             hash: truncate(tx.tx_hash, 10),
             status: tx.status,
