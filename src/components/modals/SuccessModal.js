@@ -3,6 +3,7 @@
 import React from "react";
 import styles from "./successmodal.module.css";
 
+// === Block Explorer URLs ===
 const explorers = {
   bnb: "https://bscscan.com/tx/",
   tbnb: "https://testnet.bscscan.com/tx/",
@@ -32,6 +33,7 @@ export default function SuccessModal({ message, txHash, networkKey, onClose }) {
         {txHash && (
           <div className={styles.txContainer}>
             <p className={styles.txLabel}>Transaction Hash:</p>
+
             <div className={styles.txBox}>
               <code>{txHash.slice(0, 12)}...{txHash.slice(-8)}</code>
               <button className={styles.copyButton} onClick={handleCopy}>
