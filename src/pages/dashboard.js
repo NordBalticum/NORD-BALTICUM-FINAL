@@ -1,11 +1,13 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 
-import { useSystem } from "@/contexts/SystemContext";
+import { useMagicLink } from "@/contexts/MagicLinkContext";
+import { useWallet } from "@/contexts/WalletContext";
 
+import StarsBackground from "@/components/StarsBackground";
 import styles from "@/styles/dashboard.module.css";
 import background from "@/styles/background.module.css";
 
@@ -27,53 +29,39 @@ const networkNames = {
 
 export default function Dashboard() {
   const router = useRouter();
-  const {
-    user,
-    wallet,
-    loading,
-    totalEUR,
-    refreshAllBalances,
-    activeNetwork,
-    setActiveNetwork,
-  } = useSystem();
+  const { user } = useMagicLink();
+  const { walletAddress, balances, refreshBalances } = useWallet();
 
-  const [balances, setBalances] = React.useState([]);
+  const [totalEUR, setTotalEUR] = useState("0.00");
+  const [activeNetwork, setActiveNetwork] = useState("bsc");
 
   useEffect(() => {
-    if (!user || !wallet) {
-      router.replace("/");
+    if (user && walletAddress) {
+      refreshBalances()
+        .then((balances) => {
+          const total = balances.reduce((acc, balance) => acc + parseFloat(balance.eur || 0), 0);
+          setTotalEUR(total.toFixed(2));
+        })
+        .catch((err) => console.error("Failed to refresh balances:", err));
     } else {
-      fetchLatest();
+      router.push("/");
     }
-  }, [user, wallet]);
-
-  const fetchLatest = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("balances")
-        .select("*")
-        .eq("email", user.email);
-
-      if (!error && data) setBalances(data);
-    } catch (err) {
-      console.error("❌ Failed to load balances:", err.message);
-    }
-  };
+  }, [user, walletAddress, refreshBalances, router]);
 
   const networkRoutes = {
-  bsc: "/bnb",
-  tbnb: "/tbnb",
-  ethereum: "/eth",
-  polygon: "/matic",
-  avalanche: "/avax",
-};
+    bsc: "/bnb",
+    tbnb: "/tbnb",
+    ethereum: "/eth",
+    polygon: "/matic",
+    avalanche: "/avax",
+  };
 
-const handleCardClick = (symbol) => {
-  setActiveNetwork(symbol);
-  router.push(networkRoutes[symbol] || "/send");
-};
+  const handleCardClick = (symbol) => {
+    setActiveNetwork(symbol);
+    router.push(networkRoutes[symbol] || "/send");
+  };
 
-  if (!user || !wallet || loading) {
+  if (!user || !walletAddress) {
     return <div className={styles.loading}>Loading Wallet...</div>;
   }
 
