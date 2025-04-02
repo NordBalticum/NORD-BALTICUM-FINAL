@@ -3,13 +3,14 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
-import { useSystem } from "@/contexts/SystemContext";
+import { useMagicLink } from "@/contexts/MagicLinkContext";
+import { useWallet } from "@/contexts/WalletContext";
+
 import {
   getWalletBalance,
   getMaxSendableAmount,
   isValidAddress,
 } from "@/lib/ethers";
-import { fetchPrices } from "@/utils/fetchPrices";
 
 import SwipeSelector from "@/components/SwipeSelector";
 import SuccessModal from "@/components/modals/SuccessModal";
@@ -27,15 +28,8 @@ const supportedNetworks = [
 
 export default function Send() {
   const router = useRouter();
-  const {
-    user,
-    wallet,
-    loading,
-    activeNetwork,
-    setActiveNetwork,
-    sendCrypto,
-    refreshAllBalances,
-  } = useSystem();
+  const { user } = useMagicLink();
+  const { publicKey, privateKey, activeNetwork, setActiveNetwork, sendCrypto, refreshAllBalances } = useWallet();
 
   const [receiver, setReceiver] = useState("");
   const [amount, setAmount] = useState("");
@@ -52,13 +46,13 @@ export default function Send() {
   const amountAfterFee = Number(amount || 0) - calculatedFee;
 
   useEffect(() => {
-    if (!user || !wallet?.address) router.replace("/");
-  }, [user, wallet]);
+    if (!user || !publicKey) router.replace("/");
+  }, [user, publicKey, router]);
 
   const loadBalance = async () => {
-    if (!wallet?.address || !wallet?.privateKey) return;
+    if (!publicKey || !privateKey) return;
     try {
-      const { formatted } = await getWalletBalance(wallet.address, activeNetwork);
+      const { formatted } = await getWalletBalance(publicKey, activeNetwork);
       setBalance(formatted);
 
       const prices = await fetchPrices();
@@ -66,7 +60,7 @@ export default function Send() {
       const eur = (parseFloat(formatted) * price).toFixed(2);
       setBalanceEUR(eur);
 
-      const max = await getMaxSendableAmount(wallet.privateKey, activeNetwork);
+      const max = await getMaxSendableAmount(privateKey, activeNetwork);
       setMaxSendable(max);
     } catch (err) {
       console.warn("❌ Balance fetch failed:", err.message);
@@ -78,7 +72,7 @@ export default function Send() {
 
   useEffect(() => {
     loadBalance();
-  }, [activeNetwork, wallet]);
+  }, [activeNetwork, publicKey, privateKey]);
 
   const handleSend = () => {
     const trimmed = receiver.trim();
@@ -113,14 +107,12 @@ export default function Send() {
     }
   };
 
-  if (!user || !wallet || loading) {
+  if (!user || !publicKey) {
     return <div className={styles.loading}>Loading Wallet...</div>;
   }
 
   return (
     <main className={`${styles.main} ${background.gradient}`}>
-      <StarsBackground />
-
       <div className={styles.wrapper}>
         <h1 className={styles.title}>SEND CRYPTO</h1>
         <p className={styles.subtext}>Transfer crypto securely & instantly</p>
@@ -163,9 +155,9 @@ export default function Send() {
           <button
             onClick={handleSend}
             className={styles.confirmButton}
-            disabled={loading}
+            disabled={!publicKey}
           >
-            {loading ? "SENDING..." : "SEND NOW"}
+            SEND NOW
           </button>
         </div>
 
