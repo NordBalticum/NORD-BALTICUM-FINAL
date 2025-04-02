@@ -20,7 +20,7 @@ export default function Home() {
 
   const logoRef = useRef(null);
 
-  // Animate logo
+  // Logo tilt efektas
   useEffect(() => {
     const logo = logoRef.current;
     if (!logo) return;
@@ -48,9 +48,10 @@ export default function Home() {
     };
   }, []);
 
-  // Redirect if already logged in
+  // Redirect jei prisijungęs ir wallet sukurtas
   useEffect(() => {
-    if (!loadingUser && user) {
+    const hasWallet = user?.wallet_address || user?.wallet?.address;
+    if (!loadingUser && user && hasWallet) {
       router.push("/dashboard");
     }
   }, [user, loadingUser, router]);
@@ -95,7 +96,6 @@ export default function Home() {
   return (
     <>
       <StarsBackground />
-
       <main className={`${styles.container} ${background.gradient}`}>
         <div className={styles.centerWrapper}>
           <div className={styles.logoContainer}>
@@ -123,6 +123,7 @@ export default function Home() {
                 onChange={(e) => setEmail(e.target.value)}
                 disabled={status === "sending"}
                 autoComplete="email"
+                autoFocus
                 required
               />
               <button
