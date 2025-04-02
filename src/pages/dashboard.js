@@ -10,7 +10,7 @@ import { useMagicLink } from "@/contexts/MagicLinkContext";
 import { useWallet } from "@/contexts/WalletContext";
 import { useBalances } from "@/contexts/BalanceContext";
 
-// Cryptologos.com ikonų hardcoded URL’ai
+// Hardcoded ikonų URL’ai iš cryptologos.cc
 const iconUrls = {
   bnb: "https://cryptologos.cc/logos/binance-coin-bnb-logo.png",
   tbnb: "https://cryptologos.cc/logos/binance-coin-bnb-logo.png",
@@ -19,7 +19,7 @@ const iconUrls = {
   avax: "https://cryptologos.cc/logos/avalanche-avax-logo.png",
 };
 
-// Vardai
+// Token pavadinimai
 const names = {
   bnb: "BNB",
   tbnb: "BNB Testnet",
@@ -34,6 +34,7 @@ export default function Dashboard() {
   const { wallet } = useWallet();
   const { balances, format } = useBalances();
 
+  // Redirect į homepage jei neprisijungęs
   useEffect(() => {
     if (!loading && !user) {
       router.replace("/");
@@ -45,7 +46,7 @@ export default function Dashboard() {
   return (
     <main className={styles.container}>
       <div className={styles.dashboardWrapper}>
-        {/* Logo + Total */}
+        {/* LOGOTIPAS + BALANSAS */}
         <div className={styles.totalValueContainer}>
           <Image
             src="/icons/logo.svg"
@@ -59,13 +60,13 @@ export default function Dashboard() {
             <p className={styles.totalLabel}>Total Balance</p>
             <h2 className={styles.totalValue}>
               {balances
-                ? Object.values(balances).reduce((a, b) => a + b, 0).toFixed(4)
+                ? Object.values(balances).reduce((acc, val) => acc + val, 0).toFixed(4)
                 : "Live Balances"}
             </h2>
           </div>
         </div>
 
-        {/* Token List */}
+        {/* BALANSŲ SĄRAŠAS */}
         <div className={styles.assetList}>
           {tokens.map((symbol) => {
             const value = balances[symbol];
@@ -76,7 +77,7 @@ export default function Dashboard() {
                 <div className={styles.assetLeft}>
                   <img
                     src={iconUrls[symbol]}
-                    alt={symbol}
+                    alt={`${symbol}-icon`}
                     className={styles.assetLogo}
                   />
                   <div className={styles.assetInfo}>
