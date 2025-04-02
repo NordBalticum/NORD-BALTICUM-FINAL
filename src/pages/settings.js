@@ -2,40 +2,42 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-
 import { useMagicLink } from "@/contexts/MagicLinkContext";
-import { useWallet } from "@/contexts/WalletContext";
 
 import AvatarDisplay from "@/components/AvatarDisplay";
-import AvatarModalPicker from "@/components/AvatarModalPicker";
 import SuccessModal from "@/components/SuccessModal";
 
-import { supabase } from "@/utils/supabaseClient";
 import styles from "@/styles/settings.module.css";
 import background from "@/styles/background.module.css";
 
 export default function SettingsPage() {
   const router = useRouter();
-  const { user, logout } = useMagicLink();
-  const { publicKey } = useWallet();
+  const { user, logout, fetchUserWallet, updateEmail } = useMagicLink();
 
   const [emailInput, setEmailInput] = useState("");
-  const [showAvatarModal, setShowAvatarModal] = useState(false);
-  const [avatarKey, setAvatarKey] = useState(Date.now());
   const [success, setSuccess] = useState(false);
+  const [walletAddress, setWalletAddress] = useState(null);
+
+  React.useEffect(() => {
+    if (user) {
+      fetchUserWallet(user.email).then(setWalletAddress).catch(console.error);
+    }
+  }, [user, fetchUserWallet]);
 
   const handleChangeEmail = async () => {
     if (!emailInput.trim()) return alert("Please enter a new email.");
 
-    const { error } = await supabase.auth.updateUser({ email: emailInput.trim() });
-
-    if (error) alert("❌ Error: " + error.message);
-    else alert("✅ Magic Link has been sent to your new email.");
+    const result = await updateEmail(emailInput.trim());
+    if (result.success) {
+      alert("✅ Magic Link has been sent to your new email.");
+    } else {
+      alert("❌ Error: " + result.message);
+    }
   };
 
   const handleCopy = () => {
-    if (publicKey) {
-      navigator.clipboard.writeText(publicKey);
+    if (walletAddress) {
+      navigator.clipboard.writeText(walletAddress);
       alert("✅ Wallet address copied to clipboard.");
     }
   };
@@ -45,13 +47,7 @@ export default function SettingsPage() {
     router.replace("/");
   };
 
-  const handleAvatarChange = () => {
-    setAvatarKey(Date.now());
-    setShowAvatarModal(false);
-    setSuccess(true);
-  };
-
-  if (!user || !publicKey) {
+  if (!user || !walletAddress) {
     return <div className={styles.loading}>Loading Profile...</div>;
   }
 
@@ -60,20 +56,16 @@ export default function SettingsPage() {
       <div className={styles.box}>
         <h2 className={styles.heading}>Profile Settings</h2>
 
-        <div
-          className={styles.avatarContainer}
-          onClick={() => setShowAvatarModal(true)}
-          title="Click to change avatar"
-        >
-          <AvatarDisplay walletAddress={publicKey} size={80} key={avatarKey} />
-          <p className={styles.avatarText}>Change Avatar</p>
+        <div className={styles.avatarContainer}>
+          <AvatarDisplay walletAddress={walletAddress} size={80} />
+          <p className={styles.avatarText}>Avatar</p>
         </div>
 
         <p><strong>Email:</strong> {user.email}</p>
 
         <div className={styles.walletBox} onClick={handleCopy} title="Click to copy">
           <span><strong>Wallet Address:</strong></span>
-          <span className={styles.walletAddress}>{publicKey}</span>
+          <span className={styles.walletAddress}>{walletAddress}</span>
         </div>
 
         <hr />
@@ -99,13 +91,9 @@ export default function SettingsPage() {
         </button>
       </div>
 
-      {showAvatarModal && (
-        <AvatarModalPicker onClose={handleAvatarChange} onSelect={() => {}} />
-      )}
-
       {success && (
         <SuccessModal
-          message="Avatar updated successfully!"
+          message="Email updated successfully!"
           onClose={() => setSuccess(false)}
         />
       )}
