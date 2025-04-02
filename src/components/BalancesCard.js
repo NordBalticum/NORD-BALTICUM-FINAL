@@ -1,5 +1,6 @@
 "use client";
 
+import styles from "./balancescard.module.css";
 import { useBalances } from "@/contexts/BalanceContext";
 import { motion } from "framer-motion";
 import { FaEthereum } from "react-icons/fa";
@@ -27,56 +28,30 @@ export default function BalancesCard() {
   if (loading || !balances) return null;
 
   return (
-    <div
-      style={{
-        display: "grid",
-        gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
-        gap: "24px",
-        padding: "24px",
-      }}
-    >
+    <div className={styles.cardGrid}>
       {Object.entries(balances).map(([symbol, value]) => {
         const { eur, usd } = format(symbol, value);
 
         return (
           <motion.div
             key={symbol}
+            className={styles.card}
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, ease: "easeOut" }}
-            style={{
-              padding: "20px",
-              borderRadius: "20px",
-              background: "rgba(255,255,255,0.03)",
-              backdropFilter: "blur(14px)",
-              boxShadow: "0 0 28px rgba(255,255,255,0.05)",
-              border: "1px solid rgba(255,255,255,0.06)",
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "center",
-              alignItems: "flex-start",
-              minHeight: "140px",
-              color: "#fff",
-            }}
           >
-            <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "10px" }}>
+            <div className={styles.cardHeader}>
               {icons[symbol]}
-              <span style={{ fontWeight: 600, fontSize: "1rem", letterSpacing: "0.5px" }}>
+              <span className={styles.cardSymbol}>
                 {names[symbol] || symbol.toUpperCase()}
               </span>
             </div>
 
-            <div style={{ fontSize: "1.25rem", fontWeight: 700, letterSpacing: "0.3px" }}>
+            <div className={styles.cardAmount}>
               {value.toFixed(6)} {symbol.toUpperCase()}
             </div>
 
-            <div
-              style={{
-                fontSize: "0.85rem",
-                marginTop: "4px",
-                color: "rgba(255,255,255,0.65)",
-              }}
-            >
+            <div className={styles.cardConverted}>
               ≈ €{eur.toFixed(2)} / ${usd.toFixed(2)}
             </div>
           </motion.div>
