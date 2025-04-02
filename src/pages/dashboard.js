@@ -4,6 +4,7 @@ import React, { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import styles from "@/styles/dashboard.module.css";
+import background from "@/styles/background.module.css";
 
 // Kontekstai
 import { useMagicLink } from "@/contexts/MagicLinkContext";
