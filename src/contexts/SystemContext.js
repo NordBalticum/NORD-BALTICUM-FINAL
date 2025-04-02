@@ -12,7 +12,6 @@ import { ethers } from "ethers";
 import CryptoJS from "crypto-js";
 import { supabase } from "@/utils/supabaseClient";
 
-// RPC tinklai
 const RPCS = {
   ethereum: "https://eth.llamarpc.com",
   bsc: "https://bsc-dataseed.binance.org",
@@ -205,7 +204,9 @@ export const SystemProvider = ({ children }) => {
   };
 
   const loginWithGoogle = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({ provider: "google" });
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+    });
     if (error) throw new Error(error.message);
   };
 
