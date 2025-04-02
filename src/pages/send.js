@@ -12,7 +12,6 @@ import {
 import { fetchPrices } from "@/utils/fetchPrices";
 
 import SwipeSelector from "@/components/SwipeSelector";
-import StarsBackground from "@/components/StarsBackground";
 import SuccessModal from "@/components/modals/SuccessModal";
 
 import styles from "@/styles/send.module.css";
