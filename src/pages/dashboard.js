@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMagicLink } from "@/contexts/MagicLinkContext";
 import { ethers } from "ethers";
+import Image from "next/image";
 import styles from "@/styles/dashboard.module.css";
 
 const networkConfig = {
@@ -19,7 +20,7 @@ const networkConfig = {
   },
   ethereum: {
     name: "Ethereum",
-    rpc: "https://ethereum.publicnode.com", // Greitas ir stabilus viešas RPC
+    rpc: "https://ethereum.publicnode.com",
     logo: "https://cryptologos.cc/logos/ethereum-eth-logo.png",
   },
   polygon: {
@@ -50,7 +51,7 @@ export default function Dashboard() {
               const provider = new ethers.providers.JsonRpcProvider(config.rpc);
               const balance = await provider.getBalance(wallet.address);
               const ethValue = parseFloat(ethers.utils.formatEther(balance));
-              const eurValue = ethValue * 250; // Naudojam fiksuotą kursą
+              const eurValue = ethValue * 250; // Fiksuotas konversijos kursas
 
               return {
                 network: key,
@@ -85,12 +86,16 @@ export default function Dashboard() {
 
   return (
     <main className={styles.container}>
-      <div className={styles.avatarCenter}>
-        <img src="/icons/avatar-default.svg" alt="Avatar" />
-      </div>
-
       <div className={styles.dashboardWrapper}>
         <div className={styles.totalValueContainer}>
+          <Image
+            src="/icons/logo.svg"
+            alt="NordBalticum"
+            width={160}
+            height={60}
+            className={styles.logo}
+            priority
+          />
           <p className={styles.totalLabel}>Total Value</p>
           <h2 className={styles.totalValue}>€ {totalEUR}</h2>
         </div>
