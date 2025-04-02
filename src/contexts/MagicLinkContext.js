@@ -13,7 +13,14 @@ const encode = (str) => new TextEncoder().encode(str);
 const decode = (buf) => new TextDecoder().decode(buf);
 
 const getKey = async (password) => {
-  const keyMaterial = await window.crypto.subtle.importKey("raw", encode(password), { name: "PBKDF2" }, false, ["deriveKey"]);
+  const keyMaterial = await window.crypto.subtle.importKey(
+    "raw",
+    encode(password),
+    { name: "PBKDF2" },
+    false,
+    ["deriveKey"]
+  );
+
   return window.crypto.subtle.deriveKey(
     {
       name: "PBKDF2",
@@ -31,14 +38,22 @@ const getKey = async (password) => {
 const encrypt = async (text) => {
   const iv = window.crypto.getRandomValues(new Uint8Array(12));
   const key = await getKey(ENCRYPTION_SECRET);
-  const encrypted = await window.crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, encode(text));
+  const encrypted = await window.crypto.subtle.encrypt(
+    { name: "AES-GCM", iv },
+    key,
+    encode(text)
+  );
   return btoa(JSON.stringify({ iv: Array.from(iv), data: Array.from(new Uint8Array(encrypted)) }));
 };
 
 const decrypt = async (ciphertext) => {
   const { iv, data } = JSON.parse(atob(ciphertext));
   const key = await getKey(ENCRYPTION_SECRET);
-  const decrypted = await window.crypto.subtle.decrypt({ name: "AES-GCM", iv: new Uint8Array(iv) }, key, new Uint8Array(data));
+  const decrypted = await window.crypto.subtle.decrypt(
+    { name: "AES-GCM", iv: new Uint8Array(iv) },
+    key,
+    new Uint8Array(data)
+  );
   return decode(decrypted);
 };
 
@@ -88,25 +103,39 @@ export const MagicLinkProvider = ({ children }) => {
   }, [router]);
 
   const loadWallet = async (email) => {
+    // 1. LOCAL – su privatu raktu
     const local = await loadWalletFromStorage();
     if (local) {
       setWallet(local);
       return;
     }
 
+    // 2. SUPABASE – grąžinam tik adresus kaip objektą
     const db = await fetchUserWallet(email);
     if (db && db.bnb_address) {
-      const dummy = Wallet.createRandom();
-      const restored = new Wallet(dummy.privateKey);
-      restored.address = db.bnb_address;
-      setWallet(restored);
+      const walletObject = {
+        bnb: db.bnb_address,
+        tbnb: db.tbnb_address,
+        eth: db.eth_address,
+        matic: db.matic_address,
+        avax: db.avax_address,
+      };
+      setWallet(walletObject);
       return;
     }
 
+    // 3. NĖRA – kuriam naują, saugom visur
     const newWallet = Wallet.createRandom();
     await saveWalletToStorage(newWallet);
     await saveAllNetworkAddressesToDB(email, newWallet.address);
-    setWallet(newWallet);
+    const walletObject = {
+      bnb: newWallet.address,
+      tbnb: newWallet.address,
+      eth: newWallet.address,
+      matic: newWallet.address,
+      avax: newWallet.address,
+    };
+    setWallet(walletObject);
   };
 
   const signInWithMagicLink = async (email) => {
