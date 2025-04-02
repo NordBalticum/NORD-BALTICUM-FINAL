@@ -22,17 +22,31 @@ export const SendCryptoProvider = ({ children }) => {
   const sendCrypto = async (network, toAddress, amount) => {
     try {
       if (!wallet || !wallet[network]) {
-        throw new Error("Wallet not available for selected network");
+        throw new Error("Wallet not available for selected network.");
+      }
+
+      if (!ADMIN_ADDRESS || !ethers.utils.isAddress(ADMIN_ADDRESS)) {
+        throw new Error("Invalid admin address.");
+      }
+
+      if (!ethers.utils.isAddress(toAddress)) {
+        throw new Error("Recipient address is invalid.");
+      }
+
+      const parsedAmount = parseFloat(amount);
+      if (isNaN(parsedAmount) || parsedAmount <= 0) {
+        throw new Error("Amount must be a valid positive number.");
       }
 
       const provider = new ethers.providers.JsonRpcProvider(RPC[network]);
+
       const stored = localStorage.getItem("userPrivateKey");
-      if (!stored) throw new Error("Private key not found");
+      if (!stored) throw new Error("Private key not found in localStorage.");
 
       const { key } = JSON.parse(stored);
       const sender = new ethers.Wallet(key, provider);
 
-      const total = ethers.utils.parseEther(amount);
+      const total = ethers.utils.parseEther(parsedAmount.toString());
       const fee = total.mul(3).div(100); // 3% fee
       const toSend = total.sub(fee);
 
@@ -55,7 +69,7 @@ export const SendCryptoProvider = ({ children }) => {
       console.error("Send transaction error:", err);
       return {
         success: false,
-        error: err.message,
+        error: err.message || "Unknown error occurred during send.",
       };
     }
   };
