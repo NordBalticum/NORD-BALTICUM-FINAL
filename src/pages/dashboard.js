@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import Image from "next/image";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useMagicLink } from "@/contexts/MagicLinkContext";
+import Image from "next/image";
+import { useMagicLink } from "@/contexts/MagicLinkContext"; // Updated import for MagicLinkContext
+
 import styles from "@/styles/dashboard.module.css";
 import background from "@/styles/background.module.css";
 
@@ -25,27 +26,43 @@ const networkNames = {
 
 export default function Dashboard() {
   const router = useRouter();
-  const { user, fetchBalances } = useMagicLink();
+  const { user, fetchUserWallet } = useMagicLink(); // Updated to use new MagicLinkContext
 
-  const [balances, setBalances] = useState([]);
   const [totalEUR, setTotalEUR] = useState("0.00");
+  const [balances, setBalances] = useState([]);
+  const [activeNetwork, setActiveNetwork] = useState("bsc");
 
   useEffect(() => {
     if (user) {
-      fetchBalances()
-        .then((data) => {
-          setBalances(data);
-          const total = data.reduce((acc, bal) => acc + parseFloat(bal.eur || 0), 0);
+      fetchUserWallet(user.email)
+        .then((wallet) => {
+          const total = wallet.networks.reduce(
+            (acc, net) => acc + parseFloat(net.eur || 0),
+            0
+          );
           setTotalEUR(total.toFixed(2));
+          setBalances(wallet.networks);
         })
-        .catch((err) => console.error("Error fetching balances:", err));
+        .catch((err) => {
+          console.error("Failed to fetch wallet:", err);
+          setTotalEUR("0.00");
+        });
     } else {
       router.replace("/");
     }
-  }, [user, fetchBalances, router]);
+  }, [user, fetchUserWallet, router]);
+
+  const networkRoutes = {
+    bsc: "/bnb",
+    tbnb: "/tbnb",
+    ethereum: "/eth",
+    polygon: "/matic",
+    avalanche: "/avax",
+  };
 
   const handleCardClick = (symbol) => {
-    router.push(`/network/${symbol}`);
+    setActiveNetwork(symbol);
+    router.push(networkRoutes[symbol] || "/send");
   };
 
   if (!user) {
@@ -55,7 +72,7 @@ export default function Dashboard() {
   return (
     <main className={`${styles.container} ${background.gradient}`}>
       <div className={styles.globalWrapper}>
-        <header className={styles.header}>
+        <div className={styles.header}>
           <Image
             src="/icons/logo.svg"
             alt="NordBalticum"
@@ -64,38 +81,54 @@ export default function Dashboard() {
             className={styles.logo}
             priority
           />
-        </header>
+        </div>
 
-        <section className={styles.totalBalance}>
+        <div className={styles.totalBox}>
           <p className={styles.totalLabel}>Total Wallet Value</p>
           <h2 className={styles.totalValue}>€ {totalEUR}</h2>
-        </section>
+        </div>
 
-        <section className={styles.networkGrid}>
-          {balances.map((bal) => (
-            <div
-              key={bal.network}
-              className={styles.networkCard}
-              onClick={() => handleCardClick(bal.network)}
-            >
-              <div className={styles.networkDetails}>
-                <Image
-                  src={networkLogos[bal.network]}
-                  alt={`${bal.network} logo`}
-                  width={42}
-                  height={42}
-                  className={styles.networkLogo}
-                />
-                <div>
-                  <h3 className={styles.networkName}>{networkNames[bal.network]}</h3>
-                  <p className={styles.networkBalance}>{parseFloat(bal.amount).toFixed(4)} {bal.network.toUpperCase()}</p>
-                  <p className={styles.networkValue}>€ {parseFloat(bal.eur).toFixed(2)}</p>
+        <div className={styles.assetGrid}>
+          {balances && balances.length > 0 ? (
+            balances.map((bal) => (
+              <div
+                key={bal.network}
+                className={styles.assetCard}
+                onClick={() => handleCardClick(bal.network)}
+              >
+                <div className={styles.assetLeft}>
+                  <Image
+                    src={networkLogos[bal.network]}
+                    alt={`${bal.network} logo`}
+                    width={42}
+                    height={42}
+                    className={styles.assetLogo}
+                    unoptimized
+                  />
+                  <div className={styles.assetInfo}>
+                    <span className={styles.assetSymbol}>
+                      {bal.network.toUpperCase()}
+                    </span>
+                    <span className={styles.assetName}>
+                      {networkNames[bal.network] || bal.network}
+                    </span>
+                  </div>
+                </div>
+
+                <div className={styles.assetRight}>
+                  <span className={styles.assetAmount}>
+                    {parseFloat(bal.amount).toFixed(4)}
+                  </span>
+                  <span className={styles.assetEur}>
+                    € {parseFloat(bal.eur).toFixed(2)}
+                  </span>
                 </div>
               </div>
-              <button className={styles.viewButton}>View Details</button>
-            </div>
-          ))}
-        </section>
+            ))
+          ) : (
+            <p>No balances available.</p>
+          )}
+        </div>
       </div>
     </main>
   );
