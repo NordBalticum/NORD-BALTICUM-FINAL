@@ -2,15 +2,16 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
+import { FaBars, FaTimes } from "react-icons/fa";
 
 import { useMagicLink } from "@/contexts/MagicLinkContext";
-import { FaBars, FaTimes } from "react-icons/fa";
 import styles from "@/components/sidedrawer.module.css";
 
 export default function SideDrawer() {
   const router = useRouter();
+  const pathname = usePathname();
   const { user, signOut, wallet } = useMagicLink();
 
   const [open, setOpen] = useState(false);
@@ -20,23 +21,23 @@ export default function SideDrawer() {
     try {
       await signOut();
       setOpen(false);
-      setTimeout(() => router.replace("/"), 200);
+      router.replace("/");
     } catch (err) {
       console.error("❌ Logout failed:", err.message);
       alert("Logout failed. Please try again.");
     }
   };
 
-  const handleKeyDown = (e) => {
-    if (e.key === "Escape") setOpen(false);
-  };
+  useEffect(() => {
+    if (user && pathname === "/") {
+      router.replace("/dashboard");
+    }
+  }, [user, pathname, router]);
 
   useEffect(() => {
     document.body.style.overflow = open ? "hidden" : "auto";
-    document.addEventListener("keydown", handleKeyDown);
     return () => {
       document.body.style.overflow = "auto";
-      document.removeEventListener("keydown", handleKeyDown);
     };
   }, [open]);
 
@@ -48,61 +49,73 @@ export default function SideDrawer() {
     { label: "Settings", path: "/settings" },
   ];
 
-  const shortenAddress = (addr) =>
-    addr ? `${addr.slice(0, 6)}...${addr.slice(-4)}` : "";
-
   if (!user) return null;
 
   return (
     <>
+      {/* Hamburger icon */}
       <motion.button
         className={styles.hamburger}
         onClick={toggleDrawer}
         aria-label="Open menu"
-        title="Open menu"
         whileTap={{ scale: 0.9 }}
       >
         <FaBars size={22} />
       </motion.button>
 
+      {/* Side drawer */}
       <AnimatePresence>
         {open && (
-          <motion.aside
-            className={styles.drawer}
-            initial={{ x: "-100%" }}
-            animate={{ x: 0 }}
-            exit={{ x: "-100%" }}
-            transition={{ type: "tween", duration: 0.3 }}
-          >
-            <div className={styles.drawerHeader}>
-              <button
-                className={styles.closeIcon}
-                onClick={toggleDrawer}
-                aria-label="Close menu"
-                title="Close"
-              >
-                <FaTimes size={22} />
+          <>
+            <motion.div
+              className={styles.backdrop}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={toggleDrawer}
+            />
+            <motion.aside
+              className={`${styles.drawer} ${open ? styles.open : ""}`}
+              initial={{ x: "-100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "-100%" }}
+              transition={{ type: "tween", duration: 0.33 }}
+            >
+              <div className={styles.drawerHeader}>
+                <button className={styles.closeIcon} onClick={toggleDrawer}>
+                  <FaTimes size={22} />
+                </button>
+              </div>
+
+              <div className={styles.userBox}>
+                <p className={styles.email}>
+                  {user?.email || "no@email.com"}
+                </p>
+                <p className={styles.email}>
+                  {wallet?.bnb_address || wallet?.address || "No wallet"}
+                </p>
+              </div>
+
+              <nav className={styles.nav}>
+                {navItems.map((item) => (
+                  <Link
+                    key={item.label}
+                    href={item.path}
+                    className={`${styles.link} ${
+                      pathname === item.path ? styles.active : ""
+                    }`}
+                    onClick={() => setOpen(false)}
+                  >
+                    {item.label}
+                  </Link>
+                ))}
+              </nav>
+
+              <button className={styles.logout} onClick={handleLogout}>
+                Logout
               </button>
-              <p className={styles.address}>
-                {shortenAddress(wallet?.address)}
-              </p>
-            </div>
-            <nav className={styles.nav}>
-              {navItems.map((item) => (
-                <Link
-                  key={item.label}
-                  href={item.path}
-                  onClick={() => setOpen(false)}
-                  title={item.label}
-                >
-                  {item.label}
-                </Link>
-              ))}
-            </nav>
-            <button className={styles.logout} onClick={handleLogout}>
-              Logout
-            </button>
-          </motion.aside>
+            </motion.aside>
+          </>
         )}
       </AnimatePresence>
     </>
