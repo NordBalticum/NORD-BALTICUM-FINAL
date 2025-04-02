@@ -14,16 +14,30 @@ const RPC = {
   avax: "https://api.avax.network/ext/bc/C/rpc",
 };
 
+const coinMap = {
+  bnb: "binancecoin",
+  tbnb: "binancecoin",
+  eth: "ethereum",
+  matic: "polygon",
+  avax: "avalanche-2",
+};
+
 const fetchBalance = async (providerUrl, address) => {
-  const provider = new ethers.providers.JsonRpcProvider(providerUrl);
-  const balance = await provider.getBalance(address);
-  return parseFloat(ethers.utils.formatEther(balance));
+  try {
+    const provider = new ethers.providers.JsonRpcProvider(providerUrl);
+    const balance = await provider.getBalance(address);
+    return parseFloat(ethers.utils.formatEther(balance));
+  } catch (err) {
+    console.error(`Fetch balance failed for ${address}:`, err);
+    return 0;
+  }
 };
 
 const fetchRates = async () => {
   try {
-    const url =
-      "https://api.coingecko.com/api/v3/simple/price?ids=ethereum,binancecoin,polygon,avalanche-2&vs_currencies=eur,usd";
+    const url = `https://api.coingecko.com/api/v3/simple/price?ids=${Object.values(coinMap).join(
+      ","
+    )}&vs_currencies=eur,usd`;
     const res = await fetch(url);
     return await res.json();
   } catch (err) {
@@ -39,17 +53,16 @@ export const BalanceProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!wallet || !wallet.bnb) {
-      console.log("Wallet not ready for balance fetch.");
-      return;
-    }
+    if (!wallet || !wallet.bnb) return;
+
+    let interval;
 
     const loadBalances = async () => {
       try {
         const result = {};
-        const networks = Object.keys(RPC);
+        const rateData = await fetchRates();
 
-        for (const net of networks) {
+        for (const net of Object.keys(RPC)) {
           const address = wallet[net];
           if (address) {
             const balance = await fetchBalance(RPC[net], address);
@@ -57,7 +70,6 @@ export const BalanceProvider = ({ children }) => {
           }
         }
 
-        const rateData = await fetchRates();
         setBalances(result);
         setRates(rateData);
       } catch (err) {
@@ -68,24 +80,19 @@ export const BalanceProvider = ({ children }) => {
     };
 
     loadBalances();
+    interval = setInterval(loadBalances, 30000); // Refresh every 30s
+
+    return () => clearInterval(interval);
   }, [wallet]);
 
   const format = (symbol, value) => {
-    const coinMap = {
-      bnb: "binancecoin",
-      tbnb: "binancecoin",
-      eth: "ethereum",
-      matic: "polygon",
-      avax: "avalanche-2",
-    };
-
-    const coin = coinMap[symbol] || "";
-    const eurRate = rates?.[coin]?.eur || 0;
-    const usdRate = rates?.[coin]?.usd || 0;
+    const coin = coinMap[symbol];
+    const eurRate = parseFloat(rates?.[coin]?.eur || 0);
+    const usdRate = parseFloat(rates?.[coin]?.usd || 0);
 
     return {
       token: symbol,
-      value,
+      value: parseFloat(value),
       eur: parseFloat((value * eurRate).toFixed(2)),
       usd: parseFloat((value * usdRate).toFixed(2)),
     };
