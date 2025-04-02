@@ -194,7 +194,7 @@ export default function SideDrawer() {
                   ))}
                 </nav>
 
-                <div style={{ marginTop: "24px" }}>
+                <div style={{ marginTop: "16px" }}>
                   <button className={styles.logout} onClick={handleLogout}>
                     Logout
                   </button>
