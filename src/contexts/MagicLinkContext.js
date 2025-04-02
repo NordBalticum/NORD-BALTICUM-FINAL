@@ -13,9 +13,10 @@ export const MagicLinkProvider = ({ children }) => {
   useEffect(() => {
     const loadUserSession = async () => {
       try {
+        // Gauk sesijos informaciją iš Supabase
         const { data: { session }, error } = await supabase.auth.getSession();
         if (error) {
-          console.error("Failed to get session:", error);
+          console.error("Sesijos užkrovimas nepavyko:", error);
           setUser(null);
           setLoading(false);
           return;
@@ -23,12 +24,13 @@ export const MagicLinkProvider = ({ children }) => {
 
         if (session?.user) {
           setUser(session.user);
+          // Užtikrink, kad vartotojo piniginės egzistuoja
           await ensureWalletsExist(session.user.email);
         } else {
           setUser(null);
         }
       } catch (err) {
-        console.error("Unexpected error fetching session:", err);
+        console.error("Netikėta klaida užkrovus sesiją:", err);
       } finally {
         setLoading(false);
       }
@@ -36,10 +38,13 @@ export const MagicLinkProvider = ({ children }) => {
 
     loadUserSession();
 
+    // Prenumeruok sesijos pokyčius
     const { data: subscription } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user || null);
       if (session?.user) {
+        setUser(session.user);
         ensureWalletsExist(session.user.email);
+      } else {
+        setUser(null);
       }
     });
 
@@ -50,18 +55,18 @@ export const MagicLinkProvider = ({ children }) => {
 
   const ensureWalletsExist = async (email) => {
     try {
-      // Check if wallets exist for the user
+      // Patikrink, ar vartotojo piniginės jau egzistuoja
       const { data: wallets, error } = await supabase
         .from("wallets")
         .select("bnb_address, tbnb_address, eth_address, matic_address, avax_address")
         .eq("email", email);
 
       if (error) {
-        console.error("Error fetching wallets:", error);
+        console.error("Klaida tikrinant pinigines:", error);
         return;
       }
 
-      // If no wallets found or any are missing, generate them
+      // Jei piniginės neegzistuoja arba nėra pilnos, sukurk jas
       if (!wallets.length || wallets.some(wallet => !wallet.bnb_address || !wallet.tbnb_address || !wallet.eth_address || !wallet.matic_address || !wallet.avax_address)) {
         const wallet = ethers.Wallet.createRandom();
         const walletData = {
@@ -75,26 +80,24 @@ export const MagicLinkProvider = ({ children }) => {
 
         const { error: insertError } = await supabase
           .from("wallets")
-          .insert(walletData);
+          .upsert(walletData, { onConflict: "email" });
 
         if (insertError) {
-          console.error("Error creating wallets:", insertError);
+          console.error("Klaida kuriant pinigines:", insertError);
         }
       }
     } catch (err) {
-      console.error("Unexpected error in ensureWalletsExist:", err);
+      console.error("Netikėta klaida tikrinant ar kuriant pinigines:", err);
     }
   };
 
   const signInWithMagicLink = async (email) => {
     try {
-      if (!email) throw new Error("Email is required.");
+      if (!email) throw new Error("El. paštas yra būtinas.");
       const { error } = await supabase.auth.signInWithOtp({ email });
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
     } catch (err) {
-      console.error("Error signing in with Magic Link:", err);
+      console.error("Klaida prisijungiant su Magic Link:", err);
       throw err;
     }
   };
@@ -102,11 +105,9 @@ export const MagicLinkProvider = ({ children }) => {
   const signInWithGoogle = async () => {
     try {
       const { error } = await supabase.auth.signInWithOAuth({ provider: "google" });
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
     } catch (err) {
-      console.error("Error signing in with Google:", err);
+      console.error("Klaida prisijungiant su Google:", err);
       throw err;
     }
   };
@@ -114,12 +115,10 @@ export const MagicLinkProvider = ({ children }) => {
   const signOut = async () => {
     try {
       const { error } = await supabase.auth.signOut();
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
       setUser(null);
     } catch (err) {
-      console.error("Error signing out:", err);
+      console.error("Klaida atsijungiant:", err);
       throw err;
     }
   };
@@ -142,7 +141,7 @@ export const MagicLinkProvider = ({ children }) => {
 export const useMagicLink = () => {
   const context = useContext(MagicLinkContext);
   if (!context) {
-    throw new Error("useMagicLink must be used within a MagicLinkProvider");
+    throw new Error("useMagicLink turi būti naudojamas su MagicLinkProvider.");
   }
   return context;
 };
