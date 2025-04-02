@@ -2,9 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
 import { useMagicLink } from "@/contexts/MagicLinkContext";
-
 import styles from "@/styles/dashboard.module.css";
 import background from "@/styles/background.module.css";
 
@@ -30,7 +28,6 @@ export default function Dashboard() {
 
   const [balances, setBalances] = useState([]);
   const [totalEUR, setTotalEUR] = useState("0.00");
-  const [activeNetwork, setActiveNetwork] = useState("bsc");
 
   useEffect(() => {
     if (!user || !wallet) {
@@ -65,47 +62,36 @@ export default function Dashboard() {
   };
 
   const handleCardClick = (symbol) => {
-    setActiveNetwork(symbol);
     router.push(networkRoutes[symbol] || "/send");
   };
 
   if (!user || !wallet) return null;
 
   return (
-    <main className={`${styles.container} ${background.gradient}`}>
-      <div className={styles.globalWrapper}>
-        <div className={styles.header}>
-          <Image
-            src="/icons/logo.svg"
-            alt="NordBalticum"
-            width={160}
-            height={60}
-            className={styles.logo}
-            priority
-          />
-        </div>
+    <main className={styles.container}>
+      <div className={styles.avatarCenter}>
+        <img src="/icons/avatar-default.svg" alt="Avatar" />
+      </div>
 
-        <div className={styles.totalBox}>
-          <p className={styles.totalLabel}>Total Wallet Value</p>
+      <div className={styles.dashboardWrapper}>
+        <div className={styles.totalValueContainer}>
+          <p className={styles.totalLabel}>Total Value</p>
           <h2 className={styles.totalValue}>€ {totalEUR}</h2>
         </div>
 
-        <div className={styles.assetGrid}>
+        <div className={styles.assetList}>
           {balances.length > 0 ? (
             balances.map((bal) => (
               <div
                 key={bal.network}
-                className={styles.assetCard}
+                className={styles.assetItem}
                 onClick={() => handleCardClick(bal.network)}
               >
                 <div className={styles.assetLeft}>
-                  <Image
+                  <img
                     src={networkLogos[bal.network]}
                     alt={`${bal.network} logo`}
-                    width={42}
-                    height={42}
                     className={styles.assetLogo}
-                    unoptimized
                   />
                   <div className={styles.assetInfo}>
                     <span className={styles.assetSymbol}>{bal.network.toUpperCase()}</span>
@@ -117,7 +103,7 @@ export default function Dashboard() {
 
                 <div className={styles.assetRight}>
                   <span className={styles.assetAmount}>
-                    {parseFloat(bal.amount).toFixed(4)}
+                    {parseFloat(bal.amount).toFixed(5)}
                   </span>
                   <span className={styles.assetEur}>
                     € {parseFloat(bal.eur).toFixed(2)}
