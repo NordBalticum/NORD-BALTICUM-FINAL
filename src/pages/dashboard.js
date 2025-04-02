@@ -4,7 +4,6 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { useMagicLink } from "@/system/MagicLinkContext";
-import { useWallet } from "@/system/WalletContext";
 
 import styles from "@/styles/dashboard.module.css";
 import background from "@/styles/background.module.css";
@@ -27,24 +26,27 @@ const networkNames = {
 
 export default function Dashboard() {
   const router = useRouter();
-  const { user } = useMagicLink();
-  const { wallet, balances, refreshBalances } = useWallet();
+  const { user, fetchBalances } = useMagicLink();
 
+  const [balances, setBalances] = useState([]);
   const [totalEUR, setTotalEUR] = useState("0.00");
-  const [activeNetwork, setActiveNetwork] = useState("bsc");
 
   useEffect(() => {
-    if (user && wallet) {
-      refreshBalances()
-        .then((balances) => {
-          const total = balances.reduce((acc, balance) => acc + parseFloat(balance.eur || 0), 0);
+    if (user) {
+      fetchBalances()
+        .then((data) => {
+          setBalances(data);
+          const total = data.reduce(
+            (acc, bal) => acc + parseFloat(bal.eur || 0),
+            0
+          );
           setTotalEUR(total.toFixed(2));
         })
-        .catch((err) => console.error("Failed to refresh balances:", err));
+        .catch((err) => console.error("Error fetching balances:", err));
     } else {
       router.replace("/");
     }
-  }, [user, wallet, refreshBalances, router]);
+  }, [user, fetchBalances, router]);
 
   const networkRoutes = {
     bsc: "/bnb",
@@ -55,11 +57,10 @@ export default function Dashboard() {
   };
 
   const handleCardClick = (symbol) => {
-    setActiveNetwork(symbol);
     router.push(networkRoutes[symbol] || "/send");
   };
 
-  if (!user || !wallet) {
+  if (!user) {
     return <div className={styles.loading}>Loading Wallet...</div>;
   }
 
