@@ -1,8 +1,6 @@
 // src/pages/_app.js
-"use client";
 
 import React from "react";
-
 import "@/styles/theme.css";
 import "@/styles/globals.css";
 
