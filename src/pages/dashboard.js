@@ -7,7 +7,6 @@ import Image from "next/image";
 import { useMagicLink } from "@/contexts/MagicLinkContext";
 import { useWallet } from "@/contexts/WalletContext";
 
-import StarsBackground from "@/components/StarsBackground";
 import styles from "@/styles/dashboard.module.css";
 import background from "@/styles/background.module.css";
 
