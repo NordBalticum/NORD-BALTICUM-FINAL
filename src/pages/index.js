@@ -48,27 +48,14 @@ export default function Home() {
     }
   };
 
-  const handleSignOut = async () => {
-    try {
-      setStatus("loading");
-      await signOut();
-      setMessage("You have been signed out.");
-    } catch (err) {
-      console.error(err);
-      setMessage("Sign out failed.");
-    } finally {
-      setStatus("idle");
-    }
-  };
-
   return (
     <div className={`${styles.container} ${background.fullscreen}`}>
-      <div className={styles.logoWrap}>
+      <div className={styles.logoContainer}>
         <Image
           src="/icons/logo.svg"
           alt="NordBalticum Logo"
-          width={220}
-          height={72}
+          width={240}
+          height={240}
           className={styles.logo}
           priority
         />
@@ -76,6 +63,7 @@ export default function Home() {
 
       <form onSubmit={handleSignIn} className={styles.loginBox}>
         <h1 className={styles.heading}>Welcome to NordBalticum</h1>
+        <p className={styles.subheading}>Login with Email or Google</p>
 
         <input
           type="email"
@@ -91,7 +79,7 @@ export default function Home() {
           disabled={status === "loading"}
           className={styles.buttonPrimary}
         >
-          Send Magic Link
+          SEND MAGIC LINK
         </button>
 
         <button
@@ -100,18 +88,15 @@ export default function Home() {
           disabled={status === "loading"}
           className={styles.buttonGoogle}
         >
-          Login with Google
+          <Image
+            src="/icons/google-logo.png"
+            alt="Google"
+            width={18}
+            height={18}
+            style={{ marginRight: "8px" }}
+          />
+          LOGIN WITH GOOGLE
         </button>
-
-        {user && (
-          <button
-            type="button"
-            onClick={handleSignOut}
-            className={styles.buttonSecondary}
-          >
-            Sign Out
-          </button>
-        )}
 
         {message && <p className={styles.message}>{message}</p>}
       </form>
