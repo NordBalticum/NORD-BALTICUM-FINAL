@@ -1,16 +1,19 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
+import { useWallet } from "@/contexts/WalletContext";
 import { useMagicLink } from "@/contexts/MagicLinkContext";
-import { getWalletBalance } from "@/lib/ethers";
-import { supabase } from "@/lib/supabase";
+import { ethers } from "ethers";
+import { supabase } from "@/utils/supabaseClient";
+
+const NETWORKS = ["ethereum", "bsc", "polygon", "avalanche", "tbnb"];
 
 const priceSymbols = {
-  BNB: "binancecoin",
-  TBNB: "binancecoin",
-  ETH: "ethereum",
-  MATIC: "matic-network",
-  AVAX: "avalanche-2",
+  bsc: "binancecoin",
+  tbnb: "binancecoin", // testnet, bet ta pati kaina
+  ethereum: "ethereum",
+  polygon: "matic-network",
+  avalanche: "avalanche-2",
 };
 
 const fetchPrices = async () => {
@@ -21,8 +24,8 @@ const fetchPrices = async () => {
     );
     const data = await res.json();
 
-    return Object.entries(priceSymbols).reduce((acc, [symbol, id]) => {
-      acc[symbol] = data?.[id]?.eur || 0;
+    return Object.entries(priceSymbols).reduce((acc, [net, id]) => {
+      acc[net] = data?.[id]?.eur || 0;
       return acc;
     }, {});
   } catch (e) {
@@ -32,35 +35,43 @@ const fetchPrices = async () => {
 };
 
 export const useBalance = () => {
-  const { wallet, user } = useMagicLink();
+  const { publicKey } = useWallet();
+  const { user } = useMagicLink();
+
   const [balances, setBalances] = useState({});
   const [isLoading, setIsLoading] = useState(true);
   const isFetching = useRef(false);
-  const controller = useRef(null);
+
+  const getProvider = (network) => {
+    const RPCS = {
+      ethereum: "https://eth.llamarpc.com",
+      bsc: "https://bsc-dataseed.binance.org",
+      polygon: "https://polygon-rpc.com",
+      avalanche: "https://api.avax.network/ext/bc/C/rpc",
+      tbnb: "https://data-seed-prebsc-1-s1.binance.org:8545", // BSC Testnet
+    };
+    return new ethers.providers.JsonRpcProvider(RPCS[network]);
+  };
 
   const refresh = useCallback(async () => {
-    if (!wallet?.list || !user?.email || isFetching.current) return;
+    if (!user?.email || !publicKey || isFetching.current) return;
 
     isFetching.current = true;
     setIsLoading(true);
-    controller.current?.abort();
-    controller.current = new AbortController();
 
     try {
       const prices = await fetchPrices();
       const results = {};
 
       await Promise.all(
-        wallet.list.map(async ({ network, address }) => {
+        NETWORKS.map(async (network) => {
           try {
-            const lowerNet = network.toLowerCase();
-            const { formatted } = await getWalletBalance(address, lowerNet);
-
-            const price = prices?.[network.toUpperCase()] || 0;
-            const eur = (parseFloat(formatted) * price).toFixed(2);
+            const provider = getProvider(network);
+            const balance = await provider.getBalance(publicKey);
+            const formatted = ethers.utils.formatEther(balance);
+            const eur = (parseFloat(formatted) * prices[network]).toFixed(2);
 
             results[network] = {
-              address,
               amount: formatted,
               eur: isNaN(eur) ? "0.00" : eur,
             };
@@ -70,20 +81,17 @@ export const useBalance = () => {
                 {
                   email: user.email,
                   network,
-                  wallet_address: address,
+                  wallet_address: publicKey,
                   amount: formatted,
                   eur,
                   updated_at: new Date().toISOString(),
                 },
               ],
-              {
-                onConflict: ["email", "wallet_address", "network"],
-              }
+              { onConflict: ["email", "wallet_address", "network"] }
             );
           } catch (err) {
             console.warn(`❌ Balance error [${network}]:`, err.message);
             results[network] = {
-              address,
               amount: "0.00000",
               eur: "0.00",
             };
@@ -101,18 +109,18 @@ export const useBalance = () => {
     } catch (err) {
       console.error("❌ Failed to refresh balances:", err.message);
     } finally {
-      setIsLoading(false);
       isFetching.current = false;
+      setIsLoading(false);
     }
-  }, [wallet, user]);
+  }, [user, publicKey]);
 
   useEffect(() => {
-    if (wallet?.list?.length && user?.email) {
+    if (user?.email && publicKey) {
       refresh();
       const interval = setInterval(refresh, 30000);
       return () => clearInterval(interval);
     }
-  }, [wallet, user, refresh]);
+  }, [user, publicKey, refresh]);
 
   return { balances, isLoading, refresh };
 };
