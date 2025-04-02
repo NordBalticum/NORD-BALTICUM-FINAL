@@ -2,39 +2,28 @@
 
 import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { supabase } from "@/utils/supabaseClient";
-
 import { useMagicLink } from "@/contexts/MagicLinkContext";
-import { useWallet } from "@/contexts/WalletContext";
-
 import styles from "@/styles/history.module.css";
 import background from "@/styles/background.module.css";
 
 export default function History() {
-  const { user } = useMagicLink();
-  const { walletAddress } = useWallet();
+  const { user, fetchUserTransactions } = useMagicLink();
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (user?.email && walletAddress) fetchTransactions();
-  }, [user, walletAddress]);
+    if (user?.email) {
+      fetchTransactions();
+    }
+  }, [user]);
 
   const fetchTransactions = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from("transactions")
-        .select("*")
-        .or(
-          `sender_email.eq.${user.email},receiver_email.eq.${user.email},wallet_address.eq.${walletAddress}`
-        )
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
+      const data = await fetchUserTransactions(user.email);
       setTransactions(data);
     } catch (err) {
-      console.error("❌ Error fetching transactions:", err.message);
+      console.error("Error fetching transactions:", err);
     } finally {
       setLoading(false);
     }
@@ -58,8 +47,6 @@ export default function History() {
 
   return (
     <main className={`${styles.container} ${background.gradient}`}>
-      <StarsBackground />
-
       <div className={styles.wrapper}>
         <h1 className={styles.title}>TRANSACTION HISTORY</h1>
         <p className={styles.subtext}>Your latest crypto activity</p>
@@ -135,7 +122,7 @@ export default function History() {
   );
 }
 
-// Helper
+// Helper function
 function truncateAddress(addr) {
   if (!addr || typeof addr !== "string") return "Unknown";
   return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
