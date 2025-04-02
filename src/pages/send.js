@@ -2,15 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-
 import { useMagicLink } from "@/contexts/MagicLinkContext";
-import { useWallet } from "@/contexts/WalletContext";
-
-import {
-  getWalletBalance,
-  getMaxSendableAmount,
-  isValidAddress,
-} from "@/lib/ethers";
 
 import SwipeSelector from "@/components/SwipeSelector";
 import SuccessModal from "@/components/modals/SuccessModal";
@@ -28,8 +20,14 @@ const supportedNetworks = [
 
 export default function Send() {
   const router = useRouter();
-  const { user } = useMagicLink();
-  const { publicKey, privateKey, activeNetwork, setActiveNetwork, sendCrypto, refreshAllBalances } = useWallet();
+  const {
+    user,
+    fetchUserBalance,
+    sendCryptoTransaction,
+    getMaxSendableAmount,
+    activeNetwork,
+    setActiveNetwork,
+  } = useMagicLink();
 
   const [receiver, setReceiver] = useState("");
   const [amount, setAmount] = useState("");
@@ -46,24 +44,23 @@ export default function Send() {
   const amountAfterFee = Number(amount || 0) - calculatedFee;
 
   useEffect(() => {
-    if (!user || !publicKey) router.replace("/");
-  }, [user, publicKey, router]);
+    if (!user) {
+      router.replace("/");
+    }
+  }, [user, router]);
 
   const loadBalance = async () => {
-    if (!publicKey || !privateKey) return;
+    if (!user?.email) return;
+
     try {
-      const { formatted } = await getWalletBalance(publicKey, activeNetwork);
-      setBalance(formatted);
+      const { balance: userBalance, eurBalance } = await fetchUserBalance(user.email, activeNetwork);
+      setBalance(userBalance);
+      setBalanceEUR(eurBalance);
 
-      const prices = await fetchPrices();
-      const price = prices[activeNetwork] || 0;
-      const eur = (parseFloat(formatted) * price).toFixed(2);
-      setBalanceEUR(eur);
-
-      const max = await getMaxSendableAmount(privateKey, activeNetwork);
-      setMaxSendable(max);
+      const maxAmount = await getMaxSendableAmount(user.email, activeNetwork);
+      setMaxSendable(maxAmount);
     } catch (err) {
-      console.warn("❌ Balance fetch failed:", err.message);
+      console.error("Failed to load balance:", err);
       setBalance("0.00000");
       setBalanceEUR("0.00");
       setMaxSendable("0.00000");
@@ -72,21 +69,19 @@ export default function Send() {
 
   useEffect(() => {
     loadBalance();
-  }, [activeNetwork, publicKey, privateKey]);
+  }, [activeNetwork, user, fetchUserBalance, getMaxSendableAmount]);
 
   const handleSend = () => {
-    const trimmed = receiver.trim();
+    const trimmedReceiver = receiver.trim();
 
-    if (!trimmed || !amount || isNaN(amount)) {
-      return alert("❌ Enter valid address and amount.");
-    }
-
-    if (!isValidAddress(trimmed)) {
-      return alert("❌ Invalid wallet address.");
+    if (!trimmedReceiver || !amount || isNaN(amount)) {
+      alert("Please enter a valid address and amount.");
+      return;
     }
 
     if (Number(amount) <= 0 || Number(amount) > Number(maxSendable)) {
-      return alert(`❌ Max sendable (incl. fee): ${maxSendable}`);
+      alert(`Max sendable (including fee): ${maxSendable}`);
+      return;
     }
 
     setShowConfirm(true);
@@ -94,22 +89,18 @@ export default function Send() {
 
   const confirmSend = async () => {
     setShowConfirm(false);
-    const result = await sendCrypto(receiver.trim(), amount);
+
+    const result = await sendCryptoTransaction(user.email, activeNetwork, receiver.trim(), amount);
     if (result?.success) {
       setReceiver("");
       setAmount("");
-      await loadBalance();
-      await refreshAllBalances();
+      loadBalance();
       setTxHash(result.hash);
       setShowSuccess(true);
     } else {
-      alert(result.message || "❌ Send failed");
+      alert(result.message || "Transaction failed");
     }
   };
-
-  if (!user || !publicKey) {
-    return <div className={styles.loading}>Loading Wallet...</div>;
-  }
 
   return (
     <main className={`${styles.main} ${background.gradient}`}>
@@ -155,7 +146,7 @@ export default function Send() {
           <button
             onClick={handleSend}
             className={styles.confirmButton}
-            disabled={!publicKey}
+            disabled={!user}
           >
             SEND NOW
           </button>
