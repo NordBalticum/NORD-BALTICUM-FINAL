@@ -3,7 +3,8 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 
-import { useSystem } from "@/contexts/SystemContext";
+import { useMagicLink } from "@/contexts/MagicLinkContext";
+import { useWallet } from "@/contexts/WalletContext";
 
 import AvatarDisplay from "@/components/AvatarDisplay";
 import AvatarModalPicker from "@/components/AvatarModalPicker";
@@ -15,7 +16,8 @@ import background from "@/styles/background.module.css";
 
 export default function SettingsPage() {
   const router = useRouter();
-  const { user, wallet, logout } = useSystem();
+  const { user, logout } = useMagicLink();
+  const { publicKey } = useWallet();
 
   const [emailInput, setEmailInput] = useState("");
   const [showAvatarModal, setShowAvatarModal] = useState(false);
@@ -32,8 +34,8 @@ export default function SettingsPage() {
   };
 
   const handleCopy = () => {
-    if (wallet?.address) {
-      navigator.clipboard.writeText(wallet.address);
+    if (publicKey) {
+      navigator.clipboard.writeText(publicKey);
       alert("✅ Wallet address copied to clipboard.");
     }
   };
@@ -49,14 +51,12 @@ export default function SettingsPage() {
     setSuccess(true);
   };
 
-  if (!user || !wallet) {
+  if (!user || !publicKey) {
     return <div className={styles.loading}>Loading Profile...</div>;
   }
 
   return (
     <main className={`${styles.container} ${background.gradient}`}>
-      <StarsBackground />
-
       <div className={styles.box}>
         <h2 className={styles.heading}>Profile Settings</h2>
 
@@ -65,7 +65,7 @@ export default function SettingsPage() {
           onClick={() => setShowAvatarModal(true)}
           title="Click to change avatar"
         >
-          <AvatarDisplay walletAddress={wallet.address} size={80} key={avatarKey} />
+          <AvatarDisplay walletAddress={publicKey} size={80} key={avatarKey} />
           <p className={styles.avatarText}>Change Avatar</p>
         </div>
 
@@ -73,7 +73,7 @@ export default function SettingsPage() {
 
         <div className={styles.walletBox} onClick={handleCopy} title="Click to copy">
           <span><strong>Wallet Address:</strong></span>
-          <span className={styles.walletAddress}>{wallet.address}</span>
+          <span className={styles.walletAddress}>{publicKey}</span>
         </div>
 
         <hr />
