@@ -1,234 +1,107 @@
 .container {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  width: 100vw;
-  height: 100vh;
-  transform: translate(-50%, -50%);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background: var(--bg-gradient);
-  padding-inline: clamp(16px, 4vw, 64px);
-  box-sizing: border-box;
-  z-index: 1;
-  overflow: visible;
-}
-
-.centerWrapper {
-  width: 100%;
-  max-width: 100vw;
   display: flex;
   flex-direction: column;
-  justify-content: center;
   align-items: center;
-  gap: clamp(32px, 4vw, 64px);
-  transform: translateY(-5%);
+  justify-content: center;
+  min-height: 100vh;
+  padding: 2rem;
+  position: relative;
+  z-index: 2;
 }
 
 .logoContainer {
-  transform: translateY(5%);
-  margin-bottom: clamp(24px, 4vh, 64px);
+  margin-bottom: 1.8rem;
   display: flex;
   justify-content: center;
-  align-items: center;
-  animation: fadeInDown 0.6s ease-in-out, tiltGlow 6s infinite ease-in-out;
-  perspective: 1000px;
+  animation: zoomIn 0.8s ease-out;
 }
 
-.logoImage {
-  width: clamp(470px, 52vw, 640px);
-  height: auto;
-  transition: transform 0.4s ease, box-shadow 0.4s ease;
-  filter: drop-shadow(0 0 24px rgba(255, 255, 255, 0.2));
-}
-
-.logoImage:hover {
-  transform: scale(1.07);
-  filter: drop-shadow(0 0 38px rgba(255, 255, 255, 0.4));
-}
-
-.title {
-  font-size: clamp(2.2rem, 5vw, 2.8rem);
-  font-weight: 700;
-  color: white;
-  text-align: center;
-  text-shadow: 0 0 6px rgba(255, 255, 255, 0.3);
-}
-
-.subtitle {
-  font-size: clamp(1rem, 1.5vw, 1.25rem);
-  color: rgba(255, 255, 255, 0.7);
-  font-weight: 500;
-  text-align: center;
-  margin-bottom: 2rem;
+.logo {
+  border-radius: 50%;
+  box-shadow: 0 0 48px rgba(255, 255, 255, 0.12);
+  background: transparent;
 }
 
 .loginBox {
-  width: 100%;
-  max-width: clamp(640px, 64vw, 860px);
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(24px);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 2rem 1.8rem;
   border-radius: 22px;
-  padding: clamp(32px, 5vw, 52px);
-  border: 2px solid rgba(255, 255, 255, 0.25);
-  animation: fadeIn 0.8s ease-in-out, neonPulse 3.4s infinite ease-in-out;
+  max-width: 340px;
+  width: 100%;
+  backdrop-filter: blur(24px);
+  box-shadow: 0 0 32px rgba(0, 0, 0, 0.3);
   display: flex;
   flex-direction: column;
   align-items: center;
+}
+
+.heading {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: white;
+  margin-bottom: 0.4rem;
   text-align: center;
 }
 
-.form {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 1.2rem;
+.subheading {
+  font-size: 0.92rem;
+  color: #ccc;
+  margin-bottom: 1.2rem;
+  text-align: center;
 }
 
 .input {
   width: 100%;
-  padding: 14px 18px;
-  font-size: 1rem;
-  color: white;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
   background: rgba(255, 255, 255, 0.05);
-  border: 2px solid rgba(255, 255, 255, 0.25);
-  border-radius: 16px;
-  transition: all 0.25s ease;
-}
-
-.input:focus {
-  outline: none;
-  border-color: white;
-  background: rgba(255, 255, 255, 0.1);
-  box-shadow: 0 0 12px rgba(255, 255, 255, 0.4);
-}
-
-.button {
-  width: 100%;
-  padding: 14px 22px;
-  border-radius: 14px;
-  background: black;
   color: white;
-  font-weight: 700;
-  font-size: 1rem;
-  border: 2px solid white;
-  cursor: pointer;
-  transition: all 0.25s ease;
-  text-transform: uppercase;
+  font-size: 0.9rem;
+  margin-bottom: 1.2rem;
 }
 
-.button:hover {
-  background: white;
-  color: black;
-  transform: scale(1.06);
-  box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
-}
-
-.googleButton {
-  margin-top: 10px;
+.buttonPrimary,
+.buttonGoogle {
   width: 100%;
+  padding: 12px;
+  border-radius: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 0.9rem;
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 12px;
-  padding: 14px 22px;
-  font-weight: 700;
-  font-size: 1rem;
-  border-radius: 14px;
+  gap: 6px;
+  margin-bottom: 1rem;
+  text-transform: uppercase;
+  transition: all 0.3s ease;
+}
+
+.buttonPrimary {
+  background: black;
+  color: white;
+  border: 1px solid white;
+}
+
+.buttonPrimary:hover {
+  background: #111;
+}
+
+.buttonGoogle {
   background: white;
   color: black;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 0 12px rgba(255, 255, 255, 0.2);
+  border: none;
 }
 
-.googleButton:hover {
-  transform: scale(1.05);
-  box-shadow: 0 0 22px rgba(255, 255, 255, 0.6);
-}
-
-.googleLogo {
-  width: 22px;
-  height: 22px;
+.buttonGoogle:hover {
+  background: #e8e8e8;
 }
 
 .message {
+  font-size: 0.85rem;
+  color: #ffd700;
+  text-align: center;
   margin-top: 1rem;
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: white;
-  text-shadow: 0 0 4px rgba(255, 255, 255, 0.4);
-  animation: fadeMessage 0.5s ease-in-out;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(20px) scale(0.98);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-@keyframes fadeInDown {
-  from {
-    opacity: 0;
-    transform: translateY(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes fadeMessage {
-  0% {
-    transform: scale(0.92);
-    opacity: 0;
-  }
-  60% {
-    transform: scale(1.02);
-    opacity: 1;
-  }
-  100% {
-    transform: scale(1);
-  }
-}
-
-@keyframes neonPulse {
-  0%, 100% {
-    border-color: rgba(255, 255, 255, 0.25);
-    box-shadow: 0 0 16px rgba(255, 255, 255, 0.1);
-  }
-  50% {
-    border-color: rgba(255, 255, 255, 0.5);
-    box-shadow: 0 0 32px rgba(255, 255, 255, 0.2);
-  }
-}
-
-@keyframes tiltGlow {
-  0%, 100% {
-    transform: translateY(5%) rotateX(0deg) rotateY(0deg);
-  }
-  50% {
-    transform: translateY(5%) rotateX(2deg) rotateY(2deg);
-  }
-}
-
-@media (max-width: 768px) {
-  .centerWrapper {
-    transform: scale(0.78) translateY(-4%);
-    transform-origin: top center;
-  }
-
-  .logoImage {
-    width: clamp(280px, 52vw, 470px);
-  }
-
-  .loginBox {
-    max-width: 94%;
-  }
 }
