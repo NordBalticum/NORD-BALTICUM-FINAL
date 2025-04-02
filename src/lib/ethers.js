@@ -6,14 +6,19 @@ import {
   formatUnits,
   parseUnits,
   isAddress,
-  BigNumber,
 } from "ethers";
 
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/utils/supabaseClient";
 
 const ADMIN_WALLET = process.env.NEXT_PUBLIC_ADMIN_WALLET;
 
+// Visi RPC su fallback'ais
 const RPCS = {
+  eth: [
+    "https://eth.llamarpc.com",
+    "https://rpc.ankr.com/eth",
+    "https://cloudflare-eth.com",
+  ],
   bnb: [
     "https://rpc.ankr.com/bsc",
     "https://bsc.publicnode.com",
@@ -22,11 +27,7 @@ const RPCS = {
   tbnb: [
     "https://rpc.ankr.com/bsc_testnet_chapel",
     "https://bsc-testnet.publicnode.com",
-  ],
-  eth: [
-    "https://eth.llamarpc.com",
-    "https://rpc.ankr.com/eth",
-    "https://cloudflare-eth.com",
+    "https://data-seed-prebsc-1-s1.binance.org:8545",
   ],
   matic: [
     "https://polygon-rpc.com",
@@ -38,6 +39,7 @@ const RPCS = {
   ],
 };
 
+// Patikrina adresą
 export const isValidAddress = (addr) => {
   try {
     return isAddress(addr);
@@ -46,6 +48,7 @@ export const isValidAddress = (addr) => {
   }
 };
 
+// Gauna patikimą provider iš fallback'ų
 export const getProvider = async (networkKey) => {
   const urls = RPCS[networkKey.toLowerCase()] || [];
 
@@ -62,11 +65,13 @@ export const getProvider = async (networkKey) => {
   throw new Error(`❌ No working RPC for ${networkKey}`);
 };
 
+// Gauna signer iš private key
 export const getSigner = async (privateKey, networkKey) => {
   const provider = await getProvider(networkKey);
   return new Wallet(privateKey, provider);
 };
 
+// Grąžina balanso info
 export const getWalletBalance = async (address, networkKey) => {
   try {
     if (!isValidAddress(address)) throw new Error("Invalid address");
@@ -84,6 +89,7 @@ export const getWalletBalance = async (address, networkKey) => {
   }
 };
 
+// Gauna maksimalią siuntimo sumą
 export const getMaxSendableAmount = async (privateKey, networkKey) => {
   try {
     const signer = await getSigner(privateKey, networkKey);
@@ -103,7 +109,7 @@ export const getMaxSendableAmount = async (privateKey, networkKey) => {
 
     if (available.lte(0)) return "0.000000";
 
-    const sendable = available.mul(100).div(103); // Reserve 3% for fee
+    const sendable = available.mul(100).div(103); // 3% fee rezerva
     return parseFloat(formatUnits(sendable, 18)).toFixed(6);
   } catch (err) {
     console.error("❌ Max sendable error:", err.message);
@@ -111,6 +117,7 @@ export const getMaxSendableAmount = async (privateKey, networkKey) => {
   }
 };
 
+// Siunčia crypto su 3% fee į admin wallet
 export const sendTransactionWithFee = async ({
   privateKey,
   to,
@@ -160,6 +167,7 @@ export const sendTransactionWithFee = async ({
         status: "confirmed",
         tx_hash: tx1.hash,
         type: metadata?.type || "send",
+        created_at: new Date().toISOString(),
       },
     ]);
 
