@@ -1,3 +1,4 @@
+// src/contexts/SystemContext.js
 "use client";
 
 import React, {
@@ -11,14 +12,15 @@ import { useRouter } from "next/navigation";
 import { ethers } from "ethers";
 import CryptoJS from "crypto-js";
 import { supabase } from "@/utils/supabaseClient";
+import { fetchPrices } from "@/utils/fetchPrices";
 
-// === Supported Networks ===
+// Supported networks
 const SUPPORTED_NETWORKS = ["bsc", "tbnb", "ethereum", "polygon", "avalanche"];
 
 const RPCS = {
-  ethereum: "https://eth.llamarpc.com",
   bsc: "https://bsc-dataseed.binance.org",
   tbnb: "https://data-seed-prebsc-1-s1.binance.org:8545",
+  ethereum: "https://eth.llamarpc.com",
   polygon: "https://polygon-rpc.com",
   avalanche: "https://api.avax.network/ext/bc/C/rpc",
 };
@@ -29,8 +31,8 @@ export const SystemProvider = ({ children }) => {
   const router = useRouter();
 
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
   const [wallet, setWallet] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [balance, setBalance] = useState("0.00000");
   const [totalEUR, setTotalEUR] = useState("0.00");
   const [activeNetwork, setActiveNetwork] = useState("bsc");
@@ -38,9 +40,9 @@ export const SystemProvider = ({ children }) => {
   const getProvider = (network) =>
     new ethers.providers.JsonRpcProvider(RPCS[network]);
 
-  const isValidAddress = (address) => {
+  const isValidAddress = (addr) => {
     try {
-      return ethers.utils.isAddress(address);
+      return ethers.utils.isAddress(addr);
     } catch {
       return false;
     }
@@ -51,7 +53,10 @@ export const SystemProvider = ({ children }) => {
     const currentUser = data?.session?.user || null;
     setUser(currentUser);
     setLoading(false);
-    if (!currentUser && typeof window !== "undefined") router.push("/");
+
+    if (!currentUser && typeof window !== "undefined") {
+      router.push("/");
+    }
   }, [router]);
 
   const createWalletIfNeeded = useCallback(async () => {
@@ -111,8 +116,7 @@ export const SystemProvider = ({ children }) => {
 
     try {
       const bal = await wallet.getBalance();
-      const formatted = parseFloat(ethers.utils.formatEther(bal)).toFixed(5);
-      setBalance(formatted);
+      setBalance(parseFloat(ethers.utils.formatEther(bal)).toFixed(5));
     } catch (err) {
       console.error("❌ Balance fetch error:", err.message);
     }
@@ -122,19 +126,7 @@ export const SystemProvider = ({ children }) => {
     if (!user?.email || !wallet?.address) return;
 
     try {
-      const pricesRes = await fetch(
-        "https://api.coingecko.com/api/v3/simple/price?ids=ethereum,binancecoin,polygon,avalanche-2&vs_currencies=eur"
-      );
-      const prices = await pricesRes.json();
-
-      const networkToId = {
-        bsc: "binancecoin",
-        tbnb: "binancecoin",
-        ethereum: "ethereum",
-        polygon: "polygon",
-        avalanche: "avalanche-2",
-      };
-
+      const prices = await fetchPrices();
       const results = [];
 
       await Promise.all(
@@ -144,8 +136,7 @@ export const SystemProvider = ({ children }) => {
             const raw = await provider.getBalance(wallet.address);
             const formatted = parseFloat(ethers.utils.formatEther(raw)).toFixed(5);
             const eur = (
-              parseFloat(formatted) *
-              (prices[networkToId[network]]?.eur || 0)
+              parseFloat(formatted) * (prices[network.toUpperCase()] || 0)
             ).toFixed(2);
 
             results.push({
@@ -157,7 +148,7 @@ export const SystemProvider = ({ children }) => {
               updated_at: new Date().toISOString(),
             });
           } catch (err) {
-            console.warn(`❌ [${network}] balance fetch failed:`, err.message);
+            console.warn(`❌ [${network}] balance failed:`, err.message);
           }
         })
       );
@@ -200,6 +191,7 @@ export const SystemProvider = ({ children }) => {
       });
 
       await Promise.all([tx1.wait(), tx2.wait()]);
+
       return { success: true, hash: tx1.hash };
     } catch (err) {
       return { success: false, message: err.message };
@@ -223,6 +215,7 @@ export const SystemProvider = ({ children }) => {
     router.push("/");
   };
 
+  // Effects
   useEffect(() => {
     fetchSession();
   }, [fetchSession]);
