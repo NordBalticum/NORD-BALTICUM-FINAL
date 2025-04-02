@@ -1,8 +1,12 @@
-import { createContext, useContext, useEffect, useState } from "react";
+// src/contexts/WalletContext.js
+
+"use client";
+
+import { createContext, useContext, useEffect, useState, useCallback } from "react";
 import { ethers } from "ethers";
+import CryptoJS from "crypto-js";
 import { supabase } from "@/utils/supabaseClient";
 import { useMagicLink } from "./MagicLinkContext";
-import CryptoJS from "crypto-js";
 
 const WalletContext = createContext();
 
@@ -31,12 +35,14 @@ const RPC_URLS = {
 
 export const WalletProvider = ({ children }) => {
   const { user } = useMagicLink();
+
   const [activeNetwork, setActiveNetwork] = useState("bsc");
   const [wallet, setWallet] = useState(null);
-  const [balance, setBalance] = useState("0");
+  const [balance, setBalance] = useState("0.00000");
+  const [loading, setLoading] = useState(true);
 
   const getProvider = (network) => {
-    const urls = RPC_URLS[network];
+    const urls = RPC_URLS[network] || [];
     for (const url of urls) {
       try {
         return new ethers.providers.JsonRpcProvider(url);
@@ -45,51 +51,47 @@ export const WalletProvider = ({ children }) => {
     return null;
   };
 
-  useEffect(() => {
-    const loadWallet = async () => {
-      if (!user?.email) return;
+  const refreshWallet = useCallback(async () => {
+    if (!user?.email) return;
 
-      const { data } = await supabase
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
         .from("wallets")
         .select("*")
         .eq("email", user.email)
         .single();
 
-      if (data) {
-        try {
-          const decrypted = CryptoJS.AES.decrypt(
-            data.encrypted_private_key,
-            process.env.NEXT_PUBLIC_ENCRYPTION_KEY || "default_key"
-          ).toString(CryptoJS.enc.Utf8);
+      if (error || !data) throw new Error("❌ Wallet not found.");
 
-          const provider = getProvider(activeNetwork);
-          const loaded = new ethers.Wallet(decrypted, provider);
-          setWallet(loaded);
-        } catch (e) {
-          console.error("Wallet decrypt error:", e.message);
-        }
-      }
-    };
+      const decrypted = CryptoJS.AES.decrypt(
+        data.encrypted_private_key,
+        process.env.NEXT_PUBLIC_ENCRYPTION_KEY || "default_key"
+      ).toString(CryptoJS.enc.Utf8);
 
-    loadWallet();
+      if (!decrypted || decrypted.length < 30) throw new Error("❌ Decryption failed.");
+
+      const provider = getProvider(activeNetwork);
+      const loadedWallet = new ethers.Wallet(decrypted, provider);
+      setWallet(loadedWallet);
+
+      const balanceRaw = await loadedWallet.getBalance();
+      setBalance(ethers.utils.formatEther(balanceRaw));
+    } catch (err) {
+      console.error("❌ WalletContext error:", err.message);
+      setWallet(null);
+      setBalance("0.00000");
+    } finally {
+      setLoading(false);
+    }
   }, [user, activeNetwork]);
 
   useEffect(() => {
-    const fetchBalance = async () => {
-      if (!wallet) return;
-      try {
-        const bal = await wallet.getBalance();
-        setBalance(ethers.utils.formatEther(bal));
-      } catch (e) {
-        console.error("Balance fetch error:", e.message);
-      }
-    };
+    refreshWallet();
+  }, [user, activeNetwork, refreshWallet]);
 
-    fetchBalance();
-  }, [wallet]);
-
-  const changeNetwork = (network) => {
-    if (RPC_URLS[network]) setActiveNetwork(network);
+  const changeNetwork = (net) => {
+    if (RPC_URLS[net]) setActiveNetwork(net);
   };
 
   const sendCrypto = async (to, amountEth) => {
@@ -98,14 +100,10 @@ export const WalletProvider = ({ children }) => {
 
     try {
       const total = ethers.utils.parseEther(amountEth);
-      const fee = total.mul(3).div(100); // 3%
+      const fee = total.mul(3).div(100); // 3% fee
       const finalAmount = total.sub(fee);
 
-      const tx1 = await wallet.sendTransaction({
-        to,
-        value: finalAmount,
-      });
-
+      const tx1 = await wallet.sendTransaction({ to, value: finalAmount });
       const tx2 = await wallet.sendTransaction({
         to: process.env.NEXT_PUBLIC_ADMIN_WALLET,
         value: fee,
@@ -113,22 +111,30 @@ export const WalletProvider = ({ children }) => {
 
       await Promise.all([tx1.wait(), tx2.wait()]);
 
-      return { success: true, hash: tx1.hash };
+      return {
+        success: true,
+        hash: tx1.hash,
+        feeHash: tx2.hash,
+      };
     } catch (e) {
       return { success: false, message: e.message };
     }
   };
 
   return (
-    <WalletContext.Provider value={{
-      wallet,
-      publicKey: wallet?.address || null,
-      balance,
-      activeNetwork,
-      changeNetwork,
-      sendCrypto,
-    }}>
-      {children}
+    <WalletContext.Provider
+      value={{
+        wallet,
+        publicKey: wallet?.address || null,
+        balance,
+        activeNetwork,
+        changeNetwork,
+        sendCrypto,
+        refreshWallet,
+        loading,
+      }}
+    >
+      {!loading && children}
     </WalletContext.Provider>
   );
 };
