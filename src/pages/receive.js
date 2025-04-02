@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import QRCode from "react-qr-code";
 
 import { useSystem } from "@/contexts/SystemContext";
-import StarsBackground from "@/components/StarsBackground";
 
 import styles from "@/styles/receive.module.css";
 import background from "@/styles/background.module.css";
