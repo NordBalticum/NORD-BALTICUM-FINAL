@@ -60,7 +60,7 @@ export const MagicLinkProvider = ({ children }) => {
       setUser(currentUser);
 
       if (currentUser) {
-        await loadOrCreateWallet(currentUser.email);
+        await loadWallet(currentUser.email);
         router.push("/dashboard");
       }
 
@@ -75,7 +75,7 @@ export const MagicLinkProvider = ({ children }) => {
         setUser(currentUser);
 
         if (currentUser) {
-          await loadOrCreateWallet(currentUser.email);
+          await loadWallet(currentUser.email);
           router.push("/dashboard");
         } else {
           setWallet(null);
@@ -88,46 +88,43 @@ export const MagicLinkProvider = ({ children }) => {
     return () => subscription?.unsubscribe();
   }, [router]);
 
-  const loadOrCreateWallet = async (email) => {
-    const localWallet = await loadWalletFromStorage();
-    if (localWallet) {
-      setWallet(localWallet);
-    } else {
-      const newWallet = Wallet.createRandom();
-      await saveWalletToStorage(newWallet);
-      await saveWalletToDatabase(email, newWallet.address);
-      setWallet(newWallet);
+  const loadWallet = async (email) => {
+    // 1. Try from localStorage
+    const local = await loadWalletFromStorage();
+    if (local) return setWallet(local);
+
+    // 2. Try from Supabase DB
+    const dbWallet = await fetchUserWallet(email);
+    if (dbWallet?.bnb_address) {
+      const restored = Wallet.createRandom(); // dummy to assign address
+      const dummyWallet = new Wallet(restored.privateKey);
+      dummyWallet.address = dbWallet.bnb_address;
+      return setWallet(dummyWallet); // use only address for now
     }
+
+    // 3. Create new one
+    const newWallet = Wallet.createRandom();
+    await saveWalletToStorage(newWallet);
+    await saveWalletToDatabase(email, newWallet.address);
+    setWallet(newWallet);
   };
 
   const signInWithMagicLink = async (email) => {
-    try {
-      const { error } = await supabase.auth.signInWithOtp({
-        email,
-        options: {
-          shouldCreateUser: true,
-        },
-      });
-      if (error) throw error;
-    } catch (err) {
-      console.error("Magic Link error:", err);
-      throw err;
-    }
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: { shouldCreateUser: true },
+    });
+    if (error) throw error;
   };
 
   const signInWithGoogle = async () => {
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: {
-          redirectTo: `${origin}/dashboard`,
-        },
-      });
-      if (error) throw error;
-    } catch (err) {
-      console.error("Google OAuth error:", err);
-      throw err;
-    }
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${origin}/dashboard`,
+      },
+    });
+    if (error) throw error;
   };
 
   const signOut = async () => {
