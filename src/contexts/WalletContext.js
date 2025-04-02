@@ -44,12 +44,7 @@ const encrypt = async (text) => {
     encode(text)
   );
 
-  return btoa(
-    JSON.stringify({
-      iv: Array.from(iv),
-      data: Array.from(new Uint8Array(encrypted)),
-    })
-  );
+  return btoa(JSON.stringify({ iv: Array.from(iv), data: Array.from(new Uint8Array(encrypted)) }));
 };
 
 const decrypt = async (ciphertext) => {
@@ -76,12 +71,18 @@ export const WalletProvider = ({ children }) => {
 
   useEffect(() => {
     if (!user) {
-      setWallet(null);
-      setLoading(false);
+      clearWallet();
     }
   }, [user]);
 
+  const clearWallet = () => {
+    setWallet(null);
+    setLoading(false);
+    localStorage.removeItem("userPrivateKey");
+  };
+
   const loadOrCreateWallet = async (email) => {
+    setLoading(true);
     try {
       const localKey = await loadPrivateKeyFromStorage();
       if (localKey) {
@@ -106,6 +107,7 @@ export const WalletProvider = ({ children }) => {
       setWallet(generateAddresses(newWallet));
     } catch (err) {
       console.error("Wallet error:", err);
+      clearWallet();
     } finally {
       setLoading(false);
     }
@@ -123,17 +125,18 @@ export const WalletProvider = ({ children }) => {
     try {
       localStorage.setItem("userPrivateKey", JSON.stringify({ key: privateKey }));
     } catch (err) {
-      console.error("Saving key to localStorage failed:", err);
+      console.error("Saving private key to storage failed:", err);
     }
   };
 
   const loadPrivateKeyFromStorage = async () => {
     try {
-      const data = localStorage.getItem("userPrivateKey");
-      if (!data) return null;
-      const { key } = JSON.parse(data);
-      return key;
-    } catch {
+      const item = localStorage.getItem("userPrivateKey");
+      if (!item) return null;
+      const parsed = JSON.parse(item);
+      return parsed?.key || null;
+    } catch (err) {
+      console.warn("loadPrivateKeyFromStorage failed:", err);
       return null;
     }
   };
@@ -141,7 +144,7 @@ export const WalletProvider = ({ children }) => {
   const exportPrivateKey = async () => {
     try {
       const key = await loadPrivateKeyFromStorage();
-      if (!key) throw new Error("Private key not found");
+      if (!key) throw new Error("Private key not found.");
       return key;
     } catch (err) {
       console.error("Export private key error:", err);
@@ -157,7 +160,7 @@ export const WalletProvider = ({ children }) => {
       .maybeSingle();
 
     if (error) {
-      console.error("Fetch wallet from DB error:", error.message);
+      console.error("DB fetch error:", error.message);
       return null;
     }
 
@@ -179,7 +182,9 @@ export const WalletProvider = ({ children }) => {
       .from("wallets")
       .upsert(payload, { onConflict: ["user_email"] });
 
-    if (error) console.error("Save wallet to DB failed:", error.message);
+    if (error) {
+      console.error("DB save error:", error.message);
+    }
   };
 
   return (
