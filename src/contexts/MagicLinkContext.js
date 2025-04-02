@@ -23,8 +23,9 @@ export function MagicLinkProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const [sessionChecked, setSessionChecked] = useState(false);
 
-  // === Encrypt / Decrypt ===
-  const encrypt = (text) => CryptoJS.AES.encrypt(text, ENCRYPTION_KEY).toString();
+  // === AES Encryption ===
+  const encrypt = (text) =>
+    CryptoJS.AES.encrypt(text, ENCRYPTION_KEY).toString();
 
   const decrypt = (cipher) => {
     try {
@@ -35,7 +36,7 @@ export function MagicLinkProvider({ children }) {
     }
   };
 
-  // === LocalStorage PK ===
+  // === Local Storage Handling ===
   const storePrivateKey = (pk) => {
     try {
       const encrypted = encrypt(pk);
@@ -55,15 +56,15 @@ export function MagicLinkProvider({ children }) {
   };
 
   const getWalletAddress = () => {
-    const pk = getPrivateKey();
     try {
+      const pk = getPrivateKey();
       return pk ? new ethers.Wallet(pk).address : null;
     } catch {
       return null;
     }
   };
 
-  // === Wallet Handler ===
+  // === Get or Create Wallet ===
   const getOrCreateWallet = useCallback(async (email) => {
     if (!email) return null;
 
@@ -84,13 +85,10 @@ export function MagicLinkProvider({ children }) {
 
         return {
           address: data.address,
-          list: [
-            { network: "bnb", address: data.address },
-            { network: "tbnb", address: data.address },
-            { network: "eth", address: data.address },
-            { network: "matic", address: data.address },
-            { network: "avax", address: data.address },
-          ],
+          list: ["bnb", "tbnb", "eth", "matic", "avax"].map((net) => ({
+            network: net,
+            address: data.address,
+          })),
         };
       }
 
@@ -111,13 +109,10 @@ export function MagicLinkProvider({ children }) {
 
       return {
         address: newWallet.address,
-        list: [
-          { network: "bnb", address: newWallet.address },
-          { network: "tbnb", address: newWallet.address },
-          { network: "eth", address: newWallet.address },
-          { network: "matic", address: newWallet.address },
-          { network: "avax", address: newWallet.address },
-        ],
+        list: ["bnb", "tbnb", "eth", "matic", "avax"].map((net) => ({
+          network: net,
+          address: newWallet.address,
+        })),
       };
     } catch (err) {
       console.error("❌ Wallet error:", err.message);
@@ -125,7 +120,7 @@ export function MagicLinkProvider({ children }) {
     }
   }, []);
 
-  // === Init Session ===
+  // === Initial Session Check ===
   const initSession = useCallback(async () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -134,6 +129,7 @@ export function MagicLinkProvider({ children }) {
       if (!currentUser?.email) {
         setUser(null);
         setWallet(null);
+        setSessionChecked(true);
         return;
       }
 
@@ -150,7 +146,7 @@ export function MagicLinkProvider({ children }) {
     }
   }, [getOrCreateWallet]);
 
-  // === On Mount + Listener ===
+  // === Auth State Listener ===
   useEffect(() => {
     initSession();
 
@@ -165,6 +161,7 @@ export function MagicLinkProvider({ children }) {
         } else {
           setUser(null);
           setWallet(null);
+          localStorage.removeItem("nbc_private_key");
         }
       }
     );
@@ -174,16 +171,16 @@ export function MagicLinkProvider({ children }) {
     };
   }, [initSession, getOrCreateWallet]);
 
-  // === Redirect ===
+  // === Auto Redirect on Login ===
   useEffect(() => {
-    if (sessionChecked && user?.email && wallet?.address) {
+    if (!loading && sessionChecked && user?.email && wallet?.address) {
       if (window.location.pathname === "/") {
         router.replace("/dashboard");
       }
     }
-  }, [sessionChecked, user, wallet, router]);
+  }, [loading, sessionChecked, user, wallet, router]);
 
-  // === Login & Logout ===
+  // === Login Methods ===
   const signInWithEmail = async (email) => {
     const { error } = await supabase.auth.signInWithOtp({ email });
     if (error) throw new Error("Magic Link error: " + error.message);
@@ -202,11 +199,10 @@ export function MagicLinkProvider({ children }) {
   const signOut = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) throw new Error("Logout error: " + error.message);
-
     setUser(null);
     setWallet(null);
     localStorage.removeItem("nbc_private_key");
-    router.push("/");
+    router.replace("/");
   };
 
   return (
