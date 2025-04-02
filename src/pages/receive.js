@@ -3,19 +3,29 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import QRCode from "react-qr-code";
-
 import { useMagicLink } from "@/contexts/MagicLinkContext";
-import { useWallet } from "@/contexts/WalletContext";
-
 import styles from "@/styles/receive.module.css";
 import background from "@/styles/background.module.css";
 
 export default function Receive() {
   const router = useRouter();
-  const { user } = useMagicLink();
-  const { publicKey, totalEUR } = useWallet();
-
+  const { user, fetchUserWallet } = useMagicLink();
+  const [publicKey, setPublicKey] = useState(null);
+  const [totalEUR, setTotalEUR] = useState("0.00");
   const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      fetchUserWallet(user.email)
+        .then((wallet) => {
+          setPublicKey(wallet.address);
+          setTotalEUR(wallet.totalEUR);
+        })
+        .catch((err) => console.error("Error fetching wallet:", err));
+    } else {
+      router.replace("/");
+    }
+  }, [user, fetchUserWallet, router]);
 
   const handleCopy = () => {
     if (!publicKey) return;
@@ -24,20 +34,12 @@ export default function Receive() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  useEffect(() => {
-    if (!user || !publicKey) {
-      router.replace("/");
-    }
-  }, [user, publicKey, router]);
-
   if (!user || !publicKey) {
     return <div className={styles.loading}>Loading Wallet...</div>;
   }
 
   return (
     <main className={`${styles.main} ${background.gradient}`}>
-      <StarsBackground />
-
       <div className={styles.globalContainer}>
         <div className={styles.wrapper}>
           <h1 className={styles.title}>RECEIVE</h1>
