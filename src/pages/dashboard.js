@@ -1,114 +1,126 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { motion } from "framer-motion";
 
 import { useMagicLink } from "@/contexts/MagicLinkContext";
-import { useWallet } from "@/contexts/WalletContext";
 import { useBalance } from "@/hooks/useBalance";
-
 import StarsBackground from "@/components/StarsBackground";
-import background from "@/styles/background.module.css";
-import styles from "@/styles/dashboard.module.css";
 
-const networks = [
+import styles from "@/styles/dashboard.module.css";
+import background from "@/styles/background.module.css";
+
+const networksData = [
   {
-    key: "tbnb",
-    name: "BNB Testnet",
-    logo: "https://cryptologos.cc/logos/binance-coin-bnb-logo.png",
-    route: "/tbnb",
-  },
-  {
-    key: "bnb",
-    name: "BNB Chain",
-    logo: "https://cryptologos.cc/logos/binance-coin-bnb-logo.png",
+    name: "BNB Smart Chain",
+    symbol: "BNB",
     route: "/bnb",
+    logo: "https://cryptologos.cc/logos/bnb-bnb-logo.png",
   },
   {
-    key: "eth",
+    name: "BSC Testnet",
+    symbol: "TBNB",
+    route: "/tbnb",
+    logo: "https://cryptologos.cc/logos/binance-coin-bnb-logo.png",
+  },
+  {
     name: "Ethereum",
-    logo: "https://cryptologos.cc/logos/ethereum-eth-logo.png",
+    symbol: "ETH",
     route: "/eth",
+    logo: "https://cryptologos.cc/logos/ethereum-eth-logo.png",
   },
   {
-    key: "matic",
     name: "Polygon",
-    logo: "https://cryptologos.cc/logos/polygon-matic-logo.png",
+    symbol: "MATIC",
     route: "/matic",
+    logo: "https://cryptologos.cc/logos/polygon-matic-logo.png",
   },
   {
-    key: "avax",
     name: "Avalanche",
-    logo: "https://cryptologos.cc/logos/avalanche-avax-logo.png",
+    symbol: "AVAX",
     route: "/avax",
+    logo: "https://cryptologos.cc/logos/avalanche-avax-logo.png",
   },
 ];
 
 export default function Dashboard() {
   const router = useRouter();
-  const { user } = useMagicLink();
-  const { publicKey } = useWallet();
-  const { balances, isLoading, refresh } = useBalance();
+  const { user, wallet } = useMagicLink();
+  const { balances } = useBalance();
+
+  const [totalEUR, setTotalEUR] = useState("0.00");
 
   useEffect(() => {
-    if (!user || !publicKey) {
-      router.push("/");
-    }
-  }, [user, publicKey, router]);
+    if (!user || !wallet?.address) router.push("/");
+  }, [user, wallet, router]);
+
+  useEffect(() => {
+    const total = Object.values(balances)
+      .filter((b) => b && b.eur)
+      .reduce((sum, b) => sum + parseFloat(b.eur || 0), 0)
+      .toFixed(2);
+
+    setTotalEUR(total);
+  }, [balances]);
+
+  const networks = useMemo(() => networksData, []);
+
+  if (!user || !wallet?.address) {
+    return <div className={styles.loading}>Loading Wallet...</div>;
+  }
 
   return (
     <main className={`${styles.container} ${background.gradient}`}>
       <StarsBackground />
 
-      <div className={styles.wrapper}>
-        <h1 className={styles.title}>Your Wallet Dashboard</h1>
-        <p className={styles.subtext}>Multi-Chain Wallet Overview</p>
+      <div className={styles.globalWrapper}>
+        <div className={styles.header}>
+          <Image
+            src="/icons/logo.svg"
+            alt="NordBalticum"
+            width={160}
+            height={60}
+            className={styles.logo}
+            priority
+          />
+        </div>
 
-        <div className={styles.networkGrid}>
-          {networks.map((net, index) => {
-            const data = balances[net.key] || {};
+        <div className={styles.totalBox}>
+          <p className={styles.totalLabel}>Total Wallet Value</p>
+          <h2 className={styles.totalValue}>€ {totalEUR}</h2>
+        </div>
+
+        <div className={styles.assetGrid}>
+          {networks.map((net) => {
+            const bal = balances[net.symbol] || { amount: "0.00000", eur: "0.00" };
             return (
-              <motion.div
-                key={net.key}
-                className={styles.networkCard}
+              <div
+                key={net.symbol}
+                className={styles.assetCard}
                 onClick={() => router.push(net.route)}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.08, duration: 0.4 }}
               >
-                <div className={styles.networkHeader}>
+                <div className={styles.assetLeft}>
                   <Image
                     src={net.logo}
-                    alt={`${net.name} logo`}
+                    alt={`${net.symbol} logo`}
                     width={42}
                     height={42}
-                    className={styles.networkLogo}
+                    className={styles.assetLogo}
                     unoptimized
                   />
                   <div>
-                    <p className={styles.networkName}>{net.name}</p>
-                    <p className={styles.networkKey}>{net.key.toUpperCase()}</p>
+                    <div className={styles.assetSymbol}>{net.symbol}</div>
+                    <div className={styles.assetName}>{net.name}</div>
                   </div>
                 </div>
-
-                <div className={styles.balanceInfo}>
-                  <p className={styles.amount}>
-                    {data.amount || "0.00000"} {net.key.toUpperCase()}
-                  </p>
-                  <p className={styles.eur}>~€ {data.eur || "0.00"}</p>
+                <div className={styles.assetRight}>
+                  <div className={styles.assetAmount}>{bal.amount} {net.symbol}</div>
+                  <div className={styles.assetEUR}>~€ {bal.eur}</div>
                 </div>
-              </motion.div>
+              </div>
             );
           })}
-        </div>
-
-        <div className={styles.totalBalanceBox}>
-          <h3>Total Wallet Value:</h3>
-          <p className={styles.totalAmount}>
-            {isLoading ? "Loading..." : `~€ ${balances.totalEUR || "0.00"}`}
-          </p>
         </div>
       </div>
     </main>
