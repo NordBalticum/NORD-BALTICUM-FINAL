@@ -3,9 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-
-import { useMagicLink } from "@/contexts/MagicLinkContext";
-import { useWalletCheck } from "@/contexts/WalletCheckContext";
+import { useSystem } from "@/contexts/SystemContext";
 import StarsBackground from "@/components/StarsBackground";
 
 import styles from "@/styles/index.module.css";
@@ -13,8 +11,13 @@ import background from "@/styles/background.module.css";
 
 export default function Home() {
   const router = useRouter();
-  const { user, loading, loginWithEmail, loginWithGoogle } = useMagicLink();
-  const { walletReady } = useWalletCheck();
+  const {
+    user,
+    loading,
+    loginWithEmail,
+    loginWithGoogle,
+    wallet,
+  } = useSystem();
 
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState("idle");
@@ -50,16 +53,15 @@ export default function Home() {
     };
   }, []);
 
-  // Redirect tik kai visiškai paruoštas user ir wallet
+  // Nukreipimas kai viskas paruošta
   useEffect(() => {
-    if (!loading && user && walletReady) {
+    if (!loading && user && wallet) {
       router.replace("/dashboard");
     }
-  }, [user, loading, walletReady, router]);
+  }, [user, wallet, loading, router]);
 
   const handleEmailLogin = async (e) => {
     e.preventDefault();
-
     if (!email.trim()) {
       setMessage("❌ Please enter a valid email.");
       return;
