@@ -12,20 +12,15 @@ import { ethers } from "ethers";
 import CryptoJS from "crypto-js";
 import { supabase } from "@/utils/supabaseClient";
 
+// === Supported Networks ===
+const SUPPORTED_NETWORKS = ["bsc", "tbnb", "ethereum", "polygon", "avalanche"];
+
 const RPCS = {
   ethereum: "https://eth.llamarpc.com",
   bsc: "https://bsc-dataseed.binance.org",
   tbnb: "https://data-seed-prebsc-1-s1.binance.org:8545",
   polygon: "https://polygon-rpc.com",
   avalanche: "https://api.avax.network/ext/bc/C/rpc",
-};
-
-const COINGECKO_IDS = {
-  ethereum: "ethereum",
-  bsc: "binancecoin",
-  tbnb: "binancecoin",
-  polygon: "matic-network",
-  avalanche: "avalanche-2",
 };
 
 const SystemContext = createContext();
@@ -42,6 +37,14 @@ export const SystemProvider = ({ children }) => {
 
   const getProvider = (network) =>
     new ethers.providers.JsonRpcProvider(RPCS[network]);
+
+  const isValidAddress = (address) => {
+    try {
+      return ethers.utils.isAddress(address);
+    } catch {
+      return false;
+    }
+  };
 
   const fetchSession = useCallback(async () => {
     const { data } = await supabase.auth.getSession();
@@ -67,7 +70,7 @@ export const SystemProvider = ({ children }) => {
         process.env.NEXT_PUBLIC_ENCRYPTION_KEY || "default_key"
       ).toString();
 
-      const inserts = Object.keys(RPCS).map((network) => ({
+      const inserts = SUPPORTED_NETWORKS.map((network) => ({
         email: user.email,
         network,
         address: newWallet.address,
@@ -84,7 +87,7 @@ export const SystemProvider = ({ children }) => {
 
     const { data } = await supabase
       .from("wallets")
-      .select("*")
+      .select("encrypted_private_key")
       .eq("email", user.email)
       .eq("network", activeNetwork)
       .maybeSingle();
@@ -99,51 +102,62 @@ export const SystemProvider = ({ children }) => {
     if (!decrypted || decrypted.length < 30) return;
 
     const provider = getProvider(activeNetwork);
-    const instance = new ethers.Wallet(decrypted, provider);
-    setWallet(instance);
+    const signer = new ethers.Wallet(decrypted, provider);
+    setWallet(signer);
   }, [user, activeNetwork]);
 
-  const fetchPrices = async () => {
+  const fetchBalance = useCallback(async () => {
+    if (!wallet) return;
+
     try {
-      const ids = Object.values(COINGECKO_IDS).join(",");
-      const res = await fetch(
-        `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=eur`
-      );
-      const data = await res.json();
-      return Object.entries(COINGECKO_IDS).reduce((acc, [net, id]) => {
-        acc[net] = data?.[id]?.eur || 0;
-        return acc;
-      }, {});
-    } catch (e) {
-      console.error("❌ Price fetch failed:", e.message);
-      return {};
+      const bal = await wallet.getBalance();
+      const formatted = parseFloat(ethers.utils.formatEther(bal)).toFixed(5);
+      setBalance(formatted);
+    } catch (err) {
+      console.error("❌ Balance fetch error:", err.message);
     }
-  };
+  }, [wallet]);
 
   const refreshAllBalances = useCallback(async () => {
     if (!user?.email || !wallet?.address) return;
+
     try {
-      const prices = await fetchPrices();
+      const pricesRes = await fetch(
+        "https://api.coingecko.com/api/v3/simple/price?ids=ethereum,binancecoin,polygon,avalanche-2&vs_currencies=eur"
+      );
+      const prices = await pricesRes.json();
+
+      const networkToId = {
+        bsc: "binancecoin",
+        tbnb: "binancecoin",
+        ethereum: "ethereum",
+        polygon: "polygon",
+        avalanche: "avalanche-2",
+      };
+
       const results = [];
 
       await Promise.all(
-        Object.keys(RPCS).map(async (network) => {
+        SUPPORTED_NETWORKS.map(async (network) => {
           try {
-            const provider = new ethers.providers.JsonRpcProvider(RPCS[network]);
-            const balanceRaw = await provider.getBalance(wallet.address);
-            const amount = ethers.utils.formatEther(balanceRaw);
-            const eur = (parseFloat(amount) * prices[network]).toFixed(2);
+            const provider = getProvider(network);
+            const raw = await provider.getBalance(wallet.address);
+            const formatted = parseFloat(ethers.utils.formatEther(raw)).toFixed(5);
+            const eur = (
+              parseFloat(formatted) *
+              (prices[networkToId[network]]?.eur || 0)
+            ).toFixed(2);
 
             results.push({
               email: user.email,
               network,
               wallet_address: wallet.address,
-              amount,
+              amount: formatted,
               eur,
               updated_at: new Date().toISOString(),
             });
           } catch (err) {
-            console.warn(`❌ Balance error [${network}]:`, err.message);
+            console.warn(`❌ [${network}] balance fetch failed:`, err.message);
           }
         })
       );
@@ -153,27 +167,20 @@ export const SystemProvider = ({ children }) => {
           onConflict: ["email", "wallet_address", "network"],
         });
 
-        const total = results.reduce((sum, b) => sum + parseFloat(b.eur || 0), 0);
+        const total = results.reduce(
+          (sum, b) => sum + parseFloat(b.eur || 0),
+          0
+        );
         setTotalEUR(total.toFixed(2));
       }
     } catch (err) {
-      console.error("❌ Failed to refresh balances:", err.message);
+      console.error("❌ Total EUR sync failed:", err.message);
     }
   }, [user, wallet]);
 
-  const fetchBalance = useCallback(async () => {
-    if (!wallet) return;
-    try {
-      const bal = await wallet.getBalance();
-      setBalance(ethers.utils.formatEther(bal));
-    } catch (err) {
-      console.error("❌ Balance fetch error:", err.message);
-    }
-  }, [wallet]);
-
   const sendCrypto = async (to, amountEth) => {
     if (!wallet) return { success: false, message: "Wallet not ready" };
-    if (!ethers.utils.isAddress(to)) return { success: false, message: "Invalid address" };
+    if (!isValidAddress(to)) return { success: false, message: "Invalid address" };
 
     try {
       const total = ethers.utils.parseEther(amountEth);
@@ -182,12 +189,13 @@ export const SystemProvider = ({ children }) => {
 
       const tx1 = await wallet.sendTransaction({ to, value: finalAmount });
 
-      if (!process.env.NEXT_PUBLIC_ADMIN_WALLET || !ethers.utils.isAddress(process.env.NEXT_PUBLIC_ADMIN_WALLET)) {
+      const adminWallet = process.env.NEXT_PUBLIC_ADMIN_WALLET;
+      if (!adminWallet || !isValidAddress(adminWallet)) {
         return { success: false, message: "Admin wallet address not configured." };
       }
 
       const tx2 = await wallet.sendTransaction({
-        to: process.env.NEXT_PUBLIC_ADMIN_WALLET,
+        to: adminWallet,
         value: fee,
       });
 
@@ -204,9 +212,7 @@ export const SystemProvider = ({ children }) => {
   };
 
   const loginWithGoogle = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-    });
+    const { error } = await supabase.auth.signInWithOAuth({ provider: "google" });
     if (error) throw new Error(error.message);
   };
 
