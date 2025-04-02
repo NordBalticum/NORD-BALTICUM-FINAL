@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { FaEthereum } from "react-icons/fa";
 import { SiBinance, SiPolygon, SiAvalanche } from "react-icons/si";
 
+// ICONS per network
 const icons = {
   eth: <FaEthereum size={22} />,
   bnb: <SiBinance size={20} />,
@@ -14,6 +15,7 @@ const icons = {
   avax: <SiAvalanche size={20} />,
 };
 
+// Friendly names
 const names = {
   eth: "Ethereum",
   bnb: "BNB",
@@ -25,7 +27,14 @@ const names = {
 export default function BalancesCard() {
   const { balances, format, loading } = useBalances();
 
-  if (loading || !balances) return null;
+  // Patikrinimas dėl loading arba jei nieko nėra
+  if (loading || !balances || Object.keys(balances).length === 0) {
+    return (
+      <div className={styles.loading}>
+        <p>Loading balances...</p>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.cardGrid}>
@@ -48,11 +57,11 @@ export default function BalancesCard() {
             </div>
 
             <div className={styles.cardAmount}>
-              {value.toFixed(6)} {symbol.toUpperCase()}
+              {value?.toFixed(6)} {symbol.toUpperCase()}
             </div>
 
             <div className={styles.cardConverted}>
-              ≈ €{eur.toFixed(2)} / ${usd.toFixed(2)}
+              ≈ €{eur?.toFixed(2)} / ${usd?.toFixed(2)}
             </div>
           </motion.div>
         );
