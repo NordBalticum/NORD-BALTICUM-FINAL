@@ -107,7 +107,6 @@ export default function SideDrawer() {
                     boxShadow: "0 0 28px rgba(255,255,255,0.08)",
                     transition: "transform 0.4s ease",
                   }}
-                  className={styles.logo}
                 />
 
                 <p className={styles.email}>
@@ -178,7 +177,8 @@ export default function SideDrawer() {
                 </div>
               </div>
 
-              <div style={{ flexGrow: 1, marginTop: "32px" }}>
+              {/* NAVIGATION + LOGOUT moved higher */}
+              <div style={{ marginTop: "32px" }}>
                 <nav className={styles.nav}>
                   {navItems.map((item) => (
                     <Link
@@ -193,12 +193,12 @@ export default function SideDrawer() {
                     </Link>
                   ))}
                 </nav>
-              </div>
 
-              <div style={{ paddingBottom: "32px", marginTop: "20px" }}>
-                <button className={styles.logout} onClick={handleLogout}>
-                  Logout
-                </button>
+                <div style={{ marginTop: "24px" }}>
+                  <button className={styles.logout} onClick={handleLogout}>
+                    Logout
+                  </button>
+                </div>
               </div>
             </motion.aside>
           </>
