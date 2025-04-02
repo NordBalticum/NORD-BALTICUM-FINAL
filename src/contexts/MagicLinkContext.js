@@ -48,10 +48,9 @@ export const MagicLinkProvider = ({ children }) => {
   const [wallet, setWallet] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const origin =
-    typeof window !== "undefined" && window.location.origin
-      ? window.location.origin
-      : "https://nordbalticum.com";
+  const origin = typeof window !== "undefined" && window.location.origin
+    ? window.location.origin
+    : "https://nordbalticum.com";
 
   useEffect(() => {
     const init = async () => {
@@ -89,23 +88,24 @@ export const MagicLinkProvider = ({ children }) => {
   }, [router]);
 
   const loadWallet = async (email) => {
-    // 1. Try from localStorage
     const local = await loadWalletFromStorage();
-    if (local) return setWallet(local);
-
-    // 2. Try from Supabase DB
-    const dbWallet = await fetchUserWallet(email);
-    if (dbWallet?.bnb_address) {
-      const restored = Wallet.createRandom(); // dummy to assign address
-      const dummyWallet = new Wallet(restored.privateKey);
-      dummyWallet.address = dbWallet.bnb_address;
-      return setWallet(dummyWallet); // use only address for now
+    if (local) {
+      setWallet(local);
+      return;
     }
 
-    // 3. Create new one
+    const db = await fetchUserWallet(email);
+    if (db && db.bnb_address) {
+      const dummy = Wallet.createRandom();
+      const restored = new Wallet(dummy.privateKey);
+      restored.address = db.bnb_address;
+      setWallet(restored);
+      return;
+    }
+
     const newWallet = Wallet.createRandom();
     await saveWalletToStorage(newWallet);
-    await saveWalletToDatabase(email, newWallet.address);
+    await saveAllNetworkAddressesToDB(email, newWallet.address);
     setWallet(newWallet);
   };
 
@@ -120,9 +120,7 @@ export const MagicLinkProvider = ({ children }) => {
   const signInWithGoogle = async () => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: {
-        redirectTo: `${origin}/dashboard`,
-      },
+      options: { redirectTo: `${origin}/dashboard` },
     });
     if (error) throw error;
   };
@@ -150,30 +148,42 @@ export const MagicLinkProvider = ({ children }) => {
       const decryptedKey = await decrypt(privateKey);
       return new Wallet(decryptedKey);
     } catch (err) {
-      console.error("Wallet decrypt error:", err);
       return null;
     }
   };
 
-  const saveWalletToDatabase = async (email, address) => {
+  const saveAllNetworkAddressesToDB = async (email, address) => {
+    const payload = {
+      user_email: email,
+      bnb_address: address,
+      tbnb_address: address,
+      eth_address: address,
+      matic_address: address,
+      avax_address: address,
+    };
+
     try {
       const { error } = await supabase
         .from("wallets")
-        .upsert({ user_email: email, bnb_address: address }, { onConflict: ["user_email"] });
-      if (error) console.error("Supabase DB error:", error.message);
+        .upsert(payload, { onConflict: ["user_email"] });
+      if (error) console.error("Save to DB failed:", error.message);
     } catch (err) {
-      console.error("Supabase wallet save error:", err);
+      console.error("DB error:", err);
     }
   };
 
   const fetchUserWallet = async (email) => {
-    const { data, error } = await supabase
-      .from("wallets")
-      .select("*")
-      .eq("user_email", email)
-      .single();
-    if (error) return null;
-    return data;
+    try {
+      const { data, error } = await supabase
+        .from("wallets")
+        .select("*")
+        .eq("user_email", email)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    } catch (err) {
+      return null;
+    }
   };
 
   const fetchUserBalances = async (email) => {
@@ -181,10 +191,7 @@ export const MagicLinkProvider = ({ children }) => {
       .from("balances")
       .select("*")
       .eq("user_email", email);
-    if (error) {
-      console.error("Balances fetch error:", error.message);
-      return [];
-    }
+    if (error) return [];
     return data;
   };
 
