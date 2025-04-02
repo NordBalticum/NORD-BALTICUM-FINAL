@@ -6,12 +6,15 @@ import Image from "next/image";
 import styles from "@/styles/dashboard.module.css";
 import background from "@/styles/background.module.css";
 
+// Komponentas
+import SideDrawer from "@/components/SideDrawer";
+
 // Kontekstai
 import { useMagicLink } from "@/contexts/MagicLinkContext";
 import { useWallet } from "@/contexts/WalletContext";
 import { useBalances } from "@/contexts/BalanceContext";
 
-// Hardcoded ikonų URL’ai iš cryptologos.cc
+// Ikonos iš cryptologos.cc
 const iconUrls = {
   bnb: "https://cryptologos.cc/logos/binance-coin-bnb-logo.png",
   tbnb: "https://cryptologos.cc/logos/binance-coin-bnb-logo.png",
@@ -20,7 +23,6 @@ const iconUrls = {
   avax: "https://cryptologos.cc/logos/avalanche-avax-logo.png",
 };
 
-// Token pavadinimai
 const names = {
   bnb: "BNB",
   tbnb: "BNB Testnet",
@@ -35,7 +37,6 @@ export default function Dashboard() {
   const { wallet } = useWallet();
   const { balances, format } = useBalances();
 
-  // Redirect į homepage jei neprisijungęs
   useEffect(() => {
     if (!loading && !user) {
       router.replace("/");
@@ -45,7 +46,10 @@ export default function Dashboard() {
   const tokens = balances ? Object.keys(balances) : [];
 
   return (
-    <main className={styles.container}>
+    <main className={`${styles.container} ${background.gradient}`}>
+      {/* Hamburger Menu */}
+      <SideDrawer />
+
       <div className={styles.dashboardWrapper}>
         {/* LOGOTIPAS + BALANSAS */}
         <div className={styles.totalValueContainer}>
@@ -61,7 +65,9 @@ export default function Dashboard() {
             <p className={styles.totalLabel}>Total Balance</p>
             <h2 className={styles.totalValue}>
               {balances
-                ? Object.values(balances).reduce((acc, val) => acc + val, 0).toFixed(4)
+                ? Object.values(balances)
+                    .reduce((acc, val) => acc + val, 0)
+                    .toFixed(4)
                 : "Live Balances"}
             </h2>
           </div>
