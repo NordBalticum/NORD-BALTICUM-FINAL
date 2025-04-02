@@ -7,12 +7,16 @@ import { useMagicLink } from "@/contexts/MagicLinkContext";
 
 export const WalletContext = createContext();
 
-const ENCRYPTION_SECRET = process.env.NEXT_PUBLIC_ENCRYPTION_SECRET || "fallback-secret";
+const ENCRYPTION_SECRET = process.env.NEXT_PUBLIC_ENCRYPTION_SECRET || "nordbalticum-fallback";
 
+// === SAFE ENCODING UTILS ===
 const encode = (str) => new TextEncoder().encode(str);
 const decode = (buf) => new TextDecoder().decode(buf);
 
+// === SECURE CRYPTO KEYS ===
 const getKey = async (password) => {
+  if (typeof window === "undefined") return null;
+
   const keyMaterial = await window.crypto.subtle.importKey(
     "raw",
     encode(password),
@@ -36,6 +40,8 @@ const getKey = async (password) => {
 };
 
 const encrypt = async (text) => {
+  if (typeof window === "undefined") return null;
+
   const iv = window.crypto.getRandomValues(new Uint8Array(12));
   const key = await getKey(ENCRYPTION_SECRET);
   const encrypted = await window.crypto.subtle.encrypt(
@@ -44,10 +50,14 @@ const encrypt = async (text) => {
     encode(text)
   );
 
-  return btoa(JSON.stringify({ iv: Array.from(iv), data: Array.from(new Uint8Array(encrypted)) }));
+  return btoa(
+    JSON.stringify({ iv: Array.from(iv), data: Array.from(new Uint8Array(encrypted)) })
+  );
 };
 
 const decrypt = async (ciphertext) => {
+  if (typeof window === "undefined") return null;
+
   const { iv, data } = JSON.parse(atob(ciphertext));
   const key = await getKey(ENCRYPTION_SECRET);
   const decrypted = await window.crypto.subtle.decrypt(
@@ -55,22 +65,22 @@ const decrypt = async (ciphertext) => {
     key,
     new Uint8Array(data)
   );
+
   return decode(decrypted);
 };
 
+// === MAIN PROVIDER ===
 export const WalletProvider = ({ children }) => {
   const { user } = useMagicLink();
   const [wallet, setWallet] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
+
     if (user?.email) {
       loadOrCreateWallet(user.email);
-    }
-  }, [user]);
-
-  useEffect(() => {
-    if (!user) {
+    } else {
       clearWallet();
     }
   }, [user]);
@@ -78,7 +88,9 @@ export const WalletProvider = ({ children }) => {
   const clearWallet = () => {
     setWallet(null);
     setLoading(false);
-    localStorage.removeItem("userPrivateKey");
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("userPrivateKey");
+    }
   };
 
   const loadOrCreateWallet = async (email) => {
@@ -100,6 +112,7 @@ export const WalletProvider = ({ children }) => {
         return;
       }
 
+      // CREATE NEW WALLET
       const newWallet = Wallet.createRandom();
       const encryptedKey = await encrypt(newWallet.privateKey);
       await savePrivateKeyToStorage(newWallet.privateKey);
@@ -122,34 +135,29 @@ export const WalletProvider = ({ children }) => {
   });
 
   const savePrivateKeyToStorage = async (privateKey) => {
+    if (typeof window === "undefined") return;
     try {
       localStorage.setItem("userPrivateKey", JSON.stringify({ key: privateKey }));
     } catch (err) {
-      console.error("Saving private key to storage failed:", err);
+      console.error("Saving private key failed:", err);
     }
   };
 
   const loadPrivateKeyFromStorage = async () => {
+    if (typeof window === "undefined") return null;
     try {
       const item = localStorage.getItem("userPrivateKey");
       if (!item) return null;
       const parsed = JSON.parse(item);
       return parsed?.key || null;
     } catch (err) {
-      console.warn("loadPrivateKeyFromStorage failed:", err);
       return null;
     }
   };
 
   const exportPrivateKey = async () => {
-    try {
-      const key = await loadPrivateKeyFromStorage();
-      if (!key) throw new Error("Private key not found.");
-      return key;
-    } catch (err) {
-      console.error("Export private key error:", err);
-      return null;
-    }
+    const key = await loadPrivateKeyFromStorage();
+    return key || null;
   };
 
   const fetchWalletFromDB = async (email) => {
