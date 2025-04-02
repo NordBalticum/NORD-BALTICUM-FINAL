@@ -1,18 +1,19 @@
 "use client";
 
 import React, { createContext, useState, useEffect, useContext } from "react";
+import { useRouter } from "next/navigation";
 import { supabase } from "@/utils/supabaseClient";
 import { ethers } from "ethers";
 
-// Create a context for Magic Link and wallet management
 const MagicLinkContext = createContext();
 
 export const MagicLinkProvider = ({ children }) => {
+  const router = useRouter();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchSessionAndEnsureWallets = async () => {
+    const loadSession = async () => {
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
         if (error) throw new Error("Failed to fetch session: " + error.message);
@@ -20,21 +21,25 @@ export const MagicLinkProvider = ({ children }) => {
 
         if (session?.user) {
           await ensureWalletsForAllNetworks(session.user.email);
+          router.push("/dashboard"); // Route to dashboard upon successful sign-in
         }
       } catch (error) {
-        console.error("Error fetching session or ensuring wallets:", error.message);
+        console.error(error.message);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchSessionAndEnsureWallets();
+    loadSession();
 
     const { data: subscription } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
         setUser(session?.user || null);
         if (session?.user) {
           await ensureWalletsForAllNetworks(session.user.email);
+          router.push("/dashboard"); // Route to dashboard upon successful sign-in
+        } else {
+          router.push("/"); // Route to home page if logged out
         }
       }
     );
@@ -42,7 +47,7 @@ export const MagicLinkProvider = ({ children }) => {
     return () => {
       subscription?.unsubscribe();
     };
-  }, []);
+  }, [router]);
 
   const ensureWalletsForAllNetworks = async (email) => {
     try {
@@ -115,6 +120,7 @@ export const MagicLinkProvider = ({ children }) => {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       setUser(null);
+      router.push("/"); // Route to home page after sign-out
     } catch (error) {
       console.error("Error signing out:", error.message);
       throw error;
