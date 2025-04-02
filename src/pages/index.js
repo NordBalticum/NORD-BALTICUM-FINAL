@@ -9,7 +9,7 @@ import background from "@/styles/background.module.css";
 
 export default function Home() {
   const router = useRouter();
-  const { user, wallet, signInWithMagicLink, signInWithGoogle, signOut } = useMagicLink();
+  const { user, signInWithMagicLink, signInWithGoogle, signOut } = useMagicLink();
 
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState("idle");
@@ -41,8 +41,8 @@ export default function Home() {
       setStatus("loading");
       await signInWithGoogle();
     } catch (err) {
-      console.error(err);
-      setMessage("Google login failed.");
+      console.error("Google Auth failed:", err);
+      setMessage("Google login failed. Make sure the OAuth credentials are correct.");
     } finally {
       setStatus("idle");
     }
@@ -63,19 +63,57 @@ export default function Home() {
 
   return (
     <div className={`${styles.container} ${background.fullscreen}`}>
+      <div className={styles.logoWrap}>
+        <Image
+          src="/icons/logo.svg"
+          alt="NordBalticum Logo"
+          width={220}
+          height={72}
+          className={styles.logo}
+          priority
+        />
+      </div>
+
       <form onSubmit={handleSignIn} className={styles.loginBox}>
-        <h1>NordBalticum</h1>
+        <h1 className={styles.heading}>Welcome to NordBalticum</h1>
+
         <input
           type="email"
           placeholder="Enter your email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           disabled={status === "loading"}
+          className={styles.input}
         />
-        <button type="submit" disabled={status === "loading"}>Send Magic Link</button>
-        <button type="button" onClick={handleGoogleSignIn} disabled={status === "loading"}>Login with Google</button>
-        {user && <button type="button" onClick={handleSignOut}>Sign Out</button>}
-        {message && <p>{message}</p>}
+
+        <button
+          type="submit"
+          disabled={status === "loading"}
+          className={styles.buttonPrimary}
+        >
+          Send Magic Link
+        </button>
+
+        <button
+          type="button"
+          onClick={handleGoogleSignIn}
+          disabled={status === "loading"}
+          className={styles.buttonGoogle}
+        >
+          Login with Google
+        </button>
+
+        {user && (
+          <button
+            type="button"
+            onClick={handleSignOut}
+            className={styles.buttonSecondary}
+          >
+            Sign Out
+          </button>
+        )}
+
+        {message && <p className={styles.message}>{message}</p>}
       </form>
     </div>
   );
