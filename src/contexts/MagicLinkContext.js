@@ -7,22 +7,23 @@ import React, {
   useState,
   useCallback,
 } from "react";
+import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import CryptoJS from "crypto-js";
 import { ethers } from "ethers";
-import { useRouter } from "next/navigation";
 
 const MagicLinkContext = createContext();
 const ENCRYPTION_KEY = "NORD-BALTICUM-2025-SECRET";
 
 export function MagicLinkProvider({ children }) {
   const router = useRouter();
+
   const [user, setUser] = useState(null);
   const [wallet, setWallet] = useState(null);
   const [loading, setLoading] = useState(true);
   const [sessionChecked, setSessionChecked] = useState(false);
 
-  // === Encryption ===
+  // === AES Encryption / Decryption ===
   const encrypt = (text) => CryptoJS.AES.encrypt(text, ENCRYPTION_KEY).toString();
   const decrypt = (cipher) => {
     try {
@@ -33,7 +34,7 @@ export function MagicLinkProvider({ children }) {
     }
   };
 
-  // === LocalStorage ===
+  // === LocalStorage Handling ===
   const storePrivateKey = (pk) => {
     try {
       const encrypted = encrypt(pk);
@@ -61,7 +62,7 @@ export function MagicLinkProvider({ children }) {
     }
   };
 
-  // === Wallet: create or fetch by email ===
+  // === Wallet creation / loading ===
   const getOrCreateWallet = useCallback(async (email) => {
     if (!email) return null;
 
@@ -92,6 +93,7 @@ export function MagicLinkProvider({ children }) {
         };
       }
 
+      // Create new wallet
       const newWallet = ethers.Wallet.createRandom();
       const encryptedKey = encrypt(newWallet.privateKey);
       storePrivateKey(newWallet.privateKey);
@@ -126,11 +128,12 @@ export function MagicLinkProvider({ children }) {
   // === Init Session ===
   const initSession = useCallback(async () => {
     setLoading(true);
-    try {
-      const { data, error } = await supabase.auth.getUser();
-      const currentUser = data?.user;
 
-      if (error || !currentUser) {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const currentUser = session?.user || null;
+
+      if (!currentUser || !currentUser.email) {
         setUser(null);
         setWallet(null);
         return;
@@ -149,7 +152,7 @@ export function MagicLinkProvider({ children }) {
     }
   }, [getOrCreateWallet]);
 
-  // === Auth Events ===
+  // === Auth State Listener + Session Check ===
   useEffect(() => {
     initSession();
 
@@ -168,14 +171,14 @@ export function MagicLinkProvider({ children }) {
     );
 
     const interval = setInterval(async () => {
-      const { data } = await supabase.auth.getSession();
-      if (!data?.session) {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
         setUser(null);
         setWallet(null);
         localStorage.removeItem("nbc_private_key");
         router.push("/");
       }
-    }, 600_000);
+    }, 600000); // 10 min
 
     return () => {
       listener?.subscription?.unsubscribe();
@@ -183,16 +186,16 @@ export function MagicLinkProvider({ children }) {
     };
   }, [initSession, getOrCreateWallet, router]);
 
-  // === Auto-redirect to dashboard
+  // === Redirect to Dashboard on Login ===
   useEffect(() => {
     if (!loading && sessionChecked && user?.email && wallet?.address) {
       if (window.location.pathname === "/") {
-        router.push("/dashboard");
+        router.replace("/dashboard");
       }
     }
   }, [loading, sessionChecked, user, wallet, router]);
 
-  // === Auth Methods ===
+  // === Login & Logout ===
   const signInWithEmail = async (email) => {
     const { error } = await supabase.auth.signInWithOtp({ email });
     if (error) throw new Error("Magic Link error: " + error.message);
