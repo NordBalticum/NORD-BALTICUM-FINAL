@@ -1,17 +1,20 @@
-/* === SwipeSelector Container === */
+/* === Swipe Selector Styles – NordBalticum Diamond UI === */
+
 .selectorContainer {
-  width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 12px;
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
   padding-inline: clamp(16px, 5vw, 48px);
   padding-top: clamp(12px, 3vw, 24px);
   overflow: visible;
   z-index: 2;
 }
 
-/* === Arrow Buttons (Mobile only) === */
 .arrows {
   display: flex;
   justify-content: center;
@@ -75,6 +78,7 @@
   justify-content: flex-start;
   align-items: stretch;
   padding-block: clamp(12px, 2.5vw, 20px);
+  padding-inline: 4px;
   scrollbar-width: none;
   min-width: max-content;
   touch-action: pan-x;
@@ -105,22 +109,25 @@
 }
 
 .card:hover {
-  transform: scale(1.03);
+  transform: scale(1.06);
+  background: rgba(255, 255, 255, 0.07);
 }
 
-/* === Selected === */
 .selected {
   border: 2px solid #ffd700;
-  background: rgba(255, 255, 255, 0.06);
-  transform: scale(1.05);
+  background: rgba(255, 255, 255, 0.15);
+  transform: scale(1.12);
+  box-shadow: 0 0 18px rgba(255, 255, 255, 0.15);
 }
 
 /* === Logo === */
 .logo {
-  width: 64px;
-  height: 64px;
+  width: clamp(48px, 6vw, 64px);
+  height: auto;
   margin-bottom: 14px;
+  border-radius: 16px;
   object-fit: contain;
+  user-select: none;
   filter: brightness(1.2);
 }
 
@@ -131,15 +138,11 @@
   font-family: var(--font-crypto);
   font-weight: 600;
   letter-spacing: 0.4px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
 }
 
 /* === Mobile UI Ultra Slim @media (max-width: 1024px) === */
 @media screen and (max-width: 1024px) {
-  .scrollableWrapper {
-    padding-inline: 4px;
-    gap: 8px;
-  }
-
   .card {
     width: 88px;
     height: 105px;
