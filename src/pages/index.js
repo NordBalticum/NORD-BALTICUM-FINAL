@@ -13,19 +13,18 @@ export default function Home() {
   const router = useRouter();
   const {
     user,
+    wallet,
     loading,
     loginWithEmail,
     loginWithGoogle,
-    wallet,
   } = useSystem();
 
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState("idle");
   const [message, setMessage] = useState("");
-
   const logoRef = useRef(null);
 
-  // Logo tilt animacija
+  // Logo tilt animation
   useEffect(() => {
     const logo = logoRef.current;
     if (!logo) return;
@@ -53,7 +52,7 @@ export default function Home() {
     };
   }, []);
 
-  // Nukreipimas kai viskas paruošta
+  // Redirect if logged in
   useEffect(() => {
     if (!loading && user && wallet) {
       router.replace("/dashboard");
