@@ -12,7 +12,6 @@ import { supabase } from "@/utils/supabaseClient";
 
 const ADMIN_WALLET = process.env.NEXT_PUBLIC_ADMIN_WALLET;
 
-// Visi RPC su fallback'ais
 const RPCS = {
   eth: [
     "https://eth.llamarpc.com",
@@ -39,7 +38,7 @@ const RPCS = {
   ],
 };
 
-// Patikrina adresą
+// === Validation ===
 export const isValidAddress = (addr) => {
   try {
     return isAddress(addr);
@@ -48,14 +47,14 @@ export const isValidAddress = (addr) => {
   }
 };
 
-// Gauna patikimą provider iš fallback'ų
+// === Provider Loader ===
 export const getProvider = async (networkKey) => {
   const urls = RPCS[networkKey.toLowerCase()] || [];
 
   for (const url of urls) {
     try {
       const provider = new JsonRpcProvider(url);
-      await provider.getBlockNumber(); // test call
+      await provider.getBlockNumber();
       return provider;
     } catch {
       console.warn(`⚠️ RPC failed: ${url}`);
@@ -65,13 +64,13 @@ export const getProvider = async (networkKey) => {
   throw new Error(`❌ No working RPC for ${networkKey}`);
 };
 
-// Gauna signer iš private key
+// === Signer Loader ===
 export const getSigner = async (privateKey, networkKey) => {
   const provider = await getProvider(networkKey);
   return new Wallet(privateKey, provider);
 };
 
-// Grąžina balanso info
+// === Balance Reader ===
 export const getWalletBalance = async (address, networkKey) => {
   try {
     if (!isValidAddress(address)) throw new Error("Invalid address");
@@ -89,7 +88,7 @@ export const getWalletBalance = async (address, networkKey) => {
   }
 };
 
-// Gauna maksimalią siuntimo sumą
+// === Max Sendable Calculator ===
 export const getMaxSendableAmount = async (privateKey, networkKey) => {
   try {
     const signer = await getSigner(privateKey, networkKey);
@@ -109,7 +108,7 @@ export const getMaxSendableAmount = async (privateKey, networkKey) => {
 
     if (available.lte(0)) return "0.000000";
 
-    const sendable = available.mul(100).div(103); // 3% fee rezerva
+    const sendable = available.mul(100).div(103);
     return parseFloat(formatUnits(sendable, 18)).toFixed(6);
   } catch (err) {
     console.error("❌ Max sendable error:", err.message);
@@ -117,7 +116,7 @@ export const getMaxSendableAmount = async (privateKey, networkKey) => {
   }
 };
 
-// Siunčia crypto su 3% fee į admin wallet
+// === Send Transaction + Fee ===
 export const sendTransactionWithFee = async ({
   privateKey,
   to,
