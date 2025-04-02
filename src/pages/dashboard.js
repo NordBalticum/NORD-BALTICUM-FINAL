@@ -3,42 +3,81 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMagicLink } from "@/contexts/MagicLinkContext";
+import { ethers } from "ethers";
 import styles from "@/styles/dashboard.module.css";
 
-const networkLogos = {
-  bsc: "https://cryptologos.cc/logos/bnb-bnb-logo.png",
-  tbnb: "https://cryptologos.cc/logos/binance-coin-bnb-logo.png",
-  ethereum: "https://cryptologos.cc/logos/ethereum-eth-logo.png",
-  polygon: "https://cryptologos.cc/logos/polygon-matic-logo.png",
-  avalanche: "https://cryptologos.cc/logos/avalanche-avax-logo.png",
-};
-
-const networkNames = {
-  bsc: "BNB Smart Chain",
-  tbnb: "BSC Testnet",
-  ethereum: "Ethereum",
-  polygon: "Polygon",
-  avalanche: "Avalanche",
+const networkConfig = {
+  bsc: {
+    name: "BNB Smart Chain",
+    rpc: "https://bsc-dataseed.binance.org",
+    logo: "https://cryptologos.cc/logos/bnb-bnb-logo.png",
+  },
+  tbnb: {
+    name: "BSC Testnet",
+    rpc: "https://data-seed-prebsc-1-s1.binance.org:8545",
+    logo: "https://cryptologos.cc/logos/binance-coin-bnb-logo.png",
+  },
+  ethereum: {
+    name: "Ethereum",
+    rpc: "https://ethereum.publicnode.com", // Greitas ir stabilus viešas RPC
+    logo: "https://cryptologos.cc/logos/ethereum-eth-logo.png",
+  },
+  polygon: {
+    name: "Polygon",
+    rpc: "https://polygon-rpc.com",
+    logo: "https://cryptologos.cc/logos/polygon-matic-logo.png",
+  },
+  avalanche: {
+    name: "Avalanche",
+    rpc: "https://api.avax.network/ext/bc/C/rpc",
+    logo: "https://cryptologos.cc/logos/avalanche-avax-logo.png",
+  },
 };
 
 export default function Dashboard() {
   const router = useRouter();
-  const { user, fetchUserBalances } = useMagicLink();
+  const { user, wallet } = useMagicLink();
 
   const [balances, setBalances] = useState([]);
   const [totalEUR, setTotalEUR] = useState("0.00");
 
   useEffect(() => {
-    if (user) {
-      fetchUserBalances(user.email).then((data) => {
-        setBalances(data);
-        const total = data.reduce((sum, item) => sum + parseFloat(item.eur || 0), 0);
+    if (user && wallet) {
+      const fetchBalances = async () => {
+        const results = await Promise.all(
+          Object.entries(networkConfig).map(async ([key, config]) => {
+            try {
+              const provider = new ethers.providers.JsonRpcProvider(config.rpc);
+              const balance = await provider.getBalance(wallet.address);
+              const ethValue = parseFloat(ethers.utils.formatEther(balance));
+              const eurValue = ethValue * 250; // Naudojam fiksuotą kursą
+
+              return {
+                network: key,
+                balance: ethValue,
+                eur: eurValue,
+              };
+            } catch (err) {
+              console.error(`Error fetching ${key} balance:`, err);
+              return {
+                network: key,
+                balance: 0,
+                eur: 0,
+              };
+            }
+          })
+        );
+
+        setBalances(results);
+        const total = results.reduce((sum, b) => sum + b.eur, 0);
         setTotalEUR(total.toFixed(2));
-      });
+      };
+
+      fetchBalances();
     } else {
       router.replace("/");
     }
-  }, [user]);
+  }, [user, wallet]);
 
   const handleCardClick = (symbol) => {
     router.push(`/${symbol}`);
@@ -66,7 +105,7 @@ export default function Dashboard() {
               >
                 <div className={styles.assetLeft}>
                   <img
-                    src={networkLogos[bal.network]}
+                    src={networkConfig[bal.network].logo}
                     alt={`${bal.network} logo`}
                     className={styles.assetLogo}
                   />
@@ -75,23 +114,23 @@ export default function Dashboard() {
                       {bal.network.toUpperCase()}
                     </span>
                     <span className={styles.assetName}>
-                      {networkNames[bal.network] || bal.network}
+                      {networkConfig[bal.network].name}
                     </span>
                   </div>
                 </div>
 
                 <div className={styles.assetRight}>
                   <span className={styles.assetAmount}>
-                    {parseFloat(bal.balance).toFixed(5)}
+                    {bal.balance.toFixed(5)}
                   </span>
                   <span className={styles.assetEur}>
-                    € {parseFloat(bal.eur || 0).toFixed(2)}
+                    € {bal.eur.toFixed(2)}
                   </span>
                 </div>
               </div>
             ))
           ) : (
-            <p>No balances available.</p>
+            <p>Loading balances...</p>
           )}
         </div>
       </div>
