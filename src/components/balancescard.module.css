@@ -3,6 +3,7 @@
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 24px;
   padding: 24px;
+  width: 100%;
 }
 
 .card {
@@ -18,6 +19,12 @@
   align-items: flex-start;
   min-height: 140px;
   color: #fff;
+  transition: all 0.3s ease;
+}
+
+.card:hover {
+  transform: scale(1.015);
+  box-shadow: 0 0 32px rgba(255, 255, 255, 0.08);
 }
 
 .cardHeader {
