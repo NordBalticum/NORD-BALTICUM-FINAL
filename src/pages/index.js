@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 
@@ -20,7 +20,7 @@ export default function Home() {
 
   const logoRef = useRef(null);
 
-  // === Tilt logo animacija
+  // Animate logo
   useEffect(() => {
     const logo = logoRef.current;
     if (!logo) return;
@@ -48,7 +48,7 @@ export default function Home() {
     };
   }, []);
 
-  // === Redirect jei jau prisijungęs
+  // Redirect if already logged in
   useEffect(() => {
     if (!loadingUser && user) {
       router.push("/dashboard");
@@ -95,14 +95,16 @@ export default function Home() {
   return (
     <>
       <StarsBackground />
+
       <main className={`${styles.container} ${background.gradient}`}>
         <div className={styles.centerWrapper}>
-          <div className={styles.logoContainer} ref={logoRef}>
+          <div className={styles.logoContainer}>
             <Image
               src="/icons/logo.svg"
               alt="NordBalticum Logo"
-              width={240}
-              height={240}
+              width={260}
+              height={260}
+              ref={logoRef}
               className={styles.logoImage}
               priority
             />
@@ -127,7 +129,6 @@ export default function Home() {
                 type="submit"
                 className={styles.button}
                 disabled={status === "sending"}
-                aria-busy={status === "sending"}
               >
                 {status === "sending" ? "Sending..." : "Send Magic Link"}
               </button>
@@ -137,7 +138,6 @@ export default function Home() {
               onClick={handleGoogleLogin}
               className={styles.googleButton}
               disabled={status === "sending"}
-              aria-busy={status === "sending"}
             >
               <Image
                 src="/icons/google-logo.png"
