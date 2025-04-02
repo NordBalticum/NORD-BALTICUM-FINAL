@@ -20,6 +20,7 @@ export default function Home() {
 
   const logoRef = useRef(null);
 
+  // Logo animacija
   useEffect(() => {
     const logo = logoRef.current;
     if (!logo) return;
@@ -47,6 +48,7 @@ export default function Home() {
     };
   }, []);
 
+  // Redirect jei jau prisijungęs
   useEffect(() => {
     if (!loadingUser && user) {
       router.push("/dashboard");
