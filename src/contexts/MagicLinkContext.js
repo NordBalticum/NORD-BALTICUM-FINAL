@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useState, useEffect, useContext } from "react";
-import { supabase } from "@/utils/SupabaseClient";
+import { supabase } from "@/utils/supabaseClient";
 import { ethers } from "ethers";
 
 const MagicLinkContext = createContext();
