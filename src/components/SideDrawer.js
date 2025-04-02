@@ -16,6 +16,7 @@ export default function SideDrawer() {
   const { user, signOut, wallet } = useMagicLink();
 
   const [open, setOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
   const toggleDrawer = () => setOpen((prev) => !prev);
 
   const handleLogout = async () => {
@@ -49,6 +50,8 @@ export default function SideDrawer() {
     { label: "History", path: "/history" },
     { label: "Settings", path: "/settings" },
   ];
+
+  const walletAddress = wallet?.bnb_address || wallet?.address || "No wallet";
 
   if (!user) return null;
 
@@ -105,12 +108,73 @@ export default function SideDrawer() {
                   }}
                   className={styles.logo}
                 />
+
                 <p className={styles.email}>
                   {user?.email || "no@email.com"}
                 </p>
-                <p className={styles.email}>
-                  {wallet?.bnb_address || wallet?.address || "No wallet"}
-                </p>
+
+                <div
+                  onClick={() => {
+                    if (walletAddress && walletAddress !== "No wallet") {
+                      navigator.clipboard.writeText(walletAddress);
+                      setCopied(true);
+                      setTimeout(() => setCopied(false), 1800);
+                    }
+                  }}
+                  style={{
+                    marginTop: "16px",
+                    padding: "12px 16px",
+                    background: "rgba(255, 255, 255, 0.03)",
+                    borderRadius: "16px",
+                    boxShadow: "0 4px 24px rgba(255, 255, 255, 0.08)",
+                    backdropFilter: "blur(14px)",
+                    textAlign: "center",
+                    fontFamily: "Share Tech Mono, monospace",
+                    width: "100%",
+                    wordBreak: "break-all",
+                    border: "1px solid rgba(255,255,255,0.06)",
+                    cursor: "pointer",
+                    position: "relative",
+                    transition: "all 0.3s ease",
+                  }}
+                  title="Click to copy"
+                >
+                  {copied && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 6 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -4 }}
+                      style={{
+                        position: "absolute",
+                        top: "-24px",
+                        left: "50%",
+                        transform: "translateX(-50%)",
+                        fontSize: "0.7rem",
+                        color: "#ffd700",
+                        background: "rgba(255,255,255,0.05)",
+                        padding: "2px 10px",
+                        borderRadius: "10px",
+                        backdropFilter: "blur(8px)",
+                        fontWeight: 500,
+                      }}
+                    >
+                      Copied!
+                    </motion.div>
+                  )}
+                  <p style={{ fontSize: "0.7rem", color: "#aaa", marginBottom: "6px" }}>
+                    Your wallet:
+                  </p>
+                  <p
+                    style={{
+                      fontSize: "0.82rem",
+                      color: "#fff",
+                      opacity: 0.95,
+                      letterSpacing: "0.5px",
+                    }}
+                  >
+                    {walletAddress}
+                  </p>
+                </div>
               </div>
 
               <nav className={styles.nav}>
