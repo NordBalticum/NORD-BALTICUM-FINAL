@@ -3,8 +3,7 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 
-import { useMagicLink } from "@/contexts/MagicLinkContext";
-import { useWallet } from "@/contexts/WalletContext";
+import { useSystem } from "@/contexts/SystemContext";
 
 import StarsBackground from "@/components/StarsBackground";
 import AvatarDisplay from "@/components/AvatarDisplay";
@@ -17,8 +16,7 @@ import background from "@/styles/background.module.css";
 
 export default function SettingsPage() {
   const router = useRouter();
-  const { user, logout } = useMagicLink();
-  const { publicKey } = useWallet();
+  const { user, wallet, logout } = useSystem();
 
   const [emailInput, setEmailInput] = useState("");
   const [showAvatarModal, setShowAvatarModal] = useState(false);
@@ -35,8 +33,8 @@ export default function SettingsPage() {
   };
 
   const handleCopy = () => {
-    if (publicKey) {
-      navigator.clipboard.writeText(publicKey);
+    if (wallet?.address) {
+      navigator.clipboard.writeText(wallet.address);
       alert("✅ Wallet address copied to clipboard.");
     }
   };
@@ -52,7 +50,7 @@ export default function SettingsPage() {
     setSuccess(true);
   };
 
-  if (!user || !publicKey) {
+  if (!user || !wallet) {
     return <div className={styles.loading}>Loading Profile...</div>;
   }
 
@@ -68,7 +66,7 @@ export default function SettingsPage() {
           onClick={() => setShowAvatarModal(true)}
           title="Click to change avatar"
         >
-          <AvatarDisplay walletAddress={publicKey} size={80} key={avatarKey} />
+          <AvatarDisplay walletAddress={wallet.address} size={80} key={avatarKey} />
           <p className={styles.avatarText}>Change Avatar</p>
         </div>
 
@@ -76,7 +74,7 @@ export default function SettingsPage() {
 
         <div className={styles.walletBox} onClick={handleCopy} title="Click to copy">
           <span><strong>Wallet Address:</strong></span>
-          <span className={styles.walletAddress}>{publicKey}</span>
+          <span className={styles.walletAddress}>{wallet.address}</span>
         </div>
 
         <hr />
