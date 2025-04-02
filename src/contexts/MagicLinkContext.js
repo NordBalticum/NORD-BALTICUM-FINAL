@@ -1,20 +1,18 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { supabase } from "@/utils/supabaseClient";
 
 export const MagicLinkContext = createContext();
 
 export const MagicLinkProvider = ({ children }) => {
   const router = useRouter();
+  const pathname = usePathname();
+
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-
-  const origin =
-    typeof window !== "undefined" && window.location.origin
-      ? window.location.origin
-      : "https://nordbalticum.com";
+  let inactivityTimer;
 
   useEffect(() => {
     const getSession = async () => {
@@ -45,12 +43,37 @@ export const MagicLinkProvider = ({ children }) => {
     return () => subscription?.unsubscribe();
   }, []);
 
+  // Auto redirect to /dashboard if already logged in
+  useEffect(() => {
+    if (!loading && user && pathname === "/") {
+      router.replace("/dashboard");
+    }
+  }, [user, loading, pathname, router]);
+
+  // Reset inactivity timer on activity
+  const resetInactivityTimer = () => {
+    clearTimeout(inactivityTimer);
+    inactivityTimer = setTimeout(() => {
+      signOut();
+    }, 10 * 60 * 1000); // 10 min
+  };
+
+  useEffect(() => {
+    window.addEventListener("mousemove", resetInactivityTimer);
+    window.addEventListener("keydown", resetInactivityTimer);
+
+    return () => {
+      window.removeEventListener("mousemove", resetInactivityTimer);
+      window.removeEventListener("keydown", resetInactivityTimer);
+    };
+  }, []);
+
   const signInWithMagicLink = async (email) => {
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
         shouldCreateUser: true,
-        emailRedirectTo: `${origin}/dashboard`,
+        emailRedirectTo: `${window.location.origin}/dashboard`,
       },
     });
 
@@ -61,7 +84,7 @@ export const MagicLinkProvider = ({ children }) => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${origin}/dashboard`,
+        redirectTo: `${window.location.origin}/dashboard`,
       },
     });
 
