@@ -2,9 +2,11 @@
 
 export const fetchPrices = async () => {
   try {
+    if (typeof window === "undefined") return {}; // SSR guard
+
     const ids = {
       bsc: "binancecoin",
-      tbnb: "binancecoin", // same price as bsc
+      tbnb: "binancecoin",
       eth: "ethereum",
       polygon: "matic-network",
       avax: "avalanche-2",
