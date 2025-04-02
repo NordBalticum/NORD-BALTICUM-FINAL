@@ -6,7 +6,6 @@ import { supabase } from "@/utils/supabaseClient";
 
 import { useSystem } from "@/contexts/SystemContext";
 
-import StarsBackground from "@/components/StarsBackground";
 import styles from "@/styles/history.module.css";
 import background from "@/styles/background.module.css";
 
