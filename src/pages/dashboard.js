@@ -1,5 +1,3 @@
-// src/app/dashboard.js
-
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
@@ -8,7 +6,6 @@ import Image from "next/image";
 
 import { useMagicLink } from "@/contexts/MagicLinkContext";
 import { useBalance } from "@/hooks/useBalance";
-
 import StarsBackground from "@/components/StarsBackground";
 
 import styles from "@/styles/dashboard.module.css";
@@ -50,14 +47,12 @@ const networksData = [
 export default function Dashboard() {
   const router = useRouter();
   const { user, wallet } = useMagicLink();
-  const { balances } = useBalance();
+  const { balances, isLoading } = useBalance();
 
   const [totalEUR, setTotalEUR] = useState("0.00");
 
   useEffect(() => {
-    if (!user || !wallet?.address) {
-      router.push("/");
-    }
+    if (!user || !wallet?.address) router.push("/");
   }, [user, wallet, router]);
 
   useEffect(() => {
@@ -93,13 +88,14 @@ export default function Dashboard() {
 
         <div className={styles.totalBox}>
           <p className={styles.totalLabel}>Total Wallet Value</p>
-          <h2 className={styles.totalValue}>€ {totalEUR}</h2>
+          <h2 className={styles.totalValue}>
+            {isLoading ? "..." : `€ ${totalEUR}`}
+          </h2>
         </div>
 
         <div className={styles.assetGrid}>
           {networks.map((net) => {
             const bal = balances[net.symbol] || { amount: "0.00000", eur: "0.00" };
-
             return (
               <div
                 key={net.symbol}
@@ -122,8 +118,10 @@ export default function Dashboard() {
                 </div>
 
                 <div className={styles.assetRight}>
-                  <span className={styles.assetAmount}>{bal.amount} {net.symbol}</span>
-                  <span className={styles.assetEur}>~€ {bal.eur}</span>
+                  <span className={styles.assetAmount}>
+                    {bal.amount} {net.symbol}
+                  </span>
+                  <span className={styles.assetEur}>€ {bal.eur}</span>
                 </div>
               </div>
             );
