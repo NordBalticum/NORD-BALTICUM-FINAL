@@ -18,7 +18,7 @@
     "framer-motion": "12.5.0",
     "react-select": "5.10.1",
     "crypto-js": "4.2.0",
-    "clsx": "1.2.1"
+    "clsx": "2.1.1"
   },
   "devDependencies": {
     "eslint": "9.23.0",
