@@ -1,129 +1,158 @@
 "use client";
 
-import React, { createContext, useState, useEffect, useContext } from "react";
+import React, { createContext, useContext, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/utils/supabaseClient";
-import { ethers } from "ethers";
+import { Wallet } from "ethers";
 
-const MagicLinkContext = createContext();
+export const MagicLinkContext = createContext();
+
+// AES šifravimui – slaptažodžio raktas
+const ENCRYPTION_SECRET = process.env.NEXT_PUBLIC_ENCRYPTION_SECRET || "fallback-secret";
+
+const encode = (str) => new TextEncoder().encode(str);
+const decode = (buf) => new TextDecoder().decode(buf);
+
+const getKey = async (password) => {
+  const keyMaterial = await window.crypto.subtle.importKey("raw", encode(password), { name: "PBKDF2" }, false, ["deriveKey"]);
+  return window.crypto.subtle.deriveKey(
+    {
+      name: "PBKDF2",
+      salt: encode("nordbalticum-salt"),
+      iterations: 100000,
+      hash: "SHA-256",
+    },
+    keyMaterial,
+    { name: "AES-GCM", length: 256 },
+    false,
+    ["encrypt", "decrypt"]
+  );
+};
+
+const encrypt = async (text) => {
+  const iv = window.crypto.getRandomValues(new Uint8Array(12));
+  const key = await getKey(ENCRYPTION_SECRET);
+  const encrypted = await window.crypto.subtle.encrypt(
+    { name: "AES-GCM", iv },
+    key,
+    encode(text)
+  );
+  return btoa(JSON.stringify({ iv: Array.from(iv), data: Array.from(new Uint8Array(encrypted)) }));
+};
+
+const decrypt = async (ciphertext) => {
+  const { iv, data } = JSON.parse(atob(ciphertext));
+  const key = await getKey(ENCRYPTION_SECRET);
+  const decrypted = await window.crypto.subtle.decrypt(
+    { name: "AES-GCM", iv: new Uint8Array(iv) },
+    key,
+    new Uint8Array(data)
+  );
+  return decode(decrypted);
+};
 
 export const MagicLinkProvider = ({ children }) => {
   const router = useRouter();
   const [user, setUser] = useState(null);
+  const [wallet, setWallet] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const loadSession = async () => {
-      try {
-        const { data: { session }, error } = await supabase.auth.getSession();
-        if (error) throw new Error("Failed to fetch session: " + error.message);
-        setUser(session?.user || null);
+    const init = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      const currentUser = session?.user || null;
+      setUser(currentUser);
 
-        if (session?.user) {
-          await ensureWalletsForAllNetworks(session.user.email);
-          router.push("/dashboard"); // Route to dashboard upon successful sign-in
+      if (currentUser) {
+        const localWallet = await loadWalletFromStorage();
+        if (localWallet) {
+          setWallet(localWallet);
+        } else {
+          const newWallet = Wallet.createRandom();
+          await saveWalletToStorage(newWallet);
+          setWallet(newWallet);
+          await saveWalletToDatabase(currentUser.email, newWallet.address);
         }
-      } catch (error) {
-        console.error(error.message);
-      } finally {
-        setLoading(false);
+        router.push("/dashboard");
       }
+      setLoading(false);
     };
 
-    loadSession();
+    init();
 
     const { data: subscription } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
-        setUser(session?.user || null);
-        if (session?.user) {
-          await ensureWalletsForAllNetworks(session.user.email);
-          router.push("/dashboard"); // Route to dashboard upon successful sign-in
+        const currentUser = session?.user || null;
+        setUser(currentUser);
+
+        if (currentUser) {
+          const localWallet = await loadWalletFromStorage();
+          if (localWallet) {
+            setWallet(localWallet);
+          } else {
+            const newWallet = Wallet.createRandom();
+            await saveWalletToStorage(newWallet);
+            setWallet(newWallet);
+            await saveWalletToDatabase(currentUser.email, newWallet.address);
+          }
+          router.push("/dashboard");
         } else {
-          router.push("/"); // Route to home page if logged out
+          setWallet(null);
+          localStorage.removeItem("userWallet");
+          router.push("/");
         }
       }
     );
 
-    return () => {
-      subscription?.unsubscribe();
-    };
+    return () => subscription?.unsubscribe();
   }, [router]);
-
-  const ensureWalletsForAllNetworks = async (email) => {
-    try {
-      const { data: wallet, error } = await supabase
-        .from("wallets")
-        .select("bnb_address, eth_address, matic_address, avax_address")
-        .eq("email", email)
-        .single();
-
-      if (error && error.details.includes("No rows found")) {
-        const newWallet = ethers.Wallet.createRandom();
-        const walletData = {
-          email,
-          bnb_address: newWallet.address,
-          eth_address: ethers.Wallet.createRandom().address,
-          matic_address: ethers.Wallet.createRandom().address,
-          avax_address: ethers.Wallet.createRandom().address,
-        };
-
-        const { error: insertError } = await supabase
-          .from("wallets")
-          .upsert(walletData, { onConflict: "email" });
-
-        if (insertError) throw new Error("Error creating wallet for all networks: " + insertError.message);
-      }
-    } catch (error) {
-      console.error("Error ensuring wallets for all networks:", error.message);
-    }
-  };
-
-  const fetchUserWallet = async (email) => {
-    try {
-      const { data: wallet, error } = await supabase
-        .from("wallets")
-        .select("*")
-        .eq("email", email)
-        .single();
-
-      if (error) throw new Error("Error fetching wallet: " + error.message);
-      return wallet;
-    } catch (error) {
-      console.error("Error fetching wallet:", error.message);
-      return null;
-    }
-  };
 
   const signInWithMagicLink = async (email) => {
     try {
-      if (!email) throw new Error("Email is required.");
-      const { error } = await supabase.auth.signInWithOtp({ email });
+      const { error } = await supabase.auth.signInWithOtp({ email, options: { shouldCreateUser: true } });
       if (error) throw error;
-    } catch (error) {
-      console.error("Error signing in with Magic Link:", error.message);
-      throw error;
-    }
-  };
-
-  const signInWithGoogle = async () => {
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({ provider: "google" });
-      if (error) throw error;
-    } catch (error) {
-      console.error("Error signing in with Google:", error.message);
-      throw error;
+    } catch (err) {
+      console.error("Magic Link error:", err);
     }
   };
 
   const signOut = async () => {
+    await supabase.auth.signOut();
+    setUser(null);
+    setWallet(null);
+    localStorage.removeItem("userWallet");
+    router.push("/");
+  };
+
+  const saveWalletToStorage = async (wallet) => {
+    if (!wallet?.privateKey) return;
+    const encryptedKey = await encrypt(wallet.privateKey);
+    const data = {
+      address: wallet.address,
+      privateKey: encryptedKey,
+    };
+    localStorage.setItem("userWallet", JSON.stringify(data));
+  };
+
+  const loadWalletFromStorage = async () => {
     try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-      setUser(null);
-      router.push("/"); // Route to home page after sign-out
-    } catch (error) {
-      console.error("Error signing out:", error.message);
-      throw error;
+      const data = localStorage.getItem("userWallet");
+      if (!data) return null;
+      const { privateKey } = JSON.parse(data);
+      const decryptedKey = await decrypt(privateKey);
+      return new Wallet(decryptedKey);
+    } catch (err) {
+      console.error("Wallet decrypt error:", err);
+      return null;
+    }
+  };
+
+  const saveWalletToDatabase = async (email, address) => {
+    try {
+      const { error } = await supabase.from("wallets").upsert({ email, bnb_address: address }, { onConflict: ["email"] });
+      if (error) console.error("Supabase DB error:", error.message);
+    } catch (err) {
+      console.error("Supabase wallet save error:", err);
     }
   };
 
@@ -131,11 +160,10 @@ export const MagicLinkProvider = ({ children }) => {
     <MagicLinkContext.Provider
       value={{
         user,
+        wallet,
         loading,
         signInWithMagicLink,
-        signInWithGoogle,
         signOut,
-        fetchUserWallet,
       }}
     >
       {children}
@@ -143,8 +171,4 @@ export const MagicLinkProvider = ({ children }) => {
   );
 };
 
-export const useMagicLink = () => {
-  const context = useContext(MagicLinkContext);
-  if (!context) throw new Error("useMagicLink must be used within a MagicLinkProvider.");
-  return context;
-};
+export const useMagicLink = () => useContext(MagicLinkContext);
