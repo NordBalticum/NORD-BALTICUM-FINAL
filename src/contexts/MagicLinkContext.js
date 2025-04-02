@@ -14,14 +14,13 @@ export const MagicLinkProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const inactivityTimer = useRef(null);
 
-  // Get session once on load
+  // 1️⃣ Load current session on mount
   useEffect(() => {
     const getSession = async () => {
       try {
         const {
           data: { session },
         } = await supabase.auth.getSession();
-
         setUser(session?.user || null);
       } catch (error) {
         console.error("Supabase session error:", error.message);
@@ -34,44 +33,47 @@ export const MagicLinkProvider = ({ children }) => {
     getSession();
 
     const { data: subscription } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
+      (_event, session) => {
         setUser(session?.user || null);
       }
     );
 
     return () => {
-      subscription?.unsubscribe();
+      subscription?.subscription?.unsubscribe?.();
     };
   }, []);
 
-  // Auto redirect if already logged in
+  // 2️⃣ Auto redirect to /dashboard if already logged in
   useEffect(() => {
-    if (!loading && user && pathname === "/") {
+    if (typeof window !== "undefined" && !loading && user && pathname === "/") {
       router.replace("/dashboard");
     }
   }, [user, loading, pathname, router]);
 
-  // Auto logout after inactivity
+  // 3️⃣ Inactivity auto-logout
   useEffect(() => {
-    const resetInactivityTimer = () => {
+    if (typeof window === "undefined") return;
+
+    const resetTimer = () => {
       clearTimeout(inactivityTimer.current);
       inactivityTimer.current = setTimeout(() => {
         signOut();
       }, 10 * 60 * 1000); // 10 minutes
     };
 
-    window.addEventListener("mousemove", resetInactivityTimer);
-    window.addEventListener("keydown", resetInactivityTimer);
+    window.addEventListener("mousemove", resetTimer);
+    window.addEventListener("keydown", resetTimer);
 
-    resetInactivityTimer(); // trigger once on load
+    resetTimer(); // initial run
 
     return () => {
       clearTimeout(inactivityTimer.current);
-      window.removeEventListener("mousemove", resetInactivityTimer);
-      window.removeEventListener("keydown", resetInactivityTimer);
+      window.removeEventListener("mousemove", resetTimer);
+      window.removeEventListener("keydown", resetTimer);
     };
   }, []);
 
+  // 4️⃣ Magic Link login
   const signInWithMagicLink = async (email) => {
     const origin = typeof window !== "undefined" ? window.location.origin : "https://nordbalticum.com";
 
@@ -86,6 +88,7 @@ export const MagicLinkProvider = ({ children }) => {
     if (error) throw error;
   };
 
+  // 5️⃣ Google OAuth login
   const signInWithGoogle = async () => {
     const origin = typeof window !== "undefined" ? window.location.origin : "https://nordbalticum.com";
 
@@ -99,6 +102,7 @@ export const MagicLinkProvider = ({ children }) => {
     if (error) throw error;
   };
 
+  // 6️⃣ Logout
   const signOut = async () => {
     try {
       const { error } = await supabase.auth.signOut();
@@ -107,7 +111,9 @@ export const MagicLinkProvider = ({ children }) => {
       console.warn("Logout exception:", err);
     } finally {
       setUser(null);
-      router.replace("/");
+      if (typeof window !== "undefined") {
+        router.replace("/");
+      }
     }
   };
 
