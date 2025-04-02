@@ -1,37 +1,49 @@
+"use client";
+
 import { createContext, useContext, useEffect, useState } from "react";
-import { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
 import { supabase } from "@/utils/supabaseClient";
 
 const MagicLinkContext = createContext();
 
 export const MagicLinkProvider = ({ children }) => {
   const router = useRouter();
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
 
-  // Stebi auth būseną ir nustato user
+  const [user, setUser] = useState(null);
+  const [loadingUser, setLoadingUser] = useState(true);
+
+  // Pradinis user fetch
   useEffect(() => {
-    const fetchUser = async () => {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      if (session?.user) {
-        setUser(session.user);
-        if (router.pathname === "/") router.push("/dashboard");
+    const getUser = async () => {
+      setLoadingUser(true);
+      const { data, error } = await supabase.auth.getSession();
+
+      if (error) {
+        console.error("❌ Session fetch error:", error.message);
+        setUser(null);
+        setLoadingUser(false);
+        return;
+      }
+
+      if (data?.session?.user) {
+        const fullUser = data.session.user;
+        setUser(fullUser);
       } else {
         setUser(null);
-        if (router.pathname !== "/") router.push("/");
       }
-      setLoading(false);
+
+      setLoadingUser(false);
     };
 
-    fetchUser();
+    getUser();
 
     const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
       if (session?.user) {
         setUser(session.user);
-        if (router.pathname === "/") router.push("/dashboard");
+        router.replace("/dashboard");
       } else {
         setUser(null);
-        router.push("/");
+        router.replace("/");
       }
     });
 
@@ -40,32 +52,38 @@ export const MagicLinkProvider = ({ children }) => {
     };
   }, [router]);
 
-  // Magic Link login
   const loginWithEmail = async (email) => {
-    setLoading(true);
+    setLoadingUser(true);
     const { error } = await supabase.auth.signInWithOtp({ email });
-    if (error) console.error("MagicLink login error:", error.message);
-    setLoading(false);
+    if (error) console.error("MagicLink error:", error.message);
+    setLoadingUser(false);
   };
 
-  // Google login
   const loginWithGoogle = async () => {
-    setLoading(true);
+    setLoadingUser(true);
     const { error } = await supabase.auth.signInWithOAuth({ provider: "google" });
     if (error) console.error("Google login error:", error.message);
-    setLoading(false);
+    setLoadingUser(false);
   };
 
-  // Atsijungimas
   const logout = async () => {
     await supabase.auth.signOut();
     setUser(null);
-    router.push("/");
+    router.replace("/");
   };
 
   return (
-    <MagicLinkContext.Provider value={{ user, loginWithEmail, loginWithGoogle, logout, loading }}>
-      {!loading && children}
+    <MagicLinkContext.Provider
+      value={{
+        user,
+        setUser,
+        loginWithEmail,
+        loginWithGoogle,
+        logout,
+        loadingUser,
+      }}
+    >
+      {!loadingUser && children}
     </MagicLinkContext.Provider>
   );
 };
