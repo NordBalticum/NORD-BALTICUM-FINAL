@@ -4,24 +4,25 @@ import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useMagicLink } from "@/system/MagicLinkContext";
-import { useWallet } from "@/system/WalletContext";
 import styles from "@/styles/index.module.css";
 import background from "@/styles/background.module.css";
 
 export default function Home() {
   const router = useRouter();
-  const { user, signInWithMagicLink, signInWithGoogle, signOut } = useMagicLink();
-  const { wallet, loadWallet } = useWallet();
+  const { user, signInWithMagicLink, signInWithGoogle, signOut, fetchUserWallet } = useMagicLink();
 
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState("idle");
   const [message, setMessage] = useState("");
+  const [wallet, setWallet] = useState(null);
 
   useEffect(() => {
     if (user) {
-      loadWallet(user.email).catch((error) => console.error("Error loading wallet:", error));
+      fetchUserWallet(user.email)
+        .then((walletData) => setWallet(walletData))
+        .catch((error) => console.error("Error loading wallet:", error));
     }
-  }, [user, loadWallet]);
+  }, [user, fetchUserWallet]);
 
   const handleSignIn = async (e) => {
     e.preventDefault();
@@ -59,6 +60,7 @@ export default function Home() {
       setStatus("loading");
       await signOut();
       setMessage("You have been signed out.");
+      setWallet(null);
     } catch (err) {
       console.error(err);
       setMessage("Sign out failed.");
