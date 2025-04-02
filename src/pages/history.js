@@ -4,19 +4,21 @@ import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { supabase } from "@/utils/supabaseClient";
 
-import { useSystem } from "@/contexts/SystemContext";
+import { useMagicLink } from "@/contexts/MagicLinkContext";
+import { useWallet } from "@/contexts/WalletContext";
 
 import styles from "@/styles/history.module.css";
 import background from "@/styles/background.module.css";
 
 export default function History() {
-  const { user, wallet } = useSystem();
+  const { user } = useMagicLink();
+  const { walletAddress } = useWallet();
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (user?.email && wallet?.address) fetchTransactions();
-  }, [user, wallet]);
+    if (user?.email && walletAddress) fetchTransactions();
+  }, [user, walletAddress]);
 
   const fetchTransactions = async () => {
     try {
@@ -25,7 +27,7 @@ export default function History() {
         .from("transactions")
         .select("*")
         .or(
-          `sender_email.eq.${user.email},receiver_email.eq.${user.email},wallet_address.eq.${wallet.address}`
+          `sender_email.eq.${user.email},receiver_email.eq.${user.email},wallet_address.eq.${walletAddress}`
         )
         .order("created_at", { ascending: false });
 
