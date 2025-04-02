@@ -12,60 +12,66 @@ export default function Home() {
   const { user, signInWithMagicLink, signInWithGoogle, signOut, fetchUserWallet } = useMagicLink();
 
   const [email, setEmail] = useState("");
-  const [state, setState] = useState({
-    status: "idle",
-    message: "",
-    wallet: null,
-  });
+  const [status, setStatus] = useState("idle");
+  const [message, setMessage] = useState("");
+  const [wallet, setWallet] = useState(null);
 
+  // Fetch the user's wallet when a user is logged in
   useEffect(() => {
     if (user) {
       fetchUserWallet(user.email)
-        .then((walletData) => setState((prev) => ({ ...prev, wallet: walletData })))
-        .catch((error) => {
-          console.error("Error loading wallet:", error);
-          setState((prev) => ({ ...prev, message: "Failed to load wallet. Please try again." }));
-        });
+        .then((walletData) => setWallet(walletData))
+        .catch((error) => console.error("Error loading wallet:", error));
     }
   }, [user, fetchUserWallet]);
 
+  // Handles email sign-in
   const handleSignIn = async (e) => {
     e.preventDefault();
-    setState({ ...state, message: "", status: "loading" });
+    setMessage("");
 
     if (!email) {
-      setState({ ...state, message: "Please enter a valid email.", status: "idle" });
+      setMessage("Please enter a valid email.");
       return;
     }
 
     try {
+      setStatus("loading");
       await signInWithMagicLink(email);
-      setState({ ...state, message: "Check your inbox for the Magic Link.", status: "idle" });
+      setMessage("Check your inbox for the Magic Link.");
     } catch (err) {
-      console.error("Failed to send Magic Link:", err);
-      setState({ ...state, message: "Failed to send Magic Link. Please try again.", status: "idle" });
+      console.error(err);
+      setMessage("Failed to send Magic Link.");
+    } finally {
+      setStatus("idle");
     }
   };
 
+  // Handles Google OAuth sign-in
   const handleGoogleSignIn = async () => {
-    setState({ ...state, status: "loading" });
     try {
+      setStatus("loading");
       await signInWithGoogle();
-      setState({ ...state, status: "idle" });
     } catch (err) {
-      console.error("Google login failed:", err);
-      setState({ ...state, message: "Google login failed. Please try again.", status: "idle" });
+      console.error(err);
+      setMessage("Google login failed.");
+    } finally {
+      setStatus("idle");
     }
   };
 
+  // Handles user sign-out
   const handleSignOut = async () => {
-    setState({ ...state, status: "loading" });
     try {
+      setStatus("loading");
       await signOut();
-      setState({ user: null, wallet: null, status: "idle", message: "You have been signed out." });
+      setMessage("You have been signed out.");
+      setWallet(null);
     } catch (err) {
-      console.error("Sign out failed:", err);
-      setState({ ...state, message: "Sign out failed. Please try again.", status: "idle" });
+      console.error(err);
+      setMessage("Sign out failed.");
+    } finally {
+      setStatus("idle");
     }
   };
 
@@ -87,7 +93,7 @@ export default function Home() {
           <section className={styles.loginBox}>
             <h1 className={styles.title}>Welcome to NordBalticum</h1>
             <p className={styles.subtitle}>Login with Email or Google</p>
-
+            
             <form onSubmit={handleSignIn} className={styles.form}>
               <input
                 type="email"
@@ -95,22 +101,22 @@ export default function Home() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className={styles.input}
-                disabled={state.status === "loading"}
+                disabled={status === "loading"}
                 required
               />
               <button
                 type="submit"
                 className={styles.button}
-                disabled={state.status === "loading"}
+                disabled={status === "loading"}
               >
-                {state.status === "loading" ? "Sending..." : "Send Magic Link"}
+                {status === "loading" ? "Sending..." : "Send Magic Link"}
               </button>
             </form>
 
             <button
               onClick={handleGoogleSignIn}
               className={styles.googleButton}
-              disabled={state.status === "loading"}
+              disabled={status === "loading"}
             >
               <Image
                 src="/icons/google-logo.png"
@@ -126,7 +132,7 @@ export default function Home() {
           <section className={styles.loggedInBox}>
             <h1 className={styles.title}>Hello, {user.email}</h1>
             <p className={styles.subtitle}>
-              Your wallet: {state.wallet ? state.wallet.networks.bnb : "Loading..."}
+              Your wallet: {wallet ? wallet.networks.bnb : "Loading..."}
             </p>
             <button onClick={handleSignOut} className={styles.logoutButton}>
               Sign Out
@@ -134,7 +140,7 @@ export default function Home() {
           </section>
         )}
 
-        {state.message && <p className={styles.message}>{state.message}</p>}
+        {message && <p className={styles.message}>{message}</p>}
       </div>
     </main>
   );
