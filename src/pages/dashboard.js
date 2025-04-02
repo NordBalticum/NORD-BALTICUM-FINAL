@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { useMagicLink } from "@/system/MagicLinkContext";
+import { useMagicLink } from "@/contexts/MagicLinkContext";
 
 import styles from "@/styles/dashboard.module.css";
 import background from "@/styles/background.module.css";
