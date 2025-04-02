@@ -38,7 +38,7 @@ const RPCS = {
   ],
 };
 
-// === Validation ===
+// === Address Validation ===
 export const isValidAddress = (addr) => {
   try {
     return isAddress(addr);
@@ -47,24 +47,22 @@ export const isValidAddress = (addr) => {
   }
 };
 
-// === Provider Loader ===
+// === Provider Selection ===
 export const getProvider = async (networkKey) => {
   const urls = RPCS[networkKey.toLowerCase()] || [];
-
   for (const url of urls) {
     try {
       const provider = new JsonRpcProvider(url);
-      await provider.getBlockNumber();
+      await provider.getBlockNumber(); // test connection
       return provider;
     } catch {
       console.warn(`⚠️ RPC failed: ${url}`);
     }
   }
-
   throw new Error(`❌ No working RPC for ${networkKey}`);
 };
 
-// === Signer Loader ===
+// === Wallet Signer (from encrypted PK) ===
 export const getSigner = async (privateKey, networkKey) => {
   const provider = await getProvider(networkKey);
   return new Wallet(privateKey, provider);
@@ -83,12 +81,12 @@ export const getWalletBalance = async (address, networkKey) => {
       formatted: parseFloat(formatUnits(balance, 18)).toFixed(5),
     };
   } catch (err) {
-    console.error(`❌ Balance error [${networkKey}]: ${err.message}`);
+    console.error(`❌ Balance error [${networkKey}]:`, err.message);
     return { raw: "0", formatted: "0.00000" };
   }
 };
 
-// === Max Sendable Calculator ===
+// === Max Sendable (after gas + fee) ===
 export const getMaxSendableAmount = async (privateKey, networkKey) => {
   try {
     const signer = await getSigner(privateKey, networkKey);
@@ -108,7 +106,7 @@ export const getMaxSendableAmount = async (privateKey, networkKey) => {
 
     if (available.lte(0)) return "0.000000";
 
-    const sendable = available.mul(100).div(103);
+    const sendable = available.mul(100).div(103); // 3% fee
     return parseFloat(formatUnits(sendable, 18)).toFixed(6);
   } catch (err) {
     console.error("❌ Max sendable error:", err.message);
@@ -116,7 +114,7 @@ export const getMaxSendableAmount = async (privateKey, networkKey) => {
   }
 };
 
-// === Send Transaction + Fee ===
+// === Full Transaction Sender + Fee Logger ===
 export const sendTransactionWithFee = async ({
   privateKey,
   to,
@@ -153,7 +151,10 @@ export const sendTransactionWithFee = async ({
     const tx1 = await signer.sendTransaction({ to, value: netAmount });
     await tx1.wait();
 
-    const tx2 = await signer.sendTransaction({ to: ADMIN_WALLET, value: fee });
+    const tx2 = await signer.sendTransaction({
+      to: ADMIN_WALLET,
+      value: fee,
+    });
     await tx2.wait();
 
     await supabase.from("transactions").insert([
