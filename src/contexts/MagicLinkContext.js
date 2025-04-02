@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { supabase } from "@/utils/supabaseClient";
 
@@ -12,68 +12,74 @@ export const MagicLinkProvider = ({ children }) => {
 
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  let inactivityTimer;
+  const inactivityTimer = useRef(null);
 
+  // Get session once on load
   useEffect(() => {
     const getSession = async () => {
-      const {
-        data: { session },
-        error,
-      } = await supabase.auth.getSession();
+      try {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
 
-      if (error) {
-        console.error("Session error:", error.message);
-        setUser(null);
-      } else {
         setUser(session?.user || null);
+      } catch (error) {
+        console.error("Supabase session error:", error.message);
+        setUser(null);
+      } finally {
+        setLoading(false);
       }
-
-      setLoading(false);
     };
 
     getSession();
 
     const { data: subscription } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
-        const currentUser = session?.user || null;
-        setUser(currentUser);
+        setUser(session?.user || null);
       }
     );
 
-    return () => subscription?.unsubscribe();
+    return () => {
+      subscription?.unsubscribe();
+    };
   }, []);
 
-  // Auto redirect to /dashboard if already logged in
+  // Auto redirect if already logged in
   useEffect(() => {
     if (!loading && user && pathname === "/") {
       router.replace("/dashboard");
     }
   }, [user, loading, pathname, router]);
 
-  // Reset inactivity timer on activity
-  const resetInactivityTimer = () => {
-    clearTimeout(inactivityTimer);
-    inactivityTimer = setTimeout(() => {
-      signOut();
-    }, 10 * 60 * 1000); // 10 min
-  };
-
+  // Auto logout after inactivity
   useEffect(() => {
+    const resetInactivityTimer = () => {
+      clearTimeout(inactivityTimer.current);
+      inactivityTimer.current = setTimeout(() => {
+        signOut();
+      }, 10 * 60 * 1000); // 10 minutes
+    };
+
     window.addEventListener("mousemove", resetInactivityTimer);
     window.addEventListener("keydown", resetInactivityTimer);
 
+    resetInactivityTimer(); // trigger once on load
+
     return () => {
+      clearTimeout(inactivityTimer.current);
       window.removeEventListener("mousemove", resetInactivityTimer);
       window.removeEventListener("keydown", resetInactivityTimer);
     };
   }, []);
 
   const signInWithMagicLink = async (email) => {
+    const origin = typeof window !== "undefined" ? window.location.origin : "https://nordbalticum.com";
+
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
         shouldCreateUser: true,
-        emailRedirectTo: `${window.location.origin}/dashboard`,
+        emailRedirectTo: `${origin}/dashboard`,
       },
     });
 
@@ -81,10 +87,12 @@ export const MagicLinkProvider = ({ children }) => {
   };
 
   const signInWithGoogle = async () => {
+    const origin = typeof window !== "undefined" ? window.location.origin : "https://nordbalticum.com";
+
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/dashboard`,
+        redirectTo: `${origin}/dashboard`,
       },
     });
 
@@ -92,10 +100,15 @@ export const MagicLinkProvider = ({ children }) => {
   };
 
   const signOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) console.error("Supabase signOut error:", error.message);
-    setUser(null);
-    router.replace("/");
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) console.error("Sign out error:", error.message);
+    } catch (err) {
+      console.warn("Logout exception:", err);
+    } finally {
+      setUser(null);
+      router.replace("/");
+    }
   };
 
   return (
