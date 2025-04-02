@@ -4,7 +4,6 @@ import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { useSystem } from "@/contexts/SystemContext";
-import StarsBackground from "@/components/StarsBackground";
 
 import styles from "@/styles/index.module.css";
 import background from "@/styles/background.module.css";
