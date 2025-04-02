@@ -90,10 +90,20 @@ export default function SideDrawer() {
                 <Image
                   src="/icons/logo.svg"
                   alt="NordBalticum Logo"
-                  width={160}
-                  height={54}
+                  width={240}
+                  height={80}
                   priority
-                  style={{ marginBottom: "14px" }}
+                  style={{
+                    marginBottom: "18px",
+                    borderRadius: "50%",
+                    border: "2px solid rgba(255,255,255,0.15)",
+                    padding: "8px",
+                    background:
+                      "radial-gradient(circle at center, rgba(255,255,255,0.06), transparent)",
+                    boxShadow: "0 0 28px rgba(255,255,255,0.08)",
+                    transition: "transform 0.4s ease",
+                  }}
+                  className={styles.logo}
                 />
                 <p className={styles.email}>
                   {user?.email || "no@email.com"}
