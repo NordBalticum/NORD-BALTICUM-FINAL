@@ -6,14 +6,16 @@ import { useRouter, usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { FaBars, FaTimes } from "react-icons/fa";
 import Image from "next/image";
-
 import { useMagicLink } from "@/contexts/MagicLinkContext";
+import { useWallet } from "@/contexts/WalletContext";
+import { utils } from "ethers";
 import styles from "@/components/sidedrawer.module.css";
 
 export default function SideDrawer() {
   const router = useRouter();
   const pathname = usePathname();
-  const { user, signOut, wallet } = useMagicLink();
+  const { user, signOut } = useMagicLink();
+  const { wallet } = useWallet();
 
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -31,11 +33,9 @@ export default function SideDrawer() {
     }
   };
 
-  useEffect(() => {
-    if (user && pathname === "/") {
-      router.replace("/dashboard");
-    }
-  }, [user, pathname, router]);
+  const walletAddress = wallet?.bnb && utils.isAddress(wallet.bnb)
+    ? wallet.bnb
+    : "No wallet";
 
   useEffect(() => {
     document.body.style.overflow = open ? "hidden" : "auto";
@@ -52,8 +52,6 @@ export default function SideDrawer() {
     { label: "Settings", path: "/settings" },
   ];
 
-  const walletAddress = wallet?.bnb || "No wallet";
-  
   if (!user) return null;
 
   return (
@@ -85,7 +83,11 @@ export default function SideDrawer() {
               transition={{ type: "tween", duration: 0.33 }}
             >
               <div className={styles.drawerHeader}>
-                <button className={styles.closeIcon} onClick={toggleDrawer}>
+                <button
+                  className={styles.closeIcon}
+                  onClick={toggleDrawer}
+                  aria-label="Close menu"
+                >
                   <FaTimes size={22} />
                 </button>
               </div>
@@ -105,100 +107,59 @@ export default function SideDrawer() {
                     background:
                       "radial-gradient(circle at center, rgba(255,255,255,0.06), transparent)",
                     boxShadow: "0 0 28px rgba(255,255,255,0.08)",
-                    transition: "transform 0.4s ease",
                   }}
                 />
-
-                <p className={styles.email}>
-                  {user?.email || "no@email.com"}
-                </p>
+                <p className={styles.email}>{user?.email}</p>
 
                 <div
+                  title="Click to copy"
                   onClick={() => {
-                    if (walletAddress && walletAddress !== "No wallet") {
+                    if (utils.isAddress(walletAddress)) {
                       navigator.clipboard.writeText(walletAddress);
                       setCopied(true);
-                      setTimeout(() => setCopied(false), 1800);
+                      setTimeout(() => setCopied(false), 1600);
                     }
                   }}
-                  style={{
-                    marginTop: "16px",
-                    padding: "12px 16px",
-                    background: "rgba(255, 255, 255, 0.03)",
-                    borderRadius: "16px",
-                    boxShadow: "0 4px 24px rgba(255, 255, 255, 0.08)",
-                    backdropFilter: "blur(14px)",
-                    textAlign: "center",
-                    fontFamily: "Share Tech Mono, monospace",
-                    width: "100%",
-                    wordBreak: "break-all",
-                    border: "1px solid rgba(255,255,255,0.06)",
-                    cursor: "pointer",
-                    position: "relative",
-                    transition: "all 0.3s ease",
-                  }}
-                  title="Click to copy"
+                  className={styles.walletBox}
                 >
                   {copied && (
                     <motion.div
                       initial={{ opacity: 0, y: 6 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -4 }}
-                      style={{
-                        position: "absolute",
-                        top: "-24px",
-                        left: "50%",
-                        transform: "translateX(-50%)",
-                        fontSize: "0.7rem",
-                        color: "#ffd700",
-                        background: "rgba(255,255,255,0.05)",
-                        padding: "2px 10px",
-                        borderRadius: "10px",
-                        backdropFilter: "blur(8px)",
-                        fontWeight: 500,
-                      }}
+                      className={styles.copiedText}
                     >
                       Copied!
                     </motion.div>
                   )}
-                  <p style={{ fontSize: "0.7rem", color: "#aaa", marginBottom: "6px" }}>
-                    Your wallet:
-                  </p>
-                  <p
-                    style={{
-                      fontSize: "0.82rem",
-                      color: "#fff",
-                      opacity: 0.95,
-                      letterSpacing: "0.5px",
-                    }}
-                  >
-                    {walletAddress}
-                  </p>
+                  <p className={styles.walletLabel}>Your wallet:</p>
+                  <p className={styles.walletAddress}>{walletAddress}</p>
                 </div>
               </div>
 
-              {/* NAVIGATION + LOGOUT moved higher */}
-              <div style={{ marginTop: "32px" }}>
+              <div className={styles.navSection}>
                 <nav className={styles.nav}>
                   {navItems.map((item) => (
                     <Link
                       key={item.label}
                       href={item.path}
+                      onClick={() => setOpen(false)}
                       className={`${styles.link} ${
                         pathname === item.path ? styles.active : ""
                       }`}
-                      onClick={() => setOpen(false)}
                     >
                       {item.label}
                     </Link>
                   ))}
                 </nav>
 
-                <div style={{ marginTop: "16px" }}>
-                  <button className={styles.logout} onClick={handleLogout}>
-                    Logout
-                  </button>
-                </div>
+                <button
+                  className={styles.logout}
+                  onClick={handleLogout}
+                  title="Logout"
+                >
+                  Logout
+                </button>
               </div>
             </motion.aside>
           </>
