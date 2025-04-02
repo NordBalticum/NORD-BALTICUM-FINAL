@@ -43,6 +43,7 @@ const encrypt = async (text) => {
     key,
     encode(text)
   );
+
   return btoa(
     JSON.stringify({
       iv: Array.from(iv),
@@ -73,9 +74,15 @@ export const WalletProvider = ({ children }) => {
     }
   }, [user]);
 
+  useEffect(() => {
+    if (!user) {
+      setWallet(null);
+      setLoading(false);
+    }
+  }, [user]);
+
   const loadOrCreateWallet = async (email) => {
     try {
-      // 1. Check local storage
       const localKey = await loadPrivateKeyFromStorage();
       if (localKey) {
         const localWallet = new Wallet(localKey);
@@ -83,7 +90,6 @@ export const WalletProvider = ({ children }) => {
         return;
       }
 
-      // 2. Check database
       const db = await fetchWalletFromDB(email);
       if (db?.encrypted_key) {
         const decryptedKey = await decrypt(db.encrypted_key);
@@ -93,7 +99,6 @@ export const WalletProvider = ({ children }) => {
         return;
       }
 
-      // 3. Create new wallet
       const newWallet = Wallet.createRandom();
       const encryptedKey = await encrypt(newWallet.privateKey);
       await savePrivateKeyToStorage(newWallet.privateKey);
@@ -115,7 +120,11 @@ export const WalletProvider = ({ children }) => {
   });
 
   const savePrivateKeyToStorage = async (privateKey) => {
-    localStorage.setItem("userPrivateKey", JSON.stringify({ key: privateKey }));
+    try {
+      localStorage.setItem("userPrivateKey", JSON.stringify({ key: privateKey }));
+    } catch (err) {
+      console.error("Saving key to localStorage failed:", err);
+    }
   };
 
   const loadPrivateKeyFromStorage = async () => {
@@ -129,6 +138,17 @@ export const WalletProvider = ({ children }) => {
     }
   };
 
+  const exportPrivateKey = async () => {
+    try {
+      const key = await loadPrivateKeyFromStorage();
+      if (!key) throw new Error("Private key not found");
+      return key;
+    } catch (err) {
+      console.error("Export private key error:", err);
+      return null;
+    }
+  };
+
   const fetchWalletFromDB = async (email) => {
     const { data, error } = await supabase
       .from("wallets")
@@ -136,7 +156,12 @@ export const WalletProvider = ({ children }) => {
       .eq("user_email", email)
       .maybeSingle();
 
-    return error ? null : data;
+    if (error) {
+      console.error("Fetch wallet from DB error:", error.message);
+      return null;
+    }
+
+    return data;
   };
 
   const saveWalletToDB = async (email, encrypted_key, address) => {
@@ -158,7 +183,7 @@ export const WalletProvider = ({ children }) => {
   };
 
   return (
-    <WalletContext.Provider value={{ wallet, loading }}>
+    <WalletContext.Provider value={{ wallet, loading, exportPrivateKey }}>
       {children}
     </WalletContext.Provider>
   );
