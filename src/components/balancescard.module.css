@@ -3,7 +3,6 @@
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 24px;
   padding: 24px;
-  width: 100%;
 }
 
 .card {
@@ -23,8 +22,8 @@
 }
 
 .card:hover {
-  transform: scale(1.015);
-  box-shadow: 0 0 32px rgba(255, 255, 255, 0.08);
+  transform: scale(1.02);
+  box-shadow: 0 0 42px rgba(255, 255, 255, 0.08);
 }
 
 .cardHeader {
@@ -50,4 +49,11 @@
   font-size: 0.85rem;
   margin-top: 4px;
   color: rgba(255, 255, 255, 0.65);
+}
+
+.loading {
+  padding: 40px;
+  text-align: center;
+  color: #ccc;
+  font-size: 1rem;
 }
