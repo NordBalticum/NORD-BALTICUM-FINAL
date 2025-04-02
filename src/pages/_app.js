@@ -1,25 +1,20 @@
 // src/pages/_app.js
 
+"use client";
+
 import React from "react";
 import "@/styles/theme.css";
 import "@/styles/globals.css";
 
-import { MagicLinkProvider } from "@/contexts/MagicLinkContext";
-import { WalletCheckProvider } from "@/contexts/WalletCheckContext";
-import { WalletProvider } from "@/contexts/WalletContext";
-
+import { SystemProvider } from "@/contexts/SystemContext";
 import Layout from "@/components/Layout";
 
 export default function App({ Component, pageProps }) {
   return (
-    <MagicLinkProvider>
-      <WalletCheckProvider>
-        <WalletProvider>
-          <Layout>
-            <Component {...pageProps} />
-          </Layout>
-        </WalletProvider>
-      </WalletCheckProvider>
-    </MagicLinkProvider>
+    <SystemProvider>
+      <Layout>
+        <Component {...pageProps} />
+      </Layout>
+    </SystemProvider>
   );
 }
