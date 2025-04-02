@@ -2,6 +2,7 @@
 "use client";
 
 import React from "react";
+
 import "@/styles/theme.css";
 import "@/styles/globals.css";
 
@@ -13,16 +14,14 @@ import Layout from "@/components/Layout";
 
 export default function App({ Component, pageProps }) {
   return (
-    <React.StrictMode>
-      <MagicLinkProvider>
-        <WalletCheckProvider>
-          <WalletProvider>
-            <Layout>
-              <Component {...pageProps} />
-            </Layout>
-          </WalletProvider>
-        </WalletCheckProvider>
-      </MagicLinkProvider>
-    </React.StrictMode>
+    <MagicLinkProvider>
+      <WalletCheckProvider>
+        <WalletProvider>
+          <Layout>
+            <Component {...pageProps} />
+          </Layout>
+        </WalletProvider>
+      </WalletCheckProvider>
+    </MagicLinkProvider>
   );
 }
