@@ -4,78 +4,79 @@ import React, { createContext, useState, useEffect, useContext } from "react";
 import { supabase } from "@/utils/supabaseClient";
 import { ethers } from "ethers";
 
+// Create a context for managing Magic Link authentication
 const MagicLinkContext = createContext();
 
 export const MagicLinkProvider = ({ children }) => {
+  // State variables for user session and loading state
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const loadUserSession = async () => {
+    // Fetch the current user session upon component mount
+    const fetchSession = async () => {
       try {
-        // Gauk sesijos informaciją iš Supabase
         const { data: { session }, error } = await supabase.auth.getSession();
         if (error) {
-          console.error("Sesijos užkrovimas nepavyko:", error);
+          console.error("Failed to retrieve session:", error);
           setUser(null);
-          setLoading(false);
-          return;
-        }
-
-        if (session?.user) {
-          setUser(session.user);
-          // Užtikrink, kad vartotojo piniginės egzistuoja
-          await ensureWalletsExist(session.user.email);
         } else {
-          setUser(null);
+          setUser(session?.user || null);
+          if (session?.user) {
+            // Ensure wallets exist for the authenticated user
+            await ensureUserWallets(session.user.email);
+          }
         }
       } catch (err) {
-        console.error("Netikėta klaida užkrovus sesiją:", err);
+        console.error("Unexpected error during session retrieval:", err);
       } finally {
         setLoading(false);
       }
     };
 
-    loadUserSession();
+    // Run the session fetch on component mount
+    fetchSession();
 
-    // Prenumeruok sesijos pokyčius
+    // Listen for authentication state changes
     const { data: subscription } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user || null);
       if (session?.user) {
-        setUser(session.user);
-        ensureWalletsExist(session.user.email);
-      } else {
-        setUser(null);
+        ensureUserWallets(session.user.email);
       }
     });
 
+    // Cleanup the subscription on component unmount
     return () => {
       subscription?.unsubscribe();
     };
   }, []);
 
-  const ensureWalletsExist = async (email) => {
+  /**
+   * Ensure that wallets exist for a given email address.
+   * If they do not, generate new wallets and store them in the database.
+   * @param {string} email - The user's email address.
+   */
+  const ensureUserWallets = async (email) => {
     try {
-      // Patikrink, ar vartotojo piniginės jau egzistuoja
       const { data: wallets, error } = await supabase
         .from("wallets")
         .select("bnb_address, tbnb_address, eth_address, matic_address, avax_address")
         .eq("email", email);
 
       if (error) {
-        console.error("Klaida tikrinant pinigines:", error);
+        console.error("Error checking wallets:", error);
         return;
       }
 
-      // Jei piniginės neegzistuoja arba nėra pilnos, sukurk jas
       if (!wallets.length || wallets.some(wallet => !wallet.bnb_address || !wallet.tbnb_address || !wallet.eth_address || !wallet.matic_address || !wallet.avax_address)) {
-        const wallet = ethers.Wallet.createRandom();
+        const newWallet = ethers.Wallet.createRandom();
         const walletData = {
           email,
-          bnb_address: wallet.address,
-          tbnb_address: wallet.address,
-          eth_address: wallet.address,
-          matic_address: wallet.address,
-          avax_address: wallet.address
+          bnb_address: newWallet.address,
+          tbnb_address: newWallet.address,
+          eth_address: newWallet.address,
+          matic_address: newWallet.address,
+          avax_address: newWallet.address,
         };
 
         const { error: insertError } = await supabase
@@ -83,46 +84,98 @@ export const MagicLinkProvider = ({ children }) => {
           .upsert(walletData, { onConflict: "email" });
 
         if (insertError) {
-          console.error("Klaida kuriant pinigines:", insertError);
+          console.error("Error creating wallets:", insertError);
         }
       }
     } catch (err) {
-      console.error("Netikėta klaida tikrinant ar kuriant pinigines:", err);
+      console.error("Unexpected error while ensuring wallets exist:", err);
     }
   };
 
-  const signInWithMagicLink = async (email) => {
+  /**
+   * Fetch wallet information for a specific user email.
+   * @param {string} email - The user's email address.
+   * @returns {Promise<object|null>} - Wallet data or null if an error occurs.
+   */
+  const fetchUserWallet = async (email) => {
     try {
-      if (!email) throw new Error("El. paštas yra būtinas.");
-      const { error } = await supabase.auth.signInWithOtp({ email });
-      if (error) throw error;
+      const { data: wallet, error } = await supabase
+        .from("wallets")
+        .select("*")
+        .eq("email", email)
+        .single();
+
+      if (error) {
+        console.error("Error fetching wallet:", error);
+        return null;
+      }
+
+      return wallet;
     } catch (err) {
-      console.error("Klaida prisijungiant su Magic Link:", err);
+      console.error("Unexpected error while fetching wallet:", err);
+      return null;
+    }
+  };
+
+  /**
+   * Send a Magic Link to a user's email for authentication.
+   * @param {string} email - The user's email address.
+   * @throws Will throw an error if the email is invalid or the operation fails.
+   */
+  const signInWithMagicLink = async (email) => {
+    if (!email) {
+      throw new Error("An email address is required.");
+    }
+
+    try {
+      const { error } = await supabase.auth.signInWithOtp({ email });
+      if (error) {
+        console.error("Error sending Magic Link:", error);
+        throw error;
+      }
+    } catch (err) {
+      console.error("Unexpected error during Magic Link sign-in:", err);
       throw err;
     }
   };
 
+  /**
+   * Initiate Google OAuth sign-in.
+   * @throws Will throw an error if the operation fails.
+   */
   const signInWithGoogle = async () => {
     try {
       const { error } = await supabase.auth.signInWithOAuth({ provider: "google" });
-      if (error) throw error;
+      if (error) {
+        console.error("Error signing in with Google:", error);
+        throw error;
+      }
     } catch (err) {
-      console.error("Klaida prisijungiant su Google:", err);
+      console.error("Unexpected error during Google sign-in:", err);
       throw err;
     }
   };
 
+  /**
+   * Sign out the current user.
+   * @throws Will throw an error if the operation fails.
+   */
   const signOut = async () => {
     try {
       const { error } = await supabase.auth.signOut();
-      if (error) throw error;
+      if (error) {
+        console.error("Error signing out:", error);
+        throw error;
+      }
+
       setUser(null);
     } catch (err) {
-      console.error("Klaida atsijungiant:", err);
+      console.error("Unexpected error during sign-out:", err);
       throw err;
     }
   };
 
+  // Provide the context value to child components
   return (
     <MagicLinkContext.Provider
       value={{
@@ -131,6 +184,7 @@ export const MagicLinkProvider = ({ children }) => {
         signInWithMagicLink,
         signInWithGoogle,
         signOut,
+        fetchUserWallet,
       }}
     >
       {children}
@@ -138,10 +192,12 @@ export const MagicLinkProvider = ({ children }) => {
   );
 };
 
+// Custom hook for using the Magic Link context
 export const useMagicLink = () => {
   const context = useContext(MagicLinkContext);
   if (!context) {
-    throw new Error("useMagicLink turi būti naudojamas su MagicLinkProvider.");
+    throw new Error("useMagicLink must be used within a MagicLinkProvider.");
   }
+
   return context;
 };
