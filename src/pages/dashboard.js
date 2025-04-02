@@ -6,11 +6,11 @@ import Image from "next/image";
 
 import { useMagicLink } from "@/contexts/MagicLinkContext";
 import { useWalletCheck } from "@/contexts/WalletCheckContext";
-import { useBalance } from "@/hooks/useBalance";
-import StarsBackground from "@/components/StarsBackground";
+import { useWallet } from "@/contexts/WalletContext";
 
-import styles from "@/styles/dashboard.module.css";
+import StarsBackground from "@/components/StarsBackground";
 import background from "@/styles/background.module.css";
+import styles from "@/styles/dashboard.module.css";
 
 const networksData = [
   {
@@ -49,28 +49,24 @@ export default function Dashboard() {
   const router = useRouter();
   const { user } = useMagicLink();
   const { walletReady } = useWalletCheck();
-  const { balances, isLoading } = useBalance();
+  const { balance, wallet } = useWallet();
 
-  const [totalEUR, setTotalEUR] = useState("0.00");
+  const [totalEUR, setTotalEUR] = useState("...");
 
   useEffect(() => {
-    if (!user || !walletReady) {
+    if (!user || !walletReady || !wallet?.address) {
       router.push("/");
     }
-  }, [user, walletReady, router]);
+  }, [user, walletReady, wallet, router]);
 
   useEffect(() => {
-    const total = Object.values(balances)
-      .filter((b) => b && b.eur)
-      .reduce((sum, b) => sum + parseFloat(b.eur || 0), 0)
-      .toFixed(2);
-
-    setTotalEUR(total);
-  }, [balances]);
+    const eur = (parseFloat(balance || "0") * 500).toFixed(2); // Simuliuota
+    setTotalEUR(eur);
+  }, [balance]);
 
   const networks = useMemo(() => networksData, []);
 
-  if (!user || !walletReady) {
+  if (!user || !walletReady || !wallet?.address) {
     return <div className={styles.loading}>Loading Wallet...</div>;
   }
 
@@ -92,44 +88,39 @@ export default function Dashboard() {
 
         <div className={styles.totalBox}>
           <p className={styles.totalLabel}>Total Wallet Value</p>
-          <h2 className={styles.totalValue}>
-            {isLoading ? "..." : `€ ${totalEUR}`}
-          </h2>
+          <h2 className={styles.totalValue}>€ {totalEUR}</h2>
         </div>
 
         <div className={styles.assetGrid}>
-          {networks.map((net) => {
-            const bal = balances[net.symbol] || { amount: "0.00000", eur: "0.00" };
-            return (
-              <div
-                key={net.symbol}
-                className={styles.assetCard}
-                onClick={() => router.push(net.route)}
-              >
-                <div className={styles.assetLeft}>
-                  <Image
-                    src={net.logo}
-                    alt={`${net.symbol} logo`}
-                    width={42}
-                    height={42}
-                    className={styles.assetLogo}
-                    unoptimized
-                  />
-                  <div className={styles.assetInfo}>
-                    <span className={styles.assetSymbol}>{net.symbol}</span>
-                    <span className={styles.assetName}>{net.name}</span>
-                  </div>
-                </div>
-
-                <div className={styles.assetRight}>
-                  <span className={styles.assetAmount}>
-                    {bal.amount} {net.symbol}
-                  </span>
-                  <span className={styles.assetEur}>€ {bal.eur}</span>
+          {networks.map((net) => (
+            <div
+              key={net.symbol}
+              className={styles.assetCard}
+              onClick={() => router.push(net.route)}
+            >
+              <div className={styles.assetLeft}>
+                <Image
+                  src={net.logo}
+                  alt={`${net.symbol} logo`}
+                  width={42}
+                  height={42}
+                  className={styles.assetLogo}
+                  unoptimized
+                />
+                <div className={styles.assetInfo}>
+                  <span className={styles.assetSymbol}>{net.symbol}</span>
+                  <span className={styles.assetName}>{net.name}</span>
                 </div>
               </div>
-            );
-          })}
+
+              <div className={styles.assetRight}>
+                <span className={styles.assetAmount}>
+                  {balance} {net.symbol}
+                </span>
+                <span className={styles.assetEur}>€ {totalEUR}</span>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </main>
