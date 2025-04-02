@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { useMagicLink } from "@/contexts/MagicLinkContext"; // Updated import for MagicLinkContext
+import { useMagicLink } from "@/contexts/MagicLinkContext";
 
 import styles from "@/styles/dashboard.module.css";
 import background from "@/styles/background.module.css";
@@ -26,31 +26,35 @@ const networkNames = {
 
 export default function Dashboard() {
   const router = useRouter();
-  const { user, fetchUserWallet } = useMagicLink(); // Updated to use new MagicLinkContext
+  const { user, wallet } = useMagicLink();
 
-  const [totalEUR, setTotalEUR] = useState("0.00");
   const [balances, setBalances] = useState([]);
+  const [totalEUR, setTotalEUR] = useState("0.00");
   const [activeNetwork, setActiveNetwork] = useState("bsc");
 
   useEffect(() => {
-    if (user) {
-      fetchUserWallet(user.email)
-        .then((wallet) => {
-          const total = wallet.networks.reduce(
-            (acc, net) => acc + parseFloat(net.eur || 0),
-            0
-          );
-          setTotalEUR(total.toFixed(2));
-          setBalances(wallet.networks);
-        })
-        .catch((err) => {
-          console.error("Failed to fetch wallet:", err);
-          setTotalEUR("0.00");
-        });
-    } else {
+    if (!user || !wallet) {
       router.replace("/");
+      return;
     }
-  }, [user, fetchUserWallet, router]);
+
+    const fetchBalances = async () => {
+      try {
+        const response = await fetch(`/api/balances?email=${encodeURIComponent(user.email)}`);
+        const data = await response.json();
+        if (Array.isArray(data)) {
+          setBalances(data);
+          const total = data.reduce((sum, item) => sum + parseFloat(item.eur || 0), 0);
+          setTotalEUR(total.toFixed(2));
+        }
+      } catch (err) {
+        console.error("Failed to load balances:", err);
+        setTotalEUR("0.00");
+      }
+    };
+
+    fetchBalances();
+  }, [user, wallet, router]);
 
   const networkRoutes = {
     bsc: "/bnb",
@@ -65,9 +69,7 @@ export default function Dashboard() {
     router.push(networkRoutes[symbol] || "/send");
   };
 
-  if (!user) {
-    return <div className={styles.loading}>Loading Wallet...</div>;
-  }
+  if (!user || !wallet) return null;
 
   return (
     <main className={`${styles.container} ${background.gradient}`}>
@@ -89,7 +91,7 @@ export default function Dashboard() {
         </div>
 
         <div className={styles.assetGrid}>
-          {balances && balances.length > 0 ? (
+          {balances.length > 0 ? (
             balances.map((bal) => (
               <div
                 key={bal.network}
@@ -106,9 +108,7 @@ export default function Dashboard() {
                     unoptimized
                   />
                   <div className={styles.assetInfo}>
-                    <span className={styles.assetSymbol}>
-                      {bal.network.toUpperCase()}
-                    </span>
+                    <span className={styles.assetSymbol}>{bal.network.toUpperCase()}</span>
                     <span className={styles.assetName}>
                       {networkNames[bal.network] || bal.network}
                     </span>
