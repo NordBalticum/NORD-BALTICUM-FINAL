@@ -51,7 +51,7 @@ export default function Dashboard() {
               const provider = new ethers.providers.JsonRpcProvider(config.rpc);
               const balance = await provider.getBalance(wallet.address);
               const ethValue = parseFloat(ethers.utils.formatEther(balance));
-              const eurValue = ethValue * 250; // Fiksuotas konversijos kursas
+              const eurValue = ethValue * 250;
 
               return {
                 network: key,
@@ -86,18 +86,20 @@ export default function Dashboard() {
 
   return (
     <main className={styles.container}>
-      <div className={styles.dashboardWrapper}>
-        <div className={styles.totalValueContainer}>
+      <div className={styles.dashboardWrapper} style={{ paddingTop: "80px" }}>
+        <div className={styles.totalValueContainer} style={{ marginBottom: "48px" }}>
           <Image
             src="/icons/logo.svg"
             alt="NordBalticum"
-            width={160}
-            height={60}
+            width={224} // Padidinta iš 160 (apie +40%)
+            height={84}
             className={styles.logo}
             priority
           />
-          <p className={styles.totalLabel}>Total Value</p>
-          <h2 className={styles.totalValue}>€ {totalEUR}</h2>
+          <div style={{ marginTop: "32px" }}>
+            <p className={styles.totalLabel}>Total Value</p>
+            <h2 className={styles.totalValue}>€ {totalEUR}</h2>
+          </div>
         </div>
 
         <div className={styles.assetList}>
