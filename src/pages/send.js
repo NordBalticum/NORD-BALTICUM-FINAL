@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 
 import { useMagicLink } from "@/contexts/MagicLinkContext";
 import { useWallet } from "@/contexts/WalletContext";
-import { useBalance } from "@/contexts/BalanceContext";
+import { useBalanceContext } from "@/contexts/BalanceContext";
 import { useSendCrypto } from "@/contexts/SendCryptoContext";
 
 import SwipeSelector from "@/components/SwipeSelector";
@@ -18,7 +18,7 @@ export default function Send() {
   const router = useRouter();
   const { user } = useMagicLink();
   const { activeNetwork, setActiveNetwork } = useWallet();
-  const { balance, balanceEUR, maxSendable, refreshBalance } = useBalance();
+  const { balance, balanceEUR, maxSendable, refreshBalance } = useBalanceContext();
   const { sendTransaction } = useSendCrypto();
 
   const [receiver, setReceiver] = useState("");
@@ -102,6 +102,7 @@ export default function Send() {
             onChange={(e) => setReceiver(e.target.value)}
             className={styles.inputField}
           />
+
           <input
             type="number"
             placeholder="Amount to send"
@@ -136,7 +137,12 @@ export default function Send() {
               </div>
               <div className={styles.modalActions}>
                 <button className={styles.modalButton} onClick={confirmSend}>Confirm</button>
-                <button className={`${styles.modalButton} ${styles.cancel}`} onClick={() => setShowConfirm(false)}>Cancel</button>
+                <button
+                  className={`${styles.modalButton} ${styles.cancel}`}
+                  onClick={() => setShowConfirm(false)}
+                >
+                  Cancel
+                </button>
               </div>
             </div>
           </div>
