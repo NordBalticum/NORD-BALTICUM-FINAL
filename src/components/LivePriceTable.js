@@ -37,26 +37,28 @@ const currencies = ["eur", "usd"];
 export default function LivePriceTable() {
   const [prices, setPrices] = useState({});
   const [currency, setCurrency] = useState("eur");
-  const router = useRouter();
   const intervalRef = useRef(null);
   const mountedRef = useRef(false);
+  const router = useRouter();
 
   const fetchPrices = async () => {
-    if (!navigator.onLine) return;
+    if (!navigator.onLine || !mountedRef.current) return;
+
     try {
       const ids = tokens.map((t) => t.id).join(",");
-      const response = await axios.get("https://api.coingecko.com/api/v3/simple/price", {
+      const res = await axios.get("https://api.coingecko.com/api/v3/simple/price", {
         params: {
           ids,
           vs_currencies: currencies.join(","),
         },
-        timeout: 8000,
+        timeout: 10000,
       });
+
       if (mountedRef.current) {
-        setPrices(response.data);
+        setPrices(res.data);
       }
-    } catch (error) {
-      console.error("❌ Failed to fetch prices:", error.message);
+    } catch (err) {
+      console.error("CoinGecko price fetch failed:", err.message);
     }
   };
 
@@ -69,12 +71,20 @@ export default function LivePriceTable() {
       if (document.visibilityState === "visible") fetchPrices();
     };
 
+    const onResizeOrOrientation = () => {
+      fetchPrices();
+    };
+
     document.addEventListener("visibilitychange", onVisibility);
+    window.addEventListener("resize", onResizeOrOrientation);
+    window.addEventListener("orientationchange", onResizeOrOrientation);
 
     return () => {
       mountedRef.current = false;
       clearInterval(intervalRef.current);
       document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("resize", onResizeOrOrientation);
+      window.removeEventListener("orientationchange", onResizeOrOrientation);
     };
   }, []);
 
@@ -94,11 +104,15 @@ export default function LivePriceTable() {
 
       <div className={styles.grid}>
         {tokens.map((token) => (
-          <div key={token.id} className={styles.card} onClick={() => router.push(token.route)}>
+          <div
+            key={token.id}
+            className={styles.card}
+            onClick={() => router.push(token.route)}
+          >
             <img src={token.logo} alt={token.symbol} className={styles.logo} />
             <div className={styles.symbol}>{token.symbol}</div>
             <div className={styles.price}>
-              {prices[token.id]?.[currency] !== undefined
+              {prices[token.id]?.[currency]
                 ? `${currency === "eur" ? "€" : "$"}${prices[token.id][currency].toFixed(2)}`
                 : "Loading..."}
             </div>
