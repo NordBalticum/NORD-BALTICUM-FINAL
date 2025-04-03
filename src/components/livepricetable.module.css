@@ -3,15 +3,17 @@
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  margin-bottom: 16px;
-  gap: 12px;
+  margin-bottom: 10px;
+  gap: 8px;
+  transform: scale(0.7); /* sumažinta 30% */
+  transform-origin: top right;
 }
 
 .controls {
   display: flex;
-  gap: 12px;
+  gap: 8px;
   justify-content: flex-end;
-  margin-right: 4px;
+  margin-right: 2px;
 }
 
 .currencyButton {
@@ -20,67 +22,67 @@
   color: white;
   font-family: var(--font-crypto);
   font-weight: 600;
-  font-size: 0.85rem;
-  border-radius: 12px;
-  padding: 6px 14px;
+  font-size: 0.65rem;
+  border-radius: 10px;
+  padding: 4px 10px;
   cursor: pointer;
   transition: 0.3s ease;
 }
 
 .currencyButton:hover {
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.15);
 }
 
 .active {
-  background: gold;
+  background: white;
   color: black;
-  border-color: gold;
+  border-color: white;
 }
 
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: 10px;
   width: 100%;
 }
 
 .card {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 18px;
-  padding: 16px 8px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 14px;
+  padding: 12px 6px;
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
-  backdrop-filter: blur(12px) saturate(160%);
-  box-shadow: 0 0 12px rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px) saturate(140%);
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.08);
   cursor: pointer;
   transition: 0.3s ease;
 }
 
 .card:hover {
-  transform: scale(1.035);
-  box-shadow: 0 0 18px rgba(255, 255, 255, 0.15);
+  transform: scale(1.025);
+  box-shadow: 0 0 14px rgba(255, 255, 255, 0.15);
 }
 
 .logo {
-  width: 36px;
-  height: 36px;
+  width: 28px;
+  height: 28px;
   object-fit: contain;
-  margin-bottom: 10px;
+  margin-bottom: 6px;
 }
 
 .symbol {
   font-family: var(--font-crypto);
   font-weight: 600;
-  font-size: 0.9rem;
+  font-size: 0.75rem;
   color: white;
-  margin-bottom: 4px;
+  margin-bottom: 2px;
 }
 
 .price {
   font-family: var(--font-crypto);
-  font-size: 0.85rem;
-  color: gold;
+  font-size: 0.7rem;
+  color: white;
 }
