@@ -5,7 +5,7 @@
   align-items: flex-end;
   margin-bottom: 10px;
   gap: 8px;
-  transform: scale(0.9); /* sumažinta 10% */
+  transform: scale(0.9);
   transform-origin: top right;
 }
 
@@ -41,7 +41,7 @@
 
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  grid-template-columns: repeat(2, 1fr);
   gap: 10px;
   width: 100%;
 }
