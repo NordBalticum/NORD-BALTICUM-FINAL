@@ -1,26 +1,30 @@
 .wrapper {
   width: 100%;
-  margin: 0 auto;
-  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  margin-bottom: 16px;
+  gap: 12px;
 }
 
 .controls {
   display: flex;
+  gap: 12px;
   justify-content: flex-end;
-  padding: 6px;
-  gap: 6px;
+  margin-right: 4px;
 }
 
 .currencyButton {
-  background: rgba(255, 255, 255, 0.06);
+  background: transparent;
+  border: 1px solid white;
   color: white;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  padding: 4px 10px;
-  border-radius: 8px;
-  font-size: 0.7rem;
   font-family: var(--font-crypto);
+  font-weight: 600;
+  font-size: 0.85rem;
+  border-radius: 12px;
+  padding: 6px 14px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: 0.3s ease;
 }
 
 .currencyButton:hover {
@@ -28,61 +32,55 @@
 }
 
 .active {
-  background: #ffd700;
-  color: #0a1f44;
-  font-weight: bold;
+  background: gold;
+  color: black;
+  border-color: gold;
 }
 
 .grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  background: rgba(255, 255, 255, 0.04);
-  backdrop-filter: blur(12px);
-  border-radius: 14px;
-  overflow: hidden;
-  padding: 6px;
-  gap: 6px;
-  box-shadow: 0 0 24px rgba(255, 255, 255, 0.06);
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 14px;
+  width: 100%;
 }
 
 .card {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 18px;
+  padding: 16px 8px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  background: rgba(255, 255, 255, 0.03);
-  border-radius: 12px;
-  padding: 8px 6px;
-  min-height: 80px;
-  justify-content: center;
+  text-align: center;
+  backdrop-filter: blur(12px) saturate(160%);
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.05);
+  cursor: pointer;
+  transition: 0.3s ease;
+}
+
+.card:hover {
+  transform: scale(1.035);
+  box-shadow: 0 0 18px rgba(255, 255, 255, 0.15);
 }
 
 .logo {
-  width: 22px;
-  height: 22px;
+  width: 36px;
+  height: 36px;
   object-fit: contain;
-  margin-bottom: 4px;
+  margin-bottom: 10px;
 }
 
 .symbol {
-  font-size: 0.75rem;
-  color: #fff;
   font-family: var(--font-crypto);
-  margin-bottom: 2px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: white;
+  margin-bottom: 4px;
 }
 
 .price {
-  font-size: 0.85rem;
-  color: #ffd700;
   font-family: var(--font-crypto);
-}
-
-/* Mobile */
-@media (max-width: 768px) {
-  .grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 8px;
-  }
-  .card {
-    padding: 10px 6px;
-  }
+  font-size: 0.85rem;
+  color: gold;
 }
