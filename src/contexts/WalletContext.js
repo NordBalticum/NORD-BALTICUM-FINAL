@@ -7,13 +7,17 @@ import { useMagicLink } from "@/contexts/MagicLinkContext";
 
 export const WalletContext = createContext();
 
-const ENCRYPTION_SECRET = process.env.NEXT_PUBLIC_ENCRYPTION_SECRET || "nordbalticum-fallback";
+const ENCRYPTION_SECRET =
+  process.env.NEXT_PUBLIC_ENCRYPTION_SECRET || "nordbalticum-fallback";
 
+// Encoding utils
 const encode = (str) => new TextEncoder().encode(str);
 const decode = (buf) => new TextDecoder().decode(buf);
 
+// Key derivation
 const getKey = async (password) => {
   if (typeof window === "undefined") return null;
+
   const keyMaterial = await window.crypto.subtle.importKey(
     "raw",
     encode(password),
@@ -36,8 +40,10 @@ const getKey = async (password) => {
   );
 };
 
+// Encrypt private key
 const encrypt = async (text) => {
   if (typeof window === "undefined") return null;
+
   const iv = window.crypto.getRandomValues(new Uint8Array(12));
   const key = await getKey(ENCRYPTION_SECRET);
   const encrypted = await window.crypto.subtle.encrypt(
@@ -47,12 +53,17 @@ const encrypt = async (text) => {
   );
 
   return btoa(
-    JSON.stringify({ iv: Array.from(iv), data: Array.from(new Uint8Array(encrypted)) })
+    JSON.stringify({
+      iv: Array.from(iv),
+      data: Array.from(new Uint8Array(encrypted)),
+    })
   );
 };
 
+// Decrypt private key
 const decrypt = async (ciphertext) => {
   if (typeof window === "undefined") return null;
+
   const { iv, data } = JSON.parse(atob(ciphertext));
   const key = await getKey(ENCRYPTION_SECRET);
   const decrypted = await window.crypto.subtle.decrypt(
@@ -60,9 +71,11 @@ const decrypt = async (ciphertext) => {
     key,
     new Uint8Array(data)
   );
+
   return decode(decrypted);
 };
 
+// Wallet Provider
 export const WalletProvider = ({ children }) => {
   const { user } = useMagicLink();
   const [wallet, setWallet] = useState(null);
