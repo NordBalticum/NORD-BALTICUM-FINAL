@@ -18,6 +18,20 @@ export default function SideDrawer() {
 
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    // SSR-safe: tik klientinėje pusėje
+    setIsClient(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isClient) return;
+    document.body.style.overflow = open ? "hidden" : "auto";
+    return () => {
+      document.body.style.overflow = "auto";
+    };
+  }, [open, isClient]);
 
   const toggleDrawer = () => setOpen(!open);
 
@@ -34,13 +48,6 @@ export default function SideDrawer() {
   const walletAddress =
     wallet?.bnb && utils.isAddress(wallet.bnb) ? wallet.bnb : "No wallet";
 
-  useEffect(() => {
-    document.body.style.overflow = open ? "hidden" : "auto";
-    return () => {
-      document.body.style.overflow = "auto";
-    };
-  }, [open]);
-
   const navItems = [
     { label: "Dashboard", path: "/dashboard" },
     { label: "Send", path: "/send" },
@@ -49,7 +56,8 @@ export default function SideDrawer() {
     { label: "Settings", path: "/settings" },
   ];
 
-  if (!user) return null;
+  // Nepasiruošęs – nerenderinam
+  if (!isClient || !user) return null;
 
   return (
     <>
@@ -71,6 +79,7 @@ export default function SideDrawer() {
               exit={{ opacity: 0 }}
               onClick={toggleDrawer}
             />
+
             <motion.aside
               className={`${styles.drawer} ${open ? styles.open : ""}`}
               initial={{ x: "-100%" }}
