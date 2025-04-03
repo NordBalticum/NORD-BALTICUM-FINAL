@@ -200,29 +200,37 @@
 @media (max-width: 768px) {
   .dashboardWrapper {
     padding: 20px 18px 80px;
-    transform: scale(0.96) translateY(-9%);
+    transform: scale(0.96) translateY(-7%);
     transform-origin: top center;
   }
 
+  .assetList {
+    gap: 14px;
+  }
+
+  .assetItem {
+    padding: 14px 20px;
+  }
+
   .assetLogo {
-    width: 34px;
-    height: 34px;
+    width: 32px;
+    height: 32px;
   }
 
   .assetSymbol {
-    font-size: 1rem;
-  }
-
-  .assetName {
-    font-size: 0.8rem;
-  }
-
-  .assetAmount {
     font-size: 0.95rem;
   }
 
-  .assetEur {
+  .assetName {
     font-size: 0.75rem;
+  }
+
+  .assetAmount {
+    font-size: 0.9rem;
+  }
+
+  .assetEur {
+    font-size: 0.7rem;
   }
 
   .chartControls {
