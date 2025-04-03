@@ -1,45 +1,26 @@
 .wrapper {
   width: 100%;
-  padding: 18px 20px;
-  border-radius: 18px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(18px) saturate(140%);
-  box-shadow: 0 0 24px rgba(255, 255, 255, 0.04);
-  animation: fadeIn 0.5s ease-in-out;
+  margin: 0 auto;
+  margin-bottom: 20px;
 }
 
-.header {
+.controls {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 18px;
-  flex-wrap: wrap;
-}
-
-.header h3 {
-  font-size: 1.05rem;
-  font-family: var(--font-crypto);
-  color: #ffffff;
-  margin: 0;
-}
-
-.currencyToggle {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
+  justify-content: flex-end;
+  padding: 6px;
+  gap: 6px;
 }
 
 .currencyButton {
-  font-size: 0.75rem;
-  font-family: var(--font-crypto);
-  padding: 6px 12px;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.06);
   color: white;
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 0.7rem;
+  font-family: var(--font-crypto);
   cursor: pointer;
-  transition: 0.25s ease;
+  transition: all 0.2s ease;
 }
 
 .currencyButton:hover {
@@ -47,80 +28,61 @@
 }
 
 .active {
-  background: rgba(255, 255, 255, 0.25);
-  border-color: #ffd700;
-  color: #ffd700;
-  font-weight: 600;
-  box-shadow: 0 0 12px rgba(255, 215, 0, 0.15);
+  background: #ffd700;
+  color: #0a1f44;
+  font-weight: bold;
 }
 
-.table {
+.grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 14px;
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(12px);
+  border-radius: 14px;
+  overflow: hidden;
+  padding: 6px;
+  gap: 6px;
+  box-shadow: 0 0 24px rgba(255, 255, 255, 0.06);
 }
 
-.row {
+.card {
   display: flex;
   flex-direction: column;
   align-items: center;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 16px;
-  padding: 16px 12px;
-  transition: 0.3s ease;
-  backdrop-filter: blur(12px);
-  box-shadow: 0 0 18px rgba(255, 255, 255, 0.03);
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 12px;
+  padding: 8px 6px;
+  min-height: 80px;
+  justify-content: center;
 }
 
-.row:hover {
-  background: rgba(255, 255, 255, 0.07);
-  transform: translateY(-2px);
-}
-
-.logo img {
-  width: 38px;
-  height: 38px;
+.logo {
+  width: 22px;
+  height: 22px;
   object-fit: contain;
-  margin-bottom: 10px;
-}
-
-.symbol {
-  font-family: var(--font-crypto);
-  color: white;
-  font-size: 0.9rem;
-  font-weight: 600;
   margin-bottom: 4px;
 }
 
-.price {
+.symbol {
+  font-size: 0.75rem;
+  color: #fff;
   font-family: var(--font-crypto);
+  margin-bottom: 2px;
+}
+
+.price {
+  font-size: 0.85rem;
   color: #ffd700;
-  font-size: 0.95rem;
-  font-weight: 500;
+  font-family: var(--font-crypto);
 }
 
-/* Fade animation */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(16px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* Responsive */
+/* Mobile */
 @media (max-width: 768px) {
-  .table {
+  .grid {
     grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
   }
-}
-
-@media (max-width: 480px) {
-  .table {
-    grid-template-columns: 1fr;
+  .card {
+    padding: 10px 6px;
   }
 }
