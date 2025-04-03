@@ -80,7 +80,7 @@ export default function SideDrawer() {
               </div>
 
               <div className={styles.userBox}>
-                <img src="/logo.svg" alt="Logo" className={styles.logo} />
+                <img src="/public/icons/logo.svg" alt="Logo" className={styles.logo} />
                 <p className={styles.email}>{user.email}</p>
               </div>
 
