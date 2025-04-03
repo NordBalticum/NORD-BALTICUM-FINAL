@@ -6,34 +6,10 @@ import { useRouter } from "next/navigation";
 import styles from "./livepricetable.module.css";
 
 const tokens = [
-  {
-    id: "binancecoin",
-    cmc: "BNB",
-    symbol: "BNB",
-    logo: "https://cryptologos.cc/logos/binance-coin-bnb-logo.png",
-    route: "/bnb",
-  },
-  {
-    id: "ethereum",
-    cmc: "ETH",
-    symbol: "ETH",
-    logo: "https://cryptologos.cc/logos/ethereum-eth-logo.png",
-    route: "/eth",
-  },
-  {
-    id: "polygon_pos",
-    cmc: "MATIC",
-    symbol: "MATIC",
-    logo: "https://cryptologos.cc/logos/polygon-matic-logo.png",
-    route: "/matic",
-  },
-  {
-    id: "avalanche-2",
-    cmc: "AVAX",
-    symbol: "AVAX",
-    logo: "https://cryptologos.cc/logos/avalanche-avax-logo.png",
-    route: "/avax",
-  },
+  { id: "bnb", symbol: "BNB", logo: "https://cryptologos.cc/logos/binance-coin-bnb-logo.png", route: "/bnb" },
+  { id: "eth", symbol: "ETH", logo: "https://cryptologos.cc/logos/ethereum-eth-logo.png", route: "/eth" },
+  { id: "matic", symbol: "MATIC", logo: "https://cryptologos.cc/logos/polygon-matic-logo.png", route: "/matic" },
+  { id: "avax", symbol: "AVAX", logo: "https://cryptologos.cc/logos/avalanche-avax-logo.png", route: "/avax" },
 ];
 
 const currencies = ["eur", "usd"];
@@ -48,36 +24,12 @@ export default function LivePriceTable() {
     if (!navigator.onLine) return;
 
     try {
-      const symbols = tokens.map((t) => t.cmc).join(",");
-      const res = await axios.get("https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest", {
-        params: {
-          symbol: symbols,
-          convert: currencies.join(","),
-        },
-        headers: {
-          "X-CMC_PRO_API_KEY": process.env.NEXT_PUBLIC_CMC_API_KEY,
-        },
-        timeout: 10000,
-      });
-
-      const cmcData = res.data.data;
-      const updatedPrices = {};
-
-      for (const token of tokens) {
-        const info = cmcData[token.cmc];
-        if (info) {
-          updatedPrices[token.id] = {
-            eur: info.quote.EUR?.price ?? null,
-            usd: info.quote.USD?.price ?? null,
-          };
-        }
-      }
-
-      setPrices(updatedPrices);
+      const res = await axios.get("/api/get-prices");
+      setPrices(res.data);
     } catch (err) {
-      console.error("CoinMarketCap price fetch failed:", err.message);
+      console.error("Price fetch failed:", err.message);
     }
-  }, [currency]);
+  }, []);
 
   useEffect(() => {
     fetchPrices();
