@@ -4,12 +4,11 @@
   position: fixed;
   left: 0;
   right: 0;
-  bottom: 0;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 4px); /* FINAL FIX */
   display: flex;
   justify-content: center;
   z-index: 9999;
   pointer-events: none;
-  padding-bottom: env(safe-area-inset-bottom, 8px);
   box-sizing: border-box;
 }
 
