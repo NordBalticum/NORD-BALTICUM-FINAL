@@ -4,12 +4,12 @@
   position: fixed;
   left: 0;
   right: 0;
-  bottom: 65px; /* Kilnoti čia */
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 10px);
   display: flex;
   justify-content: center;
   z-index: 9999;
   pointer-events: none;
-  padding-bottom: calc(env(safe-area-inset-bottom, 0px));
+  padding-bottom: env(safe-area-inset-bottom, 0px);
   box-sizing: border-box;
 }
 
@@ -83,9 +83,9 @@
 .active {
   background: white;
   color: black;
-  box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
-  border: 2px solid #000000;
-  transform: scale(1.02);
+  box-shadow: 0 0 14px rgba(255, 255, 255, 0.2);
+  border: 1px solid #000000;
+  transform: scale(1.01);
   transition: all 0.3s ease;
 }
 
@@ -124,8 +124,8 @@
   }
 }
 
-/* === MOBILE OPTIMIZATION === */
-@media (max-width: 480px) {
+/* === MOBILE ONLY === */
+@media (max-width: 768px) {
   .navbar {
     width: calc(100% - 20px);
     height: 64px;
@@ -144,21 +144,5 @@
 
   .label {
     font-size: 0.6rem;
-  }
-}
-
-/* === DESKTOP ULTRA === */
-@media (min-width: 1440px) {
-  .navbar {
-    max-width: 560px;
-    height: 78px;
-  }
-
-  .icon {
-    font-size: 1.4rem;
-  }
-
-  .label {
-    font-size: 0.75rem;
   }
 }
