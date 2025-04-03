@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { useMagicLink } from "@/contexts/MagicLinkContext";
 import { useWallet } from "@/contexts/WalletContext";
-import { useNetwork } from "@/contexts/NetworkContext";
 import { useBalance } from "@/contexts/BalanceContext";
+import { useSendCrypto } from "@/contexts/SendCryptoContext";
 
 import SwipeSelector from "@/components/SwipeSelector";
 import SuccessModal from "@/components/modals/SuccessModal";
@@ -16,17 +16,16 @@ import background from "@/styles/background.module.css";
 
 export default function Send() {
   const router = useRouter();
-
   const { user } = useMagicLink();
-  const { sendCryptoTransaction } = useWallet();
-  const { activeNetwork, setActiveNetwork } = useNetwork();
+  const { activeNetwork, setActiveNetwork } = useWallet();
   const { balance, balanceEUR, maxSendable, refreshBalance } = useBalance();
+  const { sendTransaction } = useSendCrypto();
 
   const [receiver, setReceiver] = useState("");
   const [amount, setAmount] = useState("");
+  const [txHash, setTxHash] = useState("");
   const [showConfirm, setShowConfirm] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
-  const [txHash, setTxHash] = useState("");
 
   const calculatedFee = Number(amount || 0) * 0.03;
   const amountAfterFee = Number(amount || 0) - calculatedFee;
@@ -36,8 +35,10 @@ export default function Send() {
   }, [user, router]);
 
   useEffect(() => {
-    if (user?.email) refreshBalance(user.email, activeNetwork);
-  }, [activeNetwork, user, refreshBalance]);
+    if (user?.email && activeNetwork) {
+      refreshBalance(user.email, activeNetwork);
+    }
+  }, [user, activeNetwork, refreshBalance]);
 
   const handleSend = () => {
     const trimmedReceiver = receiver.trim();
@@ -58,12 +59,12 @@ export default function Send() {
   const confirmSend = async () => {
     setShowConfirm(false);
 
-    const result = await sendCryptoTransaction(
-      user.email,
-      activeNetwork,
-      receiver.trim(),
-      amount
-    );
+    const result = await sendTransaction({
+      sender: user.email,
+      receiver: receiver.trim(),
+      amount,
+      network: activeNetwork,
+    });
 
     if (result?.success) {
       setReceiver("");
@@ -101,7 +102,6 @@ export default function Send() {
             onChange={(e) => setReceiver(e.target.value)}
             className={styles.inputField}
           />
-
           <input
             type="number"
             placeholder="Amount to send"
@@ -136,12 +136,7 @@ export default function Send() {
               </div>
               <div className={styles.modalActions}>
                 <button className={styles.modalButton} onClick={confirmSend}>Confirm</button>
-                <button
-                  className={`${styles.modalButton} ${styles.cancel}`}
-                  onClick={() => setShowConfirm(false)}
-                >
-                  Cancel
-                </button>
+                <button className={`${styles.modalButton} ${styles.cancel}`} onClick={() => setShowConfirm(false)}>Cancel</button>
               </div>
             </div>
           </div>
