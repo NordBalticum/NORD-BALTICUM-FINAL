@@ -28,61 +28,62 @@ const fetchBalance = async (providerUrl, address) => {
     const balance = await provider.getBalance(address);
     return parseFloat(ethers.utils.formatEther(balance));
   } catch (err) {
-    console.error(`❌ Balance fetch failed (${address}):`, err);
+    console.error(`Fetch balance failed for ${address}:`, err);
     return 0;
   }
 };
 
 const fetchRates = async () => {
   try {
-    const ids = Object.values(coinMap).join(",");
-    const url = `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=eur,usd`;
+    const url = `https://api.coingecko.com/api/v3/simple/price?ids=${Object.values(coinMap).join(",")}&vs_currencies=eur,usd`;
     const res = await fetch(url);
-    if (!res.ok) throw new Error("Rate limit or fetch error");
     return await res.json();
   } catch (err) {
-    console.error("❌ Coingecko error:", err);
-    return {}; // prevent crash in case of failure
+    console.error("Coingecko fetch failed:", err);
+    return {};
   }
 };
 
 export const BalanceProvider = ({ children }) => {
   const { wallet } = useWallet();
   const [balances, setBalances] = useState(null);
-  const [rates, setRates] = useState({});
+  const [rates, setRates] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    if (!wallet || !wallet.bnb) return;
+    if (typeof window !== "undefined") setIsClient(true);
+  }, []);
 
-    const load = async () => {
-      setLoading(true);
+  useEffect(() => {
+    if (!isClient || !wallet || !wallet.bnb) return;
+
+    const loadBalances = async () => {
       try {
-        const newBalances = {};
-        const currentRates = await fetchRates();
+        const result = {};
+        const rateData = await fetchRates();
 
         for (const net of Object.keys(RPC)) {
-          const addr = wallet[net];
-          if (addr) {
-            const amount = await fetchBalance(RPC[net], addr);
-            newBalances[net] = amount;
+          const address = wallet[net];
+          if (address) {
+            const balance = await fetchBalance(RPC[net], address);
+            result[net] = balance;
           }
         }
 
-        setBalances(newBalances);
-        setRates(currentRates);
+        setBalances(result);
+        setRates(rateData);
       } catch (err) {
-        console.error("❌ loadBalances error:", err);
+        console.error("Balance fetch error:", err);
       } finally {
         setLoading(false);
       }
     };
 
-    load();
-    const interval = setInterval(load, 30000);
+    loadBalances();
+    const interval = setInterval(loadBalances, 30000);
     return () => clearInterval(interval);
-  }, [wallet]);
+  }, [wallet, isClient]);
 
   const format = (symbol, value) => {
     const coin = coinMap[symbol];
@@ -91,7 +92,7 @@ export const BalanceProvider = ({ children }) => {
 
     return {
       token: symbol,
-      value: parseFloat(value),
+      value: parseFloat(value || 0),
       eur: parseFloat((value * eurRate).toFixed(2)),
       usd: parseFloat((value * usdRate).toFixed(2)),
     };
