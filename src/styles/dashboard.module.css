@@ -1,4 +1,4 @@
-/* === DASHBOARD MODULE – NordBalticum Web3 Ferrari Gradient Unified FINAL v2 === */
+/* === DASHBOARD MODULE – NordBalticum Web3 Ferrari Gradient Unified FINAL v3 === */
 
 .container {
   position: fixed;
@@ -28,26 +28,6 @@
   pointer-events: none;
 }
 
-/* === AVATAR CENTER === */
-.avatarCenter {
-  margin-top: 76px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  animation: fadeInDown 0.8s ease;
-}
-
-.avatarCenter img {
-  width: 92px;
-  height: 92px;
-  border-radius: 50%;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  box-shadow: 0 0 18px rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.05);
-  transition: all 0.3s ease;
-}
-
-/* === WRAPPER === */
 .dashboardWrapper {
   position: relative;
   width: 100%;
@@ -61,33 +41,42 @@
   z-index: 2;
 }
 
-/* === TOTAL BALANCE === */
-.totalValueContainer {
-  text-align: center;
-  animation: fadeInDown 0.7s ease-in-out;
+.chartSection {
+  width: 100%;
+  max-width: 960px;
+  margin-bottom: 16px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(18px) saturate(140%);
+  box-shadow: 0 0 28px rgba(255, 255, 255, 0.05);
+  overflow: hidden;
+  padding: 12px 12px 4px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.totalLabel {
-  font-size: 0.95rem;
-  font-weight: 500;
+.chartControls {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 8px 12px 12px;
+}
+
+.selector {
+  padding: 8px 12px;
+  font-size: 0.9rem;
+  font-family: var(--font-crypto);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
   color: white;
-  letter-spacing: 1px;
-  opacity: 0.85;
-  font-family: var(--font-crypto);
+  cursor: pointer;
+  transition: 0.3s ease;
 }
 
-.totalValue {
-  font-size: clamp(30px, 5.5vw, 40px);
-  font-weight: 800;
-  background: linear-gradient(90deg, white, #ffd700);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  text-shadow: 0 0 16px rgba(255, 255, 255, 0.25);
-  animation: pulseGlow 2.5s infinite ease-in-out;
-  font-family: var(--font-crypto);
+.selector:hover {
+  background: rgba(255, 255, 255, 0.15);
 }
 
-/* === NETWORK LIST === */
 .assetList {
   width: 100%;
   display: flex;
@@ -172,29 +161,43 @@
   font-family: var(--font-crypto);
 }
 
-/* === ANIMATIONS === */
+/* Animacijos */
 @keyframes fadeInDown {
-  from { opacity: 0; transform: translateY(-24px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(-24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(24px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes pulseGlow {
-  0% { text-shadow: 0 0 10px rgba(255, 255, 255, 0.2); }
-  50% { text-shadow: 0 0 20px rgba(255, 255, 255, 0.4); }
-  100% { text-shadow: 0 0 10px rgba(255, 255, 255, 0.2); }
+  0% {
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+  }
+  50% {
+    text-shadow: 0 0 20px rgba(255, 255, 255, 0.4);
+  }
+  100% {
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+  }
 }
 
-/* === RESPONSIVE === */
+/* Responsive */
 @media (max-width: 768px) {
-  .avatarCenter {
-    margin-top: 88px;
-  }
-
   .dashboardWrapper {
     padding: 20px 18px 80px;
     transform: scale(0.96) translateY(-9%);
@@ -220,5 +223,10 @@
 
   .assetEur {
     font-size: 0.75rem;
+  }
+
+  .chartControls {
+    flex-direction: column;
+    align-items: flex-end;
   }
 }
