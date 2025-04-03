@@ -248,3 +248,10 @@
     max-width: 680px;
   }
 }
+
+@media (max-width: 768px) {
+  .wrapper {
+    transform: scale(0.96) translateY(3%);
+    transform-origin: top center;
+  }
+}
