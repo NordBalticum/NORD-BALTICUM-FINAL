@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import axios from "axios";
 import {
   Chart as ChartJS,
@@ -26,12 +26,11 @@ ChartJS.register(
   TimeScale
 );
 
-// Tinklo žymėjimai su Coingecko ID
+// Tik Coingecko palaikomi ID
 const networks = [
   { id: "binancecoin", label: "BNB" },
-  { id: "binancecoin", label: "TBNB" },
   { id: "ethereum", label: "ETH" },
-  { id: "polygon", label: "MATIC" },
+  { id: "polygon-pos", label: "MATIC" },
   { id: "avalanche-2", label: "AVAX" },
 ];
 
@@ -52,7 +51,7 @@ export default function Chart({ token = "bnb", currency = "eur" }) {
   const [loading, setLoading] = useState(true);
   const intervalRef = useRef(null);
 
-  const fetchChart = async () => {
+  const fetchChart = useCallback(async () => {
     try {
       setLoading(true);
       const res = await axios.get(
@@ -61,12 +60,15 @@ export default function Chart({ token = "bnb", currency = "eur" }) {
           params: {
             vs_currency: selectedCurrency,
             days: range,
-            interval: range === 1 ? "minute" : "hourly",
+            interval: range === 1 ? "minute" : "daily",
           },
         }
       );
 
       const prices = res.data.prices;
+      if (!prices || !prices.length) {
+        throw new Error("No price data available");
+      }
 
       setData({
         labels: prices.map(([timestamp]) => timestamp),
@@ -83,18 +85,19 @@ export default function Chart({ token = "bnb", currency = "eur" }) {
         ],
       });
     } catch (err) {
-      console.error("Chart fetch error:", err.message);
+      console.error("❌ Chart fetch error:", err.message);
       setData(null);
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedToken, selectedCurrency, range, selectedLabel]);
 
   useEffect(() => {
     fetchChart();
-    intervalRef.current = setInterval(fetchChart, 60000); // 60s
+    clearInterval(intervalRef.current);
+    intervalRef.current = setInterval(fetchChart, 60000);
     return () => clearInterval(intervalRef.current);
-  }, [selectedToken, selectedCurrency, range]);
+  }, [fetchChart]);
 
   const handleTokenChange = (e) => {
     const label = e.target.options[e.target.selectedIndex].text;
@@ -149,7 +152,7 @@ export default function Chart({ token = "bnb", currency = "eur" }) {
           onChange={handleTokenChange}
         >
           {networks.map((net) => (
-            <option key={net.label} value={net.id}>
+            <option key={net.id} value={net.id}>
               {net.label}
             </option>
           ))}
