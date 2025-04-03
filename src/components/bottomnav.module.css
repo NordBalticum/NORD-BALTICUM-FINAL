@@ -1,15 +1,15 @@
-/* === FINAL BANK V1 — Bottom Navigation FIXED Perfectly at Bottom === */
+/* === FINAL BANK V2 — Bottom Navigation FIXED Perfectly at Bottom === */
 
 .bottomWrapper {
   position: fixed;
   left: 0;
   right: 0;
-  bottom: calc(env(safe-area-inset-bottom, 0px) + 10px);
+  bottom: 0;
   display: flex;
   justify-content: center;
   z-index: 9999;
   pointer-events: none;
-  padding-bottom: env(safe-area-inset-bottom, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 8px);
   box-sizing: border-box;
 }
 
@@ -17,16 +17,16 @@
   pointer-events: auto;
   transform: scale(0.97);
   width: clamp(280px, 90vw, 520px);
-  height: var(--nav-height, 72px);
+  height: var(--nav-height, 64px);
   background: rgba(12, 18, 36, 0.92);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 24px;
+  border-radius: 20px;
   display: flex;
   justify-content: space-around;
   align-items: center;
   backdrop-filter: blur(20px) saturate(180%);
   box-shadow: 0 12px 36px rgba(0, 0, 0, 0.45);
-  padding: 0 clamp(8px, 2vw, 16px);
+  padding: 0 clamp(6px, 2vw, 14px);
   animation: fadeInUp 0.5s ease-out;
   transition: all 0.3s ease;
   box-sizing: border-box;
@@ -40,9 +40,9 @@
   align-items: center;
   justify-content: center;
   gap: 2px;
-  padding: 8px 0;
+  padding: 6px 0;
   background: transparent;
-  border-radius: 18px;
+  border-radius: 14px;
   font-family: var(--font-crypto, monospace);
   color: white;
   text-decoration: none;
@@ -50,7 +50,7 @@
   position: relative;
   overflow: hidden;
   font-weight: 600;
-  min-width: 64px;
+  min-width: 60px;
 }
 
 .navItem::after {
@@ -60,7 +60,7 @@
   background: rgba(255, 255, 255, 0.08);
   opacity: 0;
   transition: opacity 0.3s ease;
-  border-radius: 18px;
+  border-radius: 14px;
 }
 
 .navItem:hover::after {
@@ -68,12 +68,12 @@
 }
 
 .navItem:hover {
-  transform: translateY(-3px) scale(1.035);
+  transform: translateY(-2px) scale(1.03);
 }
 
 .navItem:focus {
   outline: none;
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.15);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.12);
 }
 
 .navItem:active .icon {
@@ -83,7 +83,7 @@
 .active {
   background: white;
   color: black;
-  box-shadow: 0 0 14px rgba(255, 255, 255, 0.2);
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.2);
   border: 1px solid #000000;
   transform: scale(1.01);
   transition: all 0.3s ease;
@@ -95,7 +95,7 @@
 }
 
 .icon {
-  font-size: 1.2rem;
+  font-size: 1.1rem;
   margin-bottom: 1px;
   transition: transform 0.25s ease, color 0.25s ease;
   color: white;
@@ -103,7 +103,7 @@
 }
 
 .label {
-  font-size: 0.7rem;
+  font-size: 0.6rem;
   font-weight: 700;
   letter-spacing: 0.5px;
   text-transform: uppercase;
@@ -124,25 +124,50 @@
   }
 }
 
-/* === MOBILE ONLY === */
+/* === MOBILE ONLY: 480px - 768px === */
 @media (max-width: 768px) {
   .navbar {
-    width: calc(100% - 20px);
+    width: calc(100% - 24px);
     height: 64px;
     padding: 0 8px;
-    border-radius: 20px;
+    border-radius: 18px;
   }
 
   .navItem {
     padding: 6px 0;
-    border-radius: 14px;
+    border-radius: 12px;
   }
 
   .icon {
-    font-size: 1.05rem;
+    font-size: 1rem;
   }
 
   .label {
-    font-size: 0.6rem;
+    font-size: 0.55rem;
+  }
+}
+
+/* === MOBILE MINI === */
+@media (max-width: 480px) {
+  .navbar {
+    width: calc(100% - 18px);
+    height: 60px;
+    padding: 0 6px;
+    border-radius: 16px;
+  }
+
+  .icon {
+    font-size: 0.95rem;
+  }
+
+  .label {
+    font-size: 0.5rem;
+  }
+}
+
+/* === HIDE FROM PC === */
+@media (min-width: 769px) {
+  .bottomWrapper {
+    display: none;
   }
 }
