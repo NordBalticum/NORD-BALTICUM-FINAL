@@ -19,7 +19,7 @@ const tokens = [
     route: "/eth",
   },
   {
-    id: "polygon-pos",
+    id: "polygon_pos",
     symbol: "MATIC",
     logo: "https://cryptologos.cc/logos/polygon-matic-logo.png",
     route: "/matic",
