@@ -7,7 +7,7 @@ import styles from "./chart.module.css";
 
 const ApexChart = dynamic(() => import("react-apexcharts"), { ssr: false });
 
-const tokenToId = {
+const tokenToCoinId = {
   bnb: "binancecoin",
   tbnb: "binancecoin",
   eth: "ethereum",
@@ -22,11 +22,13 @@ export default function Chart({ token = "bnb", currency = "eur" }) {
 
   useEffect(() => {
     const fetchChart = async () => {
-      try {
-        setLoading(true);
-        setError("");
+      setLoading(true);
+      setError("");
 
-        const coinId = tokenToId[token] || "binancecoin";
+      try {
+        const coinId = tokenToCoinId[token];
+
+        if (!coinId) throw new Error("Unknown token");
 
         const { data } = await axios.get(
           `https://api.coingecko.com/api/v3/coins/${coinId}/market_chart`,
@@ -39,20 +41,15 @@ export default function Chart({ token = "bnb", currency = "eur" }) {
           }
         );
 
-        if (!data?.prices?.length) throw new Error("No chart data");
+        if (!data?.prices?.length) throw new Error("No price data");
 
-        const prices = data.prices.map(([timestamp, price]) => ({
-          x: new Date(timestamp),
+        const prices = data.prices.map(([time, price]) => ({
+          x: new Date(time),
           y: parseFloat(price.toFixed(4)),
         }));
 
         setChartData({
-          series: [
-            {
-              name: `${token.toUpperCase()} Price`,
-              data: prices,
-            },
-          ],
+          series: [{ name: `${token.toUpperCase()} Price`, data: prices }],
           options: {
             chart: {
               type: "area",
@@ -65,12 +62,12 @@ export default function Chart({ token = "bnb", currency = "eur" }) {
                 speed: 800,
               },
             },
-            dataLabels: { enabled: false },
             stroke: {
               curve: "smooth",
               width: 3,
               colors: ["#FFD700"],
             },
+            dataLabels: { enabled: false },
             fill: {
               type: "gradient",
               gradient: {
@@ -113,9 +110,8 @@ export default function Chart({ token = "bnb", currency = "eur" }) {
           },
         });
       } catch (err) {
-        console.error("❌ Chart fetch error:", err?.message || err);
+        console.error("❌ Chart fetch failed:", err?.message || err);
         setError("Failed to load chart. Try again later.");
-        setChartData({ series: [], options: {} });
       } finally {
         setLoading(false);
       }
@@ -137,7 +133,7 @@ export default function Chart({ token = "bnb", currency = "eur" }) {
   if (error || !chartData.series.length) {
     return (
       <div className={styles.loadingChart}>
-        {error || "Failed to load chart. Try again later."}
+        {error || "Chart unavailable."}
       </div>
     );
   }
