@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import axios from "axios";
-import styles from "./chart.module.css"; // <— Importas iš komponento stiliaus
+import styles from "./chart.module.css";
 
 const ApexChart = dynamic(() => import("react-apexcharts"), { ssr: false });
 
@@ -12,9 +12,10 @@ export default function Chart({ token = "bnb", currency = "eur" }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchChart = async () => {
       try {
         setLoading(true);
+
         const { data } = await axios.get(
           `https://api.coingecko.com/api/v3/coins/${token}/market_chart`,
           {
@@ -25,6 +26,8 @@ export default function Chart({ token = "bnb", currency = "eur" }) {
             },
           }
         );
+
+        if (!data?.prices?.length) throw new Error("Empty prices array");
 
         const prices = data.prices.map(([timestamp, price]) => ({
           x: new Date(timestamp),
@@ -98,19 +101,33 @@ export default function Chart({ token = "bnb", currency = "eur" }) {
           },
         });
       } catch (err) {
-        console.error("❌ Chart fetch error:", err);
+        console.error("❌ Chart fetch error:", err?.message || err);
+        setChartData({
+          series: [],
+          options: {},
+        });
       } finally {
         setLoading(false);
       }
     };
 
-    fetchData();
+    fetchChart();
   }, [token, currency]);
 
-  if (loading || chartData.series.length === 0) {
+  if (loading) {
     return (
       <div className={styles.loadingChart}>
-        Loading chart...
+        <span className={styles.dot}>•</span>
+        <span className={styles.dot}>•</span>
+        <span className={styles.dot}>•</span>
+      </div>
+    );
+  }
+
+  if (!chartData.series.length) {
+    return (
+      <div className={styles.loadingChart}>
+        Failed to load chart. Try again later.
       </div>
     );
   }
