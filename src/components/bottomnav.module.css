@@ -4,7 +4,7 @@
   position: fixed;
   left: 0;
   right: 0;
-  bottom: 16px; /* PAKELTAS iš 12px į 16px */
+  bottom: 20px; /* PAKELTAS į 20px */
   display: flex;
   justify-content: center;
   z-index: 9999;
