@@ -30,13 +30,14 @@
   width: 280px;
   height: 100vh;
   background: rgba(255, 255, 255, 0.03);
-  backdrop-filter: blur(18px) saturate(140%);
+  backdrop-filter: blur(20px) saturate(160%);
   border-right: 1px solid rgba(255, 255, 255, 0.08);
   z-index: 9999;
-  padding: 24px;
+  padding: 32px 24px 24px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+  transform: translateY(-30%);
 }
 
 .drawerHeader {
@@ -59,69 +60,46 @@
 
 .userBox {
   text-align: center;
-  margin-top: 16px;
-  animation: fadeInDown 0.4s ease;
+  margin-top: 12px;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 16px;
+  backdrop-filter: blur(18px);
+  box-shadow: 0 0 18px rgba(255, 255, 255, 0.1);
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.userBox::before {
+  content: "";
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60%;
+  height: 1px;
+  background: linear-gradient(to right, transparent, white, transparent);
+}
+
+.logo {
+  width: 52px;
+  height: 52px;
+  margin: 0 auto 10px;
+  display: block;
+  filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.3));
 }
 
 .email {
-  font-size: 0.95rem;
+  font-size: 1rem;
   font-weight: 500;
   color: white;
-  opacity: 0.9;
-  margin-top: 12px;
-  font-family: var(--font-crypto);
-}
-
-.walletBox {
-  margin-top: 18px;
-  padding: 14px 18px;
-  background: rgba(255, 255, 255, 0.03);
-  border-radius: 16px;
-  box-shadow: 0 4px 24px rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(14px);
-  text-align: center;
-  font-family: "Share Tech Mono", monospace;
-  word-break: break-all;
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  cursor: pointer;
-  position: relative;
-  transition: all 0.3s ease;
-}
-
-.walletBox:hover {
-  box-shadow: 0 0 32px rgba(255, 255, 255, 0.15);
-  transform: scale(1.02);
-}
-
-.walletLabel {
-  font-size: 0.72rem;
-  color: #aaa;
-  margin-bottom: 4px;
-  letter-spacing: 0.3px;
-}
-
-.walletAddress {
-  font-size: 0.84rem;
-  color: #fff;
   opacity: 0.95;
-  letter-spacing: 0.5px;
-  user-select: all;
-}
-
-.copiedText {
-  position: absolute;
-  top: -24px;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 0.7rem;
-  color: #ffd700;
+  font-family: var(--font-crypto);
   background: rgba(255, 255, 255, 0.05);
-  padding: 2px 10px;
-  border-radius: 10px;
-  backdrop-filter: blur(8px);
-  font-weight: 500;
-  z-index: 2;
-  pointer-events: none;
+  padding: 6px 12px;
+  border-radius: 12px;
+  display: inline-block;
 }
 
 .nav {
@@ -130,6 +108,7 @@
   flex-direction: column;
   gap: 1.4rem;
   font-family: var(--font-crypto);
+  align-items: flex-start;
 }
 
 .link {
@@ -160,6 +139,7 @@
   font-size: 0.9rem;
   cursor: pointer;
   transition: all 0.2s ease;
+  align-self: center;
 }
 
 .logout:hover {
