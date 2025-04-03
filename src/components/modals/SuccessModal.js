@@ -35,7 +35,9 @@ export default function SuccessModal({ message, txHash, networkKey, onClose }) {
             <p className={styles.txLabel}>Transaction Hash:</p>
 
             <div className={styles.txBox}>
-              <code>{txHash.slice(0, 12)}...{txHash.slice(-8)}</code>
+              <code>
+                {txHash.slice(0, 12)}...{txHash.slice(-8)}
+              </code>
               <button className={styles.copyButton} onClick={handleCopy}>
                 Copy
               </button>
