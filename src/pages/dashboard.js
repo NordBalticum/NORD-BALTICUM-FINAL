@@ -3,13 +3,13 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
-import Link from "next/link";
 
 import styles from "@/styles/dashboard.module.css";
 import { useMagicLink } from "@/contexts/MagicLinkContext";
 import { useWallet } from "@/contexts/WalletContext";
 import { useBalances } from "@/contexts/BalanceContext";
 
+// Paliekam tik LivePriceTable
 const LivePriceTable = dynamic(() => import("@/components/LivePriceTable"), { ssr: false });
 
 const iconUrls = {
@@ -66,7 +66,7 @@ export default function Dashboard() {
             const { eur, usd } = format(symbol, value);
 
             return (
-              <Link key={symbol} href={`/${symbol}`} className={styles.assetItem}>
+              <div key={symbol} className={styles.assetItem}>
                 <div className={styles.assetLeft}>
                   <img
                     src={iconUrls[symbol]}
@@ -91,7 +91,7 @@ export default function Dashboard() {
                     ≈ €{eur.toFixed(2)} / ${usd.toFixed(2)}
                   </div>
                 </div>
-              </Link>
+              </div>
             );
           })}
         </div>
