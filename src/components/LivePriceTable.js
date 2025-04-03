@@ -2,8 +2,8 @@
 
 import React, { useEffect, useState, useRef } from "react";
 import axios from "axios";
-import styles from "./livepricetable.module.css";
 import { useRouter } from "next/navigation";
+import styles from "./livepricetable.module.css";
 
 const tokens = [
   {
@@ -19,7 +19,7 @@ const tokens = [
     route: "/eth",
   },
   {
-    id: "polygon-pos", // Teisingas CoinGecko ID
+    id: "polygon-pos",
     symbol: "MATIC",
     logo: "https://cryptologos.cc/logos/polygon-matic-logo.png",
     route: "/matic",
@@ -77,11 +77,7 @@ export default function LivePriceTable() {
 
       <div className={styles.grid}>
         {tokens.map((token) => (
-          <div
-            key={token.id}
-            className={styles.card}
-            onClick={() => router.push(token.route)}
-          >
+          <div key={token.id} className={styles.card} onClick={() => router.push(token.route)}>
             <img src={token.logo} alt={token.symbol} className={styles.logo} />
             <div className={styles.symbol}>{token.symbol}</div>
             <div className={styles.price}>
