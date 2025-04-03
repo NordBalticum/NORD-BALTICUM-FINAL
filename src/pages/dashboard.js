@@ -31,7 +31,7 @@ export default function Dashboard() {
   const router = useRouter();
   const { user, loading } = useMagicLink();
   const { wallet } = useWallet();
-  const { balances, format } = useBalances();
+  const { format, balance } = useBalances(); // <- naudojam getBalance ir format
 
   const [isClient, setIsClient] = useState(false);
 
@@ -45,7 +45,7 @@ export default function Dashboard() {
     }
   }, [user, loading, router]);
 
-  const tokens = balances ? Object.keys(balances) : [];
+  const tokens = wallet ? Object.keys(wallet) : [];
 
   if (!isClient || !user) {
     return <div className={styles.loading}>Loading dashboard...</div>;
@@ -54,15 +54,14 @@ export default function Dashboard() {
   return (
     <main className={styles.container}>
       <div className={styles.dashboardWrapper}>
-        
         {/* === LIVE PRICE TABLE === */}
         <LivePriceTable />
 
         {/* === CRYPTO BALANCE LIST === */}
         <div className={styles.assetList}>
           {tokens.map((symbol) => {
-            const value = balances[symbol];
-            const { eur, usd } = format(symbol, value);
+            const value = balance(symbol);
+            const { eur, usd } = format(symbol);
 
             return (
               <div
@@ -91,14 +90,13 @@ export default function Dashboard() {
                     {value.toFixed(6)} {symbol.toUpperCase()}
                   </div>
                   <div className={styles.assetEur}>
-                    ≈ €{eur.toFixed(2)} / ${usd.toFixed(2)}
+                    ≈ €{eur} / ${usd}
                   </div>
                 </div>
               </div>
             );
           })}
         </div>
-
       </div>
     </main>
   );
