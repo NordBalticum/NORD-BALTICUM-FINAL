@@ -1,151 +1,190 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import dynamic from "next/dynamic";
+import React, { useEffect, useState, useRef } from "react";
 import axios from "axios";
+import {
+  Chart as ChartJS,
+  LineElement,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  Tooltip,
+  Filler,
+  TimeScale,
+} from "chart.js";
+import "chartjs-adapter-date-fns";
+import { Line } from "react-chartjs-2";
 import styles from "./chart.module.css";
 
-const ApexChart = dynamic(() => import("react-apexcharts"), { ssr: false });
+ChartJS.register(
+  LineElement,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  Tooltip,
+  Filler,
+  TimeScale
+);
 
-const tokenToCoinId = {
-  bnb: "binancecoin",
-  tbnb: "binancecoin",
-  eth: "ethereum",
-  matic: "polygon",
-  avax: "avalanche-2",
-};
+// CoinGecko-compatible token IDs
+const networks = [
+  { id: "binancecoin", label: "BNB" },
+  { id: "binancecoin", label: "TBNB" },
+  { id: "ethereum", label: "ETH" },
+  { id: "polygon", label: "MATIC" },
+  { id: "avalanche-2", label: "AVAX" },
+];
+
+const currencies = ["eur", "usd"];
+const ranges = [
+  { label: "1d", value: 1 },
+  { label: "7d", value: 7 },
+  { label: "14d", value: 14 },
+  { label: "30d", value: 30 },
+];
 
 export default function Chart({ token = "bnb", currency = "eur" }) {
-  const [chartData, setChartData] = useState({ series: [], options: {} });
+  const [selectedToken, setSelectedToken] = useState("binancecoin");
+  const [selectedCurrency, setSelectedCurrency] = useState(currency);
+  const [range, setRange] = useState(1);
+  const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const intervalRef = useRef(null);
 
-  useEffect(() => {
-    const fetchChart = async () => {
+  const fetchChart = async () => {
+    try {
       setLoading(true);
-      setError("");
-
-      try {
-        const coinId = tokenToCoinId[token];
-
-        if (!coinId) throw new Error("Unknown token");
-
-        const { data } = await axios.get(
-          `https://api.coingecko.com/api/v3/coins/${coinId}/market_chart`,
-          {
-            params: {
-              vs_currency: currency,
-              days: 1,
-              interval: "minute",
-            },
-          }
-        );
-
-        if (!data?.prices?.length) throw new Error("No price data");
-
-        const prices = data.prices.map(([time, price]) => ({
-          x: new Date(time),
-          y: parseFloat(price.toFixed(4)),
-        }));
-
-        setChartData({
-          series: [{ name: `${token.toUpperCase()} Price`, data: prices }],
-          options: {
-            chart: {
-              type: "area",
-              height: 320,
-              toolbar: { show: false },
-              zoom: { enabled: false },
-              animations: {
-                enabled: true,
-                easing: "easeinout",
-                speed: 800,
-              },
-            },
-            stroke: {
-              curve: "smooth",
-              width: 3,
-              colors: ["#FFD700"],
-            },
-            dataLabels: { enabled: false },
-            fill: {
-              type: "gradient",
-              gradient: {
-                shadeIntensity: 1,
-                opacityFrom: 0.35,
-                opacityTo: 0,
-                stops: [0, 90, 100],
-                colorStops: [
-                  { offset: 0, color: "#FFD700", opacity: 0.3 },
-                  { offset: 100, color: "#0A1F44", opacity: 0 },
-                ],
-              },
-            },
-            xaxis: {
-              type: "datetime",
-              labels: {
-                style: {
-                  colors: "#ffffff",
-                  fontFamily: "var(--font-crypto)",
-                },
-              },
-            },
-            yaxis: {
-              labels: {
-                formatter: (val) => `${val} ${currency.toUpperCase()}`,
-                style: {
-                  colors: "#ffffff",
-                  fontFamily: "var(--font-crypto)",
-                },
-              },
-            },
-            tooltip: {
-              theme: "dark",
-              x: { format: "HH:mm" },
-            },
-            grid: {
-              borderColor: "rgba(255,255,255,0.06)",
-              strokeDashArray: 4,
-            },
+      const res = await axios.get(
+        `https://api.coingecko.com/api/v3/coins/${selectedToken}/market_chart`,
+        {
+          params: {
+            vs_currency: selectedCurrency,
+            days: range,
+            interval: range === 1 ? "minute" : "hourly",
           },
-        });
-      } catch (err) {
-        console.error("❌ Chart fetch failed:", err?.message || err);
-        setError("Failed to load chart. Try again later.");
-      } finally {
-        setLoading(false);
-      }
-    };
+        }
+      );
 
+      const prices = res.data.prices;
+
+      setData({
+        labels: prices.map(([timestamp]) => timestamp),
+        datasets: [
+          {
+            label: `${selectedToken.toUpperCase()} / ${selectedCurrency.toUpperCase()}`,
+            data: prices.map(([, price]) => price),
+            fill: true,
+            borderColor: "#FFD700",
+            backgroundColor: "rgba(255, 215, 0, 0.12)",
+            tension: 0.35,
+            pointRadius: 0,
+          },
+        ],
+      });
+    } catch (err) {
+      console.error("Chart fetch error:", err.message);
+      setData(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch once and setup interval
+  useEffect(() => {
     fetchChart();
-  }, [token, currency]);
+    intervalRef.current = setInterval(fetchChart, 60000); // every 60 sec
+    return () => clearInterval(intervalRef.current);
+  }, [selectedToken, selectedCurrency, range]);
 
-  if (loading) {
-    return (
-      <div className={styles.loadingChart}>
-        <span className={styles.dot}>•</span>
-        <span className={styles.dot}>•</span>
-        <span className={styles.dot}>•</span>
-      </div>
-    );
-  }
-
-  if (error || !chartData.series.length) {
-    return (
-      <div className={styles.loadingChart}>
-        {error || "Chart unavailable."}
-      </div>
-    );
-  }
+  const options = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      tooltip: {
+        mode: "index",
+        intersect: false,
+        backgroundColor: "#0A1F44",
+        titleColor: "#FFD700",
+        bodyColor: "#fff",
+      },
+      legend: { display: false },
+    },
+    scales: {
+      x: {
+        type: "time",
+        time: {
+          unit: range === 1 ? "minute" : "day",
+          tooltipFormat: "PPp",
+        },
+        ticks: {
+          color: "#fff",
+          font: { family: "var(--font-crypto)" },
+        },
+        grid: { color: "rgba(255,255,255,0.05)" },
+      },
+      y: {
+        ticks: {
+          color: "#fff",
+          font: { family: "var(--font-crypto)" },
+          callback: (val) =>
+            `${parseFloat(val).toFixed(2)} ${selectedCurrency.toUpperCase()}`,
+        },
+        grid: { color: "rgba(255,255,255,0.06)" },
+      },
+    },
+  };
 
   return (
     <div className={styles.chartWrapper}>
-      <ApexChart
-        options={chartData.options}
-        series={chartData.series}
-        type="area"
-        height={320}
-      />
+      <div className={styles.controlsRow}>
+        {/* Network Select */}
+        <select
+          className={styles.selector}
+          value={selectedToken}
+          onChange={(e) => setSelectedToken(e.target.value)}
+        >
+          {networks.map((net) => (
+            <option key={net.id} value={net.id}>
+              {net.label}
+            </option>
+          ))}
+        </select>
+
+        {/* Currency Select */}
+        <select
+          className={styles.selector}
+          value={selectedCurrency}
+          onChange={(e) => setSelectedCurrency(e.target.value)}
+        >
+          {currencies.map((cur) => (
+            <option key={cur} value={cur}>
+              {cur.toUpperCase()}
+            </option>
+          ))}
+        </select>
+
+        {/* Range Buttons */}
+        <div className={styles.rangeButtons}>
+          {ranges.map((r) => (
+            <button
+              key={r.value}
+              className={`${styles.rangeButton} ${
+                range === r.value ? styles.active : ""
+              }`}
+              onClick={() => setRange(r.value)}
+            >
+              {r.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Chart */}
+      {loading || !data ? (
+        <div className={styles.loadingChart}>Loading chart...</div>
+      ) : (
+        <Line data={data} options={options} />
+      )}
     </div>
   );
-}
+      }
