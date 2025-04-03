@@ -3,70 +3,84 @@
 import React, { useState } from "react";
 import styles from "./chart.module.css";
 
-const tokens = ["bnb", "eth", "matic", "avax"];
-const currencies = ["eur", "usd"];
-const ranges = ["1", "7", "14", "30"];
+const tokenOptions = [
+  { id: "binancecoin", label: "BNB" },
+  { id: "ethereum", label: "ETH" },
+  { id: "polygon", label: "MATIC" },
+  { id: "avalanche-2", label: "AVAX" },
+];
+
+const currencyOptions = ["eur", "usd"];
+
+const rangeOptions = [
+  { label: "1d", value: "1" },
+  { label: "7d", value: "7" },
+  { label: "14d", value: "14" },
+  { label: "30d", value: "30" },
+];
 
 export default function ChartIframe() {
-  const [selectedToken, setSelectedToken] = useState("bnb");
-  const [selectedCurrency, setSelectedCurrency] = useState("eur");
-  const [selectedRange, setSelectedRange] = useState("1");
+  const [token, setToken] = useState("binancecoin");
+  const [currency, setCurrency] = useState("eur");
+  const [range, setRange] = useState("1");
 
-  const url = `https://www.coingecko.com/en/coins/${selectedToken}/eur?chart_duration=${selectedRange}#panel`;
+  const src = `https://www.coingecko.com/en/coins/${token}/usd#panel`;
 
   return (
     <div className={styles.chartWrapper}>
       <div className={styles.controlsRow}>
         <select
           className={styles.selector}
-          value={selectedToken}
-          onChange={(e) => setSelectedToken(e.target.value)}
+          value={token}
+          onChange={(e) => setToken(e.target.value)}
         >
-          {tokens.map((t) => (
-            <option key={t} value={t}>
-              {t.toUpperCase()}
+          {tokenOptions.map((t) => (
+            <option key={t.id} value={t.id}>
+              {t.label}
             </option>
           ))}
         </select>
 
         <select
           className={styles.selector}
-          value={selectedCurrency}
-          onChange={(e) => setSelectedCurrency(e.target.value)}
+          value={currency}
+          onChange={(e) => setCurrency(e.target.value)}
         >
-          {currencies.map((c) => (
-            <option key={c} value={c}>
-              {c.toUpperCase()}
+          {currencyOptions.map((cur) => (
+            <option key={cur} value={cur}>
+              {cur.toUpperCase()}
             </option>
           ))}
         </select>
 
         <div className={styles.rangeButtons}>
-          {ranges.map((r) => (
+          {rangeOptions.map((r) => (
             <button
-              key={r}
+              key={r.value}
               className={`${styles.rangeButton} ${
-                selectedRange === r ? styles.active : ""
+                range === r.value ? styles.active : ""
               }`}
-              onClick={() => setSelectedRange(r)}
+              onClick={() => setRange(r.value)}
             >
-              {r}d
+              {r.label}
             </button>
           ))}
         </div>
       </div>
 
       <iframe
-        src={url}
-        width="100%"
-        height="320"
-        style={{
-          border: "none",
-          borderRadius: "14px",
-          overflow: "hidden",
-          background: "transparent",
-        }}
+        className={styles.iframe}
+        src={`https://www.coingecko.com/en/coins/${token}`}
         loading="lazy"
+        title="Chart"
+        frameBorder="0"
+        style={{
+          width: "100%",
+          height: "320px",
+          borderRadius: "16px",
+          backgroundColor: "transparent",
+          overflow: "hidden",
+        }}
       />
     </div>
   );
