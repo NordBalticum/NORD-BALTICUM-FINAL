@@ -9,7 +9,8 @@ import { useMagicLink } from "@/contexts/MagicLinkContext";
 import { useWallet } from "@/contexts/WalletContext";
 import { useBalances } from "@/contexts/BalanceContext";
 
-const Chart = dynamic(() => import("@/components/Chart"), { ssr: false });
+// Naudojame IFRAME versiją vietoj bugiškų JS chartų
+const ChartIframe = dynamic(() => import("@/components/ChartIframe"), { ssr: false });
 
 const iconUrls = {
   bnb: "https://cryptologos.cc/logos/binance-coin-bnb-logo.png",
@@ -34,8 +35,6 @@ export default function Dashboard() {
   const { balances, format } = useBalances();
 
   const [isClient, setIsClient] = useState(false);
-  const [selectedToken, setSelectedToken] = useState("bnb");
-  const [selectedCurrency, setSelectedCurrency] = useState("eur");
 
   useEffect(() => {
     if (typeof window !== "undefined") setIsClient(true);
@@ -57,32 +56,9 @@ export default function Dashboard() {
     <main className={styles.container}>
       <div className={styles.dashboardWrapper}>
 
-        {/* === LIVE CHART === */}
+        {/* === LIVE CHART (IFRAME) === */}
         <div className={styles.chartSection}>
-          <Chart token={selectedToken} currency={selectedCurrency} />
-
-          <div className={styles.chartControls}>
-            <select
-              className={styles.selector}
-              value={selectedToken}
-              onChange={(e) => setSelectedToken(e.target.value)}
-            >
-              {Object.keys(iconUrls).map((key) => (
-                <option key={key} value={key}>
-                  {names[key]}
-                </option>
-              ))}
-            </select>
-
-            <select
-              className={styles.selector}
-              value={selectedCurrency}
-              onChange={(e) => setSelectedCurrency(e.target.value)}
-            >
-              <option value="eur">EUR</option>
-              <option value="usd">USD</option>
-            </select>
-          </div>
+          <ChartIframe />
         </div>
 
         {/* === CRYPTO BALANCE LIST === */}
