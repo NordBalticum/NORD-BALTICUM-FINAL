@@ -1,10 +1,17 @@
-/* === BOTTOM NAVIGATION – NordBalticum Diamond Grade === */
-
-.navbar {
+.bottomWrapper {
   position: fixed;
   bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%) scale(0.97); /* švelnus mažinimas */
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  z-index: 9999;
+  pointer-events: none;
+}
+
+.navbar {
+  pointer-events: auto;
+  transform: scale(0.97);
   width: clamp(280px, 90vw, 520px);
   height: var(--nav-height, 72px);
   background: rgba(12, 18, 36, 0.92);
@@ -13,7 +20,6 @@
   display: flex;
   justify-content: space-around;
   align-items: center;
-  z-index: 9999;
   backdrop-filter: blur(20px) saturate(180%);
   box-shadow: 0 12px 36px rgba(0, 0, 0, 0.45);
   padding: 0 clamp(8px, 2vw, 16px);
