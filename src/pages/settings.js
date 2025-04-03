@@ -13,34 +13,51 @@ export default function SettingsPage() {
   const { user, logout, fetchUserWallet, updateEmail } = useMagicLink();
 
   const [emailInput, setEmailInput] = useState("");
-  const [walletAddress, setWalletAddress] = useState("");
+  const [walletAddress, setWalletAddress] = useState("Loading...");
+  const [isClient, setIsClient] = useState(false);
 
+  // SSR-safe hook
   useEffect(() => {
-    if (user?.email) {
-      fetchUserWallet(user.email)
-        .then((addr) => setWalletAddress(addr || "Wallet not found"))
-        .catch(console.error);
+    if (typeof window !== "undefined") {
+      setIsClient(true);
     }
-  }, [user, fetchUserWallet]);
+  }, []);
+
+  // Wallet fetch only on client
+  useEffect(() => {
+    if (!isClient || !user?.email) return;
+
+    fetchUserWallet(user.email)
+      .then((addr) => {
+        setWalletAddress(addr || "Wallet not found");
+      })
+      .catch((err) => {
+        console.error("Wallet fetch error:", err);
+        setWalletAddress("Error fetching wallet");
+      });
+  }, [user, fetchUserWallet, isClient]);
 
   const handleChangeEmail = async () => {
-    if (!emailInput.trim()) {
+    const email = emailInput.trim();
+    if (!email) {
       alert("Please enter a new email.");
       return;
     }
 
-    const result = await updateEmail(emailInput.trim());
-    if (result.success) {
+    const result = await updateEmail(email);
+    if (result?.success) {
       alert("✅ Magic Link sent to new email.");
     } else {
-      alert("❌ Error: " + result.message);
+      alert("❌ Error: " + (result?.message || "Unknown error"));
     }
   };
 
   const handleCopyWallet = () => {
-    if (walletAddress && walletAddress !== "Wallet not found") {
-      navigator.clipboard.writeText(walletAddress);
-      alert("✅ Wallet address copied.");
+    if (!walletAddress || walletAddress.includes("not") || walletAddress.includes("Error")) return;
+    if (typeof window !== "undefined") {
+      navigator.clipboard.writeText(walletAddress).then(() => {
+        alert("✅ Wallet address copied.");
+      });
     }
   };
 
@@ -49,7 +66,7 @@ export default function SettingsPage() {
     router.replace("/");
   };
 
-  if (!user) return <div className={styles.loading}>Loading profile...</div>;
+  if (!isClient || !user) return <div className={styles.loading}>Loading profile...</div>;
 
   return (
     <main className={`${styles.container} ${background.gradient}`}>
