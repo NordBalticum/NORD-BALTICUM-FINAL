@@ -7,17 +7,29 @@ import styles from "./chart.module.css";
 
 const ApexChart = dynamic(() => import("react-apexcharts"), { ssr: false });
 
+const tokenToId = {
+  bnb: "binancecoin",
+  tbnb: "binancecoin",
+  eth: "ethereum",
+  matic: "polygon",
+  avax: "avalanche-2",
+};
+
 export default function Chart({ token = "bnb", currency = "eur" }) {
   const [chartData, setChartData] = useState({ series: [], options: {} });
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     const fetchChart = async () => {
       try {
         setLoading(true);
+        setError("");
+
+        const coinId = tokenToId[token] || "binancecoin";
 
         const { data } = await axios.get(
-          `https://api.coingecko.com/api/v3/coins/${token}/market_chart`,
+          `https://api.coingecko.com/api/v3/coins/${coinId}/market_chart`,
           {
             params: {
               vs_currency: currency,
@@ -27,7 +39,7 @@ export default function Chart({ token = "bnb", currency = "eur" }) {
           }
         );
 
-        if (!data?.prices?.length) throw new Error("Empty prices array");
+        if (!data?.prices?.length) throw new Error("No chart data");
 
         const prices = data.prices.map(([timestamp, price]) => ({
           x: new Date(timestamp),
@@ -102,10 +114,8 @@ export default function Chart({ token = "bnb", currency = "eur" }) {
         });
       } catch (err) {
         console.error("❌ Chart fetch error:", err?.message || err);
-        setChartData({
-          series: [],
-          options: {},
-        });
+        setError("Failed to load chart. Try again later.");
+        setChartData({ series: [], options: {} });
       } finally {
         setLoading(false);
       }
@@ -124,10 +134,10 @@ export default function Chart({ token = "bnb", currency = "eur" }) {
     );
   }
 
-  if (!chartData.series.length) {
+  if (error || !chartData.series.length) {
     return (
       <div className={styles.loadingChart}>
-        Failed to load chart. Try again later.
+        {error || "Failed to load chart. Try again later."}
       </div>
     );
   }
