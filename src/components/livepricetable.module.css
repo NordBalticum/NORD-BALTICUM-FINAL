@@ -2,18 +2,16 @@
   width: 100%;
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
+  align-items: center; /* Centruotas horizontaliai */
   margin-bottom: 10px;
   gap: 8px;
-  transform: scale(0.9);
-  transform-origin: top right;
+  transform: translateY(1%); /* Paleistas 1% žemyn */
 }
 
 .controls {
   display: flex;
   gap: 8px;
-  justify-content: flex-end;
-  margin-right: 2px;
+  justify-content: center;
 }
 
 .currencyButton {
@@ -44,6 +42,7 @@
   grid-template-columns: repeat(2, 1fr);
   gap: 10px;
   width: 100%;
+  max-width: 340px;
 }
 
 .card {
@@ -85,4 +84,30 @@
   font-family: var(--font-crypto);
   font-size: 0.7rem;
   color: white;
+}
+
+/* Extra responsive patobulinimas */
+@media (max-width: 480px) {
+  .grid {
+    grid-template-columns: repeat(2, minmax(100px, 1fr));
+    gap: 8px;
+  }
+
+  .logo {
+    width: 26px;
+    height: 26px;
+  }
+
+  .symbol {
+    font-size: 0.7rem;
+  }
+
+  .price {
+    font-size: 0.65rem;
+  }
+
+  .currencyButton {
+    font-size: 0.6rem;
+    padding: 3px 8px;
+  }
 }
