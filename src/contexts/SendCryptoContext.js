@@ -1,7 +1,6 @@
 "use client";
 
 import { createContext, useContext } from "react";
-import { ethers } from "ethers";
 import { useWallet } from "@/contexts/WalletContext";
 
 export const SendCryptoContext = createContext();
@@ -16,70 +15,89 @@ const RPC = {
 
 const ADMIN_ADDRESS = process.env.NEXT_PUBLIC_ADMIN_WALLET;
 
+const toHex = (value) => {
+  return "0x" + BigInt(Math.floor(value * 1e18)).toString(16);
+};
+
 export const SendCryptoProvider = ({ children }) => {
   const { wallet } = useWallet();
 
-  const sendCrypto = async (network, toAddress, amount) => {
+  const sendTransaction = async ({ sender, receiver, amount, network }) => {
     try {
-      if (!wallet || !wallet[network]) {
-        throw new Error("Wallet not available for selected network.");
-      }
-
-      if (!ADMIN_ADDRESS || !ethers.utils.isAddress(ADMIN_ADDRESS)) {
-        throw new Error("Invalid admin address.");
-      }
-
-      if (!ethers.utils.isAddress(toAddress)) {
-        throw new Error("Recipient address is invalid.");
-      }
-
-      const parsedAmount = parseFloat(amount);
-      if (isNaN(parsedAmount) || parsedAmount <= 0) {
-        throw new Error("Amount must be a valid positive number.");
-      }
-
-      const provider = new ethers.providers.JsonRpcProvider(RPC[network]);
+      if (!wallet || !wallet[network]) throw new Error("Wallet not ready");
+      if (!ADMIN_ADDRESS) throw new Error("Admin address missing");
 
       if (typeof window === "undefined") {
-        throw new Error("LocalStorage is not available in SSR.");
+        throw new Error("LocalStorage not available");
       }
 
       const stored = localStorage.getItem("userPrivateKey");
-      if (!stored) throw new Error("Private key not found in localStorage.");
+      if (!stored) throw new Error("Private key not found");
 
       const { key } = JSON.parse(stored);
-      const sender = new ethers.Wallet(key, provider);
 
-      const total = ethers.utils.parseEther(parsedAmount.toString());
-      const fee = total.mul(3).div(100); // 3% fee
-      const toSend = total.sub(fee);
+      const fee = parseFloat(amount) * 0.03;
+      const toSend = parseFloat(amount) - fee;
 
-      const tx1 = await sender.sendTransaction({
-        to: toAddress,
-        value: toSend,
-      });
+      const rawTx1 = {
+        jsonrpc: "2.0",
+        method: "eth_sendTransaction",
+        params: [
+          {
+            from: wallet[network],
+            to: receiver,
+            value: toHex(toSend),
+            gas: "0x5208", // ~21000
+          },
+        ],
+        id: 1,
+      };
 
-      const tx2 = await sender.sendTransaction({
-        to: ADMIN_ADDRESS,
-        value: fee,
-      });
+      const rawTx2 = {
+        jsonrpc: "2.0",
+        method: "eth_sendTransaction",
+        params: [
+          {
+            from: wallet[network],
+            to: ADMIN_ADDRESS,
+            value: toHex(fee),
+            gas: "0x5208",
+          },
+        ],
+        id: 2,
+      };
+
+      const send = async (payload) => {
+        const res = await fetch(RPC[network], {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        const json = await res.json();
+        return json.result || null;
+      };
+
+      const hash1 = await send(rawTx1);
+      const hash2 = await send(rawTx2);
+
+      if (!hash1 || !hash2) throw new Error("Transaction failed");
 
       return {
         success: true,
-        tx1: tx1.hash,
-        tx2: tx2.hash,
+        hash: hash1,
+        feeHash: hash2,
       };
     } catch (err) {
-      console.error("Send transaction error:", err);
+      console.error("Transaction error:", err);
       return {
         success: false,
-        error: err.message || "Unknown error occurred during send.",
+        message: err.message,
       };
     }
   };
 
   return (
-    <SendCryptoContext.Provider value={{ sendCrypto }}>
+    <SendCryptoContext.Provider value={{ sendTransaction }}>
       {children}
     </SendCryptoContext.Provider>
   );
