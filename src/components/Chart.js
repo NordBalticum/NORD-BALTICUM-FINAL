@@ -26,7 +26,7 @@ ChartJS.register(
   TimeScale
 );
 
-// CoinGecko-compatible token IDs
+// Tinklo žymėjimai su Coingecko ID
 const networks = [
   { id: "binancecoin", label: "BNB" },
   { id: "binancecoin", label: "TBNB" },
@@ -45,6 +45,7 @@ const ranges = [
 
 export default function Chart({ token = "bnb", currency = "eur" }) {
   const [selectedToken, setSelectedToken] = useState("binancecoin");
+  const [selectedLabel, setSelectedLabel] = useState("BNB");
   const [selectedCurrency, setSelectedCurrency] = useState(currency);
   const [range, setRange] = useState(1);
   const [data, setData] = useState(null);
@@ -71,7 +72,7 @@ export default function Chart({ token = "bnb", currency = "eur" }) {
         labels: prices.map(([timestamp]) => timestamp),
         datasets: [
           {
-            label: `${selectedToken.toUpperCase()} / ${selectedCurrency.toUpperCase()}`,
+            label: `${selectedLabel} / ${selectedCurrency.toUpperCase()}`,
             data: prices.map(([, price]) => price),
             fill: true,
             borderColor: "#FFD700",
@@ -89,12 +90,17 @@ export default function Chart({ token = "bnb", currency = "eur" }) {
     }
   };
 
-  // Fetch once and setup interval
   useEffect(() => {
     fetchChart();
-    intervalRef.current = setInterval(fetchChart, 60000); // every 60 sec
+    intervalRef.current = setInterval(fetchChart, 60000); // 60s
     return () => clearInterval(intervalRef.current);
   }, [selectedToken, selectedCurrency, range]);
+
+  const handleTokenChange = (e) => {
+    const label = e.target.options[e.target.selectedIndex].text;
+    setSelectedToken(e.target.value);
+    setSelectedLabel(label);
+  };
 
   const options = {
     responsive: true,
@@ -137,20 +143,18 @@ export default function Chart({ token = "bnb", currency = "eur" }) {
   return (
     <div className={styles.chartWrapper}>
       <div className={styles.controlsRow}>
-        {/* Network Select */}
         <select
           className={styles.selector}
           value={selectedToken}
-          onChange={(e) => setSelectedToken(e.target.value)}
+          onChange={handleTokenChange}
         >
           {networks.map((net) => (
-            <option key={net.id} value={net.id}>
+            <option key={net.label} value={net.id}>
               {net.label}
             </option>
           ))}
         </select>
 
-        {/* Currency Select */}
         <select
           className={styles.selector}
           value={selectedCurrency}
@@ -163,7 +167,6 @@ export default function Chart({ token = "bnb", currency = "eur" }) {
           ))}
         </select>
 
-        {/* Range Buttons */}
         <div className={styles.rangeButtons}>
           {ranges.map((r) => (
             <button
@@ -179,7 +182,6 @@ export default function Chart({ token = "bnb", currency = "eur" }) {
         </div>
       </div>
 
-      {/* Chart */}
       {loading || !data ? (
         <div className={styles.loadingChart}>Loading chart...</div>
       ) : (
