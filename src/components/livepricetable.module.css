@@ -5,7 +5,7 @@
   align-items: flex-end;
   margin-bottom: 10px;
   gap: 8px;
-  transform: scale(0.8); /* sumažinta 30% */
+  transform: scale(0.9); /* sumažinta 10% */
   transform-origin: top right;
 }
 
