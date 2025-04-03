@@ -3,13 +3,12 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
-
 import styles from "@/styles/dashboard.module.css";
+
 import { useMagicLink } from "@/contexts/MagicLinkContext";
 import { useWallet } from "@/contexts/WalletContext";
 import { useBalances } from "@/contexts/BalanceContext";
 
-// Paliekam tik LivePriceTable
 const LivePriceTable = dynamic(() => import("@/components/LivePriceTable"), { ssr: false });
 
 const iconUrls = {
@@ -55,7 +54,7 @@ export default function Dashboard() {
   return (
     <main className={styles.container}>
       <div className={styles.dashboardWrapper}>
-
+        
         {/* === LIVE PRICE TABLE === */}
         <LivePriceTable />
 
@@ -66,7 +65,11 @@ export default function Dashboard() {
             const { eur, usd } = format(symbol, value);
 
             return (
-              <div key={symbol} className={styles.assetItem}>
+              <div
+                key={symbol}
+                className={styles.assetItem}
+                onClick={() => router.push(`/${symbol}`)}
+              >
                 <div className={styles.assetLeft}>
                   <img
                     src={iconUrls[symbol]}
