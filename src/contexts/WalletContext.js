@@ -7,34 +7,84 @@ import { useMagicLink } from "@/contexts/MagicLinkContext";
 
 export const WalletContext = createContext();
 
+const ENCRYPTION_SECRET = process.env.NEXT_PUBLIC_ENCRYPTION_SECRET || "nordbalticum-fallback";
+
+const encode = (str) => new TextEncoder().encode(str);
+const decode = (buf) => new TextDecoder().decode(buf);
+
+const getKey = async (password) => {
+  if (typeof window === "undefined") return null;
+  const keyMaterial = await window.crypto.subtle.importKey(
+    "raw",
+    encode(password),
+    { name: "PBKDF2" },
+    false,
+    ["deriveKey"]
+  );
+
+  return window.crypto.subtle.deriveKey(
+    {
+      name: "PBKDF2",
+      salt: encode("nordbalticum-salt"),
+      iterations: 100000,
+      hash: "SHA-256",
+    },
+    keyMaterial,
+    { name: "AES-GCM", length: 256 },
+    false,
+    ["encrypt", "decrypt"]
+  );
+};
+
+const encrypt = async (text) => {
+  if (typeof window === "undefined") return null;
+  const iv = window.crypto.getRandomValues(new Uint8Array(12));
+  const key = await getKey(ENCRYPTION_SECRET);
+  const encrypted = await window.crypto.subtle.encrypt(
+    { name: "AES-GCM", iv },
+    key,
+    encode(text)
+  );
+
+  return btoa(
+    JSON.stringify({ iv: Array.from(iv), data: Array.from(new Uint8Array(encrypted)) })
+  );
+};
+
+const decrypt = async (ciphertext) => {
+  if (typeof window === "undefined") return null;
+  const { iv, data } = JSON.parse(atob(ciphertext));
+  const key = await getKey(ENCRYPTION_SECRET);
+  const decrypted = await window.crypto.subtle.decrypt(
+    { name: "AES-GCM", iv: new Uint8Array(iv) },
+    key,
+    new Uint8Array(data)
+  );
+  return decode(decrypted);
+};
+
 export const WalletProvider = ({ children }) => {
   const { user } = useMagicLink();
   const [wallet, setWallet] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
-    setIsClient(typeof window !== "undefined");
-  }, []);
+    const init = async () => {
+      if (!user?.email || typeof window === "undefined") {
+        setWallet(null);
+        setLoading(false);
+        return;
+      }
 
-  useEffect(() => {
-    if (!isClient) return;
+      await loadOrCreateWallet(user.email);
+    };
 
-    if (user?.email) {
-      loadOrCreateWallet(user.email);
-    } else {
-      clearWallet();
-    }
-  }, [user, isClient]);
-
-  const clearWallet = () => {
-    setWallet(null);
-    setLoading(false);
-    if (isClient) localStorage.removeItem("userPrivateKey");
-  };
+    init();
+  }, [user]);
 
   const loadOrCreateWallet = async (email) => {
     setLoading(true);
+
     try {
       const localKey = await loadPrivateKeyFromStorage();
       if (localKey) {
@@ -46,7 +96,6 @@ export const WalletProvider = ({ children }) => {
       const db = await fetchWalletFromDB(email);
       if (db?.encrypted_key) {
         const decryptedKey = await decrypt(db.encrypted_key);
-        if (!decryptedKey) throw new Error("Failed to decrypt key");
         await savePrivateKeyToStorage(decryptedKey);
         const dbWallet = new Wallet(decryptedKey);
         setWallet(generateAddresses(dbWallet));
@@ -60,7 +109,7 @@ export const WalletProvider = ({ children }) => {
       setWallet(generateAddresses(newWallet));
     } catch (err) {
       console.error("Wallet error:", err);
-      clearWallet();
+      setWallet(null);
     } finally {
       setLoading(false);
     }
@@ -74,77 +123,17 @@ export const WalletProvider = ({ children }) => {
     avax: wallet.address,
   });
 
-  const encode = (str) => new TextEncoder().encode(str);
-  const decode = (buf) => new TextDecoder().decode(buf);
-
-  const getKey = async (password) => {
-    if (!isClient) return null;
-
-    const keyMaterial = await window.crypto.subtle.importKey(
-      "raw",
-      encode(password),
-      { name: "PBKDF2" },
-      false,
-      ["deriveKey"]
-    );
-
-    return window.crypto.subtle.deriveKey(
-      {
-        name: "PBKDF2",
-        salt: encode("nordbalticum-salt"),
-        iterations: 100000,
-        hash: "SHA-256",
-      },
-      keyMaterial,
-      { name: "AES-GCM", length: 256 },
-      false,
-      ["encrypt", "decrypt"]
-    );
-  };
-
-  const encrypt = async (text) => {
-    if (!isClient) return null;
-
-    const iv = window.crypto.getRandomValues(new Uint8Array(12));
-    const key = await getKey(process.env.NEXT_PUBLIC_ENCRYPTION_SECRET || "nordbalticum-fallback");
-    const encrypted = await window.crypto.subtle.encrypt(
-      { name: "AES-GCM", iv },
-      key,
-      encode(text)
-    );
-
-    return btoa(JSON.stringify({ iv: Array.from(iv), data: Array.from(new Uint8Array(encrypted)) }));
-  };
-
-  const decrypt = async (ciphertext) => {
-    if (!isClient) return null;
-
-    try {
-      const { iv, data } = JSON.parse(atob(ciphertext));
-      const key = await getKey(process.env.NEXT_PUBLIC_ENCRYPTION_SECRET || "nordbalticum-fallback");
-      const decrypted = await window.crypto.subtle.decrypt(
-        { name: "AES-GCM", iv: new Uint8Array(iv) },
-        key,
-        new Uint8Array(data)
-      );
-      return decode(decrypted);
-    } catch (err) {
-      console.error("Decryption failed:", err);
-      return null;
-    }
-  };
-
   const savePrivateKeyToStorage = async (privateKey) => {
-    if (!isClient) return;
+    if (typeof window === "undefined") return;
     try {
       localStorage.setItem("userPrivateKey", JSON.stringify({ key: privateKey }));
     } catch (err) {
-      console.error("Save key error:", err);
+      console.error("Saving private key failed:", err);
     }
   };
 
   const loadPrivateKeyFromStorage = async () => {
-    if (!isClient) return null;
+    if (typeof window === "undefined") return null;
     try {
       const item = localStorage.getItem("userPrivateKey");
       if (!item) return null;
@@ -168,7 +157,7 @@ export const WalletProvider = ({ children }) => {
       .maybeSingle();
 
     if (error) {
-      console.error("Fetch wallet DB error:", error.message);
+      console.error("DB fetch error:", error.message);
       return null;
     }
 
