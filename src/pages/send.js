@@ -2,7 +2,11 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+
 import { useMagicLink } from "@/contexts/MagicLinkContext";
+import { useWallet } from "@/contexts/WalletContext";
+import { useNetwork } from "@/contexts/NetworkContext";
+import { useBalance } from "@/contexts/BalanceContext";
 
 import SwipeSelector from "@/components/SwipeSelector";
 import SuccessModal from "@/components/modals/SuccessModal";
@@ -10,32 +14,16 @@ import SuccessModal from "@/components/modals/SuccessModal";
 import styles from "@/styles/send.module.css";
 import background from "@/styles/background.module.css";
 
-const supportedNetworks = [
-  { name: "BSC", symbol: "bsc" },
-  { name: "Testnet", symbol: "tbnb" },
-  { name: "Ethereum", symbol: "ethereum" },
-  { name: "Polygon", symbol: "polygon" },
-  { name: "Avalanche", symbol: "avalanche" },
-];
-
 export default function Send() {
   const router = useRouter();
-  const {
-    user,
-    fetchUserBalance,
-    sendCryptoTransaction,
-    getMaxSendableAmount,
-    activeNetwork,
-    setActiveNetwork,
-  } = useMagicLink();
+
+  const { user } = useMagicLink();
+  const { sendCryptoTransaction } = useWallet();
+  const { activeNetwork, setActiveNetwork } = useNetwork();
+  const { balance, balanceEUR, maxSendable, refreshBalance } = useBalance();
 
   const [receiver, setReceiver] = useState("");
   const [amount, setAmount] = useState("");
-
-  const [balance, setBalance] = useState("0.00000");
-  const [maxSendable, setMaxSendable] = useState("0.00000");
-  const [balanceEUR, setBalanceEUR] = useState("0.00");
-
   const [showConfirm, setShowConfirm] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [txHash, setTxHash] = useState("");
@@ -44,43 +32,23 @@ export default function Send() {
   const amountAfterFee = Number(amount || 0) - calculatedFee;
 
   useEffect(() => {
-    if (!user) {
-      router.replace("/");
-    }
+    if (!user) router.replace("/");
   }, [user, router]);
 
-  const loadBalance = async () => {
-    if (!user?.email) return;
-
-    try {
-      const { balance: userBalance, eurBalance } = await fetchUserBalance(user.email, activeNetwork);
-      setBalance(userBalance);
-      setBalanceEUR(eurBalance);
-
-      const maxAmount = await getMaxSendableAmount(user.email, activeNetwork);
-      setMaxSendable(maxAmount);
-    } catch (err) {
-      console.error("Failed to load balance:", err);
-      setBalance("0.00000");
-      setBalanceEUR("0.00");
-      setMaxSendable("0.00000");
-    }
-  };
-
   useEffect(() => {
-    loadBalance();
-  }, [activeNetwork, user, fetchUserBalance, getMaxSendableAmount]);
+    if (user?.email) refreshBalance(user.email, activeNetwork);
+  }, [activeNetwork, user, refreshBalance]);
 
   const handleSend = () => {
     const trimmedReceiver = receiver.trim();
 
     if (!trimmedReceiver || !amount || isNaN(amount)) {
-      alert("Please enter a valid address and amount.");
+      alert("Enter a valid address and amount.");
       return;
     }
 
     if (Number(amount) <= 0 || Number(amount) > Number(maxSendable)) {
-      alert(`Max sendable (including fee): ${maxSendable}`);
+      alert(`Max sendable: ${maxSendable}`);
       return;
     }
 
@@ -90,11 +58,17 @@ export default function Send() {
   const confirmSend = async () => {
     setShowConfirm(false);
 
-    const result = await sendCryptoTransaction(user.email, activeNetwork, receiver.trim(), amount);
+    const result = await sendCryptoTransaction(
+      user.email,
+      activeNetwork,
+      receiver.trim(),
+      amount
+    );
+
     if (result?.success) {
       setReceiver("");
       setAmount("");
-      loadBalance();
+      refreshBalance(user.email, activeNetwork);
       setTxHash(result.hash);
       setShowSuccess(true);
     } else {
@@ -108,14 +82,11 @@ export default function Send() {
         <h1 className={styles.title}>SEND CRYPTO</h1>
         <p className={styles.subtext}>Transfer crypto securely & instantly</p>
 
-        <SwipeSelector
-          mode="send"
-          onSelect={(symbol) => setActiveNetwork(symbol)}
-        />
+        <SwipeSelector mode="send" onSelect={setActiveNetwork} />
 
         <div className={styles.balanceTable}>
           <p className={styles.whiteText}>
-            Total Balance: <strong>{balance}</strong> {activeNetwork} (~€ {balanceEUR})
+            Total Balance: <strong>{balance}</strong> {activeNetwork} (~€{balanceEUR})
           </p>
           <p className={styles.whiteText}>
             Max Sendable: <strong>{maxSendable}</strong> {activeNetwork} (includes 3% fee)
@@ -130,6 +101,7 @@ export default function Send() {
             onChange={(e) => setReceiver(e.target.value)}
             className={styles.inputField}
           />
+
           <input
             type="number"
             placeholder="Amount to send"
@@ -164,7 +136,12 @@ export default function Send() {
               </div>
               <div className={styles.modalActions}>
                 <button className={styles.modalButton} onClick={confirmSend}>Confirm</button>
-                <button className={`${styles.modalButton} ${styles.cancel}`} onClick={() => setShowConfirm(false)}>Cancel</button>
+                <button
+                  className={`${styles.modalButton} ${styles.cancel}`}
+                  onClick={() => setShowConfirm(false)}
+                >
+                  Cancel
+                </button>
               </div>
             </div>
           </div>
