@@ -4,7 +4,7 @@
   position: fixed;
   left: 0;
   right: 0;
-  bottom: 72px; /* Kilnoti čia */
+  bottom: 65px; /* Kilnoti čia */
   display: flex;
   justify-content: center;
   z-index: 9999;
