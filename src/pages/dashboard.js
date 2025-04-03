@@ -3,13 +3,14 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
+import Link from "next/link";
 
 import styles from "@/styles/dashboard.module.css";
 import { useMagicLink } from "@/contexts/MagicLinkContext";
 import { useWallet } from "@/contexts/WalletContext";
 import { useBalances } from "@/contexts/BalanceContext";
 
-const Chart = dynamic(() => import("@/components/Chart"), { ssr: false });
+const LivePriceTable = dynamic(() => import("@/components/LivePriceTable"), { ssr: false });
 
 const iconUrls = {
   bnb: "https://cryptologos.cc/logos/binance-coin-bnb-logo.png",
@@ -34,8 +35,6 @@ export default function Dashboard() {
   const { balances, format } = useBalances();
 
   const [isClient, setIsClient] = useState(false);
-  const [selectedToken, setSelectedToken] = useState("bnb");
-  const [selectedCurrency, setSelectedCurrency] = useState("eur");
 
   useEffect(() => {
     if (typeof window !== "undefined") setIsClient(true);
@@ -57,33 +56,8 @@ export default function Dashboard() {
     <main className={styles.container}>
       <div className={styles.dashboardWrapper}>
 
-        {/* === LIVE CHART === */}
-        <div className={styles.chartSection}>
-          <Chart token={selectedToken} currency={selectedCurrency} />
-
-          <div className={styles.chartControls}>
-            <select
-              className={styles.selector}
-              value={selectedToken}
-              onChange={(e) => setSelectedToken(e.target.value)}
-            >
-              {Object.keys(iconUrls).map((key) => (
-                <option key={key} value={key}>
-                  {names[key]}
-                </option>
-              ))}
-            </select>
-
-            <select
-              className={styles.selector}
-              value={selectedCurrency}
-              onChange={(e) => setSelectedCurrency(e.target.value)}
-            >
-              <option value="eur">EUR</option>
-              <option value="usd">USD</option>
-            </select>
-          </div>
-        </div>
+        {/* === LIVE PRICE TABLE === */}
+        <LivePriceTable />
 
         {/* === CRYPTO BALANCE LIST === */}
         <div className={styles.assetList}>
@@ -92,7 +66,7 @@ export default function Dashboard() {
             const { eur, usd } = format(symbol, value);
 
             return (
-              <div key={symbol} className={styles.assetItem}>
+              <Link key={symbol} href={`/${symbol}`} className={styles.assetItem}>
                 <div className={styles.assetLeft}>
                   <img
                     src={iconUrls[symbol]}
@@ -117,7 +91,7 @@ export default function Dashboard() {
                     ≈ €{eur.toFixed(2)} / ${usd.toFixed(2)}
                   </div>
                 </div>
-              </div>
+              </Link>
             );
           })}
         </div>
