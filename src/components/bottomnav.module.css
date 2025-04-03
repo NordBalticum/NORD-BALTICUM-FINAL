@@ -1,6 +1,8 @@
+/* === FINAL BANK V1 BOTTOM NAVIGATION === */
+
 .bottomWrapper {
   position: fixed;
-  bottom: 20px;
+  bottom: calc(max(env(safe-area-inset-bottom, 0px), constant(safe-area-inset-bottom, 0px)) + 24px);
   left: 0;
   right: 0;
   display: flex;
@@ -125,7 +127,6 @@
   .navbar {
     width: calc(100% - 20px);
     height: 64px;
-    bottom: 48px;
     padding: 0 8px;
     border-radius: 20px;
   }
@@ -149,7 +150,6 @@
   .navbar {
     max-width: 560px;
     height: 78px;
-    bottom: 24px;
   }
 
   .icon {
