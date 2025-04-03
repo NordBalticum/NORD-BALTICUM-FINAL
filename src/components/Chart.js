@@ -26,14 +26,14 @@ ChartJS.register(
   TimeScale
 );
 
-const networkMap = {
-  bnb: "binancecoin",
-  tbnb: "binancecoin",
-  eth: "ethereum",
-  matic: "polygon",
-  avax: "avalanche-2",
-};
+const networks = [
+  { id: "binancecoin", label: "BNB" },
+  { id: "ethereum", label: "ETH" },
+  { id: "polygon", label: "MATIC" },
+  { id: "avalanche-2", label: "AVAX" },
+];
 
+const currencies = ["eur", "usd"];
 const ranges = [
   { label: "1d", value: 1 },
   { label: "7d", value: 7 },
@@ -42,8 +42,9 @@ const ranges = [
 ];
 
 export default function Chart({ token = "bnb", currency = "eur" }) {
-  const [selectedToken, setSelectedToken] = useState(token);
+  const [selectedToken, setSelectedToken] = useState("binancecoin");
   const [selectedCurrency, setSelectedCurrency] = useState(currency);
+  const [selectedLabel, setSelectedLabel] = useState("BNB");
   const [range, setRange] = useState(1);
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -52,9 +53,8 @@ export default function Chart({ token = "bnb", currency = "eur" }) {
   const fetchChart = async () => {
     try {
       setLoading(true);
-      const coingeckoId = networkMap[selectedToken];
       const res = await axios.get(
-        `https://api.coingecko.com/api/v3/coins/${coingeckoId}/market_chart`,
+        `https://api.coingecko.com/api/v3/coins/${selectedToken}/market_chart`,
         {
           params: {
             vs_currency: selectedCurrency,
@@ -70,7 +70,7 @@ export default function Chart({ token = "bnb", currency = "eur" }) {
         labels: prices.map(([timestamp]) => timestamp),
         datasets: [
           {
-            label: `${selectedToken.toUpperCase()} / ${selectedCurrency.toUpperCase()}`,
+            label: `${selectedLabel} / ${selectedCurrency.toUpperCase()}`,
             data: prices.map(([, price]) => price),
             fill: true,
             borderColor: "#FFD700",
@@ -81,7 +81,7 @@ export default function Chart({ token = "bnb", currency = "eur" }) {
         ],
       });
     } catch (err) {
-      console.error("Chart error:", err.message);
+      console.error("Chart fetch error:", err.message);
       setData(null);
     } finally {
       setLoading(false);
@@ -94,17 +94,61 @@ export default function Chart({ token = "bnb", currency = "eur" }) {
     return () => clearInterval(intervalRef.current);
   }, [selectedToken, selectedCurrency, range]);
 
+  const handleTokenChange = (e) => {
+    const selected = networks.find((n) => n.id === e.target.value);
+    setSelectedToken(selected.id);
+    setSelectedLabel(selected.label);
+  };
+
+  const options = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      tooltip: {
+        mode: "index",
+        intersect: false,
+        backgroundColor: "#0A1F44",
+        titleColor: "#FFD700",
+        bodyColor: "#fff",
+      },
+      legend: { display: false },
+    },
+    scales: {
+      x: {
+        type: "time",
+        time: {
+          unit: range === 1 ? "minute" : "day",
+          tooltipFormat: "PPp",
+        },
+        ticks: {
+          color: "#fff",
+          font: { family: "var(--font-crypto)" },
+        },
+        grid: { color: "rgba(255,255,255,0.05)" },
+      },
+      y: {
+        ticks: {
+          color: "#fff",
+          font: { family: "var(--font-crypto)" },
+          callback: (val) =>
+            `${parseFloat(val).toFixed(2)} ${selectedCurrency.toUpperCase()}`,
+        },
+        grid: { color: "rgba(255,255,255,0.06)" },
+      },
+    },
+  };
+
   return (
     <div className={styles.chartWrapper}>
       <div className={styles.controlsRow}>
         <select
           className={styles.selector}
           value={selectedToken}
-          onChange={(e) => setSelectedToken(e.target.value)}
+          onChange={handleTokenChange}
         >
-          {Object.keys(networkMap).map((key) => (
-            <option key={key} value={key}>
-              {key.toUpperCase()}
+          {networks.map((net) => (
+            <option key={net.label} value={net.id}>
+              {net.label}
             </option>
           ))}
         </select>
@@ -114,8 +158,11 @@ export default function Chart({ token = "bnb", currency = "eur" }) {
           value={selectedCurrency}
           onChange={(e) => setSelectedCurrency(e.target.value)}
         >
-          <option value="eur">EUR</option>
-          <option value="usd">USD</option>
+          {currencies.map((cur) => (
+            <option key={cur} value={cur}>
+              {cur.toUpperCase()}
+            </option>
+          ))}
         </select>
 
         <div className={styles.rangeButtons}>
@@ -136,45 +183,8 @@ export default function Chart({ token = "bnb", currency = "eur" }) {
       {loading || !data ? (
         <div className={styles.loadingChart}>Loading chart...</div>
       ) : (
-        <Line
-          data={data}
-          options={{
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-              tooltip: {
-                backgroundColor: "#0A1F44",
-                titleColor: "#FFD700",
-                bodyColor: "#fff",
-              },
-              legend: { display: false },
-            },
-            scales: {
-              x: {
-                type: "time",
-                time: {
-                  unit: range === 1 ? "minute" : "day",
-                  tooltipFormat: "PPp",
-                },
-                ticks: {
-                  color: "#fff",
-                  font: { family: "var(--font-crypto)" },
-                },
-                grid: { color: "rgba(255,255,255,0.05)" },
-              },
-              y: {
-                ticks: {
-                  color: "#fff",
-                  font: { family: "var(--font-crypto)" },
-                  callback: (val) =>
-                    `${parseFloat(val).toFixed(2)} ${selectedCurrency.toUpperCase()}`,
-                },
-                grid: { color: "rgba(255,255,255,0.06)" },
-              },
-            },
-          }}
-        />
+        <Line data={data} options={options} />
       )}
     </div>
   );
-}
+      }
