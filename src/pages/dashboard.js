@@ -1,16 +1,16 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
-import styles from "@/styles/dashboard.module.css";
+import dynamic from "next/dynamic";
 
-// Kontekstai
+import styles from "@/styles/dashboard.module.css";
 import { useMagicLink } from "@/contexts/MagicLinkContext";
 import { useWallet } from "@/contexts/WalletContext";
 import { useBalances } from "@/contexts/BalanceContext";
 
-// Hardcoded ikonų URL’ai iš cryptologos.cc
+const Chart = dynamic(() => import("@/components/Chart"), { ssr: false });
+
 const iconUrls = {
   bnb: "https://cryptologos.cc/logos/binance-coin-bnb-logo.png",
   tbnb: "https://cryptologos.cc/logos/binance-coin-bnb-logo.png",
@@ -19,7 +19,6 @@ const iconUrls = {
   avax: "https://cryptologos.cc/logos/avalanche-avax-logo.png",
 };
 
-// Token pavadinimai
 const names = {
   bnb: "BNB",
   tbnb: "BNB Testnet",
@@ -34,7 +33,14 @@ export default function Dashboard() {
   const { wallet } = useWallet();
   const { balances, format } = useBalances();
 
-  // Redirect į homepage jei neprisijungęs
+  const [isClient, setIsClient] = useState(false);
+  const [selectedToken, setSelectedToken] = useState("bnb");
+  const [selectedCurrency, setSelectedCurrency] = useState("eur");
+
+  useEffect(() => {
+    if (typeof window !== "undefined") setIsClient(true);
+  }, []);
+
   useEffect(() => {
     if (!loading && !user) {
       router.replace("/");
@@ -43,30 +49,43 @@ export default function Dashboard() {
 
   const tokens = balances ? Object.keys(balances) : [];
 
+  if (!isClient || !user) {
+    return <div className={styles.loading}>Loading dashboard...</div>;
+  }
+
   return (
     <main className={styles.container}>
       <div className={styles.dashboardWrapper}>
-        {/* LOGOTIPAS + BALANSAS */}
-        <div className={styles.totalValueContainer}>
-          <Image
-            src="/icons/logo.svg"
-            alt="NordBalticum"
-            width={320}
-            height={110}
-            priority
-            className={styles.logo}
-          />
-          <div style={{ marginTop: "14px" }}>
-            <p className={styles.totalLabel}>Total Balance</p>
-            <h2 className={styles.totalValue}>
-              {balances
-                ? Object.values(balances).reduce((acc, val) => acc + val, 0).toFixed(4)
-                : "Live Balances"}
-            </h2>
+
+        {/* === LIVE CHART === */}
+        <div className={styles.chartSection}>
+          <Chart token={selectedToken} currency={selectedCurrency} />
+
+          <div className={styles.chartControls}>
+            <select
+              className={styles.selector}
+              value={selectedToken}
+              onChange={(e) => setSelectedToken(e.target.value)}
+            >
+              {Object.keys(iconUrls).map((key) => (
+                <option key={key} value={key}>
+                  {names[key]}
+                </option>
+              ))}
+            </select>
+
+            <select
+              className={styles.selector}
+              value={selectedCurrency}
+              onChange={(e) => setSelectedCurrency(e.target.value)}
+            >
+              <option value="eur">EUR</option>
+              <option value="usd">USD</option>
+            </select>
           </div>
         </div>
 
-        {/* BALANSŲ SĄRAŠAS */}
+        {/* === CRYPTO BALANCE LIST === */}
         <div className={styles.assetList}>
           {tokens.map((symbol) => {
             const value = balances[symbol];
@@ -102,6 +121,7 @@ export default function Dashboard() {
             );
           })}
         </div>
+
       </div>
     </main>
   );
