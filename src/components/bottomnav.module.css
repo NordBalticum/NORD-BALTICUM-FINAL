@@ -1,14 +1,16 @@
-/* === FINAL BANK V1 BOTTOM NAVIGATION === */
+/* === FINAL BANK V1 — Bottom Navigation FIXED Perfectly at Bottom === */
 
 .bottomWrapper {
   position: fixed;
-  bottom: calc(max(env(safe-area-inset-bottom, 0px), constant(safe-area-inset-bottom, 0px)) + 24px);
   left: 0;
   right: 0;
+  bottom: 0;
   display: flex;
   justify-content: center;
   z-index: 9999;
   pointer-events: none;
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 16px);
+  box-sizing: border-box;
 }
 
 .navbar {
@@ -28,6 +30,7 @@
   animation: fadeInUp 0.5s ease-out;
   transition: all 0.3s ease;
   box-sizing: border-box;
+  margin-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 .navItem {
