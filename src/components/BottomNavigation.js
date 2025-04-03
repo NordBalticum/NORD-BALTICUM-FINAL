@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -23,6 +23,15 @@ const navItems = [
 
 export default function BottomNavigation() {
   const pathname = usePathname();
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setIsMobile(window.innerWidth <= 768);
+    }
+  }, []);
+
+  if (!isMobile) return null;
 
   return (
     <AnimatePresence mode="wait">
@@ -49,8 +58,8 @@ export default function BottomNavigation() {
                 >
                   <motion.div
                     className={styles.icon}
-                    whileTap={{ scale: 0.85 }}
-                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    whileHover={{ scale: 1.05 }}
                     transition={{ type: "spring", stiffness: 300 }}
                   >
                     {icon}
