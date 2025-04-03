@@ -200,7 +200,7 @@
 @media (max-width: 768px) {
   .dashboardWrapper {
     padding: 20px 18px 80px;
-    transform: scale(0.96) translateY(0%);
+    transform: scale(0.96) translateY(1%);
     transform-origin: top center;
   }
 
