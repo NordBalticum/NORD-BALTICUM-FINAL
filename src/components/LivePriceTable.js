@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useRef } from "react";
 import axios from "axios";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
 import styles from "./livepricetable.module.css";
 
 const tokens = [
@@ -37,44 +37,46 @@ const currencies = ["eur", "usd"];
 export default function LivePriceTable() {
   const [prices, setPrices] = useState({});
   const [currency, setCurrency] = useState("eur");
-  const intervalRef = useRef(null);
   const router = useRouter();
-  const pathname = usePathname(); // pridėta!
+  const intervalRef = useRef(null);
+  const mountedRef = useRef(false);
 
   const fetchPrices = async () => {
     if (!navigator.onLine) return;
     try {
       const ids = tokens.map((t) => t.id).join(",");
-      const res = await axios.get("https://api.coingecko.com/api/v3/simple/price", {
+      const response = await axios.get("https://api.coingecko.com/api/v3/simple/price", {
         params: {
           ids,
           vs_currencies: currencies.join(","),
         },
-        timeout: 10000,
+        timeout: 8000,
       });
-      setPrices(res.data);
-    } catch (err) {
-      console.error("❌ CoinGecko price fetch failed:", err.message);
+      if (mountedRef.current) {
+        setPrices(response.data);
+      }
+    } catch (error) {
+      console.error("❌ Failed to fetch prices:", error.message);
     }
   };
 
   useEffect(() => {
+    mountedRef.current = true;
     fetchPrices();
     intervalRef.current = setInterval(fetchPrices, 30000);
 
-    const handleVisibility = () => {
-      if (document.visibilityState === "visible") {
-        fetchPrices();
-      }
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") fetchPrices();
     };
 
-    document.addEventListener("visibilitychange", handleVisibility);
+    document.addEventListener("visibilitychange", onVisibility);
 
     return () => {
+      mountedRef.current = false;
       clearInterval(intervalRef.current);
-      document.removeEventListener("visibilitychange", handleVisibility);
+      document.removeEventListener("visibilitychange", onVisibility);
     };
-  }, [currency, pathname]); // <- atnaujinama grįžus į puslapį
+  }, []);
 
   return (
     <div className={styles.wrapper}>
@@ -96,7 +98,7 @@ export default function LivePriceTable() {
             <img src={token.logo} alt={token.symbol} className={styles.logo} />
             <div className={styles.symbol}>{token.symbol}</div>
             <div className={styles.price}>
-              {prices[token.id]?.[currency]
+              {prices[token.id]?.[currency] !== undefined
                 ? `${currency === "eur" ? "€" : "$"}${prices[token.id][currency].toFixed(2)}`
                 : "Loading..."}
             </div>
