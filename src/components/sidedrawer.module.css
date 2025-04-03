@@ -1,3 +1,32 @@
+.drawer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 280px;
+  height: 100vh;
+  background: rgba(8, 10, 30, 0.2); /* prabangus tamsus tonas */
+  backdrop-filter: blur(28px) saturate(180%);
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
+  z-index: 9999;
+  padding: 32px 24px 24px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  box-shadow: 6px 0 24px rgba(0, 0, 0, 0.3);
+  animation: fadeInDrawer 0.5s ease;
+}
+
+@keyframes fadeInDrawer {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
 .hamburger {
   position: fixed;
   top: clamp(16px, 3vw, 24px);
@@ -18,25 +47,9 @@
 .backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(0, 0, 0, 0.45);
   z-index: 9998;
-  backdrop-filter: blur(6px);
-}
-
-.drawer {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 280px;
-  height: 100vh;
-  background: rgba(255, 255, 255, 0.03);
-  backdrop-filter: blur(20px) saturate(160%);
-  border-right: 1px solid rgba(255, 255, 255, 0.08);
-  z-index: 9999;
-  padding: 32px 24px 24px;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
+  backdrop-filter: blur(10px);
 }
 
 .drawerHeader {
@@ -59,13 +72,13 @@
 
 .userBox {
   text-align: center;
-  margin-top: 20px;
-  margin-bottom: 28px;
-  padding: 20px 16px 18px;
-  background: rgba(255, 255, 255, 0.06);
-  border-radius: 18px;
-  backdrop-filter: blur(18px);
-  box-shadow: 0 0 18px rgba(255, 255, 255, 0.1);
+  margin-top: 24px;
+  margin-bottom: 32px;
+  padding: 24px 18px 20px;
+  background: rgba(255, 255, 255, 0.07);
+  border-radius: 20px;
+  backdrop-filter: blur(24px);
+  box-shadow: 0 0 24px rgba(255, 255, 255, 0.12);
   position: relative;
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -83,11 +96,11 @@
 }
 
 .logo {
-  width: 84px;
-  height: 84px;
-  margin: 0 auto 14px;
+  width: 92px;
+  height: 92px;
+  margin: 0 auto 16px;
   display: block;
-  filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.35));
+  filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.4));
   animation: fadeInDown 0.6s ease;
 }
 
@@ -95,7 +108,7 @@
   font-size: 1rem;
   font-weight: 500;
   color: white;
-  opacity: 0.95;
+  opacity: 0.97;
   font-family: var(--font-crypto);
   background: rgba(255, 255, 255, 0.05);
   padding: 6px 14px;
@@ -104,19 +117,18 @@
 }
 
 .nav {
-  margin-top: 0;
   display: flex;
   flex-direction: column;
   gap: 1.4rem;
   font-family: var(--font-crypto);
   align-items: flex-start;
-  transform: translateY(-20px);
+  transform: translateY(-12px);
 }
 
 .link {
   color: white;
   text-decoration: none;
-  font-size: 1rem;
+  font-size: 1.02rem;
   transition: all 0.2s ease;
 }
 
@@ -131,8 +143,9 @@
 }
 
 .logout {
-  margin-top: 24px;
+  margin-top: 28px;
   padding: 10px 18px;
+  width: 70%;
   background: black;
   color: white;
   border: 1px solid white;
@@ -142,14 +155,14 @@
   cursor: pointer;
   transition: all 0.2s ease;
   align-self: center;
-  transform: translateY(-20px);
+  transform: translateY(-10px);
 }
 
 .logout:hover {
   background: #ffd700;
   color: black;
   border-color: #ffd700;
-  transform: scale(1.03);
+  transform: scale(1.04);
 }
 
 @keyframes fadeInDown {
