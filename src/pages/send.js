@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 
 import { useMagicLink } from "@/contexts/MagicLinkContext";
 import { useWallet } from "@/contexts/WalletContext";
-import { useBalanceContext } from "@/contexts/BalanceContext";
+import { useBalances } from "@/contexts/BalanceContext";
 import { useSendCrypto } from "@/contexts/SendCryptoContext";
 
 import SwipeSelector from "@/components/SwipeSelector";
@@ -18,7 +18,7 @@ export default function Send() {
   const router = useRouter();
   const { user } = useMagicLink();
   const { activeNetwork, setActiveNetwork } = useWallet();
-  const { balance, balanceEUR, maxSendable, refreshBalance } = useBalanceContext();
+  const { balance, balanceEUR, maxSendable, refreshBalance } = useBalances();
   const { sendTransaction } = useSendCrypto();
 
   const [receiver, setReceiver] = useState("");
@@ -26,9 +26,15 @@ export default function Send() {
   const [txHash, setTxHash] = useState("");
   const [showConfirm, setShowConfirm] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [sending, setSending] = useState(false);
 
-  const calculatedFee = Number(amount || 0) * 0.03;
-  const amountAfterFee = Number(amount || 0) - calculatedFee;
+  const parsedAmount = Number(amount || 0);
+  const fee = parsedAmount * 0.03;
+  const amountAfterFee = parsedAmount - fee;
+
+  const netBalance = balance(activeNetwork);
+  const netEUR = balanceEUR(activeNetwork);
+  const netSendable = maxSendable(activeNetwork);
 
   useEffect(() => {
     if (!user) router.replace("/");
@@ -40,16 +46,24 @@ export default function Send() {
     }
   }, [user, activeNetwork, refreshBalance]);
 
-  const handleSend = () => {
-    const trimmedReceiver = receiver.trim();
+  const isValidAddress = (address) =>
+    /^0x[a-fA-F0-9]{40}$/.test(address.trim());
 
-    if (!trimmedReceiver || !amount || isNaN(amount)) {
-      alert("Enter a valid address and amount.");
+  const handleSend = () => {
+    const trimmed = receiver.trim();
+
+    if (!trimmed || !isValidAddress(trimmed)) {
+      alert("Invalid receiver address.");
       return;
     }
 
-    if (Number(amount) <= 0 || Number(amount) > Number(maxSendable)) {
-      alert(`Max sendable: ${maxSendable}`);
+    if (!amount || isNaN(parsedAmount) || parsedAmount <= 0) {
+      alert("Amount must be a positive number.");
+      return;
+    }
+
+    if (parsedAmount > Number(netSendable)) {
+      alert(`Max sendable: ${netSendable} ${activeNetwork}`);
       return;
     }
 
@@ -58,6 +72,7 @@ export default function Send() {
 
   const confirmSend = async () => {
     setShowConfirm(false);
+    setSending(true);
 
     const result = await sendTransaction({
       sender: user.email,
@@ -65,6 +80,8 @@ export default function Send() {
       amount,
       network: activeNetwork,
     });
+
+    setSending(false);
 
     if (result?.success) {
       setReceiver("");
@@ -87,10 +104,10 @@ export default function Send() {
 
         <div className={styles.balanceTable}>
           <p className={styles.whiteText}>
-            Total Balance: <strong>{balance}</strong> {activeNetwork} (~€{balanceEUR})
+            Total Balance: <strong>{netBalance}</strong> {activeNetwork} (~€{netEUR})
           </p>
           <p className={styles.whiteText}>
-            Max Sendable: <strong>{maxSendable}</strong> {activeNetwork} (includes 3% fee)
+            Max Sendable: <strong>{netSendable}</strong> {activeNetwork} (includes 3% fee)
           </p>
         </div>
 
@@ -113,15 +130,15 @@ export default function Send() {
 
           <p className={styles.feeBreakdown}>
             Recipient receives <strong>{amountAfterFee.toFixed(6)} {activeNetwork}</strong>
-            <br />Includes 3% fee & gas buffer.
+            <br />Includes 3% platform fee.
           </p>
 
           <button
             onClick={handleSend}
             className={styles.confirmButton}
-            disabled={!user}
+            disabled={!user || sending}
           >
-            SEND NOW
+            {sending ? "Sending..." : "SEND NOW"}
           </button>
         </div>
 
@@ -132,11 +149,13 @@ export default function Send() {
               <div className={styles.modalInfo}>
                 <p><strong>Network:</strong> {activeNetwork}</p>
                 <p><strong>To:</strong> {receiver}</p>
-                <p><strong>Send:</strong> {amount}</p>
+                <p><strong>Send:</strong> {parsedAmount}</p>
                 <p><strong>Gets:</strong> {amountAfterFee.toFixed(6)} {activeNetwork}</p>
               </div>
               <div className={styles.modalActions}>
-                <button className={styles.modalButton} onClick={confirmSend}>Confirm</button>
+                <button className={styles.modalButton} onClick={confirmSend}>
+                  Confirm
+                </button>
                 <button
                   className={`${styles.modalButton} ${styles.cancel}`}
                   onClick={() => setShowConfirm(false)}
