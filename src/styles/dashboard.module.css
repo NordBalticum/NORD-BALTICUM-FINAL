@@ -1,12 +1,10 @@
-/* === DASHBOARD MODULE – NordBalticum Web3 Ferrari Gradient Unified FINAL v3 === */
-
 .container {
   position: fixed;
   top: 50%;
   left: 50%;
   width: 100vw;
   height: 100vh;
-  transform: translate(-50%, -50%);
+  transform: translate(-50%, -47%); /* 3% žemyn */
   background: inherit;
   background-color: transparent;
   user-select: none;
@@ -200,7 +198,7 @@
 @media (max-width: 768px) {
   .dashboardWrapper {
     padding: 20px 18px 80px;
-    transform: scale(0.96) translateY(1%);
+    transform: scale(0.96) translateY(3%);
     transform-origin: top center;
   }
 
