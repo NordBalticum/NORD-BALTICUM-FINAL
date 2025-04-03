@@ -1,13 +1,13 @@
-/* === NAVBAR MODULE – NordBalticum Web3 Diamond Grade === */
+/* === BOTTOM NAVIGATION – NordBalticum Diamond Grade === */
 
 .navbar {
   position: fixed;
   bottom: 20px;
   left: 50%;
-  transform: translateX(-50%);
+  transform: translateX(-50%) scale(0.97); /* švelnus mažinimas */
   width: clamp(280px, 90vw, 520px);
   height: var(--nav-height, 72px);
-  background: rgba(12, 18, 36, 0.95);
+  background: rgba(12, 18, 36, 0.92);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 24px;
   display: flex;
@@ -19,6 +19,7 @@
   padding: 0 clamp(8px, 2vw, 16px);
   animation: fadeInUp 0.5s ease-out;
   transition: all 0.3s ease;
+  box-sizing: border-box;
 }
 
 .navItem {
