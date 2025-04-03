@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useRef } from "react";
 import axios from "axios";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import styles from "./livepricetable.module.css";
 
 const tokens = [
@@ -19,7 +19,7 @@ const tokens = [
     route: "/eth",
   },
   {
-    id: "matic-network", // <- TOBULAS ID COINGECKO
+    id: "matic-network",
     symbol: "MATIC",
     logo: "https://cryptologos.cc/logos/polygon-matic-logo.png",
     route: "/matic",
@@ -39,6 +39,7 @@ export default function LivePriceTable() {
   const [currency, setCurrency] = useState("eur");
   const intervalRef = useRef(null);
   const router = useRouter();
+  const pathname = usePathname(); // pridėta!
 
   const fetchPrices = async () => {
     if (!navigator.onLine) return;
@@ -53,7 +54,7 @@ export default function LivePriceTable() {
       });
       setPrices(res.data);
     } catch (err) {
-      console.error("CoinGecko price fetch failed:", err.message);
+      console.error("❌ CoinGecko price fetch failed:", err.message);
     }
   };
 
@@ -73,7 +74,7 @@ export default function LivePriceTable() {
       clearInterval(intervalRef.current);
       document.removeEventListener("visibilitychange", handleVisibility);
     };
-  }, [currency]);
+  }, [currency, pathname]); // <- atnaujinama grįžus į puslapį
 
   return (
     <div className={styles.wrapper}>
