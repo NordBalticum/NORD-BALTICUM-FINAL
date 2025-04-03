@@ -3,27 +3,32 @@
 import React, { useEffect, useState, useRef } from "react";
 import axios from "axios";
 import styles from "./livepricetable.module.css";
+import { useRouter } from "next/navigation";
 
 const tokens = [
   {
     id: "binancecoin",
     symbol: "BNB",
     logo: "https://cryptologos.cc/logos/binance-coin-bnb-logo.png",
+    route: "/bnb",
   },
   {
     id: "ethereum",
     symbol: "ETH",
     logo: "https://cryptologos.cc/logos/ethereum-eth-logo.png",
+    route: "/eth",
   },
   {
-    id: "polygon-pos", // FIXED ID
+    id: "polygon-pos", // Teisingas CoinGecko ID
     symbol: "MATIC",
     logo: "https://cryptologos.cc/logos/polygon-matic-logo.png",
+    route: "/matic",
   },
   {
     id: "avalanche-2",
     symbol: "AVAX",
     logo: "https://cryptologos.cc/logos/avalanche-avax-logo.png",
+    route: "/avax",
   },
 ];
 
@@ -33,6 +38,7 @@ export default function LivePriceTable() {
   const [prices, setPrices] = useState({});
   const [currency, setCurrency] = useState("eur");
   const intervalRef = useRef(null);
+  const router = useRouter();
 
   const fetchPrices = async () => {
     try {
@@ -71,7 +77,11 @@ export default function LivePriceTable() {
 
       <div className={styles.grid}>
         {tokens.map((token) => (
-          <div key={token.id} className={styles.card}>
+          <div
+            key={token.id}
+            className={styles.card}
+            onClick={() => router.push(token.route)}
+          >
             <img src={token.logo} alt={token.symbol} className={styles.logo} />
             <div className={styles.symbol}>{token.symbol}</div>
             <div className={styles.price}>
