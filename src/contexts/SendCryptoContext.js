@@ -40,6 +40,10 @@ export const SendCryptoProvider = ({ children }) => {
 
       const provider = new ethers.providers.JsonRpcProvider(RPC[network]);
 
+      if (typeof window === "undefined") {
+        throw new Error("LocalStorage is not available in SSR.");
+      }
+
       const stored = localStorage.getItem("userPrivateKey");
       if (!stored) throw new Error("Private key not found in localStorage.");
 
