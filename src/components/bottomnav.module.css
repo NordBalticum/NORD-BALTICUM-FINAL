@@ -4,12 +4,12 @@
   position: fixed;
   left: 0;
   right: 0;
-  bottom: 0;
+  bottom: 12px; /* garantuotas pakėlimas virš safe-area */
   display: flex;
   justify-content: center;
   z-index: 9999;
   pointer-events: none;
-  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
   box-sizing: border-box;
 }
 
