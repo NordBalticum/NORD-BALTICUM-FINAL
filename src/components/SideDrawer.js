@@ -52,7 +52,11 @@ export default function SideDrawer() {
 
   return (
     <>
-      <button className={styles.hamburger} onClick={toggleDrawer} aria-label="Open menu">
+      <button
+        className={styles.hamburger}
+        onClick={toggleDrawer}
+        aria-label="Open menu"
+      >
         <FaBars size={22} />
       </button>
 
@@ -66,6 +70,7 @@ export default function SideDrawer() {
               exit={{ opacity: 0 }}
               onClick={toggleDrawer}
             />
+
             <motion.aside
               className={`${styles.drawer} ${open ? styles.open : ""}`}
               initial={{ x: "-100%" }}
@@ -80,7 +85,7 @@ export default function SideDrawer() {
               </div>
 
               <div className={styles.userBox}>
-                <img src="/public/icons/logo.svg" alt="Logo" className={styles.logo} />
+                <img src="/icons/logo.svg" alt="Logo" className={styles.logo} />
                 <p className={styles.email}>{user.email}</p>
               </div>
 
@@ -90,7 +95,9 @@ export default function SideDrawer() {
                     key={item.label}
                     href={item.path}
                     onClick={() => setOpen(false)}
-                    className={`${styles.link} ${pathname === item.path ? styles.active : ""}`}
+                    className={`${styles.link} ${
+                      pathname === item.path ? styles.active : ""
+                    }`}
                   >
                     {item.label}
                   </Link>
