@@ -4,7 +4,7 @@
   left: 50%;
   width: 100vw;
   height: 100vh;
-  transform: translate(-50%, -47%); /* 3% žemyn */
+  transform: translate(-50%, -50%); /* 3% žemyn */
   background: inherit;
   background-color: transparent;
   user-select: none;
