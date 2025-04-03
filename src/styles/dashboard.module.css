@@ -4,13 +4,14 @@
   left: 50%;
   width: 100vw;
   height: 100vh;
-  transform: translate(-50%, -50%); /* 3% žemyn */
+  transform: translate(-50%, -50%);
   background: inherit;
   background-color: transparent;
   user-select: none;
   scroll-behavior: smooth;
   -webkit-font-smoothing: antialiased;
   z-index: 1;
+  overflow: hidden; /* SCROLL FIX – no scrollbars */
 }
 
 .container::before {
