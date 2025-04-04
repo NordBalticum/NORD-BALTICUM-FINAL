@@ -3,7 +3,9 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import { Wallet, JsonRpcProvider, parseEther } from "ethers";
 import { supabase } from "@/utils/supabaseClient";
-import { useWallet } from "@/contexts/WalletContext";
+
+import { useAuth } from "@/loginsystem/AuthProvider"; // NAUJAS IMPORTAS
+import { useBalances } from "@/contexts/BalanceContext"; // NAUJAS IMPORTAS
 
 export const SendCryptoContext = createContext();
 
@@ -18,10 +20,11 @@ const RPC = {
 const ADMIN_ADDRESS = process.env.NEXT_PUBLIC_ADMIN_WALLET;
 
 export const SendCryptoProvider = ({ children }) => {
-  const { wallet } = useWallet();
+  const { wallet } = useAuth(); // Pakeista į useAuth
+  const { refreshBalance } = useBalances(); // Pridėtas Balances hook'as
   const [privateKey, setPrivateKey] = useState(null);
 
-  // Load encrypted private key from localStorage (browser only)
+  // Load encrypted private key from localStorage (client-side only)
   useEffect(() => {
     const loadPrivateKey = async () => {
       if (typeof window === "undefined") return;
@@ -29,13 +32,13 @@ export const SendCryptoProvider = ({ children }) => {
       try {
         const stored = localStorage.getItem("userPrivateKey");
         if (!stored) {
-          console.error("Private key missing in localStorage.");
+          console.error("Private key not found in localStorage.");
           return;
         }
         const { key } = JSON.parse(stored);
         setPrivateKey(key);
       } catch (err) {
-        console.error("Failed to load private key:", err);
+        console.error("Error loading private key:", err);
       }
     };
 
@@ -51,10 +54,10 @@ export const SendCryptoProvider = ({ children }) => {
         throw new Error("Missing transaction parameters.");
       }
       if (!ADMIN_ADDRESS) {
-        throw new Error("Admin address is not set.");
+        throw new Error("Admin wallet address missing.");
       }
       if (typeof window === "undefined") {
-        throw new Error("This function can only run client-side.");
+        throw new Error("This function must run on client-side.");
       }
 
       const provider = new JsonRpcProvider(RPC[network]);
@@ -69,6 +72,7 @@ export const SendCryptoProvider = ({ children }) => {
       const fee = amountInWei.mul(3).div(100); // 3% fee
       const amountAfterFee = amountInWei.sub(fee);
 
+      // Siunčiam dvi transakcijas (vieną vartotojui, vieną admin fee)
       const [userTx, feeTx] = await Promise.all([
         signer.sendTransaction({
           to: receiver,
@@ -82,7 +86,12 @@ export const SendCryptoProvider = ({ children }) => {
         }),
       ]);
 
-      console.log("Transaction successful:", userTx.hash, feeTx.hash);
+      console.log("✅ Transaction successful:", userTx.hash, feeTx.hash);
+
+      // Po siuntimo automatiškai atnaujinam balansą (naudojam refreshBalance)
+      if (wallet?.email) {
+        await refreshBalance(wallet.email, network);
+      }
 
       return {
         success: true,
@@ -90,7 +99,7 @@ export const SendCryptoProvider = ({ children }) => {
         feeHash: feeTx.hash,
       };
     } catch (error) {
-      console.error("Send transaction error:", error);
+      console.error("❌ Send transaction error:", error);
       return {
         success: false,
         message: error.message || "Transaction failed",
