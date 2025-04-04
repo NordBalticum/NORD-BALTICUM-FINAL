@@ -44,7 +44,8 @@
   margin-top: -12px;
 }
 
-.glassBox {
+.balanceTable,
+.feeBreakdown {
   width: 100%;
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.14);
@@ -56,6 +57,8 @@
   color: white;
   font-size: 0.95rem;
   line-height: 1.6;
+  margin-top: -12px;
+  text-align: left;
 }
 
 .walletActions {
@@ -184,6 +187,7 @@
   overflow-x: auto;
   padding-bottom: 12px;
 }
+
 
 /* === RESPONSIVE FIXES === */
 
