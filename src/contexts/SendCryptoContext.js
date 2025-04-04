@@ -4,7 +4,9 @@ import { createContext, useContext } from "react";
 import { parseEther } from "ethers";
 import { useWallet } from "@/contexts/WalletContext";
 
-export const SendCryptoContext = createContext(null);
+const SendCryptoContext = createContext({
+  sendTransaction: async () => ({ success: false, message: "Not ready" }),
+}); // <- čia dedam DEFAULT VALUE vietoje null !!!
 
 const ADMIN_ADDRESS = process.env.NEXT_PUBLIC_ADMIN_WALLET || "";
 
@@ -13,8 +15,8 @@ export const SendCryptoProvider = ({ children }) => {
 
   const sendTransaction = async ({ receiver, amount, network }) => {
     if (typeof window === "undefined") {
-      console.warn("sendTransaction called on server, aborting...");
-      return { success: false, message: "SSR: Window not available" };
+      console.warn("SSR: window not available, sendTransaction aborted");
+      return { success: false, message: "Window unavailable (SSR)" };
     }
 
     try {
@@ -69,12 +71,4 @@ export const SendCryptoProvider = ({ children }) => {
   );
 };
 
-export const useSendCrypto = () => {
-  const context = useContext(SendCryptoContext);
-  if (!context) {
-    return {
-      sendTransaction: async () => ({ success: false, message: "SendCryptoContext not available" }),
-    };
-  }
-  return context;
-};
+export const useSendCrypto = () => useContext(SendCryptoContext);
