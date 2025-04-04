@@ -37,12 +37,12 @@ export default function Send() {
   const netSendable = useMemo(() => Number(maxSendable(activeNetwork) || 0), [maxSendable, activeNetwork]);
 
   const networkShortNames = {
-    "Ethereum": "eth",
-    "BNB Chain": "bnb",
-    "Testnet": "tbnb",
-    "Polygon": "matic",
-    "Avalanche": "avax",
-  };
+  "eth": "eth",
+  "bnb": "bnb",
+  "tbnb": "tbnb",
+  "matic": "matic",
+  "avax": "avax",
+};
 
   const shortName = useMemo(() => networkShortNames[activeNetwork] || activeNetwork?.toLowerCase() || "", [activeNetwork]);
 
