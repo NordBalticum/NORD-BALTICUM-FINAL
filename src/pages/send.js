@@ -48,7 +48,7 @@ export default function Send() {
   const [toastMessage, setToastMessage] = useState("");
   const [isClient, setIsClient] = useState(false); // This tracks client-side rendering
 
-  // Ensure client-side rendering logic only
+  // Ensure client-side only execution
   useEffect(() => {
     if (typeof window !== "undefined") {
       setIsClient(true); // If window is defined, we're in the client-side
