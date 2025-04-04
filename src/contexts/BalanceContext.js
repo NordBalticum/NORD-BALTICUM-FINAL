@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { JsonRpcProvider, formatEther } from "ethers";
-import { useAuth } from "@/contexts/AuthContext"; // PAGRINDINIS šaltinis viskam
+import { useAuth } from "@/contexts/AuthContext";
 
 export const BalanceContext = createContext();
 
@@ -22,7 +22,6 @@ const coinMap = {
   avax: "avalanche-2",
 };
 
-// Gaunam rates iš CoinGecko
 const fetchRates = async () => {
   try {
     const ids = Object.values(coinMap).join(",");
@@ -35,7 +34,6 @@ const fetchRates = async () => {
   }
 };
 
-// Gaunam balanso reikšmę per RPC
 const fetchBalance = async (rpcUrl, address) => {
   try {
     const provider = new JsonRpcProvider(rpcUrl);
@@ -48,7 +46,7 @@ const fetchBalance = async (rpcUrl, address) => {
 };
 
 export const BalanceProvider = ({ children }) => {
-  const { wallet } = useAuth(); // Tikras wallet
+  const { wallet } = useAuth();
   const [balances, setBalances] = useState({});
   const [rates, setRates] = useState({});
   const [loading, setLoading] = useState(true);
@@ -61,7 +59,7 @@ export const BalanceProvider = ({ children }) => {
   }, []);
 
   const loadBalances = useCallback(async () => {
-    if (!isClient || !wallet || !wallet.signers) return;
+    if (!isClient || !wallet || typeof wallet !== "object" || !wallet.signers || typeof wallet.signers !== "object") return;
     setLoading(true);
     try {
       const addresses = Object.keys(wallet.signers).reduce((acc, network) => {
@@ -94,9 +92,9 @@ export const BalanceProvider = ({ children }) => {
   }, [wallet, isClient]);
 
   useEffect(() => {
-    if (!wallet || !wallet.signers || !isClient) return;
+    if (!isClient || !wallet || typeof wallet !== "object" || !wallet.signers || typeof wallet.signers !== "object") return;
     loadBalances();
-    const interval = setInterval(loadBalances, 30000); // Auto-refresh kas 30s
+    const interval = setInterval(loadBalances, 30000);
     return () => clearInterval(interval);
   }, [wallet, loadBalances, isClient]);
 
@@ -111,11 +109,11 @@ export const BalanceProvider = ({ children }) => {
 
   const getMaxSendable = (network) => {
     const raw = getBalance(network);
-    return raw * 0.97; // 3% fee
+    return raw * 0.97;
   };
 
   const refreshBalance = async (network) => {
-    if (!wallet || !wallet.signers || !network || !isClient) return;
+    if (!isClient || !wallet || typeof wallet !== "object" || !wallet.signers || typeof wallet.signers !== "object") return;
     const address = wallet.signers[network]?.address;
     if (!address) return;
 
