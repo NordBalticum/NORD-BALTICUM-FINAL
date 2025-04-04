@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { useAuth } from "@/contexts/AuthContext"; // ✅ Vienas ultimate hookas
+import { useAuth } from "@/contexts/AuthContext";
 
 import SwipeSelector from "@/components/SwipeSelector";
 import SuccessModal from "@/components/modals/SuccessModal";
@@ -41,7 +41,7 @@ export default function SendPage() {
     getMaxSendable,
     getBalanceEUR,
     refreshBalance,
-  } = useAuth(); // ✅ Viskas iš vieno konteksto
+  } = useAuth();
 
   const [receiver, setReceiver] = useState("");
   const [amount, setAmount] = useState("");
@@ -64,7 +64,7 @@ export default function SendPage() {
   }, [isClient, loading, user, router]);
 
   useEffect(() => {
-    if (isClient && activeNetwork === undefined) {
+    if (isClient && !activeNetwork) {
       setActiveNetwork("eth");
     }
   }, [isClient, activeNetwork, setActiveNetwork]);
@@ -90,22 +90,22 @@ export default function SendPage() {
     if (user?.email) {
       await refreshBalance(user.email, network);
     }
-    setToastMessage(`Switched to ${networkShortNames[network] || network.toUpperCase()}`);
+    setToastMessage(`✅ Switched to ${networkShortNames[network] || network.toUpperCase()}`);
     setTimeout(() => setToastMessage(""), 2000);
   }, [user, setActiveNetwork, refreshBalance]);
 
   const handleSend = () => {
     const trimmed = receiver.trim();
     if (!isValidAddress(trimmed)) {
-      alert("Invalid receiver address.");
+      alert("❌ Invalid receiver address.");
       return;
     }
     if (!parsedAmount || parsedAmount <= 0) {
-      alert("Amount must be greater than 0.");
+      alert("❌ Amount must be greater than 0.");
       return;
     }
     if (parsedAmount > netSendable) {
-      alert(`Max sendable: ${netSendable.toFixed(6)} ${shortName}`);
+      alert(`❌ Max sendable: ${netSendable.toFixed(6)} ${shortName}`);
       return;
     }
     setShowConfirm(true);
@@ -132,11 +132,11 @@ export default function SendPage() {
         setBalanceUpdated(true);
         setShowSuccess(true);
       } else {
-        alert(result?.message || "Transaction failed.");
+        alert(result?.message || "❌ Transaction failed.");
       }
     } catch (err) {
       console.error("Transaction send error:", err);
-      alert("Unexpected error while sending.");
+      alert("❌ Unexpected error while sending.");
     } finally {
       setSending(false);
     }
@@ -163,7 +163,6 @@ export default function SendPage() {
   };
 
   if (loading || !isClient) return <div className={styles.loading}>Loading...</div>;
-
   if (!user || !wallet) return null;
 
   return (
@@ -183,7 +182,7 @@ export default function SendPage() {
               transition={{ duration: 0.4 }}
               className={styles.successAlert}
             >
-              Balance Updated!
+              ✅ Balance Updated!
             </motion.div>
           )}
           {toastMessage && (
@@ -239,16 +238,16 @@ export default function SendPage() {
           />
 
           <p className={styles.feeBreakdown}>
-            Recipient receives <strong>{amountAfterFee.toFixed(6)} {shortName}</strong>
-            <br />Includes 3% platform fee.
+            Recipient receives <strong>{amountAfterFee.toFixed(6)} {shortName}</strong><br />
+            (Includes 3% platform fee)
           </p>
 
-          <button onClick={handleSend} style={buttonStyle} disabled={!user || sending || !receiver || !amount}>
-            {sending ? (
-              <div className={styles.loader}></div>
-            ) : (
-              "SEND NOW"
-            )}
+          <button
+            onClick={handleSend}
+            style={buttonStyle}
+            disabled={!user || sending || !receiver || !amount}
+          >
+            {sending ? "Sending..." : "SEND NOW"}
           </button>
         </div>
 
@@ -279,7 +278,7 @@ export default function SendPage() {
             transition={{ duration: 0.4 }}
           >
             <SuccessModal
-              message="Transaction completed!"
+              message="✅ Transaction completed successfully!"
               txHash={txHash}
               networkKey={activeNetwork}
               onClose={() => setShowSuccess(false)}
