@@ -37,11 +37,23 @@ export default function Send() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [sending, setSending] = useState(false);
 
+  // ✅ VAROM: jei nėra aktyvaus tinklo, padaryk default "eth"
+  useEffect(() => {
+    if (!activeNetwork) {
+      setActiveNetwork("eth");
+    }
+  }, [activeNetwork, setActiveNetwork]);
+
+  // ✅ shortName visada bus nustatytas
+  const shortName = useMemo(() => {
+    if (!activeNetwork) return "ETH";
+    return networkShortNames[activeNetwork?.toLowerCase()] || "ETH";
+  }, [activeNetwork]);
+
   const parsedAmount = Number(amount || 0);
   const fee = parsedAmount * 0.03;
   const amountAfterFee = parsedAmount - fee;
 
-  const shortName = useMemo(() => networkShortNames[activeNetwork?.toLowerCase()] || "", [activeNetwork]);
   const netBalance = useMemo(() => Number(balance(activeNetwork) || 0), [balance, activeNetwork]);
   const netEUR = useMemo(() => Number(balanceEUR(activeNetwork) || 0), [balanceEUR, activeNetwork]);
   const netSendable = useMemo(() => Number(maxSendable(activeNetwork) || 0), [maxSendable, activeNetwork]);
@@ -126,44 +138,42 @@ export default function Send() {
         <SwipeSelector mode="send" onSelect={setActiveNetwork} />
 
         <div className={styles.balanceTable}>
-  {loading ? (
-    <div className={styles.skeletonWrapper}>
-      <div className={styles.skeletonLine}></div>
-      <div className={styles.skeletonLine}></div>
-    </div>
-  ) : (
-    <>
-      <motion.p
-        className={styles.whiteText}
-        key={`balance-${activeNetwork}`}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.6 }}
-      >
-        Total Balance:{" "}
-        <span className={styles.balanceAmount}>
-          {netBalance.toFixed(6)}&nbsp;{shortName}
-        </span>{" "}
-        (~€{netEUR.toFixed(2)})
-      </motion.p>
+          {loading ? (
+            <div className={styles.skeletonWrapper}>
+              <div className={styles.skeletonLine}></div>
+              <div className={styles.skeletonLine}></div>
+            </div>
+          ) : (
+            <>
+              <motion.p
+                className={styles.whiteText}
+                key={`balance-${activeNetwork}`}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.6 }}
+              >
+                Total Balance:&nbsp;
+                <span className={styles.balanceAmount}>
+                  {netBalance.toFixed(6)} {shortName}
+                </span> (~€{netEUR.toFixed(2)})
+              </motion.p>
 
-      <motion.p
-        className={styles.whiteText}
-        key={`sendable-${activeNetwork}`}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.6 }}
-      >
-        Max Sendable:{" "}
-        <span className={styles.balanceAmount}>
-          {netSendable.toFixed(6)}&nbsp;{shortName}
-        </span>{" "}
-        (includes 3% fee)
-      </motion.p>
-    </>
-  )}
-</div>
-    
+              <motion.p
+                className={styles.whiteText}
+                key={`sendable-${activeNetwork}`}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.6 }}
+              >
+                Max Sendable:&nbsp;
+                <span className={styles.balanceAmount}>
+                  {netSendable.toFixed(6)} {shortName}
+                </span> (includes 3% fee)
+              </motion.p>
+            </>
+          )}
+        </div>
+
         <div className={styles.walletActions}>
           <input
             type="text"
@@ -182,7 +192,7 @@ export default function Send() {
           />
 
           <p className={styles.feeBreakdown}>
-            Recipient receives <strong>{amountAfterFee.toFixed(6)}&nbsp;{shortName}</strong>
+            Recipient receives <strong>{amountAfterFee.toFixed(6)} {shortName}</strong>
             <br />Includes 3% platform fee.
           </p>
 
@@ -206,8 +216,8 @@ export default function Send() {
               <div className={styles.modalInfo}>
                 <p><strong>Network:</strong> {shortName}</p>
                 <p><strong>To:</strong> {receiver}</p>
-                <p><strong>Send:</strong> {parsedAmount.toFixed(6)}&nbsp;{shortName}</p>
-                <p><strong>Gets:</strong> {amountAfterFee.toFixed(6)}&nbsp;{shortName}</p>
+                <p><strong>Send:</strong> {parsedAmount.toFixed(6)} {shortName}</p>
+                <p><strong>Gets:</strong> {amountAfterFee.toFixed(6)} {shortName}</p>
               </div>
               <div className={styles.modalActions}>
                 <button className={styles.modalButton} onClick={confirmSend}>Confirm</button>
