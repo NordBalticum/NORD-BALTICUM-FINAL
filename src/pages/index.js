@@ -3,13 +3,13 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useMagicLink } from "@/contexts/MagicLinkContext";
+import { useAuth } from "@/contexts/AuthContext"; // ✅ Naujas importas
 import styles from "@/styles/index.module.css";
 import background from "@/styles/background.module.css";
 
 export default function Home() {
   const router = useRouter();
-  const { user, signInWithMagicLink, signInWithGoogle } = useMagicLink();
+  const { user, signInWithMagicLink, signInWithGoogle } = useAuth(); // ✅ Naudojam mūsų ultimate useAuth()
 
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState("idle");
@@ -29,7 +29,7 @@ export default function Home() {
       await signInWithMagicLink(email);
       setMessage("Check your inbox for the Magic Link.");
     } catch (err) {
-      console.error("Magic Link Error:", err);
+      console.error("❌ Magic Link Error:", err);
       setMessage("Failed to send Magic Link. Try again.");
     } finally {
       setStatus("idle");
@@ -41,7 +41,7 @@ export default function Home() {
       setStatus("loading");
       await signInWithGoogle();
     } catch (err) {
-      console.error("Google Auth Error:", err);
+      console.error("❌ Google Auth Error:", err);
       setMessage("Google login failed.");
     } finally {
       setStatus("idle");
