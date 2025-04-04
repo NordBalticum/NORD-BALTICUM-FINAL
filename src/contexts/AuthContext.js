@@ -90,6 +90,7 @@ export const AuthProvider = ({ children }) => {
   // === 6️⃣ Load Session iš Supabase
   useEffect(() => {
     if (!isClient) return;
+
     const loadSession = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
@@ -110,7 +111,7 @@ export const AuthProvider = ({ children }) => {
     return () => subscription?.unsubscribe();
   }, [isClient]);
 
-  // === 7️⃣ Auto Wallet Loader su Self-Healing
+  // === 7️⃣ Auto Wallet Loader
   useEffect(() => {
     if (!isClient) return;
     if (!user?.email) return;
@@ -126,7 +127,7 @@ export const AuthProvider = ({ children }) => {
     }
   }, [user, loading, pathname, router, isClient]);
 
-  // === 9️⃣ Inactivity Logout po 10 minučių
+  // === 9️⃣ Inactivity Auto Logout
   useEffect(() => {
     if (!isClient) return;
     const resetTimer = () => {
@@ -147,7 +148,7 @@ export const AuthProvider = ({ children }) => {
     };
   }, [isClient]);
 
-  // === 1️⃣0️⃣ Load Active Network iš LocalStorage
+  // === 1️⃣0️⃣ Load Active Network
   useEffect(() => {
     if (!isClient) return;
     const stored = localStorage.getItem("activeNetwork");
@@ -160,12 +161,12 @@ export const AuthProvider = ({ children }) => {
     }
   }, [activeNetwork, isClient]);
 
-  // === 1️⃣1️⃣ Load arba Create Wallet su pilnu fallback
+  // === 1️⃣1️⃣ Load arba Create Wallet pagal user.email
   const loadOrCreateWallet = async (email) => {
     try {
       setLoading(true);
 
-      // 1️⃣ Bandom iš localStorage
+      // 1️⃣ Bandymas iš localStorage
       const localKey = loadPrivateKey();
       if (localKey && isAddress(new Wallet(localKey).address)) {
         console.log("✅ Loaded wallet from localStorage.");
@@ -176,7 +177,7 @@ export const AuthProvider = ({ children }) => {
         localStorage.removeItem("userPrivateKey");
       }
 
-      // 2️⃣ Bandom iš Supabase
+      // 2️⃣ Bandymas iš Supabase
       const { data, error } = await supabase
         .from("wallets")
         .select("*")
@@ -196,10 +197,10 @@ export const AuthProvider = ({ children }) => {
           console.warn("⚠️ Supabase key invalid, creating new wallet...");
         }
       } else {
-        console.warn("⚠️ No wallet found in Supabase, creating new...");
+        console.warn("⚠️ No wallet found in Supabase, creating new wallet...");
       }
 
-      // 3️⃣ Jei nėra local ir nėra Supabase — sukuriam naują
+      // 3️⃣ Jei nieko neranda – sukuria naują wallet
       const newWallet = Wallet.createRandom();
       const encrypted = await encrypt(newWallet.privateKey);
 
@@ -217,7 +218,6 @@ export const AuthProvider = ({ children }) => {
       if (insertError) throw insertError;
 
       console.log("🚀 New wallet created and stored to Supabase!");
-
       savePrivateKey(newWallet.privateKey);
       setupWallet(newWallet.privateKey);
 
@@ -233,13 +233,12 @@ export const AuthProvider = ({ children }) => {
       }
 
       setWallet(null);
-
     } finally {
       setLoading(false);
     }
   };
 
-  // === 1️⃣2️⃣ Setup Wallet ir RPC signers
+  // === 1️⃣2️⃣ Setup Wallet
   const setupWallet = (key) => {
     const baseWallet = new Wallet(key);
     const signers = {};
@@ -249,10 +248,11 @@ export const AuthProvider = ({ children }) => {
     });
 
     setWallet({ wallet: baseWallet, signers });
+
     loadBalances(signers);
 
     if (balanceInterval.current) clearInterval(balanceInterval.current);
-    balanceInterval.current = setInterval(() => loadBalances(signers), 180000); // kas 3 min
+    balanceInterval.current = setInterval(() => loadBalances(signers), 180000);
   };
 
   const savePrivateKey = (key) => {
@@ -268,7 +268,7 @@ export const AuthProvider = ({ children }) => {
     return stored ? JSON.parse(stored)?.key : null;
   };
 
-  // === 1️⃣3️⃣ Load Balances + Coin Rates
+  // === 1️⃣3️⃣ Load Balances + Rates
   const loadBalances = async (signers) => {
     try {
       const rateData = await fetchRates();
