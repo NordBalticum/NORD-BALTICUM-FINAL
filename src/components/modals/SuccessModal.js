@@ -2,7 +2,7 @@
 
 import React, { useEffect } from "react";
 import { motion } from "framer-motion";
-import styles from "@/styles/modals/successmodal.module.css";
+import styles from "@/components/modals/successmodal.module.css";
 
 const explorers = {
   eth: "https://etherscan.io/tx/",
