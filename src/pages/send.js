@@ -44,7 +44,7 @@ export default function Send() {
     "Avalanche": "avax",
   };
 
-  const shortName = networkShortNames[activeNetwork] || activeNetwork?.toLowerCase() || "";
+  const shortName = useMemo(() => networkShortNames[activeNetwork] || activeNetwork?.toLowerCase() || "", [activeNetwork]);
 
   useEffect(() => {
     if (!user) router.replace("/");
