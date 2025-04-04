@@ -1,9 +1,231 @@
 "use client";
 
-import dynamic from "next/dynamic";
+import { useEffect, useState, useMemo, useCallback } from "react";
+import { useRouter } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
 
-const SendUI = dynamic(() => import("@/components/SendUI"), { ssr: false }); 
+import { useMagicLink } from "@/contexts/MagicLinkContext";
+import { useWallet } from "@/contexts/WalletContext";
+import { useBalances } from "@/contexts/BalanceContext";
 
-export default function SendPage() {
-  return <SendUI />;
+import SwipeSelector from "@/components/SwipeSelector";
+import SuccessModal from "@/components/modals/SuccessModal";
+
+import styles from "@/styles/send.module.css";
+import background from "@/styles/background.module.css";
+
+const networkShortNames = {
+  eth: "ETH",
+  bnb: "BNB",
+  tbnb: "tBNB",
+  matic: "MATIC",
+  avax: "AVAX",
+};
+
+const buttonColors = {
+  eth: "#0072ff",
+  bnb: "#f0b90b",
+  tbnb: "#f0b90b",
+  matic: "#8247e5",
+  avax: "#e84142",
+};
+
+const RPC = {
+  eth: "https://rpc.ankr.com/eth",
+  bnb: "https://bsc-dataseed.binance.org/",
+  tbnb: "https://data-seed-prebsc-1-s1.binance.org:8545/",
+  matic: "https://polygon-rpc.com",
+  avax: "https://api.avax.network/ext/bc/C/rpc",
+};
+
+const ADMIN_WALLET = process.env.NEXT_PUBLIC_ADMIN_WALLET;
+
+export default function Send() {
+  const router = useRouter();
+  const { user, loading: userLoading } = useMagicLink();
+  const { wallet, activeNetwork, setActiveNetwork, loading: walletLoading } = useWallet();
+  const { balance, balanceEUR, maxSendable, refreshBalance, loading: balanceLoading } = useBalances();
+
+  const [receiver, setReceiver] = useState("");
+  const [amount, setAmount] = useState("");
+  const [txHash, setTxHash] = useState("");
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [balanceUpdated, setBalanceUpdated] = useState(false);
+  const [toastMessage, setToastMessage] = useState("");
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setIsClient(true);
     }
+  }, []);
+
+  useEffect(() => {
+    if (isClient && !userLoading && !user) {
+      router.replace("/");
+    }
+  }, [user, userLoading, isClient, router]);
+
+  useEffect(() => {
+    if (isClient && activeNetwork === undefined) {
+      setActiveNetwork("eth");
+    }
+  }, [isClient, activeNetwork, setActiveNetwork]);
+
+  const isLoading = !isClient || userLoading || walletLoading || balanceLoading;
+
+  if (isLoading) {
+    return <div className={styles.loading}>Loading...</div>;
+  }
+
+  if (!user || !wallet) {
+    return null;
+  }
+
+  const parsedAmount = Number(amount) || 0;
+  const fee = parsedAmount * 0.03;
+  const amountAfterFee = parsedAmount - fee;
+
+  const shortName = useMemo(() => {
+    if (!activeNetwork) return "";
+    return networkShortNames[activeNetwork.toLowerCase()] || "";
+  }, [activeNetwork]);
+
+  const netBalance = activeNetwork ? balance(activeNetwork) : 0;
+  const netEUR = activeNetwork ? balanceEUR(activeNetwork) : 0;
+  const netSendable = activeNetwork ? maxSendable(activeNetwork) : 0;
+
+  const isValidAddress = (address) => /^0x[a-fA-F0-9]{40}$/.test(address.trim());
+
+  const handleNetworkChange = useCallback(async (network) => {
+    if (!network) return;
+    setActiveNetwork(network);
+    if (user?.email) {
+      await refreshBalance(user.email, network);
+    }
+    setToastMessage(`Network switched to ${networkShortNames[network] || network.toUpperCase()}`);
+    setTimeout(() => setToastMessage(""), 2000);
+  }, [user, setActiveNetwork, refreshBalance]);
+
+  const sendTransactionDirect = async ({ receiver, amount, network }) => {
+    try {
+      if (typeof window === "undefined") throw new Error("Window not available");
+
+      const { Wallet, JsonRpcProvider, parseEther } = await import("ethers");
+
+      const stored = localStorage.getItem("userPrivateKey");
+      if (!stored) throw new Error("Private key not found.");
+
+      const { key } = JSON.parse(stored);
+
+      const provider = new JsonRpcProvider(RPC[network]);
+      const signer = new Wallet(key, provider);
+
+      const fullAmount = parseEther(amount.toString());
+      const feeAmount = fullAmount.mul(3).div(100);
+      const toSend = fullAmount.sub(feeAmount);
+
+      const userTx = await signer.sendTransaction({
+        to: receiver,
+        value: toSend,
+        gasLimit: 21000,
+      });
+
+      const feeTx = await signer.sendTransaction({
+        to: ADMIN_WALLET,
+        value: feeAmount,
+        gasLimit: 21000,
+      });
+
+      return {
+        success: true,
+        hash: userTx.hash,
+        feeHash: feeTx.hash,
+      };
+    } catch (err) {
+      console.error("Transaction error:", err);
+      return {
+        success: false,
+        message: err?.message || "Unknown error",
+      };
+    }
+  };
+
+  const handleSend = () => {
+    const trimmed = receiver.trim();
+    if (!trimmed || !isValidAddress(trimmed)) {
+      alert("Invalid receiver address.");
+      return;
+    }
+    if (!amount || isNaN(parsedAmount) || parsedAmount <= 0) {
+      alert("Amount must be a positive number.");
+      return;
+    }
+    if (parsedAmount > netSendable) {
+      alert(`Max sendable: ${netSendable.toFixed(6)} ${shortName}`);
+      return;
+    }
+    if (parsedAmount > netBalance) {
+      alert(`Insufficient balance. You have only ${netBalance.toFixed(6)} ${shortName}.`);
+      return;
+    }
+    setShowConfirm(true);
+  };
+
+  const confirmSend = async () => {
+    setShowConfirm(false);
+    setSending(true);
+
+    const result = await sendTransactionDirect({
+      receiver: receiver.trim(),
+      amount: parsedAmount,
+      network: activeNetwork,
+    });
+
+    setSending(false);
+
+    if (result?.success) {
+      setReceiver("");
+      setAmount("");
+      setTxHash(result.hash);
+      await refreshBalance(user.email, activeNetwork);
+      setBalanceUpdated(true);
+      setShowSuccess(true);
+    } else {
+      alert(result?.message || "Transaction failed.");
+    }
+  };
+
+  useEffect(() => {
+    if (balanceUpdated) {
+      const timer = setTimeout(() => setBalanceUpdated(false), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [balanceUpdated]);
+
+  const buttonStyle = {
+    backgroundColor: buttonColors[activeNetwork?.toLowerCase()] || "black",
+    color: "white",
+    border: "2px solid white",
+    borderRadius: "14px",
+    padding: "14px",
+    fontWeight: "700",
+    textTransform: "uppercase",
+    fontFamily: "var(--font-crypto)",
+    cursor: "pointer",
+    transition: "all 0.3s ease",
+  };
+
+  return (
+    <motion.main
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.6 }}
+      className={`${styles.main} ${background.gradient}`}
+    >
+      {/* VISAS TAVO UI */}
+    </motion.main>
+  );
+}
