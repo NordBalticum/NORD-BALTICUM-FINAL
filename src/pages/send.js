@@ -3,10 +3,7 @@
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-
-import { useAuth } from "@/contexts/AuthContext";           // TIKRAI AUTHPROVIDER
-import { useBalances } from "@/contexts/BalanceContext";    // BALANCE CONTEXTAS
-import { useSendCrypto } from "@/contexts/SendCryptoContext"; // SEND CONTEXTAS
+import { useAuth } from "@/contexts/AuthContext"; // ✅ Vienas ultimate hookas
 
 import SwipeSelector from "@/components/SwipeSelector";
 import SuccessModal from "@/components/modals/SuccessModal";
@@ -32,9 +29,19 @@ const buttonColors = {
 
 export default function SendPage() {
   const router = useRouter();
-  const { user, activeNetwork, setActiveNetwork, wallet, loading: authLoading } = useAuth();
-  const { balance, balanceEUR, maxSendable, refreshBalance, loading: balanceLoading } = useBalances();
-  const { sendTransaction } = useSendCrypto();
+  const {
+    user,
+    wallet,
+    balances,
+    activeNetwork,
+    loading,
+    setActiveNetwork,
+    sendCrypto,
+    getBalance,
+    getMaxSendable,
+    getBalanceEUR,
+    refreshBalance,
+  } = useAuth(); // ✅ Viskas iš vieno konteksto
 
   const [receiver, setReceiver] = useState("");
   const [amount, setAmount] = useState("");
@@ -47,27 +54,20 @@ export default function SendPage() {
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      setIsClient(true);
-    }
+    if (typeof window !== "undefined") setIsClient(true);
   }, []);
 
   useEffect(() => {
-    if (isClient && !authLoading && user === null) {
+    if (isClient && !loading && !user) {
       router.replace("/");
     }
-  }, [user, authLoading, router, isClient]);
+  }, [isClient, loading, user, router]);
 
   useEffect(() => {
     if (isClient && activeNetwork === undefined) {
       setActiveNetwork("eth");
     }
-  }, [activeNetwork, setActiveNetwork, isClient]);
-
-  const isLoading = authLoading || balanceLoading || !isClient;
-
-  if (isLoading) return <div className={styles.loading}>Loading...</div>;
-  if (!user || !wallet) return null;
+  }, [isClient, activeNetwork, setActiveNetwork]);
 
   const parsedAmount = Number(amount || 0);
   const fee = parsedAmount * 0.03;
@@ -78,9 +78,11 @@ export default function SendPage() {
     return networkShortNames[activeNetwork.toLowerCase()] || "";
   }, [activeNetwork]);
 
-  const netBalance = activeNetwork ? balance(activeNetwork) : 0;
-  const netEUR = activeNetwork ? balanceEUR(activeNetwork) : 0;
-  const netSendable = activeNetwork ? maxSendable(activeNetwork) : 0;
+  const netBalance = getBalance(activeNetwork) || 0;
+  const netBalanceEUR = getBalanceEUR(activeNetwork) || 0;
+  const netSendable = getMaxSendable(activeNetwork) || 0;
+
+  const isValidAddress = (address) => /^0x[a-fA-F0-9]{40}$/.test(address.trim());
 
   const handleNetworkChange = useCallback(async (network) => {
     if (!network) return;
@@ -91,8 +93,6 @@ export default function SendPage() {
     setToastMessage(`Switched to ${networkShortNames[network] || network.toUpperCase()}`);
     setTimeout(() => setToastMessage(""), 2000);
   }, [user, setActiveNetwork, refreshBalance]);
-
-  const isValidAddress = (address) => /^0x[a-fA-F0-9]{40}$/.test(address.trim());
 
   const handleSend = () => {
     const trimmed = receiver.trim();
@@ -116,9 +116,9 @@ export default function SendPage() {
     setSending(true);
 
     try {
-      const result = await sendTransaction({
+      const result = await sendCrypto({
         receiver: receiver.trim(),
-        amount,
+        amount: parsedAmount,
         network: activeNetwork,
       });
 
@@ -162,17 +162,38 @@ export default function SendPage() {
     transition: "all 0.3s ease",
   };
 
+  if (loading || !isClient) return <div className={styles.loading}>Loading...</div>;
+
+  if (!user || !wallet) return null;
+
   return (
-    <motion.main initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6 }} className={`${styles.main} ${background.gradient}`}>
+    <motion.main
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.6 }}
+      className={`${styles.main} ${background.gradient}`}
+    >
       <div className={styles.wrapper}>
         <AnimatePresence>
           {balanceUpdated && (
-            <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.4 }} className={styles.successAlert}>
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.4 }}
+              className={styles.successAlert}
+            >
               Balance Updated!
             </motion.div>
           )}
           {toastMessage && (
-            <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.4 }} className={styles.successAlert}>
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.4 }}
+              className={styles.successAlert}
+            >
               {toastMessage}
             </motion.div>
           )}
@@ -189,7 +210,7 @@ export default function SendPage() {
             <span className={styles.balanceAmount}>
               {netBalance.toFixed(6)} {shortName}
             </span>{" "}
-            (~€{netEUR.toFixed(2)})
+            (~€{netBalanceEUR.toFixed(2)})
           </motion.p>
           <motion.p className={styles.whiteText}>
             Max Sendable:&nbsp;
@@ -252,7 +273,11 @@ export default function SendPage() {
         )}
 
         {showSuccess && (
-          <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ duration: 0.4 }}>
+          <motion.div
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.4 }}
+          >
             <SuccessModal
               message="Transaction completed!"
               txHash={txHash}
