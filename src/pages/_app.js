@@ -1,30 +1,20 @@
 "use client";
 
-import React from "react";
 import "@/styles/theme.css";
 import "@/styles/globals.css";
 
-import { MagicLinkProvider } from "@/contexts/MagicLinkContext";
-import { WalletProvider } from "@/contexts/WalletContext";
+import { AuthProvider } from "@/contexts/AuthContext";  // <- Tavo pagrindinis vartotojo prisijungimo valdymas
 import { BalanceProvider } from "@/contexts/BalanceContext";
 import { SendCryptoProvider } from "@/contexts/SendCryptoContext";
 
-import Layout from "@/components/Layout";
-
 export default function App({ Component, pageProps }) {
-  if (typeof window === "undefined") return null;
-
   return (
-    <MagicLinkProvider>
-      <WalletProvider>
-        <BalanceProvider>
-          <SendCryptoProvider>
-            <Layout>
-              <Component {...pageProps} />
-            </Layout>
-          </SendCryptoProvider>
-        </BalanceProvider>
-      </WalletProvider>
-    </MagicLinkProvider>
+    <AuthProvider>
+      <BalanceProvider>
+        <SendCryptoProvider>
+          <Component {...pageProps} />
+        </SendCryptoProvider>
+      </BalanceProvider>
+    </AuthProvider>
   );
 }
