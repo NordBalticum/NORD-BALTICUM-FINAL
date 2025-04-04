@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
+import { useAuth } from "@/contexts/AuthContext"; // ✅ Pagrindinis importas
 import styles from "@/components/swipeselector.module.css";
 
 const supportedNetworks = [
@@ -23,7 +24,7 @@ const supportedNetworks = [
   },
   {
     name: "Polygon",
-    symbol: "matic",  // FIXED čia
+    symbol: "matic",
     logo: "https://cryptologos.cc/logos/polygon-matic-logo.png",
   },
   {
@@ -34,8 +35,9 @@ const supportedNetworks = [
 ];
 
 export default function SwipeSelector({ mode = "send", onSelect }) {
+  const { activeNetwork, setActiveNetwork } = useAuth(); // ✅ Ultimate hook
   const containerRef = useRef(null);
-  const [selectedIndex, setSelectedIndex] = useState(2); // Default to Ethereum
+  const [selectedIndex, setSelectedIndex] = useState(2); // Default ETH
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -46,11 +48,22 @@ export default function SwipeSelector({ mode = "send", onSelect }) {
   }, []);
 
   useEffect(() => {
+    // 1️⃣ Kai pasikeičia pasirinktas indeksas
     if (supportedNetworks[selectedIndex]) {
-      onSelect?.(supportedNetworks[selectedIndex].symbol); // SIUNČIA SYMBOL teisingai
+      const selectedSymbol = supportedNetworks[selectedIndex].symbol;
+      setActiveNetwork(selectedSymbol); // ✅ Automatiškai nustatom į Context
+      onSelect?.(selectedSymbol);       // ✅ Jeigu papildomai reikia kažkur
     }
     if (isMobile) scrollToCenter(selectedIndex);
-  }, [selectedIndex, isMobile, onSelect]);
+  }, [selectedIndex, isMobile, setActiveNetwork, onSelect]);
+
+  useEffect(() => {
+    // 2️⃣ Jeigu kitoje vietoje pasikeitė network (pvz. iš localStorage)
+    const index = supportedNetworks.findIndex((net) => net.symbol === activeNetwork);
+    if (index >= 0) {
+      setSelectedIndex(index);
+    }
+  }, [activeNetwork]);
 
   const scrollToCenter = (index) => {
     const container = containerRef.current;
@@ -63,22 +76,15 @@ export default function SwipeSelector({ mode = "send", onSelect }) {
 
   const handleSelect = (index) => {
     setSelectedIndex(index);
-    if (supportedNetworks[index]) {
-      onSelect?.(supportedNetworks[index].symbol);
-    }
     if (isMobile) scrollToCenter(index);
   };
 
   const goLeft = () => {
-    if (selectedIndex > 0) {
-      handleSelect(selectedIndex - 1);
-    }
+    if (selectedIndex > 0) handleSelect(selectedIndex - 1);
   };
 
   const goRight = () => {
-    if (selectedIndex < supportedNetworks.length - 1) {
-      handleSelect(selectedIndex + 1);
-    }
+    if (selectedIndex < supportedNetworks.length - 1) handleSelect(selectedIndex + 1);
   };
 
   return (
