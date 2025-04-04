@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
+import Image from "next/image"; // <-- vietoje paprasto img naudok Next.js Image komponentą!
 
 import { useMagicLink } from "@/contexts/MagicLinkContext";
 import { useWallet } from "@/contexts/WalletContext";
@@ -62,7 +63,6 @@ export default function Dashboard() {
   return (
     <main className={styles.container}>
       <div className={styles.dashboardWrapper}>
-
         {/* Live prices table */}
         <LivePriceTable />
 
@@ -79,15 +79,21 @@ export default function Dashboard() {
                 <div
                   key={symbol}
                   className={styles.assetItem}
-                  onClick={() => router.push(`/${symbol}`)}
+                  onClick={() => {
+                    if (isClient) { // apsauga kad SSR metu router nebandytų veikti
+                      router.push(`/${symbol}`);
+                    }
+                  }}
                 >
                   <div className={styles.assetLeft}>
-                    <img
+                    <Image
                       src={iconUrls[symbol]}
                       alt={`${symbol}-icon`}
                       className={styles.assetLogo}
                       width={40}
                       height={40}
+                      priority
+                      unoptimized // <-- kad Next.js nesustotų optimizuoti remote img
                     />
                     <div className={styles.assetInfo}>
                       <div className={styles.assetSymbol}>
