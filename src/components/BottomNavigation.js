@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -11,7 +11,7 @@ import {
   FaUserCircle,
 } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
-import styles from "@/components/bottomnav.module.css";
+import styles from "@/components/bottomnav.module.css"; // ✅ Premium CSS
 
 const navItems = [
   { path: "/dashboard", icon: <FaWallet />, label: "Wallet" },
@@ -27,7 +27,10 @@ export default function BottomNavigation() {
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      setIsMobile(window.innerWidth <= 768);
+      const checkMobile = () => setIsMobile(window.innerWidth <= 768);
+      checkMobile();
+      window.addEventListener("resize", checkMobile);
+      return () => window.removeEventListener("resize", checkMobile);
     }
   }, []);
 
@@ -35,17 +38,15 @@ export default function BottomNavigation() {
 
   return (
     <AnimatePresence mode="wait">
-      <div className={styles.bottomWrapper}>
-        <motion.nav
-          key={pathname}
-          className={styles.navbar}
-          role="navigation"
-          aria-label="Bottom Navigation"
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: 16 }}
-          transition={{ duration: 0.3, ease: [0.25, 1, 0.5, 1] }}
-        >
+      <motion.div
+        key={pathname}
+        className={styles.bottomWrapper}
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: 16 }}
+        transition={{ duration: 0.35, ease: [0.25, 1, 0.5, 1] }}
+      >
+        <nav className={styles.navbar} role="navigation" aria-label="Bottom Navigation">
           {navItems.map(({ path, icon, label }) => {
             const isActive = pathname === path;
 
@@ -58,9 +59,9 @@ export default function BottomNavigation() {
                 >
                   <motion.div
                     className={styles.icon}
-                    whileTap={{ scale: 0.9 }}
-                    whileHover={{ scale: 1.05 }}
-                    transition={{ type: "spring", stiffness: 300 }}
+                    whileTap={{ scale: 0.92 }}
+                    whileHover={{ scale: 1.06 }}
+                    transition={{ type: "spring", stiffness: 400 }}
                   >
                     {icon}
                   </motion.div>
@@ -69,8 +70,8 @@ export default function BottomNavigation() {
               </Link>
             );
           })}
-        </motion.nav>
-      </div>
+        </nav>
+      </motion.div>
     </AnimatePresence>
   );
 }
