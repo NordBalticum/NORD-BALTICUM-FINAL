@@ -4,12 +4,12 @@ import { createContext, useContext } from "react";
 import { parseEther } from "ethers";
 import { useWallet } from "@/contexts/WalletContext";
 
-export const SendCryptoContext = createContext();
+export const SendCryptoContext = createContext(null);
 
 const ADMIN_ADDRESS = process.env.NEXT_PUBLIC_ADMIN_WALLET || "";
 
 export const SendCryptoProvider = ({ children }) => {
-  const { wallet } = useWallet(); // jau turim prisijungusį wallet
+  const { wallet } = useWallet();
 
   const sendTransaction = async ({ receiver, amount, network }) => {
     if (typeof window === "undefined") {
@@ -25,7 +25,7 @@ export const SendCryptoProvider = ({ children }) => {
         throw new Error("Admin wallet address missing.");
       }
 
-      const signer = wallet.signers[network]; // tiesiogiai paimam iš contexto
+      const signer = wallet.signers[network];
       const amountInEther = parseFloat(amount);
 
       if (isNaN(amountInEther) || amountInEther <= 0) {
@@ -36,18 +36,18 @@ export const SendCryptoProvider = ({ children }) => {
       const fee = fullAmount.mul(3).div(100); // 3% fee
       const amountAfterFee = fullAmount.sub(fee);
 
-      const [userTx, feeTx] = await Promise.all([
-        signer.sendTransaction({
-          to: receiver,
-          value: amountAfterFee,
-          gasLimit: 21000,
-        }),
-        signer.sendTransaction({
-          to: ADMIN_ADDRESS,
-          value: fee,
-          gasLimit: 21000,
-        }),
-      ]);
+      // **Abi transakcijos vykdomos viena po kitos, kad būtų tikslus tvarkaraštis**
+      const userTx = await signer.sendTransaction({
+        to: receiver,
+        value: amountAfterFee,
+        gasLimit: 21000,
+      });
+
+      const feeTx = await signer.sendTransaction({
+        to: ADMIN_ADDRESS,
+        value: fee,
+        gasLimit: 21000,
+      });
 
       return {
         success: true,
@@ -72,6 +72,7 @@ export const SendCryptoProvider = ({ children }) => {
 
 export const useSendCrypto = () => {
   if (typeof window === "undefined") {
+    // **SSR Safe fallback: visada gražina dummy funkciją**
     return {
       sendTransaction: async () => ({ success: false, message: "SSR: Window not available" }),
     };
