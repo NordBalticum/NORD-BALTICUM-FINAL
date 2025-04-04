@@ -1,38 +1,51 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/contexts/AuthContext"; // ✅ Naujas importas
+import { motion, AnimatePresence } from "framer-motion"; // ✅ Animacijoms
+import { useAuth } from "@/contexts/AuthContext"; // ✅ Ultimate Auth
 import styles from "@/styles/index.module.css";
 import background from "@/styles/background.module.css";
 
 export default function Home() {
   const router = useRouter();
-  const { user, signInWithMagicLink, signInWithGoogle } = useAuth(); // ✅ Naudojam mūsų ultimate useAuth()
+  const { user, signInWithMagicLink, signInWithGoogle } = useAuth();
 
   const [email, setEmail] = useState("");
-  const [status, setStatus] = useState("idle");
+  const [status, setStatus] = useState("idle"); // idle | loading | success | error
   const [message, setMessage] = useState("");
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") setIsClient(true);
+  }, []);
+
+  useEffect(() => {
+    if (isClient && user) {
+      router.replace("/dashboard");
+    }
+  }, [user, isClient, router]);
 
   const handleSignIn = async (e) => {
     e.preventDefault();
     setMessage("");
 
     if (!email || !email.includes("@")) {
-      setMessage("Please enter a valid email.");
+      setStatus("error");
+      setMessage("❌ Please enter a valid email address.");
       return;
     }
 
     try {
       setStatus("loading");
       await signInWithMagicLink(email);
-      setMessage("Check your inbox for the Magic Link.");
+      setStatus("success");
+      setMessage("✅ Check your inbox for the Magic Link!");
     } catch (err) {
       console.error("❌ Magic Link Error:", err);
-      setMessage("Failed to send Magic Link. Try again.");
-    } finally {
-      setStatus("idle");
+      setStatus("error");
+      setMessage("❌ Failed to send Magic Link. Try again.");
     }
   };
 
@@ -42,9 +55,8 @@ export default function Home() {
       await signInWithGoogle();
     } catch (err) {
       console.error("❌ Google Auth Error:", err);
-      setMessage("Google login failed.");
-    } finally {
-      setStatus("idle");
+      setStatus("error");
+      setMessage("❌ Google login failed. Try again.");
     }
   };
 
@@ -79,7 +91,7 @@ export default function Home() {
           disabled={status === "loading"}
           className={styles.buttonPrimary}
         >
-          SEND MAGIC LINK
+          {status === "loading" ? "SENDING..." : "SEND MAGIC LINK"}
         </button>
 
         <button
@@ -95,11 +107,29 @@ export default function Home() {
             height={18}
             style={{ marginRight: "8px" }}
           />
-          LOGIN WITH GOOGLE
+          {status === "loading" ? "CONNECTING..." : "LOGIN WITH GOOGLE"}
         </button>
 
-        {message && <p className={styles.message}>{message}</p>}
+        {/* ✅ Animate success/error message */}
+        <AnimatePresence>
+          {message && (
+            <motion.p
+              key="message"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 10 }}
+              transition={{ duration: 0.4 }}
+              className={
+                status === "success"
+                  ? styles.successMessage
+                  : styles.errorMessage
+              }
+            >
+              {message}
+            </motion.p>
+          )}
+        </AnimatePresence>
       </form>
     </div>
   );
-        }
+}
