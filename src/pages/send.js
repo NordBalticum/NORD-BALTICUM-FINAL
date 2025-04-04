@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 
@@ -36,48 +36,31 @@ export default function Send() {
   const [showConfirm, setShowConfirm] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [sending, setSending] = useState(false);
+  const [balanceUpdated, setBalanceUpdated] = useState(false);
 
   const parsedAmount = Number(amount || 0);
   const fee = parsedAmount * 0.03;
   const amountAfterFee = parsedAmount - fee;
 
-  // Fallback shortName jei activeNetwork nėra
   const shortName = useMemo(() => {
     if (!activeNetwork) return "ETH";
-    return networkShortNames[activeNetwork.toLowerCase()] || "ETH";
+    return networkShortNames[activeNetwork?.toLowerCase()] || "ETH";
   }, [activeNetwork]);
 
-  const netBalance = useMemo(
-    () => Number(balance(activeNetwork) || 0),
-    [balance, activeNetwork]
-  );
-  const netEUR = useMemo(
-    () => Number(balanceEUR(activeNetwork) || 0),
-    [balanceEUR, activeNetwork]
-  );
-  const netSendable = useMemo(
-    () => Number(maxSendable(activeNetwork) || 0),
-    [maxSendable, activeNetwork]
-  );
+  const netBalance = balance(activeNetwork);
+  const netEUR = balanceEUR(activeNetwork);
+  const netSendable = maxSendable(activeNetwork);
 
   useEffect(() => {
     if (!user) router.replace("/");
   }, [user, router]);
 
-  useEffect(() => {
-    if (user?.email && activeNetwork) {
-      refreshBalance(user.email, activeNetwork);
+  const handleNetworkChange = useCallback(async (network) => {
+    setActiveNetwork(network);
+    if (user?.email) {
+      await refreshBalance(user.email, network);
     }
-  }, [user?.email, activeNetwork, refreshBalance]);
-
-  useEffect(() => {
-    if (user?.email && activeNetwork) {
-      const interval = setInterval(() => {
-        refreshBalance(user.email, activeNetwork);
-      }, 30000);
-      return () => clearInterval(interval);
-    }
-  }, [user?.email, activeNetwork, refreshBalance]);
+  }, [user, setActiveNetwork, refreshBalance]);
 
   const isValidAddress = (address) => /^0x[a-fA-F0-9]{40}$/.test(address.trim());
 
@@ -96,6 +79,11 @@ export default function Send() {
 
     if (parsedAmount > netSendable) {
       alert(`Max sendable: ${netSendable.toFixed(6)} ${shortName}`);
+      return;
+    }
+
+    if (parsedAmount > netBalance) {
+      alert(`Insufficient balance. You have only ${netBalance.toFixed(6)} ${shortName}.`);
       return;
     }
 
@@ -118,13 +106,21 @@ export default function Send() {
     if (result?.success) {
       setReceiver("");
       setAmount("");
-      refreshBalance(user.email, activeNetwork);
       setTxHash(result.hash);
+      await refreshBalance(user.email, activeNetwork);
+      setBalanceUpdated(true);
       setShowSuccess(true);
     } else {
       alert(result?.message || "Transaction failed");
     }
   };
+
+  useEffect(() => {
+    if (balanceUpdated) {
+      const timer = setTimeout(() => setBalanceUpdated(false), 2500);
+      return () => clearTimeout(timer);
+    }
+  }, [balanceUpdated]);
 
   return (
     <motion.main
@@ -134,10 +130,16 @@ export default function Send() {
       className={`${styles.main} ${background.gradient}`}
     >
       <div className={styles.wrapper}>
+        {balanceUpdated && (
+          <div className={styles.successAlert}>
+            Balance Updated!
+          </div>
+        )}
+
         <h1 className={styles.title}>SEND CRYPTO</h1>
         <p className={styles.subtext}>Transfer crypto securely & instantly</p>
 
-        <SwipeSelector mode="send" onSelect={setActiveNetwork} />
+        <SwipeSelector mode="send" onSelect={handleNetworkChange} />
 
         <div className={styles.balanceTable}>
           {loading ? (
@@ -157,7 +159,8 @@ export default function Send() {
                 Total Balance:&nbsp;
                 <span className={styles.balanceAmount}>
                   {netBalance.toFixed(6)} {shortName}
-                </span> (~€{netEUR.toFixed(2)})
+                </span>{" "}
+                (~€{netEUR.toFixed(2)})
               </motion.p>
 
               <motion.p
@@ -170,7 +173,8 @@ export default function Send() {
                 Max Sendable:&nbsp;
                 <span className={styles.balanceAmount}>
                   {netSendable.toFixed(6)} {shortName}
-                </span> (includes 3% fee)
+                </span>{" "}
+                (includes 3% fee)
               </motion.p>
             </>
           )}
@@ -201,7 +205,7 @@ export default function Send() {
           <button
             onClick={handleSend}
             className={styles.confirmButton}
-            disabled={!user || sending}
+            disabled={!user || sending || !receiver || !amount}
           >
             {sending ? (
               <div className={styles.loader}></div>
