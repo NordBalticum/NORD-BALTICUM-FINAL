@@ -44,15 +44,18 @@ export default function Send() {
   const [balanceUpdated, setBalanceUpdated] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
   const [isClient, setIsClient] = useState(false);
+  const [sendTransaction, setSendTransaction] = useState(null);
 
-  // Tik patikrinam ar window egzistuoja
   useEffect(() => {
     if (typeof window !== "undefined") {
       setIsClient(true);
+      import("@/contexts/SendCryptoContext").then((module) => {
+        const { useSendCrypto } = module;
+        const { sendTransaction } = useSendCrypto();
+        setSendTransaction(() => sendTransaction);
+      });
     }
   }, []);
-
-  const { sendTransaction } = isClient ? require("@/contexts/SendCryptoContext").useSendCrypto() : { sendTransaction: null };
 
   useEffect(() => {
     if (isClient && !userLoading && user === null) {
@@ -66,7 +69,7 @@ export default function Send() {
     }
   }, [isClient, activeNetwork, setActiveNetwork]);
 
-  const isLoading = userLoading || walletLoading || balanceLoading || !isClient;
+  const isLoading = userLoading || walletLoading || balanceLoading || !isClient || !sendTransaction;
 
   if (isLoading) {
     return <div className={styles.loading}>Loading...</div>;
@@ -102,8 +105,6 @@ export default function Send() {
   const isValidAddress = (address) => /^0x[a-fA-F0-9]{40}$/.test(address.trim());
 
   const handleSend = () => {
-    if (!isClient || !sendTransaction) return;
-
     const trimmed = receiver.trim();
     if (!trimmed || !isValidAddress(trimmed)) {
       alert("Invalid receiver address.");
@@ -125,8 +126,7 @@ export default function Send() {
   };
 
   const confirmSend = async () => {
-    if (!isClient || !sendTransaction) return;
-
+    if (!sendTransaction) return; // Apsauga jei dar nespėjo pasikrauti
     setShowConfirm(false);
     setSending(true);
 
@@ -177,7 +177,126 @@ export default function Send() {
       transition={{ duration: 0.6 }}
       className={`${styles.main} ${background.gradient}`}
     >
-      {/* Likęs tavo kodas */}
+      <div className={styles.wrapper}>
+        <AnimatePresence>
+          {balanceUpdated && (
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.4 }}
+              className={styles.successAlert}
+            >
+              Balance Updated!
+            </motion.div>
+          )}
+          {toastMessage && (
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.4 }}
+              className={styles.successAlert}
+            >
+              {toastMessage}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <h1 className={styles.title}>SEND CRYPTO</h1>
+        <p className={styles.subtext}>Transfer crypto securely & instantly</p>
+
+        <SwipeSelector mode="send" onSelect={handleNetworkChange} />
+
+        <div className={styles.balanceTable}>
+          <motion.p className={styles.whiteText}>
+            Total Balance:&nbsp;
+            <span className={styles.balanceAmount}>
+              {netBalance.toFixed(6)} {shortName}
+            </span>{" "}
+            (~€{netEUR.toFixed(2)})
+          </motion.p>
+          <motion.p className={styles.whiteText}>
+            Max Sendable:&nbsp;
+            <span className={styles.balanceAmount}>
+              {netSendable.toFixed(6)} {shortName}
+            </span>{" "}
+            (includes 3% fee)
+          </motion.p>
+        </div>
+
+        <div className={styles.walletActions}>
+          <input
+            type="text"
+            placeholder="Receiver address"
+            value={receiver}
+            onChange={(e) => setReceiver(e.target.value)}
+            className={styles.inputField}
+          />
+          <input
+            type="number"
+            placeholder="Amount to send"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            className={styles.inputField}
+          />
+
+          <p className={styles.feeBreakdown}>
+            Recipient receives <strong>{amountAfterFee.toFixed(6)} {shortName}</strong>
+            <br />Includes 3% platform fee.
+          </p>
+
+          <button
+            onClick={handleSend}
+            style={buttonStyle}
+            disabled={!user || sending || !receiver || !amount}
+          >
+            {sending ? (
+              <div className={styles.loader}></div>
+            ) : (
+              "SEND NOW"
+            )}
+          </button>
+        </div>
+
+        {showConfirm && (
+          <div className={styles.overlay}>
+            <div className={styles.confirmModal}>
+              <div className={styles.modalTitle}>Final Confirmation</div>
+              <div className={styles.modalInfo}>
+                <p><strong>Network:</strong> {shortName}</p>
+                <p><strong>To:</strong> {receiver}</p>
+                <p><strong>Send:</strong> {parsedAmount.toFixed(6)} {shortName}</p>
+                <p><strong>Gets:</strong> {amountAfterFee.toFixed(6)} {shortName}</p>
+              </div>
+              <div className={styles.modalActions}>
+                <button className={styles.modalButton} onClick={confirmSend}>Confirm</button>
+                <button
+                  className={`${styles.modalButton} ${styles.cancel}`}
+                  onClick={() => setShowConfirm(false)}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showSuccess && (
+          <motion.div
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.4 }}
+          >
+            <SuccessModal
+              message="Transaction completed!"
+              txHash={txHash}
+              networkKey={activeNetwork}
+              onClose={() => setShowSuccess(false)}
+            />
+          </motion.div>
+        )}
+      </div>
     </motion.main>
   );
 }
