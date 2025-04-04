@@ -74,6 +74,33 @@
   text-shadow: 0 0 8px rgba(255, 255, 255, 0.08);
 }
 
+/* === Skeleton Loader === */
+.skeletonWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.skeletonLine {
+  height: 22px;
+  width: 90%;
+  border-radius: 8px;
+  background: linear-gradient(90deg, rgba(255,255,255,0.08) 25%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.08) 75%);
+  background-size: 200% 100%;
+  animation: skeletonLoading 1.5s infinite linear;
+}
+
+@keyframes skeletonLoading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* === Wallet Actions === */
 .walletActions {
   display: flex;
   flex-direction: column;
@@ -119,6 +146,7 @@
   color: black;
 }
 
+/* === Loader === */
 .loader {
   width: 22px;
   height: 22px;
@@ -135,6 +163,7 @@
   }
 }
 
+/* === Modal Overlay === */
 .overlay {
   position: fixed;
   inset: 0;
@@ -210,14 +239,7 @@
   background: linear-gradient(to right, #ff3c3c, #c71d1d);
 }
 
-.loading {
-  font-size: 1.2rem;
-  color: white;
-  text-align: center;
-  padding-top: 120px;
-  font-family: var(--font-crypto);
-}
-
+/* === Selector Container === */
 .selectorContainer {
   width: 100%;
   max-width: 100%;
@@ -227,8 +249,7 @@
   justify-content: center;
 }
 
-/* === RESPONSIVE FIXES === */
-
+/* === Responsive Fixes === */
 @media screen and (max-width: 768px) {
   .wrapper {
     transform: scale(0.92) translateY(1%);
@@ -262,6 +283,10 @@
 
   .modalButton {
     font-size: 0.9rem;
+  }
+
+  .skeletonLine {
+    height: 18px;
   }
 }
 
