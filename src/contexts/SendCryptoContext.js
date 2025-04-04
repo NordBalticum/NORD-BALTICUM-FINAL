@@ -6,10 +6,7 @@ import { useWallet } from "@/contexts/WalletContext";
 
 export const SendCryptoContext = createContext();
 
-let isClient = false;
-if (typeof window !== "undefined") {
-  isClient = true;
-}
+const isClient = typeof window !== "undefined";
 
 const RPC = {
   eth: "https://rpc.ankr.com/eth",
@@ -26,7 +23,8 @@ export const SendCryptoProvider = ({ children }) => {
 
   const sendTransaction = async ({ receiver, amount, network }) => {
     if (!isClient) {
-      throw new Error("SendCrypto can only run on client.");
+      console.warn("SendCrypto: Not running on client.");
+      return { success: false, message: "Client-side only" };
     }
 
     try {
@@ -36,7 +34,8 @@ export const SendCryptoProvider = ({ children }) => {
       if (!ADMIN_ADDRESS) {
         throw new Error("Admin wallet address missing.");
       }
-      const stored = localStorage.getItem("userPrivateKey");
+
+      const stored = window.localStorage.getItem("userPrivateKey");
       if (!stored) {
         throw new Error("Private key not found.");
       }
