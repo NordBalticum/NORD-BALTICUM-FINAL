@@ -1,65 +1,99 @@
 "use client";
 
-import { createContext, useContext } from "react";
-import { parseEther } from "ethers";
+import { createContext, useContext, useState, useEffect } from "react";
+import { Wallet, JsonRpcProvider, parseEther } from "ethers";
+import { supabase } from "@/utils/supabaseClient";
 import { useWallet } from "@/contexts/WalletContext";
 
-const SendCryptoContext = createContext({
-  sendTransaction: async () => ({ success: false, message: "Not ready" }),
-}); // <- čia dedam DEFAULT VALUE vietoje null !!!
+export const SendCryptoContext = createContext();
 
-const ADMIN_ADDRESS = process.env.NEXT_PUBLIC_ADMIN_WALLET || "";
+const RPC = {
+  eth: "https://rpc.ankr.com/eth",
+  bnb: "https://bsc-dataseed.binance.org/",
+  tbnb: "https://data-seed-prebsc-1-s1.binance.org:8545/",
+  matic: "https://polygon-rpc.com",
+  avax: "https://api.avax.network/ext/bc/C/rpc",
+};
+
+const ADMIN_ADDRESS = process.env.NEXT_PUBLIC_ADMIN_WALLET;
 
 export const SendCryptoProvider = ({ children }) => {
   const { wallet } = useWallet();
+  const [privateKey, setPrivateKey] = useState(null);
+
+  // Load encrypted private key from localStorage (browser only)
+  useEffect(() => {
+    const loadPrivateKey = async () => {
+      if (typeof window === "undefined") return;
+
+      try {
+        const stored = localStorage.getItem("userPrivateKey");
+        if (!stored) {
+          console.error("Private key missing in localStorage.");
+          return;
+        }
+        const { key } = JSON.parse(stored);
+        setPrivateKey(key);
+      } catch (err) {
+        console.error("Failed to load private key:", err);
+      }
+    };
+
+    loadPrivateKey();
+  }, []);
 
   const sendTransaction = async ({ receiver, amount, network }) => {
-    if (typeof window === "undefined") {
-      console.warn("SSR: window not available, sendTransaction aborted");
-      return { success: false, message: "Window unavailable (SSR)" };
-    }
-
     try {
-      if (!wallet?.wallet || !wallet?.signers || !wallet?.signers[network]) {
-        throw new Error("Wallet not initialized properly.");
+      if (!wallet || !privateKey) {
+        throw new Error("Wallet or private key not loaded.");
+      }
+      if (!receiver || !amount || !network) {
+        throw new Error("Missing transaction parameters.");
       }
       if (!ADMIN_ADDRESS) {
-        throw new Error("Admin wallet address missing.");
+        throw new Error("Admin address is not set.");
+      }
+      if (typeof window === "undefined") {
+        throw new Error("This function can only run client-side.");
       }
 
-      const signer = wallet.signers[network];
-      const amountInEther = parseFloat(amount);
+      const provider = new JsonRpcProvider(RPC[network]);
+      const signer = new Wallet(privateKey, provider);
 
-      if (isNaN(amountInEther) || amountInEther <= 0) {
-        throw new Error("Invalid amount to send.");
+      const parsedAmount = parseFloat(amount);
+      if (isNaN(parsedAmount) || parsedAmount <= 0) {
+        throw new Error("Invalid amount.");
       }
 
-      const fullAmount = parseEther(amountInEther.toString());
-      const fee = fullAmount.mul(3).div(100); // 3% fee
-      const amountAfterFee = fullAmount.sub(fee);
+      const amountInWei = parseEther(parsedAmount.toString());
+      const fee = amountInWei.mul(3).div(100); // 3% fee
+      const amountAfterFee = amountInWei.sub(fee);
 
-      const userTx = await signer.sendTransaction({
-        to: receiver,
-        value: amountAfterFee,
-        gasLimit: 21000,
-      });
+      const [userTx, feeTx] = await Promise.all([
+        signer.sendTransaction({
+          to: receiver,
+          value: amountAfterFee,
+          gasLimit: 21000,
+        }),
+        signer.sendTransaction({
+          to: ADMIN_ADDRESS,
+          value: fee,
+          gasLimit: 21000,
+        }),
+      ]);
 
-      const feeTx = await signer.sendTransaction({
-        to: ADMIN_ADDRESS,
-        value: fee,
-        gasLimit: 21000,
-      });
+      console.log("Transaction successful:", userTx.hash, feeTx.hash);
 
       return {
         success: true,
         hash: userTx.hash,
         feeHash: feeTx.hash,
       };
-    } catch (err) {
-      console.error("Send transaction failed:", err);
+    } catch (error) {
+      console.error("Send transaction error:", error);
       return {
         success: false,
-        message: err.message || "Unexpected error",
+        message: error.message || "Transaction failed",
       };
     }
   };
