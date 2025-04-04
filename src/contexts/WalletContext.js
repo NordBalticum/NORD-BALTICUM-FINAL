@@ -8,7 +8,6 @@ import { useMagicLink } from "@/contexts/MagicLinkContext";
 // Context
 export const WalletContext = createContext();
 
-// RPC URLs
 const RPC_URLS = {
   eth: "https://rpc.ankr.com/eth",
   bnb: "https://bsc-dataseed.binance.org/",
@@ -17,7 +16,6 @@ const RPC_URLS = {
   avax: "https://api.avax.network/ext/bc/C/rpc",
 };
 
-// Encryption
 const ENCRYPTION_SECRET = process.env.NEXT_PUBLIC_ENCRYPTION_SECRET || "nordbalticum-fallback";
 
 const encode = (str) => new TextEncoder().encode(str);
@@ -70,24 +68,27 @@ const decrypt = async (ciphertext) => {
   return decode(decrypted);
 };
 
-// Provider
 export const WalletProvider = ({ children }) => {
   const { user } = useMagicLink();
   const [wallet, setWallet] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isClient, setIsClient] = useState(false);
   const [activeNetwork, setActiveNetwork] = useState("eth");
 
   useEffect(() => {
+    if (typeof window !== "undefined") {
+      setIsClient(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!isClient || !user?.email) return;
+
     const load = async () => {
-      if (!user?.email || typeof window === "undefined") {
-        setWallet(null);
-        setLoading(false);
-        return;
-      }
       await loadOrCreateWallet(user.email);
     };
     load();
-  }, [user]);
+  }, [isClient, user]);
 
   const loadOrCreateWallet = async (email) => {
     setLoading(true);
