@@ -14,12 +14,13 @@ import SuccessModal from "@/components/modals/SuccessModal";
 import styles from "@/styles/send.module.css";
 import background from "@/styles/background.module.css";
 
-const networkNameToSymbol = {
-  "Ethereum": "ETH",
-  "BNB Chain": "BNB",
-  "BNB Testnet": "tBNB",
-  "Polygon": "MATIC",
-  "Avalanche": "AVAX",
+// TOBULAS SHORTNAME MAPPERIS
+const networkShortNames = {
+  eth: "ETH",
+  bnb: "BNB",
+  tbnb: "tBNB",
+  pol: "MATIC",
+  avax: "AVAX",
 };
 
 export default function Send() {
@@ -40,7 +41,7 @@ export default function Send() {
   const fee = parsedAmount * 0.03;
   const amountAfterFee = parsedAmount - fee;
 
-  const shortName = useMemo(() => networkNameToSymbol[activeNetwork] || "", [activeNetwork]);
+  const shortName = useMemo(() => networkShortNames[activeNetwork?.toLowerCase()] || "", [activeNetwork]);
   const netBalance = useMemo(() => Number(balance(activeNetwork) || 0), [balance, activeNetwork]);
   const netEUR = useMemo(() => Number(balanceEUR(activeNetwork) || 0), [balanceEUR, activeNetwork]);
   const netSendable = useMemo(() => Number(maxSendable(activeNetwork) || 0), [maxSendable, activeNetwork]);
@@ -54,6 +55,18 @@ export default function Send() {
       refreshBalance(user.email, activeNetwork);
     }
   }, [user?.email, activeNetwork, refreshBalance]);
+
+  // --- AUTOMATINIS BALANSŲ REFRESH KAS 30s ---
+  useEffect(() => {
+    if (user?.email && activeNetwork) {
+      const interval = setInterval(() => {
+        refreshBalance(user.email, activeNetwork);
+      }, 30000); // 30 sekundžių
+
+      return () => clearInterval(interval); // išvalymas
+    }
+  }, [user?.email, activeNetwork, refreshBalance]);
+  // --- END ---
 
   const isValidAddress = (address) => /^0x[a-fA-F0-9]{40}$/.test(address.trim());
 
@@ -155,7 +168,7 @@ export default function Send() {
             <div className={styles.confirmModal}>
               <div className={styles.modalTitle}>Final Confirmation</div>
               <div className={styles.modalInfo}>
-                <p><strong>Network:</strong> {activeNetwork}</p>
+                <p><strong>Network:</strong> {shortName}</p>
                 <p><strong>To:</strong> {receiver}</p>
                 <p><strong>Send:</strong> {parsedAmount.toFixed(6)} {shortName}</p>
                 <p><strong>Gets:</strong> {amountAfterFee.toFixed(6)} {shortName}</p>
