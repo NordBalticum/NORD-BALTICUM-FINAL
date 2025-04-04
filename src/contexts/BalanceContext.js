@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect, useCallback } from "react";
-import { JsonRpcProvider, formatEther, isAddress } from "ethers";
+import { JsonRpcProvider, formatEther } from "ethers";
 import { useWallet } from "@/contexts/WalletContext";
 
 export const BalanceContext = createContext();
@@ -22,29 +22,25 @@ const coinMap = {
   avax: "avalanche-2",
 };
 
-// Fetch rates from CoinGecko
 const fetchRates = async () => {
   try {
     const ids = Object.values(coinMap).join(",");
     const url = `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=eur,usd`;
     const res = await fetch(url);
-    if (!res.ok) throw new Error("Failed to fetch rates");
     return await res.json();
   } catch (err) {
-    console.error("Rates fetch error:", err);
+    console.error("Coingecko rates fetch failed:", err);
     return {};
   }
 };
 
-// Fetch single wallet balance
 const fetchBalance = async (rpcUrl, address) => {
   try {
-    if (!address || !isAddress(address)) return 0;
     const provider = new JsonRpcProvider(rpcUrl);
     const balance = await provider.getBalance(address);
     return parseFloat(formatEther(balance));
-  } catch (err) {
-    console.error(`Fetch balance error for ${address}:`, err);
+  } catch (error) {
+    console.error(`Error fetching balance for ${address}:`, error);
     return 0;
   }
 };
@@ -63,53 +59,44 @@ export const BalanceProvider = ({ children }) => {
   }, []);
 
   const loadBalances = useCallback(async () => {
-    if (!wallet || !wallet.signers || !isClient) return;
-
+    if (!wallet || !wallet.signers) return;
     setLoading(true);
-
     try {
       const addresses = Object.keys(wallet.signers).reduce((acc, network) => {
-        const addr = wallet.signers[network]?.address;
-        if (addr && isAddress(addr)) {
-          acc[network] = addr;
-        }
+        acc[network] = wallet.signers[network].address;
         return acc;
       }, {});
 
-      const rateDataPromise = fetchRates();
-      const balancePromises = Object.entries(addresses).map(
-        async ([network, address]) => {
-          const balance = await fetchBalance(RPC[network], address);
-          return { network, balance };
-        }
-      );
+      const rateData = await fetchRates();
 
-      const [rateData, balancesData] = await Promise.all([
-        rateDataPromise,
-        Promise.all(balancePromises),
-      ]);
-
-      const balancesObj = {};
-      balancesData.forEach(({ network, balance }) => {
-        balancesObj[network] = balance;
+      const balancePromises = Object.keys(addresses).map(async (network) => {
+        const address = addresses[network];
+        const balance = await fetchBalance(RPC[network], address);
+        return { network, balance };
       });
 
-      setBalances(balancesObj);
+      const results = await Promise.all(balancePromises);
+
+      const balancesResult = {};
+      results.forEach(({ network, balance }) => {
+        balancesResult[network] = balance;
+      });
+
+      setBalances(balancesResult);
       setRates(rateData);
-    } catch (err) {
-      console.error("Error loading balances:", err);
+    } catch (error) {
+      console.error("Error loading balances:", error);
     } finally {
       setLoading(false);
     }
-  }, [wallet, isClient]);
+  }, [wallet]);
 
   useEffect(() => {
-    if (!wallet || !wallet.signers || !isClient) return;
-
+    if (!isClient || !wallet || !wallet.signers) return;
     loadBalances();
     const interval = setInterval(loadBalances, 30000);
     return () => clearInterval(interval);
-  }, [wallet, loadBalances, isClient]);
+  }, [isClient, wallet, loadBalances]);
 
   const getBalance = (network) => balances?.[network] || 0;
 
@@ -125,11 +112,10 @@ export const BalanceProvider = ({ children }) => {
     return rawBalance * 0.97;
   };
 
-  const refreshBalance = async (_email, network) => {
-    if (!wallet || !wallet.signers || !isClient || !network) return;
-
+  const refreshBalance = async (email, network) => {
+    if (!wallet || !wallet.signers || !network) return;
     const address = wallet.signers[network]?.address;
-    if (!address || !isAddress(address)) return;
+    if (!address) return;
 
     try {
       const balance = await fetchBalance(RPC[network], address);
@@ -137,8 +123,8 @@ export const BalanceProvider = ({ children }) => {
         ...prev,
         [network]: balance,
       }));
-    } catch (err) {
-      console.error(`Refresh balance error for ${network}:`, err);
+    } catch (error) {
+      console.error(`Refresh balance error for ${network}:`, error);
     }
   };
 
