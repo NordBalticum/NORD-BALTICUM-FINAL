@@ -46,15 +46,16 @@ export default function Send() {
   const [sending, setSending] = useState(false);
   const [balanceUpdated, setBalanceUpdated] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
-  const [isClient, setIsClient] = useState(false);
+  const [isClient, setIsClient] = useState(false); // This tracks client-side rendering
 
+  // Ensure client-side rendering logic only
   useEffect(() => {
     if (typeof window !== "undefined") {
-      setIsClient(true);
+      setIsClient(true); // If window is defined, we're in the client-side
     }
   }, []);
 
-  // Page load checks for client side and network initialization
+  // Page load checks for client-side and network initialization
   useEffect(() => {
     if (isClient && activeNetwork === undefined) {
       setActiveNetwork("eth");
