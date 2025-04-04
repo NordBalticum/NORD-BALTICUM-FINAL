@@ -27,7 +27,7 @@ export default function Send() {
   const router = useRouter();
   const { user } = useMagicLink();
   const { activeNetwork, setActiveNetwork } = useWallet();
-  const { balance, balanceEUR, maxSendable, refreshBalance, loading } = useBalances(); // <--- svarbu gauti loading!
+  const { balance, balanceEUR, maxSendable, refreshBalance, loading } = useBalances();
   const { sendTransaction } = useSendCrypto();
 
   const [receiver, setReceiver] = useState("");
@@ -126,25 +126,31 @@ export default function Send() {
         <SwipeSelector mode="send" onSelect={setActiveNetwork} />
 
         <div className={styles.balanceTable}>
-          {!loading && (
+          {loading ? (
+            <div className={styles.skeletonWrapper}>
+              <div className={styles.skeletonLine}></div>
+              <div className={styles.skeletonLine}></div>
+            </div>
+          ) : (
             <>
               <motion.p
                 className={styles.whiteText}
-                key={netBalance}
+                key={`balance-${activeNetwork}`}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.6 }}
               >
-                Total Balance: <strong>{netBalance.toFixed(6)} {shortName}</strong> (~€{netEUR.toFixed(2)})
+                Total Balance: <strong>{netBalance.toFixed(6)}&nbsp;{shortName}</strong> (~€{netEUR.toFixed(2)})
               </motion.p>
+
               <motion.p
                 className={styles.whiteText}
-                key={netSendable}
+                key={`sendable-${activeNetwork}`}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.6 }}
               >
-                Max Sendable: <strong>{netSendable.toFixed(6)} {shortName}</strong> (includes 3% fee)
+                Max Sendable: <strong>{netSendable.toFixed(6)}&nbsp;{shortName}</strong> (includes 3% fee)
               </motion.p>
             </>
           )}
@@ -168,7 +174,7 @@ export default function Send() {
           />
 
           <p className={styles.feeBreakdown}>
-            Recipient receives <strong>{amountAfterFee.toFixed(6)} {shortName}</strong>
+            Recipient receives <strong>{amountAfterFee.toFixed(6)}&nbsp;{shortName}</strong>
             <br />Includes 3% platform fee.
           </p>
 
@@ -192,8 +198,8 @@ export default function Send() {
               <div className={styles.modalInfo}>
                 <p><strong>Network:</strong> {shortName}</p>
                 <p><strong>To:</strong> {receiver}</p>
-                <p><strong>Send:</strong> {parsedAmount.toFixed(6)} {shortName}</p>
-                <p><strong>Gets:</strong> {amountAfterFee.toFixed(6)} {shortName}</p>
+                <p><strong>Send:</strong> {parsedAmount.toFixed(6)}&nbsp;{shortName}</p>
+                <p><strong>Gets:</strong> {amountAfterFee.toFixed(6)}&nbsp;{shortName}</p>
               </div>
               <div className={styles.modalActions}>
                 <button className={styles.modalButton} onClick={confirmSend}>Confirm</button>
