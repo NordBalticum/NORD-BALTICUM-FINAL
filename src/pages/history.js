@@ -4,37 +4,33 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/AuthContext"; // ✅ Ultimate Auth
 import styles from "@/styles/history.module.css";
 import background from "@/styles/background.module.css";
 
 export default function HistoryPage() {
   const router = useRouter();
-  const { user, wallet, fetchTransactions, loadOrCreateWallet, loading } = useAuth();
+  const { user, wallet, fetchTransactions, loading } = useAuth(); // ❌ No loadOrCreateWallet čia!
 
   const [transactions, setTransactions] = useState([]);
   const [isClient, setIsClient] = useState(false);
   const [loadingTransactions, setLoadingTransactions] = useState(true);
 
+  // ✅ Detect client
   useEffect(() => {
     if (typeof window !== "undefined") {
       setIsClient(true);
     }
   }, []);
 
+  // ✅ Auto redirect jei neprisijungęs
   useEffect(() => {
     if (isClient && !loading && !user) {
       router.replace("/");
     }
   }, [user, loading, isClient, router]);
 
-  useEffect(() => {
-    if (!isClient) return;
-    if (!user?.email) return;
-    if (wallet?.wallet?.address) return;
-    loadOrCreateWallet(user.email);
-  }, [user, wallet, isClient, loadOrCreateWallet]);
-
+  // ✅ Fetch transactions kai user yra
   useEffect(() => {
     const fetchUserTx = async () => {
       if (user?.email) {
@@ -52,6 +48,7 @@ export default function HistoryPage() {
     fetchUserTx();
   }, [user, fetchTransactions]);
 
+  // ✅ Block explorer link
   const getExplorerURL = (hash, network) => {
     const baseURLs = {
       bsc: "https://bscscan.com/tx/",
@@ -63,6 +60,7 @@ export default function HistoryPage() {
     return baseURLs[network?.toLowerCase()] + hash;
   };
 
+  // ✅ Animation
   const variants = {
     hidden: { opacity: 0, y: 20 },
     visible: { opacity: 1, y: 0 },
@@ -70,6 +68,10 @@ export default function HistoryPage() {
 
   if (!isClient || loading) {
     return <div className={styles.loading}>Loading profile...</div>;
+  }
+
+  if (!user || !wallet?.wallet?.address) {
+    return <div className={styles.loading}>Preparing wallet...</div>; // ✅ Saugus tikrinimas
   }
 
   return (
@@ -147,6 +149,7 @@ export default function HistoryPage() {
   );
 }
 
+// ✅ Helper
 function truncateAddress(addr) {
   if (!addr || typeof addr !== "string") return "Unknown";
   return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
