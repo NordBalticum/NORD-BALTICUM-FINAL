@@ -30,8 +30,8 @@ const names = {
 export default function Dashboard() {
   const router = useRouter();
   const { user, loading } = useMagicLink();
-  const { wallet, wallets } = useWallet();  // Access wallets from the context
-  const { balance, balanceEUR } = useBalances(); 
+  const { wallet } = useWallet();
+  const { balance, balanceEUR } = useBalances();
 
   const [isClient, setIsClient] = useState(false);
 
@@ -45,57 +45,63 @@ export default function Dashboard() {
     }
   }, [user, loading, router]);
 
-  const tokens = wallets && wallets.signers ? Object.keys(wallets.signers) : [];
+  // TIKSLAI: visada naudoti wallet.signers, o jei nėra - grąžinti tuščią masyvą
+  const tokens = Object.keys(wallet?.signers || {});
 
-  if (!isClient || !user) {
+  if (!isClient || !user || loading) {
     return <div className={styles.loading}>Loading dashboard...</div>;
   }
 
   return (
     <main className={styles.container}>
       <div className={styles.dashboardWrapper}>
-        {/* === LIVE PRICE TABLE === */}
+        
+        {/* LIVE PRICE TABLE */}
         <LivePriceTable />
 
-        {/* === CRYPTO BALANCE LIST === */}
+        {/* CRYPTO BALANCE LIST */}
         <div className={styles.assetList}>
-          {tokens.map((symbol) => {
-            const value = balance(symbol) || 0;
-            const eurValue = balanceEUR(symbol) || 0;
+          {tokens.length === 0 ? (
+            <div className={styles.loading}>No assets found.</div>
+          ) : (
+            tokens.map((symbol) => {
+              const value = balance(symbol) || 0;
+              const eurValue = balanceEUR(symbol) || 0;
 
-            return (
-              <div
-                key={symbol}
-                className={styles.assetItem}
-                onClick={() => router.push(`/${symbol}`)}
-              >
-                <div className={styles.assetLeft}>
-                  <img
-                    src={iconUrls[symbol]}
-                    alt={`${symbol}-icon`}
-                    className={styles.assetLogo}
-                  />
-                  <div className={styles.assetInfo}>
-                    <div className={styles.assetSymbol}>
-                      {symbol.toUpperCase()}
+              return (
+                <div
+                  key={symbol}
+                  className={styles.assetItem}
+                  onClick={() => router.push(`/${symbol}`)}
+                >
+                  <div className={styles.assetLeft}>
+                    <img
+                      src={iconUrls[symbol]}
+                      alt={`${symbol}-icon`}
+                      className={styles.assetLogo}
+                    />
+                    <div className={styles.assetInfo}>
+                      <div className={styles.assetSymbol}>
+                        {symbol.toUpperCase()}
+                      </div>
+                      <div className={styles.assetName}>
+                        {names[symbol] || symbol}
+                      </div>
                     </div>
-                    <div className={styles.assetName}>
-                      {names[symbol] || symbol}
+                  </div>
+
+                  <div className={styles.assetRight}>
+                    <div className={styles.assetAmount}>
+                      {value.toFixed(6)} {symbol.toUpperCase()}
+                    </div>
+                    <div className={styles.assetEur}>
+                      ≈ €{eurValue.toFixed(2)}
                     </div>
                   </div>
                 </div>
-
-                <div className={styles.assetRight}>
-                  <div className={styles.assetAmount}>
-                    {value.toFixed(6)} {symbol.toUpperCase()}
-                  </div>
-                  <div className={styles.assetEur}>
-                    ≈ €{eurValue.toFixed(2)}
-                  </div>
-                </div>
-              </div>
-            );
-          })}
+              );
+            })
+          )}
         </div>
       </div>
     </main>
