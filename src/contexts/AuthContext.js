@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { Wallet, JsonRpcProvider, parseEther, formatEther } from "ethers";
+import { Wallet, JsonRpcProvider, parseEther, formatEther, isAddress } from "ethers";
 import { supabase } from "@/utils/supabaseClient";
 
 // === 1️⃣ RPC Tinklai ir Coin Mapping ===
@@ -82,6 +82,7 @@ export const AuthProvider = ({ children }) => {
   const [privateKey, setPrivateKey] = useState(null);
   const [loading, setLoading] = useState(true);
   const inactivityTimer = useRef(null);
+  const balanceInterval = useRef(null);
 
   const isClient = typeof window !== "undefined";
 
@@ -109,10 +110,14 @@ export const AuthProvider = ({ children }) => {
     return () => subscription?.unsubscribe();
   }, [isClient]);
 
-  // === 6️⃣ Auto Wallet Loader ===
+  // === 6️⃣ Auto Wallet Loader SAUGUS useEffect ===
   useEffect(() => {
-    if (user?.email && isClient) loadOrCreateWallet(user.email);
-  }, [user, isClient]);
+    if (!isClient) return;
+    if (!user?.email) return;
+    if (wallet?.wallet?.address) return;
+
+    loadOrCreateWallet(user.email);
+  }, [user, isClient, wallet]);
 
   // === 7️⃣ Auto Redirect po login į Dashboard ===
   useEffect(() => {
@@ -122,7 +127,7 @@ export const AuthProvider = ({ children }) => {
     }
   }, [user, loading, pathname, router, isClient]);
 
-  // === 8️⃣ Auto Logout po 10 minučių ===
+  // === 8️⃣ Auto Logout po 10 minučių
   useEffect(() => {
     if (!isClient) return;
 
@@ -130,7 +135,7 @@ export const AuthProvider = ({ children }) => {
       clearTimeout(inactivityTimer.current);
       inactivityTimer.current = setTimeout(() => {
         signOut();
-      }, 10 * 60 * 1000); // 10 min
+      }, 10 * 60 * 1000);
     };
 
     window.addEventListener("mousemove", resetTimer);
@@ -144,7 +149,7 @@ export const AuthProvider = ({ children }) => {
     };
   }, [isClient]);
 
-  // === 9️⃣ Load Active Network iš LocalStorage ===
+  // === 9️⃣ Load Active Network iš LocalStorage
   useEffect(() => {
     if (!isClient) return;
     const stored = localStorage.getItem("activeNetwork");
@@ -157,12 +162,19 @@ export const AuthProvider = ({ children }) => {
     }
   }, [activeNetwork, isClient]);
 
-  // === 1️⃣0️⃣ Load arba Create Wallet ===
+  // === 1️⃣0️⃣ Load arba Create Wallet su pilna validacija
   const loadOrCreateWallet = async (email) => {
-    setLoading(true);
     try {
       const localKey = loadPrivateKey();
-      if (localKey) return setupWallet(localKey);
+      if (localKey && isAddress(new Wallet(localKey).address)) {
+        console.log("✅ Local private key found, setting up wallet instantly.");
+        setupWallet(localKey);
+        return;
+      } else {
+        localStorage.removeItem("userPrivateKey");
+      }
+
+      setLoading(true);
 
       const { data, error } = await supabase
         .from("wallets")
@@ -187,6 +199,7 @@ export const AuthProvider = ({ children }) => {
           matic_address: newWallet.address,
           avax_address: newWallet.address,
           encrypted_key: encrypted,
+          created_at: new Date().toISOString(),
         });
         savePrivateKey(newWallet.privateKey);
         setupWallet(newWallet.privateKey);
@@ -217,6 +230,9 @@ export const AuthProvider = ({ children }) => {
     setWallet({ wallet: baseWallet, signers });
     setPrivateKey(key);
     loadBalances(signers);
+
+    if (balanceInterval.current) clearInterval(balanceInterval.current);
+    balanceInterval.current = setInterval(() => loadBalances(signers), 180000); // kas 3min
   };
 
   const savePrivateKey = (key) => {
@@ -232,7 +248,7 @@ export const AuthProvider = ({ children }) => {
     return stored ? JSON.parse(stored)?.key : null;
   };
 
-  // === 1️⃣1️⃣ Load Balances + Rates ===
+  // === 1️⃣1️⃣ Load Balances + Rates
   const loadBalances = async (signers) => {
     try {
       const rateData = await fetchRates();
@@ -279,7 +295,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // === 1️⃣2️⃣ Login/Logout ===
+  // === 1️⃣2️⃣ Login/Logout
   const signInWithMagicLink = async (email) => {
     const origin = isClient ? window.location.origin : "https://nordbalticum.com";
     const { error } = await supabase.auth.signInWithOtp({
@@ -311,12 +327,16 @@ export const AuthProvider = ({ children }) => {
     } finally {
       setUser(null);
       setWallet(null);
-      if (isClient) localStorage.removeItem("userPrivateKey");
+      if (isClient) {
+        localStorage.removeItem("userPrivateKey");
+        localStorage.removeItem("activeNetwork");
+      }
+      if (balanceInterval.current) clearInterval(balanceInterval.current);
       router.replace("/");
     }
   };
 
-  // === 1️⃣3️⃣ Send Transaction su 3% fee ===
+  // === 1️⃣3️⃣ Send Transaction su 3% fee
   const sendTransaction = async ({ receiver, amount, network }) => {
     try {
       if (!wallet?.signers?.[network]) throw new Error("Wallet not ready");
