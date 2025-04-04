@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { JsonRpcProvider, formatEther } from "ethers";
-import { useWallet } from "@/contexts/WalletContext";
+import { useAuth } from "@/contexts/AuthContext"; // PAGRINDINIS šaltinis viskam
 
 export const BalanceContext = createContext();
 
@@ -22,6 +22,7 @@ const coinMap = {
   avax: "avalanche-2",
 };
 
+// Gaunam rates iš CoinGecko
 const fetchRates = async () => {
   try {
     const ids = Object.values(coinMap).join(",");
@@ -29,11 +30,12 @@ const fetchRates = async () => {
     const res = await fetch(url);
     return await res.json();
   } catch (err) {
-    console.error("Coingecko rates fetch failed:", err);
+    console.error("Failed fetching CoinGecko rates:", err);
     return {};
   }
 };
 
+// Gaunam balanso reikšmę per RPC
 const fetchBalance = async (rpcUrl, address) => {
   try {
     const provider = new JsonRpcProvider(rpcUrl);
@@ -46,7 +48,7 @@ const fetchBalance = async (rpcUrl, address) => {
 };
 
 export const BalanceProvider = ({ children }) => {
-  const { wallet } = useWallet();
+  const { wallet } = useAuth(); // Tikras wallet
   const [balances, setBalances] = useState({});
   const [rates, setRates] = useState({});
   const [loading, setLoading] = useState(true);
@@ -59,7 +61,7 @@ export const BalanceProvider = ({ children }) => {
   }, []);
 
   const loadBalances = useCallback(async () => {
-    if (!wallet || !wallet.signers) return;
+    if (!isClient || !wallet || !wallet.signers) return;
     setLoading(true);
     try {
       const addresses = Object.keys(wallet.signers).reduce((acc, network) => {
@@ -89,14 +91,14 @@ export const BalanceProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  }, [wallet]);
+  }, [wallet, isClient]);
 
   useEffect(() => {
-    if (!isClient || !wallet || !wallet.signers) return;
+    if (!wallet || !wallet.signers || !isClient) return;
     loadBalances();
-    const interval = setInterval(loadBalances, 30000);
+    const interval = setInterval(loadBalances, 30000); // Auto-refresh kas 30s
     return () => clearInterval(interval);
-  }, [isClient, wallet, loadBalances]);
+  }, [wallet, loadBalances, isClient]);
 
   const getBalance = (network) => balances?.[network] || 0;
 
@@ -108,12 +110,12 @@ export const BalanceProvider = ({ children }) => {
   };
 
   const getMaxSendable = (network) => {
-    const rawBalance = getBalance(network);
-    return rawBalance * 0.97;
+    const raw = getBalance(network);
+    return raw * 0.97; // 3% fee
   };
 
-  const refreshBalance = async (email, network) => {
-    if (!wallet || !wallet.signers || !network) return;
+  const refreshBalance = async (network) => {
+    if (!wallet || !wallet.signers || !network || !isClient) return;
     const address = wallet.signers[network]?.address;
     if (!address) return;
 
@@ -124,7 +126,7 @@ export const BalanceProvider = ({ children }) => {
         [network]: balance,
       }));
     } catch (error) {
-      console.error(`Refresh balance error for ${network}:`, error);
+      console.error(`Error refreshing balance for ${network}:`, error);
     }
   };
 
