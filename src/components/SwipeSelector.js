@@ -6,11 +6,31 @@ import { motion } from "framer-motion";
 import styles from "@/components/swipeselector.module.css";
 
 const supportedNetworks = [
-  { name: "BNB Testnet", symbol: "tbnb", logo: "https://cryptologos.cc/logos/binance-coin-bnb-logo.png" },
-  { name: "BNB Chain", symbol: "bnb", logo: "https://cryptologos.cc/logos/binance-coin-bnb-logo.png" },
-  { name: "Ethereum", symbol: "eth", logo: "https://cryptologos.cc/logos/ethereum-eth-logo.png" },
-  { name: "Polygon", symbol: "pol", logo: "https://cryptologos.cc/logos/polygon-matic-logo.png" },
-  { name: "Avalanche", symbol: "avax", logo: "https://cryptologos.cc/logos/avalanche-avax-logo.png" },
+  {
+    name: "BNB Testnet",
+    symbol: "tbnb",
+    logo: "https://cryptologos.cc/logos/binance-coin-bnb-logo.png",
+  },
+  {
+    name: "BNB Chain",
+    symbol: "bnb",
+    logo: "https://cryptologos.cc/logos/binance-coin-bnb-logo.png",
+  },
+  {
+    name: "Ethereum",
+    symbol: "eth",
+    logo: "https://cryptologos.cc/logos/ethereum-eth-logo.png",
+  },
+  {
+    name: "Polygon",
+    symbol: "pol",
+    logo: "https://cryptologos.cc/logos/polygon-matic-logo.png",
+  },
+  {
+    name: "Avalanche",
+    symbol: "avax",
+    logo: "https://cryptologos.cc/logos/avalanche-avax-logo.png",
+  },
 ];
 
 export default function SwipeSelector({ mode = "send", onSelect }) {
@@ -27,7 +47,7 @@ export default function SwipeSelector({ mode = "send", onSelect }) {
 
   useEffect(() => {
     if (supportedNetworks[selectedIndex]) {
-      onSelect?.(supportedNetworks[selectedIndex].name); // <-- SIUNČIAM NAME, o ne symbol!
+      onSelect?.(supportedNetworks[selectedIndex].symbol); // SIUNČIA SYMBOL
     }
     if (isMobile) scrollToCenter(selectedIndex);
   }, [selectedIndex, isMobile, onSelect]);
@@ -44,7 +64,7 @@ export default function SwipeSelector({ mode = "send", onSelect }) {
   const handleSelect = (index) => {
     setSelectedIndex(index);
     if (supportedNetworks[index]) {
-      onSelect?.(supportedNetworks[index].name); // <-- SIUNČIAM NAME ir čia
+      onSelect?.(supportedNetworks[index].symbol);
     }
     if (isMobile) scrollToCenter(index);
   };
@@ -63,9 +83,14 @@ export default function SwipeSelector({ mode = "send", onSelect }) {
 
   return (
     <div className={styles.selectorContainer}>
+      {/* Arrows for Mobile */}
       <div className={styles.arrows}>
-        <button className={styles.arrowBtn} onClick={goLeft}>←</button>
-        <button className={styles.arrowBtn} onClick={goRight}>→</button>
+        <button className={styles.arrowBtn} onClick={goLeft}>
+          ←
+        </button>
+        <button className={styles.arrowBtn} onClick={goRight}>
+          →
+        </button>
       </div>
 
       <div
@@ -75,7 +100,7 @@ export default function SwipeSelector({ mode = "send", onSelect }) {
       >
         {supportedNetworks.map((net, index) => (
           <motion.div
-            key={net.name}
+            key={net.symbol}
             className={`${styles.card} ${selectedIndex === index ? styles.selected : ""}`}
             whileTap={{ scale: 0.96 }}
             onClick={() => handleSelect(index)}
