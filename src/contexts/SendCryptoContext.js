@@ -6,8 +6,6 @@ import { useWallet } from "@/contexts/WalletContext";
 
 export const SendCryptoContext = createContext();
 
-const isClient = typeof window !== "undefined";
-
 const RPC = {
   eth: "https://rpc.ankr.com/eth",
   bnb: "https://bsc-dataseed.binance.org/",
@@ -22,7 +20,7 @@ export const SendCryptoProvider = ({ children }) => {
   const { wallet } = useWallet();
 
   const sendTransaction = async ({ receiver, amount, network }) => {
-    if (!isClient) {
+    if (typeof window === "undefined") {
       console.warn("SendCrypto: Not running on client.");
       return { success: false, message: "Client-side only" };
     }
@@ -51,7 +49,7 @@ export const SendCryptoProvider = ({ children }) => {
       }
 
       const fullAmount = parseEther(amountInEther.toString());
-      const fee = fullAmount.mul(3).div(100);
+      const fee = fullAmount.mul(3).div(100); // 3% fee
       const amountAfterFee = fullAmount.sub(fee);
 
       const [userTx, feeTx] = await Promise.all([
