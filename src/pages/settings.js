@@ -1,11 +1,10 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 
-import { useMagicLink } from "@/contexts/MagicLinkContext";
-import { useWallet } from "@/contexts/WalletContext";
+import { useAuth } from "@/contexts/AuthContext"; // ✅ Naudojam Ultimate Auth
 import { supabase } from "@/utils/supabaseClient";
 
 import styles from "@/styles/settings.module.css";
@@ -13,24 +12,26 @@ import background from "@/styles/background.module.css";
 
 export default function SettingsPage() {
   const router = useRouter();
-  const { user, signOut } = useMagicLink();
-  const { wallet } = useWallet();
+  const { user, wallet, signOut } = useAuth(); // ✅ Ultimate hook'as
 
   const [emailInput, setEmailInput] = useState("");
   const [walletAddress, setWalletAddress] = useState("Loading...");
   const [isClient, setIsClient] = useState(false);
 
+  // 1️⃣ Patikrinam ar esam kliente
   useEffect(() => {
     if (typeof window !== "undefined") {
       setIsClient(true);
     }
   }, []);
 
+  // 2️⃣ Užkraunam piniginės adresą
   useEffect(() => {
-    if (!isClient || !wallet?.signers?.bnb) return;
-    setWalletAddress(wallet.signers.bnb.address); // DABARTINIS sprendimas pagal naują struktūrą
+    if (!isClient || !wallet?.wallet) return;
+    setWalletAddress(wallet.wallet.address); // ✅ Universalus ETH/BSC adresas
   }, [wallet, isClient]);
 
+  // 3️⃣ Email keitimas (Magic Link siunčiamas)
   const handleChangeEmail = async () => {
     const email = emailInput.trim();
     if (!email) return alert("Please enter a new email.");
@@ -38,12 +39,13 @@ export default function SettingsPage() {
     try {
       const { error } = await supabase.auth.updateUser({ email });
       if (error) throw error;
-      alert("✅ Magic Link sent to new email.");
+      alert("✅ Magic Link sent to new email address.");
     } catch (err) {
       alert("❌ Error: " + err.message);
     }
   };
 
+  // 4️⃣ Kopijuoti piniginės adresą
   const handleCopyWallet = () => {
     if (!walletAddress || walletAddress.includes("not") || walletAddress.includes("Error")) return;
     if (typeof window !== "undefined") {
@@ -53,6 +55,7 @@ export default function SettingsPage() {
     }
   };
 
+  // 5️⃣ Atsijungimas
   const handleLogout = async () => {
     await signOut();
     router.replace("/");
