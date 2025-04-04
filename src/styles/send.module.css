@@ -1,15 +1,5 @@
 /* === SEND MODULE – NordBalticum Bank Premium Final === */
 
-html, body {
-  overflow: hidden !important;
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-
-::-webkit-scrollbar {
-  display: none;
-}
-
 .main {
   width: 100vw;
   height: 100vh;
