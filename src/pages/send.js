@@ -4,13 +4,9 @@ import { useEffect, useState, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 
-import dynamic from "next/dynamic"; // <-- Šitas bus labai svarbus
-import { useMagicLink } from "@/contexts/MagicLinkContext";
-import { useWallet } from "@/contexts/WalletContext";
-import { useBalances } from "@/contexts/BalanceContext";
-
-// Dinamiškai importuojam tik client-side SendCryptoContext
-const SendCryptoContextDynamic = dynamic(() => import("@/contexts/SendCryptoContext").then(mod => mod.useSendCrypto), { ssr: false });
+import { useAuth } from "@/contexts/AuthContext";           // TIKRAI AUTHPROVIDER
+import { useBalances } from "@/contexts/BalanceContext";    // BALANCE CONTEXTAS
+import { useSendCrypto } from "@/contexts/SendCryptoContext"; // SEND CONTEXTAS
 
 import SwipeSelector from "@/components/SwipeSelector";
 import SuccessModal from "@/components/modals/SuccessModal";
@@ -34,13 +30,11 @@ const buttonColors = {
   avax: "#e84142",
 };
 
-export default function Send() {
+export default function SendPage() {
   const router = useRouter();
-  const { user, loading: userLoading } = useMagicLink();
-  const { wallet, activeNetwork, setActiveNetwork, loading: walletLoading } = useWallet();
+  const { user, activeNetwork, setActiveNetwork, wallet, loading: authLoading } = useAuth();
   const { balance, balanceEUR, maxSendable, refreshBalance, loading: balanceLoading } = useBalances();
-  const useSendCrypto = SendCryptoContextDynamic(); // <- Dinaminis hookas
-  const sendTransaction = useSendCrypto?.sendTransaction; // <-- Patikrinam ar hookas yra
+  const { sendTransaction } = useSendCrypto();
 
   const [receiver, setReceiver] = useState("");
   const [amount, setAmount] = useState("");
@@ -59,26 +53,21 @@ export default function Send() {
   }, []);
 
   useEffect(() => {
-    if (isClient && !userLoading && user === null) {
+    if (isClient && !authLoading && user === null) {
       router.replace("/");
     }
-  }, [user, userLoading, isClient, router]);
+  }, [user, authLoading, router, isClient]);
 
   useEffect(() => {
     if (isClient && activeNetwork === undefined) {
       setActiveNetwork("eth");
     }
-  }, [isClient, activeNetwork, setActiveNetwork]);
+  }, [activeNetwork, setActiveNetwork, isClient]);
 
-  const isLoading = userLoading || walletLoading || balanceLoading || !isClient || !sendTransaction;
+  const isLoading = authLoading || balanceLoading || !isClient;
 
-  if (isLoading) {
-    return <div className={styles.loading}>Loading...</div>;
-  }
-
-  if (!user || !wallet) {
-    return null;
-  }
+  if (isLoading) return <div className={styles.loading}>Loading...</div>;
+  if (!user || !wallet) return null;
 
   const parsedAmount = Number(amount || 0);
   const fee = parsedAmount * 0.03;
@@ -99,7 +88,7 @@ export default function Send() {
     if (user?.email) {
       await refreshBalance(user.email, network);
     }
-    setToastMessage(`Network switched to ${networkShortNames[network] || network.toUpperCase()}`);
+    setToastMessage(`Switched to ${networkShortNames[network] || network.toUpperCase()}`);
     setTimeout(() => setToastMessage(""), 2000);
   }, [user, setActiveNetwork, refreshBalance]);
 
@@ -107,20 +96,16 @@ export default function Send() {
 
   const handleSend = () => {
     const trimmed = receiver.trim();
-    if (!trimmed || !isValidAddress(trimmed)) {
+    if (!isValidAddress(trimmed)) {
       alert("Invalid receiver address.");
       return;
     }
-    if (!amount || isNaN(parsedAmount) || parsedAmount <= 0) {
-      alert("Amount must be a positive number.");
+    if (!parsedAmount || parsedAmount <= 0) {
+      alert("Amount must be greater than 0.");
       return;
     }
     if (parsedAmount > netSendable) {
       alert(`Max sendable: ${netSendable.toFixed(6)} ${shortName}`);
-      return;
-    }
-    if (parsedAmount > netBalance) {
-      alert(`Insufficient balance. You have only ${netBalance.toFixed(6)} ${shortName}.`);
       return;
     }
     setShowConfirm(true);
@@ -130,23 +115,30 @@ export default function Send() {
     setShowConfirm(false);
     setSending(true);
 
-    const result = await sendTransaction({
-      receiver: receiver.trim(),
-      amount,
-      network: activeNetwork,
-    });
+    try {
+      const result = await sendTransaction({
+        receiver: receiver.trim(),
+        amount,
+        network: activeNetwork,
+      });
 
-    setSending(false);
-
-    if (result?.success) {
-      setReceiver("");
-      setAmount("");
-      setTxHash(result.hash);
-      await refreshBalance(user.email, activeNetwork);
-      setBalanceUpdated(true);
-      setShowSuccess(true);
-    } else {
-      alert(result?.message || "Transaction failed");
+      if (result?.success) {
+        setReceiver("");
+        setAmount("");
+        setTxHash(result.hash);
+        if (user?.email) {
+          await refreshBalance(user.email, activeNetwork);
+        }
+        setBalanceUpdated(true);
+        setShowSuccess(true);
+      } else {
+        alert(result?.message || "Transaction failed.");
+      }
+    } catch (err) {
+      console.error("Transaction send error:", err);
+      alert("Unexpected error while sending.");
+    } finally {
+      setSending(false);
     }
   };
 
@@ -171,33 +163,16 @@ export default function Send() {
   };
 
   return (
-    <motion.main
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.6 }}
-      className={`${styles.main} ${background.gradient}`}
-    >
+    <motion.main initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6 }} className={`${styles.main} ${background.gradient}`}>
       <div className={styles.wrapper}>
         <AnimatePresence>
           {balanceUpdated && (
-            <motion.div
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.4 }}
-              className={styles.successAlert}
-            >
+            <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.4 }} className={styles.successAlert}>
               Balance Updated!
             </motion.div>
           )}
           {toastMessage && (
-            <motion.div
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.4 }}
-              className={styles.successAlert}
-            >
+            <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.4 }} className={styles.successAlert}>
               {toastMessage}
             </motion.div>
           )}
@@ -247,11 +222,7 @@ export default function Send() {
             <br />Includes 3% platform fee.
           </p>
 
-          <button
-            onClick={handleSend}
-            style={buttonStyle}
-            disabled={!user || sending || !receiver || !amount}
-          >
+          <button onClick={handleSend} style={buttonStyle} disabled={!user || sending || !receiver || !amount}>
             {sending ? (
               <div className={styles.loader}></div>
             ) : (
@@ -272,10 +243,7 @@ export default function Send() {
               </div>
               <div className={styles.modalActions}>
                 <button className={styles.modalButton} onClick={confirmSend}>Confirm</button>
-                <button
-                  className={`${styles.modalButton} ${styles.cancel}`}
-                  onClick={() => setShowConfirm(false)}
-                >
+                <button className={`${styles.modalButton} ${styles.cancel}`} onClick={() => setShowConfirm(false)}>
                   Cancel
                 </button>
               </div>
@@ -284,11 +252,7 @@ export default function Send() {
         )}
 
         {showSuccess && (
-          <motion.div
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 0.4 }}
-          >
+          <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ duration: 0.4 }}>
             <SuccessModal
               message="Transaction completed!"
               txHash={txHash}
