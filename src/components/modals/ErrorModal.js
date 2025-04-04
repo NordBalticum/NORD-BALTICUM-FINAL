@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import styles from "./errormodal.module.css";
+import styles from "@/components/modals/errormodal.module.css";
 import { FaTimesCircle } from "react-icons/fa";
 
 export default function ErrorModal({ message = "Something went wrong.", onClose }) {
