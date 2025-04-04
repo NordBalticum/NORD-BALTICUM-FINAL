@@ -11,18 +11,19 @@ import { SendCryptoProvider } from "@/contexts/SendCryptoContext";
 
 import Layout from "@/components/Layout";
 
-export default function RootLayout({ children }) {
+export default function App({ Component, pageProps }) {
   return (
     <MagicLinkProvider>
       <WalletProvider>
         <BalanceProvider>
           <SendCryptoProvider>
             <Layout>
-              {children}
+              {/* Šitas patikrina ar jau esam ant kliento pusės */}
+              {typeof window !== "undefined" && <Component {...pageProps} />}
             </Layout>
           </SendCryptoProvider>
         </BalanceProvider>
       </WalletProvider>
     </MagicLinkProvider>
   );
-}
+              }
