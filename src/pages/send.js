@@ -103,13 +103,13 @@ export default function Send() {
         <SwipeSelector mode="send" onSelect={setActiveNetwork} />
 
         <div className={styles.balanceTable}>
-          <p className={styles.whiteText}>
-            Total Balance: <strong>{netBalance}</strong> {activeNetwork} (~€{netEUR})
-          </p>
-          <p className={styles.whiteText}>
-            Max Sendable: <strong>{netSendable}</strong> {activeNetwork} (includes 3% fee)
-          </p>
-        </div>
+  <p className={styles.whiteText}>
+    Total Balance: <strong>{Number(netBalance).toFixed(6)}</strong> {activeNetwork} (~€{Number(netEUR).toFixed(2)})
+  </p>
+  <p className={styles.whiteText}>
+    Max Sendable: <strong>{Number(netSendable).toFixed(6)}</strong> {activeNetwork} (includes 3% fee)
+  </p>
+</div>
 
         <div className={styles.walletActions}>
           <input
