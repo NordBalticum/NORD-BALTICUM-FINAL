@@ -11,7 +11,7 @@ import styles from "@/styles/dashboard.module.css";
 // ✅ Dynamic import without SSR
 const LivePriceTable = dynamic(() => import("@/components/LivePriceTable"), { ssr: false });
 
-// ✅ Icons
+// ✅ Token Icons
 const iconUrls = {
   eth: "https://cryptologos.cc/logos/ethereum-eth-logo.png",
   bnb: "https://cryptologos.cc/logos/binance-coin-bnb-logo.png",
@@ -20,6 +20,7 @@ const iconUrls = {
   avax: "https://cryptologos.cc/logos/avalanche-avax-logo.png",
 };
 
+// ✅ Token Names
 const names = {
   eth: "Ethereum",
   bnb: "BNB Smart Chain",
@@ -30,7 +31,7 @@ const names = {
 
 export default function Dashboard() {
   const router = useRouter();
-  const { user, wallet, balances, refreshBalance, loading, activeNetwork } = useAuth(); // ✅ ❌ Nebereikia loadOrCreateWallet čia!
+  const { user, wallet, balances, refreshBalance, loading, activeNetwork } = useAuth();
   const [isClient, setIsClient] = useState(false);
 
   // ✅ Detect client side
@@ -47,13 +48,13 @@ export default function Dashboard() {
     }
   }, [isClient, loading, user, router]);
 
-  // ✅ Tokens list
+  // ✅ Tokens list from wallet
   const tokens = useMemo(() => {
     if (!wallet?.signers) return [];
     return Object.keys(wallet.signers);
   }, [wallet]);
 
-  // ✅ Dynamic simulated EUR values
+  // ✅ Static EUR rates (can be replaced later)
   const eurRates = {
     eth: 2900,
     bnb: 450,
@@ -62,7 +63,8 @@ export default function Dashboard() {
     avax: 30,
   };
 
-  const isLoading = loading || !isClient || !wallet?.wallet?.address;
+  // ✅ Check loading state
+  const isLoading = loading || !isClient || !wallet || !wallet.wallet;
 
   if (isLoading) {
     return <div className={styles.loading}>Loading dashboard...</div>;
@@ -71,10 +73,10 @@ export default function Dashboard() {
   return (
     <main className={styles.container}>
       <div className={styles.dashboardWrapper}>
-        {/* ✅ Live Prices */}
+        {/* ✅ Live Prices Table */}
         <LivePriceTable />
 
-        {/* ✅ User Assets */}
+        {/* ✅ Wallet Assets */}
         <div className={styles.assetList}>
           {tokens.length === 0 ? (
             <div className={styles.loading}>No assets found.</div>
