@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 
 import { useMagicLink } from "@/contexts/MagicLinkContext";
@@ -32,9 +32,19 @@ export default function Send() {
   const fee = parsedAmount * 0.03;
   const amountAfterFee = parsedAmount - fee;
 
-  const netBalance = balance(activeNetwork);
-  const netEUR = balanceEUR(activeNetwork);
-  const netSendable = maxSendable(activeNetwork);
+  const netBalance = useMemo(() => Number(balance(activeNetwork) || 0), [balance, activeNetwork]);
+  const netEUR = useMemo(() => Number(balanceEUR(activeNetwork) || 0), [balanceEUR, activeNetwork]);
+  const netSendable = useMemo(() => Number(maxSendable(activeNetwork) || 0), [maxSendable, activeNetwork]);
+
+  const networkShortNames = {
+    "Ethereum": "eth",
+    "BNB Chain": "bnb",
+    "Testnet": "tbnb",
+    "Polygon": "matic",
+    "Avalanche": "avax",
+  };
+
+  const shortName = networkShortNames[activeNetwork] || activeNetwork?.toLowerCase() || "";
 
   useEffect(() => {
     if (!user) router.replace("/");
@@ -62,8 +72,8 @@ export default function Send() {
       return;
     }
 
-    if (parsedAmount > Number(netSendable)) {
-      alert(`Max sendable: ${netSendable} ${activeNetwork}`);
+    if (parsedAmount > netSendable) {
+      alert(`Max sendable: ${netSendable.toFixed(6)} ${shortName}`);
       return;
     }
 
@@ -75,7 +85,7 @@ export default function Send() {
     setSending(true);
 
     const result = await sendTransaction({
-      sender: user.email,
+      sender: user?.email,
       receiver: receiver.trim(),
       amount,
       network: activeNetwork,
@@ -90,7 +100,7 @@ export default function Send() {
       setTxHash(result.hash);
       setShowSuccess(true);
     } else {
-      alert(result.message || "Transaction failed");
+      alert(result?.message || "Transaction failed");
     }
   };
 
@@ -103,13 +113,13 @@ export default function Send() {
         <SwipeSelector mode="send" onSelect={setActiveNetwork} />
 
         <div className={styles.balanceTable}>
-  <p className={styles.whiteText}>
-    Total Balance: <strong>{Number(netBalance).toFixed(6)} {activeNetwork?.toLowerCase()}</strong> (~€{Number(netEUR).toFixed(2)})
-  </p>
-  <p className={styles.whiteText}>
-    Max Sendable: <strong>{Number(netSendable).toFixed(6)} {activeNetwork?.toLowerCase()}</strong> (includes 3% fee)
-  </p>
-</div>
+          <p className={styles.whiteText}>
+            Total Balance: <strong>{netBalance.toFixed(6)} {shortName}</strong> (~€{netEUR.toFixed(2)})
+          </p>
+          <p className={styles.whiteText}>
+            Max Sendable: <strong>{netSendable.toFixed(6)} {shortName}</strong> (includes 3% fee)
+          </p>
+        </div>
 
         <div className={styles.walletActions}>
           <input
@@ -129,7 +139,7 @@ export default function Send() {
           />
 
           <p className={styles.feeBreakdown}>
-            Recipient receives <strong>{amountAfterFee.toFixed(6)} {activeNetwork}</strong>
+            Recipient receives <strong>{amountAfterFee.toFixed(6)} {shortName}</strong>
             <br />Includes 3% platform fee.
           </p>
 
@@ -149,8 +159,8 @@ export default function Send() {
               <div className={styles.modalInfo}>
                 <p><strong>Network:</strong> {activeNetwork}</p>
                 <p><strong>To:</strong> {receiver}</p>
-                <p><strong>Send:</strong> {parsedAmount}</p>
-                <p><strong>Gets:</strong> {amountAfterFee.toFixed(6)} {activeNetwork}</p>
+                <p><strong>Send:</strong> {parsedAmount.toFixed(6)} {shortName}</p>
+                <p><strong>Gets:</strong> {amountAfterFee.toFixed(6)} {shortName}</p>
               </div>
               <div className={styles.modalActions}>
                 <button className={styles.modalButton} onClick={confirmSend}>
