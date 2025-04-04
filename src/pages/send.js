@@ -61,10 +61,11 @@ export default function Send() {
   }, [isClient, activeNetwork, setActiveNetwork]);
 
   useEffect(() => {
+    if (!isClient) return;
     if (!user) {
       router.replace("/");
     }
-  }, [user, router]);
+  }, [user, router, isClient]);
 
   const parsedAmount = Number(amount || 0);
   const fee = parsedAmount * 0.03;
@@ -303,4 +304,4 @@ export default function Send() {
       </div>
     </motion.main>
   );
-}
+        }
