@@ -19,7 +19,7 @@ const networkShortNames = {
   eth: "ETH",
   bnb: "BNB",
   tbnb: "tBNB",
-  pol: "MATIC",
+  matic: "MATIC",
   avax: "AVAX",
 };
 
