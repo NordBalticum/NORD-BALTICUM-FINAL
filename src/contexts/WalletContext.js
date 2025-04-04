@@ -1,20 +1,28 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import { Wallet, JsonRpcProvider } from "ethers";
 import { supabase } from "@/utils/supabaseClient";
 import { useMagicLink } from "@/contexts/MagicLinkContext";
 
+// === Kuriam Context'ą ===
 export const WalletContext = createContext();
 
-// --- Encryption/Decryption ---
+const RPC_URLS = {
+  eth: "https://rpc.ankr.com/eth",
+  bnb: "https://bsc-dataseed.binance.org/",
+  tbnb: "https://data-seed-prebsc-1-s1.binance.org:8545/",
+  matic: "https://polygon-rpc.com",
+  avax: "https://api.avax.network/ext/bc/C/rpc",
+};
+
+// === Šifravimo funkcijos ===
 const ENCRYPTION_SECRET = process.env.NEXT_PUBLIC_ENCRYPTION_SECRET || "nordbalticum-fallback";
 
 const encode = (str) => new TextEncoder().encode(str);
 const decode = (buf) => new TextDecoder().decode(buf);
 
 const getKey = async (password) => {
-  if (typeof window === "undefined") return null;
   const keyMaterial = await window.crypto.subtle.importKey(
     "raw",
     encode(password),
@@ -37,7 +45,6 @@ const getKey = async (password) => {
 };
 
 const encrypt = async (text) => {
-  if (typeof window === "undefined") return null;
   const iv = window.crypto.getRandomValues(new Uint8Array(12));
   const key = await getKey(ENCRYPTION_SECRET);
   const encrypted = await window.crypto.subtle.encrypt(
@@ -49,7 +56,6 @@ const encrypt = async (text) => {
 };
 
 const decrypt = async (ciphertext) => {
-  if (typeof window === "undefined") return null;
   const { iv, data } = JSON.parse(atob(ciphertext));
   const key = await getKey(ENCRYPTION_SECRET);
   const decrypted = await window.crypto.subtle.decrypt(
@@ -60,7 +66,7 @@ const decrypt = async (ciphertext) => {
   return decode(decrypted);
 };
 
-// --- Wallet Provider ---
+// === Wallet Provider ===
 export const WalletProvider = ({ children }) => {
   const { user } = useMagicLink();
   const [wallet, setWallet] = useState(null);
@@ -68,117 +74,76 @@ export const WalletProvider = ({ children }) => {
   const [activeNetwork, setActiveNetwork] = useState("eth");
 
   useEffect(() => {
-    if (!user?.email || typeof window === "undefined") {
+    if (typeof window !== "undefined" && user?.email) {
+      loadWallet(user.email);
+    } else {
       setLoading(false);
-      return;
     }
-    loadOrCreateWallet(user.email);
   }, [user]);
 
-  const loadOrCreateWallet = async (email) => {
+  const loadWallet = async (email) => {
     setLoading(true);
     try {
-      const localKey = await loadPrivateKeyFromStorage();
-      if (localKey) {
-        setWallet(await generateWallets(localKey));
+      const { data, error } = await supabase
+        .from("wallets")
+        .select("*")
+        .eq("user_email", email)
+        .maybeSingle();
+
+      if (error) {
+        console.error("Supabase fetch error:", error.message);
+        setWallet(null);
         return;
       }
 
-      const db = await fetchWalletFromDB(email);
-      if (db?.encrypted_key) {
-        const decryptedKey = await decrypt(db.encrypted_key);
-        await savePrivateKeyToStorage(decryptedKey);
-        setWallet(await generateWallets(decryptedKey));
-        return;
-      }
+      if (data && data.encrypted_key) {
+        const decryptedPrivateKey = await decrypt(data.encrypted_key);
+        const wallets = generateWallets(decryptedPrivateKey);
+        setWallet(wallets);
+      } else {
+        const newWallet = Wallet.createRandom();
+        const encryptedPrivateKey = await encrypt(newWallet.privateKey);
 
-      const newWallet = Wallet.createRandom();
-      const encryptedKey = await encrypt(newWallet.privateKey);
-      await savePrivateKeyToStorage(newWallet.privateKey);
-      await saveWalletToDB(email, encryptedKey, newWallet.address);
-      setWallet(await generateWallets(newWallet.privateKey));
+        // Išsaugom į Supabase
+        const payload = {
+          user_email: email,
+          eth_address: newWallet.address,
+          bnb_address: newWallet.address,
+          tbnb_address: newWallet.address,
+          matic_address: newWallet.address,
+          avax_address: newWallet.address,
+          encrypted_key: encryptedPrivateKey,
+        };
+
+        const { error: insertError } = await supabase
+          .from("wallets")
+          .upsert(payload, { onConflict: ["user_email"] });
+
+        if (insertError) {
+          console.error("Supabase insert error:", insertError.message);
+        } else {
+          const wallets = generateWallets(newWallet.privateKey);
+          setWallet(wallets);
+        }
+      }
     } catch (err) {
-      console.error("Wallet error:", err);
+      console.error("Load wallet error:", err);
       setWallet(null);
     } finally {
       setLoading(false);
     }
   };
 
-  const generateWallets = async (privateKey) => {
-    const rpcUrls = {
-      eth: "https://rpc.ankr.com/eth",
-      bnb: "https://bsc-dataseed.binance.org",
-      tbnb: "https://data-seed-prebsc-1-s1.binance.org:8545",
-      matic: "https://polygon-rpc.com",
-      avax: "https://api.avax.network/ext/bc/C/rpc",
-    };
+  const generateWallets = (privateKey) => {
     const signers = {};
-    for (const [network, url] of Object.entries(rpcUrls)) {
-      signers[network] = new Wallet(privateKey, new JsonRpcProvider(url));
+    for (const [network, rpcUrl] of Object.entries(RPC_URLS)) {
+      signers[network] = new Wallet(privateKey, new JsonRpcProvider(rpcUrl));
     }
     return { privateKey, signers };
   };
 
-  const savePrivateKeyToStorage = async (privateKey) => {
-    if (typeof window === "undefined") return;
-    localStorage.setItem("userPrivateKey", JSON.stringify({ key: privateKey }));
-  };
-
-  const loadPrivateKeyFromStorage = async () => {
-    if (typeof window === "undefined") return null;
-    const stored = localStorage.getItem("userPrivateKey");
-    if (!stored) return null;
-    const parsed = JSON.parse(stored);
-    return parsed?.key || null;
-  };
-
-  const exportPrivateKey = async () => {
-    if (typeof window === "undefined") return null;
-    return await loadPrivateKeyFromStorage();
-  };
-
-  const fetchWalletFromDB = async (email) => {
-    const { data, error } = await supabase
-      .from("wallets")
-      .select("*")
-      .eq("user_email", email)
-      .maybeSingle();
-    if (error) {
-      console.error("DB fetch error:", error.message);
-      return null;
-    }
-    return data;
-  };
-
-  const saveWalletToDB = async (email, encrypted_key, address) => {
-    const payload = {
-      user_email: email,
-      encrypted_key,
-      bnb_address: address,
-      tbnb_address: address,
-      eth_address: address,
-      matic_address: address,
-      avax_address: address,
-    };
-    const { error } = await supabase
-      .from("wallets")
-      .upsert(payload, { onConflict: ["user_email"] });
-    if (error) {
-      console.error("DB save error:", error.message);
-    }
-  };
-
   return (
-    <WalletContext.Provider
-      value={{
-        wallet,
-        loading,
-        exportPrivateKey,
-        activeNetwork,
-        setActiveNetwork,
-      }}
-    >
+    <WalletContext.Provider value={{ wallet, loading, activeNetwork, setActiveNetwork }}>
       {children}
     </WalletContext.Provider>
   );
