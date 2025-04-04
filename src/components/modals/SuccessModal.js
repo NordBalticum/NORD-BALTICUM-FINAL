@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 import { motion } from "framer-motion";
 import styles from "@/components/modals/successmodal.module.css";
 
@@ -29,7 +29,7 @@ export default function SuccessModal({ message, txHash, networkKey, onClose }) {
   useEffect(() => {
     const timer = setTimeout(() => {
       onClose();
-    }, 5000); // 5 sekundės ir auto-close
+    }, 5000); // Auto-close po 5s
     return () => clearTimeout(timer);
   }, [onClose]);
 
@@ -41,7 +41,12 @@ export default function SuccessModal({ message, txHash, networkKey, onClose }) {
       exit={{ opacity: 0 }}
       transition={{ duration: 0.4 }}
     >
-      <div className={styles.modal}>
+      <motion.div
+        className={styles.modal}
+        initial={{ scale: 0.8 }}
+        animate={{ scale: 1 }}
+        transition={{ type: "spring", stiffness: 300, damping: 20 }}
+      >
         <h2 className={styles.title}>Success!</h2>
         <p className={styles.message}>{message}</p>
 
@@ -59,7 +64,7 @@ export default function SuccessModal({ message, txHash, networkKey, onClose }) {
         <button className={styles.closeButton} onClick={onClose}>
           Close
         </button>
-      </div>
+      </motion.div>
     </motion.div>
   );
 }
