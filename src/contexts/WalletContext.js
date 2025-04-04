@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
-import { Wallet, providers } from "ethers";  // Importuojam ethers.js
+import { Wallet, JsonRpcProvider } from "ethers";  // Correct ethers.js imports
 import { supabase } from "@/utils/supabaseClient";
 import { useMagicLink } from "@/contexts/MagicLinkContext";
 
@@ -128,11 +128,11 @@ export const WalletProvider = ({ children }) => {
 
   const generateAddresses = (wallet) => {
     const providersMap = {
-      eth: new providers.JsonRpcProvider("https://rpc.ankr.com/eth"),
-      bnb: new providers.JsonRpcProvider("https://bsc-dataseed.binance.org"),
-      tbnb: new providers.JsonRpcProvider("https://data-seed-prebsc-1-s1.binance.org:8545"),
-      matic: new providers.JsonRpcProvider("https://polygon-rpc.com"),
-      avax: new providers.JsonRpcProvider("https://api.avax.network/ext/bc/C/rpc"),
+      eth: new JsonRpcProvider("https://rpc.ankr.com/eth"),
+      bnb: new JsonRpcProvider("https://bsc-dataseed.binance.org"),
+      tbnb: new JsonRpcProvider("https://data-seed-prebsc-1-s1.binance.org:8545"),
+      matic: new JsonRpcProvider("https://polygon-rpc.com"),
+      avax: new JsonRpcProvider("https://api.avax.network/ext/bc/C/rpc"),
     };
 
     const signers = Object.keys(providersMap).reduce((acc, network) => {
