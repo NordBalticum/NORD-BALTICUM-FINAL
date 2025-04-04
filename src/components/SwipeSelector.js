@@ -1,67 +1,48 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Image from "next/image";
 import { motion } from "framer-motion";
-import { useAuth } from "@/contexts/AuthContext"; // ✅ Pagrindinis importas
+import Image from "next/image";
+import { useAuth } from "@/contexts/AuthContext";
 import styles from "@/components/swipeselector.module.css";
 
 const supportedNetworks = [
-  {
-    name: "BNB Testnet",
-    symbol: "tbnb",
-    logo: "https://cryptologos.cc/logos/binance-coin-bnb-logo.png",
-  },
-  {
-    name: "BNB Chain",
-    symbol: "bnb",
-    logo: "https://cryptologos.cc/logos/binance-coin-bnb-logo.png",
-  },
-  {
-    name: "Ethereum",
-    symbol: "eth",
-    logo: "https://cryptologos.cc/logos/ethereum-eth-logo.png",
-  },
-  {
-    name: "Polygon",
-    symbol: "matic",
-    logo: "https://cryptologos.cc/logos/polygon-matic-logo.png",
-  },
-  {
-    name: "Avalanche",
-    symbol: "avax",
-    logo: "https://cryptologos.cc/logos/avalanche-avax-logo.png",
-  },
+  { name: "BNB Testnet", symbol: "tbnb", logo: "https://cryptologos.cc/logos/binance-coin-bnb-logo.png" },
+  { name: "BNB Chain", symbol: "bnb", logo: "https://cryptologos.cc/logos/binance-coin-bnb-logo.png" },
+  { name: "Ethereum", symbol: "eth", logo: "https://cryptologos.cc/logos/ethereum-eth-logo.png" },
+  { name: "Polygon", symbol: "matic", logo: "https://cryptologos.cc/logos/polygon-matic-logo.png" },
+  { name: "Avalanche", symbol: "avax", logo: "https://cryptologos.cc/logos/avalanche-avax-logo.png" },
 ];
 
-export default function SwipeSelector({ mode = "send", onSelect }) {
-  const { activeNetwork, setActiveNetwork } = useAuth(); // ✅ Ultimate hook
+export default function SwipeSelector({ onSelect }) {
+  const { activeNetwork, setActiveNetwork, loading } = useAuth();
   const containerRef = useRef(null);
   const [selectedIndex, setSelectedIndex] = useState(2); // Default ETH
   const [isMobile, setIsMobile] = useState(false);
 
+  // ✅ Resize listener
   useEffect(() => {
-    const updateSize = () => setIsMobile(window.innerWidth <= 1024);
-    updateSize();
-    window.addEventListener("resize", updateSize);
-    return () => window.removeEventListener("resize", updateSize);
+    const handleResize = () => setIsMobile(window.innerWidth <= 1024);
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  // ✅ Kai selectedIndex keičiasi
   useEffect(() => {
-    // 1️⃣ Kai pasikeičia pasirinktas indeksas
     if (supportedNetworks[selectedIndex]) {
       const selectedSymbol = supportedNetworks[selectedIndex].symbol;
-      setActiveNetwork(selectedSymbol); // ✅ Automatiškai nustatom į Context
-      onSelect?.(selectedSymbol);       // ✅ Jeigu papildomai reikia kažkur
+      setActiveNetwork(selectedSymbol);
+      onSelect?.(selectedSymbol);
     }
     if (isMobile) scrollToCenter(selectedIndex);
   }, [selectedIndex, isMobile, setActiveNetwork, onSelect]);
 
+  // ✅ Kai activeNetwork keičiasi iš kitų vietų
   useEffect(() => {
-    // 2️⃣ Jeigu kitoje vietoje pasikeitė network (pvz. iš localStorage)
-    const index = supportedNetworks.findIndex((net) => net.symbol === activeNetwork);
-    if (index >= 0) {
-      setSelectedIndex(index);
+    const idx = supportedNetworks.findIndex((net) => net.symbol === activeNetwork);
+    if (idx >= 0) {
+      setSelectedIndex(idx);
     }
   }, [activeNetwork]);
 
@@ -87,36 +68,40 @@ export default function SwipeSelector({ mode = "send", onSelect }) {
     if (selectedIndex < supportedNetworks.length - 1) handleSelect(selectedIndex + 1);
   };
 
+  if (loading) {
+    return <div className={styles.loading}>Loading networks...</div>;
+  }
+
   return (
     <div className={styles.selectorContainer}>
       <div className={styles.arrows}>
-        <button className={styles.arrowBtn} onClick={goLeft}>
+        <button className={styles.arrowBtn} onClick={goLeft} disabled={selectedIndex === 0}>
           ←
         </button>
-        <button className={styles.arrowBtn} onClick={goRight}>
+        <button className={styles.arrowBtn} onClick={goRight} disabled={selectedIndex === supportedNetworks.length - 1}>
           →
         </button>
       </div>
 
       <div
-        className={isMobile ? styles.scrollableWrapper : styles.staticWrapper}
         ref={containerRef}
+        className={isMobile ? styles.scrollableWrapper : styles.staticWrapper}
         style={isMobile ? { touchAction: "pan-x", overflowX: "auto", scrollBehavior: "smooth" } : {}}
       >
         {supportedNetworks.map((net, index) => (
           <motion.div
             key={net.symbol}
             className={`${styles.card} ${selectedIndex === index ? styles.selected : ""}`}
-            whileTap={{ scale: 0.96 }}
             onClick={() => handleSelect(index)}
+            whileTap={{ scale: 0.95 }}
             role="button"
             tabIndex={0}
           >
             <Image
               src={net.logo}
               alt={`${net.name} logo`}
-              width={64}
-              height={64}
+              width={60}
+              height={60}
               className={styles.logo}
               unoptimized
             />
