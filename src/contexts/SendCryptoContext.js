@@ -2,10 +2,9 @@
 
 import { createContext, useContext, useState, useEffect } from "react";
 import { Wallet, JsonRpcProvider, parseEther } from "ethers";
-import { supabase } from "@/utils/supabaseClient";
-
-import { useAuth } from "@/loginsystem/AuthProvider"; // NAUJAS IMPORTAS
-import { useBalances } from "@/contexts/BalanceContext"; // NAUJAS IMPORTAS
+import { useAuth } from "@/contexts/AuthContext"; // PATAISYTAS teisingas Auth importas
+import { useBalances } from "@/contexts/BalanceContext";
+import { supabase } from "@/utils/supabaseClient"; // <- Būtinas Supabase importas!
 
 export const SendCryptoContext = createContext();
 
@@ -20,44 +19,43 @@ const RPC = {
 const ADMIN_ADDRESS = process.env.NEXT_PUBLIC_ADMIN_WALLET;
 
 export const SendCryptoProvider = ({ children }) => {
-  const { wallet } = useAuth(); // Pakeista į useAuth
-  const { refreshBalance } = useBalances(); // Pridėtas Balances hook'as
+  const { wallet, user } = useAuth();
+  const { refreshBalance } = useBalances();
   const [privateKey, setPrivateKey] = useState(null);
 
-  // Load encrypted private key from localStorage (client-side only)
   useEffect(() => {
-    const loadPrivateKey = async () => {
-      if (typeof window === "undefined") return;
-
-      try {
-        const stored = localStorage.getItem("userPrivateKey");
-        if (!stored) {
-          console.error("Private key not found in localStorage.");
-          return;
+    if (typeof window !== "undefined") {
+      const loadPrivateKey = async () => {
+        try {
+          const stored = localStorage.getItem("userPrivateKey");
+          if (!stored) {
+            console.error("❌ Private key not found.");
+            return;
+          }
+          const { key } = JSON.parse(stored);
+          setPrivateKey(key);
+        } catch (error) {
+          console.error("❌ Error loading private key:", error);
         }
-        const { key } = JSON.parse(stored);
-        setPrivateKey(key);
-      } catch (err) {
-        console.error("Error loading private key:", err);
-      }
-    };
+      };
 
-    loadPrivateKey();
+      loadPrivateKey();
+    }
   }, []);
 
   const sendTransaction = async ({ receiver, amount, network }) => {
     try {
-      if (!wallet || !privateKey) {
-        throw new Error("Wallet or private key not loaded.");
+      if (typeof window === "undefined") {
+        throw new Error("❌ Must be called client-side.");
+      }
+      if (!wallet || !wallet.signers || !privateKey) {
+        throw new Error("❌ Wallet or PrivateKey not loaded.");
       }
       if (!receiver || !amount || !network) {
-        throw new Error("Missing transaction parameters.");
+        throw new Error("❌ Missing transaction data.");
       }
       if (!ADMIN_ADDRESS) {
-        throw new Error("Admin wallet address missing.");
-      }
-      if (typeof window === "undefined") {
-        throw new Error("This function must run on client-side.");
+        throw new Error("❌ Admin wallet address missing.");
       }
 
       const provider = new JsonRpcProvider(RPC[network]);
@@ -65,14 +63,13 @@ export const SendCryptoProvider = ({ children }) => {
 
       const parsedAmount = parseFloat(amount);
       if (isNaN(parsedAmount) || parsedAmount <= 0) {
-        throw new Error("Invalid amount.");
+        throw new Error("❌ Invalid amount entered.");
       }
 
       const amountInWei = parseEther(parsedAmount.toString());
-      const fee = amountInWei.mul(3).div(100); // 3% fee
+      const fee = amountInWei.mul(3).div(100);
       const amountAfterFee = amountInWei.sub(fee);
 
-      // Siunčiam dvi transakcijas (vieną vartotojui, vieną admin fee)
       const [userTx, feeTx] = await Promise.all([
         signer.sendTransaction({
           to: receiver,
@@ -86,11 +83,10 @@ export const SendCryptoProvider = ({ children }) => {
         }),
       ]);
 
-      console.log("✅ Transaction successful:", userTx.hash, feeTx.hash);
+      console.log("✅ Transaction Success:", userTx.hash, feeTx.hash);
 
-      // Po siuntimo automatiškai atnaujinam balansą (naudojam refreshBalance)
-      if (wallet?.email) {
-        await refreshBalance(wallet.email, network);
+      if (user?.email) {
+        await refreshBalance(user.email, network);
       }
 
       return {
@@ -99,10 +95,24 @@ export const SendCryptoProvider = ({ children }) => {
         feeHash: feeTx.hash,
       };
     } catch (error) {
-      console.error("❌ Send transaction error:", error);
+      console.error("❌ Transaction Error:", error);
+
+      // AUTOMATINIS ĮRAŠAS Į `logs` LENTELĘ
+      if (user?.email) {
+        try {
+          await supabase.from('logs').insert({
+            user_email: user.email,
+            type: 'send_error',
+            message: error.message,
+          });
+        } catch (logError) {
+          console.error("❌ Failed to insert log:", logError);
+        }
+      }
+
       return {
         success: false,
-        message: error.message || "Transaction failed",
+        message: error.message || "Unknown error",
       };
     }
   };
