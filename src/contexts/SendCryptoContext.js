@@ -14,15 +14,15 @@ const RPC = {
   avax: "https://api.avax.network/ext/bc/C/rpc",
 };
 
-const ADMIN_ADDRESS = process.env.NEXT_PUBLIC_ADMIN_WALLET;
+const ADMIN_ADDRESS = process.env.NEXT_PUBLIC_ADMIN_WALLET || "";
 
 export const SendCryptoProvider = ({ children }) => {
   const { wallet } = useWallet();
 
   const sendTransaction = async ({ receiver, amount, network }) => {
     if (typeof window === "undefined") {
-      console.error("Window object not available (SSR)");
-      return { success: false, message: "Client-side only" };
+      console.warn("sendTransaction called on server, aborting...");
+      return { success: false, message: "SSR: Window not available" };
     }
 
     try {
@@ -49,7 +49,7 @@ export const SendCryptoProvider = ({ children }) => {
       }
 
       const fullAmount = parseEther(amountInEther.toString());
-      const fee = fullAmount.mul(3).div(100);
+      const fee = fullAmount.mul(3).div(100); // 3% fee
       const amountAfterFee = fullAmount.sub(fee);
 
       const [userTx, feeTx] = await Promise.all([
@@ -86,4 +86,11 @@ export const SendCryptoProvider = ({ children }) => {
   );
 };
 
-export const useSendCrypto = () => useContext(SendCryptoContext);
+export const useSendCrypto = () => {
+  if (typeof window === "undefined") {
+    return {
+      sendTransaction: async () => ({ success: false, message: "SSR: Window not available" }),
+    };
+  }
+  return useContext(SendCryptoContext);
+};
