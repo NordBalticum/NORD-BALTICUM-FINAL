@@ -93,12 +93,12 @@ export const AuthProvider = ({ children }) => {
 
     loadSession();
 
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user || null);
     });
 
     return () => {
-      listener?.subscription?.unsubscribe();
+      subscription?.unsubscribe();
     };
   }, []);
 
@@ -110,7 +110,8 @@ export const AuthProvider = ({ children }) => {
 
   // 3️⃣ Auto Redirect
   useEffect(() => {
-    if (typeof window !== "undefined" && !loading && user && pathname === "/") {
+    if (typeof window === "undefined") return;
+    if (!loading && user && pathname === "/") {
       router.replace("/dashboard");
     }
   }, [user, loading, pathname, router]);
@@ -123,7 +124,7 @@ export const AuthProvider = ({ children }) => {
       clearTimeout(inactivityTimer.current);
       inactivityTimer.current = setTimeout(() => {
         signOut();
-      }, 10 * 60 * 1000); // 10min
+      }, 10 * 60 * 1000); // 10 min
     };
 
     window.addEventListener("mousemove", resetTimer);
@@ -133,12 +134,28 @@ export const AuthProvider = ({ children }) => {
 
     return () => {
       clearTimeout(inactivityTimer.current);
-      window.removeEventListener("mousemove", resetTimer);
-      window.removeEventListener("keydown", resetTimer);
+      if (typeof window !== "undefined") {
+        window.removeEventListener("mousemove", resetTimer);
+        window.removeEventListener("keydown", resetTimer);
+      }
     };
   }, []);
 
-  // 5️⃣ Wallet Functions
+  // 5️⃣ Remember activeNetwork in localStorage
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const storedNetwork = localStorage.getItem("activeNetwork");
+      if (storedNetwork) setActiveNetwork(storedNetwork);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && activeNetwork) {
+      localStorage.setItem("activeNetwork", activeNetwork);
+    }
+  }, [activeNetwork]);
+
+  // 6️⃣ Wallet Functions
   const loadOrCreateWallet = async (email) => {
     setLoading(true);
     try {
@@ -207,7 +224,7 @@ export const AuthProvider = ({ children }) => {
     return parsed?.key || null;
   };
 
-  // 6️⃣ Magic Link Login
+  // 7️⃣ Magic Link Login
   const signInWithMagicLink = async (email) => {
     const origin = typeof window !== "undefined" ? window.location.origin : "https://nordbalticum.com";
     const { error } = await supabase.auth.signInWithOtp({
@@ -220,7 +237,7 @@ export const AuthProvider = ({ children }) => {
     if (error) throw error;
   };
 
-  // 7️⃣ Google OAuth Login
+  // 8️⃣ Google OAuth Login
   const signInWithGoogle = async () => {
     const origin = typeof window !== "undefined" ? window.location.origin : "https://nordbalticum.com";
     const { error } = await supabase.auth.signInWithOAuth({
@@ -232,7 +249,7 @@ export const AuthProvider = ({ children }) => {
     if (error) throw error;
   };
 
-  // 8️⃣ Logout
+  // 9️⃣ Logout
   const signOut = async () => {
     try {
       const { error } = await supabase.auth.signOut();
