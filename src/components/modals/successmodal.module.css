@@ -1,12 +1,7 @@
-/* === SUCCESS MODAL – NordBalticum Ferrari Gold Edition === */
-
 .overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: rgba(0, 0, 0, 0.75);
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
   backdrop-filter: blur(6px);
   display: flex;
   align-items: center;
@@ -15,109 +10,47 @@
 }
 
 .modal {
-  background: #0e0e0e;
-  border-radius: 20px;
-  padding: 30px;
+  background: #111;
+  padding: 30px 20px;
+  border-radius: 18px;
+  text-align: center;
   max-width: 400px;
   width: 90%;
-  text-align: center;
-  box-shadow: 0 0 25px rgba(255, 215, 0, 0.25);
-  animation: fadeIn 0.4s ease-in-out;
+  box-shadow: 0 0 20px rgba(0, 255, 170, 0.4);
 }
 
 .title {
-  font-size: 1.8rem;
-  font-weight: bold;
-  color: #fff;
+  color: #00ffaa;
+  font-size: 24px;
   margin-bottom: 10px;
-  font-family: var(--font-crypto);
 }
 
 .message {
-  color: #ccc;
+  color: white;
   margin-bottom: 20px;
-  font-family: var(--font-crypto);
+  font-size: 16px;
 }
 
-.txContainer {
-  background: #161616;
-  border-radius: 10px;
-  padding: 10px 15px;
-  margin: 15px 0;
-}
-
-.txLabel {
-  font-size: 0.9rem;
-  color: #aaa;
-  margin-bottom: 5px;
-  font-family: var(--font-crypto);
-}
-
-.txBox {
-  background: #111;
-  border: 1px solid #333;
-  padding: 8px 12px;
-  border-radius: 8px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  color: #fff;
-  font-size: 0.9rem;
-  word-break: break-all;
-  font-family: var(--font-crypto);
-}
-
-.copyButton {
-  background: #222;
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  padding: 4px 10px;
-  font-size: 0.85rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  font-family: var(--font-crypto);
-}
-
-.copyButton:hover {
-  background: #444;
-}
-
-.explorerLink {
+.txLink {
   display: inline-block;
-  margin-top: 10px;
-  color: #ffd700;
+  margin-bottom: 20px;
+  color: #00d1ff;
   text-decoration: underline;
-  font-size: 0.9rem;
-  font-family: var(--font-crypto);
+  font-weight: bold;
 }
 
 .closeButton {
-  margin-top: 25px;
+  background: #00ffaa;
+  color: black;
+  border: none;
   padding: 10px 20px;
-  font-size: 1rem;
-  background: #000;
-  color: #fff;
-  border: 2px solid #fff;
-  border-radius: 10px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: bold;
   cursor: pointer;
-  transition: 0.2s ease;
-  font-family: var(--font-crypto);
-  text-transform: uppercase;
+  transition: background 0.3s ease;
 }
 
 .closeButton:hover {
-  background: #fff;
-  color: #000;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: scale(0.92);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
+  background: #00d1ff;
 }
