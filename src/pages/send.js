@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useMagicLink } from "@/contexts/MagicLinkContext";
 import { useWallet } from "@/contexts/WalletContext";
 import { useBalances } from "@/contexts/BalanceContext";
-import { useSendCrypto } from "@/contexts/SendCryptoContext"; // Normaliai importuotas!
+import { useSendCrypto } from "@/contexts/SendCryptoContext"; // TEISINGAI
 
 import SwipeSelector from "@/components/SwipeSelector";
 import SuccessModal from "@/components/modals/SuccessModal";
@@ -15,7 +15,7 @@ import SuccessModal from "@/components/modals/SuccessModal";
 import styles from "@/styles/send.module.css";
 import background from "@/styles/background.module.css";
 
-// Network trumpiniai ir spalvos
+// Tinklų trumpiniai ir spalvos
 const networkShortNames = {
   eth: "ETH",
   bnb: "BNB",
@@ -56,14 +56,14 @@ export default function Send() {
     }
   }, []);
 
-  // Tikrina ar user yra prisijungęs
+  // Redirectina jei nėra user
   useEffect(() => {
     if (isClient && !userLoading && user === null) {
       router.replace("/");
     }
   }, [isClient, userLoading, user, router]);
 
-  // Setina default active network
+  // Setina default network
   useEffect(() => {
     if (isClient && !activeNetwork) {
       setActiveNetwork("eth");
@@ -130,7 +130,7 @@ export default function Send() {
     setShowConfirm(true);
   };
 
-  // Patvirtina siuntimą
+  // Patvirtina ir išsiunčia
   const confirmSend = async () => {
     if (!sendTransaction) return;
 
