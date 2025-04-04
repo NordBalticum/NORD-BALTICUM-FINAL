@@ -5,9 +5,10 @@ import { Wallet, JsonRpcProvider } from "ethers";
 import { supabase } from "@/utils/supabaseClient";
 import { useMagicLink } from "@/contexts/MagicLinkContext";
 
-// === Kuriam Context'ą ===
+// Context
 export const WalletContext = createContext();
 
+// RPC URLs
 const RPC_URLS = {
   eth: "https://rpc.ankr.com/eth",
   bnb: "https://bsc-dataseed.binance.org/",
@@ -16,13 +17,14 @@ const RPC_URLS = {
   avax: "https://api.avax.network/ext/bc/C/rpc",
 };
 
-// === Šifravimo funkcijos ===
+// Encryption
 const ENCRYPTION_SECRET = process.env.NEXT_PUBLIC_ENCRYPTION_SECRET || "nordbalticum-fallback";
 
 const encode = (str) => new TextEncoder().encode(str);
 const decode = (buf) => new TextDecoder().decode(buf);
 
 const getKey = async (password) => {
+  if (typeof window === "undefined") return null;
   const keyMaterial = await window.crypto.subtle.importKey(
     "raw",
     encode(password),
@@ -45,6 +47,7 @@ const getKey = async (password) => {
 };
 
 const encrypt = async (text) => {
+  if (typeof window === "undefined") return null;
   const iv = window.crypto.getRandomValues(new Uint8Array(12));
   const key = await getKey(ENCRYPTION_SECRET);
   const encrypted = await window.crypto.subtle.encrypt(
@@ -56,6 +59,7 @@ const encrypt = async (text) => {
 };
 
 const decrypt = async (ciphertext) => {
+  if (typeof window === "undefined") return null;
   const { iv, data } = JSON.parse(atob(ciphertext));
   const key = await getKey(ENCRYPTION_SECRET);
   const decrypted = await window.crypto.subtle.decrypt(
@@ -66,7 +70,7 @@ const decrypt = async (ciphertext) => {
   return decode(decrypted);
 };
 
-// === Wallet Provider ===
+// Provider
 export const WalletProvider = ({ children }) => {
   const { user } = useMagicLink();
   const [wallet, setWallet] = useState(null);
@@ -74,14 +78,18 @@ export const WalletProvider = ({ children }) => {
   const [activeNetwork, setActiveNetwork] = useState("eth");
 
   useEffect(() => {
-    if (typeof window !== "undefined" && user?.email) {
-      loadWallet(user.email);
-    } else {
-      setLoading(false);
-    }
+    const load = async () => {
+      if (!user?.email || typeof window === "undefined") {
+        setWallet(null);
+        setLoading(false);
+        return;
+      }
+      await loadOrCreateWallet(user.email);
+    };
+    load();
   }, [user]);
 
-  const loadWallet = async (email) => {
+  const loadOrCreateWallet = async (email) => {
     setLoading(true);
     try {
       const { data, error } = await supabase
@@ -96,15 +104,14 @@ export const WalletProvider = ({ children }) => {
         return;
       }
 
-      if (data && data.encrypted_key) {
+      if (data?.encrypted_key) {
         const decryptedPrivateKey = await decrypt(data.encrypted_key);
-        const wallets = generateWallets(decryptedPrivateKey);
-        setWallet(wallets);
+        const generated = generateWallets(decryptedPrivateKey);
+        setWallet(generated);
       } else {
         const newWallet = Wallet.createRandom();
         const encryptedPrivateKey = await encrypt(newWallet.privateKey);
 
-        // Išsaugom į Supabase
         const payload = {
           user_email: email,
           eth_address: newWallet.address,
@@ -122,12 +129,12 @@ export const WalletProvider = ({ children }) => {
         if (insertError) {
           console.error("Supabase insert error:", insertError.message);
         } else {
-          const wallets = generateWallets(newWallet.privateKey);
-          setWallet(wallets);
+          const generated = generateWallets(newWallet.privateKey);
+          setWallet(generated);
         }
       }
     } catch (err) {
-      console.error("Load wallet error:", err);
+      console.error("Wallet Load Error:", err.message || err);
       setWallet(null);
     } finally {
       setLoading(false);
