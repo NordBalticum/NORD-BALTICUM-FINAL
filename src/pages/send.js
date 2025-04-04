@@ -27,7 +27,7 @@ export default function Send() {
   const router = useRouter();
   const { user } = useMagicLink();
   const { activeNetwork, setActiveNetwork } = useWallet();
-  const { balance, balanceEUR, maxSendable, refreshBalance } = useBalances();
+  const { balance, balanceEUR, maxSendable, refreshBalance, loading } = useBalances(); // <--- svarbu gauti loading!
   const { sendTransaction } = useSendCrypto();
 
   const [receiver, setReceiver] = useState("");
@@ -113,7 +113,12 @@ export default function Send() {
   };
 
   return (
-    <main className={`${styles.main} ${background.gradient}`}>
+    <motion.main
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.6 }}
+      className={`${styles.main} ${background.gradient}`}
+    >
       <div className={styles.wrapper}>
         <h1 className={styles.title}>SEND CRYPTO</h1>
         <p className={styles.subtext}>Transfer crypto securely & instantly</p>
@@ -121,24 +126,28 @@ export default function Send() {
         <SwipeSelector mode="send" onSelect={setActiveNetwork} />
 
         <div className={styles.balanceTable}>
-          <motion.p
-            className={styles.whiteText}
-            key={netBalance}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.6 }}
-          >
-            Total Balance: <strong>{netBalance.toFixed(6)} {shortName}</strong> (~€{netEUR.toFixed(2)})
-          </motion.p>
-          <motion.p
-            className={styles.whiteText}
-            key={netSendable}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.6 }}
-          >
-            Max Sendable: <strong>{netSendable.toFixed(6)} {shortName}</strong> (includes 3% fee)
-          </motion.p>
+          {!loading && (
+            <>
+              <motion.p
+                className={styles.whiteText}
+                key={netBalance}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.6 }}
+              >
+                Total Balance: <strong>{netBalance.toFixed(6)} {shortName}</strong> (~€{netEUR.toFixed(2)})
+              </motion.p>
+              <motion.p
+                className={styles.whiteText}
+                key={netSendable}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.6 }}
+              >
+                Max Sendable: <strong>{netSendable.toFixed(6)} {shortName}</strong> (includes 3% fee)
+              </motion.p>
+            </>
+          )}
         </div>
 
         <div className={styles.walletActions}>
@@ -187,9 +196,7 @@ export default function Send() {
                 <p><strong>Gets:</strong> {amountAfterFee.toFixed(6)} {shortName}</p>
               </div>
               <div className={styles.modalActions}>
-                <button className={styles.modalButton} onClick={confirmSend}>
-                  Confirm
-                </button>
+                <button className={styles.modalButton} onClick={confirmSend}>Confirm</button>
                 <button
                   className={`${styles.modalButton} ${styles.cancel}`}
                   onClick={() => setShowConfirm(false)}
@@ -216,6 +223,6 @@ export default function Send() {
           </motion.div>
         )}
       </div>
-    </main>
+    </motion.main>
   );
 }
