@@ -1,41 +1,57 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { useMagicLink } from "@/contexts/MagicLinkContext";
+
+import { useAuth } from "@/contexts/AuthContext"; // ✅ Ultimate Auth
 import styles from "@/styles/history.module.css";
 import background from "@/styles/background.module.css";
 
-export default function History() {
-  const { user, fetchUserTransactions } = useMagicLink();
+export default function HistoryPage() {
+  const router = useRouter();
+  const { user, fetchTransactions, loading } = useAuth(); // ✅ Ultimate metodai
   const [transactions, setTransactions] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [isClient, setIsClient] = useState(false);
+  const [loadingTransactions, setLoadingTransactions] = useState(true);
 
   useEffect(() => {
-    if (user?.email) {
-      fetchTransactions();
+    if (typeof window !== "undefined") {
+      setIsClient(true);
     }
-  }, [user]);
+  }, []);
 
-  const fetchTransactions = async () => {
-    try {
-      setLoading(true);
-      const data = await fetchUserTransactions(user.email);
-      setTransactions(data);
-    } catch (err) {
-      console.error("Error fetching transactions:", err);
-    } finally {
-      setLoading(false);
+  useEffect(() => {
+    if (isClient && !loading && !user) {
+      router.replace("/");
     }
-  };
+  }, [user, loading, isClient, router]);
+
+  useEffect(() => {
+    const fetchUserTx = async () => {
+      if (user?.email) {
+        try {
+          setLoadingTransactions(true);
+          const txs = await fetchTransactions(user.email);
+          setTransactions(txs || []);
+        } catch (err) {
+          console.error("Failed to fetch transactions:", err);
+        } finally {
+          setLoadingTransactions(false);
+        }
+      }
+    };
+
+    fetchUserTx();
+  }, [user, fetchTransactions]);
 
   const getExplorerURL = (hash, network) => {
     const baseURLs = {
       bsc: "https://bscscan.com/tx/",
       tbnb: "https://testnet.bscscan.com/tx/",
-      ethereum: "https://etherscan.io/tx/",
-      polygon: "https://polygonscan.com/tx/",
-      avalanche: "https://snowtrace.io/tx/",
+      eth: "https://etherscan.io/tx/",
+      matic: "https://polygonscan.com/tx/",
+      avax: "https://snowtrace.io/tx/",
     };
     return baseURLs[network?.toLowerCase()] + hash;
   };
@@ -45,14 +61,18 @@ export default function History() {
     visible: { opacity: 1, y: 0 },
   };
 
+  if (!isClient || loading) {
+    return <div className={styles.loading}>Loading profile...</div>;
+  }
+
   return (
     <main className={`${styles.container} ${background.gradient}`}>
       <div className={styles.wrapper}>
         <h1 className={styles.title}>TRANSACTION HISTORY</h1>
         <p className={styles.subtext}>Your latest crypto activity</p>
 
-        {loading ? (
-          <div className={styles.loading}>Loading your transactions...</div>
+        {loadingTransactions ? (
+          <div className={styles.loading}>Loading transactions...</div>
         ) : transactions.length === 0 ? (
           <div className={styles.loading}>No transactions found.</div>
         ) : (
@@ -84,13 +104,11 @@ export default function History() {
 
                 <p className={styles.transactionDetail}>
                   <strong>{tx.type === "receive" ? "From:" : "To:"}</strong>{" "}
-                  {tx.type === "receive"
-                    ? truncateAddress(tx.from_address)
-                    : truncateAddress(tx.to_address)}
+                  {truncateAddress(tx.type === "receive" ? tx.from_address : tx.to_address)}
                 </p>
 
                 <p className={styles.transactionDetail}>
-                  <strong>Fee:</strong> {tx.fee || "0"} {tx.network}
+                  <strong>Fee:</strong> {tx.fee || "0"} {tx.network?.toUpperCase()}
                 </p>
 
                 <p className={styles.transactionDate}>
