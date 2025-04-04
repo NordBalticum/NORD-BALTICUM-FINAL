@@ -40,7 +40,7 @@ export default function Send() {
   "eth": "eth",
   "bnb": "bnb",
   "tbnb": "tbnb",
-  "matic": "matic",
+  "pol": "matic",
   "avax": "avax",
 };
 
