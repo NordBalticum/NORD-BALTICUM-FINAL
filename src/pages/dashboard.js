@@ -31,7 +31,7 @@ export default function Dashboard() {
   const router = useRouter();
   const { user, loading } = useMagicLink();
   const { wallet } = useWallet();
-  const { format, balance } = useBalances(); // <- naudojam getBalance ir format
+  const { balance, balanceEUR } = useBalances(); // Naudojam naujus: balance() ir balanceEUR()
 
   const [isClient, setIsClient] = useState(false);
 
@@ -60,8 +60,8 @@ export default function Dashboard() {
         {/* === CRYPTO BALANCE LIST === */}
         <div className={styles.assetList}>
           {tokens.map((symbol) => {
-            const value = balance(symbol);
-            const { eur, usd } = format(symbol);
+            const value = balance(symbol) || 0;
+            const eurValue = balanceEUR(symbol) || 0;
 
             return (
               <div
@@ -90,7 +90,7 @@ export default function Dashboard() {
                     {value.toFixed(6)} {symbol.toUpperCase()}
                   </div>
                   <div className={styles.assetEur}>
-                    ≈ €{eur} / ${usd}
+                    ≈ €{eurValue.toFixed(2)}
                   </div>
                 </div>
               </div>
