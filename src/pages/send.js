@@ -3,10 +3,11 @@
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
+
 import { useMagicLink } from "@/contexts/MagicLinkContext";
 import { useWallet } from "@/contexts/WalletContext";
 import { useBalances } from "@/contexts/BalanceContext";
-import { useSendCrypto } from "@/contexts/SendCryptoContext";  // Normaliai importuojamas
+import { useSendCrypto } from "@/contexts/SendCryptoContext";
 
 import SwipeSelector from "@/components/SwipeSelector";
 import SuccessModal from "@/components/modals/SuccessModal";
@@ -35,7 +36,7 @@ export default function Send() {
   const { user, loading: userLoading } = useMagicLink();
   const { wallet, activeNetwork, setActiveNetwork, loading: walletLoading } = useWallet();
   const { balance, balanceEUR, maxSendable, refreshBalance, loading: balanceLoading } = useBalances();
-  const { sendTransaction } = useSendCrypto();  // Normalus sendTransaction naudojimas
+  const { sendTransaction } = useSendCrypto();
 
   const [receiver, setReceiver] = useState("");
   const [amount, setAmount] = useState("");
@@ -45,19 +46,29 @@ export default function Send() {
   const [sending, setSending] = useState(false);
   const [balanceUpdated, setBalanceUpdated] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
+
   const [isClient, setIsClient] = useState(false);
 
+  // Tik kai window egzistuoja, leidžiam viską daryti
   useEffect(() => {
     if (typeof window !== "undefined") {
       setIsClient(true);
     }
   }, []);
 
+  // Jei user neautorizuotas - redirect į /
   useEffect(() => {
     if (isClient && !userLoading && user === null) {
       router.replace("/");
     }
-  }, [user, userLoading, isClient, router]);
+  }, [isClient, user, userLoading, router]);
+
+  // Jei tinklas nenustatytas, defaultinam į ETH
+  useEffect(() => {
+    if (isClient && activeNetwork === undefined) {
+      setActiveNetwork("eth");
+    }
+  }, [isClient, activeNetwork, setActiveNetwork]);
 
   const isLoading = userLoading || walletLoading || balanceLoading || !isClient;
 
@@ -74,8 +85,7 @@ export default function Send() {
   const amountAfterFee = parsedAmount - fee;
 
   const shortName = useMemo(() => {
-    if (!activeNetwork) return "";
-    return networkShortNames[activeNetwork.toLowerCase()] || "";
+    return networkShortNames[activeNetwork?.toLowerCase()] || "";
   }, [activeNetwork]);
 
   const netBalance = activeNetwork ? balance(activeNetwork) : 0;
@@ -109,7 +119,7 @@ export default function Send() {
       return;
     }
     if (parsedAmount > netBalance) {
-      alert(`Insufficient balance. You have only ${netBalance.toFixed(6)} ${shortName}.`);
+      alert(`Insufficient balance. You have only ${netBalance.toFixed(6)} ${shortName}`);
       return;
     }
     setShowConfirm(true);
@@ -198,20 +208,20 @@ export default function Send() {
         <SwipeSelector mode="send" onSelect={handleNetworkChange} />
 
         <div className={styles.balanceTable}>
-          <motion.p className={styles.whiteText}>
+          <p className={styles.whiteText}>
             Total Balance:&nbsp;
             <span className={styles.balanceAmount}>
               {netBalance.toFixed(6)} {shortName}
             </span>{" "}
             (~€{netEUR.toFixed(2)})
-          </motion.p>
-          <motion.p className={styles.whiteText}>
+          </p>
+          <p className={styles.whiteText}>
             Max Sendable:&nbsp;
             <span className={styles.balanceAmount}>
               {netSendable.toFixed(6)} {shortName}
             </span>{" "}
             (includes 3% fee)
-          </motion.p>
+          </p>
         </div>
 
         <div className={styles.walletActions}>
