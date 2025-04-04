@@ -16,7 +16,7 @@ const RPC = {
   avax: "https://api.avax.network/ext/bc/C/rpc",
 };
 
-// Encryption
+// ENCRYPTION
 const ENCRYPTION_SECRET = process.env.NEXT_PUBLIC_ENCRYPTION_SECRET || "nordbalticum-fallback";
 
 const encode = (str) => new TextEncoder().encode(str);
@@ -71,6 +71,7 @@ export const AuthProvider = ({ children }) => {
   const pathname = usePathname();
   const [user, setUser] = useState(null);
   const [wallet, setWallet] = useState(null);
+  const [activeNetwork, setActiveNetwork] = useState("eth");
   const [loading, setLoading] = useState(true);
   const inactivityTimer = useRef(null);
 
@@ -114,7 +115,7 @@ export const AuthProvider = ({ children }) => {
     }
   }, [user, loading, pathname, router]);
 
-  // 4️⃣ Auto Logout after 10min Inactivity
+  // 4️⃣ Auto Logout after 10min inactivity
   useEffect(() => {
     if (typeof window === "undefined") return;
 
@@ -137,7 +138,7 @@ export const AuthProvider = ({ children }) => {
     };
   }, []);
 
-  // 5️⃣ Load or Create Wallet
+  // 5️⃣ Wallet Functions
   const loadOrCreateWallet = async (email) => {
     setLoading(true);
     try {
@@ -185,7 +186,6 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Generate signers
   const generateWallets = (wallet) => {
     const signers = {};
     Object.entries(RPC).forEach(([network, rpcUrl]) => {
@@ -254,6 +254,8 @@ export const AuthProvider = ({ children }) => {
       value={{
         user,
         wallet,
+        activeNetwork,
+        setActiveNetwork,
         loading,
         signInWithMagicLink,
         signInWithGoogle,
