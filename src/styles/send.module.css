@@ -74,6 +74,12 @@
   text-shadow: 0 0 8px rgba(255, 255, 255, 0.08);
 }
 
+.balanceAmount {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
 /* === Skeleton Loader === */
 .skeletonWrapper {
   display: flex;
@@ -338,8 +344,21 @@
   }
 }
 
-.balanceAmount {
-  white-space: nowrap;
-  font-variant-numeric: tabular-nums;
-  font-weight: 600;
+/* === SUCCESS ALERT (Naujas) === */
+.successAlert {
+  background: rgba(0, 255, 0, 0.1);
+  color: #00ff00;
+  padding: 12px;
+  margin-bottom: 12px;
+  border: 1px solid #00ff00;
+  border-radius: 10px;
+  text-align: center;
+  font-family: var(--font-crypto);
+  font-size: 1rem;
+  animation: fadeInSuccess 0.6s ease;
+}
+
+@keyframes fadeInSuccess {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
