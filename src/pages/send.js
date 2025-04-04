@@ -7,6 +7,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useMagicLink } from "@/contexts/MagicLinkContext";
 import { useWallet } from "@/contexts/WalletContext";
 import { useBalances } from "@/contexts/BalanceContext";
+import { useSendCrypto } from "@/contexts/SendCryptoContext"; // <- TIESIOGIAI normaliai importuotas!
+
 import SwipeSelector from "@/components/SwipeSelector";
 import SuccessModal from "@/components/modals/SuccessModal";
 
@@ -34,6 +36,7 @@ export default function Send() {
   const { user, loading: userLoading } = useMagicLink();
   const { wallet, activeNetwork, setActiveNetwork, loading: walletLoading } = useWallet();
   const { balance, balanceEUR, maxSendable, refreshBalance, loading: balanceLoading } = useBalances();
+  const { sendTransaction } = useSendCrypto(); // <-- Hook normaliai naudojamas!
 
   const [receiver, setReceiver] = useState("");
   const [amount, setAmount] = useState("");
@@ -44,16 +47,10 @@ export default function Send() {
   const [balanceUpdated, setBalanceUpdated] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
   const [isClient, setIsClient] = useState(false);
-  const [sendTransaction, setSendTransaction] = useState(null);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
       setIsClient(true);
-      import("@/contexts/SendCryptoContext").then((module) => {
-        const { useSendCrypto } = module;
-        const { sendTransaction } = useSendCrypto();
-        setSendTransaction(() => sendTransaction);
-      });
     }
   }, []);
 
@@ -69,7 +66,7 @@ export default function Send() {
     }
   }, [isClient, activeNetwork, setActiveNetwork]);
 
-  const isLoading = userLoading || walletLoading || balanceLoading || !isClient || !sendTransaction;
+  const isLoading = userLoading || walletLoading || balanceLoading || !isClient;
 
   if (isLoading) {
     return <div className={styles.loading}>Loading...</div>;
@@ -126,7 +123,6 @@ export default function Send() {
   };
 
   const confirmSend = async () => {
-    if (!sendTransaction) return; // Apsauga jei dar nespėjo pasikrauti
     setShowConfirm(false);
     setSending(true);
 
@@ -233,6 +229,7 @@ export default function Send() {
             onChange={(e) => setReceiver(e.target.value)}
             className={styles.inputField}
           />
+
           <input
             type="number"
             placeholder="Amount to send"
