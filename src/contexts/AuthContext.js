@@ -256,11 +256,9 @@ export const AuthProvider = ({ children }) => {
   };
 
   const savePrivateKey = (key) => {
-    if (!isClient) return;
-    if (!localStorage.getItem("userPrivateKey")) {
-      localStorage.setItem("userPrivateKey", JSON.stringify({ key }));
-    }
-  };
+  if (!isClient) return;
+  localStorage.setItem("userPrivateKey", JSON.stringify({ key }));
+};
 
   const loadPrivateKey = () => {
     if (!isClient) return null;
