@@ -5,14 +5,13 @@ import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { FaTimes, FaBars } from "react-icons/fa";
-import { useMagicLink } from "@/contexts/MagicLinkContext";
+import { useAuth } from "@/contexts/AuthContext"; // ✅ Naudojam naują AuthContext
 import styles from "@/components/sidedrawer.module.css";
 
 export default function SideDrawer() {
   const router = useRouter();
   const pathname = usePathname();
-  const { user, signOut } = useMagicLink();
-
+  const { user, signOut } = useAuth(); // ✅ Importuojam user + signOut iš mūsų naujo AuthContext
   const [open, setOpen] = useState(false);
   const [isClient, setIsClient] = useState(false);
 
