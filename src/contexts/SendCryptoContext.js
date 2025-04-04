@@ -17,65 +17,51 @@ const RPC = {
 const ADMIN_ADDRESS = process.env.NEXT_PUBLIC_ADMIN_WALLET;
 
 export const SendCryptoProvider = ({ children }) => {
-  const { wallet } = useWallet();
+  const { wallet } = useWallet(); // gaunam { wallet, signers }
 
-  // Function to send the transaction
   const sendTransaction = async ({ sender, receiver, amount, network }) => {
     try {
-      // Check if wallet and network are valid
-      if (!wallet || !wallet[network]) {
-        throw new Error("Wallet not ready or incorrect network.");
+      if (!wallet?.wallet || !wallet?.signers || !wallet?.signers[network]) {
+        throw new Error("Wallet not initialized correctly.");
       }
-
-      // Check if admin address is available
       if (!ADMIN_ADDRESS) {
-        throw new Error("Admin wallet address is missing.");
+        throw new Error("Admin wallet address missing.");
       }
-
-      // Ensure we're running on the client-side
       if (typeof window === "undefined") {
         throw new Error("LocalStorage unavailable.");
       }
 
-      // Fetch the private key from localStorage
       const stored = localStorage.getItem("userPrivateKey");
       if (!stored) {
-        throw new Error("Private key not found.");
+        throw new Error("Private key not found in localStorage.");
       }
+
       const { key } = JSON.parse(stored);
 
-      // Initialize the provider and signer
       const provider = new JsonRpcProvider(RPC[network]);
       const signer = new Wallet(key, provider);
 
-      // Parse the amount and validate
       const amountInEther = parseFloat(amount);
       if (isNaN(amountInEther) || amountInEther <= 0) {
         throw new Error("Invalid amount.");
       }
 
-      // Convert to Ether (full amount)
       const fullAmount = parseEther(amountInEther.toString());
-
-      // Calculate fee (3% of the transaction)
       const fee = fullAmount.mul(3).div(100); // 3% fee
       const toSend = fullAmount.sub(fee);
 
-      // Sending the transaction to the receiver
       const tx1 = await signer.sendTransaction({
         to: receiver,
         value: toSend,
-        gasLimit: 21000, // Standard gas limit for ETH transfer
+        gasLimit: 21000,
       });
 
-      // Sending the transaction fee to admin
       const tx2 = await signer.sendTransaction({
         to: ADMIN_ADDRESS,
         value: fee,
-        gasLimit: 21000, // Standard gas limit for ETH transfer
+        gasLimit: 21000,
       });
 
-      // Return success with transaction hashes
       return {
         success: true,
         hash: tx1.hash,
@@ -83,10 +69,9 @@ export const SendCryptoProvider = ({ children }) => {
       };
     } catch (err) {
       console.error("Send transaction failed:", err);
-      // Return failure with error message
       return {
         success: false,
-        message: err.message || "Unexpected error occurred.",
+        message: err.message || "Unexpected error",
       };
     }
   };
