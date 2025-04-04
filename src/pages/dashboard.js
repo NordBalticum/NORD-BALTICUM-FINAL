@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
-import Image from "next/image"; // ✅ Tik Next.js Image
-import { useAuth } from "@/contexts/AuthContext"; // ✅ Naujas importas
+import Image from "next/image";
+
+import { useAuth } from "@/contexts/AuthContext"; // ✅ Ultimate useAuth
 import styles from "@/styles/dashboard.module.css";
 
 const LivePriceTable = dynamic(() => import("@/components/LivePriceTable"), { ssr: false });
@@ -27,7 +28,7 @@ const names = {
 
 export default function Dashboard() {
   const router = useRouter();
-  const { user, wallet, balances, getBalance, loading } = useAuth(); // ✅ Ultimate useAuth()
+  const { user, wallet, balances, getBalance, loading } = useAuth();
 
   const [isClient, setIsClient] = useState(false);
 
@@ -41,10 +42,10 @@ export default function Dashboard() {
     if (isClient && !loading && !user) {
       router.replace("/");
     }
-  }, [isClient, user, loading, router]);
+  }, [isClient, loading, user, router]);
 
   const tokens = useMemo(() => {
-    if (!wallet || !wallet.signers) return [];
+    if (!wallet?.signers) return [];
     return Object.keys(wallet.signers);
   }, [wallet]);
 
@@ -57,10 +58,10 @@ export default function Dashboard() {
   return (
     <main className={styles.container}>
       <div className={styles.dashboardWrapper}>
-        {/* Live prices table */}
+        {/* Live Prices */}
         <LivePriceTable />
 
-        {/* Crypto balances */}
+        {/* User Crypto Assets */}
         <div className={styles.assetList}>
           {tokens.length === 0 ? (
             <div className={styles.loading}>No assets found.</div>
@@ -82,12 +83,12 @@ export default function Dashboard() {
                   <div className={styles.assetLeft}>
                     <Image
                       src={iconUrls[symbol]}
-                      alt={`${symbol}-icon`}
-                      className={styles.assetLogo}
+                      alt={`${symbol} logo`}
                       width={40}
                       height={40}
+                      className={styles.assetLogo}
                       priority
-                      unoptimized // ✅ Kad remote img veiktų
+                      unoptimized
                     />
                     <div className={styles.assetInfo}>
                       <div className={styles.assetSymbol}>
