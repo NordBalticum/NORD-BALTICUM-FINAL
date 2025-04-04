@@ -15,7 +15,7 @@ const supportedNetworks = [
 
 export default function SwipeSelector({ mode = "send", onSelect }) {
   const containerRef = useRef(null);
-  const [selectedIndex, setSelectedIndex] = useState(2); // Default to Ethereum
+  const [selectedIndex, setSelectedIndex] = useState(2); // Default Ethereum
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -26,7 +26,9 @@ export default function SwipeSelector({ mode = "send", onSelect }) {
   }, []);
 
   useEffect(() => {
-    onSelect?.(supportedNetworks[selectedIndex].name); // <-- Visiškai teisinga pagal tavo prašymą
+    if (supportedNetworks[selectedIndex]) {
+      onSelect?.(supportedNetworks[selectedIndex].symbol); // <-- SIUNČIA SYMBOL!
+    }
     if (isMobile) scrollToCenter(selectedIndex);
   }, [selectedIndex, isMobile, onSelect]);
 
@@ -41,7 +43,9 @@ export default function SwipeSelector({ mode = "send", onSelect }) {
 
   const handleSelect = (index) => {
     setSelectedIndex(index);
-    onSelect?.(supportedNetworks[index].name); // <-- Be delays, iškart keičia pasirinkimą
+    if (supportedNetworks[index]) {
+      onSelect?.(supportedNetworks[index].symbol); // <-- SIUNČIA SYMBOL!
+    }
     if (isMobile) scrollToCenter(index);
   };
 
@@ -59,7 +63,7 @@ export default function SwipeSelector({ mode = "send", onSelect }) {
 
   return (
     <div className={styles.selectorContainer}>
-      {/* Arrows (Mobile Only) */}
+      {/* Arrows for Mobile */}
       <div className={styles.arrows}>
         <button className={styles.arrowBtn} onClick={goLeft}>&#x2190;</button>
         <button className={styles.arrowBtn} onClick={goRight}>&#x2192;</button>
