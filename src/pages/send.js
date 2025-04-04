@@ -37,26 +37,28 @@ export default function Send() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [sending, setSending] = useState(false);
 
-  // ✅ VAROM: jei nėra aktyvaus tinklo, padaryk default "eth"
-  useEffect(() => {
-    if (!activeNetwork) {
-      setActiveNetwork("eth");
-    }
-  }, [activeNetwork, setActiveNetwork]);
-
-  // ✅ shortName visada bus nustatytas
-  const shortName = useMemo(() => {
-    if (!activeNetwork) return "ETH";
-    return networkShortNames[activeNetwork?.toLowerCase()] || "ETH";
-  }, [activeNetwork]);
-
   const parsedAmount = Number(amount || 0);
   const fee = parsedAmount * 0.03;
   const amountAfterFee = parsedAmount - fee;
 
-  const netBalance = useMemo(() => Number(balance(activeNetwork) || 0), [balance, activeNetwork]);
-  const netEUR = useMemo(() => Number(balanceEUR(activeNetwork) || 0), [balanceEUR, activeNetwork]);
-  const netSendable = useMemo(() => Number(maxSendable(activeNetwork) || 0), [maxSendable, activeNetwork]);
+  // Fallback shortName jei activeNetwork nėra
+  const shortName = useMemo(() => {
+    if (!activeNetwork) return "ETH";
+    return networkShortNames[activeNetwork.toLowerCase()] || "ETH";
+  }, [activeNetwork]);
+
+  const netBalance = useMemo(
+    () => Number(balance(activeNetwork) || 0),
+    [balance, activeNetwork]
+  );
+  const netEUR = useMemo(
+    () => Number(balanceEUR(activeNetwork) || 0),
+    [balanceEUR, activeNetwork]
+  );
+  const netSendable = useMemo(
+    () => Number(maxSendable(activeNetwork) || 0),
+    [maxSendable, activeNetwork]
+  );
 
   useEffect(() => {
     if (!user) router.replace("/");
