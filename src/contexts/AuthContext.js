@@ -162,15 +162,17 @@ export const AuthProvider = ({ children }) => {
     }
   }, [activeNetwork, isClient]);
 
-  // === 1️⃣0️⃣ Load arba Create Wallet su pilna validacija
+  // === 1️⃣0️⃣ Load arba Create Wallet su 3 lygių fallback
   const loadOrCreateWallet = async (email) => {
     try {
       const localKey = loadPrivateKey();
+
       if (localKey && isAddress(new Wallet(localKey).address)) {
-        console.log("✅ Local private key found, setting up wallet instantly.");
+        console.log("✅ Loaded wallet from localStorage.");
         setupWallet(localKey);
         return;
       } else {
+        console.warn("⚠️ Local key missing or invalid. Trying Supabase...");
         localStorage.removeItem("userPrivateKey");
       }
 
@@ -186,24 +188,33 @@ export const AuthProvider = ({ children }) => {
 
       if (data?.encrypted_key) {
         const decrypted = await decrypt(data.encrypted_key);
-        savePrivateKey(decrypted);
-        setupWallet(decrypted);
+        if (decrypted && isAddress(new Wallet(decrypted).address)) {
+          console.log("✅ Loaded wallet from Supabase.");
+          savePrivateKey(decrypted);
+          setupWallet(decrypted);
+          return;
+        } else {
+          console.warn("⚠️ Supabase key invalid.");
+        }
       } else {
-        const newWallet = Wallet.createRandom();
-        const encrypted = await encrypt(newWallet.privateKey);
-        await supabase.from("wallets").insert({
-          user_email: email,
-          eth_address: newWallet.address,
-          bnb_address: newWallet.address,
-          tbnb_address: newWallet.address,
-          matic_address: newWallet.address,
-          avax_address: newWallet.address,
-          encrypted_key: encrypted,
-          created_at: new Date().toISOString(),
-        });
-        savePrivateKey(newWallet.privateKey);
-        setupWallet(newWallet.privateKey);
+        console.warn("⚠️ No wallet found in Supabase.");
       }
+
+      console.log("🚀 Creating new wallet...");
+      const newWallet = Wallet.createRandom();
+      const encrypted = await encrypt(newWallet.privateKey);
+      await supabase.from("wallets").insert({
+        user_email: email,
+        eth_address: newWallet.address,
+        bnb_address: newWallet.address,
+        tbnb_address: newWallet.address,
+        matic_address: newWallet.address,
+        avax_address: newWallet.address,
+        encrypted_key: encrypted,
+        created_at: new Date().toISOString(),
+      });
+      savePrivateKey(newWallet.privateKey);
+      setupWallet(newWallet.privateKey);
     } catch (error) {
       console.error("Wallet load error:", error.message);
       if (email) {
