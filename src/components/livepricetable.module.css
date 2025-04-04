@@ -2,10 +2,10 @@
   width: 100%;
   display: flex;
   flex-direction: column;
-  align-items: center; /* Centruotas horizontaliai */
+  align-items: center;
   margin-bottom: 10px;
   gap: 8px;
-  transform: translateY(1%); /* Paleistas 1% žemyn */
+  transform: translateY(1%);
 }
 
 .controls {
@@ -16,8 +16,8 @@
 
 .currencyButton {
   background: transparent;
-  border: 1px solid white;
-  color: white;
+  border: 1px solid #FFD700; /* Geltonas apvadas */
+  color: #FFD700;
   font-family: var(--font-crypto);
   font-weight: 600;
   font-size: 0.65rem;
@@ -28,13 +28,13 @@
 }
 
 .currencyButton:hover {
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 215, 0, 0.15); /* Švelnus geltonas hover */
 }
 
 .active {
-  background: white;
+  background: #FFD700;
   color: black;
-  border-color: white;
+  border-color: #FFD700;
 }
 
 .grid {
@@ -47,7 +47,7 @@
 
 .card {
   background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.16);
+  border: 1px solid #FFD700; /* GELTONAS apvadas */
   border-radius: 14px;
   padding: 12px 6px;
   display: flex;
@@ -55,14 +55,14 @@
   align-items: center;
   text-align: center;
   backdrop-filter: blur(10px) saturate(140%);
-  box-shadow: 0 0 8px rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 12px rgba(255, 215, 0, 0.15);
   cursor: pointer;
   transition: 0.3s ease;
 }
 
 .card:hover {
-  transform: scale(1.025);
-  box-shadow: 0 0 14px rgba(255, 255, 255, 0.15);
+  transform: scale(1.03);
+  box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
 }
 
 .logo {
@@ -86,7 +86,7 @@
   color: white;
 }
 
-/* Extra responsive patobulinimas */
+/* Extra responsive */
 @media (max-width: 480px) {
   .grid {
     grid-template-columns: repeat(2, minmax(100px, 1fr));
