@@ -1,23 +1,23 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect, useCallback } from "react";
-import { ethers } from "ethers";
+import { JsonRpcProvider, formatEther } from "ethers";
 import { useWallet } from "@/contexts/WalletContext";
 
 export const BalanceContext = createContext();
 
 const RPC = {
+  eth: "https://rpc.ankr.com/eth",
   bnb: "https://bsc-dataseed.binance.org/",
   tbnb: "https://data-seed-prebsc-1-s1.binance.org:8545/",
-  eth: "https://rpc.ankr.com/eth",
   matic: "https://polygon-rpc.com",
   avax: "https://api.avax.network/ext/bc/C/rpc",
 };
 
 const coinMap = {
+  eth: "ethereum",
   bnb: "binancecoin",
   tbnb: "binancecoin",
-  eth: "ethereum",
   matic: "polygon",
   avax: "avalanche-2",
 };
@@ -29,16 +29,16 @@ const fetchRates = async () => {
     const res = await fetch(url);
     return await res.json();
   } catch (err) {
-    console.error("Coingecko fetch failed:", err);
+    console.error("Coingecko rates fetch failed:", err);
     return {};
   }
 };
 
 const fetchBalance = async (rpcUrl, address) => {
   try {
-    const provider = new ethers.providers.JsonRpcProvider(rpcUrl, { timeout: 10000 });
+    const provider = new JsonRpcProvider(rpcUrl);
     const balance = await provider.getBalance(address);
-    return parseFloat(ethers.utils.formatEther(balance));
+    return parseFloat(formatEther(balance));
   } catch (error) {
     console.error(`Error fetching balance for ${address}:`, error);
     return 0;
@@ -52,20 +52,23 @@ export const BalanceProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   const loadBalances = useCallback(async () => {
-    if (!wallet) return;
+    if (!wallet || !wallet.signers) return;
     setLoading(true);
     try {
+      const addresses = Object.keys(wallet.signers).reduce((acc, network) => {
+        acc[network] = wallet.signers[network].address;
+        return acc;
+      }, {});
+
       const rateData = await fetchRates();
 
-      const promises = Object.keys(RPC).map(async (network) => {
-        const address = wallet?.[network];
-        if (!address) return { network, balance: 0 };
-
+      const balancePromises = Object.keys(addresses).map(async (network) => {
+        const address = addresses[network];
         const balance = await fetchBalance(RPC[network], address);
         return { network, balance };
       });
 
-      const results = await Promise.all(promises);
+      const results = await Promise.all(balancePromises);
 
       const balancesResult = {};
       results.forEach(({ network, balance }) => {
@@ -82,7 +85,7 @@ export const BalanceProvider = ({ children }) => {
   }, [wallet]);
 
   useEffect(() => {
-    if (!wallet || !wallet.bnb) return;
+    if (!wallet || !wallet.signers) return;
     loadBalances();
     const interval = setInterval(loadBalances, 30000);
     return () => clearInterval(interval);
@@ -98,13 +101,13 @@ export const BalanceProvider = ({ children }) => {
   };
 
   const getMaxSendable = (network) => {
-    const raw = getBalance(network);
-    return raw * 0.97;
+    const rawBalance = getBalance(network);
+    return rawBalance * 0.97;
   };
 
   const refreshBalance = async (email, network) => {
-    if (!wallet || !network) return;
-    const address = wallet?.[network];
+    if (!wallet || !wallet.signers || !network) return;
+    const address = wallet.signers[network]?.address;
     if (!address) return;
 
     try {
