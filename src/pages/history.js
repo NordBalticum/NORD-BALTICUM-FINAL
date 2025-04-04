@@ -10,7 +10,8 @@ import background from "@/styles/background.module.css";
 
 export default function HistoryPage() {
   const router = useRouter();
-  const { user, fetchTransactions, loading } = useAuth();
+  const { user, wallet, fetchTransactions, loadOrCreateWallet, loading } = useAuth();
+
   const [transactions, setTransactions] = useState([]);
   const [isClient, setIsClient] = useState(false);
   const [loadingTransactions, setLoadingTransactions] = useState(true);
@@ -28,6 +29,13 @@ export default function HistoryPage() {
   }, [user, loading, isClient, router]);
 
   useEffect(() => {
+    if (!isClient) return;
+    if (!user?.email) return;
+    if (wallet?.wallet?.address) return;
+    loadOrCreateWallet(user.email);
+  }, [user, wallet, isClient, loadOrCreateWallet]);
+
+  useEffect(() => {
     const fetchUserTx = async () => {
       if (user?.email) {
         try {
@@ -41,7 +49,6 @@ export default function HistoryPage() {
         }
       }
     };
-
     fetchUserTx();
   }, [user, fetchTransactions]);
 
@@ -140,7 +147,6 @@ export default function HistoryPage() {
   );
 }
 
-// Helper function
 function truncateAddress(addr) {
   if (!addr || typeof addr !== "string") return "Unknown";
   return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
