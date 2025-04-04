@@ -9,6 +9,12 @@
   align-items: flex-start;
   position: relative;
   z-index: 0;
+  animation: fadeInPage 0.6s ease;
+}
+
+@keyframes fadeInPage {
+  from { opacity: 0; transform: scale(0.97); }
+  to { opacity: 1; transform: scale(1); }
 }
 
 .wrapper {
@@ -59,6 +65,15 @@
   text-align: left;
 }
 
+.whiteText {
+  color: white;
+  font-family: var(--font-crypto);
+  font-size: 1rem;
+  line-height: 1.6;
+  text-align: center;
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.08);
+}
+
 .walletActions {
   display: flex;
   flex-direction: column;
@@ -104,6 +119,22 @@
   color: black;
 }
 
+.loader {
+  width: 22px;
+  height: 22px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-top: 3px solid white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .overlay {
   position: fixed;
   inset: 0;
@@ -126,6 +157,12 @@
   max-width: 460px;
   color: white;
   text-align: left;
+  animation: fadeInModal 0.4s ease;
+}
+
+@keyframes fadeInModal {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
 }
 
 .modalTitle {
@@ -186,6 +223,8 @@
   max-width: 100%;
   overflow-x: auto;
   padding-bottom: 12px;
+  display: flex;
+  justify-content: center;
 }
 
 /* === RESPONSIVE FIXES === */
