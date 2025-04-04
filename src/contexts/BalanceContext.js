@@ -1,6 +1,7 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useState, useEffect, useCallback } from "react";
+import { ethers } from "ethers";
 import { useWallet } from "@/contexts/WalletContext";
 
 export const BalanceContext = createContext();
@@ -21,27 +22,6 @@ const coinMap = {
   avax: "avalanche-2",
 };
 
-const fetchBalance = async (rpc, address) => {
-  try {
-    const res = await fetch(`${rpc}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        jsonrpc: "2.0",
-        method: "eth_getBalance",
-        params: [address, "latest"],
-        id: 1,
-      }),
-    });
-    const json = await res.json();
-    const balance = parseInt(json.result, 16);
-    return balance / 1e18;
-  } catch (err) {
-    console.error(`Fetch balance failed for ${address}:`, err);
-    return 0;
-  }
-};
-
 const fetchRates = async () => {
   try {
     const ids = Object.values(coinMap).join(",");
@@ -54,72 +34,88 @@ const fetchRates = async () => {
   }
 };
 
+const fetchBalance = async (rpcUrl, address) => {
+  try {
+    const provider = new ethers.providers.JsonRpcProvider(rpcUrl, { timeout: 10000 });
+    const balance = await provider.getBalance(address);
+    return parseFloat(ethers.utils.formatEther(balance));
+  } catch (error) {
+    console.error(`Error fetching balance for ${address}:`, error);
+    return 0;
+  }
+};
+
 export const BalanceProvider = ({ children }) => {
   const { wallet } = useWallet();
   const [balances, setBalances] = useState({});
   const [rates, setRates] = useState({});
   const [loading, setLoading] = useState(true);
 
-  const loadBalances = async () => {
+  const loadBalances = useCallback(async () => {
+    if (!wallet) return;
+    setLoading(true);
     try {
-      const result = {};
       const rateData = await fetchRates();
 
-      for (const net of Object.keys(RPC)) {
-        const address = wallet?.[net];
-        if (address) {
-          const balance = await fetchBalance(RPC[net], address);
-          result[net] = balance;
-        }
-      }
+      const promises = Object.keys(RPC).map(async (network) => {
+        const address = wallet?.[network];
+        if (!address) return { network, balance: 0 };
 
-      setBalances(result);
+        const balance = await fetchBalance(RPC[network], address);
+        return { network, balance };
+      });
+
+      const results = await Promise.all(promises);
+
+      const balancesResult = {};
+      results.forEach(({ network, balance }) => {
+        balancesResult[network] = balance;
+      });
+
+      setBalances(balancesResult);
       setRates(rateData);
-    } catch (err) {
-      console.error("Balance fetch error:", err);
+    } catch (error) {
+      console.error("Error loading balances:", error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [wallet]);
 
   useEffect(() => {
     if (!wallet || !wallet.bnb) return;
     loadBalances();
     const interval = setInterval(loadBalances, 30000);
     return () => clearInterval(interval);
-  }, [wallet]);
-
-  const format = (symbol) => {
-    const value = balances?.[symbol] || 0;
-    const coin = coinMap[symbol];
-    const eurRate = parseFloat(rates?.[coin]?.eur || 0);
-    const eur = (value * eurRate).toFixed(2);
-    return {
-      token: symbol,
-      value,
-      eur,
-    };
-  };
+  }, [wallet, loadBalances]);
 
   const getBalance = (network) => balances?.[network] || 0;
 
   const getBalanceEUR = (network) => {
     const coin = coinMap[network];
-    const value = getBalance(network);
-    const rate = parseFloat(rates?.[coin]?.eur || 0);
-    return (value * rate).toFixed(2);
+    const balance = getBalance(network);
+    const eurRate = parseFloat(rates?.[coin]?.eur || 0);
+    return balance * eurRate;
   };
 
   const getMaxSendable = (network) => {
     const raw = getBalance(network);
-    return (raw * 0.97).toFixed(6);
+    return raw * 0.97;
   };
 
   const refreshBalance = async (email, network) => {
+    if (!wallet || !network) return;
     const address = wallet?.[network];
     if (!address) return;
-    const bal = await fetchBalance(RPC[network], address);
-    setBalances((prev) => ({ ...prev, [network]: bal }));
+
+    try {
+      const balance = await fetchBalance(RPC[network], address);
+      setBalances((prev) => ({
+        ...prev,
+        [network]: balance,
+      }));
+    } catch (error) {
+      console.error(`Refresh balance error for ${network}:`, error);
+    }
   };
 
   return (
@@ -130,7 +126,6 @@ export const BalanceProvider = ({ children }) => {
         maxSendable: getMaxSendable,
         refreshBalance,
         loading,
-        format,
       }}
     >
       {children}
