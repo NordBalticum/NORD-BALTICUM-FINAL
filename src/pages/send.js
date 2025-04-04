@@ -29,139 +29,100 @@ const buttonColors = {
 
 export default function SendPage() {
   const router = useRouter();
-  const [isClient, setIsClient] = useState(false); // Pridėta
-  const {
-    user,
-    wallet,
-    balances,
-    activeNetwork,
-    loading,
-    setActiveNetwork,
-    sendCrypto,
-    getBalance,
-    getMaxSendable,
-    getBalanceEUR,
-    refreshBalance,
-  } = useAuth();
+  const { user, wallet, balances, sendTransaction, refreshBalance, loading } = useAuth();
 
+  const [isClient, setIsClient] = useState(false);
+  const [localNetwork, setLocalNetwork] = useState("eth"); // ✅ Lokalus tinklas
   const [receiver, setReceiver] = useState("");
   const [amount, setAmount] = useState("");
   const [txHash, setTxHash] = useState("");
   const [showConfirm, setShowConfirm] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [sending, setSending] = useState(false);
-  const [balanceUpdated, setBalanceUpdated] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
 
+  // ✅ Client detection
   useEffect(() => {
     if (typeof window !== "undefined") {
       setIsClient(true);
     }
   }, []);
 
+  // ✅ User redirection
   useEffect(() => {
     if (isClient && !loading && !user) {
       router.replace("/");
     }
   }, [isClient, loading, user, router]);
 
-  useEffect(() => {
-    if (isClient && !activeNetwork) {
-      setActiveNetwork("eth");
-    }
-  }, [isClient, activeNetwork, setActiveNetwork]);
+  // ✅ Short name
+  const shortName = useMemo(() => {
+    return networkShortNames[localNetwork.toLowerCase()] || localNetwork.toUpperCase();
+  }, [localNetwork]);
 
+  // ✅ Balances
+  const netBalance = balances?.[localNetwork] || 0;
   const parsedAmount = Number(amount || 0);
   const fee = parsedAmount * 0.03;
   const amountAfterFee = parsedAmount - fee;
+  const maxSendable = netBalance - netBalance * 0.03;
 
-  const shortName = useMemo(() => {
-    if (!activeNetwork) return "";
-    return networkShortNames[activeNetwork.toLowerCase()] || "";
-  }, [activeNetwork]);
-
-  const netBalance = getBalance?.(activeNetwork) || 0;
-  const netBalanceEUR = getBalanceEUR?.(activeNetwork) || 0;
-  const netSendable = getMaxSendable?.(activeNetwork) || 0;
-
+  // ✅ Address Validation
   const isValidAddress = (address) => /^0x[a-fA-F0-9]{40}$/.test(address.trim());
 
-  const handleNetworkChange = useCallback(async (network) => {
-    if (!network) return;
-    setActiveNetwork(network);
-    if (user?.email) {
-      await refreshBalance(user.email, network);
+  // ✅ Local network change handler
+  const handleNetworkChange = useCallback((network) => {
+    if (network) {
+      setLocalNetwork(network);
+      setToastMessage(`✅ Switched to ${networkShortNames[network] || network.toUpperCase()}`);
+      setTimeout(() => setToastMessage(""), 2000);
     }
-    setToastMessage(`✅ Switched to ${networkShortNames[network] || network.toUpperCase()}`);
-    setTimeout(() => setToastMessage(""), 2000);
-  }, [user, setActiveNetwork, refreshBalance]);
+  }, []);
 
+  // ✅ Handle SEND button
   const handleSend = () => {
-    const trimmed = receiver.trim();
-    if (!isValidAddress(trimmed)) {
-      alert("❌ Invalid receiver address.");
+    if (!isValidAddress(receiver)) {
+      alert("❌ Invalid wallet address.");
       return;
     }
-    if (!parsedAmount || parsedAmount <= 0) {
-      alert("❌ Amount must be greater than 0.");
+    if (parsedAmount <= 0) {
+      alert("❌ Enter a valid amount.");
       return;
     }
-    if (parsedAmount > netSendable) {
-      alert(`❌ Max sendable: ${netSendable.toFixed(6)} ${shortName}`);
+    if (parsedAmount > maxSendable) {
+      alert(`❌ Insufficient balance. Max you can send: ${maxSendable.toFixed(6)} ${shortName}`);
       return;
     }
     setShowConfirm(true);
   };
 
+  // ✅ Confirm send
   const confirmSend = async () => {
     setShowConfirm(false);
     setSending(true);
 
     try {
-      const result = await sendCrypto({
+      const result = await sendTransaction({
         receiver: receiver.trim(),
         amount: parsedAmount,
-        network: activeNetwork,
+        network: localNetwork,
       });
 
       if (result?.success) {
         setReceiver("");
         setAmount("");
-        setTxHash(result.hash);
-        if (user?.email) {
-          await refreshBalance(user.email, activeNetwork);
-        }
-        setBalanceUpdated(true);
+        setTxHash(result.txHash);
+        await refreshBalance(localNetwork);
         setShowSuccess(true);
       } else {
         alert(result?.message || "❌ Transaction failed.");
       }
     } catch (err) {
-      console.error("Transaction send error:", err);
+      console.error("Send error:", err);
       alert("❌ Unexpected error while sending.");
     } finally {
       setSending(false);
     }
-  };
-
-  useEffect(() => {
-    if (balanceUpdated) {
-      const timer = setTimeout(() => setBalanceUpdated(false), 2500);
-      return () => clearTimeout(timer);
-    }
-  }, [balanceUpdated]);
-
-  const buttonStyle = {
-    backgroundColor: buttonColors[activeNetwork?.toLowerCase()] || "black",
-    color: "white",
-    border: "2px solid white",
-    borderRadius: "14px",
-    padding: "14px",
-    fontWeight: "700",
-    textTransform: "uppercase",
-    fontFamily: "var(--font-crypto)",
-    cursor: "pointer",
-    transition: "all 0.3s ease",
   };
 
   if (!isClient || loading) {
@@ -179,17 +140,6 @@ export default function SendPage() {
     >
       <div className={styles.wrapper}>
         <AnimatePresence>
-          {balanceUpdated && (
-            <motion.div
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.4 }}
-              className={styles.successAlert}
-            >
-              ✅ Balance Updated!
-            </motion.div>
-          )}
           {toastMessage && (
             <motion.div
               initial={{ opacity: 0, y: -20 }}
@@ -206,25 +156,26 @@ export default function SendPage() {
         <h1 className={styles.title}>SEND CRYPTO</h1>
         <p className={styles.subtext}>Transfer crypto securely & instantly</p>
 
+        {/* ✅ Network Selector (lokalus) */}
         <SwipeSelector mode="send" onSelect={handleNetworkChange} />
 
+        {/* ✅ Balance Table */}
         <div className={styles.balanceTable}>
-          <motion.p className={styles.whiteText}>
-            Total Balance:&nbsp;
+          <p className={styles.whiteText}>
+            Your Balance:&nbsp;
             <span className={styles.balanceAmount}>
               {netBalance.toFixed(6)} {shortName}
-            </span>{" "}
-            (~€{netBalanceEUR.toFixed(2)})
-          </motion.p>
-          <motion.p className={styles.whiteText}>
+            </span>
+          </p>
+          <p className={styles.whiteText}>
             Max Sendable:&nbsp;
             <span className={styles.balanceAmount}>
-              {netSendable.toFixed(6)} {shortName}
-            </span>{" "}
-            (includes 3% fee)
-          </motion.p>
+              {maxSendable.toFixed(6)} {shortName}
+            </span>
+          </p>
         </div>
 
+        {/* ✅ Send Form */}
         <div className={styles.walletActions}>
           <input
             type="text"
@@ -233,7 +184,6 @@ export default function SendPage() {
             onChange={(e) => setReceiver(e.target.value)}
             className={styles.inputField}
           />
-
           <input
             type="number"
             placeholder="Amount to send"
@@ -241,30 +191,39 @@ export default function SendPage() {
             onChange={(e) => setAmount(e.target.value)}
             className={styles.inputField}
           />
-
           <p className={styles.feeBreakdown}>
-            Recipient receives <strong>{amountAfterFee.toFixed(6)} {shortName}</strong><br />
-            (Includes 3% platform fee)
+            After 3% Fee: <strong>{amountAfterFee > 0 ? amountAfterFee.toFixed(6) : 0} {shortName}</strong>
           </p>
 
           <button
             onClick={handleSend}
-            style={buttonStyle}
-            disabled={!user || sending || !receiver || !amount}
+            style={{
+              backgroundColor: buttonColors[localNetwork?.toLowerCase()] || "#0070f3",
+              color: "white",
+              borderRadius: "14px",
+              padding: "14px",
+              fontWeight: "700",
+              fontFamily: "var(--font-crypto)",
+              border: "2px solid white",
+              cursor: sending ? "not-allowed" : "pointer",
+              transition: "all 0.3s ease",
+            }}
+            disabled={sending}
           >
             {sending ? "Sending..." : "SEND NOW"}
           </button>
         </div>
 
+        {/* ✅ Confirm Modal */}
         {showConfirm && (
           <div className={styles.overlay}>
             <div className={styles.confirmModal}>
               <div className={styles.modalTitle}>Final Confirmation</div>
               <div className={styles.modalInfo}>
                 <p><strong>Network:</strong> {shortName}</p>
-                <p><strong>To:</strong> {receiver}</p>
+                <p><strong>Receiver:</strong> {receiver}</p>
                 <p><strong>Send:</strong> {parsedAmount.toFixed(6)} {shortName}</p>
-                <p><strong>Gets:</strong> {amountAfterFee.toFixed(6)} {shortName}</p>
+                <p><strong>Receive:</strong> {amountAfterFee.toFixed(6)} {shortName}</p>
               </div>
               <div className={styles.modalActions}>
                 <button className={styles.modalButton} onClick={confirmSend}>Confirm</button>
@@ -276,6 +235,7 @@ export default function SendPage() {
           </div>
         )}
 
+        {/* ✅ Success Modal */}
         {showSuccess && (
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
@@ -285,7 +245,7 @@ export default function SendPage() {
             <SuccessModal
               message="✅ Transaction completed successfully!"
               txHash={txHash}
-              networkKey={activeNetwork}
+              networkKey={localNetwork}
               onClose={() => setShowSuccess(false)}
             />
           </motion.div>
