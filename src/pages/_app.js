@@ -7,17 +7,22 @@ import "@/styles/globals.css";
 import { MagicLinkProvider } from "@/contexts/MagicLinkContext";
 import { WalletProvider } from "@/contexts/WalletContext";
 import { BalanceProvider } from "@/contexts/BalanceContext";
+import { SendCryptoProvider } from "@/contexts/SendCryptoContext";
 
 import Layout from "@/components/Layout";
 
 export default function App({ Component, pageProps }) {
+  if (typeof window === "undefined") return null;
+
   return (
     <MagicLinkProvider>
       <WalletProvider>
         <BalanceProvider>
-          <Layout>
-            {typeof window !== "undefined" && <Component {...pageProps} />}
-          </Layout>
+          <SendCryptoProvider>
+            <Layout>
+              <Component {...pageProps} />
+            </Layout>
+          </SendCryptoProvider>
         </BalanceProvider>
       </WalletProvider>
     </MagicLinkProvider>
