@@ -1,13 +1,11 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, useRef } from "react";
+import { createContext, useContext, useEffect, useState, useRef, useCallback } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { supabase } from "@/utils/supabaseClient";
 import { Wallet, JsonRpcProvider } from "ethers";
+import { supabase } from "@/utils/supabaseClient";
 
-export const AuthContext = createContext();
-
-// RPC URL'ai
+// RPC Tinklai
 const RPC = {
   eth: "https://rpc.ankr.com/eth",
   bnb: "https://bsc-dataseed.binance.org/",
@@ -66,6 +64,9 @@ const decrypt = async (ciphertext) => {
   return decode(decrypted);
 };
 
+// Contextas
+export const AuthContext = createContext();
+
 export const AuthProvider = ({ children }) => {
   const router = useRouter();
   const pathname = usePathname();
@@ -75,16 +76,15 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const inactivityTimer = useRef(null);
 
-  // 1️⃣ Load Supabase Session
+  // 1️⃣ Supabase Session Loader
   useEffect(() => {
     if (typeof window === "undefined") return;
-
     const loadSession = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         setUser(session?.user || null);
       } catch (error) {
-        console.error("Supabase session error:", error.message);
+        console.error("Session load error:", error.message);
         setUser(null);
       } finally {
         setLoading(false);
@@ -102,13 +102,13 @@ export const AuthProvider = ({ children }) => {
     };
   }, []);
 
-  // 2️⃣ Load Wallet when User is Ready
+  // 2️⃣ Wallet Loader
   useEffect(() => {
     if (!user?.email || typeof window === "undefined") return;
     loadOrCreateWallet(user.email);
   }, [user]);
 
-  // 3️⃣ Auto Redirect
+  // 3️⃣ Auto Redirect (jei prisijungęs)
   useEffect(() => {
     if (typeof window === "undefined") return;
     if (!loading && user && pathname === "/") {
@@ -116,7 +116,7 @@ export const AuthProvider = ({ children }) => {
     }
   }, [user, loading, pathname, router]);
 
-  // 4️⃣ Auto Logout after 10min inactivity
+  // 4️⃣ Auto Logout po 10min Inactivity
   useEffect(() => {
     if (typeof window === "undefined") return;
 
@@ -124,7 +124,7 @@ export const AuthProvider = ({ children }) => {
       clearTimeout(inactivityTimer.current);
       inactivityTimer.current = setTimeout(() => {
         signOut();
-      }, 10 * 60 * 1000); // 10 min
+      }, 10 * 60 * 1000); // 10min
     };
 
     window.addEventListener("mousemove", resetTimer);
@@ -134,14 +134,12 @@ export const AuthProvider = ({ children }) => {
 
     return () => {
       clearTimeout(inactivityTimer.current);
-      if (typeof window !== "undefined") {
-        window.removeEventListener("mousemove", resetTimer);
-        window.removeEventListener("keydown", resetTimer);
-      }
+      window.removeEventListener("mousemove", resetTimer);
+      window.removeEventListener("keydown", resetTimer);
     };
   }, []);
 
-  // 5️⃣ Remember activeNetwork in localStorage
+  // 5️⃣ Active Network from localStorage
   useEffect(() => {
     if (typeof window !== "undefined") {
       const storedNetwork = localStorage.getItem("activeNetwork");
@@ -155,7 +153,7 @@ export const AuthProvider = ({ children }) => {
     }
   }, [activeNetwork]);
 
-  // 6️⃣ Wallet Functions
+  // 6️⃣ Wallet Create/Load
   const loadOrCreateWallet = async (email) => {
     setLoading(true);
     try {
