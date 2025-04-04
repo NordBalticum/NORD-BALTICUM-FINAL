@@ -47,26 +47,34 @@
 .balanceTable,
 .feeBreakdown {
   width: 100%;
+  max-width: 540px;
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 16px;
-  padding: 16px;
+  padding: 14px 18px;
   backdrop-filter: blur(20px) saturate(180%);
   box-shadow: 0 0 18px rgba(255, 255, 255, 0.08);
   font-family: var(--font-crypto);
   color: white;
   font-size: 0.95rem;
   line-height: 1.6;
-  margin-top: -12px;
   text-align: left;
+}
+
+.balanceTable {
+  margin-top: 16px;
+}
+
+.feeBreakdown {
+  margin-top: 16px;
 }
 
 .walletActions {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 20px;
   width: 100%;
-  margin-top: 8px;
+  margin-top: 16px;
 }
 
 .inputField {
