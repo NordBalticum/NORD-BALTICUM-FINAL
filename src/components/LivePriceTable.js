@@ -36,15 +36,16 @@ const currencies = ["eur", "usd"];
 const LOCAL_CACHE_KEY = "livePriceCache";
 
 export default function LivePriceTable() {
+  const router = useRouter();
+  const [isClient, setIsClient] = useState(false);
   const [prices, setPrices] = useState({});
   const [currency, setCurrency] = useState("eur");
   const [loading, setLoading] = useState(true);
   const intervalRef = useRef(null);
   const mountedRef = useRef(false);
-  const router = useRouter();
 
   const fetchPrices = async () => {
-    if (!mountedRef.current || !navigator.onLine) return;
+    if (!mountedRef.current) return;
 
     try {
       const ids = tokens.map((t) => t.id).join(",");
@@ -55,16 +56,20 @@ export default function LivePriceTable() {
 
       if (mountedRef.current) {
         setPrices(res.data);
-        localStorage.setItem(LOCAL_CACHE_KEY, JSON.stringify(res.data));
+        if (typeof window !== "undefined") {
+          localStorage.setItem(LOCAL_CACHE_KEY, JSON.stringify(res.data));
+        }
         setLoading(false);
       }
     } catch (err) {
-      console.warn("CoinGecko price fetch failed:", err.message);
+      console.warn("CoinGecko fetch failed:", err.message);
     }
   };
 
   const loadFromCache = () => {
-    const cached = localStorage.getItem(LOCAL_CACHE_KEY);
+    if (typeof window === "undefined") return;
+
+    const cached = window.localStorage.getItem(LOCAL_CACHE_KEY);
     if (cached) {
       try {
         const parsed = JSON.parse(cached);
@@ -72,40 +77,63 @@ export default function LivePriceTable() {
           setPrices(parsed);
         }
       } catch (e) {
-        console.error("Failed to parse cached prices");
+        console.error("Failed to parse cached prices:", e);
       }
     }
     setLoading(false);
   };
 
   useEffect(() => {
+    if (typeof window !== "undefined") {
+      setIsClient(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!isClient) return;
+
     mountedRef.current = true;
 
-    loadFromCache(); // Failover
-    fetchPrices(); // Fresh fetch
+    loadFromCache();
+    fetchPrices();
 
     intervalRef.current = setInterval(fetchPrices, 30000);
 
-    const handleVisibility = () => document.visibilityState === "visible" && fetchPrices();
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible") fetchPrices();
+    };
+
     const handleUserEvent = () => fetchPrices();
     const handleOnline = () => fetchPrices();
 
-    document.addEventListener("visibilitychange", handleVisibility);
-    window.addEventListener("resize", handleUserEvent);
-    window.addEventListener("orientationchange", handleUserEvent);
-    window.addEventListener("pageshow", handleUserEvent);
-    window.addEventListener("online", handleOnline);
+    if (typeof document !== "undefined") {
+      document.addEventListener("visibilitychange", handleVisibility);
+    }
+    if (typeof window !== "undefined") {
+      window.addEventListener("resize", handleUserEvent);
+      window.addEventListener("orientationchange", handleUserEvent);
+      window.addEventListener("pageshow", handleUserEvent);
+      window.addEventListener("online", handleOnline);
+    }
 
     return () => {
       mountedRef.current = false;
-      clearInterval(intervalRef.current);
-      document.removeEventListener("visibilitychange", handleVisibility);
-      window.removeEventListener("resize", handleUserEvent);
-      window.removeEventListener("orientationchange", handleUserEvent);
-      window.removeEventListener("pageshow", handleUserEvent);
-      window.removeEventListener("online", handleOnline);
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      if (typeof document !== "undefined") {
+        document.removeEventListener("visibilitychange", handleVisibility);
+      }
+      if (typeof window !== "undefined") {
+        window.removeEventListener("resize", handleUserEvent);
+        window.removeEventListener("orientationchange", handleUserEvent);
+        window.removeEventListener("pageshow", handleUserEvent);
+        window.removeEventListener("online", handleOnline);
+      }
     };
-  }, []);
+  }, [isClient]);
+
+  if (!isClient) {
+    return <div className={styles.loading}>Loading prices...</div>;
+  }
 
   return (
     <div className={styles.wrapper}>
