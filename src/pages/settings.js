@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 
-import { useAuth } from "@/contexts/AuthContext"; // ✅ Naudojam Ultimate Auth
+import { useAuth } from "@/contexts/AuthContext"; // ✅ Ultimate Auth
 import { supabase } from "@/utils/supabaseClient";
 
 import styles from "@/styles/settings.module.css";
@@ -12,26 +12,28 @@ import background from "@/styles/background.module.css";
 
 export default function SettingsPage() {
   const router = useRouter();
-  const { user, wallet, signOut } = useAuth(); // ✅ Ultimate hook'as
+  const { user, wallet, signOut } = useAuth();
 
   const [emailInput, setEmailInput] = useState("");
   const [walletAddress, setWalletAddress] = useState("Loading...");
   const [isClient, setIsClient] = useState(false);
+  const [copied, setCopied] = useState(false); // ✅ Kopijavimo pranešimui
+  const [emailStatus, setEmailStatus] = useState(""); // ✅ Email update pranešimui
 
-  // 1️⃣ Patikrinam ar esam kliente
+  // Patikrinam ar klientas
   useEffect(() => {
     if (typeof window !== "undefined") {
       setIsClient(true);
     }
   }, []);
 
-  // 2️⃣ Užkraunam piniginės adresą
+  // Užkraunam piniginės adresą
   useEffect(() => {
-    if (!isClient || !wallet?.wallet) return;
-    setWalletAddress(wallet.wallet.address); // ✅ Universalus ETH/BSC adresas
+    if (!isClient || !wallet?.wallet?.address) return;
+    setWalletAddress(wallet.wallet.address);
   }, [wallet, isClient]);
 
-  // 3️⃣ Email keitimas (Magic Link siunčiamas)
+  // Email keitimas (Magic Link išsiuntimas)
   const handleChangeEmail = async () => {
     const email = emailInput.trim();
     if (!email) return alert("Please enter a new email.");
@@ -39,29 +41,35 @@ export default function SettingsPage() {
     try {
       const { error } = await supabase.auth.updateUser({ email });
       if (error) throw error;
-      alert("✅ Magic Link sent to new email address.");
+      setEmailStatus("✅ Magic Link sent to new email address.");
+      setEmailInput(""); // Išvalom lauką
     } catch (err) {
-      alert("❌ Error: " + err.message);
+      setEmailStatus("❌ Error: " + err.message);
+    } finally {
+      setTimeout(() => setEmailStatus(""), 4000); // Po 4s išvalom pranešimą
     }
   };
 
-  // 4️⃣ Kopijuoti piniginės adresą
+  // Kopijuoti adresą
   const handleCopyWallet = () => {
     if (!walletAddress || walletAddress.includes("not") || walletAddress.includes("Error")) return;
     if (typeof window !== "undefined") {
       navigator.clipboard.writeText(walletAddress).then(() => {
-        alert("✅ Wallet address copied.");
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000); // Po 2s dingsta
       });
     }
   };
 
-  // 5️⃣ Atsijungimas
+  // Atsijungimas
   const handleLogout = async () => {
     await signOut();
     router.replace("/");
   };
 
-  if (!isClient || !user) return <div className={styles.loading}>Loading profile...</div>;
+  if (!isClient || !user) {
+    return <div className={styles.loading}>Loading profile...</div>;
+  }
 
   return (
     <main className={`${styles.container} ${background.gradient}`}>
@@ -75,6 +83,7 @@ export default function SettingsPage() {
           className={styles.logo}
         />
 
+        {/* Wallet Info */}
         <div
           className={styles.walletBox}
           onClick={handleCopyWallet}
@@ -82,8 +91,10 @@ export default function SettingsPage() {
         >
           <p className={styles.walletLabel}>Your Wallet:</p>
           <p className={styles.walletAddress}>{walletAddress}</p>
+          {copied && <p className={styles.copyStatus}>✅ Copied!</p>}
         </div>
 
+        {/* Change Email Section */}
         <div className={styles.section}>
           <h4>Change Email</h4>
           <p className={styles.currentEmail}>
@@ -96,11 +107,21 @@ export default function SettingsPage() {
             onChange={(e) => setEmailInput(e.target.value)}
             className={styles.input}
           />
-          <button className={styles.button} onClick={handleChangeEmail}>
+          <button
+            className={styles.button}
+            onClick={handleChangeEmail}
+            disabled={!emailInput.trim()}
+          >
             Send Magic Link
           </button>
+          {emailStatus && (
+            <p className={styles.emailStatus}>
+              {emailStatus}
+            </p>
+          )}
         </div>
 
+        {/* Logout */}
         <button className={styles.logout} onClick={handleLogout}>
           Log Out
         </button>
