@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
 
 import { useMagicLink } from "@/contexts/MagicLinkContext";
 import { useWallet } from "@/contexts/WalletContext";
@@ -14,7 +15,6 @@ import SuccessModal from "@/components/modals/SuccessModal";
 import styles from "@/styles/send.module.css";
 import background from "@/styles/background.module.css";
 
-// TOBULAS SHORTNAME MAPPERIS
 const networkShortNames = {
   eth: "ETH",
   bnb: "BNB",
@@ -56,17 +56,14 @@ export default function Send() {
     }
   }, [user?.email, activeNetwork, refreshBalance]);
 
-  // --- AUTOMATINIS BALANSŲ REFRESH KAS 30s ---
   useEffect(() => {
     if (user?.email && activeNetwork) {
       const interval = setInterval(() => {
         refreshBalance(user.email, activeNetwork);
-      }, 30000); // 30 sekundžių
-
-      return () => clearInterval(interval); // išvalymas
+      }, 30000);
+      return () => clearInterval(interval);
     }
   }, [user?.email, activeNetwork, refreshBalance]);
-  // --- END ---
 
   const isValidAddress = (address) => /^0x[a-fA-F0-9]{40}$/.test(address.trim());
 
@@ -124,12 +121,24 @@ export default function Send() {
         <SwipeSelector mode="send" onSelect={setActiveNetwork} />
 
         <div className={styles.balanceTable}>
-          <p className={styles.whiteText}>
+          <motion.p
+            className={styles.whiteText}
+            key={netBalance}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.6 }}
+          >
             Total Balance: <strong>{netBalance.toFixed(6)} {shortName}</strong> (~€{netEUR.toFixed(2)})
-          </p>
-          <p className={styles.whiteText}>
+          </motion.p>
+          <motion.p
+            className={styles.whiteText}
+            key={netSendable}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.6 }}
+          >
             Max Sendable: <strong>{netSendable.toFixed(6)} {shortName}</strong> (includes 3% fee)
-          </p>
+          </motion.p>
         </div>
 
         <div className={styles.walletActions}>
@@ -159,7 +168,11 @@ export default function Send() {
             className={styles.confirmButton}
             disabled={!user || sending}
           >
-            {sending ? "Sending..." : "SEND NOW"}
+            {sending ? (
+              <div className={styles.loader}></div>
+            ) : (
+              "SEND NOW"
+            )}
           </button>
         </div>
 
@@ -189,12 +202,18 @@ export default function Send() {
         )}
 
         {showSuccess && (
-          <SuccessModal
-            message="Transaction completed!"
-            txHash={txHash}
-            networkKey={activeNetwork}
-            onClose={() => setShowSuccess(false)}
-          />
+          <motion.div
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.4 }}
+          >
+            <SuccessModal
+              message="Transaction completed!"
+              txHash={txHash}
+              networkKey={activeNetwork}
+              onClose={() => setShowSuccess(false)}
+            />
+          </motion.div>
         )}
       </div>
     </main>
