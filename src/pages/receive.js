@@ -11,7 +11,7 @@ import background from "@/styles/background.module.css";
 
 export default function Receive() {
   const router = useRouter();
-  const { user, wallet, loading, loadOrCreateWallet } = useAuth(); // ✅ Paimam loadOrCreateWallet
+  const { user, wallet, loading } = useAuth(); // ❌ No loadOrCreateWallet čia
   const [isClient, setIsClient] = useState(false);
   const [copied, setCopied] = useState(false);
 
@@ -29,29 +29,21 @@ export default function Receive() {
     }
   }, [user, loading, isClient, router]);
 
-  // ✅ Auto Load Wallet if missing
-  useEffect(() => {
-    if (!isClient) return;
-    if (!user?.email) return;
-    if (wallet?.wallet?.address) return; // Jau yra wallet
-    loadOrCreateWallet(user.email); // Kitu atveju sukuriam/ištraukiam
-  }, [user, wallet, isClient, loadOrCreateWallet]);
-
   // ✅ Copy wallet address
   const handleCopy = () => {
-    const address = wallet?.signers?.bnb?.address; // ✅ Traukiam BNB adresą
+    const address = wallet?.signers?.bnb?.address;
     if (!address) return;
     navigator.clipboard.writeText(address);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
-  if (loading || !isClient) {
+  if (!isClient || loading) {
     return <div className={styles.loading}>Loading Wallet...</div>;
   }
 
   if (!user || !wallet?.wallet?.address) {
-    return <div className={styles.loading}>Preparing wallet...</div>;
+    return <div className={styles.loading}>Preparing wallet...</div>; // ✅ Saugus paruošimas
   }
 
   const address = wallet.signers.bnb.address;
