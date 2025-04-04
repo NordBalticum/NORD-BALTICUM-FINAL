@@ -12,7 +12,7 @@ import background from "@/styles/background.module.css";
 
 export default function SettingsPage() {
   const router = useRouter();
-  const { user, wallet, signOut } = useAuth();
+  const { user, wallet, signOut, loadOrCreateWallet } = useAuth(); // ✅ loadOrCreateWallet prijungiam
 
   const [emailInput, setEmailInput] = useState("");
   const [walletAddress, setWalletAddress] = useState("Loading...");
@@ -20,21 +20,30 @@ export default function SettingsPage() {
   const [copied, setCopied] = useState(false);
   const [emailStatus, setEmailStatus] = useState("");
 
-  // Patikrinam ar klientas
+  // ✅ Patikrinam ar klientas
   useEffect(() => {
     if (typeof window !== "undefined") {
       setIsClient(true);
     }
   }, []);
 
-  // Užkraunam wallet adresą vieną kartą
+  // ✅ Safe Wallet Loader
+  useEffect(() => {
+    if (!isClient) return;
+    if (!user?.email) return;
+    if (wallet?.wallet?.address) return; // ✅ Jau turim wallet, nieko nebedarom
+
+    loadOrCreateWallet(user.email); // ✅ Jei reikia, loadinam
+  }, [user, isClient, wallet, loadOrCreateWallet]);
+
+  // ✅ Užkraunam wallet adresą vieną kartą
   useEffect(() => {
     if (isClient && wallet?.wallet?.address) {
       setWalletAddress(wallet.wallet.address);
     }
   }, [wallet, isClient]);
 
-  // Email keitimas su Magic Link
+  // ✅ Email keitimas su Magic Link
   const handleChangeEmail = async () => {
     const email = emailInput.trim();
     if (!email) {
@@ -55,7 +64,7 @@ export default function SettingsPage() {
     }
   };
 
-  // Kopijuoti adresą
+  // ✅ Kopijuoti adresą
   const handleCopyWallet = () => {
     if (!walletAddress) return;
     navigator.clipboard.writeText(walletAddress).then(() => {
@@ -64,13 +73,13 @@ export default function SettingsPage() {
     }).catch((err) => console.error("Clipboard error:", err));
   };
 
-  // Atsijungimas
+  // ✅ Atsijungimas
   const handleLogout = async () => {
     await signOut();
     router.replace("/");
   };
 
-  if (!isClient || !user) {
+  if (!isClient || !user || !wallet?.wallet?.address) {
     return <div className={styles.loading}>Loading profile...</div>;
   }
 
