@@ -30,7 +30,7 @@ const names = {
 
 export default function Dashboard() {
   const router = useRouter();
-  const { user, wallet, balances, refreshBalance, loading, activeNetwork, loadOrCreateWallet } = useAuth(); // ✅ loadOrCreateWallet prijungiam
+  const { user, wallet, balances, refreshBalance, loading, activeNetwork } = useAuth(); // ✅ ❌ Nebereikia loadOrCreateWallet čia!
   const [isClient, setIsClient] = useState(false);
 
   // ✅ Detect client side
@@ -39,15 +39,6 @@ export default function Dashboard() {
       setIsClient(true);
     }
   }, []);
-
-  // ✅ Safe Wallet Loader
-  useEffect(() => {
-    if (!isClient) return;
-    if (!user?.email) return;
-    if (wallet?.wallet?.address) return; // ✅ Jau turim wallet, nieko nebedaryt
-
-    loadOrCreateWallet(user.email); // ✅ Jei reikia, loadinam
-  }, [user, isClient, wallet, loadOrCreateWallet]);
 
   // ✅ If not logged in → redirect
   useEffect(() => {
