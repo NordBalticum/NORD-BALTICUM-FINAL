@@ -4,13 +4,13 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 
-import { useAuth } from "@/contexts/AuthContext"; // ✅ Ultimate Auth
+import { useAuth } from "@/contexts/AuthContext";
 import styles from "@/styles/history.module.css";
 import background from "@/styles/background.module.css";
 
 export default function HistoryPage() {
   const router = useRouter();
-  const { user, fetchTransactions, loading } = useAuth(); // ✅ Ultimate metodai
+  const { user, fetchTransactions, loading } = useAuth();
   const [transactions, setTransactions] = useState([]);
   const [isClient, setIsClient] = useState(false);
   const [loadingTransactions, setLoadingTransactions] = useState(true);
@@ -35,7 +35,7 @@ export default function HistoryPage() {
           const txs = await fetchTransactions(user.email);
           setTransactions(txs || []);
         } catch (err) {
-          console.error("Failed to fetch transactions:", err);
+          console.error("❌ Failed to fetch transactions:", err);
         } finally {
           setLoadingTransactions(false);
         }
@@ -98,7 +98,7 @@ export default function HistoryPage() {
                     }
                   >
                     {tx.type === "receive" ? "+" : "-"}
-                    {tx.amount} {tx.network?.toUpperCase()}
+                    {Number(tx.amount).toFixed(6)} {tx.network?.toUpperCase()}
                   </span>
                 </div>
 
@@ -108,7 +108,7 @@ export default function HistoryPage() {
                 </p>
 
                 <p className={styles.transactionDetail}>
-                  <strong>Fee:</strong> {tx.fee || "0"} {tx.network?.toUpperCase()}
+                  <strong>Fee:</strong> {Number(tx.fee || 0).toFixed(6)} {tx.network?.toUpperCase()}
                 </p>
 
                 <p className={styles.transactionDate}>
