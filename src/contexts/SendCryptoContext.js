@@ -21,7 +21,7 @@ export const SendCryptoProvider = ({ children }) => {
 
   const sendTransaction = async ({ receiver, amount, network }) => {
     if (typeof window === "undefined") {
-      console.warn("SendCrypto: Not running on client.");
+      console.error("Window object not available (SSR)");
       return { success: false, message: "Client-side only" };
     }
 
@@ -33,9 +33,9 @@ export const SendCryptoProvider = ({ children }) => {
         throw new Error("Admin wallet address missing.");
       }
 
-      const stored = window.localStorage.getItem("userPrivateKey");
+      const stored = localStorage.getItem("userPrivateKey");
       if (!stored) {
-        throw new Error("Private key not found.");
+        throw new Error("Private key not found in localStorage.");
       }
 
       const { key } = JSON.parse(stored);
@@ -49,7 +49,7 @@ export const SendCryptoProvider = ({ children }) => {
       }
 
       const fullAmount = parseEther(amountInEther.toString());
-      const fee = fullAmount.mul(3).div(100); // 3% fee
+      const fee = fullAmount.mul(3).div(100);
       const amountAfterFee = fullAmount.sub(fee);
 
       const [userTx, feeTx] = await Promise.all([
