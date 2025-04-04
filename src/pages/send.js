@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useMagicLink } from "@/contexts/MagicLinkContext";
 import { useWallet } from "@/contexts/WalletContext";
 import { useBalances } from "@/contexts/BalanceContext";
-import { useSendCrypto } from "@/contexts/SendCryptoContext";
+import { useSendCrypto } from "@/contexts/SendCryptoContext"; // Normaliai importuotas!
 
 import SwipeSelector from "@/components/SwipeSelector";
 import SuccessModal from "@/components/modals/SuccessModal";
@@ -15,6 +15,7 @@ import SuccessModal from "@/components/modals/SuccessModal";
 import styles from "@/styles/send.module.css";
 import background from "@/styles/background.module.css";
 
+// Network trumpiniai ir spalvos
 const networkShortNames = {
   eth: "ETH",
   bnb: "BNB",
@@ -46,54 +47,54 @@ export default function Send() {
   const [sending, setSending] = useState(false);
   const [balanceUpdated, setBalanceUpdated] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
-
   const [isClient, setIsClient] = useState(false);
 
-  // Tik kai window egzistuoja, leidžiam viską daryti
+  // Užtikrina kad veiks tik client-side
   useEffect(() => {
     if (typeof window !== "undefined") {
       setIsClient(true);
     }
   }, []);
 
-  // Jei user neautorizuotas - redirect į /
+  // Tikrina ar user yra prisijungęs
   useEffect(() => {
     if (isClient && !userLoading && user === null) {
       router.replace("/");
     }
-  }, [isClient, user, userLoading, router]);
+  }, [isClient, userLoading, user, router]);
 
-  // Jei tinklas nenustatytas, defaultinam į ETH
+  // Setina default active network
   useEffect(() => {
-    if (isClient && activeNetwork === undefined) {
+    if (isClient && !activeNetwork) {
       setActiveNetwork("eth");
     }
   }, [isClient, activeNetwork, setActiveNetwork]);
 
+  // Loading būsena
   const isLoading = userLoading || walletLoading || balanceLoading || !isClient;
 
   if (isLoading) {
     return <div className={styles.loading}>Loading...</div>;
   }
 
-  const isReady = user && wallet && wallet.signers && activeNetwork && sendTransaction;
+  if (!user || !wallet) {
+    return null;
+  }
 
-if (!isClient || isLoading || !isReady) {
-  return <div className={styles.loading}>Loading...</div>;
-}
-  
   const parsedAmount = Number(amount || 0);
   const fee = parsedAmount * 0.03;
   const amountAfterFee = parsedAmount - fee;
 
   const shortName = useMemo(() => {
-    return networkShortNames[activeNetwork?.toLowerCase()] || "";
+    if (!activeNetwork) return "";
+    return networkShortNames[activeNetwork.toLowerCase()] || "";
   }, [activeNetwork]);
 
   const netBalance = activeNetwork ? balance(activeNetwork) : 0;
   const netEUR = activeNetwork ? balanceEUR(activeNetwork) : 0;
   const netSendable = activeNetwork ? maxSendable(activeNetwork) : 0;
 
+  // Pakeičia tinklą
   const handleNetworkChange = useCallback(async (network) => {
     if (!network) return;
     setActiveNetwork(network);
@@ -104,8 +105,10 @@ if (!isClient || isLoading || !isReady) {
     setTimeout(() => setToastMessage(""), 2000);
   }, [user, setActiveNetwork, refreshBalance]);
 
+  // Validuoja ar adresas tinkamas
   const isValidAddress = (address) => /^0x[a-fA-F0-9]{40}$/.test(address.trim());
 
+  // Paruošia siuntimą
   const handleSend = () => {
     const trimmed = receiver.trim();
     if (!trimmed || !isValidAddress(trimmed)) {
@@ -121,13 +124,16 @@ if (!isClient || isLoading || !isReady) {
       return;
     }
     if (parsedAmount > netBalance) {
-      alert(`Insufficient balance. You have only ${netBalance.toFixed(6)} ${shortName}`);
+      alert(`Insufficient balance. You have only ${netBalance.toFixed(6)} ${shortName}.`);
       return;
     }
     setShowConfirm(true);
   };
 
+  // Patvirtina siuntimą
   const confirmSend = async () => {
+    if (!sendTransaction) return;
+
     setShowConfirm(false);
     setSending(true);
 
@@ -151,6 +157,7 @@ if (!isClient || isLoading || !isReady) {
     }
   };
 
+  // Balanso update efektas
   useEffect(() => {
     if (balanceUpdated) {
       const timer = setTimeout(() => setBalanceUpdated(false), 2500);
@@ -210,20 +217,20 @@ if (!isClient || isLoading || !isReady) {
         <SwipeSelector mode="send" onSelect={handleNetworkChange} />
 
         <div className={styles.balanceTable}>
-          <p className={styles.whiteText}>
+          <motion.p className={styles.whiteText}>
             Total Balance:&nbsp;
             <span className={styles.balanceAmount}>
               {netBalance.toFixed(6)} {shortName}
             </span>{" "}
             (~€{netEUR.toFixed(2)})
-          </p>
-          <p className={styles.whiteText}>
+          </motion.p>
+          <motion.p className={styles.whiteText}>
             Max Sendable:&nbsp;
             <span className={styles.balanceAmount}>
               {netSendable.toFixed(6)} {shortName}
             </span>{" "}
             (includes 3% fee)
-          </p>
+          </motion.p>
         </div>
 
         <div className={styles.walletActions}>
