@@ -26,9 +26,9 @@ export default function SwipeSelector({ mode = "send", onSelect }) {
   }, []);
 
   useEffect(() => {
-    onSelect?.(supportedNetworks[selectedIndex].symbol);
+    onSelect?.(supportedNetworks[selectedIndex].name); // <-- Visiškai teisinga pagal tavo prašymą
     if (isMobile) scrollToCenter(selectedIndex);
-  }, [selectedIndex, isMobile]);
+  }, [selectedIndex, isMobile, onSelect]);
 
   const scrollToCenter = (index) => {
     const container = containerRef.current;
@@ -39,21 +39,21 @@ export default function SwipeSelector({ mode = "send", onSelect }) {
     }
   };
 
-  const handleSelect = (index) => setSelectedIndex(index);
+  const handleSelect = (index) => {
+    setSelectedIndex(index);
+    onSelect?.(supportedNetworks[index].name); // <-- Be delays, iškart keičia pasirinkimą
+    if (isMobile) scrollToCenter(index);
+  };
 
   const goLeft = () => {
     if (selectedIndex > 0) {
-      const newIndex = selectedIndex - 1;
-      setSelectedIndex(newIndex);
-      if (isMobile) scrollToCenter(newIndex);
+      handleSelect(selectedIndex - 1);
     }
   };
 
   const goRight = () => {
     if (selectedIndex < supportedNetworks.length - 1) {
-      const newIndex = selectedIndex + 1;
-      setSelectedIndex(newIndex);
-      if (isMobile) scrollToCenter(newIndex);
+      handleSelect(selectedIndex + 1);
     }
   };
 
@@ -68,7 +68,7 @@ export default function SwipeSelector({ mode = "send", onSelect }) {
       <div
         className={isMobile ? styles.scrollableWrapper : styles.staticWrapper}
         ref={containerRef}
-        style={isMobile ? { touchAction: "pan-x", overflowX: "auto" } : {}}
+        style={isMobile ? { touchAction: "pan-x", overflowX: "auto", scrollBehavior: "smooth" } : {}}
       >
         {supportedNetworks.map((net, index) => (
           <motion.div
