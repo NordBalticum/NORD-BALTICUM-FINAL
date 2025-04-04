@@ -6,7 +6,7 @@
   --transition: all 0.3s ease-in-out;
   --safe-area-inset-bottom: env(safe-area-inset-bottom);
 
-  /* Spalviniai kintamieji (naudojami per theme.css) */
+  /* Spalviniai kintamieji */
   --font-crypto: 'Share Tech Mono', monospace;
   --white-gold: #FFD700;
   --gold-glow: rgba(255, 215, 0, 0.3);
@@ -20,7 +20,7 @@
   -webkit-tap-highlight-color: transparent;
 }
 
-/* === HTML & BODY STRUCTURE (be background) === */
+/* === HTML & BODY STRUCTURE === */
 html,
 body {
   width: 100%;
@@ -29,14 +29,35 @@ body {
   font-family: 'Poppins', sans-serif;
   font-size: 100%;
   color: var(--primary-text);
-  scroll-behavior: smooth;
+  scroll-behavior: none !important;
   -webkit-font-smoothing: antialiased;
-  overflow: hidden;
-  touch-action: none;
-  user-select: none;
-  zoom: reset;
+  overflow: hidden !important;
+  touch-action: none !important;
+  user-select: none !important;
   position: fixed;
   inset: 0;
+  zoom: reset;
+  overscroll-behavior: none;
+}
+
+/* === SCROLLBAR OFF (visiems naršyklės engine) === */
+::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+::-webkit-scrollbar-thumb {
+  background: transparent !important;
+}
+::-webkit-scrollbar-track {
+  background: transparent !important;
+}
+body::-moz-scrollbar {
+  display: none !important;
+}
+body {
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
 }
 
 /* === GLOBAL FULLSCREEN CONTAINER === */
@@ -63,18 +84,6 @@ body {
     transform-origin: top center;
     padding-inline: clamp(8px, 5vw, 24px);
   }
-}
-
-/* === SCROLLBAR === */
-::-webkit-scrollbar {
-  width: 6px;
-}
-::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 3px;
-}
-::-webkit-scrollbar-track {
-  background: transparent;
 }
 
 /* === UTILITY CLASSES === */
