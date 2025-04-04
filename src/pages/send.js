@@ -104,10 +104,10 @@ export default function Send() {
 
         <div className={styles.balanceTable}>
   <p className={styles.whiteText}>
-    Total Balance: <strong>{Number(netBalance).toFixed(6)}</strong> {activeNetwork} (~€{Number(netEUR).toFixed(2)})
+    Total Balance: <strong>{Number(netBalance).toFixed(6)} {activeNetwork?.toLowerCase()}</strong> (~€{Number(netEUR).toFixed(2)})
   </p>
   <p className={styles.whiteText}>
-    Max Sendable: <strong>{Number(netSendable).toFixed(6)}</strong> {activeNetwork} (includes 3% fee)
+    Max Sendable: <strong>{Number(netSendable).toFixed(6)} {activeNetwork?.toLowerCase()}</strong> (includes 3% fee)
   </p>
 </div>
 
