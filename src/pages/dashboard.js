@@ -30,8 +30,8 @@ const names = {
 export default function Dashboard() {
   const router = useRouter();
   const { user, loading } = useMagicLink();
-  const { wallets } = useWallet(); // Use wallets from the context instead of wallet
-  const { balance, balanceEUR } = useBalances();
+  const { wallet, wallets } = useWallet();  // Access wallets from the context
+  const { balance, balanceEUR } = useBalances(); 
 
   const [isClient, setIsClient] = useState(false);
 
@@ -45,7 +45,7 @@ export default function Dashboard() {
     }
   }, [user, loading, router]);
 
-  const tokens = wallets ? Object.keys(wallets.signers) : []; // Get tokens from the wallet signers
+  const tokens = wallets && wallets.signers ? Object.keys(wallets.signers) : [];
 
   if (!isClient || !user) {
     return <div className={styles.loading}>Loading dashboard...</div>;
