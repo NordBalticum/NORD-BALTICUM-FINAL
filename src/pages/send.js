@@ -76,10 +76,12 @@ export default function Send() {
     return <div className={styles.loading}>Loading...</div>;
   }
 
-  if (!user || !wallet) {
-    return null;
-  }
+  const isReady = user && wallet && wallet.signers && activeNetwork && sendTransaction;
 
+if (!isClient || isLoading || !isReady) {
+  return <div className={styles.loading}>Loading...</div>;
+}
+  
   const parsedAmount = Number(amount || 0);
   const fee = parsedAmount * 0.03;
   const amountAfterFee = parsedAmount - fee;
