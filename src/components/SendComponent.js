@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 
-const SendComponent = () => {
+export default function SendComponent() {
   const { sendTransaction, activeNetwork, loading } = useAuth();
   const [receiver, setReceiver] = useState("");
   const [amount, setAmount] = useState("");
@@ -13,25 +13,39 @@ const SendComponent = () => {
   const handleSend = async (e) => {
     e.preventDefault();
     setStatus("");
-    if (!receiver || !amount) {
+
+    if (!receiver.trim() || !amount.trim()) {
       setStatus("❌ Please fill all fields.");
+      return;
+    }
+
+    if (!/^0x[a-fA-F0-9]{40}$/.test(receiver.trim())) {
+      setStatus("❌ Invalid wallet address.");
+      return;
+    }
+
+    if (parseFloat(amount) <= 0) {
+      setStatus("❌ Amount must be greater than 0.");
       return;
     }
 
     setSending(true);
     try {
       const result = await sendTransaction({
-        receiver,
-        amount,
+        receiver: receiver.trim(),
+        amount: amount.trim(),
         network: activeNetwork,
       });
 
-      if (result.success) {
+      if (result?.success) {
         setStatus(`✅ Success! TxHash: ${result.txHash}`);
+        setReceiver("");
+        setAmount("");
       } else {
-        setStatus(`❌ Error: ${result.message}`);
+        setStatus(`❌ Error: ${result?.message || "Transaction failed."}`);
       }
     } catch (error) {
+      console.error("Transaction error:", error);
       setStatus(`❌ Unexpected error: ${error.message}`);
     } finally {
       setSending(false);
@@ -39,21 +53,23 @@ const SendComponent = () => {
   };
 
   if (loading) {
-    return <div>Loading wallet...</div>;
+    return <div style={styles.loading}>Loading wallet...</div>;
   }
 
   return (
-    <div style={{ padding: "20px", textAlign: "center" }}>
-      <h2>Send {activeNetwork.toUpperCase()}</h2>
-      <form onSubmit={handleSend} style={{ display: "flex", flexDirection: "column", gap: "10px", maxWidth: "400px", margin: "0 auto" }}>
+    <div style={styles.container}>
+      <h2 style={styles.title}>SEND {activeNetwork?.toUpperCase()}</h2>
+
+      <form onSubmit={handleSend} style={styles.form}>
         <input
           type="text"
-          placeholder="Receiver address"
+          placeholder="Receiver Address"
           value={receiver}
           onChange={(e) => setReceiver(e.target.value)}
           required
-          style={{ padding: "10px", borderRadius: "8px", border: "1px solid #ccc" }}
+          style={styles.input}
         />
+
         <input
           type="number"
           step="0.0001"
@@ -61,32 +77,73 @@ const SendComponent = () => {
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
           required
-          style={{ padding: "10px", borderRadius: "8px", border: "1px solid #ccc" }}
+          style={styles.input}
         />
+
         <button
           type="submit"
           disabled={sending}
           style={{
-            padding: "10px",
-            borderRadius: "8px",
+            ...styles.button,
             backgroundColor: sending ? "#999" : "#0070f3",
-            color: "white",
-            fontWeight: "bold",
-            border: "none",
-            cursor: "pointer",
           }}
         >
-          {sending ? "Sending..." : "Send"}
+          {sending ? "Sending..." : "Send Now"}
         </button>
       </form>
 
       {status && (
-        <p style={{ marginTop: "20px", fontWeight: "bold", color: status.startsWith("✅") ? "green" : "red" }}>
+        <p style={{
+          marginTop: "20px",
+          fontWeight: "bold",
+          color: status.startsWith("✅") ? "green" : "red",
+          fontSize: "16px",
+        }}>
           {status}
         </p>
       )}
     </div>
   );
-};
+}
 
-export default SendComponent;
+const styles = {
+  container: {
+    padding: "20px",
+    textAlign: "center",
+    color: "white",
+  },
+  title: {
+    fontSize: "24px",
+    marginBottom: "20px",
+    textTransform: "uppercase",
+  },
+  form: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "14px",
+    maxWidth: "400px",
+    margin: "0 auto",
+  },
+  input: {
+    padding: "12px",
+    borderRadius: "8px",
+    border: "1px solid #ccc",
+    fontSize: "16px",
+  },
+  button: {
+    padding: "12px",
+    borderRadius: "8px",
+    color: "white",
+    fontWeight: "bold",
+    border: "none",
+    cursor: "pointer",
+    transition: "all 0.3s ease",
+    fontSize: "16px",
+  },
+  loading: {
+    padding: "40px",
+    textAlign: "center",
+    fontSize: "18px",
+    color: "white",
+  },
+};
