@@ -1,13 +1,12 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
-import { Wallet, JsonRpcProvider } from "ethers";  // Correct ethers.js imports
+import { Wallet, JsonRpcProvider } from "ethers";
 import { supabase } from "@/utils/supabaseClient";
 import { useMagicLink } from "@/contexts/MagicLinkContext";
 
 export const WalletContext = createContext();
 
-// Encryption and Decryption Utilities
 const ENCRYPTION_SECRET = process.env.NEXT_PUBLIC_ENCRYPTION_SECRET || "nordbalticum-fallback";
 
 const encode = (str) => new TextEncoder().encode(str);
@@ -44,13 +43,7 @@ const encrypt = async (text) => {
     key,
     encode(text)
   );
-
-  return btoa(
-    JSON.stringify({
-      iv: Array.from(iv),
-      data: Array.from(new Uint8Array(encrypted)),
-    })
-  );
+  return btoa(JSON.stringify({ iv: Array.from(iv), data: Array.from(new Uint8Array(encrypted)) }));
 };
 
 const decrypt = async (ciphertext) => {
@@ -61,23 +54,14 @@ const decrypt = async (ciphertext) => {
     key,
     new Uint8Array(data)
   );
-
   return decode(decrypted);
 };
 
-// Wallet Provider
 export const WalletProvider = ({ children }) => {
   const { user } = useMagicLink();
-  const [wallet, setWallet] = useState(null);
+  const [wallet, setWallet] = useState(null); // { wallet, signers }
   const [loading, setLoading] = useState(true);
-
-  const [wallets, setWallets] = useState({
-    eth: null,
-    bnb: null,
-    matic: null,
-    avax: null,
-    tbnb: null,
-  });
+  const [activeNetwork, setActiveNetwork] = useState("eth");
 
   useEffect(() => {
     const init = async () => {
@@ -86,30 +70,27 @@ export const WalletProvider = ({ children }) => {
         setLoading(false);
         return;
       }
-
       await loadOrCreateWallet(user.email);
     };
-
     init();
   }, [user]);
 
   const loadOrCreateWallet = async (email) => {
     setLoading(true);
-
     try {
       const localKey = await loadPrivateKeyFromStorage();
       if (localKey) {
         const localWallet = new Wallet(localKey);
-        setWallet(generateAddresses(localWallet));
+        setWallet(generateWalletData(localWallet));
         return;
       }
 
-      const db = await fetchWalletFromDB(email);
-      if (db?.encrypted_key) {
-        const decryptedKey = await decrypt(db.encrypted_key);
+      const dbWallet = await fetchWalletFromDB(email);
+      if (dbWallet?.encrypted_key) {
+        const decryptedKey = await decrypt(dbWallet.encrypted_key);
         await savePrivateKeyToStorage(decryptedKey);
-        const dbWallet = new Wallet(decryptedKey);
-        setWallet(generateAddresses(dbWallet));
+        const newWallet = new Wallet(decryptedKey);
+        setWallet(generateWalletData(newWallet));
         return;
       }
 
@@ -117,7 +98,7 @@ export const WalletProvider = ({ children }) => {
       const encryptedKey = await encrypt(newWallet.privateKey);
       await savePrivateKeyToStorage(newWallet.privateKey);
       await saveWalletToDB(email, encryptedKey, newWallet.address);
-      setWallet(generateAddresses(newWallet));
+      setWallet(generateWalletData(newWallet));
     } catch (err) {
       console.error("Wallet error:", err);
       setWallet(null);
@@ -126,8 +107,8 @@ export const WalletProvider = ({ children }) => {
     }
   };
 
-  const generateAddresses = (wallet) => {
-    const providersMap = {
+  const generateWalletData = (wallet) => {
+    const providers = {
       eth: new JsonRpcProvider("https://rpc.ankr.com/eth"),
       bnb: new JsonRpcProvider("https://bsc-dataseed.binance.org"),
       tbnb: new JsonRpcProvider("https://data-seed-prebsc-1-s1.binance.org:8545"),
@@ -135,15 +116,12 @@ export const WalletProvider = ({ children }) => {
       avax: new JsonRpcProvider("https://api.avax.network/ext/bc/C/rpc"),
     };
 
-    const signers = Object.keys(providersMap).reduce((acc, network) => {
-      acc[network] = new Wallet(wallet.privateKey, providersMap[network]);
-      return acc;
-    }, {});
+    const signers = {};
+    for (const chain in providers) {
+      signers[chain] = new Wallet(wallet.privateKey, providers[chain]);
+    }
 
-    return {
-      wallet,
-      signers,
-    };
+    return { wallet, signers };
   };
 
   const savePrivateKeyToStorage = async (privateKey) => {
@@ -151,7 +129,7 @@ export const WalletProvider = ({ children }) => {
     try {
       localStorage.setItem("userPrivateKey", JSON.stringify({ key: privateKey }));
     } catch (err) {
-      console.error("Saving private key failed:", err);
+      console.error("Save private key error:", err);
     }
   };
 
@@ -167,11 +145,6 @@ export const WalletProvider = ({ children }) => {
     }
   };
 
-  const exportPrivateKey = async () => {
-    const key = await loadPrivateKeyFromStorage();
-    return key || null;
-  };
-
   const fetchWalletFromDB = async (email) => {
     const { data, error } = await supabase
       .from("wallets")
@@ -180,10 +153,9 @@ export const WalletProvider = ({ children }) => {
       .maybeSingle();
 
     if (error) {
-      console.error("DB fetch error:", error.message);
+      console.error("Supabase fetch error:", error.message);
       return null;
     }
-
     return data;
   };
 
@@ -197,18 +169,14 @@ export const WalletProvider = ({ children }) => {
       matic_address: address,
       avax_address: address,
     };
-
-    const { error } = await supabase
-      .from("wallets")
-      .upsert(payload, { onConflict: ["user_email"] });
-
+    const { error } = await supabase.from("wallets").upsert(payload, { onConflict: ["user_email"] });
     if (error) {
-      console.error("DB save error:", error.message);
+      console.error("Supabase save error:", error.message);
     }
   };
 
   return (
-    <WalletContext.Provider value={{ wallet, wallets, loading, exportPrivateKey }}>
+    <WalletContext.Provider value={{ wallet, loading, activeNetwork, setActiveNetwork }}>
       {children}
     </WalletContext.Provider>
   );
