@@ -1,16 +1,18 @@
-"use client";
+m"use client";
 
 import { useEffect, useState, useMemo, useCallback } from "react";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 
 import { useMagicLink } from "@/contexts/MagicLinkContext";
 import { useWallet } from "@/contexts/WalletContext";
 import { useBalances } from "@/contexts/BalanceContext";
-import { useSendCrypto } from "@/contexts/SendCryptoContext"; // <- TIESIOGIAI normaliai importuotas!
 
 import SwipeSelector from "@/components/SwipeSelector";
 import SuccessModal from "@/components/modals/SuccessModal";
+
+import { supabase } from "@/utils/supabaseClient"; // NEPAMIRŠK supabase importo!
 
 import styles from "@/styles/send.module.css";
 import background from "@/styles/background.module.css";
@@ -31,12 +33,15 @@ const buttonColors = {
   avax: "#e84142",
 };
 
+// Dinamiškas useSendCrypto importavimas tik kliente
+const useSendCrypto = dynamic(() => import('@/contexts/SendCryptoContext').then(mod => mod.useSendCrypto), { ssr: false });
+
 export default function Send() {
   const router = useRouter();
   const { user, loading: userLoading } = useMagicLink();
   const { wallet, activeNetwork, setActiveNetwork, loading: walletLoading } = useWallet();
   const { balance, balanceEUR, maxSendable, refreshBalance, loading: balanceLoading } = useBalances();
-  const { sendTransaction } = useSendCrypto(); // <-- Hook normaliai naudojamas!
+  const { sendTransaction } = useSendCrypto();
 
   const [receiver, setReceiver] = useState("");
   const [amount, setAmount] = useState("");
@@ -46,6 +51,7 @@ export default function Send() {
   const [sending, setSending] = useState(false);
   const [balanceUpdated, setBalanceUpdated] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
+
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
@@ -68,14 +74,6 @@ export default function Send() {
 
   const isLoading = userLoading || walletLoading || balanceLoading || !isClient;
 
-  if (isLoading) {
-    return <div className={styles.loading}>Loading...</div>;
-  }
-
-  if (!user || !wallet) {
-    return null;
-  }
-
   const parsedAmount = Number(amount || 0);
   const fee = parsedAmount * 0.03;
   const amountAfterFee = parsedAmount - fee;
@@ -89,6 +87,8 @@ export default function Send() {
   const netEUR = activeNetwork ? balanceEUR(activeNetwork) : 0;
   const netSendable = activeNetwork ? maxSendable(activeNetwork) : 0;
 
+  const isValidAddress = (address) => /^0x[a-fA-F0-9]{40}$/.test(address.trim());
+
   const handleNetworkChange = useCallback(async (network) => {
     if (!network) return;
     setActiveNetwork(network);
@@ -98,8 +98,6 @@ export default function Send() {
     setToastMessage(`Network switched to ${networkShortNames[network] || network.toUpperCase()}`);
     setTimeout(() => setToastMessage(""), 2000);
   }, [user, setActiveNetwork, refreshBalance]);
-
-  const isValidAddress = (address) => /^0x[a-fA-F0-9]{40}$/.test(address.trim());
 
   const handleSend = () => {
     const trimmed = receiver.trim();
@@ -126,23 +124,38 @@ export default function Send() {
     setShowConfirm(false);
     setSending(true);
 
-    const result = await sendTransaction({
-      receiver: receiver.trim(),
-      amount,
-      network: activeNetwork,
-    });
+    try {
+      const result = await sendTransaction({
+        receiver: receiver.trim(),
+        amount,
+        network: activeNetwork,
+      });
 
-    setSending(false);
+      if (result?.success) {
+        // Sėkminga transakcija -> įrašyti į Supabase
+        await supabase.from('transactions').insert({
+          sender_email: user.email,
+          receiver_email: receiver.trim(),
+          network: activeNetwork,
+          amount: parsedAmount,
+          fee: parsedAmount * 0.03,
+          created_at: new Date().toISOString(),
+        });
 
-    if (result?.success) {
-      setReceiver("");
-      setAmount("");
-      setTxHash(result.hash);
-      await refreshBalance(user.email, activeNetwork);
-      setBalanceUpdated(true);
-      setShowSuccess(true);
-    } else {
-      alert(result?.message || "Transaction failed");
+        setReceiver("");
+        setAmount("");
+        setTxHash(result.hash);
+        await refreshBalance(user.email, activeNetwork);
+        setBalanceUpdated(true);
+        setShowSuccess(true);
+      } else {
+        alert(result?.message || "Transaction failed");
+      }
+    } catch (err) {
+      console.error("Confirm send failed:", err);
+      alert("Unexpected error sending transaction.");
+    } finally {
+      setSending(false);
     }
   };
 
@@ -152,6 +165,14 @@ export default function Send() {
       return () => clearTimeout(timer);
     }
   }, [balanceUpdated]);
+
+  if (isLoading) {
+    return <div className={styles.loading}>Loading...</div>;
+  }
+
+  if (!user || !wallet) {
+    return null;
+  }
 
   const buttonStyle = {
     backgroundColor: buttonColors[activeNetwork?.toLowerCase()] || "black",
@@ -296,4 +317,4 @@ export default function Send() {
       </div>
     </motion.main>
   );
-}
+          }
