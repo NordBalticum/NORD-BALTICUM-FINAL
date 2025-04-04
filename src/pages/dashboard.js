@@ -5,9 +5,10 @@ import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 
-import { useAuth } from "@/contexts/AuthContext"; // ✅ Ultimate useAuth
+import { useAuth } from "@/contexts/AuthContext"; // ✅ Ultimate Auth
 import styles from "@/styles/dashboard.module.css";
 
+// ✅ Dynamic import without SSR
 const LivePriceTable = dynamic(() => import("@/components/LivePriceTable"), { ssr: false });
 
 const iconUrls = {
@@ -29,7 +30,6 @@ const names = {
 export default function Dashboard() {
   const router = useRouter();
   const { user, wallet, balances, getBalance, loading } = useAuth();
-
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
@@ -49,7 +49,7 @@ export default function Dashboard() {
     return Object.keys(wallet.signers);
   }, [wallet]);
 
-  const isLoading = loading || !isClient;
+  const isLoading = loading || !isClient || !wallet;
 
   if (isLoading) {
     return <div className={styles.loading}>Loading dashboard...</div>;
@@ -58,17 +58,17 @@ export default function Dashboard() {
   return (
     <main className={styles.container}>
       <div className={styles.dashboardWrapper}>
-        {/* Live Prices */}
+        {/* ✅ Live Prices */}
         <LivePriceTable />
 
-        {/* User Crypto Assets */}
+        {/* ✅ User Crypto Assets */}
         <div className={styles.assetList}>
           {tokens.length === 0 ? (
             <div className={styles.loading}>No assets found.</div>
           ) : (
             tokens.map((symbol) => {
-              const tokenBalance = getBalance(symbol) || 0;
-              const tokenBalanceEUR = balances?.[symbol]?.eur || 0;
+              const tokenBalance = getBalance?.(symbol) || 0;
+              const tokenBalanceEUR = balances?.[symbol] ? balances[symbol] * (symbol === "bnb" || symbol === "tbnb" ? 450 : 2500) : 0; // Simuliuojam EUR
 
               return (
                 <div
