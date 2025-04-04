@@ -1,27 +1,18 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
-import { ethers } from "ethers"; // <- TIESIOGIAI naudojam ethers.js!
-
+import { motion, AnimatePresence } from "framer-motion";
 import { useMagicLink } from "@/contexts/MagicLinkContext";
 import { useWallet } from "@/contexts/WalletContext";
 import { useBalances } from "@/contexts/BalanceContext";
+import { useSendCrypto } from "@/contexts/SendCryptoContext";  // Normaliai importuojamas
 
 import SwipeSelector from "@/components/SwipeSelector";
 import SuccessModal from "@/components/modals/SuccessModal";
 
-import styles from "@/styles/dashboard.module.css";
+import styles from "@/styles/send.module.css";
 import background from "@/styles/background.module.css";
-
-const networkRPC = {
-  eth: "https://rpc.ankr.com/eth",
-  bnb: "https://bsc-dataseed.binance.org/",
-  tbnb: "https://data-seed-prebsc-1-s1.binance.org:8545/",
-  matic: "https://polygon-rpc.com",
-  avax: "https://api.avax.network/ext/bc/C/rpc",
-};
 
 const networkShortNames = {
   eth: "ETH",
@@ -31,13 +22,20 @@ const networkShortNames = {
   avax: "AVAX",
 };
 
-const ADMIN_ADDRESS = process.env.NEXT_PUBLIC_ADMIN_WALLET; // 3% fee recipient
+const buttonColors = {
+  eth: "#0072ff",
+  bnb: "#f0b90b",
+  tbnb: "#f0b90b",
+  matic: "#8247e5",
+  avax: "#e84142",
+};
 
-export default function SendPage() {
+export default function Send() {
   const router = useRouter();
   const { user, loading: userLoading } = useMagicLink();
   const { wallet, activeNetwork, setActiveNetwork, loading: walletLoading } = useWallet();
   const { balance, balanceEUR, maxSendable, refreshBalance, loading: balanceLoading } = useBalances();
+  const { sendTransaction } = useSendCrypto();  // Normalus sendTransaction naudojimas
 
   const [receiver, setReceiver] = useState("");
   const [amount, setAmount] = useState("");
@@ -61,25 +59,24 @@ export default function SendPage() {
     }
   }, [user, userLoading, isClient, router]);
 
-  useEffect(() => {
-    if (isClient && activeNetwork === undefined) {
-      setActiveNetwork("eth");
-    }
-  }, [isClient, activeNetwork, setActiveNetwork]);
-
-  const isLoading = !isClient || userLoading || walletLoading || balanceLoading;
+  const isLoading = userLoading || walletLoading || balanceLoading || !isClient;
 
   if (isLoading) {
     return <div className={styles.loading}>Loading...</div>;
   }
 
-  if (!user || !wallet || !wallet.signers) {
+  if (!user || !wallet) {
     return null;
   }
 
-  const parsedAmount = parseFloat(amount) || 0;
+  const parsedAmount = Number(amount || 0);
   const fee = parsedAmount * 0.03;
   const amountAfterFee = parsedAmount - fee;
+
+  const shortName = useMemo(() => {
+    if (!activeNetwork) return "";
+    return networkShortNames[activeNetwork.toLowerCase()] || "";
+  }, [activeNetwork]);
 
   const netBalance = activeNetwork ? balance(activeNetwork) : 0;
   const netEUR = activeNetwork ? balanceEUR(activeNetwork) : 0;
@@ -91,128 +88,203 @@ export default function SendPage() {
     if (user?.email) {
       await refreshBalance(user.email, network);
     }
-    setToastMessage(`Switched to ${networkShortNames[network]}`);
+    setToastMessage(`Network switched to ${networkShortNames[network] || network.toUpperCase()}`);
     setTimeout(() => setToastMessage(""), 2000);
   }, [user, setActiveNetwork, refreshBalance]);
 
   const isValidAddress = (address) => /^0x[a-fA-F0-9]{40}$/.test(address.trim());
 
   const handleSend = () => {
-    if (!isValidAddress(receiver)) {
-      alert("Invalid address.");
+    const trimmed = receiver.trim();
+    if (!trimmed || !isValidAddress(trimmed)) {
+      alert("Invalid receiver address.");
       return;
     }
-    if (!parsedAmount || parsedAmount <= 0) {
-      alert("Invalid amount.");
+    if (!amount || isNaN(parsedAmount) || parsedAmount <= 0) {
+      alert("Amount must be a positive number.");
       return;
     }
     if (parsedAmount > netSendable) {
-      alert(`Max sendable: ${netSendable.toFixed(6)}`);
+      alert(`Max sendable: ${netSendable.toFixed(6)} ${shortName}`);
+      return;
+    }
+    if (parsedAmount > netBalance) {
+      alert(`Insufficient balance. You have only ${netBalance.toFixed(6)} ${shortName}.`);
       return;
     }
     setShowConfirm(true);
   };
 
   const confirmSend = async () => {
-    setSending(true);
     setShowConfirm(false);
+    setSending(true);
 
-    try {
-      const signer = wallet.signers[activeNetwork];
-      if (!signer) {
-        throw new Error("Wallet signer not found.");
-      }
+    const result = await sendTransaction({
+      receiver: receiver.trim(),
+      amount,
+      network: activeNetwork,
+    });
 
-      const fullAmount = ethers.utils.parseEther(parsedAmount.toString());
-      const feeAmount = fullAmount.mul(3).div(100);
-      const userAmount = fullAmount.sub(feeAmount);
+    setSending(false);
 
-      // Send to receiver
-      const tx1 = await signer.sendTransaction({
-        to: receiver.trim(),
-        value: userAmount,
-        gasLimit: 21000,
-      });
-
-      // Send 3% fee to ADMIN_ADDRESS
-      const tx2 = await signer.sendTransaction({
-        to: ADMIN_ADDRESS,
-        value: feeAmount,
-        gasLimit: 21000,
-      });
-
-      setTxHash(tx1.hash);
+    if (result?.success) {
+      setReceiver("");
+      setAmount("");
+      setTxHash(result.hash);
       await refreshBalance(user.email, activeNetwork);
       setBalanceUpdated(true);
       setShowSuccess(true);
-
-    } catch (error) {
-      console.error("Transaction error:", error);
-      alert(error.message || "Transaction failed.");
-    } finally {
-      setSending(false);
+    } else {
+      alert(result?.message || "Transaction failed");
     }
+  };
+
+  useEffect(() => {
+    if (balanceUpdated) {
+      const timer = setTimeout(() => setBalanceUpdated(false), 2500);
+      return () => clearTimeout(timer);
+    }
+  }, [balanceUpdated]);
+
+  const buttonStyle = {
+    backgroundColor: buttonColors[activeNetwork?.toLowerCase()] || "black",
+    color: "white",
+    border: "2px solid white",
+    borderRadius: "14px",
+    padding: "14px",
+    fontWeight: "700",
+    textTransform: "uppercase",
+    fontFamily: "var(--font-crypto)",
+    cursor: "pointer",
+    transition: "all 0.3s ease",
   };
 
   return (
     <motion.main
-      className={`${styles.main} ${background.gradient}`}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      transition={{ duration: 0.5 }}
+      transition={{ duration: 0.6 }}
+      className={`${styles.main} ${background.gradient}`}
     >
-      <div className={styles.dashboardContainer}>
+      <div className={styles.wrapper}>
+        <AnimatePresence>
+          {balanceUpdated && (
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.4 }}
+              className={styles.successAlert}
+            >
+              Balance Updated!
+            </motion.div>
+          )}
+          {toastMessage && (
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.4 }}
+              className={styles.successAlert}
+            >
+              {toastMessage}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <h1 className={styles.title}>SEND CRYPTO</h1>
+        <p className={styles.subtext}>Transfer crypto securely & instantly</p>
+
         <SwipeSelector mode="send" onSelect={handleNetworkChange} />
 
-        <div className={styles.balanceContainer}>
-          <p>Balance: {netBalance.toFixed(6)} {networkShortNames[activeNetwork]}</p>
-          <p>~€{netEUR.toFixed(2)}</p>
-          <p>Max Sendable: {netSendable.toFixed(6)} {networkShortNames[activeNetwork]}</p>
+        <div className={styles.balanceTable}>
+          <motion.p className={styles.whiteText}>
+            Total Balance:&nbsp;
+            <span className={styles.balanceAmount}>
+              {netBalance.toFixed(6)} {shortName}
+            </span>{" "}
+            (~€{netEUR.toFixed(2)})
+          </motion.p>
+          <motion.p className={styles.whiteText}>
+            Max Sendable:&nbsp;
+            <span className={styles.balanceAmount}>
+              {netSendable.toFixed(6)} {shortName}
+            </span>{" "}
+            (includes 3% fee)
+          </motion.p>
         </div>
 
         <div className={styles.walletActions}>
           <input
-            className={styles.input}
             type="text"
-            placeholder="Receiver Address"
+            placeholder="Receiver address"
             value={receiver}
             onChange={(e) => setReceiver(e.target.value)}
+            className={styles.inputField}
           />
+
           <input
-            className={styles.input}
             type="number"
-            placeholder="Amount"
+            placeholder="Amount to send"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
+            className={styles.inputField}
           />
-          <p>Recipient receives: {amountAfterFee.toFixed(6)} {networkShortNames[activeNetwork]}</p>
+
+          <p className={styles.feeBreakdown}>
+            Recipient receives <strong>{amountAfterFee.toFixed(6)} {shortName}</strong>
+            <br />Includes 3% platform fee.
+          </p>
 
           <button
-            className={styles.button}
             onClick={handleSend}
-            disabled={!receiver || !amount || sending}
+            style={buttonStyle}
+            disabled={!user || sending || !receiver || !amount}
           >
-            {sending ? "Sending..." : "Send Now"}
+            {sending ? (
+              <div className={styles.loader}></div>
+            ) : (
+              "SEND NOW"
+            )}
           </button>
         </div>
 
         {showConfirm && (
           <div className={styles.overlay}>
             <div className={styles.confirmModal}>
-              <p>Confirm sending {parsedAmount} {networkShortNames[activeNetwork]}</p>
-              <button onClick={confirmSend} className={styles.confirmButton}>Confirm</button>
-              <button onClick={() => setShowConfirm(false)} className={styles.cancelButton}>Cancel</button>
+              <div className={styles.modalTitle}>Final Confirmation</div>
+              <div className={styles.modalInfo}>
+                <p><strong>Network:</strong> {shortName}</p>
+                <p><strong>To:</strong> {receiver}</p>
+                <p><strong>Send:</strong> {parsedAmount.toFixed(6)} {shortName}</p>
+                <p><strong>Gets:</strong> {amountAfterFee.toFixed(6)} {shortName}</p>
+              </div>
+              <div className={styles.modalActions}>
+                <button className={styles.modalButton} onClick={confirmSend}>Confirm</button>
+                <button
+                  className={`${styles.modalButton} ${styles.cancel}`}
+                  onClick={() => setShowConfirm(false)}
+                >
+                  Cancel
+                </button>
+              </div>
             </div>
           </div>
         )}
 
         {showSuccess && (
-          <SuccessModal
-            message="Transaction Completed!"
-            txHash={txHash}
-            networkKey={activeNetwork}
-            onClose={() => setShowSuccess(false)}
-          />
+          <motion.div
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.4 }}
+          >
+            <SuccessModal
+              message="Transaction completed!"
+              txHash={txHash}
+              networkKey={activeNetwork}
+              onClose={() => setShowSuccess(false)}
+            />
+          </motion.div>
         )}
       </div>
     </motion.main>
