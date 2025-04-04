@@ -5,12 +5,13 @@ import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 
-import { useAuth } from "@/contexts/AuthContext"; // ✅ Ultimate Auth
+import { useAuth } from "@/contexts/AuthContext"; // ✅ Ultimate Auth Context
 import styles from "@/styles/dashboard.module.css";
 
 // ✅ Dynamic import without SSR
 const LivePriceTable = dynamic(() => import("@/components/LivePriceTable"), { ssr: false });
 
+// ✅ Icons
 const iconUrls = {
   eth: "https://cryptologos.cc/logos/ethereum-eth-logo.png",
   bnb: "https://cryptologos.cc/logos/binance-coin-bnb-logo.png",
@@ -21,7 +22,7 @@ const iconUrls = {
 
 const names = {
   eth: "Ethereum",
-  bnb: "BNB",
+  bnb: "BNB Smart Chain",
   tbnb: "BNB Testnet",
   matic: "Polygon",
   avax: "Avalanche",
@@ -29,25 +30,37 @@ const names = {
 
 export default function Dashboard() {
   const router = useRouter();
-  const { user, wallet, balances, getBalance, loading } = useAuth();
+  const { user, wallet, balances, refreshBalance, loading, activeNetwork } = useAuth();
   const [isClient, setIsClient] = useState(false);
 
+  // ✅ Detect client side
   useEffect(() => {
     if (typeof window !== "undefined") {
       setIsClient(true);
     }
   }, []);
 
+  // ✅ If not logged in → redirect
   useEffect(() => {
     if (isClient && !loading && !user) {
       router.replace("/");
     }
   }, [isClient, loading, user, router]);
 
+  // ✅ Tokens list
   const tokens = useMemo(() => {
     if (!wallet?.signers) return [];
     return Object.keys(wallet.signers);
   }, [wallet]);
+
+  // ✅ Dynamic simulated EUR values
+  const eurRates = {
+    eth: 2900,
+    bnb: 450,
+    tbnb: 450,
+    matic: 1.5,
+    avax: 30,
+  };
 
   const isLoading = loading || !isClient || !wallet;
 
@@ -61,14 +74,14 @@ export default function Dashboard() {
         {/* ✅ Live Prices */}
         <LivePriceTable />
 
-        {/* ✅ User Crypto Assets */}
+        {/* ✅ User Assets */}
         <div className={styles.assetList}>
           {tokens.length === 0 ? (
             <div className={styles.loading}>No assets found.</div>
           ) : (
             tokens.map((symbol) => {
-              const tokenBalance = getBalance?.(symbol) || 0;
-              const tokenBalanceEUR = balances?.[symbol] ? balances[symbol] * (symbol === "bnb" || symbol === "tbnb" ? 450 : 2500) : 0; // Simuliuojam EUR
+              const balance = balances?.[symbol] || 0;
+              const eurValue = balance * (eurRates[symbol] || 0);
 
               return (
                 <div
@@ -79,6 +92,8 @@ export default function Dashboard() {
                       router.push(`/${symbol}`);
                     }
                   }}
+                  role="button"
+                  tabIndex={0}
                 >
                   <div className={styles.assetLeft}>
                     <Image
@@ -102,10 +117,10 @@ export default function Dashboard() {
 
                   <div className={styles.assetRight}>
                     <div className={styles.assetAmount}>
-                      {tokenBalance.toFixed(6)} {symbol.toUpperCase()}
+                      {balance.toFixed(6)} {symbol.toUpperCase()}
                     </div>
                     <div className={styles.assetEur}>
-                      ≈ €{tokenBalanceEUR.toFixed(2)}
+                      ≈ €{eurValue.toFixed(2)}
                     </div>
                   </div>
                 </div>
