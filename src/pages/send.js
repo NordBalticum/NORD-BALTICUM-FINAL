@@ -29,10 +29,10 @@ const buttonColors = {
 
 export default function SendPage() {
   const router = useRouter();
-  const { user, wallet, balances, sendTransaction, refreshBalance, loading } = useAuth();
+  const { user, wallet, balances, sendTransaction, refreshBalance, loading, loadOrCreateWallet } = useAuth(); // ✅ prijungiam loadOrCreateWallet
 
   const [isClient, setIsClient] = useState(false);
-  const [localNetwork, setLocalNetwork] = useState("eth"); // ✅ Lokalus tinklas
+  const [localNetwork, setLocalNetwork] = useState("eth");
   const [receiver, setReceiver] = useState("");
   const [amount, setAmount] = useState("");
   const [txHash, setTxHash] = useState("");
@@ -41,21 +41,30 @@ export default function SendPage() {
   const [sending, setSending] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
 
-  // ✅ Client detection
+  // ✅ Detect client
   useEffect(() => {
     if (typeof window !== "undefined") {
       setIsClient(true);
     }
   }, []);
 
-  // ✅ User redirection
+  // ✅ Auto redirect jei neprisijungęs
   useEffect(() => {
     if (isClient && !loading && !user) {
       router.replace("/");
     }
   }, [isClient, loading, user, router]);
 
-  // ✅ Short name
+  // ✅ Auto load Wallet jei nerasta
+  useEffect(() => {
+    if (!isClient) return;
+    if (!user?.email) return;
+    if (wallet?.wallet?.address) return; // ✅ Wallet jau yra
+
+    loadOrCreateWallet(user.email); // ✅ jei reikia, automatiškai kraunam
+  }, [user, wallet, isClient, loadOrCreateWallet]);
+
+  // ✅ Network Short Name
   const shortName = useMemo(() => {
     return networkShortNames[localNetwork.toLowerCase()] || localNetwork.toUpperCase();
   }, [localNetwork]);
@@ -129,7 +138,9 @@ export default function SendPage() {
     return <div className={styles.loading}>Loading...</div>;
   }
 
-  if (!user || !wallet) return null;
+  if (!user || !wallet?.wallet?.address) {
+    return <div className={styles.loading}>Preparing wallet...</div>; // ✅ Saugus loading
+  }
 
   return (
     <motion.main
@@ -156,7 +167,7 @@ export default function SendPage() {
         <h1 className={styles.title}>SEND CRYPTO</h1>
         <p className={styles.subtext}>Transfer crypto securely & instantly</p>
 
-        {/* ✅ Network Selector (lokalus) */}
+        {/* ✅ Network Selector */}
         <SwipeSelector mode="send" onSelect={handleNetworkChange} />
 
         {/* ✅ Balance Table */}
