@@ -6,6 +6,8 @@ import Image from "next/image";
 
 import { useMagicLink } from "@/contexts/MagicLinkContext";
 import { useWallet } from "@/contexts/WalletContext";
+import { supabase } from "@/utils/supabaseClient";
+
 import styles from "@/styles/settings.module.css";
 import background from "@/styles/background.module.css";
 
@@ -25,8 +27,8 @@ export default function SettingsPage() {
   }, []);
 
   useEffect(() => {
-    if (!isClient || !wallet?.bnb) return;
-    setWalletAddress(wallet.bnb);
+    if (!isClient || !wallet?.signers?.bnb) return;
+    setWalletAddress(wallet.signers.bnb.address); // DABARTINIS sprendimas pagal naują struktūrą
   }, [wallet, isClient]);
 
   const handleChangeEmail = async () => {
