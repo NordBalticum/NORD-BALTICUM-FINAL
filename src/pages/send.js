@@ -24,11 +24,11 @@ const networkShortNames = {
 };
 
 const buttonColors = {
-  eth: "#0072ff",   // Mėlynas
-  bnb: "#f0b90b",   // Geltonas
-  tbnb: "#f0b90b",  // Testnet
-  matic: "#8247e5", // Violetinis
-  avax: "#e84142",  // Raudonas
+  eth: "#0072ff",
+  bnb: "#f0b90b",
+  tbnb: "#f0b90b",
+  matic: "#8247e5",
+  avax: "#e84142",
 };
 
 export default function Send() {
@@ -56,16 +56,15 @@ export default function Send() {
 
   useEffect(() => {
     if (isClient && !activeNetwork) {
-      setActiveNetwork("eth");
+      setActiveNetwork("eth"); // DEFAULT ETH
     }
   }, [isClient, activeNetwork, setActiveNetwork]);
 
   useEffect(() => {
-    if (!isClient) return;
-    if (!user) {
+    if (isClient && !user) {
       router.replace("/");
     }
-  }, [user, router, isClient]);
+  }, [user, isClient, router]);
 
   const parsedAmount = Number(amount || 0);
   const fee = parsedAmount * 0.03;
@@ -163,6 +162,11 @@ export default function Send() {
     transition: "all 0.3s ease",
   };
 
+  // SSR FIX: jei client dar neužsikrovė arba activeNetwork nėra
+  if (!isClient || !activeNetwork) {
+    return <div className={styles.loading}>Loading...</div>;
+  }
+
   return (
     <motion.main
       initial={{ opacity: 0 }}
@@ -208,24 +212,22 @@ export default function Send() {
               <div className={styles.skeletonLine}></div>
             </div>
           ) : (
-            activeNetwork && (
-              <>
-                <motion.p className={styles.whiteText}>
-                  Total Balance:&nbsp;
-                  <span className={styles.balanceAmount}>
-                    {netBalance.toFixed(6)} {shortName}
-                  </span>{" "}
-                  (~€{netEUR.toFixed(2)})
-                </motion.p>
-                <motion.p className={styles.whiteText}>
-                  Max Sendable:&nbsp;
-                  <span className={styles.balanceAmount}>
-                    {netSendable.toFixed(6)} {shortName}
-                  </span>{" "}
-                  (includes 3% fee)
-                </motion.p>
-              </>
-            )
+            <>
+              <motion.p className={styles.whiteText}>
+                Total Balance:&nbsp;
+                <span className={styles.balanceAmount}>
+                  {netBalance.toFixed(6)} {shortName}
+                </span>{" "}
+                (~€{netEUR.toFixed(2)})
+              </motion.p>
+              <motion.p className={styles.whiteText}>
+                Max Sendable:&nbsp;
+                <span className={styles.balanceAmount}>
+                  {netSendable.toFixed(6)} {shortName}
+                </span>{" "}
+                (includes 3% fee)
+              </motion.p>
+            </>
           )}
         </div>
 
@@ -304,4 +306,4 @@ export default function Send() {
       </div>
     </motion.main>
   );
-        }
+}
