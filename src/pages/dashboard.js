@@ -3,12 +3,8 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
-import Image from "next/image"; // <-- vietoje paprasto img naudok Next.js Image komponentą!
-
-import { useMagicLink } from "@/contexts/MagicLinkContext";
-import { useWallet } from "@/contexts/WalletContext";
-import { useBalances } from "@/contexts/BalanceContext";
-
+import Image from "next/image"; // ✅ Tik Next.js Image
+import { useAuth } from "@/contexts/AuthContext"; // ✅ Naujas importas
 import styles from "@/styles/dashboard.module.css";
 
 const LivePriceTable = dynamic(() => import("@/components/LivePriceTable"), { ssr: false });
@@ -31,9 +27,7 @@ const names = {
 
 export default function Dashboard() {
   const router = useRouter();
-  const { user, loading: userLoading } = useMagicLink();
-  const { wallet, loading: walletLoading } = useWallet();
-  const { balance, balanceEUR, loading: balanceLoading } = useBalances();
+  const { user, wallet, balances, getBalance, loading } = useAuth(); // ✅ Ultimate useAuth()
 
   const [isClient, setIsClient] = useState(false);
 
@@ -44,17 +38,17 @@ export default function Dashboard() {
   }, []);
 
   useEffect(() => {
-    if (isClient && !userLoading && !user) {
+    if (isClient && !loading && !user) {
       router.replace("/");
     }
-  }, [isClient, user, userLoading, router]);
+  }, [isClient, user, loading, router]);
 
   const tokens = useMemo(() => {
     if (!wallet || !wallet.signers) return [];
     return Object.keys(wallet.signers);
   }, [wallet]);
 
-  const isLoading = userLoading || walletLoading || balanceLoading || !isClient;
+  const isLoading = loading || !isClient;
 
   if (isLoading) {
     return <div className={styles.loading}>Loading dashboard...</div>;
@@ -72,15 +66,15 @@ export default function Dashboard() {
             <div className={styles.loading}>No assets found.</div>
           ) : (
             tokens.map((symbol) => {
-              const tokenBalance = balance(symbol) || 0;
-              const tokenBalanceEUR = balanceEUR(symbol) || 0;
+              const tokenBalance = getBalance(symbol) || 0;
+              const tokenBalanceEUR = balances?.[symbol]?.eur || 0;
 
               return (
                 <div
                   key={symbol}
                   className={styles.assetItem}
                   onClick={() => {
-                    if (isClient) { // apsauga kad SSR metu router nebandytų veikti
+                    if (isClient) {
                       router.push(`/${symbol}`);
                     }
                   }}
@@ -93,7 +87,7 @@ export default function Dashboard() {
                       width={40}
                       height={40}
                       priority
-                      unoptimized // <-- kad Next.js nesustotų optimizuoti remote img
+                      unoptimized // ✅ Kad remote img veiktų
                     />
                     <div className={styles.assetInfo}>
                       <div className={styles.assetSymbol}>
