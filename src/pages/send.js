@@ -23,6 +23,15 @@ const networkShortNames = {
   avax: "AVAX",
 };
 
+// Mygtuko spalvos pagal tinklą
+const buttonColors = {
+  eth: "#0072ff",    // Mėlynas
+  bnb: "#f0b90b",    // Geltonas
+  tbnb: "#f0b90b",   // Testnet irgi geltonas kaip BNB
+  matic: "#8247e5",  // Violetinis
+  avax: "#e84142",   // Raudonas
+};
+
 export default function Send() {
   const router = useRouter();
   const { user } = useMagicLink();
@@ -38,30 +47,37 @@ export default function Send() {
   const [sending, setSending] = useState(false);
   const [balanceUpdated, setBalanceUpdated] = useState(false);
 
+  // Užkraunam ETH kaip default
+  useEffect(() => {
+    if (!activeNetwork) {
+      setActiveNetwork("eth");
+    }
+  }, [activeNetwork, setActiveNetwork]);
+
   const parsedAmount = Number(amount || 0);
   const fee = parsedAmount * 0.03;
   const amountAfterFee = parsedAmount - fee;
 
   const shortName = useMemo(() => {
-    if (!activeNetwork) return ""; // jeigu nėra pasirinkimo, nerodyti nieko
-    return networkShortNames[activeNetwork?.toLowerCase()] || "";
+    if (!activeNetwork) return "";
+    return networkShortNames[activeNetwork.toLowerCase()] || "";
   }, [activeNetwork]);
 
-  const netBalance = balance(activeNetwork) || 0;
-  const netEUR = balanceEUR(activeNetwork) || 0;
-  const netSendable = maxSendable(activeNetwork) || 0;
+  const netBalance = activeNetwork ? balance(activeNetwork) : 0;
+  const netEUR = activeNetwork ? balanceEUR(activeNetwork) : 0;
+  const netSendable = activeNetwork ? maxSendable(activeNetwork) : 0;
+
+  const handleNetworkChange = useCallback(async (network) => {
+    if (!network) return;
+    setActiveNetwork(network);
+    if (user?.email) {
+      await refreshBalance(user.email, network);
+    }
+  }, [user, setActiveNetwork, refreshBalance]);
 
   useEffect(() => {
     if (!user) router.replace("/");
   }, [user, router]);
-
-  const handleNetworkChange = useCallback(async (network) => {
-    if (!network) return;
-    setActiveNetwork(network); // Pakeičiam tinklą
-    if (user?.email) {
-      await refreshBalance(user.email, network); // Iškart gaunam naują balansą
-    }
-  }, [user, setActiveNetwork, refreshBalance]);
 
   const isValidAddress = (address) => /^0x[a-fA-F0-9]{40}$/.test(address.trim());
 
@@ -122,6 +138,20 @@ export default function Send() {
       return () => clearTimeout(timer);
     }
   }, [balanceUpdated]);
+
+  // Dinaminė mygtuko spalva
+  const buttonStyle = {
+    backgroundColor: buttonColors[activeNetwork?.toLowerCase()] || "black",
+    color: "white",
+    border: "2px solid white",
+    borderRadius: "14px",
+    padding: "14px",
+    fontWeight: "700",
+    textTransform: "uppercase",
+    fontFamily: "var(--font-crypto)",
+    cursor: "pointer",
+    transition: "all 0.3s ease",
+  };
 
   return (
     <motion.main
@@ -209,7 +239,7 @@ export default function Send() {
 
           <button
             onClick={handleSend}
-            className={styles.confirmButton}
+            style={buttonStyle}
             disabled={!user || sending || !receiver || !amount}
           >
             {sending ? (
@@ -260,4 +290,4 @@ export default function Send() {
       </div>
     </motion.main>
   );
-}
+                       }
