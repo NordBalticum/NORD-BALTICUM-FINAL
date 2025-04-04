@@ -1,4 +1,4 @@
-m"use client";
+"use client";
 
 import { useEffect, useState, useMemo, useCallback } from "react";
 import dynamic from "next/dynamic";
