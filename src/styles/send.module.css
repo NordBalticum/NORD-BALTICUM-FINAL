@@ -1,4 +1,4 @@
-/* === SEND MODULE – NordBalticum Ferrari Gradient Unified === */
+/* === SEND MODULE – NordBalticum Bank Premium === */
 
 .main {
   width: 100vw;
@@ -38,10 +38,24 @@
 
 .subtext {
   font-size: clamp(14px, 2.5vw, 20px);
-  color: rgba(255, 255, 255, 0.85);
+  color: rgba(255, 255, 255, 0.9);
   font-weight: 500;
   font-family: var(--font-crypto);
   margin-top: -12px;
+}
+
+.glassBox {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 16px;
+  padding: 16px;
+  backdrop-filter: blur(20px) saturate(180%);
+  box-shadow: 0 0 18px rgba(255, 255, 255, 0.08);
+  font-family: var(--font-crypto);
+  color: white;
+  font-size: 0.95rem;
+  line-height: 1.6;
 }
 
 .walletActions {
@@ -172,6 +186,14 @@
 }
 
 /* === RESPONSIVE FIXES === */
+
+@media screen and (max-width: 768px) {
+  .wrapper {
+    transform: scale(0.9) translateY(2%);
+    transform-origin: top center;
+  }
+}
+
 @media screen and (max-width: 480px) {
   .wrapper {
     padding: 16px;
@@ -246,12 +268,5 @@
 
   .confirmModal {
     max-width: 680px;
-  }
-}
-
-@media (max-width: 768px) {
-  .wrapper {
-    transform: scale(0.96) translateY(3%);
-    transform-origin: top center;
   }
 }
