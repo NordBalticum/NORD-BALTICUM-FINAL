@@ -59,11 +59,12 @@ export const BalanceProvider = ({ children }) => {
   }, []);
 
   const loadBalances = useCallback(async () => {
-    if (!isClient || !wallet || typeof wallet !== "object" || !wallet.signers || typeof wallet.signers !== "object") return;
+    if (!isClient || !wallet || !wallet.signers) return;
+
     setLoading(true);
     try {
-      const addresses = Object.keys(wallet.signers).reduce((acc, network) => {
-        acc[network] = wallet.signers[network].address;
+      const addresses = Object.entries(wallet.signers).reduce((acc, [network, signer]) => {
+        if (signer?.address) acc[network] = signer.address;
         return acc;
       }, {});
 
@@ -92,7 +93,7 @@ export const BalanceProvider = ({ children }) => {
   }, [wallet, isClient]);
 
   useEffect(() => {
-    if (!isClient || !wallet || typeof wallet !== "object" || !wallet.signers || typeof wallet.signers !== "object") return;
+    if (!isClient || !wallet || !wallet.signers) return;
     loadBalances();
     const interval = setInterval(loadBalances, 30000);
     return () => clearInterval(interval);
@@ -113,7 +114,7 @@ export const BalanceProvider = ({ children }) => {
   };
 
   const refreshBalance = async (network) => {
-    if (!isClient || !wallet || typeof wallet !== "object" || !wallet.signers || typeof wallet.signers !== "object") return;
+    if (!isClient || !wallet || !wallet.signers) return;
     const address = wallet.signers[network]?.address;
     if (!address) return;
 
