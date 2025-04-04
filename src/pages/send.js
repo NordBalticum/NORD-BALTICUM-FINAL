@@ -126,36 +126,44 @@ export default function Send() {
         <SwipeSelector mode="send" onSelect={setActiveNetwork} />
 
         <div className={styles.balanceTable}>
-          {loading ? (
-            <div className={styles.skeletonWrapper}>
-              <div className={styles.skeletonLine}></div>
-              <div className={styles.skeletonLine}></div>
-            </div>
-          ) : (
-            <>
-              <motion.p
-                className={styles.whiteText}
-                key={`balance-${activeNetwork}`}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.6 }}
-              >
-                Total Balance: <strong>{netBalance.toFixed(6)}&nbsp;{shortName}</strong> (~€{netEUR.toFixed(2)})
-              </motion.p>
+  {loading ? (
+    <div className={styles.skeletonWrapper}>
+      <div className={styles.skeletonLine}></div>
+      <div className={styles.skeletonLine}></div>
+    </div>
+  ) : (
+    <>
+      <motion.p
+        className={styles.whiteText}
+        key={`balance-${activeNetwork}`}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.6 }}
+      >
+        Total Balance:{" "}
+        <span className={styles.balanceAmount}>
+          {netBalance.toFixed(6)}&nbsp;{shortName}
+        </span>{" "}
+        (~€{netEUR.toFixed(2)})
+      </motion.p>
 
-              <motion.p
-                className={styles.whiteText}
-                key={`sendable-${activeNetwork}`}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.6 }}
-              >
-                Max Sendable: <strong>{netSendable.toFixed(6)}&nbsp;{shortName}</strong> (includes 3% fee)
-              </motion.p>
-            </>
-          )}
-        </div>
-
+      <motion.p
+        className={styles.whiteText}
+        key={`sendable-${activeNetwork}`}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.6 }}
+      >
+        Max Sendable:{" "}
+        <span className={styles.balanceAmount}>
+          {netSendable.toFixed(6)}&nbsp;{shortName}
+        </span>{" "}
+        (includes 3% fee)
+      </motion.p>
+    </>
+  )}
+</div>
+    
         <div className={styles.walletActions}>
           <input
             type="text"
