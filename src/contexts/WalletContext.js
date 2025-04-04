@@ -1,23 +1,19 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
-import { Wallet } from "ethers";
+import { Wallet, providers } from "ethers";  // Importuojam ethers.js
 import { supabase } from "@/utils/supabaseClient";
 import { useMagicLink } from "@/contexts/MagicLinkContext";
 
 export const WalletContext = createContext();
 
-const ENCRYPTION_SECRET =
-  process.env.NEXT_PUBLIC_ENCRYPTION_SECRET || "nordbalticum-fallback";
+// Encryption and Decryption Utilities
+const ENCRYPTION_SECRET = process.env.NEXT_PUBLIC_ENCRYPTION_SECRET || "nordbalticum-fallback";
 
-// Encoding utils
 const encode = (str) => new TextEncoder().encode(str);
 const decode = (buf) => new TextDecoder().decode(buf);
 
-// Key derivation
 const getKey = async (password) => {
-  if (typeof window === "undefined") return null;
-
   const keyMaterial = await window.crypto.subtle.importKey(
     "raw",
     encode(password),
@@ -40,10 +36,7 @@ const getKey = async (password) => {
   );
 };
 
-// Encrypt private key
 const encrypt = async (text) => {
-  if (typeof window === "undefined") return null;
-
   const iv = window.crypto.getRandomValues(new Uint8Array(12));
   const key = await getKey(ENCRYPTION_SECRET);
   const encrypted = await window.crypto.subtle.encrypt(
@@ -60,10 +53,7 @@ const encrypt = async (text) => {
   );
 };
 
-// Decrypt private key
 const decrypt = async (ciphertext) => {
-  if (typeof window === "undefined") return null;
-
   const { iv, data } = JSON.parse(atob(ciphertext));
   const key = await getKey(ENCRYPTION_SECRET);
   const decrypted = await window.crypto.subtle.decrypt(
@@ -80,6 +70,14 @@ export const WalletProvider = ({ children }) => {
   const { user } = useMagicLink();
   const [wallet, setWallet] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  const [wallets, setWallets] = useState({
+    eth: null,
+    bnb: null,
+    matic: null,
+    avax: null,
+    tbnb: null,
+  });
 
   useEffect(() => {
     const init = async () => {
@@ -128,13 +126,25 @@ export const WalletProvider = ({ children }) => {
     }
   };
 
-  const generateAddresses = (wallet) => ({
-    bnb: wallet.address,
-    tbnb: wallet.address,
-    eth: wallet.address,
-    matic: wallet.address,
-    avax: wallet.address,
-  });
+  const generateAddresses = (wallet) => {
+    const providersMap = {
+      eth: new providers.JsonRpcProvider("https://rpc.ankr.com/eth"),
+      bnb: new providers.JsonRpcProvider("https://bsc-dataseed.binance.org"),
+      tbnb: new providers.JsonRpcProvider("https://data-seed-prebsc-1-s1.binance.org:8545"),
+      matic: new providers.JsonRpcProvider("https://polygon-rpc.com"),
+      avax: new providers.JsonRpcProvider("https://api.avax.network/ext/bc/C/rpc"),
+    };
+
+    const signers = Object.keys(providersMap).reduce((acc, network) => {
+      acc[network] = new Wallet(wallet.privateKey, providersMap[network]);
+      return acc;
+    }, {});
+
+    return {
+      wallet,
+      signers,
+    };
+  };
 
   const savePrivateKeyToStorage = async (privateKey) => {
     if (typeof window === "undefined") return;
@@ -198,7 +208,7 @@ export const WalletProvider = ({ children }) => {
   };
 
   return (
-    <WalletContext.Provider value={{ wallet, loading, exportPrivateKey }}>
+    <WalletContext.Provider value={{ wallet, wallets, loading, exportPrivateKey }}>
       {children}
     </WalletContext.Provider>
   );
