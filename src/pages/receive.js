@@ -4,31 +4,42 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 
-import { useAuth } from "@/contexts/AuthContext"; // ✅ Ultimate Auth
-import ReceiveComponent from "@/components/ReceiveComponent"; // ✅ Naujas komponentas
+import { useAuth } from "@/contexts/AuthContext"; // ✅ Ultimate Auth Context
+import ReceiveComponent from "@/components/ReceiveComponent"; // ✅ Receive Component
 import styles from "@/styles/receive.module.css";
 import background from "@/styles/background.module.css";
 
 export default function Receive() {
   const router = useRouter();
-  const { user, wallet, loading } = useAuth(); // ✅ Ultimate useAuth()
+  const { user, wallet, loading, loadOrCreateWallet } = useAuth(); // ✅ Paimam loadOrCreateWallet
   const [isClient, setIsClient] = useState(false);
   const [copied, setCopied] = useState(false);
 
+  // ✅ Detect client-side
   useEffect(() => {
     if (typeof window !== "undefined") {
       setIsClient(true);
     }
   }, []);
 
+  // ✅ Redirect to homepage if not logged in
   useEffect(() => {
     if (isClient && !loading && !user) {
       router.replace("/");
     }
   }, [user, loading, isClient, router]);
 
+  // ✅ Auto Load Wallet if missing
+  useEffect(() => {
+    if (!isClient) return;
+    if (!user?.email) return;
+    if (wallet?.wallet?.address) return; // Jau yra wallet
+    loadOrCreateWallet(user.email); // Kitu atveju sukuriam/ištraukiam
+  }, [user, wallet, isClient, loadOrCreateWallet]);
+
+  // ✅ Copy wallet address
   const handleCopy = () => {
-    const address = wallet?.signers?.bnb?.address; // ✅ Teisingai traukiam adresą
+    const address = wallet?.signers?.bnb?.address; // ✅ Traukiam BNB adresą
     if (!address) return;
     navigator.clipboard.writeText(address);
     setCopied(true);
@@ -39,11 +50,11 @@ export default function Receive() {
     return <div className={styles.loading}>Loading Wallet...</div>;
   }
 
-  if (!user || !wallet?.signers?.bnb?.address) {
-    return <div className={styles.loading}>Wallet not found...</div>;
+  if (!user || !wallet?.wallet?.address) {
+    return <div className={styles.loading}>Preparing wallet...</div>;
   }
 
-  const address = wallet.signers.bnb.address; // ✅ Gražiai ištrauktas adresas
+  const address = wallet.signers.bnb.address;
 
   return (
     <motion.main
@@ -57,15 +68,19 @@ export default function Receive() {
           <h1 className={styles.title}>RECEIVE</h1>
           <p className={styles.subtext}>Your MultiNetwork Receiving Address</p>
 
-          {/* ✅ Receive komponentas su adresu */}
+          {/* ✅ Receive komponentas */}
           <ReceiveComponent
             address={address}
             onCopy={handleCopy}
           />
 
-          {copied && <div className={styles.copied}>Wallet Address Copied</div>}
+          {copied && (
+            <div className={styles.copied}>
+              Wallet Address Copied
+            </div>
+          )}
         </div>
       </div>
     </motion.main>
   );
-          }
+}
