@@ -12,7 +12,8 @@ export default function ReceiveComponent() {
     return <div style={styles.loading}>Loading wallet...</div>;
   }
 
-  const address = wallet?.[activeNetwork];
+  // ✅ Teisingai paimam address iš wallet.signers
+  const address = wallet?.wallet?.address || "";
 
   if (!address) {
     return <div style={styles.loading}>Wallet not ready...</div>;
@@ -24,7 +25,7 @@ export default function ReceiveComponent() {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (error) {
-      console.error("Copy failed:", error);
+      console.error("Copy failed:", error.message);
     }
   };
 
@@ -36,7 +37,9 @@ export default function ReceiveComponent() {
         <QRCode value={address} size={180} bgColor="transparent" fgColor="#ffffff" />
       </div>
 
-      <p style={styles.addressText}>{address}</p>
+      <p style={styles.addressText}>
+        {address}
+      </p>
 
       <button
         onClick={copyToClipboard}
@@ -61,33 +64,37 @@ const styles = {
     fontSize: "24px",
     marginBottom: "20px",
     textTransform: "uppercase",
+    letterSpacing: "1px",
   },
   qrWrapper: {
     margin: "20px auto",
     background: "white",
-    padding: "16px",
+    padding: "18px",
     borderRadius: "16px",
     display: "inline-block",
     cursor: "pointer",
+    transition: "transform 0.3s ease",
   },
   addressText: {
     marginTop: "20px",
     fontSize: "14px",
     wordBreak: "break-word",
+    color: "#ccc",
   },
   button: {
-    marginTop: "15px",
+    marginTop: "20px",
     padding: "12px 24px",
-    borderRadius: "8px",
+    borderRadius: "10px",
+    backgroundColor: "#0070f3",
     color: "white",
+    fontWeight: "bold",
     border: "none",
     cursor: "pointer",
-    fontWeight: "bold",
     fontSize: "16px",
     transition: "all 0.3s ease",
   },
   loading: {
-    padding: "40px",
+    padding: "50px",
     textAlign: "center",
     fontSize: "18px",
     color: "white",
