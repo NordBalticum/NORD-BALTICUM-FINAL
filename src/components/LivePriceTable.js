@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useEffect, useState, useRef } from "react";
-import axios from "axios";
+import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image"; // ✅ Next.js optimalus Image
+import axios from "axios";
 import styles from "./livepricetable.module.css";
 
 const tokens = [
@@ -19,7 +20,7 @@ const tokens = [
     route: "/eth",
   },
   {
-    id: "matic-network",
+    id: "polygon",
     symbol: "MATIC",
     logo: "https://cryptologos.cc/logos/polygon-matic-logo.png",
     route: "/matic",
@@ -41,8 +42,8 @@ export default function LivePriceTable() {
   const [prices, setPrices] = useState({});
   const [currency, setCurrency] = useState("eur");
   const [loading, setLoading] = useState(true);
-  const intervalRef = useRef(null);
   const mountedRef = useRef(false);
+  const intervalRef = useRef(null);
 
   const fetchPrices = async () => {
     if (!mountedRef.current) return;
@@ -54,7 +55,7 @@ export default function LivePriceTable() {
         timeout: 10000,
       });
 
-      if (mountedRef.current) {
+      if (mountedRef.current && res.data) {
         setPrices(res.data);
         if (typeof window !== "undefined") {
           localStorage.setItem(LOCAL_CACHE_KEY, JSON.stringify(res.data));
@@ -69,15 +70,15 @@ export default function LivePriceTable() {
   const loadFromCache = () => {
     if (typeof window === "undefined") return;
 
-    const cached = window.localStorage.getItem(LOCAL_CACHE_KEY);
+    const cached = localStorage.getItem(LOCAL_CACHE_KEY);
     if (cached) {
       try {
         const parsed = JSON.parse(cached);
         if (typeof parsed === "object") {
           setPrices(parsed);
         }
-      } catch (e) {
-        console.error("Failed to parse cached prices:", e);
+      } catch (err) {
+        console.error("Failed to parse cached prices:", err);
       }
     }
     setLoading(false);
@@ -103,31 +104,14 @@ export default function LivePriceTable() {
       if (document.visibilityState === "visible") fetchPrices();
     };
 
-    const handleUserEvent = () => fetchPrices();
-    const handleOnline = () => fetchPrices();
-
-    if (typeof document !== "undefined") {
-      document.addEventListener("visibilitychange", handleVisibility);
-    }
-    if (typeof window !== "undefined") {
-      window.addEventListener("resize", handleUserEvent);
-      window.addEventListener("orientationchange", handleUserEvent);
-      window.addEventListener("pageshow", handleUserEvent);
-      window.addEventListener("online", handleOnline);
-    }
+    document.addEventListener("visibilitychange", handleVisibility);
+    window.addEventListener("online", fetchPrices);
 
     return () => {
       mountedRef.current = false;
-      if (intervalRef.current) clearInterval(intervalRef.current);
-      if (typeof document !== "undefined") {
-        document.removeEventListener("visibilitychange", handleVisibility);
-      }
-      if (typeof window !== "undefined") {
-        window.removeEventListener("resize", handleUserEvent);
-        window.removeEventListener("orientationchange", handleUserEvent);
-        window.removeEventListener("pageshow", handleUserEvent);
-        window.removeEventListener("online", handleOnline);
-      }
+      clearInterval(intervalRef.current);
+      document.removeEventListener("visibilitychange", handleVisibility);
+      window.removeEventListener("online", fetchPrices);
     };
   }, [isClient]);
 
@@ -159,7 +143,15 @@ export default function LivePriceTable() {
               className={styles.card}
               onClick={() => router.push(token.route)}
             >
-              <img src={token.logo} alt={token.symbol} className={styles.logo} />
+              <Image
+                src={token.logo}
+                alt={token.symbol}
+                width={48}
+                height={48}
+                className={styles.logo}
+                unoptimized
+                priority
+              />
               <div className={styles.symbol}>{token.symbol}</div>
               <div className={styles.price}>
                 {price !== undefined
