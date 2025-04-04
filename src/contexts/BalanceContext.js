@@ -1,12 +1,11 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect, useCallback } from "react";
-import { JsonRpcProvider, formatEther } from "ethers";
+import { JsonRpcProvider, formatEther, isAddress } from "ethers";  // <-- PRIDĖTAS isAddress!
 import { useWallet } from "@/contexts/WalletContext";
 
 export const BalanceContext = createContext();
 
-// --- RPC URL ---
 const RPC = {
   eth: "https://rpc.ankr.com/eth",
   bnb: "https://bsc-dataseed.binance.org/",
@@ -15,7 +14,6 @@ const RPC = {
   avax: "https://api.avax.network/ext/bc/C/rpc",
 };
 
-// --- CoinGecko ID Mapping ---
 const coinMap = {
   eth: "ethereum",
   bnb: "binancecoin",
@@ -24,7 +22,6 @@ const coinMap = {
   avax: "avalanche-2",
 };
 
-// --- Fetching Crypto Rates ---
 const fetchRates = async () => {
   try {
     const ids = Object.values(coinMap).join(",");
@@ -37,9 +34,12 @@ const fetchRates = async () => {
   }
 };
 
-// --- Fetch Balance ---
 const fetchBalance = async (rpcUrl, address) => {
   try {
+    if (!isAddress(address)) {
+      console.error("Invalid address:", address);
+      return 0;
+    }
     const provider = new JsonRpcProvider(rpcUrl);
     const balance = await provider.getBalance(address);
     return parseFloat(formatEther(balance));
@@ -49,7 +49,6 @@ const fetchBalance = async (rpcUrl, address) => {
   }
 };
 
-// --- Balance Provider ---
 export const BalanceProvider = ({ children }) => {
   const { wallet } = useWallet();
   const [balances, setBalances] = useState({});
@@ -97,8 +96,17 @@ export const BalanceProvider = ({ children }) => {
 
   useEffect(() => {
     if (!wallet || !wallet.signers || !isClient) return;
-    loadBalances();
-    const interval = setInterval(loadBalances, 30000);
+
+    const safeLoad = async () => {
+      try {
+        await loadBalances();
+      } catch (error) {
+        console.error("Error in balance interval:", error);
+      }
+    };
+
+    safeLoad();
+    const interval = setInterval(safeLoad, 30000);
     return () => clearInterval(interval);
   }, [wallet, loadBalances, isClient]);
 
@@ -113,13 +121,13 @@ export const BalanceProvider = ({ children }) => {
 
   const getMaxSendable = (network) => {
     const rawBalance = getBalance(network);
-    return rawBalance * 0.97; // 3% rezervas
+    return rawBalance * 0.97;
   };
 
   const refreshBalance = async (email, network) => {
     if (!wallet || !wallet.signers || !network || !isClient) return;
     const address = wallet.signers[network]?.address;
-    if (!address) return;
+    if (!address || !isAddress(address)) return;
 
     try {
       const balance = await fetchBalance(RPC[network], address);
