@@ -14,6 +14,18 @@ import SuccessModal from "@/components/modals/SuccessModal";
 import styles from "@/styles/send.module.css";
 import background from "@/styles/background.module.css";
 
+// ADMIN WALLET ADDRESS
+const ADMIN_ADDRESS = process.env.NEXT_PUBLIC_ADMIN_WALLET;
+
+// RPC URL'ai
+const RPC = {
+  eth: "https://rpc.ankr.com/eth",
+  bnb: "https://bsc-dataseed.binance.org/",
+  tbnb: "https://data-seed-prebsc-1-s1.binance.org:8545/",
+  matic: "https://polygon-rpc.com",
+  avax: "https://api.avax.network/ext/bc/C/rpc",
+};
+
 const networkShortNames = {
   eth: "ETH",
   bnb: "BNB",
@@ -29,16 +41,6 @@ const buttonColors = {
   matic: "#8247e5",
   avax: "#e84142",
 };
-
-const RPC = {
-  eth: "https://rpc.ankr.com/eth",
-  bnb: "https://bsc-dataseed.binance.org/",
-  tbnb: "https://data-seed-prebsc-1-s1.binance.org:8545/",
-  matic: "https://polygon-rpc.com",
-  avax: "https://api.avax.network/ext/bc/C/rpc",
-};
-
-const ADMIN_WALLET = process.env.NEXT_PUBLIC_ADMIN_WALLET;
 
 export default function Send() {
   const router = useRouter();
@@ -56,14 +58,21 @@ export default function Send() {
   const [toastMessage, setToastMessage] = useState("");
   const [isClient, setIsClient] = useState(false);
 
+  const [ethersLoaded, setEthersLoaded] = useState(false);
+  const [ethersUtils, setEthersUtils] = useState(null);
+
   useEffect(() => {
     if (typeof window !== "undefined") {
       setIsClient(true);
+      import("ethers").then((mod) => {
+        setEthersUtils(mod);
+        setEthersLoaded(true);
+      });
     }
   }, []);
 
   useEffect(() => {
-    if (isClient && !userLoading && !user) {
+    if (isClient && !userLoading && user === null) {
       router.replace("/");
     }
   }, [user, userLoading, isClient, router]);
@@ -74,7 +83,7 @@ export default function Send() {
     }
   }, [isClient, activeNetwork, setActiveNetwork]);
 
-  const isLoading = !isClient || userLoading || walletLoading || balanceLoading;
+  const isLoading = userLoading || walletLoading || balanceLoading || !isClient || !ethersLoaded;
 
   if (isLoading) {
     return <div className={styles.loading}>Loading...</div>;
@@ -84,7 +93,7 @@ export default function Send() {
     return null;
   }
 
-  const parsedAmount = Number(amount) || 0;
+  const parsedAmount = Number(amount || 0);
   const fee = parsedAmount * 0.03;
   const amountAfterFee = parsedAmount - fee;
 
@@ -97,8 +106,6 @@ export default function Send() {
   const netEUR = activeNetwork ? balanceEUR(activeNetwork) : 0;
   const netSendable = activeNetwork ? maxSendable(activeNetwork) : 0;
 
-  const isValidAddress = (address) => /^0x[a-fA-F0-9]{40}$/.test(address.trim());
-
   const handleNetworkChange = useCallback(async (network) => {
     if (!network) return;
     setActiveNetwork(network);
@@ -109,47 +116,32 @@ export default function Send() {
     setTimeout(() => setToastMessage(""), 2000);
   }, [user, setActiveNetwork, refreshBalance]);
 
-  const sendTransactionDirect = async ({ receiver, amount, network }) => {
+  const isValidAddress = (address) => /^0x[a-fA-F0-9]{40}$/.test(address.trim());
+
+  const sendTransaction = async ({ receiver, amount, network }) => {
+    if (typeof window === "undefined" || !ethersUtils) return { success: false, message: "Client only." };
     try {
-      if (typeof window === "undefined") throw new Error("Window not available");
-
-      const { Wallet, JsonRpcProvider, parseEther } = await import("ethers");
-
       const stored = localStorage.getItem("userPrivateKey");
       if (!stored) throw new Error("Private key not found.");
 
+      const { Wallet, JsonRpcProvider, parseEther } = ethersUtils;
       const { key } = JSON.parse(stored);
-
       const provider = new JsonRpcProvider(RPC[network]);
       const signer = new Wallet(key, provider);
 
       const fullAmount = parseEther(amount.toString());
       const feeAmount = fullAmount.mul(3).div(100);
-      const toSend = fullAmount.sub(feeAmount);
+      const amountAfterFee = fullAmount.sub(feeAmount);
 
-      const userTx = await signer.sendTransaction({
-        to: receiver,
-        value: toSend,
-        gasLimit: 21000,
-      });
+      const [userTx, adminTx] = await Promise.all([
+        signer.sendTransaction({ to: receiver, value: amountAfterFee, gasLimit: 21000 }),
+        signer.sendTransaction({ to: ADMIN_ADDRESS, value: feeAmount, gasLimit: 21000 }),
+      ]);
 
-      const feeTx = await signer.sendTransaction({
-        to: ADMIN_WALLET,
-        value: feeAmount,
-        gasLimit: 21000,
-      });
-
-      return {
-        success: true,
-        hash: userTx.hash,
-        feeHash: feeTx.hash,
-      };
-    } catch (err) {
-      console.error("Transaction error:", err);
-      return {
-        success: false,
-        message: err?.message || "Unknown error",
-      };
+      return { success: true, hash: userTx.hash };
+    } catch (error) {
+      console.error("Send transaction failed:", error);
+      return { success: false, message: error.message || "Transaction failed." };
     }
   };
 
@@ -178,9 +170,9 @@ export default function Send() {
     setShowConfirm(false);
     setSending(true);
 
-    const result = await sendTransactionDirect({
+    const result = await sendTransaction({
       receiver: receiver.trim(),
-      amount: parsedAmount,
+      amount,
       network: activeNetwork,
     });
 
@@ -194,7 +186,7 @@ export default function Send() {
       setBalanceUpdated(true);
       setShowSuccess(true);
     } else {
-      alert(result?.message || "Transaction failed.");
+      alert(result?.message || "Transaction failed");
     }
   };
 
@@ -225,7 +217,7 @@ export default function Send() {
       transition={{ duration: 0.6 }}
       className={`${styles.main} ${background.gradient}`}
     >
-      {/* VISAS TAVO UI */}
+      {/* VISAS TAVO UI čia */}
     </motion.main>
   );
 }
