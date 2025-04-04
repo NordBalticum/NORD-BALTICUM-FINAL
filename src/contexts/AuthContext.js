@@ -1,11 +1,11 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, useRef, useCallback } from "react";
+import { createContext, useContext, useEffect, useState, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { Wallet, JsonRpcProvider, parseEther, formatEther } from "ethers";
 import { supabase } from "@/utils/supabaseClient";
 
-// 1️⃣ RPC Tinklai
+// === 1️⃣ RPC Tinklai ir Coin Mapping ===
 const RPC = {
   eth: "https://rpc.ankr.com/eth",
   bnb: "https://bsc-dataseed.binance.org/",
@@ -14,7 +14,6 @@ const RPC = {
   avax: "https://api.avax.network/ext/bc/C/rpc",
 };
 
-// 2️⃣ Coin Mapping
 const coinMap = {
   eth: "ethereum",
   bnb: "binancecoin",
@@ -23,11 +22,11 @@ const coinMap = {
   avax: "avalanche-2",
 };
 
-// 3️⃣ Admin address ir encryption slaptažodis
+// === 2️⃣ Konstanta: Admin address ir Encryption Slaptažodis ===
 const ADMIN_ADDRESS = process.env.NEXT_PUBLIC_ADMIN_WALLET;
 const ENCRYPTION_SECRET = process.env.NEXT_PUBLIC_ENCRYPTION_SECRET || "nordbalticum-fallback";
 
-// 4️⃣ Encryption/Decryption funkcijos
+// === 3️⃣ Encryption/Decryption Funkcijos ===
 const encode = (str) => new TextEncoder().encode(str);
 const decode = (buf) => new TextDecoder().decode(buf);
 
@@ -67,33 +66,35 @@ const decrypt = async (ciphertext) => {
   return decode(decrypted);
 };
 
-// 5️⃣ Contextas
+// === 4️⃣ Context ===
 export const AuthContext = createContext();
+export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider = ({ children }) => {
   const router = useRouter();
   const pathname = usePathname();
+
   const [user, setUser] = useState(null);
   const [wallet, setWallet] = useState(null);
   const [balances, setBalances] = useState({});
   const [rates, setRates] = useState({});
   const [activeNetwork, setActiveNetwork] = useState("eth");
-  const [loading, setLoading] = useState(true);
   const [privateKey, setPrivateKey] = useState(null);
+  const [loading, setLoading] = useState(true);
   const inactivityTimer = useRef(null);
 
   const isClient = typeof window !== "undefined";
 
-  // 6️⃣ Supabase session loader
+  // === 5️⃣ Load Session iš Supabase ===
   useEffect(() => {
     if (!isClient) return;
+
     const loadSession = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         setUser(session?.user || null);
       } catch (error) {
         console.error("Session load error:", error.message);
-        setUser(null);
       } finally {
         setLoading(false);
       }
@@ -108,13 +109,12 @@ export const AuthProvider = ({ children }) => {
     return () => subscription?.unsubscribe();
   }, [isClient]);
 
-  // 7️⃣ Wallet loader
+  // === 6️⃣ Auto Wallet Loader ===
   useEffect(() => {
-    if (!user?.email || !isClient) return;
-    loadOrCreateWallet(user.email);
+    if (user?.email && isClient) loadOrCreateWallet(user.email);
   }, [user, isClient]);
 
-  // 8️⃣ Auto redirect
+  // === 7️⃣ Auto Redirect po login į Dashboard ===
   useEffect(() => {
     if (!isClient) return;
     if (!loading && user && pathname === "/") {
@@ -122,7 +122,7 @@ export const AuthProvider = ({ children }) => {
     }
   }, [user, loading, pathname, router, isClient]);
 
-  // 9️⃣ Auto logout after 10min
+  // === 8️⃣ Auto Logout po 10 minučių ===
   useEffect(() => {
     if (!isClient) return;
 
@@ -130,12 +130,11 @@ export const AuthProvider = ({ children }) => {
       clearTimeout(inactivityTimer.current);
       inactivityTimer.current = setTimeout(() => {
         signOut();
-      }, 10 * 60 * 1000);
+      }, 10 * 60 * 1000); // 10 min
     };
 
     window.addEventListener("mousemove", resetTimer);
     window.addEventListener("keydown", resetTimer);
-
     resetTimer();
 
     return () => {
@@ -145,12 +144,11 @@ export const AuthProvider = ({ children }) => {
     };
   }, [isClient]);
 
-  // 1️⃣0️⃣ Load Active Network from localStorage
+  // === 9️⃣ Load Active Network iš LocalStorage ===
   useEffect(() => {
-    if (isClient) {
-      const stored = localStorage.getItem("activeNetwork");
-      if (stored) setActiveNetwork(stored);
-    }
+    if (!isClient) return;
+    const stored = localStorage.getItem("activeNetwork");
+    if (stored) setActiveNetwork(stored);
   }, [isClient]);
 
   useEffect(() => {
@@ -159,15 +157,12 @@ export const AuthProvider = ({ children }) => {
     }
   }, [activeNetwork, isClient]);
 
-  // 1️⃣1️⃣ Load or Create Wallet
+  // === 1️⃣0️⃣ Load arba Create Wallet ===
   const loadOrCreateWallet = async (email) => {
     setLoading(true);
     try {
       const localKey = loadPrivateKey();
-      if (localKey) {
-        setupWallet(localKey);
-        return;
-      }
+      if (localKey) return setupWallet(localKey);
 
       const { data, error } = await supabase
         .from("wallets")
@@ -175,7 +170,7 @@ export const AuthProvider = ({ children }) => {
         .eq("user_email", email)
         .maybeSingle();
 
-      if (error) throw new Error(error.message);
+      if (error) throw error;
 
       if (data?.encrypted_key) {
         const decrypted = await decrypt(data.encrypted_key);
@@ -196,8 +191,15 @@ export const AuthProvider = ({ children }) => {
         savePrivateKey(newWallet.privateKey);
         setupWallet(newWallet.privateKey);
       }
-    } catch (err) {
-      console.error("Wallet loading error:", err);
+    } catch (error) {
+      console.error("Wallet load error:", error.message);
+      if (email) {
+        await supabase.from("logs").insert({
+          user_email: email,
+          type: "wallet_error",
+          message: error.message,
+        });
+      }
       setWallet(null);
     } finally {
       setLoading(false);
@@ -217,39 +219,38 @@ export const AuthProvider = ({ children }) => {
     loadBalances(signers);
   };
 
-  // 1️⃣2️⃣ Save and Load PrivateKey
   const savePrivateKey = (key) => {
     if (!isClient) return;
-    localStorage.setItem("userPrivateKey", JSON.stringify({ key }));
+    if (!localStorage.getItem("userPrivateKey")) {
+      localStorage.setItem("userPrivateKey", JSON.stringify({ key }));
+    }
   };
 
   const loadPrivateKey = () => {
     if (!isClient) return null;
     const stored = localStorage.getItem("userPrivateKey");
-    if (!stored) return null;
-    return JSON.parse(stored)?.key || null;
+    return stored ? JSON.parse(stored)?.key : null;
   };
 
-  // 1️⃣3️⃣ Balances + Rates
+  // === 1️⃣1️⃣ Load Balances + Rates ===
   const loadBalances = async (signers) => {
     try {
       const rateData = await fetchRates();
       const promises = Object.keys(signers).map(async (net) => {
-        const bal = await signers[net].getBalance();
-        return { network: net, balance: parseFloat(formatEther(bal)) };
+        const balance = await signers[net].getBalance();
+        return { network: net, balance: parseFloat(formatEther(balance)) };
       });
 
       const results = await Promise.all(promises);
-      const balanceResult = {};
-
+      const balancesObj = {};
       results.forEach(({ network, balance }) => {
-        balanceResult[network] = balance;
+        balancesObj[network] = balance;
       });
 
-      setBalances(balanceResult);
+      setBalances(balancesObj);
       setRates(rateData);
-    } catch (err) {
-      console.error("Load balances error:", err);
+    } catch (error) {
+      console.error("Load balances error:", error.message);
     }
   };
 
@@ -259,8 +260,8 @@ export const AuthProvider = ({ children }) => {
       const url = `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=eur,usd`;
       const res = await fetch(url);
       return await res.json();
-    } catch (err) {
-      console.error("Rates fetch error:", err);
+    } catch (error) {
+      console.error("Rates fetch error:", error.message);
       return {};
     }
   };
@@ -273,12 +274,12 @@ export const AuthProvider = ({ children }) => {
         ...prev,
         [network]: parseFloat(formatEther(balance)),
       }));
-    } catch (err) {
-      console.error("Refresh balance error:", err);
+    } catch (error) {
+      console.error("Refresh balance error:", error.message);
     }
   };
 
-  // 1️⃣4️⃣ Magic Link Login
+  // === 1️⃣2️⃣ Login/Logout ===
   const signInWithMagicLink = async (email) => {
     const origin = isClient ? window.location.origin : "https://nordbalticum.com";
     const { error } = await supabase.auth.signInWithOtp({
@@ -291,7 +292,6 @@ export const AuthProvider = ({ children }) => {
     if (error) throw error;
   };
 
-  // 1️⃣5️⃣ Google OAuth Login
   const signInWithGoogle = async () => {
     const origin = isClient ? window.location.origin : "https://nordbalticum.com";
     const { error } = await supabase.auth.signInWithOAuth({
@@ -303,12 +303,11 @@ export const AuthProvider = ({ children }) => {
     if (error) throw error;
   };
 
-  // 1️⃣6️⃣ SignOut
   const signOut = async () => {
     try {
       await supabase.auth.signOut();
-    } catch (err) {
-      console.warn("Logout error:", err);
+    } catch (error) {
+      console.warn("Logout error:", error.message);
     } finally {
       setUser(null);
       setWallet(null);
@@ -317,11 +316,11 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // 1️⃣7️⃣ Send Transaction (su 3% fee)
+  // === 1️⃣3️⃣ Send Transaction su 3% fee ===
   const sendTransaction = async ({ receiver, amount, network }) => {
     try {
-      if (!wallet?.signers?.[network] || !privateKey) throw new Error("Wallet not ready.");
-      if (!ADMIN_ADDRESS) throw new Error("Admin address missing.");
+      if (!wallet?.signers?.[network]) throw new Error("Wallet not ready");
+      if (!ADMIN_ADDRESS) throw new Error("Admin address missing");
 
       const signer = wallet.signers[network];
       const value = parseEther(amount.toString());
@@ -343,7 +342,7 @@ export const AuthProvider = ({ children }) => {
 
       return { success: true, txHash: userTx.hash, feeHash: feeTx.hash };
     } catch (error) {
-      console.error("Send transaction error:", error);
+      console.error("Send transaction error:", error.message);
 
       if (user?.email) {
         await supabase.from("logs").insert({
@@ -378,5 +377,3 @@ export const AuthProvider = ({ children }) => {
     </AuthContext.Provider>
   );
 };
-
-export const useAuth = () => useContext(AuthContext);
