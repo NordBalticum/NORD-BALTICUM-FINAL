@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 
-import { useAuth } from "@/contexts/AuthContext"; // ✅ Ultimate Auth
+import { useAuth } from "@/contexts/AuthContext"; // ✅ Ultimate Auth Context
 import { supabase } from "@/utils/supabaseClient";
 
 import styles from "@/styles/settings.module.css";
@@ -17,8 +17,8 @@ export default function SettingsPage() {
   const [emailInput, setEmailInput] = useState("");
   const [walletAddress, setWalletAddress] = useState("Loading...");
   const [isClient, setIsClient] = useState(false);
-  const [copied, setCopied] = useState(false); // ✅ Kopijavimo pranešimui
-  const [emailStatus, setEmailStatus] = useState(""); // ✅ Email update pranešimui
+  const [copied, setCopied] = useState(false);
+  const [emailStatus, setEmailStatus] = useState("");
 
   // Patikrinam ar klientas
   useEffect(() => {
@@ -27,38 +27,41 @@ export default function SettingsPage() {
     }
   }, []);
 
-  // Užkraunam piniginės adresą
+  // Užkraunam wallet adresą vieną kartą
   useEffect(() => {
-    if (!isClient || !wallet?.wallet?.address) return;
-    setWalletAddress(wallet.wallet.address);
+    if (isClient && wallet?.wallet?.address) {
+      setWalletAddress(wallet.wallet.address);
+    }
   }, [wallet, isClient]);
 
-  // Email keitimas (Magic Link išsiuntimas)
+  // Email keitimas su Magic Link
   const handleChangeEmail = async () => {
     const email = emailInput.trim();
-    if (!email) return alert("Please enter a new email.");
+    if (!email) {
+      setEmailStatus("❌ Please enter a new email address.");
+      return;
+    }
 
     try {
       const { error } = await supabase.auth.updateUser({ email });
       if (error) throw error;
       setEmailStatus("✅ Magic Link sent to new email address.");
-      setEmailInput(""); // Išvalom lauką
-    } catch (err) {
-      setEmailStatus("❌ Error: " + err.message);
+      setEmailInput("");
+    } catch (error) {
+      console.error("Email update error:", error.message);
+      setEmailStatus(`❌ ${error.message}`);
     } finally {
-      setTimeout(() => setEmailStatus(""), 4000); // Po 4s išvalom pranešimą
+      setTimeout(() => setEmailStatus(""), 4000);
     }
   };
 
   // Kopijuoti adresą
   const handleCopyWallet = () => {
-    if (!walletAddress || walletAddress.includes("not") || walletAddress.includes("Error")) return;
-    if (typeof window !== "undefined") {
-      navigator.clipboard.writeText(walletAddress).then(() => {
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000); // Po 2s dingsta
-      });
-    }
+    if (!walletAddress) return;
+    navigator.clipboard.writeText(walletAddress).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }).catch((err) => console.error("Clipboard error:", err));
   };
 
   // Atsijungimas
@@ -74,6 +77,7 @@ export default function SettingsPage() {
   return (
     <main className={`${styles.container} ${background.gradient}`}>
       <div className={styles.box}>
+        {/* Logo */}
         <Image
           src="/icons/logo.svg"
           alt="NordBalticum Logo"
@@ -90,11 +94,13 @@ export default function SettingsPage() {
           title="Click to copy wallet address"
         >
           <p className={styles.walletLabel}>Your Wallet:</p>
-          <p className={styles.walletAddress}>{walletAddress}</p>
+          <p className={styles.walletAddress}>
+            {walletAddress}
+          </p>
           {copied && <p className={styles.copyStatus}>✅ Copied!</p>}
         </div>
 
-        {/* Change Email Section */}
+        {/* Email Section */}
         <div className={styles.section}>
           <h4>Change Email</h4>
           <p className={styles.currentEmail}>
@@ -121,7 +127,7 @@ export default function SettingsPage() {
           )}
         </div>
 
-        {/* Logout */}
+        {/* Logout Button */}
         <button className={styles.logout} onClick={handleLogout}>
           Log Out
         </button>
