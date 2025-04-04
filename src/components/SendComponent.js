@@ -15,17 +15,17 @@ export default function SendComponent() {
     setStatus("");
 
     if (!receiver.trim() || !amount.trim()) {
-      setStatus("❌ Please fill all fields.");
+      setStatus("❌ Please fill in all fields.");
       return;
     }
 
     if (!/^0x[a-fA-F0-9]{40}$/.test(receiver.trim())) {
-      setStatus("❌ Invalid wallet address.");
+      setStatus("❌ Invalid wallet address format.");
       return;
     }
 
-    if (parseFloat(amount) <= 0) {
-      setStatus("❌ Amount must be greater than 0.");
+    if (isNaN(amount) || parseFloat(amount) <= 0) {
+      setStatus("❌ Amount must be a positive number.");
       return;
     }
 
@@ -38,7 +38,7 @@ export default function SendComponent() {
       });
 
       if (result?.success) {
-        setStatus(`✅ Success! TxHash: ${result.txHash}`);
+        setStatus(`✅ Transaction Successful! TxHash: ${result.txHash}`);
         setReceiver("");
         setAmount("");
       } else {
@@ -53,17 +53,21 @@ export default function SendComponent() {
   };
 
   if (loading) {
-    return <div style={styles.loading}>Loading wallet...</div>;
+    return (
+      <div style={styles.loading}>
+        Loading your wallet...
+      </div>
+    );
   }
 
   return (
     <div style={styles.container}>
-      <h2 style={styles.title}>SEND {activeNetwork?.toUpperCase()}</h2>
+      <h2 style={styles.title}>Send {activeNetwork?.toUpperCase()}</h2>
 
       <form onSubmit={handleSend} style={styles.form}>
         <input
           type="text"
-          placeholder="Receiver Address"
+          placeholder="Receiver Address (0x...)"
           value={receiver}
           onChange={(e) => setReceiver(e.target.value)}
           required
@@ -73,7 +77,7 @@ export default function SendComponent() {
         <input
           type="number"
           step="0.0001"
-          placeholder="Amount"
+          placeholder="Amount to Send"
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
           required
@@ -85,7 +89,8 @@ export default function SendComponent() {
           disabled={sending}
           style={{
             ...styles.button,
-            backgroundColor: sending ? "#999" : "#0070f3",
+            backgroundColor: sending ? "#555" : "#0070f3",
+            cursor: sending ? "not-allowed" : "pointer",
           }}
         >
           {sending ? "Sending..." : "Send Now"}
@@ -96,8 +101,9 @@ export default function SendComponent() {
         <p style={{
           marginTop: "20px",
           fontWeight: "bold",
-          color: status.startsWith("✅") ? "green" : "red",
+          color: status.startsWith("✅") ? "limegreen" : "crimson",
           fontSize: "16px",
+          wordBreak: "break-word",
         }}>
           {status}
         </p>
@@ -108,40 +114,41 @@ export default function SendComponent() {
 
 const styles = {
   container: {
-    padding: "20px",
+    padding: "30px 20px",
     textAlign: "center",
     color: "white",
   },
   title: {
-    fontSize: "24px",
-    marginBottom: "20px",
+    fontSize: "26px",
+    marginBottom: "25px",
     textTransform: "uppercase",
+    letterSpacing: "1px",
   },
   form: {
     display: "flex",
     flexDirection: "column",
-    gap: "14px",
+    gap: "16px",
     maxWidth: "400px",
     margin: "0 auto",
   },
   input: {
-    padding: "12px",
-    borderRadius: "8px",
+    padding: "14px",
+    borderRadius: "10px",
     border: "1px solid #ccc",
     fontSize: "16px",
+    outline: "none",
   },
   button: {
-    padding: "12px",
-    borderRadius: "8px",
-    color: "white",
+    padding: "14px",
+    borderRadius: "10px",
     fontWeight: "bold",
+    color: "white",
     border: "none",
-    cursor: "pointer",
-    transition: "all 0.3s ease",
     fontSize: "16px",
+    transition: "all 0.3s ease",
   },
   loading: {
-    padding: "40px",
+    padding: "50px",
     textAlign: "center",
     fontSize: "18px",
     color: "white",
