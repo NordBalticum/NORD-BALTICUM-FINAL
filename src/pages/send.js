@@ -32,19 +32,20 @@ export default function Send() {
   const fee = parsedAmount * 0.03;
   const amountAfterFee = parsedAmount - fee;
 
+  // NAUJAS bank lygio shortName mapperis
+  const networkShortNames = {
+    "Ethereum": "ETH",
+    "BNB Chain": "BNB",
+    "BNB Testnet": "tBNB",
+    "Polygon": "MATIC",
+    "Avalanche": "AVAX",
+  };
+
+  const shortName = useMemo(() => networkShortNames[activeNetwork] || "", [activeNetwork]);
+
   const netBalance = useMemo(() => Number(balance(activeNetwork) || 0), [balance, activeNetwork]);
   const netEUR = useMemo(() => Number(balanceEUR(activeNetwork) || 0), [balanceEUR, activeNetwork]);
   const netSendable = useMemo(() => Number(maxSendable(activeNetwork) || 0), [maxSendable, activeNetwork]);
-
-  const networkShortNames = {
-  "eth": "eth",
-  "bnb": "bnb",
-  "tbnb": "tbnb",
-  "pol": "matic",
-  "avax": "avax",
-};
-
-  const shortName = useMemo(() => networkShortNames[activeNetwork] || activeNetwork?.toLowerCase() || "", [activeNetwork]);
 
   useEffect(() => {
     if (!user) router.replace("/");
