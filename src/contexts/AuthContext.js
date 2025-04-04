@@ -22,11 +22,11 @@ const coinMap = {
   avax: "avalanche-2",
 };
 
-// === 2️⃣ Konstanta: Admin address ir Encryption Slaptažodis ===
+// === 2️⃣ Konstanta: Admin address ir Encryption slaptažodis
 const ADMIN_ADDRESS = process.env.NEXT_PUBLIC_ADMIN_WALLET;
 const ENCRYPTION_SECRET = process.env.NEXT_PUBLIC_ENCRYPTION_SECRET || "nordbalticum-fallback";
 
-// === 3️⃣ Encryption/Decryption Funkcijos ===
+// === 3️⃣ Encryption/Decryption funkcijos
 const encode = (str) => new TextEncoder().encode(str);
 const decode = (buf) => new TextDecoder().decode(buf);
 
@@ -62,11 +62,15 @@ const encrypt = async (text) => {
 const decrypt = async (ciphertext) => {
   const { iv, data } = JSON.parse(atob(ciphertext));
   const key = await getKey();
-  const decrypted = await window.crypto.subtle.decrypt({ name: "AES-GCM", iv: new Uint8Array(iv) }, key, new Uint8Array(data));
+  const decrypted = await window.crypto.subtle.decrypt(
+    { name: "AES-GCM", iv: new Uint8Array(iv) },
+    key,
+    new Uint8Array(data)
+  );
   return decode(decrypted);
 };
 
-// === 4️⃣ Context ===
+// === 4️⃣ Context
 export const AuthContext = createContext();
 export const useAuth = () => useContext(AuthContext);
 
@@ -79,14 +83,14 @@ export const AuthProvider = ({ children }) => {
   const [balances, setBalances] = useState({});
   const [rates, setRates] = useState({});
   const [activeNetwork, setActiveNetwork] = useState("eth");
-  const [privateKey, setPrivateKey] = useState(null);
   const [loading, setLoading] = useState(true);
+
   const inactivityTimer = useRef(null);
   const balanceInterval = useRef(null);
 
   const isClient = typeof window !== "undefined";
 
-  // === 5️⃣ Load Session iš Supabase ===
+  // === 5️⃣ Load Session iš Supabase
   useEffect(() => {
     if (!isClient) return;
 
@@ -110,7 +114,7 @@ export const AuthProvider = ({ children }) => {
     return () => subscription?.unsubscribe();
   }, [isClient]);
 
-  // === 6️⃣ Auto Wallet Loader SAUGUS useEffect ===
+  // === 6️⃣ Auto Wallet Loader
   useEffect(() => {
     if (!isClient) return;
     if (!user?.email) return;
@@ -119,7 +123,7 @@ export const AuthProvider = ({ children }) => {
     loadOrCreateWallet(user.email);
   }, [user, isClient, wallet]);
 
-  // === 7️⃣ Auto Redirect po login į Dashboard ===
+  // === 7️⃣ Auto Redirect po login į Dashboard
   useEffect(() => {
     if (!isClient) return;
     if (!loading && user && pathname === "/") {
@@ -127,7 +131,7 @@ export const AuthProvider = ({ children }) => {
     }
   }, [user, loading, pathname, router, isClient]);
 
-  // === 8️⃣ Auto Logout po 10 minučių
+  // === 8️⃣ Inactivity Logout po 10 minučių
   useEffect(() => {
     if (!isClient) return;
 
@@ -162,20 +166,9 @@ export const AuthProvider = ({ children }) => {
     }
   }, [activeNetwork, isClient]);
 
-  // === 1️⃣0️⃣ Load arba Create Wallet su 3 lygių fallback
+  // === 1️⃣0️⃣ Load arba Create Wallet su 2 fallback
   const loadOrCreateWallet = async (email) => {
     try {
-      const localKey = loadPrivateKey();
-
-      if (localKey && isAddress(new Wallet(localKey).address)) {
-        console.log("✅ Loaded wallet from localStorage.");
-        setupWallet(localKey);
-        return;
-      } else {
-        console.warn("⚠️ Local key missing or invalid. Trying Supabase...");
-        localStorage.removeItem("userPrivateKey");
-      }
-
       setLoading(true);
 
       const { data, error } = await supabase
@@ -186,35 +179,33 @@ export const AuthProvider = ({ children }) => {
 
       if (error) throw error;
 
+      let privateKey;
+
       if (data?.encrypted_key) {
-        const decrypted = await decrypt(data.encrypted_key);
-        if (decrypted && isAddress(new Wallet(decrypted).address)) {
-          console.log("✅ Loaded wallet from Supabase.");
-          savePrivateKey(decrypted);
-          setupWallet(decrypted);
-          return;
-        } else {
-          console.warn("⚠️ Supabase key invalid.");
+        privateKey = await decrypt(data.encrypted_key);
+        if (!isAddress(new Wallet(privateKey).address)) {
+          throw new Error("Invalid private key from Supabase.");
         }
       } else {
-        console.warn("⚠️ No wallet found in Supabase.");
+        console.warn("⚠️ No wallet found. Creating...");
+        const newWallet = Wallet.createRandom();
+        privateKey = newWallet.privateKey;
+        const encrypted = await encrypt(privateKey);
+
+        await supabase.from("wallets").insert({
+          user_email: email,
+          eth_address: newWallet.address,
+          bnb_address: newWallet.address,
+          tbnb_address: newWallet.address,
+          matic_address: newWallet.address,
+          avax_address: newWallet.address,
+          encrypted_key: encrypted,
+          created_at: new Date().toISOString(),
+        });
       }
 
-      console.log("🚀 Creating new wallet...");
-      const newWallet = Wallet.createRandom();
-      const encrypted = await encrypt(newWallet.privateKey);
-      await supabase.from("wallets").insert({
-        user_email: email,
-        eth_address: newWallet.address,
-        bnb_address: newWallet.address,
-        tbnb_address: newWallet.address,
-        matic_address: newWallet.address,
-        avax_address: newWallet.address,
-        encrypted_key: encrypted,
-        created_at: new Date().toISOString(),
-      });
-      savePrivateKey(newWallet.privateKey);
-      setupWallet(newWallet.privateKey);
+      setupWallet(privateKey);
+
     } catch (error) {
       console.error("Wallet load error:", error.message);
       if (email) {
@@ -230,33 +221,20 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const setupWallet = (key) => {
-    const baseWallet = new Wallet(key);
+  const setupWallet = (privateKey) => {
+    const baseWallet = new Wallet(privateKey);
     const signers = {};
 
     Object.entries(RPC).forEach(([network, rpcUrl]) => {
-      signers[network] = new Wallet(key, new JsonRpcProvider(rpcUrl));
+      signers[network] = new Wallet(privateKey, new JsonRpcProvider(rpcUrl));
     });
 
     setWallet({ wallet: baseWallet, signers });
-    setPrivateKey(key);
+
     loadBalances(signers);
 
     if (balanceInterval.current) clearInterval(balanceInterval.current);
     balanceInterval.current = setInterval(() => loadBalances(signers), 180000); // kas 3min
-  };
-
-  const savePrivateKey = (key) => {
-    if (!isClient) return;
-    if (!localStorage.getItem("userPrivateKey")) {
-      localStorage.setItem("userPrivateKey", JSON.stringify({ key }));
-    }
-  };
-
-  const loadPrivateKey = () => {
-    if (!isClient) return null;
-    const stored = localStorage.getItem("userPrivateKey");
-    return stored ? JSON.parse(stored)?.key : null;
   };
 
   // === 1️⃣1️⃣ Load Balances + Rates
@@ -306,7 +284,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // === 1️⃣2️⃣ Login/Logout
+  // === 1️⃣2️⃣ Login/Logout funkcijos
   const signInWithMagicLink = async (email) => {
     const origin = isClient ? window.location.origin : "https://nordbalticum.com";
     const { error } = await supabase.auth.signInWithOtp({
@@ -338,10 +316,6 @@ export const AuthProvider = ({ children }) => {
     } finally {
       setUser(null);
       setWallet(null);
-      if (isClient) {
-        localStorage.removeItem("userPrivateKey");
-        localStorage.removeItem("activeNetwork");
-      }
       if (balanceInterval.current) clearInterval(balanceInterval.current);
       router.replace("/");
     }
@@ -387,6 +361,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // === 1️⃣4️⃣ Return Context
   return (
     <AuthContext.Provider
       value={{
