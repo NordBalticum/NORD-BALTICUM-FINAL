@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/AuthContext"; // ✅ Ultimate Auth
 
 import SwipeSelector from "@/components/SwipeSelector";
 import SuccessModal from "@/components/modals/SuccessModal";
@@ -29,7 +29,7 @@ const buttonColors = {
 
 export default function SendPage() {
   const router = useRouter();
-  const { user, wallet, balances, sendTransaction, refreshBalance, loading, loadOrCreateWallet } = useAuth(); // ✅ prijungiam loadOrCreateWallet
+  const { user, wallet, balances, sendTransaction, refreshBalance, loading } = useAuth(); // ❌ No loadOrCreateWallet čia!
 
   const [isClient, setIsClient] = useState(false);
   const [localNetwork, setLocalNetwork] = useState("eth");
@@ -54,15 +54,6 @@ export default function SendPage() {
       router.replace("/");
     }
   }, [isClient, loading, user, router]);
-
-  // ✅ Auto load Wallet jei nerasta
-  useEffect(() => {
-    if (!isClient) return;
-    if (!user?.email) return;
-    if (wallet?.wallet?.address) return; // ✅ Wallet jau yra
-
-    loadOrCreateWallet(user.email); // ✅ jei reikia, automatiškai kraunam
-  }, [user, wallet, isClient, loadOrCreateWallet]);
 
   // ✅ Network Short Name
   const shortName = useMemo(() => {
