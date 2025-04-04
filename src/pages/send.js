@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 
 import { useMagicLink } from "@/contexts/MagicLinkContext";
 import { useWallet } from "@/contexts/WalletContext";
@@ -23,13 +23,12 @@ const networkShortNames = {
   avax: "AVAX",
 };
 
-// Mygtuko spalvos pagal tinklą
 const buttonColors = {
-  eth: "#0072ff",    // Mėlynas
-  bnb: "#f0b90b",    // Geltonas
-  tbnb: "#f0b90b",   // Testnet irgi geltonas kaip BNB
-  matic: "#8247e5",  // Violetinis
-  avax: "#e84142",   // Raudonas
+  eth: "#0072ff",   // Mėlynas
+  bnb: "#f0b90b",   // Geltonas
+  tbnb: "#f0b90b",  // Testnet
+  matic: "#8247e5", // Violetinis
+  avax: "#e84142",  // Raudonas
 };
 
 export default function Send() {
@@ -46,13 +45,26 @@ export default function Send() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [sending, setSending] = useState(false);
   const [balanceUpdated, setBalanceUpdated] = useState(false);
+  const [toastMessage, setToastMessage] = useState("");
+  const [isClient, setIsClient] = useState(false);
 
-  // Užkraunam ETH kaip default
   useEffect(() => {
-    if (!activeNetwork) {
+    if (typeof window !== "undefined") {
+      setIsClient(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isClient && !activeNetwork) {
       setActiveNetwork("eth");
     }
-  }, [activeNetwork, setActiveNetwork]);
+  }, [isClient, activeNetwork, setActiveNetwork]);
+
+  useEffect(() => {
+    if (!user) {
+      router.replace("/");
+    }
+  }, [user, router]);
 
   const parsedAmount = Number(amount || 0);
   const fee = parsedAmount * 0.03;
@@ -73,11 +85,9 @@ export default function Send() {
     if (user?.email) {
       await refreshBalance(user.email, network);
     }
+    setToastMessage(`Network switched to ${networkShortNames[network] || network.toUpperCase()}`);
+    setTimeout(() => setToastMessage(""), 2000);
   }, [user, setActiveNetwork, refreshBalance]);
-
-  useEffect(() => {
-    if (!user) router.replace("/");
-  }, [user, router]);
 
   const isValidAddress = (address) => /^0x[a-fA-F0-9]{40}$/.test(address.trim());
 
@@ -139,7 +149,6 @@ export default function Send() {
     }
   }, [balanceUpdated]);
 
-  // Dinaminė mygtuko spalva
   const buttonStyle = {
     backgroundColor: buttonColors[activeNetwork?.toLowerCase()] || "black",
     color: "white",
@@ -161,11 +170,30 @@ export default function Send() {
       className={`${styles.main} ${background.gradient}`}
     >
       <div className={styles.wrapper}>
-        {balanceUpdated && (
-          <div className={styles.successAlert}>
-            Balance Updated!
-          </div>
-        )}
+        <AnimatePresence>
+          {balanceUpdated && (
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.4 }}
+              className={styles.successAlert}
+            >
+              Balance Updated!
+            </motion.div>
+          )}
+          {toastMessage && (
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.4 }}
+              className={styles.successAlert}
+            >
+              {toastMessage}
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         <h1 className={styles.title}>SEND CRYPTO</h1>
         <p className={styles.subtext}>Transfer crypto securely & instantly</p>
@@ -179,39 +207,24 @@ export default function Send() {
               <div className={styles.skeletonLine}></div>
             </div>
           ) : (
-            <>
-              {activeNetwork && (
-                <>
-                  <motion.p
-                    className={styles.whiteText}
-                    key={`balance-${activeNetwork}`}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ duration: 0.6 }}
-                  >
-                    Total Balance:&nbsp;
-                    <span className={styles.balanceAmount}>
-                      {netBalance.toFixed(6)} {shortName}
-                    </span>{" "}
-                    (~€{netEUR.toFixed(2)})
-                  </motion.p>
-
-                  <motion.p
-                    className={styles.whiteText}
-                    key={`sendable-${activeNetwork}`}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ duration: 0.6 }}
-                  >
-                    Max Sendable:&nbsp;
-                    <span className={styles.balanceAmount}>
-                      {netSendable.toFixed(6)} {shortName}
-                    </span>{" "}
-                    (includes 3% fee)
-                  </motion.p>
-                </>
-              )}
-            </>
+            activeNetwork && (
+              <>
+                <motion.p className={styles.whiteText}>
+                  Total Balance:&nbsp;
+                  <span className={styles.balanceAmount}>
+                    {netBalance.toFixed(6)} {shortName}
+                  </span>{" "}
+                  (~€{netEUR.toFixed(2)})
+                </motion.p>
+                <motion.p className={styles.whiteText}>
+                  Max Sendable:&nbsp;
+                  <span className={styles.balanceAmount}>
+                    {netSendable.toFixed(6)} {shortName}
+                  </span>{" "}
+                  (includes 3% fee)
+                </motion.p>
+              </>
+            )
           )}
         </div>
 
@@ -290,4 +303,4 @@ export default function Send() {
       </div>
     </motion.main>
   );
-                       }
+}
