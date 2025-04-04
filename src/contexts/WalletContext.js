@@ -1,18 +1,20 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useState, useEffect } from "react";
 import { Wallet, JsonRpcProvider } from "ethers";
 import { supabase } from "@/utils/supabaseClient";
 import { useMagicLink } from "@/contexts/MagicLinkContext";
 
 export const WalletContext = createContext();
 
+// --- Encryption/Decryption ---
 const ENCRYPTION_SECRET = process.env.NEXT_PUBLIC_ENCRYPTION_SECRET || "nordbalticum-fallback";
 
 const encode = (str) => new TextEncoder().encode(str);
 const decode = (buf) => new TextDecoder().decode(buf);
 
 const getKey = async (password) => {
+  if (typeof window === "undefined") return null;
   const keyMaterial = await window.crypto.subtle.importKey(
     "raw",
     encode(password),
@@ -20,7 +22,6 @@ const getKey = async (password) => {
     false,
     ["deriveKey"]
   );
-
   return window.crypto.subtle.deriveKey(
     {
       name: "PBKDF2",
@@ -36,6 +37,7 @@ const getKey = async (password) => {
 };
 
 const encrypt = async (text) => {
+  if (typeof window === "undefined") return null;
   const iv = window.crypto.getRandomValues(new Uint8Array(12));
   const key = await getKey(ENCRYPTION_SECRET);
   const encrypted = await window.crypto.subtle.encrypt(
@@ -47,6 +49,7 @@ const encrypt = async (text) => {
 };
 
 const decrypt = async (ciphertext) => {
+  if (typeof window === "undefined") return null;
   const { iv, data } = JSON.parse(atob(ciphertext));
   const key = await getKey(ENCRYPTION_SECRET);
   const decrypted = await window.crypto.subtle.decrypt(
@@ -57,22 +60,19 @@ const decrypt = async (ciphertext) => {
   return decode(decrypted);
 };
 
+// --- Wallet Provider ---
 export const WalletProvider = ({ children }) => {
   const { user } = useMagicLink();
-  const [wallet, setWallet] = useState(null); // { wallet, signers }
+  const [wallet, setWallet] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeNetwork, setActiveNetwork] = useState("eth");
 
   useEffect(() => {
-    const init = async () => {
-      if (!user?.email || typeof window === "undefined") {
-        setWallet(null);
-        setLoading(false);
-        return;
-      }
-      await loadOrCreateWallet(user.email);
-    };
-    init();
+    if (!user?.email || typeof window === "undefined") {
+      setLoading(false);
+      return;
+    }
+    loadOrCreateWallet(user.email);
   }, [user]);
 
   const loadOrCreateWallet = async (email) => {
@@ -80,17 +80,15 @@ export const WalletProvider = ({ children }) => {
     try {
       const localKey = await loadPrivateKeyFromStorage();
       if (localKey) {
-        const localWallet = new Wallet(localKey);
-        setWallet(generateWalletData(localWallet));
+        setWallet(await generateWallets(localKey));
         return;
       }
 
-      const dbWallet = await fetchWalletFromDB(email);
-      if (dbWallet?.encrypted_key) {
-        const decryptedKey = await decrypt(dbWallet.encrypted_key);
+      const db = await fetchWalletFromDB(email);
+      if (db?.encrypted_key) {
+        const decryptedKey = await decrypt(db.encrypted_key);
         await savePrivateKeyToStorage(decryptedKey);
-        const newWallet = new Wallet(decryptedKey);
-        setWallet(generateWalletData(newWallet));
+        setWallet(await generateWallets(decryptedKey));
         return;
       }
 
@@ -98,7 +96,7 @@ export const WalletProvider = ({ children }) => {
       const encryptedKey = await encrypt(newWallet.privateKey);
       await savePrivateKeyToStorage(newWallet.privateKey);
       await saveWalletToDB(email, encryptedKey, newWallet.address);
-      setWallet(generateWalletData(newWallet));
+      setWallet(await generateWallets(newWallet.privateKey));
     } catch (err) {
       console.error("Wallet error:", err);
       setWallet(null);
@@ -107,42 +105,37 @@ export const WalletProvider = ({ children }) => {
     }
   };
 
-  const generateWalletData = (wallet) => {
-    const providers = {
-      eth: new JsonRpcProvider("https://rpc.ankr.com/eth"),
-      bnb: new JsonRpcProvider("https://bsc-dataseed.binance.org"),
-      tbnb: new JsonRpcProvider("https://data-seed-prebsc-1-s1.binance.org:8545"),
-      matic: new JsonRpcProvider("https://polygon-rpc.com"),
-      avax: new JsonRpcProvider("https://api.avax.network/ext/bc/C/rpc"),
+  const generateWallets = async (privateKey) => {
+    const rpcUrls = {
+      eth: "https://rpc.ankr.com/eth",
+      bnb: "https://bsc-dataseed.binance.org",
+      tbnb: "https://data-seed-prebsc-1-s1.binance.org:8545",
+      matic: "https://polygon-rpc.com",
+      avax: "https://api.avax.network/ext/bc/C/rpc",
     };
-
     const signers = {};
-    for (const chain in providers) {
-      signers[chain] = new Wallet(wallet.privateKey, providers[chain]);
+    for (const [network, url] of Object.entries(rpcUrls)) {
+      signers[network] = new Wallet(privateKey, new JsonRpcProvider(url));
     }
-
-    return { wallet, signers };
+    return { privateKey, signers };
   };
 
   const savePrivateKeyToStorage = async (privateKey) => {
     if (typeof window === "undefined") return;
-    try {
-      localStorage.setItem("userPrivateKey", JSON.stringify({ key: privateKey }));
-    } catch (err) {
-      console.error("Save private key error:", err);
-    }
+    localStorage.setItem("userPrivateKey", JSON.stringify({ key: privateKey }));
   };
 
   const loadPrivateKeyFromStorage = async () => {
     if (typeof window === "undefined") return null;
-    try {
-      const item = localStorage.getItem("userPrivateKey");
-      if (!item) return null;
-      const parsed = JSON.parse(item);
-      return parsed?.key || null;
-    } catch {
-      return null;
-    }
+    const stored = localStorage.getItem("userPrivateKey");
+    if (!stored) return null;
+    const parsed = JSON.parse(stored);
+    return parsed?.key || null;
+  };
+
+  const exportPrivateKey = async () => {
+    if (typeof window === "undefined") return null;
+    return await loadPrivateKeyFromStorage();
   };
 
   const fetchWalletFromDB = async (email) => {
@@ -151,9 +144,8 @@ export const WalletProvider = ({ children }) => {
       .select("*")
       .eq("user_email", email)
       .maybeSingle();
-
     if (error) {
-      console.error("Supabase fetch error:", error.message);
+      console.error("DB fetch error:", error.message);
       return null;
     }
     return data;
@@ -169,14 +161,24 @@ export const WalletProvider = ({ children }) => {
       matic_address: address,
       avax_address: address,
     };
-    const { error } = await supabase.from("wallets").upsert(payload, { onConflict: ["user_email"] });
+    const { error } = await supabase
+      .from("wallets")
+      .upsert(payload, { onConflict: ["user_email"] });
     if (error) {
-      console.error("Supabase save error:", error.message);
+      console.error("DB save error:", error.message);
     }
   };
 
   return (
-    <WalletContext.Provider value={{ wallet, loading, activeNetwork, setActiveNetwork }}>
+    <WalletContext.Provider
+      value={{
+        wallet,
+        loading,
+        exportPrivateKey,
+        activeNetwork,
+        setActiveNetwork,
+      }}
+    >
       {children}
     </WalletContext.Provider>
   );
