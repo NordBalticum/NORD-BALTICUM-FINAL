@@ -48,15 +48,17 @@ export default function Send() {
   const [toastMessage, setToastMessage] = useState("");
   const [isClient, setIsClient] = useState(false);
 
+  // Detect if we are client side
   useEffect(() => {
     if (typeof window !== "undefined") {
       setIsClient(true);
     }
   }, []);
 
+  // Set default ETH if no network selected
   useEffect(() => {
     if (isClient && !activeNetwork) {
-      setActiveNetwork("eth"); // DEFAULT ETH
+      setActiveNetwork("eth");
     }
   }, [isClient, activeNetwork, setActiveNetwork]);
 
@@ -98,22 +100,18 @@ export default function Send() {
       alert("Invalid receiver address.");
       return;
     }
-
     if (!amount || isNaN(parsedAmount) || parsedAmount <= 0) {
       alert("Amount must be a positive number.");
       return;
     }
-
     if (parsedAmount > netSendable) {
       alert(`Max sendable: ${netSendable.toFixed(6)} ${shortName}`);
       return;
     }
-
     if (parsedAmount > netBalance) {
       alert(`Insufficient balance. You have only ${netBalance.toFixed(6)} ${shortName}.`);
       return;
     }
-
     setShowConfirm(true);
   };
 
@@ -162,7 +160,6 @@ export default function Send() {
     transition: "all 0.3s ease",
   };
 
-  // SSR FIX: jei client dar neužsikrovė arba activeNetwork nėra
   if (!isClient || !activeNetwork) {
     return <div className={styles.loading}>Loading...</div>;
   }
@@ -203,7 +200,9 @@ export default function Send() {
         <h1 className={styles.title}>SEND CRYPTO</h1>
         <p className={styles.subtext}>Transfer crypto securely & instantly</p>
 
-        <SwipeSelector mode="send" onSelect={handleNetworkChange} />
+        {isClient && (
+          <SwipeSelector mode="send" onSelect={handleNetworkChange} />
+        )}
 
         <div className={styles.balanceTable}>
           {loading ? (
