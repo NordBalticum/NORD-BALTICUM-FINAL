@@ -11,14 +11,14 @@ import { SendCryptoProvider } from "@/contexts/SendCryptoContext";
 
 import Layout from "@/components/Layout";
 
-export default function App({ Component, pageProps }) {
+export default function RootLayout({ children }) {
   return (
     <MagicLinkProvider>
       <WalletProvider>
         <BalanceProvider>
           <SendCryptoProvider>
             <Layout>
-              <Component {...pageProps} />
+              {children}
             </Layout>
           </SendCryptoProvider>
         </BalanceProvider>
