@@ -11,7 +11,7 @@ import { useBalances } from "@/contexts/BalanceContext";
 import SwipeSelector from "@/components/SwipeSelector";
 import SuccessModal from "@/components/modals/SuccessModal";
 
-import styles from "@/styles/dashboard.module.css"; // KLONUOTAS iš dashboard
+import styles from "@/styles/send.module.css"; // KLONUOTAS iš dashboard
 import background from "@/styles/background.module.css";
 
 const networkShortNames = {
