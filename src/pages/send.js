@@ -68,8 +68,13 @@ export default function Send() {
     }
   }, [user, isClient, router]);
 
+  // --- Loading State ---
   if (!isClient || user === undefined || activeNetwork === undefined) {
     return <div className={styles.loading}>Loading...</div>;
+  }
+
+  if (user === null) {
+    return null;
   }
 
   const parsedAmount = Number(amount || 0);
