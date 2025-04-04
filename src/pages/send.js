@@ -14,6 +14,14 @@ import SuccessModal from "@/components/modals/SuccessModal";
 import styles from "@/styles/send.module.css";
 import background from "@/styles/background.module.css";
 
+const networkNameToSymbol = {
+  "Ethereum": "ETH",
+  "BNB Chain": "BNB",
+  "BNB Testnet": "tBNB",
+  "Polygon": "MATIC",
+  "Avalanche": "AVAX",
+};
+
 export default function Send() {
   const router = useRouter();
   const { user } = useMagicLink();
@@ -32,17 +40,7 @@ export default function Send() {
   const fee = parsedAmount * 0.03;
   const amountAfterFee = parsedAmount - fee;
 
-  // NAUJAS bank lygio shortName mapperis
-  const networkShortNames = {
-    "Ethereum": "ETH",
-    "BNB Chain": "BNB",
-    "BNB Testnet": "tBNB",
-    "Polygon": "MATIC",
-    "Avalanche": "AVAX",
-  };
-
-  const shortName = useMemo(() => networkShortNames[activeNetwork] || "", [activeNetwork]);
-
+  const shortName = useMemo(() => networkNameToSymbol[activeNetwork] || "", [activeNetwork]);
   const netBalance = useMemo(() => Number(balance(activeNetwork) || 0), [balance, activeNetwork]);
   const netEUR = useMemo(() => Number(balanceEUR(activeNetwork) || 0), [balanceEUR, activeNetwork]);
   const netSendable = useMemo(() => Number(maxSendable(activeNetwork) || 0), [maxSendable, activeNetwork]);
@@ -55,10 +53,9 @@ export default function Send() {
     if (user?.email && activeNetwork) {
       refreshBalance(user.email, activeNetwork);
     }
-  }, [user, activeNetwork, refreshBalance]);
+  }, [user?.email, activeNetwork, refreshBalance]);
 
-  const isValidAddress = (address) =>
-    /^0x[a-fA-F0-9]{40}$/.test(address.trim());
+  const isValidAddress = (address) => /^0x[a-fA-F0-9]{40}$/.test(address.trim());
 
   const handleSend = () => {
     const trimmed = receiver.trim();
