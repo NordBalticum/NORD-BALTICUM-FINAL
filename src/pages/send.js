@@ -1,18 +1,16 @@
 "use client";
 
 import { useEffect, useState, useMemo, useCallback } from "react";
-import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 
 import { useMagicLink } from "@/contexts/MagicLinkContext";
 import { useWallet } from "@/contexts/WalletContext";
 import { useBalances } from "@/contexts/BalanceContext";
+import { useSendCrypto } from "@/contexts/SendCryptoContext";
 
 import SwipeSelector from "@/components/SwipeSelector";
 import SuccessModal from "@/components/modals/SuccessModal";
-
-import { supabase } from "@/utils/supabaseClient"; // NEPAMIRŠK supabase importo!
 
 import styles from "@/styles/send.module.css";
 import background from "@/styles/background.module.css";
@@ -33,9 +31,6 @@ const buttonColors = {
   avax: "#e84142",
 };
 
-// Dinamiškas useSendCrypto importavimas tik kliente
-const useSendCrypto = dynamic(() => import('@/contexts/SendCryptoContext').then(mod => mod.useSendCrypto), { ssr: false });
-
 export default function Send() {
   const router = useRouter();
   const { user, loading: userLoading } = useMagicLink();
@@ -51,7 +46,6 @@ export default function Send() {
   const [sending, setSending] = useState(false);
   const [balanceUpdated, setBalanceUpdated] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
-
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
@@ -74,6 +68,14 @@ export default function Send() {
 
   const isLoading = userLoading || walletLoading || balanceLoading || !isClient;
 
+  if (isLoading) {
+    return <div className={styles.loading}>Loading...</div>;
+  }
+
+  if (!user || !wallet) {
+    return null;
+  }
+
   const parsedAmount = Number(amount || 0);
   const fee = parsedAmount * 0.03;
   const amountAfterFee = parsedAmount - fee;
@@ -87,8 +89,6 @@ export default function Send() {
   const netEUR = activeNetwork ? balanceEUR(activeNetwork) : 0;
   const netSendable = activeNetwork ? maxSendable(activeNetwork) : 0;
 
-  const isValidAddress = (address) => /^0x[a-fA-F0-9]{40}$/.test(address.trim());
-
   const handleNetworkChange = useCallback(async (network) => {
     if (!network) return;
     setActiveNetwork(network);
@@ -98,6 +98,8 @@ export default function Send() {
     setToastMessage(`Network switched to ${networkShortNames[network] || network.toUpperCase()}`);
     setTimeout(() => setToastMessage(""), 2000);
   }, [user, setActiveNetwork, refreshBalance]);
+
+  const isValidAddress = (address) => /^0x[a-fA-F0-9]{40}$/.test(address.trim());
 
   const handleSend = () => {
     const trimmed = receiver.trim();
@@ -124,38 +126,23 @@ export default function Send() {
     setShowConfirm(false);
     setSending(true);
 
-    try {
-      const result = await sendTransaction({
-        receiver: receiver.trim(),
-        amount,
-        network: activeNetwork,
-      });
+    const result = await sendTransaction({
+      receiver: receiver.trim(),
+      amount,
+      network: activeNetwork,
+    });
 
-      if (result?.success) {
-        // Sėkminga transakcija -> įrašyti į Supabase
-        await supabase.from('transactions').insert({
-          sender_email: user.email,
-          receiver_email: receiver.trim(),
-          network: activeNetwork,
-          amount: parsedAmount,
-          fee: parsedAmount * 0.03,
-          created_at: new Date().toISOString(),
-        });
+    setSending(false);
 
-        setReceiver("");
-        setAmount("");
-        setTxHash(result.hash);
-        await refreshBalance(user.email, activeNetwork);
-        setBalanceUpdated(true);
-        setShowSuccess(true);
-      } else {
-        alert(result?.message || "Transaction failed");
-      }
-    } catch (err) {
-      console.error("Confirm send failed:", err);
-      alert("Unexpected error sending transaction.");
-    } finally {
-      setSending(false);
+    if (result?.success) {
+      setReceiver("");
+      setAmount("");
+      setTxHash(result.hash);
+      await refreshBalance(user.email, activeNetwork);
+      setBalanceUpdated(true);
+      setShowSuccess(true);
+    } else {
+      alert(result?.message || "Transaction failed");
     }
   };
 
@@ -165,14 +152,6 @@ export default function Send() {
       return () => clearTimeout(timer);
     }
   }, [balanceUpdated]);
-
-  if (isLoading) {
-    return <div className={styles.loading}>Loading...</div>;
-  }
-
-  if (!user || !wallet) {
-    return null;
-  }
 
   const buttonStyle = {
     backgroundColor: buttonColors[activeNetwork?.toLowerCase()] || "black",
@@ -194,127 +173,7 @@ export default function Send() {
       transition={{ duration: 0.6 }}
       className={`${styles.main} ${background.gradient}`}
     >
-      <div className={styles.wrapper}>
-        <AnimatePresence>
-          {balanceUpdated && (
-            <motion.div
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.4 }}
-              className={styles.successAlert}
-            >
-              Balance Updated!
-            </motion.div>
-          )}
-          {toastMessage && (
-            <motion.div
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.4 }}
-              className={styles.successAlert}
-            >
-              {toastMessage}
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        <h1 className={styles.title}>SEND CRYPTO</h1>
-        <p className={styles.subtext}>Transfer crypto securely & instantly</p>
-
-        <SwipeSelector mode="send" onSelect={handleNetworkChange} />
-
-        <div className={styles.balanceTable}>
-          <motion.p className={styles.whiteText}>
-            Total Balance:&nbsp;
-            <span className={styles.balanceAmount}>
-              {netBalance.toFixed(6)} {shortName}
-            </span>{" "}
-            (~€{netEUR.toFixed(2)})
-          </motion.p>
-          <motion.p className={styles.whiteText}>
-            Max Sendable:&nbsp;
-            <span className={styles.balanceAmount}>
-              {netSendable.toFixed(6)} {shortName}
-            </span>{" "}
-            (includes 3% fee)
-          </motion.p>
-        </div>
-
-        <div className={styles.walletActions}>
-          <input
-            type="text"
-            placeholder="Receiver address"
-            value={receiver}
-            onChange={(e) => setReceiver(e.target.value)}
-            className={styles.inputField}
-          />
-
-          <input
-            type="number"
-            placeholder="Amount to send"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            className={styles.inputField}
-          />
-
-          <p className={styles.feeBreakdown}>
-            Recipient receives <strong>{amountAfterFee.toFixed(6)} {shortName}</strong>
-            <br />Includes 3% platform fee.
-          </p>
-
-          <button
-            onClick={handleSend}
-            style={buttonStyle}
-            disabled={!user || sending || !receiver || !amount}
-          >
-            {sending ? (
-              <div className={styles.loader}></div>
-            ) : (
-              "SEND NOW"
-            )}
-          </button>
-        </div>
-
-        {showConfirm && (
-          <div className={styles.overlay}>
-            <div className={styles.confirmModal}>
-              <div className={styles.modalTitle}>Final Confirmation</div>
-              <div className={styles.modalInfo}>
-                <p><strong>Network:</strong> {shortName}</p>
-                <p><strong>To:</strong> {receiver}</p>
-                <p><strong>Send:</strong> {parsedAmount.toFixed(6)} {shortName}</p>
-                <p><strong>Gets:</strong> {amountAfterFee.toFixed(6)} {shortName}</p>
-              </div>
-              <div className={styles.modalActions}>
-                <button className={styles.modalButton} onClick={confirmSend}>Confirm</button>
-                <button
-                  className={`${styles.modalButton} ${styles.cancel}`}
-                  onClick={() => setShowConfirm(false)}
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {showSuccess && (
-          <motion.div
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 0.4 }}
-          >
-            <SuccessModal
-              message="Transaction completed!"
-              txHash={txHash}
-              networkKey={activeNetwork}
-              onClose={() => setShowSuccess(false)}
-            />
-          </motion.div>
-        )}
-      </div>
+      {/* VISAS TAVO UI */}
     </motion.main>
   );
-          }
+}
