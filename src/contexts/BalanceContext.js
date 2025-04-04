@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect, useCallback } from "react";
-import { JsonRpcProvider, formatEther, isAddress } from "ethers";  // <-- PRIDĖTAS isAddress!
+import { JsonRpcProvider, formatEther, isAddress } from "ethers"; 
 import { useWallet } from "@/contexts/WalletContext";
 
 export const BalanceContext = createContext();
@@ -22,6 +22,7 @@ const coinMap = {
   avax: "avalanche-2",
 };
 
+// Fetch real-time crypto rates
 const fetchRates = async () => {
   try {
     const ids = Object.values(coinMap).join(",");
@@ -34,12 +35,10 @@ const fetchRates = async () => {
   }
 };
 
+// Fetch balance from blockchain
 const fetchBalance = async (rpcUrl, address) => {
   try {
-    if (!isAddress(address)) {
-      console.error("Invalid address:", address);
-      return 0;
-    }
+    if (!address || !isAddress(address)) return 0;
     const provider = new JsonRpcProvider(rpcUrl);
     const balance = await provider.getBalance(address);
     return parseFloat(formatEther(balance));
@@ -68,24 +67,24 @@ export const BalanceProvider = ({ children }) => {
 
     try {
       const addresses = Object.keys(wallet.signers).reduce((acc, network) => {
-        acc[network] = wallet.signers[network].address;
+        const address = wallet.signers[network]?.address;
+        if (address && isAddress(address)) {
+          acc[network] = address;
+        }
         return acc;
       }, {});
 
-      const [rateData, ...balanceData] = await Promise.all([
+      const [rateData, ...balancePromises] = await Promise.all([
         fetchRates(),
-        ...Object.keys(addresses).map(async (network) => {
-          const balance = await fetchBalance(RPC[network], addresses[network]);
-          return { network, balance };
-        }),
+        ...Object.entries(addresses).map(([network, address]) => fetchBalance(RPC[network], address)),
       ]);
 
-      const balancesResult = {};
-      balanceData.forEach(({ network, balance }) => {
-        balancesResult[network] = balance;
+      const newBalances = {};
+      Object.keys(addresses).forEach((network, index) => {
+        newBalances[network] = balancePromises[index];
       });
 
-      setBalances(balancesResult);
+      setBalances(newBalances);
       setRates(rateData);
     } catch (error) {
       console.error("Error loading balances:", error);
@@ -101,12 +100,12 @@ export const BalanceProvider = ({ children }) => {
       try {
         await loadBalances();
       } catch (error) {
-        console.error("Error in balance interval:", error);
+        console.error("Balance loading interval error:", error);
       }
     };
 
     safeLoad();
-    const interval = setInterval(safeLoad, 30000);
+    const interval = setInterval(safeLoad, 30000); // Every 30 sec
     return () => clearInterval(interval);
   }, [wallet, loadBalances, isClient]);
 
@@ -124,8 +123,8 @@ export const BalanceProvider = ({ children }) => {
     return rawBalance * 0.97;
   };
 
-  const refreshBalance = async (email, network) => {
-    if (!wallet || !wallet.signers || !network || !isClient) return;
+  const refreshBalance = async (_email, network) => {
+    if (!wallet || !wallet.signers || !isClient || !network) return;
     const address = wallet.signers[network]?.address;
     if (!address || !isAddress(address)) return;
 
@@ -136,7 +135,7 @@ export const BalanceProvider = ({ children }) => {
         [network]: balance,
       }));
     } catch (error) {
-      console.error(`Refresh balance error for ${network}:`, error);
+      console.error(`Error refreshing balance for ${network}:`, error);
     }
   };
 
