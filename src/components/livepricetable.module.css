@@ -16,8 +16,8 @@
 
 .currencyButton {
   background: transparent;
-  border: 1px solid #FFD700; /* Geltonas apvadas */
-  color: #FFD700;
+  border: 1px solid white;
+  color: white;
   font-family: var(--font-crypto);
   font-weight: 600;
   font-size: 0.65rem;
@@ -28,13 +28,13 @@
 }
 
 .currencyButton:hover {
-  background: rgba(255, 215, 0, 0.15); /* Švelnus geltonas hover */
+  background: rgba(255, 255, 255, 0.15);
 }
 
 .active {
-  background: #FFD700;
+  background: white;
   color: black;
-  border-color: #FFD700;
+  border-color: white;
 }
 
 .grid {
@@ -47,7 +47,7 @@
 
 .card {
   background: rgba(255, 255, 255, 0.06);
-  border: 1px solid #FFD700; /* GELTONAS apvadas */
+  border: 1px solid #FFD700; /* Tik šitas geltonas */
   border-radius: 14px;
   padding: 12px 6px;
   display: flex;
