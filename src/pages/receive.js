@@ -11,7 +11,7 @@ import background from "@/styles/background.module.css";
 
 export default function Receive() {
   const router = useRouter();
-  const { user, wallet, loading } = useAuth(); // ✅ Naudojam ultimate
+  const { user, wallet, loading } = useAuth(); // ✅ Ultimate useAuth()
   const [isClient, setIsClient] = useState(false);
   const [copied, setCopied] = useState(false);
 
@@ -28,8 +28,9 @@ export default function Receive() {
   }, [user, loading, isClient, router]);
 
   const handleCopy = () => {
-    if (!wallet?.wallet?.address) return;
-    navigator.clipboard.writeText(wallet.wallet.address);
+    const address = wallet?.signers?.bnb?.address; // ✅ Teisingai traukiam adresą
+    if (!address) return;
+    navigator.clipboard.writeText(address);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -38,9 +39,11 @@ export default function Receive() {
     return <div className={styles.loading}>Loading Wallet...</div>;
   }
 
-  if (!user || !wallet?.wallet?.address) {
+  if (!user || !wallet?.signers?.bnb?.address) {
     return <div className={styles.loading}>Wallet not found...</div>;
   }
+
+  const address = wallet.signers.bnb.address; // ✅ Gražiai ištrauktas adresas
 
   return (
     <motion.main
@@ -54,9 +57,9 @@ export default function Receive() {
           <h1 className={styles.title}>RECEIVE</h1>
           <p className={styles.subtext}>Your MultiNetwork Receiving Address</p>
 
-          {/* ✅ Pagrindinis Receive komponentas */}
+          {/* ✅ Receive komponentas su adresu */}
           <ReceiveComponent
-            address={wallet.wallet.address}
+            address={address}
             onCopy={handleCopy}
           />
 
