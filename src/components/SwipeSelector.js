@@ -23,7 +23,7 @@ const supportedNetworks = [
   },
   {
     name: "Polygon",
-    symbol: "pol",
+    symbol: "matic",  // FIXED čia
     logo: "https://cryptologos.cc/logos/polygon-matic-logo.png",
   },
   {
@@ -47,7 +47,7 @@ export default function SwipeSelector({ mode = "send", onSelect }) {
 
   useEffect(() => {
     if (supportedNetworks[selectedIndex]) {
-      onSelect?.(supportedNetworks[selectedIndex].symbol); // SIUNČIA SYMBOL
+      onSelect?.(supportedNetworks[selectedIndex].symbol); // SIUNČIA SYMBOL teisingai
     }
     if (isMobile) scrollToCenter(selectedIndex);
   }, [selectedIndex, isMobile, onSelect]);
@@ -83,7 +83,6 @@ export default function SwipeSelector({ mode = "send", onSelect }) {
 
   return (
     <div className={styles.selectorContainer}>
-      {/* Arrows for Mobile */}
       <div className={styles.arrows}>
         <button className={styles.arrowBtn} onClick={goLeft}>
           ←
