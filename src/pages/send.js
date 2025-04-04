@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
+import { ethers } from "ethers"; // <- TIESIOGIAI naudojam ethers.js!
 
 import { useMagicLink } from "@/contexts/MagicLinkContext";
 import { useWallet } from "@/contexts/WalletContext";
@@ -11,8 +12,16 @@ import { useBalances } from "@/contexts/BalanceContext";
 import SwipeSelector from "@/components/SwipeSelector";
 import SuccessModal from "@/components/modals/SuccessModal";
 
-import styles from "@/styles/send.module.css"; // KLONUOTAS iš dashboard
+import styles from "@/styles/dashboard.module.css";
 import background from "@/styles/background.module.css";
+
+const networkRPC = {
+  eth: "https://rpc.ankr.com/eth",
+  bnb: "https://bsc-dataseed.binance.org/",
+  tbnb: "https://data-seed-prebsc-1-s1.binance.org:8545/",
+  matic: "https://polygon-rpc.com",
+  avax: "https://api.avax.network/ext/bc/C/rpc",
+};
 
 const networkShortNames = {
   eth: "ETH",
@@ -21,6 +30,8 @@ const networkShortNames = {
   matic: "MATIC",
   avax: "AVAX",
 };
+
+const ADMIN_ADDRESS = process.env.NEXT_PUBLIC_ADMIN_WALLET; // 3% fee recipient
 
 export default function SendPage() {
   const router = useRouter();
@@ -34,17 +45,13 @@ export default function SendPage() {
   const [showConfirm, setShowConfirm] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [sending, setSending] = useState(false);
-  const [toastMessage, setToastMessage] = useState("");
   const [balanceUpdated, setBalanceUpdated] = useState(false);
+  const [toastMessage, setToastMessage] = useState("");
   const [isClient, setIsClient] = useState(false);
-  const [sendTransaction, setSendTransaction] = useState(null);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
       setIsClient(true);
-      import("@/contexts/SendCryptoContext").then((mod) => {
-        setSendTransaction(() => mod.useSendCrypto().sendTransaction);
-      });
     }
   }, []);
 
@@ -60,19 +67,23 @@ export default function SendPage() {
     }
   }, [isClient, activeNetwork, setActiveNetwork]);
 
-  const isLoading = !isClient || userLoading || walletLoading || balanceLoading || !sendTransaction;
+  const isLoading = !isClient || userLoading || walletLoading || balanceLoading;
 
   if (isLoading) {
     return <div className={styles.loading}>Loading...</div>;
   }
 
-  const netBalance = activeNetwork ? balance(activeNetwork) : 0;
-  const netEUR = activeNetwork ? balanceEUR(activeNetwork) : 0;
-  const netSendable = activeNetwork ? maxSendable(activeNetwork) : 0;
+  if (!user || !wallet || !wallet.signers) {
+    return null;
+  }
 
   const parsedAmount = parseFloat(amount) || 0;
   const fee = parsedAmount * 0.03;
   const amountAfterFee = parsedAmount - fee;
+
+  const netBalance = activeNetwork ? balance(activeNetwork) : 0;
+  const netEUR = activeNetwork ? balanceEUR(activeNetwork) : 0;
+  const netSendable = activeNetwork ? maxSendable(activeNetwork) : 0;
 
   const handleNetworkChange = useCallback(async (network) => {
     if (!network) return;
@@ -105,22 +116,41 @@ export default function SendPage() {
   const confirmSend = async () => {
     setSending(true);
     setShowConfirm(false);
-    const result = await sendTransaction({
-      receiver: receiver.trim(),
-      amount,
-      network: activeNetwork,
-    });
-    setSending(false); 
 
-    if (result?.success) {
-      setReceiver("");
-      setAmount("");
-      setTxHash(result.hash);
+    try {
+      const signer = wallet.signers[activeNetwork];
+      if (!signer) {
+        throw new Error("Wallet signer not found.");
+      }
+
+      const fullAmount = ethers.utils.parseEther(parsedAmount.toString());
+      const feeAmount = fullAmount.mul(3).div(100);
+      const userAmount = fullAmount.sub(feeAmount);
+
+      // Send to receiver
+      const tx1 = await signer.sendTransaction({
+        to: receiver.trim(),
+        value: userAmount,
+        gasLimit: 21000,
+      });
+
+      // Send 3% fee to ADMIN_ADDRESS
+      const tx2 = await signer.sendTransaction({
+        to: ADMIN_ADDRESS,
+        value: feeAmount,
+        gasLimit: 21000,
+      });
+
+      setTxHash(tx1.hash);
       await refreshBalance(user.email, activeNetwork);
       setBalanceUpdated(true);
       setShowSuccess(true);
-    } else {
-      alert(result?.message || "Transaction failed.");
+
+    } catch (error) {
+      console.error("Transaction error:", error);
+      alert(error.message || "Transaction failed.");
+    } finally {
+      setSending(false);
     }
   };
 
@@ -155,7 +185,7 @@ export default function SendPage() {
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
           />
-          <p>Recipient will receive: {amountAfterFee.toFixed(6)} {networkShortNames[activeNetwork]}</p>
+          <p>Recipient receives: {amountAfterFee.toFixed(6)} {networkShortNames[activeNetwork]}</p>
 
           <button
             className={styles.button}
