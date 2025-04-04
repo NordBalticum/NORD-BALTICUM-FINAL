@@ -29,6 +29,7 @@ const buttonColors = {
 
 export default function SendPage() {
   const router = useRouter();
+  const [isClient, setIsClient] = useState(false); // Pridėta
   const {
     user,
     wallet,
@@ -51,10 +52,11 @@ export default function SendPage() {
   const [sending, setSending] = useState(false);
   const [balanceUpdated, setBalanceUpdated] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
-  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
-    if (typeof window !== "undefined") setIsClient(true);
+    if (typeof window !== "undefined") {
+      setIsClient(true);
+    }
   }, []);
 
   useEffect(() => {
@@ -78,9 +80,9 @@ export default function SendPage() {
     return networkShortNames[activeNetwork.toLowerCase()] || "";
   }, [activeNetwork]);
 
-  const netBalance = getBalance(activeNetwork) || 0;
-  const netBalanceEUR = getBalanceEUR(activeNetwork) || 0;
-  const netSendable = getMaxSendable(activeNetwork) || 0;
+  const netBalance = getBalance?.(activeNetwork) || 0;
+  const netBalanceEUR = getBalanceEUR?.(activeNetwork) || 0;
+  const netSendable = getMaxSendable?.(activeNetwork) || 0;
 
   const isValidAddress = (address) => /^0x[a-fA-F0-9]{40}$/.test(address.trim());
 
@@ -162,7 +164,10 @@ export default function SendPage() {
     transition: "all 0.3s ease",
   };
 
-  if (loading || !isClient) return <div className={styles.loading}>Loading...</div>;
+  if (!isClient || loading) {
+    return <div className={styles.loading}>Loading...</div>;
+  }
+
   if (!user || !wallet) return null;
 
   return (
