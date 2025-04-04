@@ -12,7 +12,7 @@ import background from "@/styles/background.module.css";
 
 export default function SettingsPage() {
   const router = useRouter();
-  const { user, wallet, signOut, loadOrCreateWallet } = useAuth(); // ✅ loadOrCreateWallet prijungiam
+  const { user, wallet, signOut } = useAuth(); // ❌ loadOrCreateWallet čia nereikalingas
 
   const [emailInput, setEmailInput] = useState("");
   const [walletAddress, setWalletAddress] = useState("Loading...");
@@ -27,16 +27,7 @@ export default function SettingsPage() {
     }
   }, []);
 
-  // ✅ Safe Wallet Loader
-  useEffect(() => {
-    if (!isClient) return;
-    if (!user?.email) return;
-    if (wallet?.wallet?.address) return; // ✅ Jau turim wallet, nieko nebedarom
-
-    loadOrCreateWallet(user.email); // ✅ Jei reikia, loadinam
-  }, [user, isClient, wallet, loadOrCreateWallet]);
-
-  // ✅ Užkraunam wallet adresą vieną kartą
+  // ✅ Užkraunam wallet adresą
   useEffect(() => {
     if (isClient && wallet?.wallet?.address) {
       setWalletAddress(wallet.wallet.address);
