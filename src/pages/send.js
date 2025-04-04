@@ -43,22 +43,23 @@ export default function Send() {
   const amountAfterFee = parsedAmount - fee;
 
   const shortName = useMemo(() => {
-    if (!activeNetwork) return "ETH";
-    return networkShortNames[activeNetwork?.toLowerCase()] || "ETH";
+    if (!activeNetwork) return ""; // jeigu nėra pasirinkimo, nerodyti nieko
+    return networkShortNames[activeNetwork?.toLowerCase()] || "";
   }, [activeNetwork]);
 
-  const netBalance = balance(activeNetwork);
-  const netEUR = balanceEUR(activeNetwork);
-  const netSendable = maxSendable(activeNetwork);
+  const netBalance = balance(activeNetwork) || 0;
+  const netEUR = balanceEUR(activeNetwork) || 0;
+  const netSendable = maxSendable(activeNetwork) || 0;
 
   useEffect(() => {
     if (!user) router.replace("/");
   }, [user, router]);
 
   const handleNetworkChange = useCallback(async (network) => {
-    setActiveNetwork(network);
+    if (!network) return;
+    setActiveNetwork(network); // Pakeičiam tinklą
     if (user?.email) {
-      await refreshBalance(user.email, network);
+      await refreshBalance(user.email, network); // Iškart gaunam naują balansą
     }
   }, [user, setActiveNetwork, refreshBalance]);
 
@@ -149,33 +150,37 @@ export default function Send() {
             </div>
           ) : (
             <>
-              <motion.p
-                className={styles.whiteText}
-                key={`balance-${activeNetwork}`}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.6 }}
-              >
-                Total Balance:&nbsp;
-                <span className={styles.balanceAmount}>
-                  {netBalance.toFixed(6)} {shortName}
-                </span>{" "}
-                (~€{netEUR.toFixed(2)})
-              </motion.p>
+              {activeNetwork && (
+                <>
+                  <motion.p
+                    className={styles.whiteText}
+                    key={`balance-${activeNetwork}`}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.6 }}
+                  >
+                    Total Balance:&nbsp;
+                    <span className={styles.balanceAmount}>
+                      {netBalance.toFixed(6)} {shortName}
+                    </span>{" "}
+                    (~€{netEUR.toFixed(2)})
+                  </motion.p>
 
-              <motion.p
-                className={styles.whiteText}
-                key={`sendable-${activeNetwork}`}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.6 }}
-              >
-                Max Sendable:&nbsp;
-                <span className={styles.balanceAmount}>
-                  {netSendable.toFixed(6)} {shortName}
-                </span>{" "}
-                (includes 3% fee)
-              </motion.p>
+                  <motion.p
+                    className={styles.whiteText}
+                    key={`sendable-${activeNetwork}`}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.6 }}
+                  >
+                    Max Sendable:&nbsp;
+                    <span className={styles.balanceAmount}>
+                      {netSendable.toFixed(6)} {shortName}
+                    </span>{" "}
+                    (includes 3% fee)
+                  </motion.p>
+                </>
+              )}
             </>
           )}
         </div>
