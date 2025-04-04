@@ -36,7 +36,6 @@ export const SendCryptoProvider = ({ children }) => {
       const fee = fullAmount.mul(3).div(100); // 3% fee
       const amountAfterFee = fullAmount.sub(fee);
 
-      // **Abi transakcijos vykdomos viena po kitos, kad būtų tikslus tvarkaraštis**
       const userTx = await signer.sendTransaction({
         to: receiver,
         value: amountAfterFee,
@@ -71,11 +70,11 @@ export const SendCryptoProvider = ({ children }) => {
 };
 
 export const useSendCrypto = () => {
-  if (typeof window === "undefined") {
-    // **SSR Safe fallback: visada gražina dummy funkciją**
+  const context = useContext(SendCryptoContext);
+  if (!context) {
     return {
-      sendTransaction: async () => ({ success: false, message: "SSR: Window not available" }),
+      sendTransaction: async () => ({ success: false, message: "SendCryptoContext not available" }),
     };
   }
-  return useContext(SendCryptoContext);
+  return context;
 };
