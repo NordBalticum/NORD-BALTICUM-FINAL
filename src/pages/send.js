@@ -48,41 +48,29 @@ export default function Send() {
   const [toastMessage, setToastMessage] = useState("");
   const [isClient, setIsClient] = useState(false);
 
-  // Detect client side
   useEffect(() => {
     if (typeof window !== "undefined") {
       setIsClient(true);
     }
   }, []);
 
-  // Kai puslapis pilnai užsikrovęs
+  // Page load checks for client side and network initialization
   useEffect(() => {
-    if (isClient && activeNetwork === undefined) return;
-    if (isClient && !activeNetwork) {
+    if (isClient && activeNetwork === undefined) {
       setActiveNetwork("eth");
     }
   }, [isClient, activeNetwork, setActiveNetwork]);
 
-  // Jei user yra null => redirect
+  // Redirect if user is null
   useEffect(() => {
     if (isClient && user === null) {
       router.replace("/");
     }
   }, [user, isClient, router]);
 
-  // --- LABAI SVARBUS BLOKAS ---
-  if (!isClient) {
+  if (!isClient || user === undefined || activeNetwork === undefined) {
     return <div className={styles.loading}>Loading...</div>;
   }
-
-  if (user === undefined || activeNetwork === undefined) {
-    return <div className={styles.loading}>Loading...</div>;
-  }
-
-  if (user === null) {
-    return null;
-  }
-  // ---------------------------
 
   const parsedAmount = Number(amount || 0);
   const fee = parsedAmount * 0.03;
