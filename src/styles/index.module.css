@@ -14,7 +14,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  transform: translateY(-10px); /* ✅ Šiek tiek aukščiau */
+  transform: translateY(-10px);
   animation: zoomIn 0.8s ease-out;
 }
 
@@ -23,12 +23,12 @@
   height: auto;
   object-fit: contain;
   background: transparent;
-  filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.08)); /* ✅ Švelnus smooth glow */
+  filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.08));
   transition: filter 0.4s ease;
 }
 
 .logo:hover {
-  filter: drop-shadow(0 0 16px rgba(255, 255, 255, 0.15)); /* ✅ Sklandus didesnis glow on hover */
+  filter: drop-shadow(0 0 16px rgba(255, 255, 255, 0.15));
 }
 
 .loginBox {
@@ -127,9 +127,9 @@
   }
 }
 
-/* Responsive fix – pakelti 17% per 768px */
+/* Responsive Fix - 768px */
 @media screen and (max-width: 768px) {
   .logoContainer {
-    transform: translateY(-17%);
+    transform: scale(0.92) translateY(-7%);
   }
 }
