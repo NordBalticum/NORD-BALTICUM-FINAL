@@ -1,6 +1,5 @@
 "use client";
 
-import React from "react";
 import { useState, useMemo, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -296,4 +295,4 @@ export default function SendPage() {
       </div>
     </motion.main>
   );
-                        }
+                         }
