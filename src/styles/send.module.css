@@ -28,7 +28,7 @@
   text-align: center;
   position: relative;
   z-index: 5;
-  transform: translateY(1%);
+  transform: translateY(3%);
 }
 
 .title {
@@ -361,4 +361,10 @@
 @keyframes fadeInSuccess {
   from { opacity: 0; transform: translateY(-10px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+@media screen and (min-width: 1024px) {
+  .wrapper {
+    transform: translateY(1.5%);
+  }
 }
