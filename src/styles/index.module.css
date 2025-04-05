@@ -131,8 +131,8 @@
 /* Responsive Fix - 768px */
 @media screen and (max-width: 768px) {
   .container {
-    width: calc(100vw - 120px);
-    height: calc(100vh - 120px);
+    width: calc(100vw - 50px);
+    height: calc(100vh - 50px);
     transform: translateY(-22%);
     transform: translateX(0);
   }
