@@ -4,10 +4,9 @@ import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import { useAuth } from "@/contexts/AuthContext";
-import { useComponentReady } from "@/hooks/useComponentReady"; // ✅ Tobulas universalus tikrinimas
+import { useComponentReady } from "@/hooks/useComponentReady";
 import styles from "@/components/swipeselector.module.css";
 
-// ✅ Palaikomi tinklai
 const supportedNetworks = [
   { name: "BNB Testnet", symbol: "tbnb", logo: "https://cryptologos.cc/logos/binance-coin-bnb-logo.png" },
   { name: "BNB Chain", symbol: "bnb", logo: "https://cryptologos.cc/logos/binance-coin-bnb-logo.png" },
@@ -21,14 +20,12 @@ export default function SwipeSelector({ onSelect }) {
   const containerRef = useRef(null);
   const [selectedIndex, setSelectedIndex] = useState(2);
   const [isMobile, setIsMobile] = useState(false);
-
-  // ✅ Naudojam tik universalų komponento readiness hook'ą
+  const hasInitialized = useRef(false); // ✅ Pridedam kontrolę
   const isReady = useComponentReady({
     activeNetwork,
     setActiveNetwork,
   });
 
-  // ✅ Tikrinam ekraną
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth <= 1024);
     handleResize();
@@ -36,27 +33,28 @@ export default function SwipeSelector({ onSelect }) {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // ✅ Kai pasirinktas tinklas keičiasi
+  // ✅ Tik pirmą kartą automatiškai nustatom tinklą
   useEffect(() => {
-    if (!isReady) return;
+    if (!isReady || hasInitialized.current) return;
+
     if (supportedNetworks[selectedIndex]) {
       const selectedSymbol = supportedNetworks[selectedIndex].symbol;
       setActiveNetwork(selectedSymbol);
       onSelect?.(selectedSymbol);
+      hasInitialized.current = true; // ✅ Užfiksuojam, kad jau suinicializuota
     }
     if (isMobile) scrollToCenter(selectedIndex);
-  }, [selectedIndex, isMobile, setActiveNetwork, onSelect, isReady]);
+  }, [isReady, isMobile, selectedIndex, setActiveNetwork, onSelect]);
 
-  // ✅ Kai aktyvus tinklas pasikeičia
+  // ✅ Kai aktyvus tinklas pasikeičia (vartotojo pasirinkimu ar sistemos)
   useEffect(() => {
     if (!isReady) return;
     const idx = supportedNetworks.findIndex((net) => net.symbol === activeNetwork);
-    if (idx >= 0) {
+    if (idx >= 0 && idx !== selectedIndex) {
       setSelectedIndex(idx);
     }
   }, [activeNetwork, isReady]);
 
-  // ✅ Scroll į centrą
   const scrollToCenter = (index) => {
     const container = containerRef.current;
     const card = container?.children?.[index];
@@ -66,13 +64,14 @@ export default function SwipeSelector({ onSelect }) {
     }
   };
 
-  // ✅ Tinklo pasirinkimas
   const handleSelect = (index) => {
     setSelectedIndex(index);
+    const selectedSymbol = supportedNetworks[index].symbol;
+    setActiveNetwork(selectedSymbol);
+    onSelect?.(selectedSymbol);
     if (isMobile) scrollToCenter(index);
   };
 
-  // ✅ Left/Right navigacija
   const goLeft = () => {
     if (selectedIndex > 0) handleSelect(selectedIndex - 1);
   };
@@ -81,12 +80,10 @@ export default function SwipeSelector({ onSelect }) {
     if (selectedIndex < supportedNetworks.length - 1) handleSelect(selectedIndex + 1);
   };
 
-  // ✅ Kol komponentas neparuoštas
   if (!isReady) {
     return <div className={styles.loading}>Loading networks...</div>;
   }
 
-  // ✅ Renderis
   return (
     <div className={styles.selectorContainer}>
       <div className={styles.arrows}>
