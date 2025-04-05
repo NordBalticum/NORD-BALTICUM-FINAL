@@ -7,7 +7,7 @@
   padding: 2rem;
   position: relative;
   z-index: 2;
-  animation: fadeInUp 1.8s ease-out;
+  animation: fadeInUp 0.7s ease;
 }
 
 .logoContainer {
