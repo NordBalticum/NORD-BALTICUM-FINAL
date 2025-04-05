@@ -8,10 +8,8 @@ import Image from "next/image";
 import { useAuth } from "@/contexts/AuthContext";
 import styles from "@/styles/dashboard.module.css";
 
-// ✅ Dynamic import without SSR
 const LivePriceTable = dynamic(() => import("@/components/LivePriceTable"), { ssr: false });
 
-// ✅ Token Icons
 const iconUrls = {
   eth: "https://cryptologos.cc/logos/ethereum-eth-logo.png",
   bnb: "https://cryptologos.cc/logos/binance-coin-bnb-logo.png",
@@ -20,7 +18,6 @@ const iconUrls = {
   avax: "https://cryptologos.cc/logos/avalanche-avax-logo.png",
 };
 
-// ✅ Token Names
 const names = {
   eth: "Ethereum",
   bnb: "BNB Smart Chain",
@@ -29,59 +26,46 @@ const names = {
   avax: "Avalanche",
 };
 
-// ✅ Static EUR rates (replace later with live rates)
-const eurRates = {
-  eth: 2900,
-  bnb: 450,
-  tbnb: 450,
-  matic: 1.5,
-  avax: 30,
-};
-
 export default function Dashboard() {
   const router = useRouter();
-  const { user, wallet, balances, refreshBalance, loading } = useAuth();
+  const { user, wallet, balances, loading, walletLoading } = useAuth();
   const [isClient, setIsClient] = useState(false);
 
-  // ✅ Detect client side
   useEffect(() => {
     if (typeof window !== "undefined") {
       setIsClient(true);
     }
   }, []);
 
-  // ✅ Redirect if not logged in
   useEffect(() => {
     if (isClient && !loading && !user) {
       router.replace("/");
     }
   }, [isClient, loading, user, router]);
 
-  // ✅ Tokens list
   const tokens = useMemo(() => {
     if (!wallet?.signers) return [];
     return Object.keys(wallet.signers);
   }, [wallet]);
 
-  // ✅ Universal Loading Check
-  const isLoading = loading || !isClient || !user || !wallet || !wallet.wallet;
+  const eurRates = {
+    eth: 2900,
+    bnb: 450,
+    tbnb: 450,
+    matic: 1.5,
+    avax: 30,
+  };
+
+  const isLoading = loading || walletLoading || !wallet || !wallet.wallet;
 
   if (isLoading) {
-    return (
-      <div className={styles.loading}>
-        Loading Dashboard...
-      </div>
-    );
+    return <div className={styles.loading}>Loading dashboard...</div>;
   }
 
   return (
     <main className={styles.container}>
       <div className={styles.dashboardWrapper}>
-        
-        {/* ✅ Live Crypto Prices */}
         <LivePriceTable />
-
-        {/* ✅ User's Wallet Assets */}
         <div className={styles.assetList}>
           {tokens.length === 0 ? (
             <div className={styles.loading}>No assets found.</div>
@@ -109,12 +93,8 @@ export default function Dashboard() {
                       unoptimized
                     />
                     <div className={styles.assetInfo}>
-                      <div className={styles.assetSymbol}>
-                        {symbol.toUpperCase()}
-                      </div>
-                      <div className={styles.assetName}>
-                        {names[symbol] || symbol.toUpperCase()}
-                      </div>
+                      <div className={styles.assetSymbol}>{symbol.toUpperCase()}</div>
+                      <div className={styles.assetName}>{names[symbol]}</div>
                     </div>
                   </div>
 
