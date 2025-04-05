@@ -1,23 +1,54 @@
-// src/hooks/useSwipeReady.js
 "use client";
 
 import { useAuth } from "@/contexts/AuthContext";
 import { useState, useEffect } from "react";
 
+/**
+ * ULTRA-ULTIMATE SwipeSelector readiness hook
+ * - Tikrina naršyklę
+ * - Tikrina activeNetwork ir setActiveNetwork
+ * - Tikrina inicializaciją
+ * - Prideda stabilumo delay (~150ms)
+ * 
+ * @returns {boolean} - Ar SwipeSelector yra 100% stabiliai paruoštas
+ */
 export function useSwipeReady() {
   const { activeNetwork, setActiveNetwork } = useAuth();
   const [isClient, setIsClient] = useState(false);
+  const [hasInitialized, setHasInitialized] = useState(false);
+  const [delayedReady, setDelayedReady] = useState(false);
 
+  // Patikrinam ar esam browseryje
   useEffect(() => {
     if (typeof window !== "undefined") {
       setIsClient(true);
     }
   }, []);
 
-  const isReady =
+  // Inicializacija kai visi dependency paruošti
+  useEffect(() => {
+    if (isClient && activeNetwork && typeof setActiveNetwork === "function") {
+      setHasInitialized(true);
+    }
+  }, [isClient, activeNetwork, setActiveNetwork]);
+
+  // Stabilumo delay (~150ms) kai ready
+  useEffect(() => {
+    if (hasInitialized) {
+      const timer = setTimeout(() => {
+        setDelayedReady(true);
+      }, 150); // ✅ 150ms laukimas saugiam UX
+
+      return () => clearTimeout(timer);
+    }
+  }, [hasInitialized]);
+
+  const isSwipeReady =
     isClient &&
     !!activeNetwork &&
-    typeof setActiveNetwork === "function";
+    typeof setActiveNetwork === "function" &&
+    hasInitialized &&
+    delayedReady;
 
-  return isReady;
+  return isSwipeReady;
 }
