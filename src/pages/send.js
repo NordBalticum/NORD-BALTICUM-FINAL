@@ -54,7 +54,7 @@ export default function SendPage() {
   const parsedAmount = Number(amount) || 0;
   const netBalance = balances?.[network]?.balance ? parseFloat(balances[network].balance) : 0;
 
-  const { gasFee, adminFee, loading: feesLoading, refetchFees } = useFeeCalculator(network, parsedAmount);
+  const { gasFee, adminFee, totalFee, loading: feesLoading, refetchFees } = useFeeCalculator(network, parsedAmount);
 
   const afterFees = useMemo(() => {
     return parsedAmount > 0 ? parsedAmount - gasFee - adminFee : 0;
@@ -80,7 +80,7 @@ export default function SendPage() {
       await refetch();
     }
 
-    setAmount(""); 
+    setAmount(""); // resetinam amount kad fees persiskaičiuotų
     setToastMessage(`Switched to ${networkShortNames[selectedNetwork] || selectedNetwork.toUpperCase()}`);
     setShowToast(true);
     setTimeout(() => setShowToast(false), 1500);
@@ -126,7 +126,7 @@ export default function SendPage() {
   useEffect(() => {
     const interval = setInterval(() => {
       refetchFees();
-    }, 5000);
+    }, 5000); // kas 5s stabilus gas fees atsinaujinimas
     return () => clearInterval(interval);
   }, [network, parsedAmount, refetchFees]);
 
@@ -238,6 +238,8 @@ export default function SendPage() {
                   <p><strong>Network:</strong> {shortName}</p>
                   <p><strong>Receiver:</strong> {receiver}</p>
                   <p><strong>Amount:</strong> {parsedAmount.toFixed(6)} {shortName}</p>
+                  <p><strong>Gas Fee:</strong> {gasFee.toFixed(6)} {shortName}</p>
+                  <p><strong>Admin Fee:</strong> {adminFee.toFixed(6)} {shortName}</p>
                   <p><strong>After Fees:</strong> {afterFees.toFixed(6)} {shortName}</p>
                 </div>
                 <div className={styles.modalActions}>
