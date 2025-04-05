@@ -115,6 +115,56 @@
   margin-top: 1rem;
 }
 
+.spinner {
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-top: 3px solid white;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Modal styles */
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(6px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modalContent {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 18px;
+  padding: 24px;
+  text-align: center;
+  color: white;
+  font-family: var(--font-crypto);
+  backdrop-filter: blur(18px);
+  box-shadow: 0 0 24px rgba(255, 255, 255, 0.08);
+}
+
+.modalContent h2 {
+  margin-bottom: 12px;
+  font-size: 1.5rem;
+  color: #00ff88;
+}
+
+.modalContent p {
+  font-size: 1rem;
+  color: #ccc;
+}
+
 /* === Desktop Animacija === */
 @keyframes fadeInSlideLeftDesktop {
   from {
