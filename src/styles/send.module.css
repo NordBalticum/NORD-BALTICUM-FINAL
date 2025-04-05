@@ -28,7 +28,7 @@
   text-align: center;
   position: relative;
   z-index: 5;
-  transform: translateY(3%);
+  transform: translateY(clamp(4%, 6%, 8%));
 }
 
 .title {
@@ -258,7 +258,7 @@
 /* === Responsive Fixes === */
 @media screen and (max-width: 768px) {
   .wrapper {
-    transform: scale(0.92) translateY(1%);
+    transform: scale(0.90) translateY(3%);
     transform-origin: top center;
   }
 }
@@ -365,6 +365,6 @@
 
 @media screen and (min-width: 1024px) {
   .wrapper {
-    transform: translateY(1.5%);
+    transform: translateY(2.5%);
   }
 }
