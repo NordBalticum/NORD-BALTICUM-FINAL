@@ -4,8 +4,8 @@ import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 
-import { useAuth } from "@/contexts/AuthContext"; 
-import { fetchTransactions } from "@/hooks/useTransactions"; // ✅ Tinkamas hook
+import { supabase } from "@/utils/supabaseClient"; // ✅ Tiesioginis importas
+import { useAuth } from "@/contexts/AuthContext";
 import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
 import styles from "@/styles/history.module.css";
 import background from "@/styles/background.module.css";
@@ -15,60 +15,46 @@ export default function HistoryPage() {
   const { user, wallet, loading: authLoading } = useAuth();
 
   const [transactions, setTransactions] = useState([]);
-  const [isClient, setIsClient] = useState(false);
   const [loadingTransactions, setLoadingTransactions] = useState(true);
   const [error, setError] = useState(null);
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      setIsClient(true);
-    }
+    if (typeof window !== "undefined") setIsClient(true);
   }, []);
 
   useEffect(() => {
     if (isClient && !authLoading && !user) {
       router.replace("/");
     }
-  }, [user, authLoading, isClient, router]);
+  }, [isClient, authLoading, user, router]);
 
-  const fetchUserTx = useCallback(async () => {
-    if (user?.email) {
-      try {
-        setLoadingTransactions(true);
-        const txs = await fetchTransactions(user.email);
-        setTransactions(txs || []);
-        setError(null);
-      } catch (err) {
-        console.error("❌ Failed to fetch transactions:", err);
-        setError("❌ Failed to load transactions.");
-      } finally {
-        setLoadingTransactions(false);
-      }
+  const fetchUserTransactions = useCallback(async () => {
+    if (!user?.email) return;
+    try {
+      setLoadingTransactions(true);
+      const { data, error } = await supabase
+        .from("transactions")
+        .select("*")
+        .eq("sender_email", user.email)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      setTransactions(data || []);
+      setError(null);
+    } catch (err) {
+      console.error("❌ Fetch transactions error:", err.message || err);
+      setError("❌ Failed to load transactions.");
+    } finally {
+      setLoadingTransactions(false);
     }
   }, [user]);
 
   useEffect(() => {
-    fetchUserTx();
-    const interval = setInterval(fetchUserTx, 30000); // ✅ Automatinis atsinaujinimas kas 30s
+    fetchUserTransactions();
+    const interval = setInterval(fetchUserTransactions, 30000); // ✅ Kas 30s
     return () => clearInterval(interval);
-  }, [fetchUserTx]);
-
-  const getExplorerURL = (hash, network) => {
-    const baseURLs = {
-      bsc: "https://bscscan.com/tx/",
-      tbnb: "https://testnet.bscscan.com/tx/",
-      eth: "https://etherscan.io/tx/",
-      matic: "https://polygonscan.com/tx/",
-      avax: "https://snowtrace.io/tx/",
-    };
-    return baseURLs[network?.toLowerCase()] + hash;
-  };
-
-  const variants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0 },
-    hover: { scale: 1.03, boxShadow: "0px 0px 15px rgba(255, 255, 255, 0.2)" },
-  };
+  }, [fetchUserTransactions]);
 
   if (!isClient || authLoading) {
     return (
@@ -97,22 +83,19 @@ export default function HistoryPage() {
             <MiniLoadingSpinner /> Loading transactions...
           </div>
         ) : error ? (
-          <div className={styles.error}>
-            {error}
-          </div>
+          <div className={styles.error}>{error}</div>
         ) : transactions.length === 0 ? (
           <div className={styles.loading}>No transactions found.</div>
         ) : (
           <div className={styles.transactionList}>
-            {transactions.map((tx, i) => (
+            {transactions.map((tx, index) => (
               <motion.div
-                key={tx.tx_hash + i}
+                key={tx.tx_hash + index}
                 className={styles.transactionCard}
-                variants={variants}
-                initial="hidden"
-                animate="visible"
-                whileHover="hover"
-                transition={{ duration: 0.35, delay: i * 0.07 }}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                whileHover={{ scale: 1.03, boxShadow: "0px 0px 15px rgba(255,255,255,0.2)" }}
+                transition={{ duration: 0.35, delay: index * 0.07 }}
               >
                 <div className={styles.transactionHeader}>
                   <span className={styles.transactionType}>
@@ -168,8 +151,19 @@ export default function HistoryPage() {
   );
 }
 
-// ✅ Helper: trumpina adresą
-function truncateAddress(addr) {
-  if (!addr || typeof addr !== "string") return "Unknown";
-  return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
+// ✅ Helperiai
+function truncateAddress(address) {
+  if (!address || typeof address !== "string") return "Unknown";
+  return `${address.slice(0, 6)}...${address.slice(-4)}`;
+}
+
+function getExplorerURL(hash, network) {
+  const baseURLs = {
+    bsc: "https://bscscan.com/tx/",
+    tbnb: "https://testnet.bscscan.com/tx/",
+    eth: "https://etherscan.io/tx/",
+    matic: "https://polygonscan.com/tx/",
+    avax: "https://snowtrace.io/tx/",
+  };
+  return baseURLs[network?.toLowerCase()] + hash;
 }
