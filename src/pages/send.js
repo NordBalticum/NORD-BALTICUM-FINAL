@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { useAuth } from "@/contexts/AuthContext"; // ✅ Ultimate Auth
+import { useAuth } from "@/contexts/AuthContext";
 
 import SwipeSelector from "@/components/SwipeSelector";
 import SuccessModal from "@/components/modals/SuccessModal";
@@ -29,7 +29,7 @@ const buttonColors = {
 
 export default function SendPage() {
   const router = useRouter();
-  const { user, wallet, balances, sendTransaction, refreshBalance, loading } = useAuth(); // ❌ No loadOrCreateWallet čia!
+  const { user, wallet, balances, sendTransaction, refreshBalance, loading } = useAuth();
 
   const [isClient, setIsClient] = useState(false);
   const [localNetwork, setLocalNetwork] = useState("eth");
@@ -41,36 +41,28 @@ export default function SendPage() {
   const [sending, setSending] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
 
-  // ✅ Detect client
   useEffect(() => {
     if (typeof window !== "undefined") {
       setIsClient(true);
     }
   }, []);
 
-  // ✅ Auto redirect jei neprisijungęs
   useEffect(() => {
     if (isClient && !loading && !user) {
       router.replace("/");
     }
   }, [isClient, loading, user, router]);
 
-  // ✅ Network Short Name
-  const shortName = useMemo(() => {
-    return networkShortNames[localNetwork.toLowerCase()] || localNetwork.toUpperCase();
-  }, [localNetwork]);
+  const shortName = useMemo(() => networkShortNames[localNetwork.toLowerCase()] || localNetwork.toUpperCase(), [localNetwork]);
 
-  // ✅ Balances
   const netBalance = balances?.[localNetwork] || 0;
   const parsedAmount = Number(amount || 0);
   const fee = parsedAmount * 0.03;
   const amountAfterFee = parsedAmount - fee;
   const maxSendable = netBalance - netBalance * 0.03;
 
-  // ✅ Address Validation
   const isValidAddress = (address) => /^0x[a-fA-F0-9]{40}$/.test(address.trim());
 
-  // ✅ Local network change handler
   const handleNetworkChange = useCallback((network) => {
     if (network) {
       setLocalNetwork(network);
@@ -79,7 +71,6 @@ export default function SendPage() {
     }
   }, []);
 
-  // ✅ Handle SEND button
   const handleSend = () => {
     if (!isValidAddress(receiver)) {
       alert("❌ Invalid wallet address.");
@@ -90,13 +81,12 @@ export default function SendPage() {
       return;
     }
     if (parsedAmount > maxSendable) {
-      alert(`❌ Insufficient balance. Max you can send: ${maxSendable.toFixed(6)} ${shortName}`);
+      alert(`❌ Insufficient balance. Max sendable: ${maxSendable.toFixed(6)} ${shortName}`);
       return;
     }
     setShowConfirm(true);
   };
 
-  // ✅ Confirm send
   const confirmSend = async () => {
     setShowConfirm(false);
     setSending(true);
@@ -130,7 +120,7 @@ export default function SendPage() {
   }
 
   if (!user || !wallet?.wallet?.address) {
-    return <div className={styles.loading}>Preparing wallet...</div>; // ✅ Saugus loading
+    return <div className={styles.loading}>Preparing wallet...</div>;
   }
 
   return (
@@ -158,10 +148,8 @@ export default function SendPage() {
         <h1 className={styles.title}>SEND CRYPTO</h1>
         <p className={styles.subtext}>Transfer crypto securely & instantly</p>
 
-        {/* ✅ Network Selector */}
         <SwipeSelector mode="send" onSelect={handleNetworkChange} />
 
-        {/* ✅ Balance Table */}
         <div className={styles.balanceTable}>
           <p className={styles.whiteText}>
             Your Balance:&nbsp;
@@ -177,7 +165,6 @@ export default function SendPage() {
           </p>
         </div>
 
-        {/* ✅ Send Form */}
         <div className={styles.walletActions}>
           <input
             type="text"
@@ -193,11 +180,14 @@ export default function SendPage() {
             onChange={(e) => setAmount(e.target.value)}
             className={styles.inputField}
           />
+
           <p className={styles.feeBreakdown}>
             After 3% Fee: <strong>{amountAfterFee > 0 ? amountAfterFee.toFixed(6) : 0} {shortName}</strong>
           </p>
 
-          <button
+          <motion.button
+            whileHover={{ scale: 1.04 }}
+            whileTap={{ scale: 0.98 }}
             onClick={handleSend}
             style={{
               backgroundColor: buttonColors[localNetwork?.toLowerCase()] || "#0070f3",
@@ -209,49 +199,68 @@ export default function SendPage() {
               border: "2px solid white",
               cursor: sending ? "not-allowed" : "pointer",
               transition: "all 0.3s ease",
+              width: "100%",
+              marginTop: "14px",
             }}
             disabled={sending}
           >
             {sending ? "Sending..." : "SEND NOW"}
-          </button>
+          </motion.button>
         </div>
 
-        {/* ✅ Confirm Modal */}
-        {showConfirm && (
-          <div className={styles.overlay}>
-            <div className={styles.confirmModal}>
-              <div className={styles.modalTitle}>Final Confirmation</div>
-              <div className={styles.modalInfo}>
-                <p><strong>Network:</strong> {shortName}</p>
-                <p><strong>Receiver:</strong> {receiver}</p>
-                <p><strong>Send:</strong> {parsedAmount.toFixed(6)} {shortName}</p>
-                <p><strong>Receive:</strong> {amountAfterFee.toFixed(6)} {shortName}</p>
-              </div>
-              <div className={styles.modalActions}>
-                <button className={styles.modalButton} onClick={confirmSend}>Confirm</button>
-                <button className={`${styles.modalButton} ${styles.cancel}`} onClick={() => setShowConfirm(false)}>
-                  Cancel
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+        {/* Confirm Modal */}
+        <AnimatePresence>
+          {showConfirm && (
+            <motion.div
+              className={styles.overlay}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <motion.div
+                className={styles.confirmModal}
+                initial={{ scale: 0.8 }}
+                animate={{ scale: 1 }}
+                exit={{ scale: 0.8 }}
+                transition={{ duration: 0.3 }}
+              >
+                <div className={styles.modalTitle}>Final Confirmation</div>
+                <div className={styles.modalInfo}>
+                  <p><strong>Network:</strong> {shortName}</p>
+                  <p><strong>Receiver:</strong> {receiver}</p>
+                  <p><strong>Send:</strong> {parsedAmount.toFixed(6)} {shortName}</p>
+                  <p><strong>Receive:</strong> {amountAfterFee.toFixed(6)} {shortName}</p>
+                </div>
+                <div className={styles.modalActions}>
+                  <button className={styles.modalButton} onClick={confirmSend}>Confirm</button>
+                  <button className={`${styles.modalButton} ${styles.cancel}`} onClick={() => setShowConfirm(false)}>
+                    Cancel
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-        {/* ✅ Success Modal */}
-        {showSuccess && (
-          <motion.div
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 0.4 }}
-          >
-            <SuccessModal
-              message="✅ Transaction completed successfully!"
-              txHash={txHash}
-              networkKey={localNetwork}
-              onClose={() => setShowSuccess(false)}
-            />
-          </motion.div>
-        )}
+        {/* Success Modal */}
+        <AnimatePresence>
+          {showSuccess && (
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              transition={{ duration: 0.4 }}
+            >
+              <SuccessModal
+                message="✅ Transaction completed successfully!"
+                txHash={txHash}
+                networkKey={localNetwork}
+                onClose={() => setShowSuccess(false)}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </motion.main>
   );
