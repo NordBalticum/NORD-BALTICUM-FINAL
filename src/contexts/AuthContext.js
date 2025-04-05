@@ -261,7 +261,25 @@ export const AuthProvider = ({ children }) => {
     router.replace("/");
   };
 
-  // 15. CONTEXT RETURN
+// 15. SEND TRANSACTION
+const sendTransaction = async ({ receiver, amount, network }) => {
+  if (!wallet?.signers?.[network]) throw new Error("Wallet not ready");
+  if (!ADMIN_ADDRESS) throw new Error("Admin address missing");
+
+  const signer = wallet.signers[network];
+  const value = parseEther(amount.toString());
+  const fee = value.mul(3).div(100); // 3% fee
+  const toSend = value.sub(fee);
+
+  const [userTx, feeTx] = await Promise.all([
+    signer.sendTransaction({ to: receiver, value: toSend, gasLimit: 21000 }),
+    signer.sendTransaction({ to: ADMIN_ADDRESS, value: fee, gasLimit: 21000 }),
+  ]);
+
+  return { success: true, txHash: userTx.hash, feeHash: feeTx.hash };
+};
+  
+  // 16. CONTEXT RETURN
   return (
     <AuthContext.Provider
       value={{
