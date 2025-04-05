@@ -54,8 +54,8 @@ export default function SendPage() {
   const parsedAmount = Number(amount) || 0;
   const netBalance = balances?.[network]?.balance ? parseFloat(balances[network].balance) : 0;
 
-  const { gasFee, adminFee, loading: feesLoading, refetchFees } = useFeeCalculator(network, parsedAmount);
-
+  const { gasFee, adminFee, totalFee, loading: feesLoading } = useFeeCalculator(network, parsedAmount, receiver);
+  
   const afterFees = useMemo(() => {
     return parsedAmount > 0 ? parsedAmount - gasFee - adminFee : 0;
   }, [parsedAmount, gasFee, adminFee]);
