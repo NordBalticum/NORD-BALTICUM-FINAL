@@ -258,7 +258,7 @@
 /* === Responsive Fixes === */
 @media screen and (max-width: 768px) {
   .wrapper {
-    transform: scale(0.90) translateY(3%);
+    transform: scale(0.90) translateY(5%);
     transform-origin: top center;
   }
 }
@@ -365,6 +365,6 @@
 
 @media screen and (min-width: 1024px) {
   .wrapper {
-    transform: translateY(2.5%);
+    transform: translateY(4%);
   }
 }
