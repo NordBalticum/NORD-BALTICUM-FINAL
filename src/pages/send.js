@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useMemo, useCallback, useEffect } from "react";
-import dynamic from "next/dynamic"; // << čia magic dynamic importas
 import { motion, AnimatePresence } from "framer-motion";
 
 import { useBalance } from "@/hooks/useBalance";
@@ -18,12 +17,6 @@ import SuccessToast from "@/components/SuccessToast";
 
 import styles from "@/styles/send.module.css";
 import background from "@/styles/background.module.css";
-
-// === Dynamic import sendTransaction funkcijai, su SSR: false ===
-const sendTransaction = dynamic(
-  () => import("@/utils/sendCryptoFunction").then((mod) => mod.sendTransaction),
-  { ssr: false }
-);
 
 const networkShortNames = {
   ethereum: "ETH",
@@ -52,8 +45,8 @@ export default function SendPage() {
   const [showConfirm, setShowConfirm] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [showToast, setShowToast] = useState(false);
-  const [sending, setSending] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
+  const [sending, setSending] = useState(false);
   const [error, setError] = useState(null);
 
   const shortName = useMemo(() => networkShortNames[network] || network.toUpperCase(), [network]);
@@ -106,17 +99,21 @@ export default function SendPage() {
   const confirmSend = async () => {
     setShowConfirm(false);
     setSending(true);
+    setError(null);
     try {
-      const hash = await sendTransaction({
-        to: receiver.trim(),
-        amount: parsedAmount,
-        network,
-      });
-      console.log("✅ Transaction successful, hash:", hash);
-      setReceiver("");
-      setAmount("");
-      await refetch();
-      setShowSuccess(true);
+      if (typeof window !== "undefined") {
+        const { sendTransaction } = await import("@/utils/sendCryptoFunction"); // Dynamic import
+        const hash = await sendTransaction({
+          to: receiver.trim(),
+          amount: parsedAmount,
+          network,
+        });
+        console.log("✅ Transaction successful, hash:", hash);
+        setReceiver("");
+        setAmount("");
+        await refetch();
+        setShowSuccess(true);
+      }
     } catch (err) {
       console.error("❌ Transaction error:", err.message || err);
       setError(err.message || "Transaction failed.");
@@ -275,4 +272,4 @@ export default function SendPage() {
       </div>
     </motion.main>
   );
-          }
+}
