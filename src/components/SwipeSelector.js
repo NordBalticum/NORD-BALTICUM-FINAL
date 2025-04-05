@@ -17,7 +17,7 @@ const supportedNetworks = [
 export default function SwipeSelector({ onSelect }) {
   const { activeNetwork, setActiveNetwork } = useAuth();
   const containerRef = useRef(null);
-  const [selectedIndex, setSelectedIndex] = useState(2); // ETH default
+  const [selectedIndex, setSelectedIndex] = useState(2); // Default ETH
   const [isMobile, setIsMobile] = useState(false);
 
   const isDataReady = !!activeNetwork && typeof setActiveNetwork === "function";
