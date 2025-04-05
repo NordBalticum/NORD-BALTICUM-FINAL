@@ -21,15 +21,7 @@ export default function SwipeSelector({ onSelect }) {
   const [selectedIndex, setSelectedIndex] = useState(2);
   const [isMobile, setIsMobile] = useState(false);
   const hasInitialized = useRef(false);
-
   const isSwipeReady = useSwipeReady();
-
-  // ✅ Vibracija (Haptic Feedback)
-  const triggerVibration = () => {
-    if (typeof window !== "undefined" && "vibrate" in navigator) {
-      navigator.vibrate(20); // Švelnus vibracijos bumpas
-    }
-  };
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth <= 1024);
@@ -40,7 +32,6 @@ export default function SwipeSelector({ onSelect }) {
 
   useEffect(() => {
     if (!isSwipeReady || hasInitialized.current) return;
-
     if (supportedNetworks[selectedIndex]) {
       const selectedSymbol = supportedNetworks[selectedIndex].symbol;
       setActiveNetwork(selectedSymbol);
@@ -72,21 +63,20 @@ export default function SwipeSelector({ onSelect }) {
     const selectedSymbol = supportedNetworks[index].symbol;
     setActiveNetwork(selectedSymbol);
     onSelect?.(selectedSymbol);
+
+    if (typeof window !== "undefined" && "vibrate" in navigator) {
+      navigator.vibrate(10); // ✅ Trumpa vibracija paspaudus kortelę
+    }
+
     if (isMobile) scrollToCenter(index);
   };
 
   const goLeft = () => {
-    if (selectedIndex > 0) {
-      triggerVibration(); // ✅ Vibracija!
-      handleSelect(selectedIndex - 1);
-    }
+    if (selectedIndex > 0) handleSelect(selectedIndex - 1);
   };
 
   const goRight = () => {
-    if (selectedIndex < supportedNetworks.length - 1) {
-      triggerVibration(); // ✅ Vibracija!
-      handleSelect(selectedIndex + 1);
-    }
+    if (selectedIndex < supportedNetworks.length - 1) handleSelect(selectedIndex + 1);
   };
 
   if (!isSwipeReady) {
@@ -111,14 +101,13 @@ export default function SwipeSelector({ onSelect }) {
       <div
         ref={containerRef}
         className={isMobile ? styles.scrollableWrapper : styles.staticWrapper}
-        style={isMobile ? { touchAction: "pan-x", overflowX: "auto", scrollBehavior: "smooth" } : {}}
       >
         {supportedNetworks.map((net, index) => (
           <motion.div
             key={net.symbol}
             className={`${styles.card} ${selectedIndex === index ? styles.selected : ""}`}
             onClick={() => handleSelect(index)}
-            whileTap={{ scale: 0.95 }}
+            whileTap={{ scale: 0.95 }} // ✅ bounce
             role="button"
             tabIndex={0}
           >
