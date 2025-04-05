@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePageReady } from "@/hooks/usePageReady";
@@ -11,6 +12,7 @@ import SuccessModal from "@/components/modals/SuccessModal";
 import styles from "@/styles/send.module.css";
 import background from "@/styles/background.module.css";
 
+// Trumpiniai ir spalvos
 const networkShortNames = {
   eth: "ETH",
   bnb: "BNB",
@@ -28,21 +30,22 @@ const buttonColors = {
 };
 
 export default function SendPage() {
-  const { user, wallet, balances, sendTransaction, refreshBalance } = useAuth();
+  const { wallet, balances, sendTransaction, refreshBalance } = useAuth();
   const isReady = usePageReady();
+  const router = useRouter();
 
   const [localNetwork, setLocalNetwork] = useState("eth");
   const [receiver, setReceiver] = useState("");
   const [amount, setAmount] = useState("");
-  const [txHash, setTxHash] = useState("");
   const [showConfirm, setShowConfirm] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [sending, setSending] = useState(false);
+  const [txHash, setTxHash] = useState("");
   const [toastMessage, setToastMessage] = useState("");
 
-  const shortName = useMemo(() => networkShortNames[localNetwork.toLowerCase()] || localNetwork.toUpperCase(), [localNetwork]);
+  const shortName = useMemo(() => networkShortNames[localNetwork] || localNetwork.toUpperCase(), [localNetwork]);
   const netBalance = balances?.[localNetwork] || 0;
-  const parsedAmount = Number(amount || 0);
+  const parsedAmount = Number(amount) || 0;
   const fee = parsedAmount * 0.03;
   const amountAfterFee = parsedAmount - fee;
   const maxSendable = netBalance - netBalance * 0.03;
@@ -130,7 +133,7 @@ export default function SendPage() {
         <h1 className={styles.title}>SEND CRYPTO</h1>
         <p className={styles.subtext}>Transfer crypto securely & instantly</p>
 
-        <SwipeSelector mode="send" onSelect={handleNetworkChange} />
+        <SwipeSelector onSelect={handleNetworkChange} />
 
         <div className={styles.balanceTable}>
           <p className={styles.whiteText}>
@@ -164,7 +167,8 @@ export default function SendPage() {
           />
 
           <p className={styles.feeBreakdown}>
-            After 3% Fee: <strong>{amountAfterFee > 0 ? amountAfterFee.toFixed(6) : 0} {shortName}</strong>
+            After 3% Fee:&nbsp;
+            <strong>{amountAfterFee > 0 ? amountAfterFee.toFixed(6) : 0} {shortName}</strong>
           </p>
 
           <motion.button
@@ -180,7 +184,6 @@ export default function SendPage() {
               fontFamily: "var(--font-crypto)",
               border: "2px solid white",
               cursor: sending ? "not-allowed" : "pointer",
-              transition: "all 0.3s ease",
               width: "100%",
               marginTop: "14px",
             }}
@@ -190,7 +193,6 @@ export default function SendPage() {
           </motion.button>
         </div>
 
-        {/* Confirm Modal */}
         <AnimatePresence>
           {showConfirm && (
             <motion.div
@@ -225,7 +227,6 @@ export default function SendPage() {
           )}
         </AnimatePresence>
 
-        {/* Success Modal */}
         <AnimatePresence>
           {showSuccess && (
             <motion.div
