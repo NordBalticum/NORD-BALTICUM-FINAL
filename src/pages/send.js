@@ -80,7 +80,7 @@ export default function SendPage() {
       await refetch();
     }
 
-    setAmount(""); // resetinam įvestį, kad fees persiskaičiuotų
+    setAmount(""); 
     setToastMessage(`Switched to ${networkShortNames[selectedNetwork] || selectedNetwork.toUpperCase()}`);
     setShowToast(true);
     setTimeout(() => setShowToast(false), 1500);
@@ -159,12 +159,9 @@ export default function SendPage() {
 
         <SwipeSelector onSelect={handleNetworkChange} />
 
-        <div className={styles.balanceTable}>
+        <div className={styles.balanceTable} style={{ textAlign: "center" }}>
           <p className={styles.whiteText}>
-            Your Balance:&nbsp;
-            <span className={styles.balanceAmount}>
-              {netBalance.toFixed(6)} {shortName}
-            </span>
+            Your Balance: <span className={styles.balanceAmount}>{netBalance.toFixed(6)} {shortName}</span>
           </p>
           <p className={styles.subBalance}>
             ≈ {eurBalance} EUR | {usdBalance} USD
@@ -179,17 +176,16 @@ export default function SendPage() {
             onChange={(e) => setReceiver(e.target.value)}
             className={styles.inputField}
           />
-          <div style={{ display: "flex", gap: "6px" }}>
-            <input
-              type="number"
-              placeholder="Amount to send"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              className={styles.inputField}
-            />
-          </div>
+          <input
+            type="number"
+            placeholder="Amount to send"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            className={styles.inputField}
+            style={{ marginTop: "8px" }}
+          />
 
-          <p className={styles.feeBreakdown}>
+          <p className={styles.feeBreakdown} style={{ textAlign: "center" }}>
             Gas Fee: <strong>{gasFee.toFixed(6)} {shortName}</strong><br />
             Admin Fee: <strong>{adminFee.toFixed(6)} {shortName}</strong><br />
             You Receive: <strong>{afterFees > 0 ? afterFees.toFixed(6) : "0.000000"} {shortName}</strong>
@@ -233,18 +229,17 @@ export default function SendPage() {
                 transition={{ duration: 0.3 }}
               >
                 <div className={styles.modalTitle}>Confirm Transaction</div>
-                <div className={styles.modalInfo}>
+                <div className={styles.modalInfo} style={{ textAlign: "center" }}>
                   <p><strong>Network:</strong> {shortName}</p>
                   <p><strong>Receiver:</strong> {receiver}</p>
                   <p><strong>Amount:</strong> {parsedAmount.toFixed(6)} {shortName}</p>
+                  <p><strong>Gas Fee:</strong> {gasFee.toFixed(6)} {shortName}</p>
+                  <p><strong>Admin Fee:</strong> {adminFee.toFixed(6)} {shortName}</p>
                   <p><strong>After Fees:</strong> {afterFees.toFixed(6)} {shortName}</p>
                 </div>
                 <div className={styles.modalActions}>
                   <button className={styles.modalButton} onClick={confirmSend}>Confirm</button>
-                  <button
-                    className={`${styles.modalButton} ${styles.cancel}`}
-                    onClick={() => setShowConfirm(false)}
-                  >
+                  <button className={`${styles.modalButton} ${styles.cancel}`} onClick={() => setShowConfirm(false)}>
                     Cancel
                   </button>
                 </div>
