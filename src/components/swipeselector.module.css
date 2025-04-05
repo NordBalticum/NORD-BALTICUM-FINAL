@@ -25,28 +25,34 @@
 }
 
 .arrowBtn {
-  font-size: 13px;
-  width: 36px;
-  height: 36px;
-  padding: 0;
-  background: transparent;
+  width: 48px;
+  height: 48px;
   border: 2px solid white;
-  color: white;
-  border-radius: 8px;
-  cursor: pointer;
-  font-family: var(--font-crypto);
-  transition: all 0.25s ease;
+  border-radius: 12px;
+  background: transparent;
   display: flex;
   align-items: center;
   justify-content: center;
-  line-height: 1;
-  box-shadow: 0 0 6px rgba(255, 255, 255, 0.15);
+  font-size: 26px; /* ✅ Rodyklės viduje didelės */
+  font-weight: 700; /* ✅ Stiprios rodyklės */
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.25); /* ✅ Švelnus glow */
+  user-select: none;
 }
 
 .arrowBtn:hover {
-  background: white;
+  background: rgba(255, 255, 255, 0.95);
   color: black;
-  transform: scale(1.05);
+  transform: scale(1.12); /* ✅ Premium plastiškas padidėjimas */
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.5); /* ✅ Švytėjimas per hover */
+}
+
+.arrowBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  box-shadow: none;
 }
 
 @media screen and (min-width: 1025px) {
