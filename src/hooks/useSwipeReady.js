@@ -1,3 +1,4 @@
+// src/hooks/useSwipeReady.js
 "use client";
 
 import { useAuth } from "@/contexts/AuthContext";
