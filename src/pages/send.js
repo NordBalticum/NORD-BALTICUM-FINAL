@@ -10,7 +10,7 @@ import { useSendCrypto } from "@/hooks/useSendCrypto"; // ✅ Naujas siuntimo ho
 import { usePageReady } from "@/hooks/usePageReady"; // ✅ Detect ready
 
 import SwipeSelector from "@/components/SwipeSelector";
-import LoadingCircle from "@/components/LoadingCircle"; // ✅ Loading Circle
+import LoadingSpinner from "@/components/LoadingSpinner"; // ✅ Loading Spinner
 import SuccessModal from "@/components/modals/SuccessModal";
 import SuccessToast from "@/components/SuccessToast"; // ✅ Toast pranešimai
 
