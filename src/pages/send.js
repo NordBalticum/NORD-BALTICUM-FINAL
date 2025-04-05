@@ -57,8 +57,9 @@ export default function SendPage() {
 
   const { gasFee, adminFee, totalFee, loading: feesLoading, refetchFees } = useFeeCalculator(network, amount);
 
-  const adminFee = useMemo(() => (parsedAmount > 0 ? parsedAmount * 0.03 : 0), [parsedAmount]);
-  const afterFees = useMemo(() => (parsedAmount > 0 ? parsedAmount - gasFee - adminFee : 0), [parsedAmount, gasFee, adminFee]);
+  const afterFees = useMemo(() => (
+    parsedAmount > 0 ? parsedAmount - gasFee - adminFee : 0
+  ), [parsedAmount, gasFee, adminFee]);
 
   const usdBalance = useMemo(() => {
     const price = prices?.[network]?.usd || 0;
@@ -120,11 +121,8 @@ export default function SendPage() {
   };
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      refetchFees();
-    }, 5000);
-    return () => clearInterval(interval);
-  }, [network, parsedAmount, refetchFees]);
+    refetchFees(); // Refresh fees on amount or network change
+  }, [amount, network, refetchFees]);
 
   useEffect(() => {
     if (success) {
@@ -217,8 +215,7 @@ export default function SendPage() {
           >
             {sending ? (
               <div style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
-                Sending
-                <MiniLoadingSpinner />
+                Sending <MiniLoadingSpinner />
               </div>
             ) : (
               "SEND NOW"
@@ -254,8 +251,7 @@ export default function SendPage() {
                   <button className={styles.modalButton} onClick={confirmSend}>
                     {sending ? (
                       <div style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
-                        Confirming
-                        <MiniLoadingSpinner />
+                        Confirming <MiniLoadingSpinner />
                       </div>
                     ) : (
                       "Confirm"
@@ -295,4 +291,4 @@ export default function SendPage() {
       </div>
     </motion.main>
   );
-                         }
+                     }
