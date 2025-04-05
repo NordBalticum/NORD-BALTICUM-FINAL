@@ -52,8 +52,8 @@ export default function SendPage() {
   const [toastMessage, setToastMessage] = useState("");
 
   const shortName = useMemo(() => networkShortNames[network] || network.toUpperCase(), [network]);
-  const parsedAmount = Number(amount) || 0;
-  const netBalance = balances?.[network]?.balance ? parseFloat(balances[network].balance) : 0;
+  const parsedAmount = useMemo(() => Number(amount) || 0, [amount]);
+  const netBalance = useMemo(() => balances?.[network]?.balance ? parseFloat(balances[network].balance) : 0, [balances, network]);
 
   const { gasFee, loading: feesLoading, refetchFees } = useFeeCalculator(network);
 
@@ -75,7 +75,7 @@ export default function SendPage() {
   const handleNetworkChange = useCallback(async (selectedNetwork) => {
     if (!selectedNetwork) return;
     setNetwork(selectedNetwork);
-    if (wallet?.email) await refetch();
+    if (wallet?.email) await refetch(); // ✅ Refetch balances kai pakeičia tinklą
     setAmount("");
     setToastMessage(`Switched to ${networkShortNames[selectedNetwork] || selectedNetwork.toUpperCase()}`);
     setShowToast(true);
@@ -104,12 +104,12 @@ export default function SendPage() {
       await sendCrypto({
         to: receiver.trim(),
         amount: parsedAmount,
-        network: network,
+        network,
       });
       setReceiver("");
       setAmount("");
+      await refetch(); // ✅ Refetch balansą po siuntimo!
       setShowSuccess(true);
-      await refetch();
     } catch (err) {
       console.error("❌ Transaction error:", err.message);
     }
@@ -120,7 +120,9 @@ export default function SendPage() {
   };
 
   useEffect(() => {
-    refetchFees();
+    if (amount || network) {
+      refetchFees(); // ✅ Refetch fees kai amount arba network keičiasi
+    }
   }, [amount, network, refetchFees]);
 
   useEffect(() => {
@@ -247,17 +249,24 @@ export default function SendPage() {
         {/* Success and Error Modals */}
         <AnimatePresence>
           {showSuccess && (
-            <SuccessModal message="✅ Transaction Successful!" txHash={txHash} networkKey={network} onClose={() => setShowSuccess(false)} />
+            <SuccessModal
+              message="✅ Transaction Successful!"
+              txHash={txHash}
+              networkKey={network}
+              onClose={() => setShowSuccess(false)}
+            />
           )}
         </AnimatePresence>
 
         <AnimatePresence>
           {error && (
-            <ErrorModal error={error} onRetry={handleRetry} />
+            <ErrorModal
+              error={error}
+              onRetry={handleRetry}
+            />
           )}
         </AnimatePresence>
-
       </div>
     </motion.main>
   );
-                        }
+                     }
