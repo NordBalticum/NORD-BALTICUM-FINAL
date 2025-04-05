@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import { useAuth } from "@/contexts/AuthContext";
-import { useSwipeReady } from "@/hooks/useSwipeReady"; // ✅ Mini hook tik tinklui
+import { usePageReady } from "@/hooks/usePageReady";
 import styles from "@/components/swipeselector.module.css";
 
 const supportedNetworks = [
@@ -18,10 +18,9 @@ const supportedNetworks = [
 export default function SwipeSelector({ onSelect }) {
   const { activeNetwork, setActiveNetwork } = useAuth();
   const containerRef = useRef(null);
-  const [selectedIndex, setSelectedIndex] = useState(2); // Default ETH
+  const [selectedIndex, setSelectedIndex] = useState(2);
   const [isMobile, setIsMobile] = useState(false);
-
-  const isReady = useSwipeReady(); // ✅ Dabar super greitas tikrinimas!
+  const isReady = usePageReady();
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth <= 1024);
