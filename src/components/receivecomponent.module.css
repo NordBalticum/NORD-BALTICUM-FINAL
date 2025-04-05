@@ -1,0 +1,73 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  padding: 20px;
+  text-align: center;
+  color: white;
+  backdrop-filter: blur(18px) saturate(180%);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  box-shadow: 0 0 22px rgba(255, 255, 255, 0.06);
+}
+
+.title {
+  font-size: 1.2rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.qrWrapper {
+  padding: 18px;
+  background: white;
+  border-radius: 16px;
+  display: inline-block;
+  cursor: pointer;
+  box-shadow: 0 4px 18px rgba(255, 255, 255, 0.15);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.qrWrapper:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 24px rgba(255, 255, 255, 0.2);
+}
+
+.address {
+  font-size: 0.95rem;
+  word-break: break-word;
+  color: #ccc;
+}
+
+.button {
+  margin-top: 10px;
+  padding: 12px 24px;
+  background: black;
+  color: white;
+  border: 1px solid white;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 600;
+  text-transform: uppercase;
+  transition: all 0.3s ease;
+}
+
+.button:hover {
+  background: white;
+  color: black;
+}
+
+.copied {
+  background: #00c853; /* ✅ Žalia spalva kai kopijuota */
+  color: white;
+  border-color: #00c853;
+}
+
+.loading {
+  padding: 50px;
+  text-align: center;
+  font-size: 18px;
+  color: white;
+}
