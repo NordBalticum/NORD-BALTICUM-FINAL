@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useCallback, useEffect } from "react";
+import dynamic from "next/dynamic"; // << čia magic dynamic importas
 import { motion, AnimatePresence } from "framer-motion";
 
 import { useBalance } from "@/hooks/useBalance";
@@ -17,6 +18,12 @@ import SuccessToast from "@/components/SuccessToast";
 
 import styles from "@/styles/send.module.css";
 import background from "@/styles/background.module.css";
+
+// === Dynamic import sendTransaction funkcijai, su SSR: false ===
+const sendTransaction = dynamic(
+  () => import("@/utils/sendCryptoFunction").then((mod) => mod.sendTransaction),
+  { ssr: false }
+);
 
 const networkShortNames = {
   ethereum: "ETH",
@@ -45,10 +52,9 @@ export default function SendPage() {
   const [showConfirm, setShowConfirm] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [showToast, setShowToast] = useState(false);
-  const [toastMessage, setToastMessage] = useState("");
   const [sending, setSending] = useState(false);
+  const [toastMessage, setToastMessage] = useState("");
   const [error, setError] = useState(null);
-  const [success, setSuccess] = useState(false);
 
   const shortName = useMemo(() => networkShortNames[network] || network.toUpperCase(), [network]);
   const parsedAmount = useMemo(() => Number(amount) || 0, [amount]);
@@ -99,25 +105,22 @@ export default function SendPage() {
 
   const confirmSend = async () => {
     setShowConfirm(false);
+    setSending(true);
     try {
-      if (typeof window !== "undefined") {
-        setSending(true);
-        const { sendTransaction } = await import("@/utils/sendCryptoFunction");
-const hash = await sendTransaction({
-  to: receiver.trim(),
-  amount: parsedAmount,
-  network,
-});
-        console.log("✅ Transaction successful, hash:", hash);
-        setReceiver("");
-        setAmount("");
-        await refetch();
-        setSuccess(true);
-        setSending(false);
-      }
+      const hash = await sendTransaction({
+        to: receiver.trim(),
+        amount: parsedAmount,
+        network,
+      });
+      console.log("✅ Transaction successful, hash:", hash);
+      setReceiver("");
+      setAmount("");
+      await refetch();
+      setShowSuccess(true);
     } catch (err) {
       console.error("❌ Transaction error:", err.message || err);
-      setError(err.message || "Transaction failed");
+      setError(err.message || "Transaction failed.");
+    } finally {
       setSending(false);
     }
   };
@@ -131,12 +134,6 @@ const hash = await sendTransaction({
       refetchFees();
     }
   }, [amount, network, refetchFees]);
-
-  useEffect(() => {
-    if (success) {
-      setShowSuccess(true);
-    }
-  }, [success]);
 
   if (!isReady || initialLoading || feesLoading) {
     return (
@@ -187,13 +184,15 @@ const hash = await sendTransaction({
             onChange={(e) => setReceiver(e.target.value)}
             className={styles.inputField}
           />
-          <input
-            type="number"
-            placeholder="Amount to send"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            className={styles.inputField}
-          />
+          <div style={{ display: "flex", gap: "6px" }}>
+            <input
+              type="number"
+              placeholder="Amount to send"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              className={styles.inputField}
+            />
+          </div>
 
           <p className={styles.feeBreakdown}>
             Admin Fee: <strong>{adminFee.toFixed(6)} {shortName}</strong><br />
@@ -228,6 +227,7 @@ const hash = await sendTransaction({
           </motion.button>
         </div>
 
+        {/* Confirm Modal */}
         <AnimatePresence>
           {showConfirm && (
             <motion.div className={styles.overlay} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
@@ -254,6 +254,7 @@ const hash = await sendTransaction({
           )}
         </AnimatePresence>
 
+        {/* Success and Error Modals */}
         <AnimatePresence>
           {showSuccess && (
             <SuccessModal
@@ -274,4 +275,4 @@ const hash = await sendTransaction({
       </div>
     </motion.main>
   );
-}
+          }
