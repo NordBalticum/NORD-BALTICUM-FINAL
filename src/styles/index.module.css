@@ -10,13 +10,18 @@
 }
 
 .logoContainer {
-  margin-bottom: 1.8rem;
+  margin-bottom: 1.5rem; /* Sumažintas tarpas po logotipu */
   display: flex;
   justify-content: center;
+  align-items: center;
+  transform: translateY(-6px); /* ✅ Lengvas pakėlimas į viršų */
   animation: zoomIn 0.8s ease-out;
 }
 
 .logo {
+  width: 160px;
+  height: 160px;
+  object-fit: cover;
   border-radius: 50%;
   box-shadow: 0 0 48px rgba(255, 255, 255, 0.12);
   background: transparent;
@@ -104,4 +109,16 @@
   color: #ffd700;
   text-align: center;
   margin-top: 1rem;
+}
+
+/* Animacija */
+@keyframes zoomIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
