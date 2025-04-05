@@ -115,13 +115,11 @@ export default function SendPage() {
     }
   };
 
-  if (!isClient || loading) {
-    return <div className={styles.loading}>Loading...</div>;
-  }
+  const fullyReady = isClient && !loading && user && wallet && wallet.wallet?.address;
 
-  if (!user || !wallet?.wallet?.address) {
-    return <div className={styles.loading}>Preparing wallet...</div>;
-  }
+if (!fullyReady) {
+  return <div className={styles.loading}>Loading...</div>;
+}
 
   return (
     <motion.main
