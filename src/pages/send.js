@@ -37,7 +37,6 @@ const buttonColors = {
 export default function SendPage() {
   const isReady = usePageReady();
   const { balances, loading: balancesLoading, initialLoading, refetch } = useBalance();
-  const { sendCrypto, loading: sending, success, txHash, error, resetError } = useSendCrypto();
   const { prices } = usePrices();
 
   const [network, setNetwork] = useState("bsc");
@@ -47,6 +46,9 @@ export default function SendPage() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(false);
 
   const shortName = useMemo(() => networkShortNames[network] || network.toUpperCase(), [network]);
   const parsedAmount = useMemo(() => Number(amount) || 0, [amount]);
@@ -96,28 +98,32 @@ export default function SendPage() {
   };
 
   const confirmSend = async () => {
-  setShowConfirm(false);
-  try {
-    if (typeof window !== "undefined") {
-      const { sendCrypto } = await import("@/utils/sendCryptoFunction"); // Dynamic import
-      const hash = await sendCrypto({
-        to: receiver.trim(),
-        amount: parsedAmount,
-        network,
-      });
-      console.log("✅ Transaction successful, hash:", hash);
-      setReceiver("");
-      setAmount("");
-      await refetch();
-      setShowSuccess(true);
+    setShowConfirm(false);
+    try {
+      if (typeof window !== "undefined") {
+        setSending(true);
+        const { sendCrypto } = await import("@/utils/sendCryptoFunction"); // ✅ Dynamic import
+        const hash = await sendCrypto({
+          to: receiver.trim(),
+          amount: parsedAmount,
+          network,
+        });
+        console.log("✅ Transaction successful, hash:", hash);
+        setReceiver("");
+        setAmount("");
+        await refetch();
+        setSuccess(true);
+        setSending(false);
+      }
+    } catch (err) {
+      console.error("❌ Transaction error:", err.message || err);
+      setError(err.message || "Transaction failed");
+      setSending(false);
     }
-  } catch (err) {
-    console.error("❌ Transaction error:", err.message || err);
-  }
-};
+  };
 
   const handleRetry = () => {
-    resetError();
+    setError(null);
   };
 
   useEffect(() => {
@@ -181,15 +187,13 @@ export default function SendPage() {
             onChange={(e) => setReceiver(e.target.value)}
             className={styles.inputField}
           />
-          <div style={{ display: "flex", gap: "6px" }}>
-            <input
-              type="number"
-              placeholder="Amount to send"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              className={styles.inputField}
-            />
-          </div>
+          <input
+            type="number"
+            placeholder="Amount to send"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            className={styles.inputField}
+          />
 
           <p className={styles.feeBreakdown}>
             Admin Fee: <strong>{adminFee.toFixed(6)} {shortName}</strong><br />
@@ -224,7 +228,6 @@ export default function SendPage() {
           </motion.button>
         </div>
 
-        {/* Confirm Modal */}
         <AnimatePresence>
           {showConfirm && (
             <motion.div className={styles.overlay} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
@@ -251,7 +254,6 @@ export default function SendPage() {
           )}
         </AnimatePresence>
 
-        {/* Success and Error Modals */}
         <AnimatePresence>
           {showSuccess && (
             <SuccessModal
