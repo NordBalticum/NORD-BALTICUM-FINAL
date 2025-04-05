@@ -176,13 +176,6 @@ export default function SendPage() {
               onChange={(e) => setAmount(e.target.value)}
               className={styles.inputField}
             />
-            <button
-              type="button"
-              className={styles.maxSendButton}
-              onClick={handleMax}
-            >
-              Max
-            </button>
           </div>
 
           {/* Fees */}
