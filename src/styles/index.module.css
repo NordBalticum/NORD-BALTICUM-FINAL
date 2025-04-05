@@ -133,12 +133,12 @@
   from {
     opacity: 0;
     transform: translateX(-24px);
-    transform: translateY(-12);
+    transform: translateY(-1);
   }
   to {
     opacity: 1;
     transform: translateX(0);
-    transform: translateY(-12);
+    transform: translateY(-1);
   }
 }
 
