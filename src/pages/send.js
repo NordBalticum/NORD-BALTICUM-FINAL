@@ -161,7 +161,7 @@ export default function SendPage() {
               </span>
             )}
           </p>
-          <p className={styles.subBalance}>
+          <p className={styles.whiteText}>
             {balancesLoading ? <MiniLoadingSpinner /> : `≈ ${eurBalance} EUR | ${usdBalance} USD`}
           </p>
         </div>
@@ -221,7 +221,7 @@ export default function SendPage() {
         <AnimatePresence>
           {showConfirm && (
             <motion.div className={styles.overlay} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              <motion.div className={styles.confirmModal} initial={{ scale: 0.8 }} animate={{ scale: 1 }} exit={{ scale: 0.8 }} transition={{ duration: 0.3 }}>
+              <motion.div className={styles.confirmModal} initial={{ scale: 0.8 }} animate={{ scale: 1 }} exit={{ scale: 0.8 }} transition={{ duration: 0.4 }}>
                 <div className={styles.modalTitle}>Confirm Transaction</div>
                 <div className={styles.modalInfo}>
                   <p><strong>Network:</strong> {shortName}</p>
@@ -235,10 +235,7 @@ export default function SendPage() {
                   <button className={styles.modalButton} onClick={confirmSend}>
                     {sending ? "Confirming..." : "Confirm"}
                   </button>
-                  <button
-                    className={`${styles.modalButton} ${styles.cancel}`}
-                    onClick={() => setShowConfirm(false)}
-                  >
+                  <button className={`${styles.modalButton} ${styles.cancel}`} onClick={() => setShowConfirm(false)}>
                     Cancel
                   </button>
                 </div>
@@ -250,25 +247,17 @@ export default function SendPage() {
         {/* Success and Error Modals */}
         <AnimatePresence>
           {showSuccess && (
-            <SuccessModal
-              message="✅ Transaction Successful!"
-              txHash={txHash}
-              networkKey={network}
-              onClose={() => setShowSuccess(false)}
-            />
+            <SuccessModal message="✅ Transaction Successful!" txHash={txHash} networkKey={network} onClose={() => setShowSuccess(false)} />
           )}
         </AnimatePresence>
 
         <AnimatePresence>
           {error && (
-            <ErrorModal
-              error={error}
-              onRetry={handleRetry}
-            />
+            <ErrorModal error={error} onRetry={handleRetry} />
           )}
         </AnimatePresence>
 
       </div>
     </motion.main>
   );
-                     }
+                        }
