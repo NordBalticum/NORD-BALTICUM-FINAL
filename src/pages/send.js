@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
@@ -8,6 +8,7 @@ import { usePageReady } from "@/hooks/usePageReady";
 
 import SwipeSelector from "@/components/SwipeSelector";
 import SuccessModal from "@/components/modals/SuccessModal";
+import SuccessToast from "@/components/SuccessToast"; // ✅ Importuojam naują Toast
 
 import styles from "@/styles/send.module.css";
 import background from "@/styles/background.module.css";
@@ -41,6 +42,7 @@ export default function SendPage() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [sending, setSending] = useState(false);
   const [txHash, setTxHash] = useState("");
+  const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
 
   const shortName = useMemo(() => networkShortNames[localNetwork] || localNetwork.toUpperCase(), [localNetwork]);
@@ -56,9 +58,17 @@ export default function SendPage() {
     if (network) {
       setLocalNetwork(network);
       setToastMessage(`✅ Switched to ${networkShortNames[network] || network.toUpperCase()}`);
-      setTimeout(() => setToastMessage(""), 2000);
+      setShowToast(true);
     }
   }, []);
+
+  // Toast auto-hide
+  useEffect(() => {
+    if (showToast) {
+      const timer = setTimeout(() => setShowToast(false), 1000); // 1s automatinis paslėpimas
+      return () => clearTimeout(timer);
+    }
+  }, [showToast]);
 
   const handleSend = () => {
     if (!isValidAddress(receiver)) {
@@ -116,19 +126,9 @@ export default function SendPage() {
       className={`${styles.main} ${background.gradient}`}
     >
       <div className={styles.wrapper}>
-        <AnimatePresence>
-          {toastMessage && (
-            <motion.div
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.4 }}
-              className={styles.successAlert}
-            >
-              {toastMessage}
-            </motion.div>
-          )}
-        </AnimatePresence>
+        
+        {/* ✅ Naujasis Toast */}
+        <SuccessToast show={showToast} message={toastMessage} />
 
         <h1 className={styles.title}>SEND CRYPTO</h1>
         <p className={styles.subtext}>Transfer crypto securely & instantly</p>
