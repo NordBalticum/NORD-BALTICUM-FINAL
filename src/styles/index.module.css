@@ -24,13 +24,13 @@
   height: auto;
   object-fit: contain;
   background: transparent;
-  filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.06)) drop-shadow(0 0 14px rgba(255, 255, 255, 0.04));
+  filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.07)) drop-shadow(0 0 40px rgba(255, 255, 255, 0.07));
   transition: filter 0.4s ease, transform 0.4s ease;
 }
 
 .logo:hover {
-  transform: scale(1.035);
-  filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.08)) drop-shadow(0 0 18px rgba(255, 255, 255, 0.05));
+  transform: scale(1.04);
+  filter: drop-shadow(0 0 24px rgba(255, 255, 255, 0.09)) drop-shadow(0 0 48px rgba(255, 255, 255, 0.09));
 }
 
 .loginBox {
