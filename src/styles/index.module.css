@@ -130,7 +130,8 @@
 /* Responsive Fix - 768px */
 @media screen and (max-width: 768px) {
   .container {
-    transform: translateY(-22%);
-    transform: translateX(0);
+    transform: scale(0.88) translate(0, -22%);
+    transform-origin: top center;
+    transition: transform 0.4s ease-out; /* (nebūtina, bet bus smooth perėjimas) */
   }
 }
