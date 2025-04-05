@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 const TOKEN_IDS = {
   ethereum: "ethereum",
   bsc: "binancecoin",
-  polygon: "polygon",
+  matic: "matic-network",
   avalanche: "avalanche-2",
   tbnb: "binancecoin", // TBNB = testnet BNB, imsim kaip BNB
 };
