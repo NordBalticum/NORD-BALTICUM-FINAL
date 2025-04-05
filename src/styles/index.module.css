@@ -7,7 +7,6 @@
   padding: 2rem;
   position: relative;
   z-index: 2;
-  animation: fadeInSlideLeft 1.7s ease-out;
 }
 
 .logoContainer {
@@ -116,7 +115,8 @@
   margin-top: 1rem;
 }
 
-@keyframes fadeInSlideLeft {
+/* === Desktop Animacija === */
+@keyframes fadeInSlideLeftDesktop {
   from {
     opacity: 0;
     transform: translateX(-24px);
@@ -127,12 +127,30 @@
   }
 }
 
-/* Responsive Fix - 768px */
+/* === Mobile Animacija (su Scale!) === */
+@keyframes fadeInSlideLeftMobile {
+  from {
+    opacity: 0;
+    transform: scale(0.88) translateY(-8%) translateX(-24px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(0.88) translateY(-8%) translateX(0);
+  }
+}
+
+/* === Responsive Fix - 768px === */
 @media screen and (max-width: 768px) {
   .container {
-    transform: scale(0.88) translate(0, -22%);
+    transform: scale(0.88) translateY(-8%);
     transform-origin: top center;
-    transition: transform 0.4s ease-out;
-    animation: fadeInSlideLeft 1.7s ease-out;
+    animation: fadeInSlideLeftMobile 1.7s ease-out; /* ✅ Animacija vyksta čia! */
+  }
+}
+
+/* === Default (Desktop) Animacija === */
+@media screen and (min-width: 769px) {
+  .container {
+    animation: fadeInSlideLeftDesktop 1.7s ease-out;
   }
 }
