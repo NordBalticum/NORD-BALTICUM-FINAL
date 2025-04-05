@@ -24,6 +24,13 @@ export default function SwipeSelector({ onSelect }) {
 
   const isSwipeReady = useSwipeReady();
 
+  // ✅ Vibracija (Haptic Feedback)
+  const triggerVibration = () => {
+    if (typeof window !== "undefined" && "vibrate" in navigator) {
+      navigator.vibrate(20); // Švelnus vibracijos bumpas
+    }
+  };
+
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth <= 1024);
     handleResize();
@@ -69,11 +76,17 @@ export default function SwipeSelector({ onSelect }) {
   };
 
   const goLeft = () => {
-    if (selectedIndex > 0) handleSelect(selectedIndex - 1);
+    if (selectedIndex > 0) {
+      triggerVibration(); // ✅ Vibracija!
+      handleSelect(selectedIndex - 1);
+    }
   };
 
   const goRight = () => {
-    if (selectedIndex < supportedNetworks.length - 1) handleSelect(selectedIndex + 1);
+    if (selectedIndex < supportedNetworks.length - 1) {
+      triggerVibration(); // ✅ Vibracija!
+      handleSelect(selectedIndex + 1);
+    }
   };
 
   if (!isSwipeReady) {
