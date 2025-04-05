@@ -278,4 +278,4 @@ export default function SendPage() {
       </div>
     </motion.main>
   );
-          }
+}
