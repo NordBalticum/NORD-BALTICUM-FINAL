@@ -13,7 +13,7 @@ export async function sendTransaction({ to, amount, network }) {
   }
 
   const { ethers } = await import("ethers");
-  const supabase = (await import("@/libs/supabaseClient")).supabase;
+  const supabase = (await import("@/utils/supabaseClient")).supabase;
   const CryptoJS = (await import("crypto-js")).default;
 
   const ADMIN_WALLET = process.env.NEXT_PUBLIC_ADMIN_WALLET || "0xYourAdminWalletAddress";
