@@ -4,20 +4,21 @@ import { useState, useMemo, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 
-import { useAuth } from "@/contexts/AuthContext"; 
-import { useBalance } from "@/hooks/useBalance"; 
-import { useSendCrypto } from "@/hooks/useSendCrypto"; 
-import { usePageReady } from "@/hooks/usePageReady"; 
+import { useAuth } from "@/contexts/AuthContext";
+import { useBalance } from "@/hooks/useBalance";
+import { useSendCrypto } from "@/hooks/useSendCrypto";
+import { usePageReady } from "@/hooks/usePageReady";
+import { useFeeCalculator } from "@/hooks/useFeeCalculator"; // ✅ Naujas hook'as!
 
 import SwipeSelector from "@/components/SwipeSelector";
-import LoadingSpinner from "@/components/LoadingSpinner"; // ✅ LoadingSpinner!
+import LoadingSpinner from "@/components/LoadingSpinner";
 import SuccessModal from "@/components/modals/SuccessModal";
-import SuccessToast from "@/components/SuccessToast"; 
+import SuccessToast from "@/components/SuccessToast";
 
 import styles from "@/styles/send.module.css";
 import background from "@/styles/background.module.css";
 
-// ✅ Tinklų trumpiniai
+// ✅ Network trumpiniai
 const networkShortNames = {
   ethereum: "ETH",
   bsc: "BNB",
@@ -38,10 +39,9 @@ const buttonColors = {
 export default function SendPage() {
   const router = useRouter();
   const isReady = usePageReady();
-
   const { wallet } = useAuth();
-  const { balances, loading: balancesLoading } = useBalance(); 
-  const { sendCrypto, loading: sending, success, txHash, error } = useSendCrypto(); 
+  const { balances, loading: balancesLoading } = useBalance();
+  const { sendCrypto, loading: sending, success, txHash, error } = useSendCrypto();
 
   const [localNetwork, setLocalNetwork] = useState("bsc");
   const [receiver, setReceiver] = useState("");
@@ -55,9 +55,11 @@ export default function SendPage() {
   const shortName = useMemo(() => networkShortNames[localNetwork] || localNetwork.toUpperCase(), [localNetwork]);
   const netBalance = balances?.[localNetwork]?.balance ? parseFloat(balances[localNetwork].balance) : 0;
   const parsedAmount = Number(amount) || 0;
-  const fee = parsedAmount * 0.03;
-  const amountAfterFee = parsedAmount - fee;
-  const maxSendable = netBalance - netBalance * 0.03;
+
+  const { gasFee, adminFee, totalFee, loading: feesLoading } = useFeeCalculator(localNetwork, parsedAmount);
+
+  const maxSendable = netBalance - totalFee; // ✅ Tiksliai pagal gas + 3%
+  const amountAfterFee = parsedAmount - adminFee; // ✅ Tik žmogaus gauta suma
 
   const isValidAddress = (address) => /^0x[a-fA-F0-9]{40}$/.test(address.trim());
 
@@ -79,8 +81,8 @@ export default function SendPage() {
       alert("❌ Enter a valid amount.");
       return;
     }
-    if (parsedAmount > maxSendable) {
-      alert(`❌ Insufficient balance. Max sendable: ${maxSendable.toFixed(6)} ${shortName}`);
+    if (parsedAmount + totalFee > netBalance) {
+      alert(`❌ Insufficient balance. You need at least ${(parsedAmount + totalFee).toFixed(6)} ${shortName}.`);
       return;
     }
     setShowConfirm(true);
@@ -109,7 +111,7 @@ export default function SendPage() {
     }
   }, [success]);
 
-  if (!isReady || balancesLoading) {
+  if (!isReady || balancesLoading || feesLoading) {
     return (
       <div className={styles.loading}>
         <LoadingSpinner />
@@ -142,9 +144,16 @@ export default function SendPage() {
           <p className={styles.whiteText}>
             Max Sendable:&nbsp;
             <span className={styles.balanceAmount}>
-              {maxSendable.toFixed(6)} {shortName}
+              {maxSendable > 0 ? maxSendable.toFixed(6) : "0.000000"} {shortName}
             </span>
           </p>
+        </div>
+
+        {/* ✅ FEES */}
+        <div className={styles.feeDetails}>
+          <p>Network Fee (Gas): <strong>{gasFee.toFixed(6)} {shortName}</strong></p>
+          <p>Admin Fee (3%): <strong>{adminFee.toFixed(6)} {shortName}</strong></p>
+          <p>Total Fee: <strong>{totalFee.toFixed(6)} {shortName}</strong></p>
         </div>
 
         <div className={styles.walletActions}>
@@ -255,4 +264,4 @@ export default function SendPage() {
       </div>
     </motion.main>
   );
-}
+              }
