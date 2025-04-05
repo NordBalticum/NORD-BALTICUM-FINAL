@@ -28,7 +28,7 @@
   text-align: center;
   position: relative;
   z-index: 5;
-  transform: translateY(clamp(6%, 8%, 10%));
+  transform: translateY(1%);
 }
 
 .title {
