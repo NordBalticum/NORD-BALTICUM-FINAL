@@ -3,13 +3,26 @@
   top: 20px;
   left: 50%;
   transform: translateX(-50%);
-  background: rgba(0, 200, 0, 0.9);
-  color: white;
-  padding: 12px 24px;
-  border-radius: 12px;
-  font-size: 16px;
+  background: #0f0f0f;
+  color: #fff;
+  padding: 12px 20px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+  z-index: 1000;
   font-weight: 600;
-  z-index: 9999;
-  box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.2);
+  font-size: 16px;
   backdrop-filter: blur(10px);
+}
+
+.logoWrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.message {
+  white-space: nowrap;
 }
