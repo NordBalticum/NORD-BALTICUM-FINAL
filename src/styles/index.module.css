@@ -10,21 +10,25 @@
 }
 
 .logoContainer {
-  margin-bottom: 1.5rem; /* Sumažintas tarpas po logotipu */
+  margin-bottom: 1.8rem;
   display: flex;
   justify-content: center;
   align-items: center;
-  transform: translateY(-6px); /* ✅ Lengvas pakėlimas į viršų */
+  transform: translateY(-10px); /* ✅ Šiek tiek aukščiau */
   animation: zoomIn 0.8s ease-out;
 }
 
 .logo {
   width: 160px;
-  height: 160px;
-  object-fit: cover;
-  border-radius: 50%;
-  box-shadow: 0 0 48px rgba(255, 255, 255, 0.12);
+  height: auto;
+  object-fit: contain;
   background: transparent;
+  filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.08)); /* ✅ Švelnus smooth glow */
+  transition: filter 0.4s ease;
+}
+
+.logo:hover {
+  filter: drop-shadow(0 0 16px rgba(255, 255, 255, 0.15)); /* ✅ Sklandus didesnis glow on hover */
 }
 
 .loginBox {
@@ -120,5 +124,12 @@
   100% {
     opacity: 1;
     transform: scale(1);
+  }
+}
+
+/* Responsive fix – pakelti 17% per 768px */
+@media screen and (max-width: 768px) {
+  .logoContainer {
+    transform: translateY(-17%);
   }
 }
