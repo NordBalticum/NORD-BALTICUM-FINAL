@@ -12,6 +12,7 @@ import { usePrices } from "@/hooks/usePrices";
 
 import SwipeSelector from "@/components/SwipeSelector";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import MiniLoadingSpinner from "@/components/MiniLoadingSpinner"; // ✅ Importuojam mini spinnerį
 import SuccessModal from "@/components/modals/SuccessModal";
 import ErrorModal from "@/components/modals/ErrorModal";
 import SuccessToast from "@/components/SuccessToast";
@@ -55,7 +56,7 @@ export default function SendPage() {
   const netBalance = balances?.[network]?.balance ? parseFloat(balances[network].balance) : 0;
 
   const { gasFee, adminFee, totalFee, loading: feesLoading, refetchFees } = useFeeCalculator(network, amount);
-  
+
   const afterFees = useMemo(() => {
     return parsedAmount > 0 ? parsedAmount - gasFee - adminFee : 0;
   }, [parsedAmount, gasFee, adminFee]);
@@ -80,7 +81,7 @@ export default function SendPage() {
       await refetch();
     }
 
-    setAmount(""); // resetinam amount kad fees persiskaičiuotų
+    setAmount(""); 
     setToastMessage(`Switched to ${networkShortNames[selectedNetwork] || selectedNetwork.toUpperCase()}`);
     setShowToast(true);
     setTimeout(() => setShowToast(false), 1500);
@@ -126,7 +127,7 @@ export default function SendPage() {
   useEffect(() => {
     const interval = setInterval(() => {
       refetchFees();
-    }, 5000); // kas 5s stabilus gas fees atsinaujinimas
+    }, 5000);
     return () => clearInterval(interval);
   }, [network, parsedAmount, refetchFees]);
 
@@ -162,12 +163,14 @@ export default function SendPage() {
         <div className={styles.balanceTable}>
           <p className={styles.whiteText}>
             Your Balance:&nbsp;
-            <span className={styles.balanceAmount}>
-              {netBalance.toFixed(6)} {shortName}
-            </span>
+            {balancesLoading ? <MiniLoadingSpinner /> : (
+              <span className={styles.balanceAmount}>
+                {netBalance.toFixed(6)} {shortName}
+              </span>
+            )}
           </p>
           <p className={styles.subBalance}>
-            ≈ {eurBalance} EUR | {usdBalance} USD
+            {balancesLoading ? <MiniLoadingSpinner /> : `≈ ${eurBalance} EUR | ${usdBalance} USD`}
           </p>
         </div>
 
@@ -190,9 +193,13 @@ export default function SendPage() {
           </div>
 
           <p className={styles.feeBreakdown}>
-            Gas Fee: <strong>{gasFee.toFixed(6)} {shortName}</strong><br />
-            Admin Fee: <strong>{adminFee.toFixed(6)} {shortName}</strong><br />
-            You Receive: <strong>{afterFees > 0 ? afterFees.toFixed(6) : "0.000000"} {shortName}</strong>
+            {feesLoading ? <MiniLoadingSpinner /> : (
+              <>
+                Gas Fee: <strong>{gasFee.toFixed(6)} {shortName}</strong><br />
+                Admin Fee: <strong>{adminFee.toFixed(6)} {shortName}</strong><br />
+                You Receive: <strong>{afterFees > 0 ? afterFees.toFixed(6) : "0.000000"} {shortName}</strong>
+              </>
+            )}
           </p>
 
           <motion.button
@@ -213,7 +220,14 @@ export default function SendPage() {
               cursor: sending ? "not-allowed" : "pointer",
             }}
           >
-            {sending ? <LoadingSpinner /> : "SEND NOW"}
+            {sending ? (
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+                Sending
+                <MiniLoadingSpinner />
+              </div>
+            ) : (
+              "SEND NOW"
+            )}
           </motion.button>
         </div>
 
@@ -243,7 +257,16 @@ export default function SendPage() {
                   <p><strong>After Fees:</strong> {afterFees.toFixed(6)} {shortName}</p>
                 </div>
                 <div className={styles.modalActions}>
-                  <button className={styles.modalButton} onClick={confirmSend}>Confirm</button>
+                  <button className={styles.modalButton} onClick={confirmSend}>
+                    {sending ? (
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        Confirming
+                        <MiniLoadingSpinner />
+                      </div>
+                    ) : (
+                      "Confirm"
+                    )}
+                  </button>
                   <button
                     className={`${styles.modalButton} ${styles.cancel}`}
                     onClick={() => setShowConfirm(false)}
@@ -278,4 +301,4 @@ export default function SendPage() {
       </div>
     </motion.main>
   );
-}
+                     }
