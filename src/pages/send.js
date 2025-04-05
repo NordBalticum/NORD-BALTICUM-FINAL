@@ -4,7 +4,6 @@ import { useState, useMemo, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 import { useBalance } from "@/hooks/useBalance";
-import { useSendCrypto } from "@/hooks/useSendCrypto";
 import { usePageReady } from "@/hooks/usePageReady";
 import { useFeeCalculator } from "@/hooks/useFeeCalculator";
 import { usePrices } from "@/hooks/usePrices";
