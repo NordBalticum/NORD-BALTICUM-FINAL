@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import { useAuth } from "@/contexts/AuthContext";
-import { usePageReady } from "@/hooks/usePageReady";
+import { useSwipeReady } from "@/hooks/useSwipeReady"; // ✅ TIKRAS Swipe Ready
 import styles from "@/components/swipeselector.module.css";
 
 const supportedNetworks = [
@@ -20,8 +20,10 @@ export default function SwipeSelector({ onSelect }) {
   const containerRef = useRef(null);
   const [selectedIndex, setSelectedIndex] = useState(2);
   const [isMobile, setIsMobile] = useState(false);
-  const isReady = usePageReady();
 
+  const isSwipeReady = useSwipeReady(); // ✅ Tikrinam SWIPE readiness
+
+  // Responsive check
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth <= 1024);
     handleResize();
@@ -29,24 +31,27 @@ export default function SwipeSelector({ onSelect }) {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  // Kai pasirinktas tinklas pasikeičia
   useEffect(() => {
-    if (!isReady) return;
+    if (!isSwipeReady) return;
     if (supportedNetworks[selectedIndex]) {
       const selectedSymbol = supportedNetworks[selectedIndex].symbol;
       setActiveNetwork(selectedSymbol);
       onSelect?.(selectedSymbol);
     }
     if (isMobile) scrollToCenter(selectedIndex);
-  }, [selectedIndex, isMobile, setActiveNetwork, onSelect, isReady]);
+  }, [selectedIndex, isMobile, setActiveNetwork, onSelect, isSwipeReady]);
 
+  // Kai activeNetwork keičiasi
   useEffect(() => {
-    if (!isReady) return;
+    if (!isSwipeReady) return;
     const idx = supportedNetworks.findIndex((net) => net.symbol === activeNetwork);
     if (idx >= 0) {
       setSelectedIndex(idx);
     }
-  }, [activeNetwork, isReady]);
+  }, [activeNetwork, isSwipeReady]);
 
+  // Scroll į centrą
   const scrollToCenter = (index) => {
     const container = containerRef.current;
     const card = container?.children?.[index];
@@ -69,10 +74,12 @@ export default function SwipeSelector({ onSelect }) {
     if (selectedIndex < supportedNetworks.length - 1) handleSelect(selectedIndex + 1);
   };
 
-  if (!isReady) {
+  // Jei SWIPE dar neparuoštas
+  if (!isSwipeReady) {
     return <div className={styles.loading}>Loading networks...</div>;
   }
 
+  // Renderis
   return (
     <div className={styles.selectorContainer}>
       <div className={styles.arrows}>
