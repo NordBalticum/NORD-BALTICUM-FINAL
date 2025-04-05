@@ -8,6 +8,7 @@
   position: relative;
   z-index: 2;
   animation: fadeInSlideLeft 1.7s ease-out;
+  transform: translateY(0);
 }
 
 .logoContainer {
@@ -133,12 +134,10 @@
   from {
     opacity: 0;
     transform: translateX(-24px);
-    transform: translateY(-24);
   }
   to {
     opacity: 1;
     transform: translateX(0);
-    transform: translateY(-24);
   }
 }
 
@@ -146,6 +145,7 @@
 @media screen and (max-width: 768px) {
   .container {
     transform: scale(0.92) translateY(-12%);
+    transform: translateX(0);
   }
 }
 
