@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { ethers } from "ethers";
 
-// ✅ RPC adresai
 const RPC_URLS = {
   ethereum: "https://rpc.ankr.com/eth",
   bsc: "https://bsc-dataseed.bnbchain.org",
@@ -12,36 +11,43 @@ const RPC_URLS = {
   tbnb: "https://data-seed-prebsc-1-s1.binance.org:8545",
 };
 
-const BASE_GAS_LIMIT = 21000;
 const ADMIN_FEE_PERCENT = 3;
 
-export function useFeeCalculator(network, amount) {
+export function useFeeCalculator(network, amount, receiver = "") {
   const [gasFee, setGasFee] = useState(0);
   const [adminFee, setAdminFee] = useState(0);
   const [totalFee, setTotalFee] = useState(0);
   const [loading, setLoading] = useState(true);
 
-  const fetchGasPrice = useCallback(async () => {
+  const fetchGasEstimate = useCallback(async () => {
     try {
       if (!network) return;
+      if (!receiver || Number(amount) <= 0) {
+        setGasFee(0);
+        return;
+      }
 
       const provider = new ethers.JsonRpcProvider(RPC_URLS[network]);
-      const feeData = await provider.getFeeData();
-      const gasPrice = feeData.gasPrice || ethers.parseUnits("5", "gwei"); // fallback jeigu duomenų nėra
-      const gasCost = Number(ethers.formatEther(gasPrice * BigInt(BASE_GAS_LIMIT)));
+      const gasPrice = (await provider.getFeeData()).gasPrice || ethers.parseUnits("5", "gwei");
 
-      setGasFee(gasCost);
+      const estimatedGas = await provider.estimateGas({
+        to: receiver,
+        value: ethers.parseEther(amount.toString())
+      });
+
+      const totalGasCost = Number(ethers.formatEther(gasPrice * estimatedGas));
+      setGasFee(totalGasCost);
     } catch (error) {
-      console.error("❌ Gas fetch error:", error.message);
+      console.error("❌ Gas estimate error:", error.message);
       setGasFee(0);
     }
-  }, [network]);
+  }, [network, amount, receiver]);
 
   useEffect(() => {
-    fetchGasPrice();
-    const interval = setInterval(fetchGasPrice, 10000); // ✅ Kas 10s
+    fetchGasEstimate();
+    const interval = setInterval(fetchGasEstimate, 10000); // atnaujinam kas 10s
     return () => clearInterval(interval);
-  }, [fetchGasPrice]);
+  }, [fetchGasEstimate]);
 
   useEffect(() => {
     if (amount) {
@@ -58,9 +64,9 @@ export function useFeeCalculator(network, amount) {
   }, [gasFee, adminFee]);
 
   return {
-    gasFee,    // Real gas fee
-    adminFee,  // 3% fee
-    totalFee,  // Viso
+    gasFee,
+    adminFee,
+    totalFee,
     loading,
   };
 }
