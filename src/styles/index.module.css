@@ -131,6 +131,9 @@
 /* Responsive Fix - 768px */
 @media screen and (max-width: 768px) {
   .container {
+    width: calc(100vw - 80px);
+    height: calc(100vh - 80px);
+    background-size: 120% 120%;
     transform: translateY(-22%);
     transform: translateX(0);
   }
