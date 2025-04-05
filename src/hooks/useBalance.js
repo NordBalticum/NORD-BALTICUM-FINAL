@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { ethers } from "ethers";
 import { useAuth } from "@/contexts/AuthContext";
 
-// ✅ Geriausi RPC su simboliais
+// ✅ Patikimi RPC endpointai su simboliais
 const NETWORKS = {
   ethereum: { rpc: "https://rpc.ankr.com/eth", symbol: "ETH" },
   bsc: { rpc: "https://bsc-dataseed.bnbchain.org", symbol: "BNB" },
@@ -13,7 +13,7 @@ const NETWORKS = {
   tbnb: { rpc: "https://data-seed-prebsc-1-s1.binance.org:8545", symbol: "TBNB" },
 };
 
-// ✅ Funkcija gauti balansams
+// ✅ Funkcija gauti balansus visiems tinklams
 async function getBalances(address) {
   if (!address) throw new Error("❌ Wallet address is required!");
 
@@ -21,7 +21,7 @@ async function getBalances(address) {
 
   for (const [network, config] of Object.entries(NETWORKS)) {
     try {
-      const provider = new ethers.JsonRpcProvider(config.rpc);
+      const provider = new ethers.JsonRpcProvider(config.rpc, { staticNetwork: network });
       const balance = await provider.getBalance(address);
       const formatted = ethers.formatEther(balance);
       balances[network] = {
@@ -29,7 +29,7 @@ async function getBalances(address) {
         balance: formatted,
       };
     } catch (error) {
-      console.error(`❌ Failed to fetch balance for ${network}:`, error.message);
+      console.error(`❌ Failed to fetch balance for ${network}:`, error?.message || error);
       balances[network] = {
         symbol: config.symbol,
         balance: null,
@@ -40,12 +40,13 @@ async function getBalances(address) {
   return balances;
 }
 
-// ✅ Ultimate useBalance Hook
+// ✅ Ultimate Web3 Banking useBalance Hook
 export function useBalance() {
   const { wallet } = useAuth();
   const [balances, setBalances] = useState({});
-  const [loading, setLoading] = useState(true);         // loading kai refetchinam
-  const [initialLoading, setInitialLoading] = useState(true); // loading pirmą kartą
+  const [loading, setLoading] = useState(false);         // ✅ loading kai refetch'inam
+  const [initialLoading, setInitialLoading] = useState(true); // ✅ loading tik pirmą kartą
+  const intervalRef = useRef(null);                      // ✅ Kad niekad neliktų pasimetusių intervalų
 
   const fetchBalances = useCallback(async () => {
     if (!wallet?.wallet?.address) return;
@@ -55,21 +56,36 @@ export function useBalance() {
       const data = await getBalances(wallet.wallet.address);
       setBalances(data);
     } catch (error) {
-      console.error("❌ Balance fetch error:", error.message);
+      console.error("❌ Error fetching balances:", error?.message || error);
     } finally {
-      setLoading(false);        // ✅ Baigiam refetch loading
-      setInitialLoading(false); // ✅ Baigiam pirmą loading
+      setLoading(false);         // ✅ Baigiam refetch loading
+      setInitialLoading(false);  // ✅ Baigiam pirmą loading visam puslapiui
     }
   }, [wallet?.wallet?.address]);
 
   useEffect(() => {
     if (!wallet?.wallet?.address) return;
 
-    fetchBalances(); // ✅ Pirmas užkrovimas
+    // ✅ Pirmas balansų užkrovimas
+    fetchBalances();
 
-    const interval = setInterval(fetchBalances, 10000); // ✅ Auto-refresh kas 10s
-    return () => clearInterval(interval);
+    // ✅ Pradėti automatinį balansų atnaujinimą
+    intervalRef.current = setInterval(fetchBalances, 15000); // Kas 15s saugiau
+    console.log("✅ Auto-balance updater started.");
+
+    // ✅ Švariai išvalom intervalą, kad nebūtų memory leak
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        console.log("🧹 Auto-balance updater stopped.");
+      }
+    };
   }, [fetchBalances]);
 
-  return { balances, loading, initialLoading, refetch: fetchBalances };
+  return {
+    balances,        // ✅ Visi balansai
+    loading,         // ✅ Fono loading (kai atnaujinam)
+    initialLoading,  // ✅ Pirmas pilnas loading (rodom tik kartą)
+    refetch: fetchBalances, // ✅ Rankinis refetch jeigu reikia
+  };
 }
