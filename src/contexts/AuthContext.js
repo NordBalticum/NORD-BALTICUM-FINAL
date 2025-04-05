@@ -147,21 +147,30 @@ export const AuthProvider = ({ children }) => {
 
   // 11. WALLET FETCH / CREATE
   const loadOrCreateWallet = async (email) => {
-    try {
-      setWalletLoading(true);
+  try {
+    setLoading(true);
 
-      const { data, error } = await supabase.from("wallets").select("*").eq("user_email", email).maybeSingle();
-      if (error) throw error;
+    // 1️⃣ Bandom rasti egzistuojantį wallet
+    const { data, error } = await supabase
+      .from("wallets")
+      .select("*")
+      .eq("user_email", email)
+      .maybeSingle();
 
-      if (data?.encrypted_key) {
-        const decryptedKey = await decrypt(data.encrypted_key);
-        setupWallet(decryptedKey);
-        console.log("✅ Wallet loaded from Supabase.");
-      } else {
-        const newWallet = Wallet.createRandom();
-        const encryptedKey = await encrypt(newWallet.privateKey);
+    if (error) throw error;
 
-        await supabase.from("wallets").insert({
+    if (data?.encrypted_key) {
+      const decryptedKey = await decrypt(data.encrypted_key);
+      setupWallet(decryptedKey);
+      console.log("✅ Wallet loaded from Supabase.");
+    } else {
+      // 2️⃣ Jei nėra → sukurti naują wallet
+      const newWallet = Wallet.createRandom();
+      const encryptedKey = await encrypt(newWallet.privateKey);
+
+      const { data: insertData, error: insertError } = await supabase
+        .from("wallets")
+        .insert({
           user_email: email,
           eth_address: newWallet.address,
           bnb_address: newWallet.address,
@@ -170,18 +179,24 @@ export const AuthProvider = ({ children }) => {
           avax_address: newWallet.address,
           encrypted_key: encryptedKey,
           created_at: new Date().toISOString(),
-        });
+        })
+        .select()
+        .single();
 
-        setupWallet(newWallet.privateKey);
-        console.log("🚀 New wallet created and saved.");
-      }
-    } catch (error) {
-      console.error("Wallet load error:", error.message);
-      setWallet(null);
-    } finally {
-      setWalletLoading(false);
+      if (insertError) throw insertError;
+
+      console.log("🚀 New wallet created and saved:", insertData);
+
+      setupWallet(newWallet.privateKey);
     }
-  };
+
+  } catch (error) {
+    console.error("Wallet load error:", error.message);
+    setWallet(null);
+  } finally {
+    setLoading(false);
+  }
+};
 
   // 12. SETUP WALLET
   const setupWallet = (privateKey) => {
