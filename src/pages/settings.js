@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 
-import { useAuth } from "@/contexts/AuthContext"; // ✅ Ultimate Auth Context
+import { useAuth } from "@/contexts/AuthContext"; 
 import { supabase } from "@/utils/supabaseClient";
 
 import styles from "@/styles/settings.module.css";
@@ -12,29 +12,26 @@ import background from "@/styles/background.module.css";
 
 export default function SettingsPage() {
   const router = useRouter();
-  const { user, wallet, signOut } = useAuth(); // ❌ loadOrCreateWallet čia nereikalingas
+  const { user, wallet, signOut } = useAuth();
 
   const [emailInput, setEmailInput] = useState("");
-  const [walletAddress, setWalletAddress] = useState("Loading...");
+  const [walletAddress, setWalletAddress] = useState("");
   const [isClient, setIsClient] = useState(false);
   const [copied, setCopied] = useState(false);
   const [emailStatus, setEmailStatus] = useState("");
 
-  // ✅ Patikrinam ar klientas
   useEffect(() => {
     if (typeof window !== "undefined") {
       setIsClient(true);
     }
   }, []);
 
-  // ✅ Užkraunam wallet adresą
   useEffect(() => {
     if (isClient && wallet?.wallet?.address) {
       setWalletAddress(wallet.wallet.address);
     }
   }, [wallet, isClient]);
 
-  // ✅ Email keitimas su Magic Link
   const handleChangeEmail = async () => {
     const email = emailInput.trim();
     if (!email) {
@@ -55,19 +52,24 @@ export default function SettingsPage() {
     }
   };
 
-  // ✅ Kopijuoti adresą
-  const handleCopyWallet = () => {
+  const handleCopyWallet = async () => {
     if (!walletAddress) return;
-    navigator.clipboard.writeText(walletAddress).then(() => {
+    try {
+      await navigator.clipboard.writeText(walletAddress);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    }).catch((err) => console.error("Clipboard error:", err));
+    } catch (err) {
+      console.error("Clipboard error:", err);
+    }
   };
 
-  // ✅ Atsijungimas
   const handleLogout = async () => {
-    await signOut();
-    router.replace("/");
+    try {
+      await signOut();
+      router.replace("/");
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
   };
 
   if (!isClient || !user || !wallet?.wallet?.address) {
@@ -87,7 +89,7 @@ export default function SettingsPage() {
           className={styles.logo}
         />
 
-        {/* Wallet Info */}
+        {/* Wallet */}
         <div
           className={styles.walletBox}
           onClick={handleCopyWallet}
@@ -100,7 +102,7 @@ export default function SettingsPage() {
           {copied && <p className={styles.copyStatus}>✅ Copied!</p>}
         </div>
 
-        {/* Email Section */}
+        {/* Email */}
         <div className={styles.section}>
           <h4>Change Email</h4>
           <p className={styles.currentEmail}>
@@ -127,7 +129,7 @@ export default function SettingsPage() {
           )}
         </div>
 
-        {/* Logout Button */}
+        {/* Logout */}
         <button className={styles.logout} onClick={handleLogout}>
           Log Out
         </button>
