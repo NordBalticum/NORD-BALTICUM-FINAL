@@ -65,11 +65,11 @@ export default function Dashboard() {
   };
 
   // 9️⃣ Bendras loading
-  const isLoading = loading || !isClient || !wallet || !wallet.wallet;
+  const isLoading = !isClient || !user || !wallet || !wallet.wallet;
 
-  if (isLoading) {
-    return <div className={styles.loading}>Loading dashboard...</div>;
-  }
+if (isLoading) {
+  return <div className={styles.loading}>Loading dashboard...</div>;
+}
 
   // 🔟 UI
   return (
