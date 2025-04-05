@@ -102,7 +102,7 @@ export default function SendPage() {
     setError(null);
     try {
       if (typeof window !== "undefined") {
-        const { sendTransaction } = await import("@/utils/sendCryptoFunction"); // Dynamic import
+        const { sendTransaction } = await import("@/utils/sendCryptoFunction");
         const hash = await sendTransaction({
           to: receiver.trim(),
           amount: parsedAmount,
@@ -131,6 +131,26 @@ export default function SendPage() {
       refetchFees();
     }
   }, [amount, network, refetchFees]);
+
+  // Auto close Success modal after 3s
+  useEffect(() => {
+    if (showSuccess) {
+      const timer = setTimeout(() => {
+        setShowSuccess(false);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [showSuccess]);
+
+  // Auto close Error modal after 4s
+  useEffect(() => {
+    if (error) {
+      const timer = setTimeout(() => {
+        setError(null);
+      }, 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [error]);
 
   if (!isReady || initialLoading || feesLoading) {
     return (
@@ -180,6 +200,7 @@ export default function SendPage() {
             value={receiver}
             onChange={(e) => setReceiver(e.target.value)}
             className={styles.inputField}
+            disabled={sending}
           />
           <div style={{ display: "flex", gap: "6px" }}>
             <input
@@ -188,6 +209,7 @@ export default function SendPage() {
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               className={styles.inputField}
+              disabled={sending}
             />
           </div>
 
@@ -239,8 +261,14 @@ export default function SendPage() {
                   <p><strong>After Fees:</strong> {(parsedAmount - gasFee - adminFee).toFixed(6)} {shortName}</p>
                 </div>
                 <div className={styles.modalActions}>
-                  <button className={styles.modalButton} onClick={confirmSend}>
-                    {sending ? "Confirming..." : "Confirm"}
+                  <button className={styles.modalButton} onClick={confirmSend} disabled={sending}>
+                    {sending ? (
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        Confirming <MiniLoadingSpinner />
+                      </div>
+                    ) : (
+                      "Confirm"
+                    )}
                   </button>
                   <button className={`${styles.modalButton} ${styles.cancel}`} onClick={() => setShowConfirm(false)}>
                     Cancel
