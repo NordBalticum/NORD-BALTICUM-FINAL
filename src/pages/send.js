@@ -157,20 +157,18 @@ export default function SendPage() {
         <div className={styles.balanceTable}>
           <p className={styles.whiteText}>
             Your Balance:&nbsp;
-            {balancesLoading ? <MiniLoadingSpinner /> : (
-              <motion.span
-                className={styles.balanceAmount}
-                key={netBalance} // <- Balanso animacija kai keičiasi
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.4 }}
-              >
-                {netBalance.toFixed(6)} {shortName}
-              </motion.span>
-            )}
+            <motion.span
+              className={styles.balanceAmount}
+              key={netBalance}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.4 }}
+            >
+              {netBalance.toFixed(6)} {shortName}
+            </motion.span>
           </p>
           <p className={styles.whiteText}>
-            {balancesLoading ? <MiniLoadingSpinner /> : `≈ ${eurBalance} EUR | ${usdBalance} USD`}
+            ≈ {eurBalance} EUR | {usdBalance} USD
           </p>
         </div>
 
@@ -243,7 +241,10 @@ export default function SendPage() {
                   <button className={styles.modalButton} onClick={confirmSend}>
                     {sending ? "Confirming..." : "Confirm"}
                   </button>
-                  <button className={`${styles.modalButton} ${styles.cancel}`} onClick={() => setShowConfirm(false)}>
+                  <button
+                    className={`${styles.modalButton} ${styles.cancel}`}
+                    onClick={() => setShowConfirm(false)}
+                  >
                     Cancel
                   </button>
                 </div>
@@ -275,4 +276,4 @@ export default function SendPage() {
       </div>
     </motion.main>
   );
-                     }
+}
