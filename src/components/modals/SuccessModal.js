@@ -11,7 +11,7 @@ const explorerLinks = {
   avalanche: "https://snowtrace.io/tx/",
 };
 
-export default function SuccessModal({ message, txHash, networkKey, onClose }) {
+export default function SuccessModal({ message = "✅ Transaction Successful!", txHash, networkKey, onClose = () => {} }) {
   const explorerBase = explorerLinks[networkKey] || "";
   const explorerUrl = txHash ? `${explorerBase}${txHash}` : "#";
 
@@ -31,7 +31,7 @@ export default function SuccessModal({ message, txHash, networkKey, onClose }) {
       >
         {/* Close Button Top Right */}
         <button
-          onClick={onClose}
+          onClick={typeof onClose === "function" ? onClose : () => {}}
           style={{
             position: "absolute",
             top: "12px",
@@ -46,11 +46,12 @@ export default function SuccessModal({ message, txHash, networkKey, onClose }) {
           ✖
         </button>
 
-        <div className={styles.modalTitle}>Success</div>
+        {/* Modal Content */}
+        <div className={styles.modalTitle}>Transaction is Done!</div>
 
         <div className={styles.modalInfo} style={{ textAlign: "center" }}>
           <p style={{ color: "#00ff00", fontWeight: "600", fontSize: "1.1rem" }}>
-            Transaction is Done!
+            {message}
           </p>
 
           {txHash && (
@@ -72,8 +73,12 @@ export default function SuccessModal({ message, txHash, networkKey, onClose }) {
           )}
         </div>
 
+        {/* Bottom Close Button */}
         <div className={styles.modalActions} style={{ justifyContent: "center", marginTop: "24px" }}>
-          <button className={styles.modalButton} onClick={onClose}>
+          <button
+            className={styles.modalButton}
+            onClick={typeof onClose === "function" ? onClose : () => {}}
+          >
             Close
           </button>
         </div>
