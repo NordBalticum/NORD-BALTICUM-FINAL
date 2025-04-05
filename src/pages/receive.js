@@ -12,16 +12,18 @@ import background from "@/styles/background.module.css";
 export default function Receive() {
   const router = useRouter();
   const { user, wallet, loading } = useAuth();
-  
+
   const [isClient, setIsClient] = useState(false);
   const [copied, setCopied] = useState(false);
 
+  // ✅ Check if on client
   useEffect(() => {
     if (typeof window !== "undefined") {
       setIsClient(true);
     }
   }, []);
 
+  // ✅ Redirect to homepage if not logged in
   useEffect(() => {
     if (isClient && !loading && !user) {
       router.replace("/");
@@ -41,14 +43,22 @@ export default function Receive() {
   };
 
   if (!isClient || loading) {
-    return <div className={styles.loading}>Loading Wallet...</div>;
+    return (
+      <div className={styles.loadingScreen}>
+        Loading Wallet...
+      </div>
+    );
   }
 
-  if (!user || !wallet?.wallet?.address) {
-    return <div className={styles.loading}>Preparing wallet...</div>;
-  }
+  const address = wallet?.wallet?.address;
 
-  const address = wallet.wallet.address; // ✅ Naujas modelis
+  if (!user || !address) {
+    return (
+      <div className={styles.loadingScreen}>
+        Preparing wallet...
+      </div>
+    );
+  }
 
   return (
     <motion.main
@@ -62,13 +72,11 @@ export default function Receive() {
           <h1 className={styles.title}>RECEIVE</h1>
           <p className={styles.subtext}>Your MultiNetwork Receiving Address</p>
 
-          {/* ✅ ReceiveComponent tik jeigu yra address */}
-          {address && (
-            <ReceiveComponent
-              address={address}
-              onCopy={handleCopy}
-            />
-          )}
+          {/* ✅ Tik jei address */}
+          <ReceiveComponent
+            address={address}
+            onCopy={handleCopy}
+          />
 
           {copied && (
             <div className={styles.copied}>
