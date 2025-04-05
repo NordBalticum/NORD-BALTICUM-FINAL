@@ -3,12 +3,12 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 12px;
+  gap: 14px; /* šiek tiek daugiau oro */
   width: 100%;
   max-width: 720px;
   margin: 0 auto;
-  padding-inline: clamp(16px, 5vw, 48px);
-  padding-top: clamp(12px, 3vw, 24px);
+  padding-inline: clamp(20px, 5vw, 48px);
+  padding-top: clamp(16px, 3vw, 32px);
   overflow: visible;
   z-index: 99;
 }
@@ -17,9 +17,9 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 10px;
+  gap: 14px; /* šiek tiek platesnis tarpas */
   margin-bottom: 12px;
-  margin-top: -4px;
+  margin-top: -2px; /* šiek tiek pakelta */
   position: relative;
   z-index: 1000;
 }
@@ -29,24 +29,24 @@
   height: 48px;
   border: 2px solid white;
   border-radius: 12px;
-  background: transparent;
+  background: rgba(255, 255, 255, 0.05); /* švelnus fonas */
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 26px; /* ✅ Rodyklės viduje didelės */
-  font-weight: 700; /* ✅ Stiprios rodyklės */
+  font-size: 24px;
+  font-weight: 700;
   color: white;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 0 8px rgba(255, 255, 255, 0.25); /* ✅ Švelnus glow */
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.2);
   user-select: none;
 }
 
 .arrowBtn:hover {
-  background: rgba(255, 255, 255, 0.95);
+  background: rgba(255, 255, 255, 0.92);
   color: black;
-  transform: scale(1.12); /* ✅ Premium plastiškas padidėjimas */
-  box-shadow: 0 0 12px rgba(255, 255, 255, 0.5); /* ✅ Švytėjimas per hover */
+  transform: scale(1.12);
+  box-shadow: 0 0 14px rgba(255, 255, 255, 0.4);
 }
 
 .arrowBtn:disabled {
@@ -55,6 +55,7 @@
   box-shadow: none;
 }
 
+/* didesni ekranai - paslėpti rodykles */
 @media screen and (min-width: 1025px) {
   .arrows {
     display: none;
@@ -64,11 +65,11 @@
 .staticWrapper {
   display: flex;
   flex-wrap: wrap;
-  gap: clamp(16px, 3vw, 32px);
+  gap: clamp(20px, 3vw, 36px);
   justify-content: center;
   align-items: center;
   width: 100%;
-  padding-block: clamp(12px, 2.5vw, 20px);
+  padding-block: clamp(16px, 2.5vw, 28px);
   overflow: hidden;
 }
 
@@ -79,11 +80,11 @@
   scroll-snap-type: x mandatory;
   -webkit-overflow-scrolling: touch;
   scroll-behavior: smooth;
-  gap: clamp(16px, 3vw, 32px);
+  gap: clamp(20px, 3vw, 36px);
   justify-content: flex-start;
   align-items: stretch;
-  padding-block: clamp(12px, 2.5vw, 20px);
-  padding-inline: 4px;
+  padding-block: clamp(16px, 2.5vw, 28px);
+  padding-inline: 8px;
   scrollbar-width: none;
   min-width: max-content;
   touch-action: pan-x;
@@ -96,11 +97,11 @@
 .card {
   flex: 0 0 auto;
   scroll-snap-align: center;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 28px;
-  backdrop-filter: blur(20px) saturate(180%);
-  padding: 20px;
+  backdrop-filter: blur(24px) saturate(200%);
+  padding: 22px;
   width: 160px;
   height: 180px;
   display: flex;
@@ -108,43 +109,70 @@
   justify-content: center;
   align-items: center;
   text-align: center;
-  transition: transform 0.3s ease, background 0.3s ease;
+  transition: transform 0.35s ease, background 0.35s ease;
   cursor: pointer;
-  box-shadow: 0 0 8px rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.08);
 }
 
 .card:hover {
-  transform: scale(1.06);
+  transform: scale(1.07);
   background: rgba(255, 255, 255, 0.07);
 }
 
 .selected {
   border: 2px solid #ffd700;
   background: rgba(255, 255, 255, 0.15);
-  transform: scale(1.12);
-  box-shadow: 0 0 20px rgba(255, 255, 255, 0.15);
+  transform: scale(1.14);
+  box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
 }
 
 .logo {
-  width: 42px;
-  height: 42px;
+  width: 46px;
+  height: 46px;
   object-fit: contain;
-  margin-bottom: 12px;
-  border-radius: 12px;
-  filter: brightness(1.2);
+  margin-bottom: 14px;
+  border-radius: 14px;
+  filter: brightness(1.25);
   user-select: none;
 }
 
 .name {
-  font-size: 15px;
+  font-size: 16px;
   color: white;
   font-family: var(--font-crypto);
   font-weight: 600;
-  letter-spacing: 0.4px;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  letter-spacing: 0.45px;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
 }
 
-/* === Planšetės & vidutiniai įrenginiai === */
+/* Responsyvūs dydžiai */
+@media screen and (max-width: 1024px) {
+  .card {
+    width: 92px;
+    height: 108px;
+    padding: 6px;
+    border-radius: 14px;
+  }
+
+  .logo {
+    width: 34px;
+    height: 34px;
+    margin-bottom: 8px;
+  }
+
+  .name {
+    font-size: 11.5px;
+  }
+
+  .arrowBtn {
+    font-size: 14px;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border-radius: 8px;
+  }
+}
+
 @media screen and (max-width: 768px) {
   .card {
     width: 86px;
@@ -164,7 +192,7 @@
   }
 
   .arrowBtn {
-    font-size: 12px;
+    font-size: 13px;
     width: 34px;
     height: 34px;
     padding: 0;
@@ -172,35 +200,6 @@
   }
 }
 
-/* === Mobiliems iki 1024px === */
-@media screen and (max-width: 1024px) {
-  .card {
-    width: 92px;
-    height: 108px;
-    padding: 6px;
-    border-radius: 14px;
-  }
-
-  .logo {
-    width: 34px;
-    height: 34px;
-    margin-bottom: 6px;
-  }
-
-  .name {
-    font-size: 11px;
-  }
-
-  .arrowBtn {
-    font-size: 13px;
-    width: 36px;
-    height: 36px;
-    padding: 0;
-    border-radius: 8px;
-  }
-}
-
-/* === Ultra mažiems ekranams iki 280px === */
 @media screen and (max-width: 280px) {
   .card {
     width: 78px;
