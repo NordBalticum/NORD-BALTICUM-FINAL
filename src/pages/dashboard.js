@@ -19,7 +19,7 @@ const iconUrls = {
   ethereum: "https://cryptologos.cc/logos/ethereum-eth-logo.png",
   bsc: "https://cryptologos.cc/logos/binance-coin-bnb-logo.png",
   tbnb: "https://cryptologos.cc/logos/binance-coin-bnb-logo.png",
-  matic: "https://cryptologos.cc/logos/polygon-matic-logo.png",
+  polygon: "https://cryptologos.cc/logos/polygon-matic-logo.png",
   avalanche: "https://cryptologos.cc/logos/avalanche-avax-logo.png",
 };
 
@@ -28,7 +28,7 @@ const names = {
   ethereum: "Ethereum",
   bsc: "BNB Smart Chain",
   tbnb: "BNB Testnet",
-  matic: "Polygon",
+  polygon: "Polygon",
   avalanche: "Avalanche",
 };
 
