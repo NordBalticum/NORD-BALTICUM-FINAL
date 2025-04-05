@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { ethers } from "ethers";
 import { useAuth } from "@/contexts/AuthContext";
 
+// ✅ Geriausi RPC su simboliais
 const NETWORKS = {
   ethereum: { rpc: "https://rpc.ankr.com/eth", symbol: "ETH" },
   bsc: { rpc: "https://bsc-dataseed.bnbchain.org", symbol: "BNB" },
@@ -12,6 +13,7 @@ const NETWORKS = {
   tbnb: { rpc: "https://data-seed-prebsc-1-s1.binance.org:8545", symbol: "TBNB" },
 };
 
+// ✅ Funkcija gauti balansams
 async function getBalances(address) {
   if (!address) throw new Error("❌ Wallet address is required!");
 
@@ -38,33 +40,36 @@ async function getBalances(address) {
   return balances;
 }
 
+// ✅ Ultimate useBalance Hook
 export function useBalance() {
   const { wallet } = useAuth();
   const [balances, setBalances] = useState({});
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true);         // loading kai refetchinam
+  const [initialLoading, setInitialLoading] = useState(true); // loading pirmą kartą
 
-  const refetch = useCallback(async () => {
+  const fetchBalances = useCallback(async () => {
     if (!wallet?.wallet?.address) return;
 
-    setLoading(true); // ✅ Rodom loaderį per refetch
+    setLoading(true); // ✅ Rodom loading tik per refetch
     try {
       const data = await getBalances(wallet.wallet.address);
       setBalances(data);
     } catch (error) {
       console.error("❌ Balance fetch error:", error.message);
     } finally {
-      setLoading(false); // ✅ Baigiam loading bet kuriuo atveju
+      setLoading(false);        // ✅ Baigiam refetch loading
+      setInitialLoading(false); // ✅ Baigiam pirmą loading
     }
   }, [wallet?.wallet?.address]);
 
   useEffect(() => {
     if (!wallet?.wallet?.address) return;
 
-    refetch(); // ✅ Pirmas užkrovimas
+    fetchBalances(); // ✅ Pirmas užkrovimas
 
-    const interval = setInterval(refetch, 10000); // ✅ Auto-refresh kas 10s
+    const interval = setInterval(fetchBalances, 10000); // ✅ Auto-refresh kas 10s
     return () => clearInterval(interval);
-  }, [refetch]);
+  }, [fetchBalances]);
 
-  return { balances, loading, refetch };
+  return { balances, loading, initialLoading, refetch: fetchBalances };
 }
