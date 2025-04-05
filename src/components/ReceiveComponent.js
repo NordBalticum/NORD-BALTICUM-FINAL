@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import QRCode from "react-qr-code";
+import styles from "./receivecomponent.module.css";
 
 export default function ReceiveComponent({ address, onCopy }) {
   const { loading } = useAuth();
