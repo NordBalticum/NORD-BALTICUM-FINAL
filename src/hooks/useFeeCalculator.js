@@ -13,7 +13,7 @@ const RPC_URLS = {
 };
 
 const BASE_GAS_LIMIT = 21000; // Basic transaction gas limit
-const ADMIN_FEE_PERCENT = 3; // 3% admin fee
+const ADMIN_FEE_PERCENT = 3;  // 3% administracinis mokestis
 
 export function useFeeCalculator(network, amount) {
   const [gasFee, setGasFee] = useState(0);
@@ -27,7 +27,7 @@ export function useFeeCalculator(network, amount) {
 
       const provider = new ethers.JsonRpcProvider(RPC_URLS[network]);
       const feeData = await provider.getFeeData();
-      const gasPrice = feeData.gasPrice || ethers.parseUnits("5", "gwei"); // fallback 5 gwei
+      const gasPrice = feeData.gasPrice || ethers.parseUnits("5", "gwei"); // fallback
       const gasCost = Number(ethers.formatEther(gasPrice * BigInt(BASE_GAS_LIMIT)));
 
       setGasFee(gasCost);
@@ -37,26 +37,26 @@ export function useFeeCalculator(network, amount) {
     }
   }, [network]);
 
-  // Kai pasikeičia network arba inputinam amount -> pasigauna fees
+  // Kai keičiasi tinklas arba suma, gaunam naujus duomenis
   useEffect(() => {
     fetchGasPrice();
   }, [fetchGasPrice]);
 
-  // Kas 10 sekundžių stabiliai atsinaujina gas price
+  // Kas 10 sekundžių atnaujina gas price
   useEffect(() => {
     const interval = setInterval(() => {
       fetchGasPrice();
-    }, 10000); // 10 sekundžių
+    }, 10000);
     return () => clearInterval(interval);
   }, [fetchGasPrice]);
 
-  // Perskaičiuoja admin fee, kai pasikeičia įvesta suma
+  // Paskaičiuoja admin fee
   useEffect(() => {
     const adminFeeAmount = amount ? (Number(amount) * ADMIN_FEE_PERCENT) / 100 : 0;
     setAdminFee(adminFeeAmount);
   }, [amount]);
 
-  // Kai pasikeičia gasFee arba adminFee, automatiškai perskaičiuoja totalFee
+  // Total fees update
   useEffect(() => {
     setTotalFee(gasFee + adminFee);
     setLoading(false);
@@ -67,6 +67,6 @@ export function useFeeCalculator(network, amount) {
     adminFee,
     totalFee,
     loading,
-    refetchFees: fetchGasPrice, // leis bet kada rankiniu būdu iškviesti
+    refetchFees: fetchGasPrice, // rankinis fees atnaujinimas
   };
 }
