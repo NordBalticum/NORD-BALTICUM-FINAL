@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import { useAuth } from "@/contexts/AuthContext";
-import { useComponentReady } from "@/hooks/useComponentReady";
+import { useSwipeReady } from "@/hooks/useSwipeReady"; // ✅ Tikras SwipeReady hookas
 import styles from "@/components/swipeselector.module.css";
 
 const supportedNetworks = [
@@ -20,12 +20,11 @@ export default function SwipeSelector({ onSelect }) {
   const containerRef = useRef(null);
   const [selectedIndex, setSelectedIndex] = useState(2);
   const [isMobile, setIsMobile] = useState(false);
-  const hasInitialized = useRef(false); // ✅ Pridedam kontrolę
-  const isReady = useComponentReady({
-    activeNetwork,
-    setActiveNetwork,
-  });
+  const hasInitialized = useRef(false); // ✅ Fiksuojam pradinę inicializaciją
 
+  const isSwipeReady = useSwipeReady(); // ✅ Naudojam tobulą Swipe Ready hook'ą
+
+  // Responsive check
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth <= 1024);
     handleResize();
@@ -35,7 +34,7 @@ export default function SwipeSelector({ onSelect }) {
 
   // ✅ Tik pirmą kartą automatiškai nustatom tinklą
   useEffect(() => {
-    if (!isReady || hasInitialized.current) return;
+    if (!isSwipeReady || hasInitialized.current) return;
 
     if (supportedNetworks[selectedIndex]) {
       const selectedSymbol = supportedNetworks[selectedIndex].symbol;
@@ -44,17 +43,18 @@ export default function SwipeSelector({ onSelect }) {
       hasInitialized.current = true; // ✅ Užfiksuojam, kad jau suinicializuota
     }
     if (isMobile) scrollToCenter(selectedIndex);
-  }, [isReady, isMobile, selectedIndex, setActiveNetwork, onSelect]);
+  }, [isSwipeReady, isMobile, selectedIndex, setActiveNetwork, onSelect]);
 
-  // ✅ Kai aktyvus tinklas pasikeičia (vartotojo pasirinkimu ar sistemos)
+  // ✅ Kai aktyvus tinklas pasikeičia
   useEffect(() => {
-    if (!isReady) return;
+    if (!isSwipeReady) return;
     const idx = supportedNetworks.findIndex((net) => net.symbol === activeNetwork);
     if (idx >= 0 && idx !== selectedIndex) {
       setSelectedIndex(idx);
     }
-  }, [activeNetwork, isReady]);
+  }, [activeNetwork, isSwipeReady]);
 
+  // Scroll į centrą
   const scrollToCenter = (index) => {
     const container = containerRef.current;
     const card = container?.children?.[index];
@@ -80,7 +80,7 @@ export default function SwipeSelector({ onSelect }) {
     if (selectedIndex < supportedNetworks.length - 1) handleSelect(selectedIndex + 1);
   };
 
-  if (!isReady) {
+  if (!isSwipeReady) {
     return <div className={styles.loading}>Loading networks...</div>;
   }
 
