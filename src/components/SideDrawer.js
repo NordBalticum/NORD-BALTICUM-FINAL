@@ -1,5 +1,6 @@
 "use client";
 
+// 1️⃣ Importai
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
@@ -11,16 +12,16 @@ import styles from "@/components/sidedrawer.module.css";
 export default function SideDrawer() {
   const router = useRouter();
   const pathname = usePathname();
-  const { user, signOut } = useAuth();
+  const { user, wallet, signOut } = useAuth(); // ✅ Tik user + wallet
   const [open, setOpen] = useState(false);
   const [isClient, setIsClient] = useState(false);
 
+  // 2️⃣ Detect Client
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      setIsClient(true);
-    }
+    setIsClient(typeof window !== "undefined");
   }, []);
 
+  // 3️⃣ Lock Scroll kai Drawer atidarytas
   useEffect(() => {
     if (!isClient) return;
     document.body.style.overflow = open ? "hidden" : "auto";
@@ -29,18 +30,21 @@ export default function SideDrawer() {
     };
   }, [open, isClient]);
 
+  // 4️⃣ Toggle Drawer
   const toggleDrawer = () => setOpen((prev) => !prev);
 
+  // 5️⃣ Logout
   const handleLogout = async () => {
     try {
       await signOut();
       setOpen(false);
       router.replace("/");
-    } catch (err) {
-      console.error("Logout failed:", err.message);
+    } catch (error) {
+      console.error("Logout failed:", error.message);
     }
   };
 
+  // 6️⃣ Navigacijos nuorodos
   const navItems = [
     { label: "Dashboard", path: "/dashboard" },
     { label: "Send", path: "/send" },
@@ -49,8 +53,10 @@ export default function SideDrawer() {
     { label: "Settings", path: "/settings" },
   ];
 
-  if (!isClient || !user) return null;
+  // 7️⃣ Jei user arba wallet nėra → nieko nerodyti
+  if (!isClient || !user || !wallet?.wallet) return null;
 
+  // 8️⃣ UI
   return (
     <>
       <button
@@ -80,6 +86,7 @@ export default function SideDrawer() {
               exit={{ x: "-100%" }}
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
             >
+              {/* Drawer Header */}
               <div className={styles.drawerHeader}>
                 <button
                   className={styles.closeIcon}
@@ -90,6 +97,7 @@ export default function SideDrawer() {
                 </button>
               </div>
 
+              {/* User Info */}
               <div className={styles.userBox}>
                 <img
                   src="/icons/logo.svg"
@@ -101,14 +109,13 @@ export default function SideDrawer() {
                 <p className={styles.email}>{user.email}</p>
               </div>
 
+              {/* Navigation */}
               <nav className={styles.nav}>
                 {navItems.map((item) => (
                   <Link
                     key={item.label}
                     href={item.path}
-                    className={`${styles.link} ${
-                      pathname === item.path ? styles.active : ""
-                    }`}
+                    className={`${styles.link} ${pathname === item.path ? styles.active : ""}`}
                     onClick={() => setOpen(false)}
                     aria-current={pathname === item.path ? "page" : undefined}
                   >
@@ -117,6 +124,7 @@ export default function SideDrawer() {
                 ))}
               </nav>
 
+              {/* Logout */}
               <button
                 className={styles.logout}
                 onClick={handleLogout}
