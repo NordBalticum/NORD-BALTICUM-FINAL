@@ -3,51 +3,57 @@
 import { useState, useMemo, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { useAuth } from "@/contexts/AuthContext";
-import { usePageReady } from "@/hooks/usePageReady";
+
+import { useAuth } from "@/contexts/AuthContext"; // ✅ Ultimate Auth
+import { useBalance } from "@/hooks/useBalance"; // ✅ Naujas balansų hook
+import { useSendCrypto } from "@/hooks/useSendCrypto"; // ✅ Naujas siuntimo hook
+import { usePageReady } from "@/hooks/usePageReady"; // ✅ Detect ready
 
 import SwipeSelector from "@/components/SwipeSelector";
+import LoadingCircle from "@/components/LoadingCircle"; // ✅ Loading Circle
 import SuccessModal from "@/components/modals/SuccessModal";
-import SuccessToast from "@/components/SuccessToast"; // ✅ Naujas Toast
+import SuccessToast from "@/components/SuccessToast"; // ✅ Toast pranešimai
 
 import styles from "@/styles/send.module.css";
 import background from "@/styles/background.module.css";
 
-// ✅ Tinklų trumpiniai ir spalvos
+// ✅ Tinklų trumpiniai
 const networkShortNames = {
-  eth: "ETH",
-  bnb: "BNB",
+  ethereum: "ETH",
+  bsc: "BNB",
   tbnb: "tBNB",
-  matic: "MATIC",
-  avax: "AVAX",
+  polygon: "MATIC",
+  avalanche: "AVAX",
 };
 
+// ✅ Mygtukų spalvos
 const buttonColors = {
-  eth: "#0072ff",
-  bnb: "#f0b90b",
+  ethereum: "#0072ff",
+  bsc: "#f0b90b",
   tbnb: "#f0b90b",
-  matic: "#8247e5",
-  avax: "#e84142",
+  polygon: "#8247e5",
+  avalanche: "#e84142",
 };
 
 export default function SendPage() {
-  const { wallet, balances, sendTransaction, refreshBalance } = useAuth();
-  const isReady = usePageReady();
   const router = useRouter();
+  const isReady = usePageReady();
 
-  const [localNetwork, setLocalNetwork] = useState("eth");
+  const { wallet } = useAuth();
+  const { balances, loading: balancesLoading } = useBalance(); // ✅ Balances hook
+  const { sendCrypto, loading: sending, success, txHash, error } = useSendCrypto(); // ✅ SendCrypto hook
+
+  const [localNetwork, setLocalNetwork] = useState("bsc");
   const [receiver, setReceiver] = useState("");
   const [amount, setAmount] = useState("");
   const [showConfirm, setShowConfirm] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
-  const [sending, setSending] = useState(false);
-  const [txHash, setTxHash] = useState("");
 
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
 
   const shortName = useMemo(() => networkShortNames[localNetwork] || localNetwork.toUpperCase(), [localNetwork]);
-  const netBalance = balances?.[localNetwork] || 0;
+  const netBalance = balances?.[localNetwork]?.balance ? parseFloat(balances[localNetwork].balance) : 0;
   const parsedAmount = Number(amount) || 0;
   const fee = parsedAmount * 0.03;
   const amountAfterFee = parsedAmount - fee;
@@ -60,8 +66,7 @@ export default function SendPage() {
       setLocalNetwork(network);
       setToastMessage(`Switched to ${networkShortNames[network] || network.toUpperCase()}`);
       setShowToast(true);
-
-      setTimeout(() => setShowToast(false), 1500); // ✅ Automatiškai paslėpti po 1.5s
+      setTimeout(() => setShowToast(false), 1500);
     }
   }, []);
 
@@ -83,34 +88,33 @@ export default function SendPage() {
 
   const confirmSend = async () => {
     setShowConfirm(false);
-    setSending(true);
-
     try {
-      const result = await sendTransaction({
-        receiver: receiver.trim(),
+      await sendCrypto({
+        to: receiver.trim(),
         amount: parsedAmount,
         network: localNetwork,
       });
-
-      if (result?.success) {
-        setReceiver("");
-        setAmount("");
-        setTxHash(result.txHash);
-        await refreshBalance(localNetwork);
-        setShowSuccess(true);
-      } else {
-        alert(result?.message || "❌ Transaction failed.");
-      }
+      setReceiver("");
+      setAmount("");
+      setShowSuccess(true);
     } catch (err) {
-      console.error("Send error:", err);
-      alert("❌ Unexpected error while sending.");
-    } finally {
-      setSending(false);
+      console.error("❌ Send error:", err.message);
+      alert("❌ Unexpected error during send.");
     }
   };
 
-  if (!isReady) {
-    return <div className={styles.loading}>Loading Send Page...</div>;
+  useEffect(() => {
+    if (success) {
+      setShowSuccess(true);
+    }
+  }, [success]);
+
+  if (!isReady || balancesLoading) {
+    return (
+      <div className={styles.loading}>
+        <LoadingCircle />
+      </div>
+    );
   }
 
   return (
@@ -121,7 +125,6 @@ export default function SendPage() {
       className={`${styles.main} ${background.gradient}`}
     >
       <div className={styles.wrapper}>
-        {/* ✅ Modernus Toast su LOGO */}
         <SuccessToast show={showToast} message={toastMessage} networkKey={localNetwork} />
 
         <h1 className={styles.title}>SEND CRYPTO</h1>
@@ -183,7 +186,7 @@ export default function SendPage() {
             }}
             disabled={sending}
           >
-            {sending ? "Sending..." : "SEND NOW"}
+            {sending ? <LoadingCircle /> : "SEND NOW"}
           </motion.button>
         </div>
 
@@ -238,6 +241,15 @@ export default function SendPage() {
                 onClose={() => setShowSuccess(false)}
               />
             </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* ✅ Error Modal */}
+        <AnimatePresence>
+          {error && (
+            <div style={{ color: "red", marginTop: "20px", textAlign: "center" }}>
+              ❌ {error}
+            </div>
           )}
         </AnimatePresence>
       </div>
