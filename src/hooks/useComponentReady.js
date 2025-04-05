@@ -4,8 +4,10 @@ import { useState, useEffect } from "react";
 
 /**
  * Universalus hook'as komponento readiness tikrinimui
- * @param {Object} checks - Objektas su loginiais tikrinimais
- * @returns {boolean} - Ar komponentas yra paruoštas
+ * Naudojamas bet kokiems komponentams, kurie turi priklausomybes
+ * 
+ * @param {Object} checks - Objektas su loginiais (truthy/falsy) tikrinimais
+ * @returns {boolean} - Ar komponentas yra pilnai paruoštas
  */
 export function useComponentReady(checks = {}) {
   const [isClient, setIsClient] = useState(false);
@@ -16,7 +18,7 @@ export function useComponentReady(checks = {}) {
     }
   }, []);
 
-  const allChecksPassed = Object.values(checks).every((check) => Boolean(check));
+  const allChecksPassed = Object.values(checks || {}).every(Boolean);
 
   return isClient && allChecksPassed;
 }
