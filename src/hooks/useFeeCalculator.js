@@ -37,21 +37,26 @@ export function useFeeCalculator(network, amount) {
     }
   }, [network]);
 
+  // Kai pasikeičia network arba inputinam amount -> pasigauna fees
   useEffect(() => {
     fetchGasPrice();
-    const interval = setInterval(fetchGasPrice, 5000); // kas 5s
+  }, [fetchGasPrice]);
+
+  // Kas 10 sekundžių stabiliai atsinaujina gas price
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchGasPrice();
+    }, 10000); // 10 sekundžių
     return () => clearInterval(interval);
   }, [fetchGasPrice]);
 
+  // Perskaičiuoja admin fee, kai pasikeičia įvesta suma
   useEffect(() => {
-    if (amount) {
-      const adminFeeAmount = (Number(amount) * ADMIN_FEE_PERCENT) / 100;
-      setAdminFee(adminFeeAmount);
-    } else {
-      setAdminFee(0);
-    }
+    const adminFeeAmount = amount ? (Number(amount) * ADMIN_FEE_PERCENT) / 100 : 0;
+    setAdminFee(adminFeeAmount);
   }, [amount]);
 
+  // Kai pasikeičia gasFee arba adminFee, automatiškai perskaičiuoja totalFee
   useEffect(() => {
     setTotalFee(gasFee + adminFee);
     setLoading(false);
@@ -62,6 +67,6 @@ export function useFeeCalculator(network, amount) {
     adminFee,
     totalFee,
     loading,
-    refetchFees: fetchGasPrice, // grąžinam refetch funkciją
+    refetchFees: fetchGasPrice, // leis bet kada rankiniu būdu iškviesti
   };
 }
