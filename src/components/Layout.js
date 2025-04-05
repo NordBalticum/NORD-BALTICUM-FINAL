@@ -1,20 +1,24 @@
 "use client";
 
+// 1️⃣ Importai
 import { usePathname } from "next/navigation";
-import { useAuth } from "@/contexts/AuthContext"; // ✅ Ultimate Auth
-import SideDrawer from "@/components/SideDrawer"; // ✅ Navigation Drawer
-import BottomNav from "@/components/BottomNavigation"; // ✅ Mobile Bottom Nav
-import styles from "@/components/layout.module.css"; // ✅ CSS
+import { useAuth } from "@/contexts/AuthContext"; // ✅ Ultimate Auth Context
+import SideDrawer from "@/components/SideDrawer"; // ✅ Sidebar Navigation
+import BottomNav from "@/components/BottomNavigation"; // ✅ Mobile Navigation
+import styles from "@/components/layout.module.css"; // ✅ Layout CSS
 
 export default function Layout({ children }) {
   const pathname = usePathname();
-  const { user, loading } = useAuth(); // ✅ Pasiimam user + loading iš Auth
+  const { user, wallet } = useAuth(); // ✅ Tik user ir wallet
 
-  const hideUI = pathname === "/"; // ✅ Jei pagrindinis puslapis, slėpti visą UI
+  // 2️⃣ Kur slėpti visą UI
+  const hideUI = pathname === "/";
 
-  const showUI = !!user && !loading && !hideUI; 
-  // ✅ Tik jei user prisijungęs, nebekraunam, ir nėra pagrindinis puslapis – rodom UI
+  // 3️⃣ Kada rodyti UI
+  const showUI = user && wallet?.wallet && !hideUI;
+  // ✅ Tik jei user YRA, wallet YRA, ir nėra pagrindinis puslapis → tada rodom.
 
+  // 4️⃣ UI struktūra
   return (
     <div className={styles.layoutWrapper}>
       {showUI && <SideDrawer />}
