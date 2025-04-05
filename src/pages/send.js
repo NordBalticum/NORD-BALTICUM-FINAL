@@ -18,7 +18,7 @@ import SuccessToast from "@/components/SuccessToast";
 import styles from "@/styles/send.module.css";
 import background from "@/styles/background.module.css";
 
-// ✅ Network trumpiniai
+// ✅ Tinklo pavadinimai
 const networkShortNames = {
   ethereum: "ETH",
   bsc: "BNB",
@@ -42,7 +42,7 @@ export default function SendPage() {
   const { balances, loading: balancesLoading, refetch } = useBalance();
   const { sendCrypto, loading: sending, success, txHash, error, resetError } = useSendCrypto();
 
-  const [localNetwork, setLocalNetwork] = useState("bsc");
+  const [network, setNetwork] = useState("bsc");
   const [receiver, setReceiver] = useState("");
   const [amount, setAmount] = useState("");
   const [showConfirm, setShowConfirm] = useState(false);
@@ -50,34 +50,29 @@ export default function SendPage() {
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
 
-  const shortName = useMemo(() => networkShortNames[localNetwork] || localNetwork.toUpperCase(), [localNetwork]);
+  const shortName = useMemo(() => networkShortNames[network] || network.toUpperCase(), [network]);
   const parsedAmount = Number(amount) || 0;
-  const netBalance = balances?.[localNetwork]?.balance ? parseFloat(balances[localNetwork].balance) : 0;
+  const netBalance = balances?.[network]?.balance ? parseFloat(balances[network].balance) : 0;
 
-  const { gasFee, adminFee, totalFee, loading: feesLoading } = useFeeCalculator(localNetwork, parsedAmount);
+  const { gasFee, adminFee, totalFee, loading: feesLoading } = useFeeCalculator(network, parsedAmount);
 
   const maxSendable = netBalance > totalFee ? netBalance - totalFee : 0;
-  const afterFees = parsedAmount - adminFee - gasFee;
+  const afterFees = parsedAmount > 0 ? parsedAmount - adminFee - gasFee : 0;
 
   const isValidAddress = (address) => /^0x[a-fA-F0-9]{40}$/.test(address.trim());
 
-  const handleNetworkChange = useCallback(async (network) => {
-    if (!network) return;
-    setLocalNetwork(network);
+  const handleNetworkChange = useCallback(async (selectedNetwork) => {
+    if (!selectedNetwork) return;
+    setNetwork(selectedNetwork);
 
     if (wallet?.email) {
       await refetch();
     }
 
-    const balanceForNewNetwork = balances?.[network]?.balance || 0;
-    const maxSend = balanceForNewNetwork * 0.97;
-
-    setAmount(maxSend > 0 ? maxSend.toFixed(6) : "0");
-
-    setToastMessage(`Network switched to ${networkShortNames[network] || network.toUpperCase()}`);
+    setToastMessage(`Switched to ${networkShortNames[selectedNetwork] || selectedNetwork.toUpperCase()}`);
     setShowToast(true);
     setTimeout(() => setShowToast(false), 1500);
-  }, [wallet, balances, refetch]);
+  }, [wallet, refetch]);
 
   const handleSend = () => {
     if (!isValidAddress(receiver)) {
@@ -89,7 +84,7 @@ export default function SendPage() {
       return;
     }
     if (parsedAmount + totalFee > netBalance) {
-      alert(`❌ Insufficient balance. You need at least ${(parsedAmount + totalFee).toFixed(6)} ${shortName}`);
+      alert(`❌ Insufficient balance. Required: ${(parsedAmount + totalFee).toFixed(6)} ${shortName}`);
       return;
     }
     setShowConfirm(true);
@@ -101,14 +96,14 @@ export default function SendPage() {
       await sendCrypto({
         to: receiver.trim(),
         amount: parsedAmount,
-        network: localNetwork,
+        network: network,
       });
       setReceiver("");
       setAmount("");
       setShowSuccess(true);
       await refetch();
     } catch (err) {
-      console.error("❌ Send error:", err.message);
+      console.error("❌ Transaction error:", err.message);
     }
   };
 
@@ -138,13 +133,17 @@ export default function SendPage() {
       className={`${styles.main} ${background.gradient}`}
     >
       <div className={styles.wrapper}>
-        <SuccessToast show={showToast} message={toastMessage} networkKey={localNetwork} />
+        {/* ✅ Toast */}
+        <SuccessToast show={showToast} message={toastMessage} networkKey={network} />
 
+        {/* ✅ Puslapio antraštė */}
         <h1 className={styles.title}>SEND CRYPTO</h1>
         <p className={styles.subtext}>Transfer crypto securely & instantly</p>
 
+        {/* ✅ Tinklo pasirinkimas */}
         <SwipeSelector onSelect={handleNetworkChange} />
 
+        {/* ✅ Balanso rodymas */}
         <div className={styles.balanceTable}>
           <p className={styles.whiteText}>
             Your Balance:&nbsp;
@@ -160,6 +159,7 @@ export default function SendPage() {
           </p>
         </div>
 
+        {/* ✅ Adreso ir sumos įvedimas */}
         <div className={styles.walletActions}>
           <input
             type="text"
@@ -168,8 +168,7 @@ export default function SendPage() {
             onChange={(e) => setReceiver(e.target.value)}
             className={styles.inputField}
           />
-
-          <div style={{ display: "flex", alignItems: "center", gap: "6px", width: "100%" }}>
+          <div style={{ display: "flex", gap: "6px" }}>
             <input
               type="number"
               placeholder="Amount to send"
@@ -180,42 +179,43 @@ export default function SendPage() {
             <button
               type="button"
               className={styles.maxSendButton}
-              onClick={() => setAmount(maxSendable > 0 ? maxSendable.toFixed(6) : "0")}
+              onClick={() => setAmount(maxSendable.toFixed(6))}
             >
               Max
             </button>
           </div>
 
+          {/* ✅ Fees */}
           <p className={styles.feeBreakdown}>
-            Network Fee (Gas): <strong>{gasFee.toFixed(6)} {shortName}</strong><br />
+            Gas Fee: <strong>{gasFee.toFixed(6)} {shortName}</strong><br />
             Admin Fee: <strong>{adminFee.toFixed(6)} {shortName}</strong><br />
-            After Fees:&nbsp;
-            <strong>{afterFees > 0 ? afterFees.toFixed(6) : "0.000000"} {shortName}</strong>
+            You Receive: <strong>{afterFees > 0 ? afterFees.toFixed(6) : "0.000000"} {shortName}</strong>
           </p>
 
+          {/* ✅ Send mygtukas */}
           <motion.button
             whileHover={{ scale: 1.04 }}
             whileTap={{ scale: 0.98 }}
             onClick={handleSend}
+            disabled={sending}
             style={{
-              backgroundColor: buttonColors[localNetwork?.toLowerCase()] || "#0070f3",
+              backgroundColor: buttonColors[network] || "#0070f3",
               color: "white",
-              borderRadius: "14px",
               padding: "14px",
+              borderRadius: "14px",
+              width: "100%",
+              marginTop: "12px",
               fontWeight: "700",
               fontFamily: "var(--font-crypto)",
               border: "2px solid white",
               cursor: sending ? "not-allowed" : "pointer",
-              width: "100%",
-              marginTop: "14px",
             }}
-            disabled={sending}
           >
             {sending ? <LoadingSpinner /> : "SEND NOW"}
           </motion.button>
         </div>
 
-        {/* ✅ Confirm Modal */}
+        {/* ✅ Confirm modal */}
         <AnimatePresence>
           {showConfirm && (
             <motion.div
@@ -223,7 +223,6 @@ export default function SendPage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.3 }}
             >
               <motion.div
                 className={styles.confirmModal}
@@ -232,16 +231,19 @@ export default function SendPage() {
                 exit={{ scale: 0.8 }}
                 transition={{ duration: 0.3 }}
               >
-                <div className={styles.modalTitle}>Final Confirmation</div>
+                <div className={styles.modalTitle}>Confirm Transaction</div>
                 <div className={styles.modalInfo}>
                   <p><strong>Network:</strong> {shortName}</p>
                   <p><strong>Receiver:</strong> {receiver}</p>
-                  <p><strong>Send:</strong> {parsedAmount.toFixed(6)} {shortName}</p>
-                  <p><strong>Receive After Fees:</strong> {afterFees.toFixed(6)} {shortName}</p>
+                  <p><strong>Amount:</strong> {parsedAmount.toFixed(6)} {shortName}</p>
+                  <p><strong>After Fees:</strong> {afterFees.toFixed(6)} {shortName}</p>
                 </div>
                 <div className={styles.modalActions}>
                   <button className={styles.modalButton} onClick={confirmSend}>Confirm</button>
-                  <button className={`${styles.modalButton} ${styles.cancel}`} onClick={() => setShowConfirm(false)}>
+                  <button
+                    className={`${styles.modalButton} ${styles.cancel}`}
+                    onClick={() => setShowConfirm(false)}
+                  >
                     Cancel
                   </button>
                 </div>
@@ -250,22 +252,25 @@ export default function SendPage() {
           )}
         </AnimatePresence>
 
-        {/* ✅ Success Modal */}
+        {/* ✅ Success modal */}
         <AnimatePresence>
           {showSuccess && (
             <SuccessModal
-              message="✅ Transaction completed successfully!"
+              message="✅ Transaction Successful!"
               txHash={txHash}
-              networkKey={localNetwork}
+              networkKey={network}
               onClose={() => setShowSuccess(false)}
             />
           )}
         </AnimatePresence>
 
-        {/* ✅ Error Modal */}
+        {/* ✅ Error modal */}
         <AnimatePresence>
           {error && (
-            <ErrorModal error={error} onRetry={handleRetry} />
+            <ErrorModal
+              error={error}
+              onRetry={handleRetry}
+            />
           )}
         </AnimatePresence>
       </div>
