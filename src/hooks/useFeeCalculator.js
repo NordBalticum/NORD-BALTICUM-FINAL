@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { ethers } from "ethers";
 
+// RPC adresai
 const RPC_URLS = {
   ethereum: "https://rpc.ankr.com/eth",
   bsc: "https://bsc-dataseed.bnbchain.org",
@@ -11,43 +12,36 @@ const RPC_URLS = {
   tbnb: "https://data-seed-prebsc-1-s1.binance.org:8545",
 };
 
+const BASE_GAS_LIMIT = 21000;
 const ADMIN_FEE_PERCENT = 3;
 
-export function useFeeCalculator(network, amount, receiver = "") {
+export function useFeeCalculator(network, receiver, amount) {
   const [gasFee, setGasFee] = useState(0);
   const [adminFee, setAdminFee] = useState(0);
   const [totalFee, setTotalFee] = useState(0);
   const [loading, setLoading] = useState(true);
 
-  const fetchGasEstimate = useCallback(async () => {
+  const fetchGasPrice = useCallback(async () => {
+    if (!network || !receiver || !amount || !ethers.isAddress(receiver)) {
+      setGasFee(0);
+      return;
+    }
     try {
-      if (!network) return;
-      if (!receiver || Number(amount) <= 0) {
-        setGasFee(0);
-        return;
-      }
-
       const provider = new ethers.JsonRpcProvider(RPC_URLS[network]);
       const gasPrice = (await provider.getFeeData()).gasPrice || ethers.parseUnits("5", "gwei");
-
-      const estimatedGas = await provider.estimateGas({
-        to: receiver,
-        value: ethers.parseEther(amount.toString())
-      });
-
-      const totalGasCost = Number(ethers.formatEther(gasPrice * estimatedGas));
-      setGasFee(totalGasCost);
+      const gasCost = Number(ethers.formatEther(gasPrice * BigInt(BASE_GAS_LIMIT)));
+      setGasFee(gasCost);
     } catch (error) {
-      console.error("❌ Gas estimate error:", error.message);
+      console.error("❌ Gas fetch error:", error.message);
       setGasFee(0);
     }
-  }, [network, amount, receiver]);
+  }, [network, receiver, amount]);
 
   useEffect(() => {
-    fetchGasEstimate();
-    const interval = setInterval(fetchGasEstimate, 10000); // atnaujinam kas 10s
+    fetchGasPrice();
+    const interval = setInterval(fetchGasPrice, 10000);
     return () => clearInterval(interval);
-  }, [fetchGasEstimate]);
+  }, [fetchGasPrice]);
 
   useEffect(() => {
     if (amount) {
