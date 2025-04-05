@@ -131,5 +131,6 @@
 @media screen and (max-width: 768px) {
   .container {
     transform: translateY(-22%);
+    transform: translateX(0);
   }
 }
