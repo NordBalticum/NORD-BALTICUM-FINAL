@@ -68,37 +68,14 @@
 }
 
 @media screen and (min-width: 1025px) {
-  .arrows {
-    display: none;
-  }
+  .arrows { display: none; }
 }
 
 /* Kortelių Wrapperiai */
 .staticWrapper,
-.scrollableWrapper {
-  display: flex;
-  flex-wrap: wrap;
-  gap: clamp(20px, 3vw, 36px);
-  justify-content: center;
-  align-items: center;
-  width: 100%;
-  padding-block: clamp(16px, 2.5vw, 28px);
-  overflow: visible;
-}
+.scrollableWrapper { ... }
 
-.scrollableWrapper {
-  flex-wrap: nowrap;
-  overflow-x: auto;
-  scroll-snap-type: x mandatory;
-  -webkit-overflow-scrolling: touch;
-  scroll-behavior: smooth;
-  min-width: max-content;
-  touch-action: pan-x;
-}
-
-.scrollableWrapper::-webkit-scrollbar {
-  display: none;
-}
+.scrollableWrapper::-webkit-scrollbar { display: none; }
 
 /* Kortelės */
 .card {
@@ -118,14 +95,21 @@
   text-align: center;
   transition: transform 0.35s ease, background 0.35s ease, box-shadow 0.35s ease;
   cursor: pointer;
-  box-shadow: 0 0 12px rgba(255, 255, 255, 0.06);
+  box-shadow: none; /* ✅ Glow nuimtas */
   overflow: visible;
 }
 
 .card:hover {
   transform: scale(1.07);
   background: rgba(255, 255, 255, 0.08);
-  box-shadow: 0 0 16px rgba(255, 255, 255, 0.08);
+}
+
+/* ✅ Švelnus 3D efektas tik desktop */
+@media (hover: hover) and (pointer: fine) {
+  .card:hover {
+    transform: perspective(800px) rotateY(4deg) scale(1.06);
+    background: rgba(255, 255, 255, 0.08);
+  }
 }
 
 .selected {
@@ -136,100 +120,14 @@
 }
 
 /* Logotipai */
-.logo {
-  width: 46px;
-  height: 46px;
-  object-fit: contain;
-  margin-bottom: 14px;
-  border-radius: 14px;
-  filter: brightness(1.3);
-  user-select: none;
-}
+.logo { ... }
 
 /* Pavadinimai */
-.name {
-  font-size: 16px;
-  color: white;
-  font-family: var(--font-crypto);
-  font-weight: 600;
-  letter-spacing: 0.45px;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
-}
+.name { ... }
 
 /* Responsyvūs Dydžiai */
-@media screen and (max-width: 1024px) {
-  .card {
-    width: 92px;
-    height: 108px;
-    padding: 6px;
-    border-radius: 14px;
-  }
+@media screen and (max-width: 1024px) { ... }
 
-  .logo {
-    width: 34px;
-    height: 34px;
-    margin-bottom: 8px;
-  }
+@media screen and (max-width: 768px) { ... }
 
-  .name {
-    font-size: 11.5px;
-  }
-
-  .arrowBtn {
-    width: 36px;
-    height: 36px;
-    font-size: 14px;
-    border-radius: 8px;
-  }
-}
-
-@media screen and (max-width: 768px) {
-  .card {
-    width: 86px;
-    height: 102px;
-    padding: 5px;
-    border-radius: 13px;
-  }
-
-  .logo {
-    width: 32px;
-    height: 32px;
-    margin-bottom: 6px;
-  }
-
-  .name {
-    font-size: 10.5px;
-  }
-
-  .arrowBtn {
-    width: 34px;
-    height: 34px;
-    font-size: 13px;
-    border-radius: 7px;
-  }
-}
-
-@media screen and (max-width: 280px) {
-  .card {
-    width: 78px;
-    height: 92px;
-    padding: 5px;
-    border-radius: 10px;
-  }
-
-  .logo {
-    width: 30px;
-    height: 30px;
-  }
-
-  .name {
-    font-size: 10px;
-  }
-
-  .arrowBtn {
-    width: 32px;
-    height: 32px;
-    font-size: 12px;
-    border-radius: 7px;
-  }
-}
+@media screen and (max-width: 280px) { ... }
