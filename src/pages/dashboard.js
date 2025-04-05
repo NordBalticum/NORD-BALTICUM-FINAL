@@ -11,55 +11,53 @@ import { usePrices } from "@/hooks/usePrices";
 
 import styles from "@/styles/dashboard.module.css";
 
-// ✅ Dynamic Live Price Table (jei norėsi papildomai rodyti lentelę)
+// ✅ Dynamic Live Price Table (jeigu norėsi papildomai rodyti lentelę)
 const LivePriceTable = dynamic(() => import("@/components/LivePriceTable"), { ssr: false });
 
 // ✅ Token ikonų URL
 const iconUrls = {
-  eth: "https://cryptologos.cc/logos/ethereum-eth-logo.png",
-  bnb: "https://cryptologos.cc/logos/binance-coin-bnb-logo.png",
+  ethereum: "https://cryptologos.cc/logos/ethereum-eth-logo.png",
+  bsc: "https://cryptologos.cc/logos/binance-coin-bnb-logo.png",
   tbnb: "https://cryptologos.cc/logos/binance-coin-bnb-logo.png",
   matic: "https://cryptologos.cc/logos/polygon-matic-logo.png",
-  avax: "https://cryptologos.cc/logos/avalanche-avax-logo.png",
+  avalanche: "https://cryptologos.cc/logos/avalanche-avax-logo.png",
 };
 
 // ✅ Token pavadinimai
 const names = {
-  eth: "Ethereum",
-  bnb: "BNB Smart Chain",
+  ethereum: "Ethereum",
+  bsc: "BNB Smart Chain",
   tbnb: "BNB Testnet",
   matic: "Polygon",
-  avax: "Avalanche",
+  avalanche: "Avalanche",
 };
 
 export default function Dashboard() {
   const router = useRouter();
-  const { user, wallet, loading } = useAuth();
+  const { user, wallet, loading: authLoading } = useAuth();
   const { balances, loading: balancesLoading } = useBalance();
   const { prices, loading: pricesLoading } = usePrices();
   const [isClient, setIsClient] = useState(false);
 
-  // ✅ Detect client side
   useEffect(() => {
     if (typeof window !== "undefined") {
       setIsClient(true);
     }
   }, []);
 
-  // ✅ Redirect if not logged in
   useEffect(() => {
-    if (isClient && !loading && !user) {
+    if (isClient && !authLoading && !user) {
       router.replace("/");
     }
-  }, [isClient, loading, user, router]);
+  }, [isClient, authLoading, user, router]);
 
-  // ✅ Gauti turimus tokenus iš wallet
+  // ✅ Saugiai surenkam turimus tokenus
   const tokens = useMemo(() => {
-    if (!wallet?.signers) return [];
-    return Object.keys(wallet.signers);
-  }, [wallet]);
+    if (!wallet?.wallet?.address) return [];
+    return Object.keys(balances || {});
+  }, [wallet, balances]);
 
-  const isLoading = !isClient || !user || !wallet || balancesLoading || pricesLoading;
+  const isLoading = !isClient || authLoading || balancesLoading || pricesLoading;
 
   if (isLoading) {
     return <div className={styles.loading}>Loading dashboard...</div>;
@@ -69,21 +67,23 @@ export default function Dashboard() {
     <main className={styles.container}>
       <div className={styles.dashboardWrapper}>
 
-        {/* ✅ Jei nori - live lentelė viršuje */}
+        {/* ✅ Live Price Lentelė viršuje */}
         <LivePriceTable />
 
         <div className={styles.assetList}>
           {tokens.length === 0 ? (
             <div className={styles.loading}>No assets found.</div>
           ) : (
-            tokens.map((symbol) => {
-              const balance = balances?.[symbol] || 0;
-              const eurRate = prices?.[symbol] || 0;
+            tokens.map((network) => {
+              const info = balances?.[network];
+              const symbol = info?.symbol?.toLowerCase();
+              const balance = parseFloat(info?.balance || 0);
+              const eurRate = prices?.[network] || 0;
               const eurValue = balance * eurRate;
 
               return (
                 <div
-                  key={symbol}
+                  key={network}
                   className={styles.assetItem}
                   onClick={() => router.push(`/${symbol}`)}
                   role="button"
@@ -91,8 +91,8 @@ export default function Dashboard() {
                 >
                   <div className={styles.assetLeft}>
                     <Image
-                      src={iconUrls[symbol]}
-                      alt={`${symbol} logo`}
+                      src={iconUrls[network] || "/icons/default-icon.png"}
+                      alt={`${symbol?.toUpperCase()} logo`}
                       width={40}
                       height={40}
                       className={styles.assetLogo}
@@ -100,14 +100,18 @@ export default function Dashboard() {
                       unoptimized
                     />
                     <div className={styles.assetInfo}>
-                      <div className={styles.assetSymbol}>{symbol.toUpperCase()}</div>
-                      <div className={styles.assetName}>{names[symbol]}</div>
+                      <div className={styles.assetSymbol}>
+                        {symbol?.toUpperCase() || network.toUpperCase()}
+                      </div>
+                      <div className={styles.assetName}>
+                        {names[network] || "Unknown"}
+                      </div>
                     </div>
                   </div>
 
                   <div className={styles.assetRight}>
                     <div className={styles.assetAmount}>
-                      {balance.toFixed(6)} {symbol.toUpperCase()}
+                      {balance.toFixed(6)} {symbol?.toUpperCase()}
                     </div>
                     <div className={styles.assetEur}>
                       ≈ €{eurValue.toFixed(2)}
