@@ -35,14 +35,14 @@
   font-size: clamp(28px, 6vw, 48px);
   font-weight: 900;
   font-family: var(--font-crypto);
-  color: #ffd700;
+  color: white; /* ✅ Baltas pagrindinis SEND CRYPTO tekstas */
   letter-spacing: 0.5px;
-  text-shadow: 0 0 6px rgba(255, 255, 255, 0.1);
+  text-shadow: 0 0 6px rgba(255, 255, 255, 0.12);
 }
 
 .subtext {
   font-size: clamp(14px, 2.5vw, 20px);
-  color: rgba(255, 255, 255, 0.9);
+  color: rgba(255, 255, 255, 0.85);
   font-weight: 500;
   font-family: var(--font-crypto);
   margin-top: -8px;
@@ -98,12 +98,8 @@
 }
 
 @keyframes skeletonLoading {
-  0% {
-    background-position: 200% 0;
-  }
-  100% {
-    background-position: -200% 0;
-  }
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }
 
 /* === Wallet Actions === */
@@ -164,9 +160,7 @@
 }
 
 @keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
+  to { transform: rotate(360deg); }
 }
 
 /* === Modal Overlay === */
@@ -204,7 +198,7 @@
   font-size: 1.3rem;
   font-weight: 700;
   margin-bottom: 1rem;
-  color: #ffd700;
+  color: white; /* ✅ Baltas modal Title */
   font-family: var(--font-crypto);
   text-align: center;
 }
@@ -214,6 +208,7 @@
   font-size: 0.95rem;
   line-height: 1.4;
   font-family: var(--font-crypto);
+  color: white; /* ✅ Modal tekstas baltas */
 }
 
 .modalActions {
@@ -245,14 +240,23 @@
   background: linear-gradient(to right, #ff3c3c, #c71d1d);
 }
 
-/* === Selector Container === */
-.selectorContainer {
-  width: 100%;
-  max-width: 100%;
-  overflow-x: auto;
-  padding-bottom: 12px;
-  display: flex;
-  justify-content: center;
+/* === SUCCESS ALERT (Naujas) === */
+.successAlert {
+  background: rgba(0, 255, 0, 0.1);
+  color: #00ff00;
+  padding: 12px;
+  margin-bottom: 12px;
+  border: 1px solid #00ff00;
+  border-radius: 10px;
+  text-align: center;
+  font-family: var(--font-crypto);
+  font-size: 1rem;
+  animation: fadeInSuccess 0.6s ease;
+}
+
+@keyframes fadeInSuccess {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 /* === Responsive Fixes === */
@@ -341,30 +345,5 @@
 
   .confirmModal {
     max-width: 680px;
-  }
-}
-
-/* === SUCCESS ALERT (Naujas) === */
-.successAlert {
-  background: rgba(0, 255, 0, 0.1);
-  color: #00ff00;
-  padding: 12px;
-  margin-bottom: 12px;
-  border: 1px solid #00ff00;
-  border-radius: 10px;
-  text-align: center;
-  font-family: var(--font-crypto);
-  font-size: 1rem;
-  animation: fadeInSuccess 0.6s ease;
-}
-
-@keyframes fadeInSuccess {
-  from { opacity: 0; transform: translateY(-10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-@media screen and (min-width: 1024px) {
-  .wrapper {
-    transform: translateY(4%);
   }
 }
