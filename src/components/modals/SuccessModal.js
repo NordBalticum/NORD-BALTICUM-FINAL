@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import styles from "@/modals/successmodal.module.css";
+import styles from "@/components/modals/successmodal.module.css";
 
 const explorerLinks = {
   bsc: "https://bscscan.com/tx/",
