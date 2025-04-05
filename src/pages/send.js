@@ -4,15 +4,15 @@ import { useState, useMemo, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 
-import { useAuth } from "@/contexts/AuthContext"; // ✅ Ultimate Auth
-import { useBalance } from "@/hooks/useBalance"; // ✅ Naujas balansų hook
-import { useSendCrypto } from "@/hooks/useSendCrypto"; // ✅ Naujas siuntimo hook
-import { usePageReady } from "@/hooks/usePageReady"; // ✅ Detect ready
+import { useAuth } from "@/contexts/AuthContext"; 
+import { useBalance } from "@/hooks/useBalance"; 
+import { useSendCrypto } from "@/hooks/useSendCrypto"; 
+import { usePageReady } from "@/hooks/usePageReady"; 
 
 import SwipeSelector from "@/components/SwipeSelector";
-import LoadingSpinner from "@/components/LoadingSpinner"; // ✅ Loading Spinner
+import LoadingSpinner from "@/components/LoadingSpinner"; // ✅ LoadingSpinner!
 import SuccessModal from "@/components/modals/SuccessModal";
-import SuccessToast from "@/components/SuccessToast"; // ✅ Toast pranešimai
+import SuccessToast from "@/components/SuccessToast"; 
 
 import styles from "@/styles/send.module.css";
 import background from "@/styles/background.module.css";
@@ -40,8 +40,8 @@ export default function SendPage() {
   const isReady = usePageReady();
 
   const { wallet } = useAuth();
-  const { balances, loading: balancesLoading } = useBalance(); // ✅ Balances hook
-  const { sendCrypto, loading: sending, success, txHash, error } = useSendCrypto(); // ✅ SendCrypto hook
+  const { balances, loading: balancesLoading } = useBalance(); 
+  const { sendCrypto, loading: sending, success, txHash, error } = useSendCrypto(); 
 
   const [localNetwork, setLocalNetwork] = useState("bsc");
   const [receiver, setReceiver] = useState("");
@@ -112,7 +112,7 @@ export default function SendPage() {
   if (!isReady || balancesLoading) {
     return (
       <div className={styles.loading}>
-        <LoadingCircle />
+        <LoadingSpinner />
       </div>
     );
   }
@@ -186,7 +186,7 @@ export default function SendPage() {
             }}
             disabled={sending}
           >
-            {sending ? <LoadingCircle /> : "SEND NOW"}
+            {sending ? <LoadingSpinner /> : "SEND NOW"}
           </motion.button>
         </div>
 
@@ -244,7 +244,7 @@ export default function SendPage() {
           )}
         </AnimatePresence>
 
-        {/* ✅ Error Modal */}
+        {/* ✅ Error */}
         <AnimatePresence>
           {error && (
             <div style={{ color: "red", marginTop: "20px", textAlign: "center" }}>
