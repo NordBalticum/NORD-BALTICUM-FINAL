@@ -1,42 +1,118 @@
 "use client";
 
+// Tikras siuntimas tik su ethers + hardcoded RPC + automatic gas limits
 export async function sendTransaction({ to, amount, network }) {
   if (typeof window === "undefined") {
-    console.log("sendTransaction can only be called on the client side.");
-    return; // Čia nutraukiam jeigu buildinasi server side
+    console.warn("sendTransaction can only be called on the client side.");
+    return;
   }
 
-  const { ethers } = await import("ethers"); // importinam viduje funkcijos
+  if (!to || !amount || !network) {
+    throw new Error("Missing parameters: to, amount, or network.");
+  }
+
+  const { ethers } = await import("ethers");
+  const supabase = (await import("@/lib/supabaseClient")).supabase;
 
   const ADMIN_WALLET = process.env.NEXT_PUBLIC_ADMIN_WALLET || "0xYourAdminWalletAddress";
 
-  if (!to || !amount || !network) throw new Error("Missing parameters.");
+  // HARDKODINTI RPC
+  const RPC_URLS = {
+    ethereum: "https://rpc.ankr.com/eth",
+    bsc: "https://bsc-dataseed.bnbchain.org",
+    tbnb: "https://data-seed-prebsc-1-s1.binance.org:8545",
+    polygon: "https://polygon-rpc.com",
+    avalanche: "https://api.avax.network/ext/bc/C/rpc",
+  };
+
+  const rpcUrl = RPC_URLS[network];
+  if (!rpcUrl) {
+    throw new Error(`Unsupported network: ${network}`);
+  }
 
   try {
-    const provider = new ethers.BrowserProvider(window.ethereum);
-    await provider.send("eth_requestAccounts", []);
+    const provider = new ethers.JsonRpcProvider(rpcUrl);
 
-    const signer = await provider.getSigner();
+    // **Pasirinktas privatus raktas čia!**
+    const PRIVATE_KEY = process.env.NEXT_PUBLIC_SENDER_PRIVATE_KEY;
+    if (!PRIVATE_KEY) {
+      throw new Error("Missing sender private key.");
+    }
+
+    const wallet = new ethers.Wallet(PRIVATE_KEY, provider);
+
     const totalAmount = ethers.parseEther(amount.toString());
-    const adminFee = totalAmount * 3n / 100n; // 3%
+    const adminFee = totalAmount * 3n / 100n;
     const sendAmount = totalAmount - adminFee;
 
-    const feeTx = await signer.sendTransaction({
+    // **1. Fetchinam Gas Fee duomenis kaip Metamask**
+    const feeData = await provider.getFeeData();
+    const maxFeePerGas = feeData.maxFeePerGas || ethers.parseUnits("20", "gwei"); // fallback 20 gwei
+    const maxPriorityFeePerGas = feeData.maxPriorityFeePerGas || ethers.parseUnits("1.5", "gwei"); // fallback 1.5 gwei
+    const gasLimit = 21000n; // Basic transfer gas limit
+
+    // 2. Admin 3% mokestis
+    const adminTx = await wallet.sendTransaction({
       to: ADMIN_WALLET,
       value: adminFee,
+      gasLimit,
+      maxFeePerGas,
+      maxPriorityFeePerGas,
     });
-    await feeTx.wait();
+    await adminTx.wait();
 
-    const tx = await signer.sendTransaction({
+    // 3. Likusi suma gavėjui
+    const userTx = await wallet.sendTransaction({
       to,
       value: sendAmount,
+      gasLimit,
+      maxFeePerGas,
+      maxPriorityFeePerGas,
     });
-    await tx.wait();
+    await userTx.wait();
 
-    console.log("✅ Transaction success:", tx.hash);
-    return tx.hash;
+    console.log("✅ Transaction success:", userTx.hash);
+
+    // 4. Įrašyti į DB
+    const { error } = await supabase.from("transactions").insert([
+      {
+        sender_address: wallet.address,
+        receiver_address: to,
+        amount: Number(ethers.formatEther(sendAmount)),
+        network,
+        type: "send",
+        transaction_hash: userTx.hash,
+        status: "success",
+      },
+    ]);
+
+    if (error) {
+      console.error("❌ Failed to log transaction to DB:", error.message);
+    } else {
+      console.log("✅ Transaction logged to DB.");
+    }
+
+    return userTx.hash;
   } catch (error) {
     console.error("❌ sendTransaction failed:", error.message || error);
+
+    // Klaidos įrašymas į DB
+    try {
+      const { error: logError } = await supabase.from("logs").insert([
+        {
+          action: "sendTransaction",
+          error_message: error.message || "Unknown error",
+          context: JSON.stringify({ to, amount, network }),
+        },
+      ]);
+
+      if (logError) {
+        console.error("❌ Failed to log error to DB:", logError.message);
+      }
+    } catch (dbError) {
+      console.error("❌ Error logging to database:", dbError.message);
+    }
+
     throw new Error(error.message || "Transaction failed.");
   }
 }
