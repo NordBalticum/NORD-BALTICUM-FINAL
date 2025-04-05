@@ -2,35 +2,15 @@
 
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image"; // ✅ Next.js optimalus Image
+import Image from "next/image";
 import axios from "axios";
 import styles from "./livepricetable.module.css";
 
 const tokens = [
-  {
-    id: "binancecoin",
-    symbol: "BNB",
-    logo: "https://cryptologos.cc/logos/binance-coin-bnb-logo.png",
-    route: "/bnb",
-  },
-  {
-    id: "ethereum",
-    symbol: "ETH",
-    logo: "https://cryptologos.cc/logos/ethereum-eth-logo.png",
-    route: "/eth",
-  },
-  {
-    id: "matic-network",
-    symbol: "MATIC",
-    logo: "https://cryptologos.cc/logos/polygon-matic-logo.png",
-    route: "/matic",
-  },
-  {
-    id: "avalanche-2",
-    symbol: "AVAX",
-    logo: "https://cryptologos.cc/logos/avalanche-avax-logo.png",
-    route: "/avax",
-  },
+  { id: "binancecoin", symbol: "BNB", logo: "https://cryptologos.cc/logos/binance-coin-bnb-logo.png", route: "/bnb" },
+  { id: "ethereum", symbol: "ETH", logo: "https://cryptologos.cc/logos/ethereum-eth-logo.png", route: "/eth" },
+  { id: "matic-network", symbol: "MATIC", logo: "https://cryptologos.cc/logos/polygon-matic-logo.png", route: "/matic" },
+  { id: "avalanche-2", symbol: "AVAX", logo: "https://cryptologos.cc/logos/avalanche-avax-logo.png", route: "/avax" },
 ];
 
 const currencies = ["eur", "usd"];
@@ -42,6 +22,7 @@ export default function LivePriceTable() {
   const [prices, setPrices] = useState({});
   const [currency, setCurrency] = useState("eur");
   const [loading, setLoading] = useState(true);
+  const [updatedToken, setUpdatedToken] = useState(null);
   const mountedRef = useRef(false);
   const intervalRef = useRef(null);
 
@@ -56,9 +37,17 @@ export default function LivePriceTable() {
       });
 
       if (mountedRef.current && res.data) {
-        setPrices(res.data);
+        const newPrices = res.data;
+        const priceChange = Object.keys(newPrices).find(id => 
+          prices[id]?.[currency] !== newPrices[id][currency]
+        );
+        if (priceChange) {
+          setUpdatedToken(priceChange);
+          setTimeout(() => setUpdatedToken(null), 1000); // Žalias flash 1s
+        }
+        setPrices(newPrices);
         if (typeof window !== "undefined") {
-          localStorage.setItem(LOCAL_CACHE_KEY, JSON.stringify(res.data));
+          localStorage.setItem(LOCAL_CACHE_KEY, JSON.stringify(newPrices));
         }
         setLoading(false);
       }
@@ -69,14 +58,11 @@ export default function LivePriceTable() {
 
   const loadFromCache = () => {
     if (typeof window === "undefined") return;
-
     const cached = localStorage.getItem(LOCAL_CACHE_KEY);
     if (cached) {
       try {
         const parsed = JSON.parse(cached);
-        if (typeof parsed === "object") {
-          setPrices(parsed);
-        }
+        if (typeof parsed === "object") setPrices(parsed);
       } catch (err) {
         console.error("Failed to parse cached prices:", err);
       }
@@ -85,16 +71,12 @@ export default function LivePriceTable() {
   };
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      setIsClient(true);
-    }
+    if (typeof window !== "undefined") setIsClient(true);
   }, []);
 
   useEffect(() => {
     if (!isClient) return;
-
     mountedRef.current = true;
-
     loadFromCache();
     fetchPrices();
 
@@ -115,8 +97,19 @@ export default function LivePriceTable() {
     };
   }, [isClient]);
 
+  const handleCardClick = (route) => {
+    if (navigator.vibrate) {
+      navigator.vibrate(10); // ✅ Vibracija!
+    }
+    router.push(route);
+  };
+
   if (!isClient) {
-    return <div className={styles.loading}>Loading prices...</div>;
+    return (
+      <div className={styles.loading}>
+        <div className={styles.spinner}></div> Loading prices...
+      </div>
+    );
   }
 
   return (
@@ -141,7 +134,7 @@ export default function LivePriceTable() {
             <div
               key={token.id}
               className={styles.card}
-              onClick={() => router.push(token.route)}
+              onClick={() => handleCardClick(token.route)}
             >
               <Image
                 src={token.logo}
@@ -153,7 +146,7 @@ export default function LivePriceTable() {
                 priority
               />
               <div className={styles.symbol}>{token.symbol}</div>
-              <div className={styles.price}>
+              <div className={`${styles.price} ${updatedToken === token.id ? styles.updated : ""}`}>
                 {price !== undefined
                   ? `${currency === "eur" ? "€" : "$"}${price.toFixed(2)}`
                   : loading
