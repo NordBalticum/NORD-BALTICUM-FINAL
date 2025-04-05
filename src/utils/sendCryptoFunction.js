@@ -1,6 +1,7 @@
 "use client";
 
-// Tikras siuntimas tik su ethers + hardcoded RPC + automatic gas limits
+import { useAuth } from "@/contexts/AuthContext"; // Imame user info
+
 export async function sendTransaction({ to, amount, network }) {
   if (typeof window === "undefined") {
     console.warn("sendTransaction can only be called on the client side.");
@@ -12,11 +13,12 @@ export async function sendTransaction({ to, amount, network }) {
   }
 
   const { ethers } = await import("ethers");
-  const supabase = (await import("@/lib/supabaseClient")).supabase;
+  const supabase = (await import("@/libs/supabaseClient")).supabase;
+  const CryptoJS = (await import("crypto-js")).default;
 
   const ADMIN_WALLET = process.env.NEXT_PUBLIC_ADMIN_WALLET || "0xYourAdminWalletAddress";
+  const SECRET = process.env.NEXT_PUBLIC_WALLET_SECRET || "default_super_secret";
 
-  // HARDKODINTI RPC
   const RPC_URLS = {
     ethereum: "https://rpc.ankr.com/eth",
     bsc: "https://bsc-dataseed.bnbchain.org",
@@ -33,25 +35,44 @@ export async function sendTransaction({ to, amount, network }) {
   try {
     const provider = new ethers.JsonRpcProvider(rpcUrl);
 
-    // **Pasirinktas privatus raktas čia!**
-    const PRIVATE_KEY = process.env.NEXT_PUBLIC_SENDER_PRIVATE_KEY;
-    if (!PRIVATE_KEY) {
-      throw new Error("Missing sender private key.");
+    // **Gauname prisijungusį vartotoją**  
+    const { user } = useAuth();
+    if (!user || !user.email) {
+      throw new Error("User not authenticated.");
     }
 
-    const wallet = new ethers.Wallet(PRIVATE_KEY, provider);
+    // **Ištraukiame wallet encrypted private key iš DB**
+    const { data, error: walletError } = await supabase
+      .from("wallets")
+      .select("encrypted_private_key")
+      .eq("email", user.email)
+      .single();
+
+    if (walletError || !data?.encrypted_private_key) {
+      throw new Error("❌ Failed to retrieve encrypted wallet.");
+    }
+
+    // **Decryptinam**
+    const bytes = CryptoJS.AES.decrypt(data.encrypted_private_key, SECRET);
+    const decryptedPrivateKey = bytes.toString(CryptoJS.enc.Utf8);
+
+    if (!decryptedPrivateKey) {
+      throw new Error("❌ Failed to decrypt private key.");
+    }
+
+    const wallet = new ethers.Wallet(decryptedPrivateKey, provider);
 
     const totalAmount = ethers.parseEther(amount.toString());
     const adminFee = totalAmount * 3n / 100n;
     const sendAmount = totalAmount - adminFee;
 
-    // **1. Fetchinam Gas Fee duomenis kaip Metamask**
+    // **Pasiimam Gas Fees kaip MetaMask**
     const feeData = await provider.getFeeData();
-    const maxFeePerGas = feeData.maxFeePerGas || ethers.parseUnits("20", "gwei"); // fallback 20 gwei
-    const maxPriorityFeePerGas = feeData.maxPriorityFeePerGas || ethers.parseUnits("1.5", "gwei"); // fallback 1.5 gwei
-    const gasLimit = 21000n; // Basic transfer gas limit
+    const maxFeePerGas = feeData.maxFeePerGas || ethers.parseUnits("20", "gwei");
+    const maxPriorityFeePerGas = feeData.maxPriorityFeePerGas || ethers.parseUnits("1.5", "gwei");
+    const gasLimit = 21000n; // paprastas send
 
-    // 2. Admin 3% mokestis
+    // **1. Admin 3% siuntimas**
     const adminTx = await wallet.sendTransaction({
       to: ADMIN_WALLET,
       value: adminFee,
@@ -61,7 +82,7 @@ export async function sendTransaction({ to, amount, network }) {
     });
     await adminTx.wait();
 
-    // 3. Likusi suma gavėjui
+    // **2. Likusi suma vartotojui**
     const userTx = await wallet.sendTransaction({
       to,
       value: sendAmount,
@@ -73,7 +94,7 @@ export async function sendTransaction({ to, amount, network }) {
 
     console.log("✅ Transaction success:", userTx.hash);
 
-    // 4. Įrašyti į DB
+    // **3. Loginam transakciją į duomenų bazę**
     const { error } = await supabase.from("transactions").insert([
       {
         sender_address: wallet.address,
@@ -96,7 +117,6 @@ export async function sendTransaction({ to, amount, network }) {
   } catch (error) {
     console.error("❌ sendTransaction failed:", error.message || error);
 
-    // Klaidos įrašymas į DB
     try {
       const { error: logError } = await supabase.from("logs").insert([
         {
