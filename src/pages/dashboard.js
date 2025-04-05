@@ -10,6 +10,7 @@ import { useBalance } from "@/hooks/useBalance";
 import { usePrices } from "@/hooks/usePrices";
 
 import styles from "@/styles/dashboard.module.css";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 // ✅ Dynamic Live Price Table (jeigu norėsi papildomai rodyti lentelę)
 const LivePriceTable = dynamic(() => import("@/components/LivePriceTable"), { ssr: false });
@@ -60,8 +61,8 @@ export default function Dashboard() {
   const isLoading = !isClient || authLoading || balancesLoading || pricesLoading;
 
   if (isLoading) {
-    return <div className={styles.loading}>Loading dashboard...</div>;
-  }
+  return <LoadingSpinner />;
+    }
 
   return (
     <main className={styles.container}>
