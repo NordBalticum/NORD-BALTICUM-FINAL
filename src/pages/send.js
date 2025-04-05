@@ -18,7 +18,6 @@ import SuccessToast from "@/components/SuccessToast";
 import styles from "@/styles/send.module.css";
 import background from "@/styles/background.module.css";
 
-// ✅ Tinklo pavadinimai
 const networkShortNames = {
   ethereum: "ETH",
   bsc: "BNB",
@@ -27,7 +26,6 @@ const networkShortNames = {
   avalanche: "AVAX",
 };
 
-// ✅ Mygtukų spalvos
 const buttonColors = {
   ethereum: "#0072ff",
   bsc: "#f0b90b",
@@ -56,8 +54,13 @@ export default function SendPage() {
 
   const { gasFee, adminFee, totalFee, loading: feesLoading } = useFeeCalculator(network, parsedAmount);
 
-  const maxSendable = netBalance > totalFee ? netBalance - totalFee : 0;
-  const afterFees = parsedAmount > 0 ? parsedAmount - adminFee - gasFee : 0;
+  const computedMaxSendable = useMemo(() => {
+    return netBalance > totalFee ? netBalance - gasFee - adminFee : 0;
+  }, [netBalance, gasFee, adminFee, totalFee]);
+
+  const afterFees = useMemo(() => {
+    return parsedAmount > 0 ? parsedAmount - gasFee - adminFee : 0;
+  }, [parsedAmount, gasFee, adminFee]);
 
   const isValidAddress = (address) => /^0x[a-fA-F0-9]{40}$/.test(address.trim());
 
@@ -111,6 +114,10 @@ export default function SendPage() {
     resetError();
   };
 
+  const handleMax = () => {
+    setAmount(computedMaxSendable.toFixed(6));
+  };
+
   useEffect(() => {
     if (success) {
       setShowSuccess(true);
@@ -133,17 +140,17 @@ export default function SendPage() {
       className={`${styles.main} ${background.gradient}`}
     >
       <div className={styles.wrapper}>
-        {/* ✅ Toast */}
+        {/* Toast */}
         <SuccessToast show={showToast} message={toastMessage} networkKey={network} />
 
-        {/* ✅ Puslapio antraštė */}
+        {/* Title */}
         <h1 className={styles.title}>SEND CRYPTO</h1>
         <p className={styles.subtext}>Transfer crypto securely & instantly</p>
 
-        {/* ✅ Tinklo pasirinkimas */}
+        {/* Network selector */}
         <SwipeSelector onSelect={handleNetworkChange} />
 
-        {/* ✅ Balanso rodymas */}
+        {/* Balance info */}
         <div className={styles.balanceTable}>
           <p className={styles.whiteText}>
             Your Balance:&nbsp;
@@ -154,12 +161,12 @@ export default function SendPage() {
           <p className={styles.whiteText}>
             Max Sendable:&nbsp;
             <span className={styles.balanceAmount}>
-              {maxSendable > 0 ? maxSendable.toFixed(6) : "0.000000"} {shortName}
+              {computedMaxSendable.toFixed(6)} {shortName}
             </span>
           </p>
         </div>
 
-        {/* ✅ Adreso ir sumos įvedimas */}
+        {/* Inputs */}
         <div className={styles.walletActions}>
           <input
             type="text"
@@ -179,20 +186,20 @@ export default function SendPage() {
             <button
               type="button"
               className={styles.maxSendButton}
-              onClick={() => setAmount(maxSendable.toFixed(6))}
+              onClick={handleMax}
             >
               Max
             </button>
           </div>
 
-          {/* ✅ Fees */}
+          {/* Fees */}
           <p className={styles.feeBreakdown}>
             Gas Fee: <strong>{gasFee.toFixed(6)} {shortName}</strong><br />
             Admin Fee: <strong>{adminFee.toFixed(6)} {shortName}</strong><br />
             You Receive: <strong>{afterFees > 0 ? afterFees.toFixed(6) : "0.000000"} {shortName}</strong>
           </p>
 
-          {/* ✅ Send mygtukas */}
+          {/* Send Button */}
           <motion.button
             whileHover={{ scale: 1.04 }}
             whileTap={{ scale: 0.98 }}
@@ -215,7 +222,7 @@ export default function SendPage() {
           </motion.button>
         </div>
 
-        {/* ✅ Confirm modal */}
+        {/* Confirm Modal */}
         <AnimatePresence>
           {showConfirm && (
             <motion.div
@@ -252,7 +259,7 @@ export default function SendPage() {
           )}
         </AnimatePresence>
 
-        {/* ✅ Success modal */}
+        {/* Success Modal */}
         <AnimatePresence>
           {showSuccess && (
             <SuccessModal
@@ -264,7 +271,7 @@ export default function SendPage() {
           )}
         </AnimatePresence>
 
-        {/* ✅ Error modal */}
+        {/* Error Modal */}
         <AnimatePresence>
           {error && (
             <ErrorModal
