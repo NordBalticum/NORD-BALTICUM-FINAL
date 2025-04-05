@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { ethers } from "ethers";
-import { useAuth } from "@/contexts/AuthContext"; // ✅ Pasiimam vartotoją ir jo wallet
+import { useAuth } from "@/contexts/AuthContext"; // ✅ Ultimate AuthContext
 
 // ✅ Geriausi hardcoded RPC adresai
 const NETWORKS = {
@@ -23,14 +23,14 @@ const NETWORKS = {
     symbol: "AVAX",
   },
   tbnb: {
-    rpc: "https://data-seed-prebsc-1-s1.binance.org:8545", // ✅ Testnet BNB
+    rpc: "https://data-seed-prebsc-1-s1.binance.org:8545",
     symbol: "TBNB",
   },
 };
 
 // ✅ Funkcija balansams gauti
 async function getBalances(address) {
-  if (!address) throw new Error("❌ Address is required to fetch balances.");
+  if (!address) throw new Error("❌ Wallet address is required!");
 
   const balances = {};
 
@@ -44,7 +44,7 @@ async function getBalances(address) {
         balance: formatted,
       };
     } catch (error) {
-      console.error(`❌ Error fetching balance for ${network}:`, error.message);
+      console.error(`❌ Failed to fetch balance for ${network}:`, error.message);
       balances[network] = {
         symbol: config.symbol,
         balance: null,
@@ -55,30 +55,33 @@ async function getBalances(address) {
   return balances;
 }
 
-// ✅ Hook'as useBalance
+// ✅ Ultimate Balance Hook
 export function useBalance() {
   const { wallet } = useAuth();
   const [balances, setBalances] = useState({});
   const [loading, setLoading] = useState(true);
 
+  const fetchBalances = useCallback(async () => {
+    if (!wallet?.wallet?.address) return;
+
+    try {
+      const data = await getBalances(wallet.wallet.address);
+      setBalances(data);
+    } catch (error) {
+      console.error("❌ Balance fetch error:", error.message);
+    } finally {
+      setLoading(false); // ✅ Net jei klaida - baigiam loading
+    }
+  }, [wallet?.wallet?.address]);
+
   useEffect(() => {
     if (!wallet?.wallet?.address) return;
 
-    const fetchBalances = async () => {
-      try {
-        const data = await getBalances(wallet.wallet.address);
-        setBalances(data);
-        setLoading(false);
-      } catch (error) {
-        console.error("❌ Balance fetch error:", error.message);
-      }
-    };
+    fetchBalances(); // ✅ Pirmas užkrovimas
 
-    fetchBalances(); // ✅ Pirmas uzkrovimas
-
-    const interval = setInterval(fetchBalances, 10000); // ✅ Auto-refresh kas 10 sekundžių
+    const interval = setInterval(fetchBalances, 10000); // ✅ Auto-refresh kas 10s
     return () => clearInterval(interval);
-  }, [wallet]);
+  }, [fetchBalances]);
 
   return { balances, loading };
 }
