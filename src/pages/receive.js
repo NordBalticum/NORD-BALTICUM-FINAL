@@ -3,9 +3,9 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
+import QRCode from "react-qr-code";
 
 import { useAuth } from "@/contexts/AuthContext"; 
-import ReceiveComponent from "@/components/ReceiveComponent"; 
 import styles from "@/styles/receive.module.css";
 import background from "@/styles/background.module.css";
 
@@ -16,22 +16,19 @@ export default function Receive() {
   const [isClient, setIsClient] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  // ✅ Check if on client
   useEffect(() => {
     if (typeof window !== "undefined") {
       setIsClient(true);
     }
   }, []);
 
-  // ✅ Redirect to homepage if not logged in
   useEffect(() => {
     if (isClient && !loading && !user) {
       router.replace("/");
     }
   }, [user, loading, isClient, router]);
 
-  const handleCopy = async () => {
-    const address = wallet?.wallet?.address;
+  const handleCopy = async (address) => {
     if (!address) return;
     try {
       await navigator.clipboard.writeText(address);
@@ -43,21 +40,13 @@ export default function Receive() {
   };
 
   if (!isClient || loading) {
-    return (
-      <div className={styles.loadingScreen}>
-        Loading Wallet...
-      </div>
-    );
+    return <div className={styles.loadingScreen}>Loading Wallet...</div>;
   }
 
   const address = wallet?.wallet?.address;
 
   if (!user || !address) {
-    return (
-      <div className={styles.loadingScreen}>
-        Preparing wallet...
-      </div>
-    );
+    return <div className={styles.loadingScreen}>Preparing wallet...</div>;
   }
 
   return (
@@ -72,12 +61,31 @@ export default function Receive() {
           <h1 className={styles.title}>RECEIVE</h1>
           <p className={styles.subtext}>Your MultiNetwork Receiving Address</p>
 
-          {/* ✅ Tik jei address */}
-          <ReceiveComponent
-            address={address}
-            onCopy={handleCopy}
-          />
+          {/* ✅ QR kodas tiesiogiai */}
+          <div className={styles.qrWrapper} onClick={() => handleCopy(address)}>
+            <QRCode
+              value={address}
+              size={180}
+              bgColor="transparent"
+              fgColor="#ffffff"
+              style={{ height: "auto", maxWidth: "100%", width: "100%" }}
+            />
+          </div>
 
+          {/* ✅ Wallet Address */}
+          <p className={styles.addressText}>
+            {address}
+          </p>
+
+          {/* ✅ Copy Button */}
+          <button
+            onClick={() => handleCopy(address)}
+            className={styles.copyButton}
+          >
+            {copied ? "Copied!" : "Copy Address"}
+          </button>
+
+          {/* ✅ Small copied success message */}
           {copied && (
             <div className={styles.copied}>
               ✅ Wallet Address Copied
