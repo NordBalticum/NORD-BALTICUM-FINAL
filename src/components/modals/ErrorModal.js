@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { motion } from "framer-motion";
 import { FaTimesCircle } from "react-icons/fa";
-import styles from "@/components/modals/successmodal.module.css"; // ✅ Naudojam tą patį stilių!
+import styles from "@/components/modals/modalstyle.module.css"; // ✅ Naudojam tą patį stilių!
 
 export default function ErrorModal({ error, onRetry }) {
   if (!error) return null;
