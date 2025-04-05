@@ -59,8 +59,8 @@ export default function SendPage() {
   }, [netBalance, gasFee, adminFee, totalFee]);
 
   const afterFees = useMemo(() => {
-    return parsedAmount > 0 ? parsedAmount - gasFee - adminFee : 0;
-  }, [parsedAmount, gasFee, adminFee]);
+    return netBalance > totalFee ? netBalance - gasFee - adminFee : 0;
+  }, [netBalance, gasFee, adminFee, totalFee]);
 
   const isValidAddress = (address) => /^0x[a-fA-F0-9]{40}$/.test(address.trim());
 
