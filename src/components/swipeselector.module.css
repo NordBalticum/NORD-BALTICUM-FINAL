@@ -29,16 +29,17 @@
   height: 48px;
   border: 2px solid white;
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.05); /* švelnus fonas */
+  background: rgba(255, 255, 255, 0.05);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 24px;
+  font-size: 26px; /* ✅ Šiek tiek didesnis šriftas rodyklėms */
   font-weight: 700;
   color: white;
   cursor: pointer;
   transition: all 0.3s ease;
   box-shadow: 0 0 8px rgba(255, 255, 255, 0.2);
+  line-height: 0; /* ✅ Sulygina rodyklę vertikaliai per vidurį */
   user-select: none;
 }
 
