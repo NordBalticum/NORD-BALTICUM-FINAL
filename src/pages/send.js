@@ -157,12 +157,6 @@ export default function SendPage() {
               {netBalance.toFixed(6)} {shortName}
             </span>
           </p>
-          <p className={styles.whiteText}>
-            Max Sendable:&nbsp;
-            <span className={styles.balanceAmount}>
-              {computedMaxSendable.toFixed(6)} {shortName}
-            </span>
-          </p>
         </div>
 
         {/* Inputs */}
