@@ -61,17 +61,46 @@
   margin-top: -4px;
 }
 
+/* === QR CONTAINER su GOLDEN PULSE === */
 .qrContainer {
   margin-top: clamp(12px, 3vw, 24px);
-  transition: transform 0.2s ease;
+  background: rgba(255, 255, 255, 0.04);
+  padding: clamp(18px, 4vw, 28px);
+  border-radius: 18px;
+  display: inline-block;
   cursor: pointer;
-  position: relative;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 0 24px rgba(255, 215, 0, 0.15);
+  animation: goldenPulse 3s ease-in-out infinite;
 }
 
 .qrContainer:hover {
-  transform: scale(1.02);
+  transform: scale(1.03);
+  box-shadow: 0 0 36px rgba(255, 215, 0, 0.4);
 }
 
+/* QR kodas SVG */
+.qrContainer svg {
+  height: auto;
+  width: 100%;
+  max-width: 220px;
+}
+
+/* === Golden Pulse Keyframes === */
+@keyframes goldenPulse {
+  0% {
+    box-shadow: 0 0 24px rgba(255, 215, 0, 0.15);
+  }
+  50% {
+    box-shadow: 0 0 48px rgba(255, 215, 0, 0.35);
+  }
+  100% {
+    box-shadow: 0 0 24px rgba(255, 215, 0, 0.15);
+  }
+}
+
+/* === Wallet info === */
 .infoBoxes {
   display: flex;
   flex-direction: column;
@@ -118,6 +147,7 @@
   width: 100%;
 }
 
+/* === COPY SUCCESS ALERT === */
 .copied {
   position: absolute;
   top: -36px;
@@ -136,6 +166,47 @@
   font-family: var(--font-crypto);
 }
 
+/* Copy button */
+.copyButton {
+  margin-top: 24px;
+  padding: 12px 24px;
+  border-radius: 14px;
+  background-color: #0070f3;
+  color: white;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  transition: all 0.3s ease;
+}
+
+.copyButton:hover {
+  background-color: #0051a8;
+}
+
+/* Address text */
+.addressText {
+  margin-top: 20px;
+  font-size: clamp(14px, 2.5vw, 18px);
+  word-break: break-word;
+  color: #ccc;
+  text-align: center;
+  font-family: var(--font-crypto);
+  opacity: 0.85;
+}
+
+/* Loading */
+.loading {
+  font-size: 1.2rem;
+  color: white;
+  text-align: center;
+  padding-top: 120px;
+  font-family: var(--font-crypto);
+}
+
+/* === Fade In/Out animation for success copy alert === */
 @keyframes fadeInOut {
   0% {
     opacity: 0;
@@ -155,15 +226,7 @@
   }
 }
 
-.loading {
-  font-size: 1.2rem;
-  color: white;
-  text-align: center;
-  padding-top: 120px;
-  font-family: var(--font-crypto);
-}
-
-/* === MOBILE === */
+/* === MOBILE FIXES === */
 @media screen and (max-width: 768px) {
   .globalContainer {
     transform: translate(-50%, -60%);
