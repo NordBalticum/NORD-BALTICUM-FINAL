@@ -17,8 +17,11 @@ const supportedNetworks = [
 export default function SwipeSelector({ onSelect }) {
   const { activeNetwork, setActiveNetwork, loading } = useAuth();
   const containerRef = useRef(null);
-  const [selectedIndex, setSelectedIndex] = useState(2); // Default ETH
+  const [selectedIndex, setSelectedIndex] = useState(2); // ETH default
   const [isMobile, setIsMobile] = useState(false);
+
+  // ✅ Is the system ready
+  const isReady = !loading && activeNetwork && setActiveNetwork;
 
   // ✅ Resize listener
   useEffect(() => {
@@ -28,23 +31,25 @@ export default function SwipeSelector({ onSelect }) {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // ✅ Kai selectedIndex keičiasi
+  // ✅ When selectedIndex changes
   useEffect(() => {
+    if (!isReady) return;
     if (supportedNetworks[selectedIndex]) {
       const selectedSymbol = supportedNetworks[selectedIndex].symbol;
       setActiveNetwork(selectedSymbol);
       onSelect?.(selectedSymbol);
     }
     if (isMobile) scrollToCenter(selectedIndex);
-  }, [selectedIndex, isMobile, setActiveNetwork, onSelect]);
+  }, [selectedIndex, isMobile, setActiveNetwork, onSelect, isReady]);
 
-  // ✅ Kai activeNetwork keičiasi iš kitų vietų
+  // ✅ When activeNetwork changes
   useEffect(() => {
+    if (!isReady) return;
     const idx = supportedNetworks.findIndex((net) => net.symbol === activeNetwork);
     if (idx >= 0) {
       setSelectedIndex(idx);
     }
-  }, [activeNetwork]);
+  }, [activeNetwork, isReady]);
 
   const scrollToCenter = (index) => {
     const container = containerRef.current;
@@ -68,8 +73,8 @@ export default function SwipeSelector({ onSelect }) {
     if (selectedIndex < supportedNetworks.length - 1) handleSelect(selectedIndex + 1);
   };
 
-  if (loading) {
-    return <div className={styles.loading}>Loading networks...</div>;
+  if (!isReady) {
+    return <div className={styles.loading}>Preparing networks...</div>;
   }
 
   return (
