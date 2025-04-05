@@ -306,6 +306,30 @@
   }
 }
 
+/* === Max Send Button (Naujas) === */
+.maxSendButton {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 6px 10px;
+  font-size: 0.8rem;
+  background: linear-gradient(to right, #00c6ff, #0072ff);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-family: var(--font-crypto);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  vertical-align: middle;
+}
+
+.maxSendButton:hover {
+  background: linear-gradient(to right, #0072ff, #00c6ff);
+  transform: scale(1.05);
+}
+
 @media screen and (max-width: 320px) {
   .wrapper {
     padding: 12px;
