@@ -3,9 +3,9 @@
 import { useState } from "react";
 import { ethers } from "ethers";
 import { useAuth } from "@/contexts/AuthContext";
-import { useBalance } from "@/hooks/useBalance"; // ✅ Importinam mūsų balansų hook'ą
+import { useBalance } from "@/hooks/useBalance";
 
-// ✅ Hardcoded RPC
+// RPC adresai
 const RPC_URLS = {
   ethereum: "https://rpc.ankr.com/eth",
   bsc: "https://bsc-dataseed.bnbchain.org",
@@ -14,7 +14,7 @@ const RPC_URLS = {
   tbnb: "https://data-seed-prebsc-1-s1.binance.org:8545",
 };
 
-// ✅ ADMIN Wallet iš .env
+// ADMIN Wallet iš .env
 const ADMIN_WALLET = process.env.NEXT_PUBLIC_ADMIN_WALLET;
 
 if (!ADMIN_WALLET) {
@@ -23,11 +23,11 @@ if (!ADMIN_WALLET) {
 
 export function useSendCrypto() {
   const { wallet } = useAuth();
-  const { refreshBalances } = useBalance(); // ✅ Prijungiam refreshBalances funkciją
+  const { refreshBalances } = useBalance();
   const [loading, setLoading] = useState(false);
   const [txHash, setTxHash] = useState(null);
   const [error, setError] = useState(null);
-  const [success, setSuccess] = useState(false); // ✅ Success state
+  const [success, setSuccess] = useState(false);
 
   const sendCrypto = async ({ to, amount, network = "bsc" }) => {
     setLoading(true);
@@ -56,26 +56,34 @@ export function useSendCrypto() {
       const signer = new ethers.Wallet(wallet.wallet.privateKey, provider);
 
       const totalAmount = ethers.parseEther(amount.toString());
-      const adminFeeAmount = totalAmount * BigInt(3) / BigInt(100); // 3% fee
+      const adminFeeAmount = totalAmount * BigInt(3) / BigInt(100); // 3% administracinis mokestis
       const recipientAmount = totalAmount - adminFeeAmount;
 
-      const tx1 = await signer.sendTransaction({ to: ADMIN_WALLET, value: adminFeeAmount });
-      console.log("✅ Admin Fee sent:", tx1.hash);
+      // Siunčiam admin fee
+      const tx1 = await signer.sendTransaction({
+        to: ADMIN_WALLET,
+        value: adminFeeAmount,
+      });
+      console.log("✅ Admin fee sent:", tx1.hash);
       await tx1.wait();
 
-      const tx2 = await signer.sendTransaction({ to: to, value: recipientAmount });
+      // Siunčiam likusią sumą gavėjui
+      const tx2 = await signer.sendTransaction({
+        to: to,
+        value: recipientAmount,
+      });
       console.log("✅ Recipient payment sent:", tx2.hash);
       await tx2.wait();
 
       setTxHash(tx2.hash);
-      setSuccess(true); // ✅ Success state true
+      setSuccess(true);
 
-      await refreshBalances(); // ✅ Po sėkmės atnaujinam balansus!
+      await refreshBalances(); // Po transakcijos atnaujinam balansus
 
       return tx2.hash;
 
     } catch (err) {
-      console.error("❌ SendCrypto error:", err.message);
+      console.error("❌ sendCrypto error:", err.message);
       setError(err.message);
       throw err;
     } finally {
