@@ -1,20 +1,22 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 
 import { useAuth } from "@/contexts/AuthContext"; // ✅ Ultimate Auth
+import MiniLoadingSpinner from "@/components/MiniLoadingSpinner"; // ✅ Mini spinner
 import styles from "@/styles/history.module.css";
 import background from "@/styles/background.module.css";
 
 export default function HistoryPage() {
   const router = useRouter();
-  const { user, wallet, fetchTransactions, loading } = useAuth(); // ❌ No loadOrCreateWallet čia!
+  const { user, wallet, fetchTransactions, loading: authLoading } = useAuth(); // ✅ Tik ultimate Auth
 
   const [transactions, setTransactions] = useState([]);
   const [isClient, setIsClient] = useState(false);
   const [loadingTransactions, setLoadingTransactions] = useState(true);
+  const [error, setError] = useState(null);
 
   // ✅ Detect client
   useEffect(() => {
@@ -25,30 +27,34 @@ export default function HistoryPage() {
 
   // ✅ Auto redirect jei neprisijungęs
   useEffect(() => {
-    if (isClient && !loading && !user) {
+    if (isClient && !authLoading && !user) {
       router.replace("/");
     }
-  }, [user, loading, isClient, router]);
+  }, [user, authLoading, isClient, router]);
 
-  // ✅ Fetch transactions kai user yra
-  useEffect(() => {
-    const fetchUserTx = async () => {
-      if (user?.email) {
-        try {
-          setLoadingTransactions(true);
-          const txs = await fetchTransactions(user.email);
-          setTransactions(txs || []);
-        } catch (err) {
-          console.error("❌ Failed to fetch transactions:", err);
-        } finally {
-          setLoadingTransactions(false);
-        }
+  // ✅ Gauti transakcijas
+  const fetchUserTx = useCallback(async () => {
+    if (user?.email) {
+      try {
+        setLoadingTransactions(true);
+        const txs = await fetchTransactions(user.email);
+        setTransactions(txs || []);
+        setError(null);
+      } catch (err) {
+        console.error("❌ Failed to fetch transactions:", err);
+        setError("❌ Failed to load transactions.");
+      } finally {
+        setLoadingTransactions(false);
       }
-    };
-    fetchUserTx();
+    }
   }, [user, fetchTransactions]);
 
-  // ✅ Block explorer link
+  useEffect(() => {
+    fetchUserTx();
+    const interval = setInterval(fetchUserTx, 30000); // ✅ Kas 30s atsinaujina
+    return () => clearInterval(interval);
+  }, [fetchUserTx]);
+
   const getExplorerURL = (hash, network) => {
     const baseURLs = {
       bsc: "https://bscscan.com/tx/",
@@ -60,18 +66,26 @@ export default function HistoryPage() {
     return baseURLs[network?.toLowerCase()] + hash;
   };
 
-  // ✅ Animation
   const variants = {
     hidden: { opacity: 0, y: 20 },
     visible: { opacity: 1, y: 0 },
+    hover: { scale: 1.03, boxShadow: "0px 0px 15px rgba(255, 255, 255, 0.2)" },
   };
 
-  if (!isClient || loading) {
-    return <div className={styles.loading}>Loading profile...</div>;
+  if (!isClient || authLoading) {
+    return (
+      <div className={styles.loading}>
+        <MiniLoadingSpinner /> Loading profile...
+      </div>
+    );
   }
 
   if (!user || !wallet?.wallet?.address) {
-    return <div className={styles.loading}>Preparing wallet...</div>; // ✅ Saugus tikrinimas
+    return (
+      <div className={styles.loading}>
+        <MiniLoadingSpinner /> Preparing wallet...
+      </div>
+    );
   }
 
   return (
@@ -81,7 +95,13 @@ export default function HistoryPage() {
         <p className={styles.subtext}>Your latest crypto activity</p>
 
         {loadingTransactions ? (
-          <div className={styles.loading}>Loading transactions...</div>
+          <div className={styles.loading}>
+            <MiniLoadingSpinner /> Loading transactions...
+          </div>
+        ) : error ? (
+          <div className={styles.error}>
+            {error}
+          </div>
         ) : transactions.length === 0 ? (
           <div className={styles.loading}>No transactions found.</div>
         ) : (
@@ -93,6 +113,7 @@ export default function HistoryPage() {
                 variants={variants}
                 initial="hidden"
                 animate="visible"
+                whileHover="hover"
                 transition={{ duration: 0.35, delay: i * 0.07 }}
               >
                 <div className={styles.transactionHeader}>
@@ -149,7 +170,7 @@ export default function HistoryPage() {
   );
 }
 
-// ✅ Helper
+// ✅ Helper: trumpina adresą
 function truncateAddress(addr) {
   if (!addr || typeof addr !== "string") return "Unknown";
   return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
