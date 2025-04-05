@@ -3,7 +3,7 @@
 // 1. IMPORTAI
 import { createContext, useContext, useEffect, useState, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { Wallet, JsonRpcProvider, parseEther, formatEther, isAddress } from "ethers";
+import { Wallet, JsonRpcProvider, parseEther, formatEther } from "ethers";
 import { supabase } from "@/utils/supabaseClient";
 
 // 2. RPC TINKLAI
@@ -32,9 +32,20 @@ const encode = (str) => new TextEncoder().encode(str);
 const decode = (buf) => new TextDecoder().decode(buf);
 
 const getKey = async () => {
-  const keyMaterial = await window.crypto.subtle.importKey("raw", encode(ENCRYPTION_SECRET), { name: "PBKDF2" }, false, ["deriveKey"]);
+  const keyMaterial = await window.crypto.subtle.importKey(
+    "raw",
+    encode(ENCRYPTION_SECRET),
+    { name: "PBKDF2" },
+    false,
+    ["deriveKey"]
+  );
   return window.crypto.subtle.deriveKey(
-    { name: "PBKDF2", salt: encode("nordbalticum-salt"), iterations: 100000, hash: "SHA-256" },
+    {
+      name: "PBKDF2",
+      salt: encode("nordbalticum-salt"),
+      iterations: 100000,
+      hash: "SHA-256",
+    },
     keyMaterial,
     { name: "AES-GCM", length: 256 },
     false,
@@ -79,6 +90,7 @@ export const AuthProvider = ({ children }) => {
   // 7. LOAD SESSION
   useEffect(() => {
     if (!isClient) return;
+
     const loadSession = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
@@ -99,12 +111,12 @@ export const AuthProvider = ({ children }) => {
     return () => subscription?.unsubscribe();
   }, [isClient]);
 
-  // 8. AUTO LOAD WALLET
+  // 8. AUTO LOAD WALLET (tik jei dar neužkrauta)
   useEffect(() => {
-    if (!isClient || loading || !user?.email) return;
-    console.log("✅ User authenticated, loading wallet for:", user.email);
+    if (!isClient || loading || !user?.email || wallet) return;
+    console.log("✅ User ready, loading wallet for:", user.email);
     loadOrCreateWallet(user.email);
-  }, [isClient, loading, user]);
+  }, [isClient, loading, user, wallet]);
 
   // 9. AUTO REDIRECT
   useEffect(() => {
@@ -137,6 +149,7 @@ export const AuthProvider = ({ children }) => {
   const loadOrCreateWallet = async (email) => {
     try {
       setLoading(true);
+
       const { data, error } = await supabase.from("wallets").select("*").eq("user_email", email).maybeSingle();
       if (error) throw error;
 
@@ -163,7 +176,7 @@ export const AuthProvider = ({ children }) => {
         console.log("🚀 New wallet created and stored.");
       }
     } catch (error) {
-      console.error("Wallet load error:", error.message);
+      console.error("❌ Wallet load error:", error.message);
       setWallet(null);
     } finally {
       setLoading(false);
@@ -174,9 +187,11 @@ export const AuthProvider = ({ children }) => {
   const setupWallet = (privateKey) => {
     const baseWallet = new Wallet(privateKey);
     const signers = {};
+
     Object.entries(RPC).forEach(([network, url]) => {
       signers[network] = new Wallet(privateKey, new JsonRpcProvider(url));
     });
+
     setWallet({ wallet: baseWallet, signers });
     loadBalances(signers);
 
@@ -198,10 +213,11 @@ export const AuthProvider = ({ children }) => {
       results.forEach(({ network, balance }) => {
         balancesObj[network] = balance;
       });
+
       setBalances(balancesObj);
       setRates(rateData);
     } catch (error) {
-      console.error("Load balances error:", error.message);
+      console.error("❌ Load balances error:", error.message);
     }
   };
 
@@ -212,7 +228,7 @@ export const AuthProvider = ({ children }) => {
       const res = await fetch(url);
       return await res.json();
     } catch (error) {
-      console.error("Rates fetch error:", error.message);
+      console.error("❌ Rates fetch error:", error.message);
       return {};
     }
   };
@@ -226,7 +242,7 @@ export const AuthProvider = ({ children }) => {
         [network]: parseFloat(formatEther(balance)),
       }));
     } catch (error) {
-      console.error("Refresh balance error:", error.message);
+      console.error("❌ Refresh balance error:", error.message);
     }
   };
 
@@ -250,36 +266,22 @@ export const AuthProvider = ({ children }) => {
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
-    setUser(null);
-    setWallet(null);
-    if (balanceInterval.current) clearInterval(balanceInterval.current);
-    if (isClient) {
-      localStorage.removeItem("userPrivateKey");
-      localStorage.removeItem("activeNetwork");
+    try {
+      await supabase.auth.signOut();
+    } catch (error) {
+      console.warn("Logout error:", error.message);
+    } finally {
+      setUser(null);
+      setWallet(null);
+      if (balanceInterval.current) clearInterval(balanceInterval.current);
+      if (isClient) {
+        localStorage.removeItem("activeNetwork");
+      }
+      router.replace("/");
     }
-    router.replace("/");
   };
 
-// 15. SEND TRANSACTION
-const sendTransaction = async ({ receiver, amount, network }) => {
-  if (!wallet?.signers?.[network]) throw new Error("Wallet not ready");
-  if (!ADMIN_ADDRESS) throw new Error("Admin address missing");
-
-  const signer = wallet.signers[network];
-  const value = parseEther(amount.toString());
-  const fee = value.mul(3).div(100); // 3% fee
-  const toSend = value.sub(fee);
-
-  const [userTx, feeTx] = await Promise.all([
-    signer.sendTransaction({ to: receiver, value: toSend, gasLimit: 21000 }),
-    signer.sendTransaction({ to: ADMIN_ADDRESS, value: fee, gasLimit: 21000 }),
-  ]);
-
-  return { success: true, txHash: userTx.hash, feeHash: feeTx.hash };
-};
-  
-  // 16. CONTEXT RETURN
+  // 15. CONTEXT RETURN
   return (
     <AuthContext.Provider
       value={{
@@ -293,7 +295,6 @@ const sendTransaction = async ({ receiver, amount, network }) => {
         signInWithMagicLink,
         signInWithGoogle,
         signOut,
-        sendTransaction,
         refreshBalance,
       }}
     >
