@@ -13,27 +13,36 @@ const NETWORKS = {
   tbnb: { rpc: "https://data-seed-prebsc-1-s1.binance.org:8545", symbol: "TBNB" },
 };
 
-// ✅ Funkcija gauti balansus visiems tinklams
-async function getBalances(address) {
+// ✅ Funkcija gauti balansus su retry mechanizmu
+async function getBalances(address, retries = 2) {
   if (!address) throw new Error("❌ Wallet address is required!");
 
   const balances = {};
 
   for (const [network, config] of Object.entries(NETWORKS)) {
-    try {
-      const provider = new ethers.JsonRpcProvider(config.rpc, { staticNetwork: network });
-      const balance = await provider.getBalance(address);
-      const formatted = ethers.formatEther(balance);
-      balances[network] = {
-        symbol: config.symbol,
-        balance: formatted,
-      };
-    } catch (error) {
-      console.error(`❌ Failed to fetch balance for ${network}:`, error?.message || error);
-      balances[network] = {
-        symbol: config.symbol,
-        balance: null,
-      };
+    let attempt = 0;
+    let success = false;
+
+    while (attempt <= retries && !success) {
+      try {
+        const provider = new ethers.JsonRpcProvider(config.rpc);
+        const balance = await provider.getBalance(address);
+        const formatted = ethers.formatEther(balance);
+        balances[network] = {
+          symbol: config.symbol,
+          balance: formatted,
+        };
+        success = true;
+      } catch (error) {
+        attempt++;
+        console.error(`❌ Failed to fetch ${network} (attempt ${attempt}):`, error?.message || error);
+        if (attempt > retries) {
+          balances[network] = {
+            symbol: config.symbol,
+            balance: null,
+          };
+        }
+      }
     }
   }
 
@@ -44,48 +53,69 @@ async function getBalances(address) {
 export function useBalance() {
   const { wallet } = useAuth();
   const [balances, setBalances] = useState({});
-  const [loading, setLoading] = useState(false);         // ✅ loading kai refetch'inam
-  const [initialLoading, setInitialLoading] = useState(true); // ✅ loading tik pirmą kartą
-  const intervalRef = useRef(null);                      // ✅ Kad niekad neliktų pasimetusių intervalų
+  const [loading, setLoading] = useState(false);         // ✅ loading tik kai rankinis refetch
+  const [initialLoading, setInitialLoading] = useState(true); // ✅ loading tik pirmam kartui
+  const [isOnline, setIsOnline] = useState(true);         // ✅ Anti-disconnect statusas
+  const intervalRef = useRef(null);
 
   const fetchBalances = useCallback(async () => {
-    if (!wallet?.wallet?.address) return;
+    if (!wallet?.wallet?.address || !isOnline) return;
 
-    setLoading(true); // ✅ Rodom loading tik per refetch
+    setLoading(true);
     try {
       const data = await getBalances(wallet.wallet.address);
       setBalances(data);
     } catch (error) {
       console.error("❌ Error fetching balances:", error?.message || error);
     } finally {
-      setLoading(false);         // ✅ Baigiam refetch loading
-      setInitialLoading(false);  // ✅ Baigiam pirmą loading visam puslapiui
+      setLoading(false);
+      setInitialLoading(false);
     }
-  }, [wallet?.wallet?.address]);
+  }, [wallet?.wallet?.address, isOnline]);
 
+  // ✅ Auto-refetch kas 15s
   useEffect(() => {
     if (!wallet?.wallet?.address) return;
 
-    // ✅ Pirmas balansų užkrovimas
-    fetchBalances();
+    fetchBalances(); // ✅ Pirmas užkrovimas
 
-    // ✅ Pradėti automatinį balansų atnaujinimą
-    intervalRef.current = setInterval(fetchBalances, 15000); // Kas 15s saugiau
-    console.log("✅ Auto-balance updater started.");
+    intervalRef.current = setInterval(fetchBalances, 15000); // ✅ Kas 15s update
+    console.log("✅ Balance updater started.");
 
-    // ✅ Švariai išvalom intervalą, kad nebūtų memory leak
     return () => {
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
-        console.log("🧹 Auto-balance updater stopped.");
+        console.log("🧹 Balance updater cleared.");
       }
+    };
+  }, [fetchBalances]);
+
+  // ✅ Interneto disconnect / reconnect detektavimas
+  useEffect(() => {
+    const handleOnline = () => {
+      console.log("🌐 Back online.");
+      setIsOnline(true);
+      fetchBalances(); // ✅ Kai prisijungia vėl - refetch
+    };
+
+    const handleOffline = () => {
+      console.warn("⚡ Lost internet connection.");
+      setIsOnline(false);
+    };
+
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
     };
   }, [fetchBalances]);
 
   return {
     balances,        // ✅ Visi balansai
-    loading,         // ✅ Fono loading (kai atnaujinam)
-    initialLoading,  // ✅ Pirmas pilnas loading (rodom tik kartą)
-    refetch: fetchBalances, // ✅ Rankinis refetch jeigu reikia
+    loading,         // ✅ Tik fono loading
+    initialLoading,  // ✅ Tik pirmas puslapio loading
+    refetch: fetchBalances, // ✅ Rankinis refetch
   };
 }
