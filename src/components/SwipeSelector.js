@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import { useAuth } from "@/contexts/AuthContext";
+import { useSwipeReady } from "@/hooks/useSwipeReady"; // ✅ Mini hook tik tinklui
 import styles from "@/components/swipeselector.module.css";
 
 const supportedNetworks = [
@@ -20,7 +21,7 @@ export default function SwipeSelector({ onSelect }) {
   const [selectedIndex, setSelectedIndex] = useState(2); // Default ETH
   const [isMobile, setIsMobile] = useState(false);
 
-  const isDataReady = !!activeNetwork && typeof setActiveNetwork === "function";
+  const isReady = useSwipeReady(); // ✅ Dabar super greitas tikrinimas!
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth <= 1024);
@@ -30,22 +31,22 @@ export default function SwipeSelector({ onSelect }) {
   }, []);
 
   useEffect(() => {
-    if (!isDataReady) return;
+    if (!isReady) return;
     if (supportedNetworks[selectedIndex]) {
       const selectedSymbol = supportedNetworks[selectedIndex].symbol;
       setActiveNetwork(selectedSymbol);
       onSelect?.(selectedSymbol);
     }
     if (isMobile) scrollToCenter(selectedIndex);
-  }, [selectedIndex, isMobile, setActiveNetwork, onSelect, isDataReady]);
+  }, [selectedIndex, isMobile, setActiveNetwork, onSelect, isReady]);
 
   useEffect(() => {
-    if (!isDataReady) return;
+    if (!isReady) return;
     const idx = supportedNetworks.findIndex((net) => net.symbol === activeNetwork);
     if (idx >= 0) {
       setSelectedIndex(idx);
     }
-  }, [activeNetwork, isDataReady]);
+  }, [activeNetwork, isReady]);
 
   const scrollToCenter = (index) => {
     const container = containerRef.current;
@@ -69,7 +70,7 @@ export default function SwipeSelector({ onSelect }) {
     if (selectedIndex < supportedNetworks.length - 1) handleSelect(selectedIndex + 1);
   };
 
-  if (!isDataReady) {
+  if (!isReady) {
     return <div className={styles.loading}>Loading networks...</div>;
   }
 
