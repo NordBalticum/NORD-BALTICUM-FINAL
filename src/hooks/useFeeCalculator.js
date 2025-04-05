@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { ethers } from "ethers";
 
-// RPC adresai
+// ✅ RPC adresai
 const RPC_URLS = {
   ethereum: "https://rpc.ankr.com/eth",
   bsc: "https://bsc-dataseed.bnbchain.org",
@@ -22,13 +22,14 @@ export function useFeeCalculator(network, receiver, amount) {
   const [loading, setLoading] = useState(true);
 
   const fetchGasPrice = useCallback(async () => {
-    if (!network || !receiver || !amount || !ethers.isAddress(receiver)) {
+    if (!network || !receiver || !ethers.isAddress(receiver) || !amount) {
       setGasFee(0);
       return;
     }
     try {
       const provider = new ethers.JsonRpcProvider(RPC_URLS[network]);
-      const gasPrice = (await provider.getFeeData()).gasPrice || ethers.parseUnits("5", "gwei");
+      const feeData = await provider.getFeeData();
+      const gasPrice = feeData.gasPrice || ethers.parseUnits("5", "gwei");
       const gasCost = Number(ethers.formatEther(gasPrice * BigInt(BASE_GAS_LIMIT)));
       setGasFee(gasCost);
     } catch (error) {
@@ -39,8 +40,6 @@ export function useFeeCalculator(network, receiver, amount) {
 
   useEffect(() => {
     fetchGasPrice();
-    const interval = setInterval(fetchGasPrice, 10000);
-    return () => clearInterval(interval);
   }, [fetchGasPrice]);
 
   useEffect(() => {
