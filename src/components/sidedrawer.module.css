@@ -3,24 +3,25 @@
   top: clamp(16px, 3vw, 24px);
   left: clamp(16px, 3vw, 24px);
   z-index: 99999;
-  padding: 0;
   background: none;
   border: none;
   color: white;
   cursor: pointer;
-  transition: transform 0.2s ease;
+  padding: 0;
+  transition: transform 0.25s ease, color 0.25s ease;
 }
 
 .hamburger:hover {
-  transform: scale(1.12);
+  transform: scale(1.14);
+  color: #ffd700;
 }
 
 .backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.45);
+  background: rgba(10, 18, 42, 0.75);
+  backdrop-filter: blur(12px) brightness(0.9);
   z-index: 9998;
-  backdrop-filter: blur(10px);
 }
 
 .drawer {
@@ -29,16 +30,16 @@
   left: 0;
   width: 280px;
   height: 100vh;
-  background: rgba(8, 10, 30, 0.24);
-  backdrop-filter: blur(28px) saturate(180%);
-  border-right: 1px solid rgba(255, 255, 255, 0.1);
+  background: radial-gradient(circle at top left, rgba(10, 18, 42, 0.95), rgba(8, 12, 30, 0.95));
+  backdrop-filter: blur(22px) saturate(160%);
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
   z-index: 9999;
-  padding: 32px 24px 24px;
+  padding: 32px 24px;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-  box-shadow: 6px 0 24px rgba(0, 0, 0, 0.3);
-  animation: fadeInDrawer 0.5s ease;
+  box-shadow: 8px 0 24px rgba(0, 0, 0, 0.6);
+  animation: fadeInDrawer 0.6s ease forwards;
 }
 
 @keyframes fadeInDrawer {
@@ -62,39 +63,40 @@
   border: none;
   color: white;
   cursor: pointer;
-  padding: 6px;
-  transition: transform 0.2s ease;
+  padding: 8px;
+  transition: transform 0.25s ease, color 0.25s ease;
 }
 
 .closeIcon:hover {
-  transform: scale(1.12);
+  transform: scale(1.14);
+  color: #ffd700;
 }
 
 .userBox {
   text-align: center;
-  margin-top: 24px;
-  margin-bottom: 32px;
-  padding: 26px 18px 22px;
-  background: rgba(8, 10, 30, 0.16);
-  border-radius: 22px;
-  backdrop-filter: blur(32px) saturate(200%);
-  box-shadow: 0 0 26px rgba(255, 255, 255, 0.15);
-  position: relative;
-  overflow: hidden;
+  margin-top: 26px;
+  margin-bottom: 34px;
+  padding: 28px 18px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 24px;
+  backdrop-filter: blur(32px) saturate(220%);
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.15);
   border: 1px solid rgba(255, 255, 255, 0.08);
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 14px;
+  position: relative;
+  overflow: hidden;
 }
 
 .userBox::before {
   content: "";
   position: absolute;
-  top: -12px;
+  top: -10px;
   left: 50%;
   transform: translateX(-50%);
-  width: 60%;
+  width: 70%;
   height: 1px;
   background: linear-gradient(to right, transparent, white, transparent);
 }
@@ -103,48 +105,44 @@
   width: 96px;
   height: 96px;
   display: block;
-  filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.4));
-  animation: fadeInDown 0.6s ease;
+  filter: drop-shadow(0 0 16px rgba(255, 255, 255, 0.4));
+  animation: fadeInDown 0.7s ease forwards;
 }
 
 .email {
-  font-size: 0.5rem; /* kompaktiškas tekstas */
+  font-size: 0.6rem;
   font-weight: 500;
   color: white;
-  opacity: 0.96;
+  opacity: 0.92;
   font-family: var(--font-crypto);
   background: rgba(255, 255, 255, 0.05);
-  padding: 8px 26px; /* šiek tiek platesnis padding */
-  border-radius: 14px;
-  display: inline-block;
-  text-align: center;
-  word-break: break-word;
-  overflow-wrap: break-word;
-  width: fit-content;
+  padding: 8px 26px;
+  border-radius: 16px;
   max-width: 100%;
-  margin: 0 auto;
+  word-break: break-word;
+  text-align: center;
 }
 
 .nav {
   display: flex;
   flex-direction: column;
-  gap: 1.4rem;
+  gap: 1.6rem;
   font-family: var(--font-crypto);
   align-items: flex-start;
-  transform: translateY(-12px);
+  transform: translateY(-10px);
 }
 
 .link {
   color: white;
   text-decoration: none;
-  font-size: 1.02rem;
-  transition: all 0.2s ease;
+  font-size: 1.05rem;
   position: relative;
+  transition: all 0.3s ease;
 }
 
 .link:hover {
   color: #ffd700;
-  transform: translateX(4px);
+  transform: translateX(6px);
 }
 
 .link::before {
@@ -178,32 +176,32 @@
 }
 
 .logout {
-  margin-top: 28px;
+  margin-top: 32px;
   padding: 10px 18px;
-  width: 70%;
-  background: black;
+  width: 72%;
+  background: rgba(10, 18, 42, 0.8);
   color: white;
   border: 1px solid white;
-  border-radius: 12px;
+  border-radius: 14px;
   font-family: var(--font-crypto);
-  font-size: 0.9rem;
+  font-size: 0.92rem;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
   align-self: center;
   transform: translateY(-10px);
 }
 
 .logout:hover {
   background: #ffd700;
-  color: black;
+  color: #0a122a;
   border-color: #ffd700;
-  transform: scale(1.04);
+  transform: scale(1.05);
 }
 
 @keyframes fadeInDown {
   from {
     opacity: 0;
-    transform: translateY(-12px);
+    transform: translateY(-20px);
   }
   to {
     opacity: 1;
