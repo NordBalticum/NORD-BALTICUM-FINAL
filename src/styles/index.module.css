@@ -131,7 +131,7 @@
 /* Responsive Fix - 768px */
 @media screen and (max-width: 768px) {
   .container {
-    transform: scale(0.92) translateY(-1%);
+    transform: scale(0.92) translateY(-17%);
   }
 }
 
