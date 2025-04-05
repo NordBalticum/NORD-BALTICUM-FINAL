@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { ethers } from "ethers";
 
-// ✅ RPC adresai
+// RPC adresai
 const RPC_URLS = {
   ethereum: "https://rpc.ankr.com/eth",
   bsc: "https://bsc-dataseed.bnbchain.org",
@@ -12,34 +12,35 @@ const RPC_URLS = {
   tbnb: "https://data-seed-prebsc-1-s1.binance.org:8545",
 };
 
-const BASE_GAS_LIMIT = 21000;
-const ADMIN_FEE_PERCENT = 3;
+const BASE_GAS_LIMIT = 21000; // Basic transaction gas limit
+const ADMIN_FEE_PERCENT = 3; // 3% admin fee
 
-export function useFeeCalculator(network, receiver, amount) {
+export function useFeeCalculator(network, amount) {
   const [gasFee, setGasFee] = useState(0);
   const [adminFee, setAdminFee] = useState(0);
   const [totalFee, setTotalFee] = useState(0);
   const [loading, setLoading] = useState(true);
 
   const fetchGasPrice = useCallback(async () => {
-    if (!network || !receiver || !ethers.isAddress(receiver) || !amount) {
-      setGasFee(0);
-      return;
-    }
     try {
+      if (!network) return;
+
       const provider = new ethers.JsonRpcProvider(RPC_URLS[network]);
       const feeData = await provider.getFeeData();
-      const gasPrice = feeData.gasPrice || ethers.parseUnits("5", "gwei");
+      const gasPrice = feeData.gasPrice || ethers.parseUnits("5", "gwei"); // fallback 5 gwei
       const gasCost = Number(ethers.formatEther(gasPrice * BigInt(BASE_GAS_LIMIT)));
+
       setGasFee(gasCost);
     } catch (error) {
       console.error("❌ Gas fetch error:", error.message);
       setGasFee(0);
     }
-  }, [network, receiver, amount]);
+  }, [network]);
 
   useEffect(() => {
     fetchGasPrice();
+    const interval = setInterval(fetchGasPrice, 5000); // kas 5s
+    return () => clearInterval(interval);
   }, [fetchGasPrice]);
 
   useEffect(() => {
@@ -61,5 +62,6 @@ export function useFeeCalculator(network, receiver, amount) {
     adminFee,
     totalFee,
     loading,
+    refetchFees: fetchGasPrice, // grąžinam refetch funkciją
   };
 }
