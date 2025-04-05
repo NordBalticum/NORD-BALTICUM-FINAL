@@ -7,6 +7,7 @@
   padding: 2rem;
   position: relative;
   z-index: 2;
+  transform: scale(0.92);
   animation: fadeInSlideLeft 1.7s ease-out;
   transform: translateY(0);
 }
@@ -144,13 +145,7 @@
 /* Responsive Fix - 768px */
 @media screen and (max-width: 768px) {
   .container {
-    transform: scale(0.88) translateY(-22%);
+    transform: scale(0.92) translateY(-22%);
     transform: translateX(0);
-  }
-}
-
-@media (max-width: 480px) {
-  .logo {
-    width: 250px;
   }
 }
