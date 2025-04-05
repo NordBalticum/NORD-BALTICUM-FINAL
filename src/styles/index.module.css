@@ -7,7 +7,7 @@
   padding: 2rem;
   position: relative;
   z-index: 2;
-  transform: scale(0.92);
+  transform: scale(0.7);
   animation: fadeInSlideLeft 1.7s ease-out;
   transform: translateY(0);
 }
