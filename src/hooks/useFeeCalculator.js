@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { ethers } from "ethers";
 
-// ✅ RPC URL'ai
+// ✅ RPC adresai
 const RPC_URLS = {
   ethereum: "https://rpc.ankr.com/eth",
   bsc: "https://bsc-dataseed.bnbchain.org",
@@ -12,7 +12,7 @@ const RPC_URLS = {
   tbnb: "https://data-seed-prebsc-1-s1.binance.org:8545",
 };
 
-// ✅ 3% admin fee
+const BASE_GAS_LIMIT = 21000;
 const ADMIN_FEE_PERCENT = 3;
 
 export function useFeeCalculator(network, amount) {
@@ -21,52 +21,46 @@ export function useFeeCalculator(network, amount) {
   const [totalFee, setTotalFee] = useState(0);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (!network || !amount) {
+  const fetchGasPrice = useCallback(async () => {
+    try {
+      if (!network) return;
+
+      const provider = new ethers.JsonRpcProvider(RPC_URLS[network]);
+      const feeData = await provider.getFeeData();
+      const gasPrice = feeData.gasPrice || ethers.parseUnits("5", "gwei"); // fallback jeigu duomenų nėra
+      const gasCost = Number(ethers.formatEther(gasPrice * BigInt(BASE_GAS_LIMIT)));
+
+      setGasFee(gasCost);
+    } catch (error) {
+      console.error("❌ Gas fetch error:", error.message);
       setGasFee(0);
-      setAdminFee(0);
-      setTotalFee(0);
-      return;
     }
+  }, [network]);
 
-    const fetchFeeData = async () => {
-      try {
-        setLoading(true);
-
-        const rpcUrl = RPC_URLS[network];
-        if (!rpcUrl) throw new Error("Unsupported network");
-
-        const provider = new ethers.JsonRpcProvider(rpcUrl);
-        const feeData = await provider.getFeeData();
-
-        const gasPrice = feeData.gasPrice || ethers.parseUnits("5", "gwei"); // fallback
-        const estimatedGas = BigInt(21000); // Paprastas transfer
-
-        const gasCost = Number(ethers.formatEther(gasPrice * estimatedGas));
-
-        const adminFeeAmount = (Number(amount) * ADMIN_FEE_PERCENT) / 100;
-
-        const totalCost = gasCost + adminFeeAmount;
-
-        setGasFee(gasCost);
-        setAdminFee(adminFeeAmount);
-        setTotalFee(totalCost);
-
-      } catch (error) {
-        console.error("❌ Error fetching fee data:", error.message);
-        setGasFee(0);
-        setAdminFee((Number(amount) * ADMIN_FEE_PERCENT) / 100);
-        setTotalFee((Number(amount) * ADMIN_FEE_PERCENT) / 100);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchFeeData();
-
-    const interval = setInterval(fetchFeeData, 10000); // ✅ Kas 10 sek atnaujina
+  useEffect(() => {
+    fetchGasPrice();
+    const interval = setInterval(fetchGasPrice, 10000); // ✅ Kas 10s
     return () => clearInterval(interval);
-  }, [network, amount]);
+  }, [fetchGasPrice]);
 
-  return { gasFee, adminFee, totalFee, loading };
+  useEffect(() => {
+    if (amount) {
+      const adminFeeAmount = (Number(amount) * ADMIN_FEE_PERCENT) / 100;
+      setAdminFee(adminFeeAmount);
+    } else {
+      setAdminFee(0);
+    }
+  }, [amount]);
+
+  useEffect(() => {
+    setTotalFee(gasFee + adminFee);
+    setLoading(false);
+  }, [gasFee, adminFee]);
+
+  return {
+    gasFee,    // Real gas fee
+    adminFee,  // 3% fee
+    totalFee,  // Viso
+    loading,
+  };
 }
