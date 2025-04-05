@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 
-import { useAuth } from "@/contexts/AuthContext"; // ✅ Ultimate Auth Context
+import { useAuth } from "@/contexts/AuthContext";
 import styles from "@/styles/dashboard.module.css";
 
 // ✅ Dynamic import without SSR
@@ -29,9 +29,18 @@ const names = {
   avax: "Avalanche",
 };
 
+// ✅ Static EUR rates (replace later with live rates)
+const eurRates = {
+  eth: 2900,
+  bnb: 450,
+  tbnb: 450,
+  matic: 1.5,
+  avax: 30,
+};
+
 export default function Dashboard() {
   const router = useRouter();
-  const { user, wallet, balances, refreshBalance, loading, activeNetwork } = useAuth();
+  const { user, wallet, balances, refreshBalance, loading } = useAuth();
   const [isClient, setIsClient] = useState(false);
 
   // ✅ Detect client side
@@ -41,42 +50,38 @@ export default function Dashboard() {
     }
   }, []);
 
-  // ✅ If not logged in → redirect
+  // ✅ Redirect if not logged in
   useEffect(() => {
     if (isClient && !loading && !user) {
       router.replace("/");
     }
   }, [isClient, loading, user, router]);
 
-  // ✅ Tokens list from wallet
+  // ✅ Tokens list
   const tokens = useMemo(() => {
     if (!wallet?.signers) return [];
     return Object.keys(wallet.signers);
   }, [wallet]);
 
-  // ✅ Static EUR rates (can be replaced later)
-  const eurRates = {
-    eth: 2900,
-    bnb: 450,
-    tbnb: 450,
-    matic: 1.5,
-    avax: 30,
-  };
-
-  // ✅ Check loading state
-  const isLoading = loading || !isClient || !wallet || !wallet.wallet;
+  // ✅ Universal Loading Check
+  const isLoading = loading || !isClient || !user || !wallet || !wallet.wallet;
 
   if (isLoading) {
-    return <div className={styles.loading}>Loading dashboard...</div>;
+    return (
+      <div className={styles.loading}>
+        Loading Dashboard...
+      </div>
+    );
   }
 
   return (
     <main className={styles.container}>
       <div className={styles.dashboardWrapper}>
-        {/* ✅ Live Prices Table */}
+        
+        {/* ✅ Live Crypto Prices */}
         <LivePriceTable />
 
-        {/* ✅ Wallet Assets */}
+        {/* ✅ User's Wallet Assets */}
         <div className={styles.assetList}>
           {tokens.length === 0 ? (
             <div className={styles.loading}>No assets found.</div>
@@ -89,11 +94,7 @@ export default function Dashboard() {
                 <div
                   key={symbol}
                   className={styles.assetItem}
-                  onClick={() => {
-                    if (isClient) {
-                      router.push(`/${symbol}`);
-                    }
-                  }}
+                  onClick={() => router.push(`/${symbol}`)}
                   role="button"
                   tabIndex={0}
                 >
