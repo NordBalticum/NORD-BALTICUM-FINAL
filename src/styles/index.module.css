@@ -131,18 +131,18 @@
 @keyframes fadeInSlideLeftMobile {
   from {
     opacity: 0;
-    transform: scale(0.88) translateY(-8%) translateX(-24px);
+    transform: scale(0.88) translateY(-4%) translateX(-24px);
   }
   to {
     opacity: 1;
-    transform: scale(0.88) translateY(-8%) translateX(0);
+    transform: scale(0.88) translateY(-4%) translateX(0);
   }
 }
 
 /* === Responsive Fix - 768px === */
 @media screen and (max-width: 768px) {
   .container {
-    transform: scale(0.88) translateY(-8%);
+    transform: scale(0.88) translateY(-4%);
     transform-origin: top center;
     animation: fadeInSlideLeftMobile 1.7s ease-out; /* ✅ Animacija vyksta čia! */
   }
