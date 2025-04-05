@@ -12,7 +12,7 @@ import { usePrices } from "@/hooks/usePrices";
 import styles from "@/styles/dashboard.module.css";
 import LoadingSpinner from "@/components/LoadingSpinner";
 
-// ✅ Dynamic Live Price Table (jeigu norėsi papildomai rodyti lentelę)
+// ✅ Dynamic Live Price Table
 const LivePriceTable = dynamic(() => import("@/components/LivePriceTable"), { ssr: false });
 
 // ✅ Token ikonų URL
@@ -31,6 +31,15 @@ const names = {
   tbnb: "BNB Testnet",
   polygon: "Polygon",
   avalanche: "Avalanche",
+};
+
+// ✅ Simboliai naudojami URL routing
+const routeNames = {
+  ethereum: "eth",
+  bsc: "bnb",
+  tbnb: "tbnb",
+  polygon: "matic",
+  avalanche: "avax",
 };
 
 export default function Dashboard() {
@@ -52,7 +61,6 @@ export default function Dashboard() {
     }
   }, [isClient, authLoading, user, router]);
 
-  // ✅ Saugiai surenkam turimus tokenus
   const tokens = useMemo(() => {
     if (!wallet?.wallet?.address) return [];
     return Object.keys(balances || {});
@@ -61,14 +69,13 @@ export default function Dashboard() {
   const isLoading = !isClient || authLoading || balancesLoading || pricesLoading;
 
   if (isLoading) {
-  return <LoadingSpinner />;
-    }
+    return <LoadingSpinner />;
+  }
 
   return (
     <main className={styles.container}>
       <div className={styles.dashboardWrapper}>
-
-        {/* ✅ Live Price Lentelė viršuje */}
+        {/* ✅ Live Price Lentelė */}
         <LivePriceTable />
 
         <div className={styles.assetList}>
@@ -79,14 +86,15 @@ export default function Dashboard() {
               const info = balances?.[network];
               const symbol = info?.symbol?.toLowerCase();
               const balance = parseFloat(info?.balance || 0);
-              const eurRate = prices?.[network] || 0;
+              const eurRate = prices?.[network]?.eur || 0;
               const eurValue = balance * eurRate;
+              const routeSymbol = routeNames[network] || network; // ✅ Saugus route
 
               return (
                 <div
                   key={network}
                   className={styles.assetItem}
-                  onClick={() => router.push(`/${symbol}`)}
+                  onClick={() => router.push(`/${routeSymbol}`)}
                   role="button"
                   tabIndex={0}
                 >
