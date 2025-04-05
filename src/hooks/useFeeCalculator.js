@@ -13,7 +13,7 @@ const RPC_URLS = {
 };
 
 const BASE_GAS_LIMIT = 21000; // Basic transaction gas limit
-const ADMIN_FEE_PERCENT = 3;  // 3% administracinis mokestis
+const ADMIN_FEE_PERCENT = 3; // 3% admin fee
 
 export function useFeeCalculator(network, amount) {
   const [gasFee, setGasFee] = useState(0);
@@ -27,7 +27,7 @@ export function useFeeCalculator(network, amount) {
 
       const provider = new ethers.JsonRpcProvider(RPC_URLS[network]);
       const feeData = await provider.getFeeData();
-      const gasPrice = feeData.gasPrice || ethers.parseUnits("5", "gwei"); // fallback
+      const gasPrice = feeData.gasPrice || ethers.parseUnits("5", "gwei"); // fallback 5 gwei
       const gasCost = Number(ethers.formatEther(gasPrice * BigInt(BASE_GAS_LIMIT)));
 
       setGasFee(gasCost);
@@ -37,26 +37,28 @@ export function useFeeCalculator(network, amount) {
     }
   }, [network]);
 
-  // Kai keičiasi tinklas arba suma, gaunam naujus duomenis
+  // ✅ Pagrindinis dinaminis hookas
   useEffect(() => {
-    fetchGasPrice();
-  }, [fetchGasPrice]);
+    if (amount || network) {
+      fetchGasPrice(); // Kiekvieną kartą kai įvedi sumą arba pasikeičia network
+    }
+  }, [fetchGasPrice, amount, network]);
 
-  // Kas 10 sekundžių atnaujina gas price
+  // ✅ Kas 10s stabilus atsinaujinimas
   useEffect(() => {
     const interval = setInterval(() => {
       fetchGasPrice();
-    }, 10000);
+    }, 10000); // 10 sekundžių
     return () => clearInterval(interval);
   }, [fetchGasPrice]);
 
-  // Paskaičiuoja admin fee
+  // ✅ Admin fee (3%) skaičiavimas nuo sumos
   useEffect(() => {
     const adminFeeAmount = amount ? (Number(amount) * ADMIN_FEE_PERCENT) / 100 : 0;
     setAdminFee(adminFeeAmount);
   }, [amount]);
 
-  // Total fees update
+  // ✅ Total fee (admin + gas) skaičiavimas
   useEffect(() => {
     setTotalFee(gasFee + adminFee);
     setLoading(false);
@@ -67,6 +69,6 @@ export function useFeeCalculator(network, amount) {
     adminFee,
     totalFee,
     loading,
-    refetchFees: fetchGasPrice, // rankinis fees atnaujinimas
+    refetchFees: fetchGasPrice,
   };
 }
