@@ -1,3 +1,9 @@
+"use client";
+
+import { useState, useCallback, useEffect } from "react";
+import { ethers } from "ethers";
+import { RPC_URLS } from "@/config/rpcUrls"; // (jei naudoji RPC_URLS)
+
 export function useFeeCalculator(network, amount) {
   const [gasFee, setGasFee] = useState(0);
   const [adminFee, setAdminFee] = useState(0);
@@ -22,7 +28,7 @@ export function useFeeCalculator(network, amount) {
 
   useEffect(() => {
     if (amount || network) {
-      fetchGasPrice(); // Dinamiškai kai įvedi amount arba keiti network
+      fetchGasPrice();
     }
   }, [fetchGasPrice, amount, network]);
 
