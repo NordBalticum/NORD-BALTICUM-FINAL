@@ -39,7 +39,7 @@ const buttonColors = {
 export default function SendPage() {
   const isReady = usePageReady();
   const { wallet } = useAuth();
-  const { balances, loading: balancesLoading, refetch } = useBalance();
+  const { balances, loading: balancesLoading, initialLoading, refetch } = useBalance();
   const { sendCrypto, loading: sending, success, txHash, error, resetError } = useSendCrypto();
   const { prices } = usePrices();
 
@@ -75,7 +75,7 @@ export default function SendPage() {
   const handleNetworkChange = useCallback(async (selectedNetwork) => {
     if (!selectedNetwork) return;
     setNetwork(selectedNetwork);
-    if (wallet?.email) await refetch(); // ✅ Refetch balances kai pakeičia tinklą
+    if (wallet?.email) await refetch();
     setAmount("");
     setToastMessage(`Switched to ${networkShortNames[selectedNetwork] || selectedNetwork.toUpperCase()}`);
     setShowToast(true);
@@ -108,7 +108,7 @@ export default function SendPage() {
       });
       setReceiver("");
       setAmount("");
-      await refetch(); // ✅ Refetch balansą po siuntimo!
+      await refetch();
       setShowSuccess(true);
     } catch (err) {
       console.error("❌ Transaction error:", err.message);
@@ -121,7 +121,7 @@ export default function SendPage() {
 
   useEffect(() => {
     if (amount || network) {
-      refetchFees(); // ✅ Refetch fees kai amount arba network keičiasi
+      refetchFees();
     }
   }, [amount, network, refetchFees]);
 
@@ -131,7 +131,7 @@ export default function SendPage() {
     }
   }, [success]);
 
-  if (!isReady || balancesLoading || feesLoading) {
+  if (!isReady || initialLoading || feesLoading) {
     return (
       <div className={styles.loading}>
         <LoadingSpinner />
@@ -158,9 +158,15 @@ export default function SendPage() {
           <p className={styles.whiteText}>
             Your Balance:&nbsp;
             {balancesLoading ? <MiniLoadingSpinner /> : (
-              <span className={styles.balanceAmount}>
+              <motion.span
+                className={styles.balanceAmount}
+                key={netBalance} // <- Balanso animacija kai keičiasi
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.4 }}
+              >
                 {netBalance.toFixed(6)} {shortName}
-              </span>
+              </motion.span>
             )}
           </p>
           <p className={styles.whiteText}>
