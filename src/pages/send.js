@@ -39,7 +39,7 @@ const buttonColors = {
 export default function SendPage() {
   const isReady = usePageReady();
   const { wallet } = useAuth();
-  const { balances, loading: balancesLoading, refetch } = useBalance(); // ✅ refetch balansą
+  const { balances, loading: balancesLoading, refetch } = useBalance();
   const { sendCrypto, loading: sending, success, txHash, error, resetError } = useSendCrypto();
 
   const [localNetwork, setLocalNetwork] = useState("bsc");
@@ -56,19 +56,28 @@ export default function SendPage() {
 
   const { gasFee, adminFee, totalFee, loading: feesLoading } = useFeeCalculator(localNetwork, parsedAmount);
 
-  const maxSendable = netBalance > totalFee ? netBalance - totalFee : 0; // ✅ garantuota apsauga
-  const afterFees = parsedAmount - adminFee - gasFee; // ✅ bendras after fees
+  const maxSendable = netBalance > totalFee ? netBalance - totalFee : 0;
+  const afterFees = parsedAmount - adminFee - gasFee;
 
   const isValidAddress = (address) => /^0x[a-fA-F0-9]{40}$/.test(address.trim());
 
-  const handleNetworkChange = useCallback((network) => {
-    if (network) {
-      setLocalNetwork(network);
-      setToastMessage(`Switched to ${networkShortNames[network] || network.toUpperCase()}`);
-      setShowToast(true);
-      setTimeout(() => setShowToast(false), 1500);
+  const handleNetworkChange = useCallback(async (network) => {
+    if (!network) return;
+    setLocalNetwork(network);
+
+    if (wallet?.email) {
+      await refetch();
     }
-  }, []);
+
+    const balanceForNewNetwork = balances?.[network]?.balance || 0;
+    const maxSend = balanceForNewNetwork * 0.97;
+
+    setAmount(maxSend > 0 ? maxSend.toFixed(6) : "0");
+
+    setToastMessage(`Network switched to ${networkShortNames[network] || network.toUpperCase()}`);
+    setShowToast(true);
+    setTimeout(() => setShowToast(false), 1500);
+  }, [wallet, balances, refetch]);
 
   const handleSend = () => {
     if (!isValidAddress(receiver)) {
@@ -97,7 +106,7 @@ export default function SendPage() {
       setReceiver("");
       setAmount("");
       setShowSuccess(true);
-      await refetch(); // ✅ atnaujinam balansą po sėkmės
+      await refetch();
     } catch (err) {
       console.error("❌ Send error:", err.message);
     }
@@ -152,59 +161,31 @@ export default function SendPage() {
         </div>
 
         <div className={styles.walletActions}>
-  <input
-    type="text"
-    placeholder="Receiver address"
-    value={receiver}
-    onChange={(e) => setReceiver(e.target.value)}
-    className={styles.inputField}
-  />
+          <input
+            type="text"
+            placeholder="Receiver address"
+            value={receiver}
+            onChange={(e) => setReceiver(e.target.value)}
+            className={styles.inputField}
+          />
 
-  <div style={{ display: "flex", alignItems: "center", gap: "6px", width: "100%" }}>
-    <input
-      type="number"
-      placeholder="Amount to send"
-      value={amount}
-      onChange={(e) => setAmount(e.target.value)}
-      className={styles.inputField}
-    />
-    <button
-      type="button"
-      className={styles.maxSendButton}
-      onClick={() => setAmount(maxSendable > 0 ? maxSendable.toFixed(6) : "0")}
-    >
-      Max
-    </button>
-  </div>
+          <div style={{ display: "flex", alignItems: "center", gap: "6px", width: "100%" }}>
+            <input
+              type="number"
+              placeholder="Amount to send"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              className={styles.inputField}
+            />
+            <button
+              type="button"
+              className={styles.maxSendButton}
+              onClick={() => setAmount(maxSendable > 0 ? maxSendable.toFixed(6) : "0")}
+            >
+              Max
+            </button>
+          </div>
 
-  <p className={styles.feeBreakdown}>
-    Network Fee (Gas): <strong>{gasFee.toFixed(6)} {shortName}</strong><br />
-    Admin Fee: <strong>{adminFee.toFixed(6)} {shortName}</strong><br />
-    After Fees:&nbsp;
-    <strong>{afterFees > 0 ? afterFees.toFixed(6) : "0.000000"} {shortName}</strong>
-  </p>
-
-  <motion.button
-    whileHover={{ scale: 1.04 }}
-    whileTap={{ scale: 0.98 }}
-    onClick={handleSend}
-    style={{
-      backgroundColor: buttonColors[localNetwork?.toLowerCase()] || "#0070f3",
-      color: "white",
-      borderRadius: "14px",
-      padding: "14px",
-      fontWeight: "700",
-      fontFamily: "var(--font-crypto)",
-      border: "2px solid white",
-      cursor: sending ? "not-allowed" : "pointer",
-      width: "100%",
-      marginTop: "14px",
-    }}
-    disabled={sending}
-  >
-    {sending ? <LoadingSpinner /> : "SEND NOW"}
-  </motion.button>
-</div>
           <p className={styles.feeBreakdown}>
             Network Fee (Gas): <strong>{gasFee.toFixed(6)} {shortName}</strong><br />
             Admin Fee: <strong>{adminFee.toFixed(6)} {shortName}</strong><br />
@@ -287,8 +268,7 @@ export default function SendPage() {
             <ErrorModal error={error} onRetry={handleRetry} />
           )}
         </AnimatePresence>
-
       </div>
     </motion.main>
   );
-                }
+}
