@@ -102,12 +102,12 @@ export default function SendPage() {
     try {
       if (typeof window !== "undefined") {
         setSending(true);
-        const { sendCrypto } = await import("@/utils/sendCryptoFunction"); // ✅ Dynamic import
-        const hash = await sendCrypto({
-          to: receiver.trim(),
-          amount: parsedAmount,
-          network,
-        });
+        const { sendTransaction } = await import("@/utils/sendCryptoFunction");
+const hash = await sendTransaction({
+  to: receiver.trim(),
+  amount: parsedAmount,
+  network,
+});
         console.log("✅ Transaction successful, hash:", hash);
         setReceiver("");
         setAmount("");
