@@ -55,11 +55,10 @@ export default function SendPage() {
   const parsedAmount = Number(amount) || 0;
   const netBalance = balances?.[network]?.balance ? parseFloat(balances[network].balance) : 0;
 
-  const { gasFee, adminFee, totalFee, loading: feesLoading, refetchFees } = useFeeCalculator(network, amount);
+  const { gasFee, loading: feesLoading, refetchFees } = useFeeCalculator(network);
 
-  const afterFees = useMemo(() => (
-    parsedAmount > 0 ? parsedAmount - gasFee - adminFee : 0
-  ), [parsedAmount, gasFee, adminFee]);
+  const adminFee = useMemo(() => parsedAmount > 0 ? parsedAmount * 0.03 : 0, [parsedAmount]);
+  const afterFees = useMemo(() => parsedAmount > 0 ? parsedAmount - adminFee : 0, [parsedAmount, adminFee]);
 
   const usdBalance = useMemo(() => {
     const price = prices?.[network]?.usd || 0;
@@ -92,8 +91,8 @@ export default function SendPage() {
       alert("❌ Enter a valid amount.");
       return;
     }
-    if (parsedAmount + gasFee + adminFee > netBalance) {
-      alert(`❌ Insufficient balance. Required: ${(parsedAmount + gasFee + adminFee).toFixed(6)} ${shortName}`);
+    if (parsedAmount + adminFee > netBalance) {
+      alert(`❌ Insufficient balance. Required: ${(parsedAmount + adminFee).toFixed(6)} ${shortName}`);
       return;
     }
     setShowConfirm(true);
@@ -121,7 +120,7 @@ export default function SendPage() {
   };
 
   useEffect(() => {
-    refetchFees(); // Refresh fees on amount or network change
+    refetchFees();
   }, [amount, network, refetchFees]);
 
   useEffect(() => {
@@ -186,13 +185,8 @@ export default function SendPage() {
           </div>
 
           <p className={styles.feeBreakdown}>
-            {feesLoading ? <MiniLoadingSpinner /> : (
-              <>
-                Gas Fee: <strong>{gasFee.toFixed(6)} {shortName}</strong><br />
-                Admin Fee: <strong>{adminFee.toFixed(6)} {shortName}</strong><br />
-                You Receive: <strong>{afterFees > 0 ? afterFees.toFixed(6) : "0.000000"} {shortName}</strong>
-              </>
-            )}
+            Admin Fee: <strong>{adminFee.toFixed(6)} {shortName}</strong><br />
+            You Receive: <strong>{afterFees > 0 ? afterFees.toFixed(6) : "0.000000"} {shortName}</strong>
           </p>
 
           <motion.button
@@ -223,21 +217,11 @@ export default function SendPage() {
           </motion.button>
         </div>
 
+        {/* Confirm Modal */}
         <AnimatePresence>
           {showConfirm && (
-            <motion.div
-              className={styles.overlay}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-            >
-              <motion.div
-                className={styles.confirmModal}
-                initial={{ scale: 0.8 }}
-                animate={{ scale: 1 }}
-                exit={{ scale: 0.8 }}
-                transition={{ duration: 0.3 }}
-              >
+            <motion.div className={styles.overlay} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+              <motion.div className={styles.confirmModal} initial={{ scale: 0.8 }} animate={{ scale: 1 }} exit={{ scale: 0.8 }} transition={{ duration: 0.3 }}>
                 <div className={styles.modalTitle}>Confirm Transaction</div>
                 <div className={styles.modalInfo}>
                   <p><strong>Network:</strong> {shortName}</p>
@@ -245,17 +229,11 @@ export default function SendPage() {
                   <p><strong>Amount:</strong> {parsedAmount.toFixed(6)} {shortName}</p>
                   <p><strong>Gas Fee:</strong> {gasFee.toFixed(6)} {shortName}</p>
                   <p><strong>Admin Fee:</strong> {adminFee.toFixed(6)} {shortName}</p>
-                  <p><strong>After Fees:</strong> {afterFees.toFixed(6)} {shortName}</p>
+                  <p><strong>After Fees:</strong> {(parsedAmount - gasFee - adminFee).toFixed(6)} {shortName}</p>
                 </div>
                 <div className={styles.modalActions}>
                   <button className={styles.modalButton} onClick={confirmSend}>
-                    {sending ? (
-                      <div style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
-                        Confirming <MiniLoadingSpinner />
-                      </div>
-                    ) : (
-                      "Confirm"
-                    )}
+                    {sending ? "Confirming..." : "Confirm"}
                   </button>
                   <button
                     className={`${styles.modalButton} ${styles.cancel}`}
@@ -269,6 +247,7 @@ export default function SendPage() {
           )}
         </AnimatePresence>
 
+        {/* Success and Error Modals */}
         <AnimatePresence>
           {showSuccess && (
             <SuccessModal
@@ -288,6 +267,7 @@ export default function SendPage() {
             />
           )}
         </AnimatePresence>
+
       </div>
     </motion.main>
   );
