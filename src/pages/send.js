@@ -54,7 +54,7 @@ export default function SendPage() {
   const parsedAmount = Number(amount) || 0;
   const netBalance = balances?.[network]?.balance ? parseFloat(balances[network].balance) : 0;
 
-  const { gasFee, adminFee, totalFee, loading: feesLoading } = useFeeCalculator(network, receiver, parsedAmount);
+  const { gasFee, adminFee, loading: feesLoading, refetchFees } = useFeeCalculator(network, parsedAmount);
 
   const afterFees = useMemo(() => {
     return parsedAmount > 0 ? parsedAmount - gasFee - adminFee : 0;
@@ -81,7 +81,6 @@ export default function SendPage() {
     }
 
     setAmount(""); 
-    setReceiver("");
     setToastMessage(`Switched to ${networkShortNames[selectedNetwork] || selectedNetwork.toUpperCase()}`);
     setShowToast(true);
     setTimeout(() => setShowToast(false), 1500);
@@ -123,6 +122,13 @@ export default function SendPage() {
   const handleRetry = () => {
     resetError();
   };
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      refetchFees();
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [network, parsedAmount, refetchFees]);
 
   useEffect(() => {
     if (success) {
@@ -211,11 +217,22 @@ export default function SendPage() {
           </motion.button>
         </div>
 
-        {/* Confirm, Success, Error modals */}
+        {/* Confirm modal */}
         <AnimatePresence>
           {showConfirm && (
-            <motion.div className={styles.overlay} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              <motion.div className={styles.confirmModal} initial={{ scale: 0.8 }} animate={{ scale: 1 }} exit={{ scale: 0.8 }} transition={{ duration: 0.3 }}>
+            <motion.div
+              className={styles.overlay}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+            >
+              <motion.div
+                className={styles.confirmModal}
+                initial={{ scale: 0.8 }}
+                animate={{ scale: 1 }}
+                exit={{ scale: 0.8 }}
+                transition={{ duration: 0.3 }}
+              >
                 <div className={styles.modalTitle}>Confirm Transaction</div>
                 <div className={styles.modalInfo}>
                   <p><strong>Network:</strong> {shortName}</p>
@@ -225,7 +242,10 @@ export default function SendPage() {
                 </div>
                 <div className={styles.modalActions}>
                   <button className={styles.modalButton} onClick={confirmSend}>Confirm</button>
-                  <button className={`${styles.modalButton} ${styles.cancel}`} onClick={() => setShowConfirm(false)}>
+                  <button
+                    className={`${styles.modalButton} ${styles.cancel}`}
+                    onClick={() => setShowConfirm(false)}
+                  >
                     Cancel
                   </button>
                 </div>
