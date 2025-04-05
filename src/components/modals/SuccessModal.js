@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { motion } from "framer-motion";
 import styles from "@/components/modals/successmodal.module.css";
 
@@ -11,25 +12,48 @@ const explorerLinks = {
   avalanche: "https://snowtrace.io/tx/",
 };
 
-export default function SuccessModal({ message = "✅ Transaction Successful!", txHash, networkKey, onClose = () => {} }) {
+export default function SuccessModal({
+  message = "✅ Transaction Successful!",
+  txHash,
+  networkKey,
+  onClose = () => {},
+}) {
   const explorerBase = explorerLinks[networkKey] || "";
   const explorerUrl = txHash ? `${explorerBase}${txHash}` : "#";
+
+  // ✅ Auto-close po 5 sekundžių
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (typeof onClose === "function") {
+        onClose();
+      }
+    }, 5000);
+
+    return () => clearTimeout(timer); // ✅ Išvalom jei modalą uždarom ranka
+  }, [onClose]);
 
   return (
     <motion.div
       className={styles.overlay}
+      style={{
+        background: "transparent", 
+        pointerEvents: "none",
+      }}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
     >
       <motion.div
         className={styles.confirmModal}
+        style={{
+          pointerEvents: "auto",
+        }}
         initial={{ scale: 0.8 }}
         animate={{ scale: 1 }}
         exit={{ scale: 0.8 }}
         transition={{ duration: 0.4 }}
       >
-        {/* Close Button Top Right */}
+        {/* X mygtukas */}
         <button
           onClick={typeof onClose === "function" ? onClose : () => {}}
           style={{
@@ -46,7 +70,7 @@ export default function SuccessModal({ message = "✅ Transaction Successful!", 
           ✖
         </button>
 
-        {/* Modal Content */}
+        {/* Modal turinys */}
         <div className={styles.modalTitle}>Transaction is Done!</div>
 
         <div className={styles.modalInfo} style={{ textAlign: "center" }}>
