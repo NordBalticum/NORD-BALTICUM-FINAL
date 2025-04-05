@@ -133,7 +133,6 @@
   .container {
     width: calc(100vw - 120px);
     height: calc(100vh - 120px);
-    background-size: 160% 160%;
     transform: translateY(-22%);
     transform: translateX(0);
   }
