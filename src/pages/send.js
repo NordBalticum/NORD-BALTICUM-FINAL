@@ -55,11 +55,17 @@ export default function SendPage() {
   const parsedAmount = Number(amount) || 0;
   const netBalance = balances?.[network]?.balance ? parseFloat(balances[network].balance) : 0;
 
-  const { gasFee, adminFee, totalFee, loading: feesLoading, refetchFees } = useFeeCalculator(network, amount);
+  const { gasFee, loading: feesLoading, refetchFees } = useFeeCalculator(network);
 
-  const afterFees = useMemo(() => {
-    return parsedAmount > 0 ? parsedAmount - gasFee - adminFee : 0;
-  }, [parsedAmount, gasFee, adminFee]);
+const adminFee = useMemo(() => {
+  const parsedAmount = Number(amount) || 0;
+  return parsedAmount > 0 ? parsedAmount * 0.03 : 0;
+}, [amount]);
+
+const afterFees = useMemo(() => {
+  const parsedAmount = Number(amount) || 0;
+  return parsedAmount > 0 ? parsedAmount - gasFee - adminFee : 0;
+}, [amount, gasFee, adminFee]);
 
   const usdBalance = useMemo(() => {
     const price = prices?.[network]?.usd || 0;
