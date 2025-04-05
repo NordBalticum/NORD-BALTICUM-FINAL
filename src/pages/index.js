@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import Image from "next/image";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion"; // ✅ Animacijoms
-import { useAuth } from "@/contexts/AuthContext"; // ✅ Ultimate Auth
+import Image from "next/image";
+import { motion, AnimatePresence } from "framer-motion";
+
+import { useAuth } from "@/contexts/AuthContext"; 
 import styles from "@/styles/index.module.css";
 import background from "@/styles/background.module.css";
 
@@ -16,6 +17,7 @@ export default function Home() {
   const [status, setStatus] = useState("idle"); // idle | loading | success | error
   const [message, setMessage] = useState("");
   const [isClient, setIsClient] = useState(false);
+  const [showModal, setShowModal] = useState(false); // ✅ Modal būklė
 
   useEffect(() => {
     if (typeof window !== "undefined") setIsClient(true);
@@ -41,7 +43,8 @@ export default function Home() {
       setStatus("loading");
       await signInWithMagicLink(email);
       setStatus("success");
-      setMessage("✅ Check your inbox for the Magic Link!");
+      setShowModal(true); // ✅ Rodyti modal
+      setTimeout(() => setShowModal(false), 3500); // Modal dingsta automatiškai
     } catch (err) {
       console.error("❌ Magic Link Error:", err);
       setStatus("error");
@@ -61,21 +64,26 @@ export default function Home() {
   };
 
   return (
-    <div className={`${styles.container} ${background.fullscreen}`}>
+    <motion.div
+      initial={{ opacity: 0, scale: 0.97 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.8, ease: "easeOut" }}
+      className={`${styles.container} ${background.fullscreen}`}
+    >
       <div className={styles.logoContainer}>
         <Image
           src="/icons/logo.svg"
           alt="NordBalticum Logo"
           width={240}
           height={240}
-          className={styles.logo}
           priority
+          className={styles.logo}
         />
       </div>
 
       <form onSubmit={handleSignIn} className={styles.loginBox}>
         <h1 className={styles.heading}>Welcome to NordBalticum</h1>
-        <p className={styles.subheading}>Login with Email or Google</p>
+        <p className={styles.subheading}>Secure Web3 Banking</p>
 
         <input
           type="email"
@@ -91,7 +99,11 @@ export default function Home() {
           disabled={status === "loading"}
           className={styles.buttonPrimary}
         >
-          {status === "loading" ? "SENDING..." : "SEND MAGIC LINK"}
+          {status === "loading" ? (
+            <div className={styles.spinner}></div> // ✅ Spinner vietoje teksto
+          ) : (
+            "SEND MAGIC LINK"
+          )}
         </button>
 
         <button
@@ -115,10 +127,10 @@ export default function Home() {
           {message && (
             <motion.p
               key="message"
-              initial={{ opacity: 0, y: 10 }}
+              initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 10 }}
-              transition={{ duration: 0.4 }}
+              exit={{ opacity: 0, y: 8 }}
+              transition={{ duration: 0.5 }}
               className={
                 status === "success"
                   ? styles.successMessage
@@ -130,6 +142,30 @@ export default function Home() {
           )}
         </AnimatePresence>
       </form>
-    </div>
+
+      {/* ✅ Success Modal */}
+      <AnimatePresence>
+        {showModal && (
+          <motion.div
+            key="modal"
+            className={styles.modalOverlay}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <motion.div
+              className={styles.modalContent}
+              initial={{ scale: 0.8 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0.8 }}
+              transition={{ duration: 0.4 }}
+            >
+              <h2>✅ Magic Link Sent!</h2>
+              <p>Check your email to complete login.</p>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
   );
 }
