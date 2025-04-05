@@ -1,18 +1,18 @@
 "use client";
 
 import { useState, useMemo, useCallback, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 
 import { useAuth } from "@/contexts/AuthContext";
 import { useBalance } from "@/hooks/useBalance";
 import { useSendCrypto } from "@/hooks/useSendCrypto";
 import { usePageReady } from "@/hooks/usePageReady";
-import { useFeeCalculator } from "@/hooks/useFeeCalculator"; // ✅ Naujas hook'as!
+import { useFeeCalculator } from "@/hooks/useFeeCalculator";
 
 import SwipeSelector from "@/components/SwipeSelector";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import SuccessModal from "@/components/modals/SuccessModal";
+import ErrorModal from "@/components/modals/ErrorModal";
 import SuccessToast from "@/components/SuccessToast";
 
 import styles from "@/styles/send.module.css";
@@ -37,29 +37,27 @@ const buttonColors = {
 };
 
 export default function SendPage() {
-  const router = useRouter();
   const isReady = usePageReady();
   const { wallet } = useAuth();
-  const { balances, loading: balancesLoading } = useBalance();
-  const { sendCrypto, loading: sending, success, txHash, error } = useSendCrypto();
+  const { balances, loading: balancesLoading, refetch } = useBalance(); // ✅ refetch balansą
+  const { sendCrypto, loading: sending, success, txHash, error, resetError } = useSendCrypto();
 
   const [localNetwork, setLocalNetwork] = useState("bsc");
   const [receiver, setReceiver] = useState("");
   const [amount, setAmount] = useState("");
   const [showConfirm, setShowConfirm] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
-
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
 
   const shortName = useMemo(() => networkShortNames[localNetwork] || localNetwork.toUpperCase(), [localNetwork]);
-  const netBalance = balances?.[localNetwork]?.balance ? parseFloat(balances[localNetwork].balance) : 0;
   const parsedAmount = Number(amount) || 0;
+  const netBalance = balances?.[localNetwork]?.balance ? parseFloat(balances[localNetwork].balance) : 0;
 
   const { gasFee, adminFee, totalFee, loading: feesLoading } = useFeeCalculator(localNetwork, parsedAmount);
 
-  const maxSendable = netBalance - totalFee; // ✅ Tiksliai pagal gas + 3%
-  const amountAfterFee = parsedAmount - adminFee; // ✅ Tik žmogaus gauta suma
+  const maxSendable = netBalance > totalFee ? netBalance - totalFee : 0; // ✅ garantuota apsauga
+  const afterFees = parsedAmount - adminFee - gasFee; // ✅ bendras after fees
 
   const isValidAddress = (address) => /^0x[a-fA-F0-9]{40}$/.test(address.trim());
 
@@ -82,7 +80,7 @@ export default function SendPage() {
       return;
     }
     if (parsedAmount + totalFee > netBalance) {
-      alert(`❌ Insufficient balance. You need at least ${(parsedAmount + totalFee).toFixed(6)} ${shortName}.`);
+      alert(`❌ Insufficient balance. You need at least ${(parsedAmount + totalFee).toFixed(6)} ${shortName}`);
       return;
     }
     setShowConfirm(true);
@@ -99,10 +97,14 @@ export default function SendPage() {
       setReceiver("");
       setAmount("");
       setShowSuccess(true);
+      await refetch(); // ✅ atnaujinam balansą po sėkmės
     } catch (err) {
       console.error("❌ Send error:", err.message);
-      alert("❌ Unexpected error during send.");
     }
+  };
+
+  const handleRetry = () => {
+    resetError();
   };
 
   useEffect(() => {
@@ -149,13 +151,6 @@ export default function SendPage() {
           </p>
         </div>
 
-        {/* ✅ FEES */}
-        <div className={styles.feeDetails}>
-          <p>Network Fee (Gas): <strong>{gasFee.toFixed(6)} {shortName}</strong></p>
-          <p>Admin Fee (3%): <strong>{adminFee.toFixed(6)} {shortName}</strong></p>
-          <p>Total Fee: <strong>{totalFee.toFixed(6)} {shortName}</strong></p>
-        </div>
-
         <div className={styles.walletActions}>
           <input
             type="text"
@@ -164,17 +159,29 @@ export default function SendPage() {
             onChange={(e) => setReceiver(e.target.value)}
             className={styles.inputField}
           />
-          <input
-            type="number"
-            placeholder="Amount to send"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            className={styles.inputField}
-          />
+
+          <div className={styles.amountInputWrapper}>
+            <input
+              type="number"
+              placeholder="Amount to send"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              className={styles.inputField}
+            />
+            <button
+              type="button"
+              className={styles.maxButton}
+              onClick={() => setAmount(maxSendable > 0 ? maxSendable.toFixed(6) : "0")}
+            >
+              MAX
+            </button>
+          </div>
 
           <p className={styles.feeBreakdown}>
-            After 3% Fee:&nbsp;
-            <strong>{amountAfterFee > 0 ? amountAfterFee.toFixed(6) : 0} {shortName}</strong>
+            Network Fee (Gas): <strong>{gasFee.toFixed(6)} {shortName}</strong><br />
+            Admin Fee: <strong>{adminFee.toFixed(6)} {shortName}</strong><br />
+            After Fees:&nbsp;
+            <strong>{afterFees > 0 ? afterFees.toFixed(6) : "0.000000"} {shortName}</strong>
           </p>
 
           <motion.button
@@ -221,7 +228,7 @@ export default function SendPage() {
                   <p><strong>Network:</strong> {shortName}</p>
                   <p><strong>Receiver:</strong> {receiver}</p>
                   <p><strong>Send:</strong> {parsedAmount.toFixed(6)} {shortName}</p>
-                  <p><strong>Receive:</strong> {amountAfterFee.toFixed(6)} {shortName}</p>
+                  <p><strong>Receive After Fees:</strong> {afterFees.toFixed(6)} {shortName}</p>
                 </div>
                 <div className={styles.modalActions}>
                   <button className={styles.modalButton} onClick={confirmSend}>Confirm</button>
@@ -237,31 +244,23 @@ export default function SendPage() {
         {/* ✅ Success Modal */}
         <AnimatePresence>
           {showSuccess && (
-            <motion.div
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.8, opacity: 0 }}
-              transition={{ duration: 0.4 }}
-            >
-              <SuccessModal
-                message="✅ Transaction completed successfully!"
-                txHash={txHash}
-                networkKey={localNetwork}
-                onClose={() => setShowSuccess(false)}
-              />
-            </motion.div>
+            <SuccessModal
+              message="✅ Transaction completed successfully!"
+              txHash={txHash}
+              networkKey={localNetwork}
+              onClose={() => setShowSuccess(false)}
+            />
           )}
         </AnimatePresence>
 
-        {/* ✅ Error */}
+        {/* ✅ Error Modal */}
         <AnimatePresence>
           {error && (
-            <div style={{ color: "red", marginTop: "20px", textAlign: "center" }}>
-              ❌ {error}
-            </div>
+            <ErrorModal error={error} onRetry={handleRetry} />
           )}
         </AnimatePresence>
+
       </div>
     </motion.main>
   );
-}
+                }
