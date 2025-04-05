@@ -1,15 +1,16 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useState } from "react";
 import QRCode from "react-qr-code";
 
 export default function ReceiveComponent({ address, onCopy }) {
-  const { loading } = useAuth();
   const [copied, setCopied] = useState(false);
 
+  if (!address) {
+    return <div style={styles.loading}>Loading QR Code...</div>;
+  }
+
   const handleCopy = async () => {
-    if (!address) return;
     try {
       await navigator.clipboard.writeText(address);
       setCopied(true);
@@ -18,10 +19,6 @@ export default function ReceiveComponent({ address, onCopy }) {
       console.error("Copy failed:", error.message);
     }
   };
-
-  if (loading || !address) {
-    return <div style={styles.loading}>Loading Wallet...</div>; // ✅ Rodom laukimo ekraną
-  }
 
   return (
     <div style={styles.container}>
@@ -42,7 +39,10 @@ export default function ReceiveComponent({ address, onCopy }) {
       </p>
 
       <button
-        onClick={handleCopy}
+        onClick={() => {
+          onCopy();
+          handleCopy();
+        }}
         style={{
           ...styles.button,
           backgroundColor: copied ? "#4CAF50" : "#0070f3",
