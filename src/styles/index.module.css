@@ -7,7 +7,7 @@
   padding: 2rem;
   position: relative;
   z-index: 2;
-  animation: fadeInUp 0.8s ease-in-out;
+  animation: fadeInSlideLeft 0.8s ease-out;
 }
 
 .logoContainer {
@@ -129,14 +129,14 @@
   }
 }
 
-@keyframes fadeInUp {
+@keyframes fadeInSlideLeft {
   from {
     opacity: 0;
-    transform: translateY(4px);
+    transform: translateX(-24px);
   }
   to {
     opacity: 1;
-    transform: translateY(0px);
+    transform: translateX(0);
   }
 }
 
