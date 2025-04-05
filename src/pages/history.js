@@ -4,35 +4,33 @@ import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 
-import { useAuth } from "@/contexts/AuthContext"; // ✅ Ultimate Auth
-import MiniLoadingSpinner from "@/components/MiniLoadingSpinner"; // ✅ Mini spinner
+import { useAuth } from "@/contexts/AuthContext"; 
+import { fetchTransactions } from "@/hooks/useTransactions"; // ✅ Tinkamas hook
+import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
 import styles from "@/styles/history.module.css";
 import background from "@/styles/background.module.css";
 
 export default function HistoryPage() {
   const router = useRouter();
-  const { user, wallet, fetchTransactions, loading: authLoading } = useAuth(); // ✅ Tik ultimate Auth
+  const { user, wallet, loading: authLoading } = useAuth();
 
   const [transactions, setTransactions] = useState([]);
   const [isClient, setIsClient] = useState(false);
   const [loadingTransactions, setLoadingTransactions] = useState(true);
   const [error, setError] = useState(null);
 
-  // ✅ Detect client
   useEffect(() => {
     if (typeof window !== "undefined") {
       setIsClient(true);
     }
   }, []);
 
-  // ✅ Auto redirect jei neprisijungęs
   useEffect(() => {
     if (isClient && !authLoading && !user) {
       router.replace("/");
     }
   }, [user, authLoading, isClient, router]);
 
-  // ✅ Gauti transakcijas
   const fetchUserTx = useCallback(async () => {
     if (user?.email) {
       try {
@@ -47,11 +45,11 @@ export default function HistoryPage() {
         setLoadingTransactions(false);
       }
     }
-  }, [user, fetchTransactions]);
+  }, [user]);
 
   useEffect(() => {
     fetchUserTx();
-    const interval = setInterval(fetchUserTx, 30000); // ✅ Kas 30s atsinaujina
+    const interval = setInterval(fetchUserTx, 30000); // ✅ Automatinis atsinaujinimas kas 30s
     return () => clearInterval(interval);
   }, [fetchUserTx]);
 
