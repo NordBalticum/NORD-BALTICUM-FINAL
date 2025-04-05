@@ -8,12 +8,12 @@ import { usePageReady } from "@/hooks/usePageReady";
 
 import SwipeSelector from "@/components/SwipeSelector";
 import SuccessModal from "@/components/modals/SuccessModal";
-import SuccessToast from "@/components/SuccessToast"; // ✅ Importuojam naują Toast
+import SuccessToast from "@/components/SuccessToast"; // ✅ Naujas Toast
 
 import styles from "@/styles/send.module.css";
 import background from "@/styles/background.module.css";
 
-// Trumpiniai ir spalvos
+// ✅ Tinklų trumpiniai ir spalvos
 const networkShortNames = {
   eth: "ETH",
   bnb: "BNB",
@@ -42,6 +42,7 @@ export default function SendPage() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [sending, setSending] = useState(false);
   const [txHash, setTxHash] = useState("");
+
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
 
@@ -57,18 +58,12 @@ export default function SendPage() {
   const handleNetworkChange = useCallback((network) => {
     if (network) {
       setLocalNetwork(network);
-      setToastMessage(`✅ Switched to ${networkShortNames[network] || network.toUpperCase()}`);
+      setToastMessage(`Switched to ${networkShortNames[network] || network.toUpperCase()}`);
       setShowToast(true);
+
+      setTimeout(() => setShowToast(false), 1500); // ✅ Automatiškai paslėpti po 1.5s
     }
   }, []);
-
-  // Toast auto-hide
-  useEffect(() => {
-    if (showToast) {
-      const timer = setTimeout(() => setShowToast(false), 1000); // 1s automatinis paslėpimas
-      return () => clearTimeout(timer);
-    }
-  }, [showToast]);
 
   const handleSend = () => {
     if (!isValidAddress(receiver)) {
@@ -126,9 +121,8 @@ export default function SendPage() {
       className={`${styles.main} ${background.gradient}`}
     >
       <div className={styles.wrapper}>
-        
-        {/* ✅ Naujasis Toast */}
-        <SuccessToast show={showToast} message={toastMessage} />
+        {/* ✅ Modernus Toast su LOGO */}
+        <SuccessToast show={showToast} message={toastMessage} networkKey={localNetwork} />
 
         <h1 className={styles.title}>SEND CRYPTO</h1>
         <p className={styles.subtext}>Transfer crypto securely & instantly</p>
@@ -193,6 +187,7 @@ export default function SendPage() {
           </motion.button>
         </div>
 
+        {/* ✅ Confirm Modal */}
         <AnimatePresence>
           {showConfirm && (
             <motion.div
@@ -227,6 +222,7 @@ export default function SendPage() {
           )}
         </AnimatePresence>
 
+        {/* ✅ Success Modal */}
         <AnimatePresence>
           {showSuccess && (
             <motion.div
