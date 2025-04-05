@@ -75,8 +75,12 @@ export default function SendPage() {
   const handleNetworkChange = useCallback(async (selectedNetwork) => {
     if (!selectedNetwork) return;
     setNetwork(selectedNetwork);
-    if (wallet?.email) await refetch();
-    setAmount("");
+
+    if (wallet?.email) {
+      await refetch();
+    }
+
+    setAmount(""); 
     setReceiver("");
     setToastMessage(`Switched to ${networkShortNames[selectedNetwork] || selectedNetwork.toUpperCase()}`);
     setShowToast(true);
@@ -102,7 +106,11 @@ export default function SendPage() {
   const confirmSend = async () => {
     setShowConfirm(false);
     try {
-      await sendCrypto({ to: receiver.trim(), amount: parsedAmount, network });
+      await sendCrypto({
+        to: receiver.trim(),
+        amount: parsedAmount,
+        network: network,
+      });
       setReceiver("");
       setAmount("");
       setShowSuccess(true);
@@ -112,7 +120,15 @@ export default function SendPage() {
     }
   };
 
-  const handleRetry = () => resetError();
+  const handleRetry = () => {
+    resetError();
+  };
+
+  useEffect(() => {
+    if (success) {
+      setShowSuccess(true);
+    }
+  }, [success]);
 
   if (!isReady || balancesLoading || feesLoading) {
     return (
@@ -157,19 +173,21 @@ export default function SendPage() {
             onChange={(e) => setReceiver(e.target.value)}
             className={styles.inputField}
           />
-          <input
-            type="number"
-            placeholder="Amount to send"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            className={styles.inputField}
-          />
+          <div style={{ display: "flex", gap: "6px" }}>
+            <input
+              type="number"
+              placeholder="Amount to send"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              className={styles.inputField}
+            />
+          </div>
 
-          <div className={styles.feeBreakdown}>
+          <p className={styles.feeBreakdown}>
             Gas Fee: <strong>{gasFee.toFixed(6)} {shortName}</strong><br />
             Admin Fee: <strong>{adminFee.toFixed(6)} {shortName}</strong><br />
             You Receive: <strong>{afterFees > 0 ? afterFees.toFixed(6) : "0.000000"} {shortName}</strong>
-          </div>
+          </p>
 
           <motion.button
             whileHover={{ scale: 1.04 }}
@@ -193,21 +211,11 @@ export default function SendPage() {
           </motion.button>
         </div>
 
+        {/* Confirm, Success, Error modals */}
         <AnimatePresence>
           {showConfirm && (
-            <motion.div
-              className={styles.overlay}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-            >
-              <motion.div
-                className={styles.confirmModal}
-                initial={{ scale: 0.8 }}
-                animate={{ scale: 1 }}
-                exit={{ scale: 0.8 }}
-                transition={{ duration: 0.3 }}
-              >
+            <motion.div className={styles.overlay} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+              <motion.div className={styles.confirmModal} initial={{ scale: 0.8 }} animate={{ scale: 1 }} exit={{ scale: 0.8 }} transition={{ duration: 0.3 }}>
                 <div className={styles.modalTitle}>Confirm Transaction</div>
                 <div className={styles.modalInfo}>
                   <p><strong>Network:</strong> {shortName}</p>
@@ -217,7 +225,9 @@ export default function SendPage() {
                 </div>
                 <div className={styles.modalActions}>
                   <button className={styles.modalButton} onClick={confirmSend}>Confirm</button>
-                  <button className={`${styles.modalButton} ${styles.cancel}`} onClick={() => setShowConfirm(false)}>Cancel</button>
+                  <button className={`${styles.modalButton} ${styles.cancel}`} onClick={() => setShowConfirm(false)}>
+                    Cancel
+                  </button>
                 </div>
               </motion.div>
             </motion.div>
@@ -237,7 +247,10 @@ export default function SendPage() {
 
         <AnimatePresence>
           {error && (
-            <ErrorModal error={error} onRetry={handleRetry} />
+            <ErrorModal
+              error={error}
+              onRetry={handleRetry}
+            />
           )}
         </AnimatePresence>
       </div>
