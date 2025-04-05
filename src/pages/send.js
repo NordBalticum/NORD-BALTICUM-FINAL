@@ -12,7 +12,7 @@ import { usePrices } from "@/hooks/usePrices";
 
 import SwipeSelector from "@/components/SwipeSelector";
 import LoadingSpinner from "@/components/LoadingSpinner";
-import MiniLoadingSpinner from "@/components/MiniLoadingSpinner"; // ✅ Importuojam mini spinnerį
+import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
 import SuccessModal from "@/components/modals/SuccessModal";
 import ErrorModal from "@/components/modals/ErrorModal";
 import SuccessToast from "@/components/SuccessToast";
@@ -57,15 +57,8 @@ export default function SendPage() {
 
   const { gasFee, loading: feesLoading, refetchFees } = useFeeCalculator(network);
 
-const adminFee = useMemo(() => {
-  const parsedAmount = Number(amount) || 0;
-  return parsedAmount > 0 ? parsedAmount * 0.03 : 0;
-}, [amount]);
-
-const afterFees = useMemo(() => {
-  const parsedAmount = Number(amount) || 0;
-  return parsedAmount > 0 ? parsedAmount - gasFee - adminFee : 0;
-}, [amount, gasFee, adminFee]);
+  const adminFee = useMemo(() => (parsedAmount > 0 ? parsedAmount * 0.03 : 0), [parsedAmount]);
+  const afterFees = useMemo(() => (parsedAmount > 0 ? parsedAmount - gasFee - adminFee : 0), [parsedAmount, gasFee, adminFee]);
 
   const usdBalance = useMemo(() => {
     const price = prices?.[network]?.usd || 0;
@@ -82,12 +75,8 @@ const afterFees = useMemo(() => {
   const handleNetworkChange = useCallback(async (selectedNetwork) => {
     if (!selectedNetwork) return;
     setNetwork(selectedNetwork);
-
-    if (wallet?.email) {
-      await refetch();
-    }
-
-    setAmount(""); 
+    if (wallet?.email) await refetch();
+    setAmount("");
     setToastMessage(`Switched to ${networkShortNames[selectedNetwork] || selectedNetwork.toUpperCase()}`);
     setShowToast(true);
     setTimeout(() => setShowToast(false), 1500);
@@ -237,7 +226,6 @@ const afterFees = useMemo(() => {
           </motion.button>
         </div>
 
-        {/* Confirm modal */}
         <AnimatePresence>
           {showConfirm && (
             <motion.div
@@ -307,4 +295,4 @@ const afterFees = useMemo(() => {
       </div>
     </motion.main>
   );
-                     }
+                        }
