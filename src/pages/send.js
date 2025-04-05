@@ -8,7 +8,7 @@ import { useBalance } from "@/hooks/useBalance";
 import { useSendCrypto } from "@/hooks/useSendCrypto";
 import { usePageReady } from "@/hooks/usePageReady";
 import { useFeeCalculator } from "@/hooks/useFeeCalculator";
-import { usePrices } from "@/hooks/usePrices"; // ✅ Pridėta EUR/USD konvertavimui
+import { usePrices } from "@/hooks/usePrices";
 
 import SwipeSelector from "@/components/SwipeSelector";
 import LoadingSpinner from "@/components/LoadingSpinner";
@@ -40,7 +40,7 @@ export default function SendPage() {
   const { wallet } = useAuth();
   const { balances, loading: balancesLoading, refetch } = useBalance();
   const { sendCrypto, loading: sending, success, txHash, error, resetError } = useSendCrypto();
-  const { prices } = usePrices(); // ✅ Paimam kainas
+  const { prices } = usePrices();
 
   const [network, setNetwork] = useState("bsc");
   const [receiver, setReceiver] = useState("");
@@ -54,7 +54,7 @@ export default function SendPage() {
   const parsedAmount = Number(amount) || 0;
   const netBalance = balances?.[network]?.balance ? parseFloat(balances[network].balance) : 0;
 
-  const { gasFee, adminFee, totalFee, loading: feesLoading, refetchFees } = useFeeCalculator(network, parsedAmount);
+  const { gasFee, adminFee, loading: feesLoading, refetchFees } = useFeeCalculator(network, parsedAmount);
 
   const afterFees = useMemo(() => {
     return parsedAmount > 0 ? parsedAmount - gasFee - adminFee : 0;
@@ -80,7 +80,7 @@ export default function SendPage() {
       await refetch();
     }
 
-    setAmount(""); // ✅ iškart resetinam amount
+    setAmount(""); // resetinam įvestį, kad fees persiskaičiuotų
     setToastMessage(`Switched to ${networkShortNames[selectedNetwork] || selectedNetwork.toUpperCase()}`);
     setShowToast(true);
     setTimeout(() => setShowToast(false), 1500);
@@ -95,8 +95,8 @@ export default function SendPage() {
       alert("❌ Enter a valid amount.");
       return;
     }
-    if (parsedAmount + totalFee > netBalance) {
-      alert(`❌ Insufficient balance. Required: ${(parsedAmount + totalFee).toFixed(6)} ${shortName}`);
+    if (parsedAmount + gasFee + adminFee > netBalance) {
+      alert(`❌ Insufficient balance. Required: ${(parsedAmount + gasFee + adminFee).toFixed(6)} ${shortName}`);
       return;
     }
     setShowConfirm(true);
@@ -123,7 +123,6 @@ export default function SendPage() {
     resetError();
   };
 
-  // ✅ Automatinis gas fee atnaujinimas kas 5 sekundes
   useEffect(() => {
     const interval = setInterval(() => {
       refetchFees();
@@ -167,7 +166,7 @@ export default function SendPage() {
               {netBalance.toFixed(6)} {shortName}
             </span>
           </p>
-          <p className={styles.subtext}>
+          <p className={styles.subBalance}>
             ≈ {eurBalance} EUR | {usdBalance} USD
           </p>
         </div>
