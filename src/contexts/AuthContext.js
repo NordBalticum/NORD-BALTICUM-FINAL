@@ -56,27 +56,14 @@ const getKey = async () => {
 const encrypt = async (text) => {
   const iv = window.crypto.getRandomValues(new Uint8Array(12));
   const key = await getKey();
-  const encrypted = await window.crypto.subtle.encrypt(
-    { name: "AES-GCM", iv },
-    key,
-    encode(text)
-  );
-  return btoa(
-    JSON.stringify({
-      iv: Array.from(iv),
-      data: Array.from(new Uint8Array(encrypted)),
-    })
-  );
+  const encrypted = await window.crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, encode(text));
+  return btoa(JSON.stringify({ iv: Array.from(iv), data: Array.from(new Uint8Array(encrypted)) }));
 };
 
 const decrypt = async (ciphertext) => {
   const { iv, data } = JSON.parse(atob(ciphertext));
   const key = await getKey();
-  const decrypted = await window.crypto.subtle.decrypt(
-    { name: "AES-GCM", iv: new Uint8Array(iv) },
-    key,
-    new Uint8Array(data)
-  );
+  const decrypted = await window.crypto.subtle.decrypt({ name: "AES-GCM", iv: new Uint8Array(iv) }, key, new Uint8Array(data));
   return decode(decrypted);
 };
 
@@ -91,6 +78,7 @@ export const AuthProvider = ({ children }) => {
 
   const [user, setUser] = useState(null);
   const [wallet, setWallet] = useState(null);
+  const [walletLoading, setWalletLoading] = useState(false);
   const [balances, setBalances] = useState({});
   const [rates, setRates] = useState({});
   const [activeNetwork, setActiveNetwork] = useState("eth");
@@ -103,6 +91,7 @@ export const AuthProvider = ({ children }) => {
   // 7. LOAD SESSION
   useEffect(() => {
     if (!isClient) return;
+
     const loadSession = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
@@ -113,7 +102,6 @@ export const AuthProvider = ({ children }) => {
         setLoading(false);
       }
     };
-
     loadSession();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -123,12 +111,12 @@ export const AuthProvider = ({ children }) => {
     return () => subscription?.unsubscribe();
   }, [isClient]);
 
-  // 8. AUTO LOAD WALLET
+  // 8. AUTO LOAD WALLET (ONE TIME!)
   useEffect(() => {
-    if (!isClient || loading || !user?.email) return;
+    if (!isClient || loading || !user?.email || wallet || walletLoading) return;
     console.log("User ready, loading wallet for:", user.email);
     loadOrCreateWallet(user.email);
-  }, [isClient, loading, user]);
+  }, [isClient, loading, user, wallet, walletLoading]);
 
   // 9. AUTO REDIRECT
   useEffect(() => {
@@ -157,17 +145,12 @@ export const AuthProvider = ({ children }) => {
     };
   }, [isClient]);
 
-  // 11. WALLET CREATION / FETCH
+  // 11. WALLET FETCH / CREATE
   const loadOrCreateWallet = async (email) => {
     try {
-      setLoading(true);
+      setWalletLoading(true);
 
-      const { data, error } = await supabase
-        .from("wallets")
-        .select("*")
-        .eq("user_email", email)
-        .maybeSingle();
-
+      const { data, error } = await supabase.from("wallets").select("*").eq("user_email", email).maybeSingle();
       if (error) throw error;
 
       if (data?.encrypted_key) {
@@ -190,13 +173,13 @@ export const AuthProvider = ({ children }) => {
         });
 
         setupWallet(newWallet.privateKey);
-        console.log("🚀 New wallet created and stored.");
+        console.log("🚀 New wallet created and saved.");
       }
     } catch (error) {
       console.error("Wallet load error:", error.message);
       setWallet(null);
     } finally {
-      setLoading(false);
+      setWalletLoading(false);
     }
   };
 
@@ -204,11 +187,12 @@ export const AuthProvider = ({ children }) => {
   const setupWallet = (privateKey) => {
     const baseWallet = new Wallet(privateKey);
     const signers = {};
+
     Object.entries(RPC).forEach(([net, url]) => {
       signers[net] = new Wallet(privateKey, new JsonRpcProvider(url));
     });
-    setWallet({ wallet: baseWallet, signers });
 
+    setWallet({ wallet: baseWallet, signers });
     loadBalances(signers);
 
     if (balanceInterval.current) clearInterval(balanceInterval.current);
@@ -254,10 +238,7 @@ export const AuthProvider = ({ children }) => {
     const origin = isClient ? window.location.origin : "https://nordbalticum.com";
     const { error } = await supabase.auth.signInWithOtp({
       email,
-      options: {
-        shouldCreateUser: true,
-        emailRedirectTo: `${origin}/dashboard`,
-      },
+      options: { shouldCreateUser: true, emailRedirectTo: `${origin}/dashboard` },
     });
     if (error) throw error;
   };
@@ -266,9 +247,7 @@ export const AuthProvider = ({ children }) => {
     const origin = isClient ? window.location.origin : "https://nordbalticum.com";
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: {
-        redirectTo: `${origin}/dashboard`,
-      },
+      options: { redirectTo: `${origin}/dashboard` },
     });
     if (error) throw error;
   };
