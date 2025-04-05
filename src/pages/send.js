@@ -54,10 +54,6 @@ export default function SendPage() {
 
   const { gasFee, adminFee, totalFee, loading: feesLoading } = useFeeCalculator(network, parsedAmount);
 
-  const computedMaxSendable = useMemo(() => {
-    return netBalance > totalFee ? netBalance - gasFee - adminFee : 0;
-  }, [netBalance, gasFee, adminFee, totalFee]);
-
   const afterFees = useMemo(() => {
   return parsedAmount > 0 ? parsedAmount - gasFee - adminFee : 0;
 }, [parsedAmount, gasFee, adminFee]);
