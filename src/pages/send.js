@@ -97,21 +97,25 @@ export default function SendPage() {
   };
 
   const confirmSend = async () => {
-    setShowConfirm(false);
-    try {
-      await sendCrypto({
+  setShowConfirm(false);
+  try {
+    if (typeof window !== "undefined") {
+      const { sendCrypto } = await import("@/utils/sendCryptoFunction"); // Dynamic import
+      const hash = await sendCrypto({
         to: receiver.trim(),
         amount: parsedAmount,
         network,
       });
+      console.log("✅ Transaction successful, hash:", hash);
       setReceiver("");
       setAmount("");
       await refetch();
       setShowSuccess(true);
-    } catch (err) {
-      console.error("❌ Transaction error:", err.message || err);
     }
-  };
+  } catch (err) {
+    console.error("❌ Transaction error:", err.message || err);
+  }
+};
 
   const handleRetry = () => {
     resetError();
