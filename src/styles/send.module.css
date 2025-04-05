@@ -1,4 +1,4 @@
-/* === SEND MODULE – NordBalticum Bank Premium Final === */
+/* === SEND MODULE FINAL UPGRADE – NordBalticum Bank Premium === */
 
 .main {
   width: 100vw;
@@ -13,14 +13,8 @@
 }
 
 @keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(24px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .wrapper {
@@ -41,7 +35,7 @@
   font-size: clamp(28px, 6vw, 48px);
   font-weight: 900;
   font-family: var(--font-crypto);
-  color: white; /* ✅ Baltas pagrindinis SEND CRYPTO tekstas */
+  color: white;
   letter-spacing: 0.5px;
   text-shadow: 0 0 6px rgba(255, 255, 255, 0.12);
 }
@@ -68,7 +62,7 @@
   color: white;
   font-size: 0.95rem;
   line-height: 1.6;
-  text-align: left;
+  text-align: center; /* <<< Centruotas! */
 }
 
 .whiteText {
@@ -86,29 +80,6 @@
   font-weight: 600;
 }
 
-/* === Skeleton Loader === */
-.skeletonWrapper {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  width: 100%;
-}
-
-.skeletonLine {
-  height: 22px;
-  width: 90%;
-  border-radius: 8px;
-  background: linear-gradient(90deg, rgba(255,255,255,0.08) 25%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.08) 75%);
-  background-size: 200% 100%;
-  animation: skeletonLoading 1.5s infinite linear;
-}
-
-@keyframes skeletonLoading {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
-}
-
-/* === Wallet Actions === */
 .walletActions {
   display: flex;
   flex-direction: column;
@@ -135,26 +106,6 @@
   background: rgba(255, 255, 255, 0.07);
 }
 
-.confirmButton {
-  margin-top: 2px;
-  padding: 14px;
-  font-weight: 700;
-  font-family: var(--font-crypto);
-  text-transform: uppercase;
-  background: black;
-  color: white;
-  border: 2px solid white;
-  border-radius: 14px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.confirmButton:hover {
-  background: white;
-  color: black;
-}
-
-/* === Loader === */
 .loader {
   width: 22px;
   height: 22px;
@@ -169,17 +120,22 @@
   to { transform: rotate(360deg); }
 }
 
-/* === Modal Overlay === */
 .overlay {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.75);
-  backdrop-filter: blur(8px);
+  backdrop-filter: blur(10px);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 9999;
   padding: 20px;
+  animation: fadeInOverlay 0.6s ease forwards;
+}
+
+@keyframes fadeInOverlay {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .confirmModal {
@@ -192,19 +148,20 @@
   max-width: 460px;
   color: white;
   text-align: left;
-  animation: fadeInModal 0.4s ease;
+  animation: bounceModal 0.4s ease;
 }
 
-@keyframes fadeInModal {
-  from { opacity: 0; transform: scale(0.95); }
-  to { opacity: 1; transform: scale(1); }
+@keyframes bounceModal {
+  0% { opacity: 0; transform: scale(0.7); }
+  50% { opacity: 1; transform: scale(1.05); }
+  100% { transform: scale(1); }
 }
 
 .modalTitle {
   font-size: 1.3rem;
   font-weight: 700;
   margin-bottom: 1rem;
-  color: white; /* ✅ Baltas modal Title */
+  color: white;
   font-family: var(--font-crypto);
   text-align: center;
 }
@@ -214,12 +171,13 @@
   font-size: 0.95rem;
   line-height: 1.4;
   font-family: var(--font-crypto);
-  color: white; /* ✅ Modal tekstas baltas */
+  color: white;
+  text-align: center;
 }
 
 .modalActions {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   margin-top: 1.5rem;
   gap: 1rem;
 }
@@ -228,30 +186,28 @@
   flex: 1;
   background: linear-gradient(to right, #00c6ff, #0072ff);
   border: none;
-  padding: 10px;
+  padding: 12px 16px;
   color: white;
   font-weight: bold;
   border-radius: 12px;
   cursor: pointer;
-  transition: transform 0.2s ease, background 0.2s ease;
+  transition: transform 0.3s ease, background 0.3s ease;
   font-family: var(--font-crypto);
   text-transform: uppercase;
 }
 
 .modalButton:hover {
-  transform: scale(1.05);
+  transform: scale(1.08);
 }
 
 .modalButton.cancel {
   background: linear-gradient(to right, #ff3c3c, #c71d1d);
 }
 
-/* === SUCCESS ALERT (Naujas) === */
 .successAlert {
-  background: rgba(0, 255, 0, 0.1);
+  background: rgba(0, 255, 0, 0.12);
   color: #00ff00;
-  padding: 12px;
-  margin-bottom: 12px;
+  padding: 14px;
   border: 1px solid #00ff00;
   border-radius: 10px;
   text-align: center;
@@ -279,72 +235,13 @@
     gap: 20px;
   }
 
-  .inputField {
+  .inputField,
+  .modalButton {
     font-size: 0.95rem;
-    padding: 12px;
-  }
-
-  .confirmButton {
-    font-size: 0.95rem;
-    padding: 12px;
   }
 
   .modalTitle {
     font-size: 1rem;
-  }
-
-  .modalInfo {
-    font-size: 0.9rem;
-  }
-
-  .modalButton {
-    font-size: 0.9rem;
-  }
-
-  .skeletonLine {
-    height: 18px;
-  }
-}
-
-/* === Max Send Button (Naujas) === */
-.maxSendButton {
-  display: inline-block;
-  margin-left: 8px;
-  padding: 6px 10px;
-  font-size: 0.8rem;
-  background: linear-gradient(to right, #00c6ff, #0072ff);
-  color: white;
-  border: none;
-  border-radius: 10px;
-  font-family: var(--font-crypto);
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  vertical-align: middle;
-}
-
-.maxSendButton:hover {
-  background: linear-gradient(to right, #0072ff, #00c6ff);
-  transform: scale(1.05);
-}
-
-@media screen and (max-width: 320px) {
-  .wrapper {
-    padding: 12px;
-  }
-
-  .inputField {
-    font-size: 0.85rem;
-  }
-
-  .confirmButton {
-    font-size: 0.85rem;
-  }
-
-  .modalButton {
-    font-size: 0.85rem;
   }
 }
 
