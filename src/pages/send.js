@@ -152,31 +152,59 @@ export default function SendPage() {
         </div>
 
         <div className={styles.walletActions}>
-          <input
-            type="text"
-            placeholder="Receiver address"
-            value={receiver}
-            onChange={(e) => setReceiver(e.target.value)}
-            className={styles.inputField}
-          />
+  <input
+    type="text"
+    placeholder="Receiver address"
+    value={receiver}
+    onChange={(e) => setReceiver(e.target.value)}
+    className={styles.inputField}
+  />
 
-          <div className={styles.amountInputWrapper}>
-            <input
-              type="number"
-              placeholder="Amount to send"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              className={styles.inputField}
-            />
-            <button
-              type="button"
-              className={styles.maxButton}
-              onClick={() => setAmount(maxSendable > 0 ? maxSendable.toFixed(6) : "0")}
-            >
-              MAX
-            </button>
-          </div>
+  <div style={{ display: "flex", alignItems: "center", gap: "6px", width: "100%" }}>
+    <input
+      type="number"
+      placeholder="Amount to send"
+      value={amount}
+      onChange={(e) => setAmount(e.target.value)}
+      className={styles.inputField}
+    />
+    <button
+      type="button"
+      className={styles.maxSendButton}
+      onClick={() => setAmount(maxSendable > 0 ? maxSendable.toFixed(6) : "0")}
+    >
+      Max
+    </button>
+  </div>
 
+  <p className={styles.feeBreakdown}>
+    Network Fee (Gas): <strong>{gasFee.toFixed(6)} {shortName}</strong><br />
+    Admin Fee: <strong>{adminFee.toFixed(6)} {shortName}</strong><br />
+    After Fees:&nbsp;
+    <strong>{afterFees > 0 ? afterFees.toFixed(6) : "0.000000"} {shortName}</strong>
+  </p>
+
+  <motion.button
+    whileHover={{ scale: 1.04 }}
+    whileTap={{ scale: 0.98 }}
+    onClick={handleSend}
+    style={{
+      backgroundColor: buttonColors[localNetwork?.toLowerCase()] || "#0070f3",
+      color: "white",
+      borderRadius: "14px",
+      padding: "14px",
+      fontWeight: "700",
+      fontFamily: "var(--font-crypto)",
+      border: "2px solid white",
+      cursor: sending ? "not-allowed" : "pointer",
+      width: "100%",
+      marginTop: "14px",
+    }}
+    disabled={sending}
+  >
+    {sending ? <LoadingSpinner /> : "SEND NOW"}
+  </motion.button>
+</div>
           <p className={styles.feeBreakdown}>
             Network Fee (Gas): <strong>{gasFee.toFixed(6)} {shortName}</strong><br />
             Admin Fee: <strong>{adminFee.toFixed(6)} {shortName}</strong><br />
