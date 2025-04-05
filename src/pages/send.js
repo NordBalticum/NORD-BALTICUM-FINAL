@@ -8,6 +8,7 @@ import { useBalance } from "@/hooks/useBalance";
 import { useSendCrypto } from "@/hooks/useSendCrypto";
 import { usePageReady } from "@/hooks/usePageReady";
 import { useFeeCalculator } from "@/hooks/useFeeCalculator";
+import { usePrices } from "@/hooks/usePrices"; // ✅ Pridėta EUR/USD konvertavimui
 
 import SwipeSelector from "@/components/SwipeSelector";
 import LoadingSpinner from "@/components/LoadingSpinner";
@@ -39,6 +40,7 @@ export default function SendPage() {
   const { wallet } = useAuth();
   const { balances, loading: balancesLoading, refetch } = useBalance();
   const { sendCrypto, loading: sending, success, txHash, error, resetError } = useSendCrypto();
+  const { prices } = usePrices(); // ✅ Paimam kainas
 
   const [network, setNetwork] = useState("bsc");
   const [receiver, setReceiver] = useState("");
@@ -52,30 +54,38 @@ export default function SendPage() {
   const parsedAmount = Number(amount) || 0;
   const netBalance = balances?.[network]?.balance ? parseFloat(balances[network].balance) : 0;
 
-  const { gasFee, adminFee, totalFee, loading: feesLoading } = useFeeCalculator(network, parsedAmount);
+  const { gasFee, adminFee, totalFee, loading: feesLoading, refetchFees } = useFeeCalculator(network, parsedAmount);
 
   const afterFees = useMemo(() => {
-  return parsedAmount > 0 ? parsedAmount - gasFee - adminFee : 0;
-}, [parsedAmount, gasFee, adminFee]);
+    return parsedAmount > 0 ? parsedAmount - gasFee - adminFee : 0;
+  }, [parsedAmount, gasFee, adminFee]);
+
+  const usdBalance = useMemo(() => {
+    const price = prices?.[network]?.usd || 0;
+    return price ? (netBalance * price).toFixed(2) : "0.00";
+  }, [netBalance, prices, network]);
+
+  const eurBalance = useMemo(() => {
+    const price = prices?.[network]?.eur || 0;
+    return price ? (netBalance * price).toFixed(2) : "0.00";
+  }, [netBalance, prices, network]);
 
   const isValidAddress = (address) => /^0x[a-fA-F0-9]{40}$/.test(address.trim());
 
   const handleNetworkChange = useCallback(async (selectedNetwork) => {
-  if (!selectedNetwork) return;
-  setNetwork(selectedNetwork);
+    if (!selectedNetwork) return;
+    setNetwork(selectedNetwork);
 
-  if (wallet?.email) {
-    await refetch();
-  }
+    if (wallet?.email) {
+      await refetch();
+    }
 
-  // ✅ PRIDEDAM ŠITĄ LINIJA:
-  setAmount(""); // <--- iškart force reset amount kad adminFee persiskaičiuotų
+    setAmount(""); // ✅ iškart resetinam amount
+    setToastMessage(`Switched to ${networkShortNames[selectedNetwork] || selectedNetwork.toUpperCase()}`);
+    setShowToast(true);
+    setTimeout(() => setShowToast(false), 1500);
+  }, [wallet, refetch]);
 
-  setToastMessage(`Switched to ${networkShortNames[selectedNetwork] || selectedNetwork.toUpperCase()}`);
-  setShowToast(true);
-  setTimeout(() => setShowToast(false), 1500);
-}, [wallet, refetch]);
-  
   const handleSend = () => {
     if (!isValidAddress(receiver)) {
       alert("❌ Invalid wallet address.");
@@ -113,9 +123,13 @@ export default function SendPage() {
     resetError();
   };
 
-  const handleMax = () => {
-    setAmount(computedMaxSendable.toFixed(6));
-  };
+  // ✅ Automatinis gas fee atnaujinimas kas 5 sekundes
+  useEffect(() => {
+    const interval = setInterval(() => {
+      refetchFees();
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [network, parsedAmount, refetchFees]);
 
   useEffect(() => {
     if (success) {
@@ -139,17 +153,13 @@ export default function SendPage() {
       className={`${styles.main} ${background.gradient}`}
     >
       <div className={styles.wrapper}>
-        {/* Toast */}
         <SuccessToast show={showToast} message={toastMessage} networkKey={network} />
 
-        {/* Title */}
         <h1 className={styles.title}>SEND CRYPTO</h1>
         <p className={styles.subtext}>Transfer crypto securely & instantly</p>
 
-        {/* Network selector */}
         <SwipeSelector onSelect={handleNetworkChange} />
 
-        {/* Balance info */}
         <div className={styles.balanceTable}>
           <p className={styles.whiteText}>
             Your Balance:&nbsp;
@@ -157,9 +167,11 @@ export default function SendPage() {
               {netBalance.toFixed(6)} {shortName}
             </span>
           </p>
+          <p className={styles.subtext}>
+            ≈ {eurBalance} EUR | {usdBalance} USD
+          </p>
         </div>
 
-        {/* Inputs */}
         <div className={styles.walletActions}>
           <input
             type="text"
@@ -178,14 +190,12 @@ export default function SendPage() {
             />
           </div>
 
-          {/* Fees */}
           <p className={styles.feeBreakdown}>
             Gas Fee: <strong>{gasFee.toFixed(6)} {shortName}</strong><br />
             Admin Fee: <strong>{adminFee.toFixed(6)} {shortName}</strong><br />
             You Receive: <strong>{afterFees > 0 ? afterFees.toFixed(6) : "0.000000"} {shortName}</strong>
           </p>
 
-          {/* Send Button */}
           <motion.button
             whileHover={{ scale: 1.04 }}
             whileTap={{ scale: 0.98 }}
@@ -208,7 +218,6 @@ export default function SendPage() {
           </motion.button>
         </div>
 
-        {/* Confirm Modal */}
         <AnimatePresence>
           {showConfirm && (
             <motion.div
@@ -245,7 +254,6 @@ export default function SendPage() {
           )}
         </AnimatePresence>
 
-        {/* Success Modal */}
         <AnimatePresence>
           {showSuccess && (
             <SuccessModal
@@ -257,7 +265,6 @@ export default function SendPage() {
           )}
         </AnimatePresence>
 
-        {/* Error Modal */}
         <AnimatePresence>
           {error && (
             <ErrorModal
