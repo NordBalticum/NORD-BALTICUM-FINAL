@@ -65,18 +65,21 @@ export default function SendPage() {
   const isValidAddress = (address) => /^0x[a-fA-F0-9]{40}$/.test(address.trim());
 
   const handleNetworkChange = useCallback(async (selectedNetwork) => {
-    if (!selectedNetwork) return;
-    setNetwork(selectedNetwork);
+  if (!selectedNetwork) return;
+  setNetwork(selectedNetwork);
 
-    if (wallet?.email) {
-      await refetch();
-    }
+  if (wallet?.email) {
+    await refetch();
+  }
 
-    setToastMessage(`Switched to ${networkShortNames[selectedNetwork] || selectedNetwork.toUpperCase()}`);
-    setShowToast(true);
-    setTimeout(() => setShowToast(false), 1500);
-  }, [wallet, refetch]);
+  // ✅ PRIDEDAM ŠITĄ LINIJA:
+  setAmount(""); // <--- iškart force reset amount kad adminFee persiskaičiuotų
 
+  setToastMessage(`Switched to ${networkShortNames[selectedNetwork] || selectedNetwork.toUpperCase()}`);
+  setShowToast(true);
+  setTimeout(() => setShowToast(false), 1500);
+}, [wallet, refetch]);
+  
   const handleSend = () => {
     if (!isValidAddress(receiver)) {
       alert("❌ Invalid wallet address.");
