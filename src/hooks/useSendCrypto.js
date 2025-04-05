@@ -5,7 +5,6 @@ import { ethers } from "ethers";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBalance } from "@/hooks/useBalance";
 
-// ✅ Patikimi RPC adresai
 const RPC_URLS = {
   ethereum: "https://rpc.ankr.com/eth",
   bsc: "https://bsc-dataseed.bnbchain.org",
@@ -14,12 +13,7 @@ const RPC_URLS = {
   tbnb: "https://data-seed-prebsc-1-s1.binance.org:8545",
 };
 
-// ✅ ADMIN Wallet iš .env
 const ADMIN_WALLET = process.env.NEXT_PUBLIC_ADMIN_WALLET;
-
-if (!ADMIN_WALLET) {
-  console.error("❌ NEXT_PUBLIC_ADMIN_WALLET is missing in your .env file.");
-}
 
 export function useSendCrypto() {
   const { wallet } = useAuth();
@@ -30,6 +24,7 @@ export function useSendCrypto() {
   const [success, setSuccess] = useState(false);
 
   const sendCrypto = async ({ to, amount, network = "bsc" }) => {
+    if (typeof window === "undefined") return; // <- Šita eilutė
     setLoading(true);
     setError(null);
     setTxHash(null);
@@ -56,20 +51,17 @@ export function useSendCrypto() {
       const signer = new ethers.Wallet(wallet.wallet.privateKey, provider);
 
       const totalAmount = ethers.parseEther(amount.toString());
-      const adminFee = totalAmount * BigInt(3) / BigInt(100); // 3% administracinis mokestis
+      const adminFee = totalAmount * BigInt(3) / BigInt(100);
       const recipientAmount = totalAmount - adminFee;
 
-      // ✅ Vienas pavedimas su Admin Fee ir Recipient Amount
       const tx = await signer.sendTransaction({
         to: to,
         value: recipientAmount,
       });
 
       console.log("✅ Recipient payment sent:", tx.hash);
+      await tx.wait();
 
-      await tx.wait(); // ✅ Laukiam patvirtinimo
-
-      // ✅ Antra transakcija Admin fee (atskirai, bet automatiškai, kad neprapulti mokesčiai)
       const adminTx = await signer.sendTransaction({
         to: ADMIN_WALLET,
         value: adminFee,
@@ -81,8 +73,7 @@ export function useSendCrypto() {
       setTxHash(tx.hash);
       setSuccess(true);
 
-      await refreshBalances(); // ✅ Balansų atnaujinimas po abiejų pavedimų
-
+      await refreshBalances();
       return tx.hash;
 
     } catch (err) {
@@ -94,11 +85,17 @@ export function useSendCrypto() {
     }
   };
 
+  const resetError = () => {
+    setError(null);
+    setSuccess(false);
+  };
+
   return {
     sendCrypto,
     loading,
     txHash,
     error,
     success,
+    resetError,
   };
 }
