@@ -3,7 +3,6 @@
 import { useState, useMemo, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
-import { useAuth } from "@/contexts/AuthContext";
 import { useBalance } from "@/hooks/useBalance";
 import { useSendCrypto } from "@/hooks/useSendCrypto";
 import { usePageReady } from "@/hooks/usePageReady";
@@ -38,7 +37,6 @@ const buttonColors = {
 
 export default function SendPage() {
   const isReady = usePageReady();
-  const { wallet } = useAuth();
   const { balances, loading: balancesLoading, initialLoading, refetch } = useBalance();
   const { sendCrypto, loading: sending, success, txHash, error, resetError } = useSendCrypto();
   const { prices } = usePrices();
@@ -75,12 +73,12 @@ export default function SendPage() {
   const handleNetworkChange = useCallback(async (selectedNetwork) => {
     if (!selectedNetwork) return;
     setNetwork(selectedNetwork);
-    if (wallet?.email) await refetch();
+    await refetch();
     setAmount("");
     setToastMessage(`Switched to ${networkShortNames[selectedNetwork] || selectedNetwork.toUpperCase()}`);
     setShowToast(true);
     setTimeout(() => setShowToast(false), 1500);
-  }, [wallet, refetch]);
+  }, [refetch]);
 
   const handleSend = () => {
     if (!isValidAddress(receiver)) {
@@ -111,7 +109,7 @@ export default function SendPage() {
       await refetch();
       setShowSuccess(true);
     } catch (err) {
-      console.error("❌ Transaction error:", err.message);
+      console.error("❌ Transaction error:", err.message || err);
     }
   };
 
@@ -241,10 +239,7 @@ export default function SendPage() {
                   <button className={styles.modalButton} onClick={confirmSend}>
                     {sending ? "Confirming..." : "Confirm"}
                   </button>
-                  <button
-                    className={`${styles.modalButton} ${styles.cancel}`}
-                    onClick={() => setShowConfirm(false)}
-                  >
+                  <button className={`${styles.modalButton} ${styles.cancel}`} onClick={() => setShowConfirm(false)}>
                     Cancel
                   </button>
                 </div>
@@ -258,8 +253,6 @@ export default function SendPage() {
           {showSuccess && (
             <SuccessModal
               message="✅ Transaction Successful!"
-              txHash={txHash}
-              networkKey={network}
               onClose={() => setShowSuccess(false)}
             />
           )}
