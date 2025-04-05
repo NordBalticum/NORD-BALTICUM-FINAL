@@ -132,6 +132,7 @@
   .container {
     transform: scale(0.88) translate(0, -22%);
     transform-origin: top center;
-    transition: transform 0.4s ease-out; /* (nebūtina, bet bus smooth perėjimas) */
+    transition: transform 0.4s ease-out;
+    animation: fadeInSlideLeft 1.7s ease-out;
   }
 }
