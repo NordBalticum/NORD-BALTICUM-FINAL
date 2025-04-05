@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState, useMemo, useCallback } from "react";
-import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
+import { usePageReady } from "@/hooks/usePageReady";
 
 import SwipeSelector from "@/components/SwipeSelector";
 import SuccessModal from "@/components/modals/SuccessModal";
@@ -11,7 +11,6 @@ import SuccessModal from "@/components/modals/SuccessModal";
 import styles from "@/styles/send.module.css";
 import background from "@/styles/background.module.css";
 
-// ✅ Tinklo trumpiniai ir spalvos
 const networkShortNames = {
   eth: "ETH",
   bnb: "BNB",
@@ -28,26 +27,9 @@ const buttonColors = {
   avax: "#e84142",
 };
 
-// ✅ Helperis: ar pilnai paruoštas puslapis
-function usePageReady() {
-  const { user, wallet, balances, loading } = useAuth();
-  const [isClient, setIsClient] = useState(false);
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      setIsClient(true);
-    }
-  }, []);
-
-  const isReady = isClient && !loading && !!user?.id && !!wallet?.wallet?.address && balances !== null;
-  return isReady;
-}
-
 export default function SendPage() {
-  const router = useRouter();
   const { user, wallet, balances, sendTransaction, refreshBalance } = useAuth();
-
-  const isReady = usePageReady(); // ✅ Ultimate stabilumas
+  const isReady = usePageReady();
 
   const [localNetwork, setLocalNetwork] = useState("eth");
   const [receiver, setReceiver] = useState("");
@@ -58,20 +40,15 @@ export default function SendPage() {
   const [sending, setSending] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
 
-  // ✅ Network trumpinis
   const shortName = useMemo(() => networkShortNames[localNetwork.toLowerCase()] || localNetwork.toUpperCase(), [localNetwork]);
-
-  // ✅ Balansai
   const netBalance = balances?.[localNetwork] || 0;
   const parsedAmount = Number(amount || 0);
   const fee = parsedAmount * 0.03;
   const amountAfterFee = parsedAmount - fee;
   const maxSendable = netBalance - netBalance * 0.03;
 
-  // ✅ Tikrinimas ar adresas validus
   const isValidAddress = (address) => /^0x[a-fA-F0-9]{40}$/.test(address.trim());
 
-  // ✅ Pakeisti pasirinktą tinklą
   const handleNetworkChange = useCallback((network) => {
     if (network) {
       setLocalNetwork(network);
@@ -80,7 +57,6 @@ export default function SendPage() {
     }
   }, []);
 
-  // ✅ Paspaudus SEND
   const handleSend = () => {
     if (!isValidAddress(receiver)) {
       alert("❌ Invalid wallet address.");
@@ -97,7 +73,6 @@ export default function SendPage() {
     setShowConfirm(true);
   };
 
-  // ✅ Patvirtinti siuntimą
   const confirmSend = async () => {
     setShowConfirm(false);
     setSending(true);
@@ -126,12 +101,10 @@ export default function SendPage() {
     }
   };
 
-  // ✅ Jei dar neparuoštas puslapis
   if (!isReady) {
     return <div className={styles.loading}>Loading Send Page...</div>;
   }
 
-  // ✅ Renderis
   return (
     <motion.main
       initial={{ opacity: 0 }}
@@ -140,7 +113,6 @@ export default function SendPage() {
       className={`${styles.main} ${background.gradient}`}
     >
       <div className={styles.wrapper}>
-        {/* ✅ Toast žinutės */}
         <AnimatePresence>
           {toastMessage && (
             <motion.div
@@ -155,14 +127,11 @@ export default function SendPage() {
           )}
         </AnimatePresence>
 
-        {/* ✅ Antraštė */}
         <h1 className={styles.title}>SEND CRYPTO</h1>
         <p className={styles.subtext}>Transfer crypto securely & instantly</p>
 
-        {/* ✅ Tinklo pasirinkimas */}
         <SwipeSelector mode="send" onSelect={handleNetworkChange} />
 
-        {/* ✅ Balansų lentelė */}
         <div className={styles.balanceTable}>
           <p className={styles.whiteText}>
             Your Balance:&nbsp;
@@ -178,7 +147,6 @@ export default function SendPage() {
           </p>
         </div>
 
-        {/* ✅ Siuntimo forma */}
         <div className={styles.walletActions}>
           <input
             type="text"
@@ -222,7 +190,7 @@ export default function SendPage() {
           </motion.button>
         </div>
 
-        {/* ✅ Confirm Modal */}
+        {/* Confirm Modal */}
         <AnimatePresence>
           {showConfirm && (
             <motion.div
@@ -257,7 +225,7 @@ export default function SendPage() {
           )}
         </AnimatePresence>
 
-        {/* ✅ Success Modal */}
+        {/* Success Modal */}
         <AnimatePresence>
           {showSuccess && (
             <motion.div
