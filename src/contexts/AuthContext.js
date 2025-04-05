@@ -262,7 +262,6 @@ export const AuthProvider = ({ children }) => {
         signInWithMagicLink,
         signInWithGoogle,
         signOut,
-        sendTransaction,
       }}
     >
       {children}
