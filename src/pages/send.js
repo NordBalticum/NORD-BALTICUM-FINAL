@@ -53,6 +53,7 @@ export default function SendPage() {
   const [sending, setSending] = useState(false);
   const [error, setError] = useState(null);
   const [transactionHash, setTransactionHash] = useState(null);
+  const [gasOption, setGasOption] = useState("average"); // <<< Naujas
 
   const shortName = useMemo(() => networkShortNames[network] || network.toUpperCase(), [network]);
   const parsedAmount = useMemo(() => Number(amount) || 0, [amount]);
@@ -61,14 +62,6 @@ export default function SendPage() {
   const { gasFee, loading: feesLoading, refetchFees } = useFeeCalculator(network);
 
   const adminFee = useMemo(() => parsedAmount > 0 ? parsedAmount * 0.03 : 0, [parsedAmount]);
-  const totalFee = useMemo(() => adminFee + gasFee, [adminFee, gasFee]);
-  const finalReceiveAmount = useMemo(() => {
-    if (parsedAmount > 0) {
-      const receive = parsedAmount - adminFee - gasFee;
-      return receive > 0 ? receive : 0;
-    }
-    return 0;
-  }, [parsedAmount, adminFee, gasFee]);
 
   const usdBalance = useMemo(() => {
     const price = prices?.[network]?.usd || 0;
@@ -122,6 +115,7 @@ export default function SendPage() {
           amount: parsedAmount,
           network,
           userEmail: user.email,
+          gasOption, // <<< Naujas
         });
 
         console.log("✅ Transaction successful, hash:", hash);
@@ -229,9 +223,23 @@ export default function SendPage() {
           </div>
 
           <p className={styles.feeBreakdown}>
-            Fees: <strong>{totalFee.toFixed(6)} {shortName}</strong><br />
-            You Receive: <strong>{finalReceiveAmount.toFixed(6)} {shortName}</strong>
+            Fees: <strong>{adminFee.toFixed(6)} {shortName}</strong>
           </p>
+
+          {/* Gas Option Selector */}
+          <div className={styles.gasOptions}>
+            <label style={{ color: "white", marginBottom: "4px" }}>Select Gas Fee:</label>
+            <select
+              value={gasOption}
+              onChange={(e) => setGasOption(e.target.value)}
+              className={styles.inputField}
+              disabled={sending}
+            >
+              <option value="slow">Slow (Cheapest)</option>
+              <option value="average">Average (Recommended)</option>
+              <option value="fast">Fast (Highest)</option>
+            </select>
+          </div>
 
           <motion.button
             whileHover={{ scale: 1.04 }}
@@ -332,4 +340,4 @@ export default function SendPage() {
       </div>
     </motion.main>
   );
-}
+                }
