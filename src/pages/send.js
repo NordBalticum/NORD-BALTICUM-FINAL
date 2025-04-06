@@ -53,7 +53,7 @@ export default function SendPage() {
   const [sending, setSending] = useState(false);
   const [error, setError] = useState(null);
   const [transactionHash, setTransactionHash] = useState(null);
-  const [gasOption, setGasOption] = useState("average"); // <<< Naujas
+  const [gasOption, setGasOption] = useState("average"); // <<< Pridėta GasOption pasirinkimas
 
   const shortName = useMemo(() => networkShortNames[network] || network.toUpperCase(), [network]);
   const parsedAmount = useMemo(() => Number(amount) || 0, [amount]);
@@ -115,7 +115,7 @@ export default function SendPage() {
           amount: parsedAmount,
           network,
           userEmail: user.email,
-          gasOption, // <<< Naujas
+          gasOption, // <<< Čia perduodam pasirinktą gasOption
         });
 
         console.log("✅ Transaction successful, hash:", hash);
@@ -237,7 +237,7 @@ export default function SendPage() {
             >
               <option value="slow">Slow (Cheapest)</option>
               <option value="average">Average (Recommended)</option>
-              <option value="fast">Fast (Highest)</option>
+              <option value="fast">Fast (Priority)</option>
             </select>
           </div>
 
@@ -340,4 +340,4 @@ export default function SendPage() {
       </div>
     </motion.main>
   );
-                }
+}
