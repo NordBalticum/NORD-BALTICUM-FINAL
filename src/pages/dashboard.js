@@ -86,8 +86,14 @@ export default function Dashboard() {
               const info = balances?.[network];
               const symbol = info?.symbol?.toLowerCase();
               const balance = parseFloat(info?.balance || 0);
-              const eurRate = prices?.[network]?.eur || 0;
+
+              const priceData = prices?.[network === "tbnb" ? "bsc" : network] || { eur: 0, usd: 0 };
+              const eurRate = priceData.eur || 0;
+              const usdRate = priceData.usd || 0;
+
               const eurValue = balance * eurRate;
+              const usdValue = balance * usdRate;
+
               const routeSymbol = routeNames[network] || network; // ✅ Saugus route
 
               return (
@@ -123,7 +129,7 @@ export default function Dashboard() {
                       {balance.toFixed(6)} {symbol?.toUpperCase()}
                     </div>
                     <div className={styles.assetEur}>
-                      ≈ €{eurValue.toFixed(2)}
+                      ≈ €{eurValue.toFixed(2)} | ≈ ${usdValue.toFixed(2)}
                     </div>
                   </div>
                 </div>
