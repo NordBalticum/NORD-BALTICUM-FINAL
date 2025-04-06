@@ -3,6 +3,7 @@
 import { useState, useMemo, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
+import { useAuth } from "@/contexts/AuthContext";
 import { useBalance } from "@/hooks/useBalance";
 import { usePageReady } from "@/hooks/usePageReady";
 import { useFeeCalculator } from "@/hooks/useFeeCalculator";
@@ -14,6 +15,8 @@ import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
 import SuccessModal from "@/components/modals/SuccessModal";
 import ErrorModal from "@/components/modals/ErrorModal";
 import SuccessToast from "@/components/SuccessToast";
+
+import { supabase } from "@/utils/supabaseClient"; // ✅ Real-time history update
 
 import styles from "@/styles/send.module.css";
 import background from "@/styles/background.module.css";
@@ -36,6 +39,7 @@ const buttonColors = {
 
 export default function SendPage() {
   const isReady = usePageReady();
+  const { user } = useAuth();
   const { balances, loading: balancesLoading, initialLoading, refetch } = useBalance();
   const { prices } = usePrices();
 
@@ -48,6 +52,7 @@ export default function SendPage() {
   const [toastMessage, setToastMessage] = useState("");
   const [sending, setSending] = useState(false);
   const [error, setError] = useState(null);
+  const [transactionHash, setTransactionHash] = useState(null);
 
   const shortName = useMemo(() => networkShortNames[network] || network.toUpperCase(), [network]);
   const parsedAmount = useMemo(() => Number(amount) || 0, [amount]);
@@ -100,15 +105,32 @@ export default function SendPage() {
     setShowConfirm(false);
     setSending(true);
     setError(null);
+
     try {
       if (typeof window !== "undefined") {
         const { sendTransaction } = await import("@/utils/sendCryptoFunction");
+
         const hash = await sendTransaction({
           to: receiver.trim(),
           amount: parsedAmount,
           network,
+          userEmail: user.email,
         });
+
         console.log("✅ Transaction successful, hash:", hash);
+        setTransactionHash(hash);
+
+        // ✅ Insert into history in real-time
+        await supabase.from("transactions").insert([{
+          sender_email: user.email,
+          to_address: receiver.trim(),
+          amount: parsedAmount,
+          fee: adminFee,
+          network: network,
+          type: "send",
+          tx_hash: hash,
+        }]);
+
         setReceiver("");
         setAmount("");
         await refetch();
@@ -131,26 +153,6 @@ export default function SendPage() {
       refetchFees();
     }
   }, [amount, network, refetchFees]);
-
-  // Auto close Success modal after 3s
-  useEffect(() => {
-    if (showSuccess) {
-      const timer = setTimeout(() => {
-        setShowSuccess(false);
-      }, 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [showSuccess]);
-
-  // Auto close Error modal after 4s
-  useEffect(() => {
-    if (error) {
-      const timer = setTimeout(() => {
-        setError(null);
-      }, 4000);
-      return () => clearTimeout(timer);
-    }
-  }, [error]);
 
   if (!isReady || initialLoading || feesLoading) {
     return (
@@ -189,7 +191,7 @@ export default function SendPage() {
             </motion.span>
           </p>
           <p className={styles.whiteText}>
-            ≈ {eurBalance} EUR | {usdBalance} USD
+            ≈ €{eurBalance} | ${usdBalance}
           </p>
         </div>
 
@@ -249,8 +251,19 @@ export default function SendPage() {
         {/* Confirm Modal */}
         <AnimatePresence>
           {showConfirm && (
-            <motion.div className={styles.overlay} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              <motion.div className={styles.confirmModal} initial={{ scale: 0.8 }} animate={{ scale: 1 }} exit={{ scale: 0.8 }} transition={{ duration: 0.4 }}>
+            <motion.div
+              className={styles.overlay}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+            >
+              <motion.div
+                className={styles.confirmModal}
+                initial={{ scale: 0.8 }}
+                animate={{ scale: 1 }}
+                exit={{ scale: 0.8 }}
+                transition={{ duration: 0.4 }}
+              >
                 <div className={styles.modalTitle}>Confirm Transaction</div>
                 <div className={styles.modalInfo}>
                   <p><strong>Network:</strong> {shortName}</p>
@@ -270,7 +283,10 @@ export default function SendPage() {
                       "Confirm"
                     )}
                   </button>
-                  <button className={`${styles.modalButton} ${styles.cancel}`} onClick={() => setShowConfirm(false)}>
+                  <button
+                    className={`${styles.modalButton} ${styles.cancel}`}
+                    onClick={() => setShowConfirm(false)}
+                  >
                     Cancel
                   </button>
                 </div>
@@ -285,6 +301,8 @@ export default function SendPage() {
             <SuccessModal
               message="✅ Transaction Successful!"
               onClose={() => setShowSuccess(false)}
+              transactionHash={transactionHash}
+              network={network}
             />
           )}
         </AnimatePresence>
@@ -300,4 +318,4 @@ export default function SendPage() {
       </div>
     </motion.main>
   );
-}
+          }
