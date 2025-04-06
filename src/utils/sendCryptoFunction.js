@@ -1,6 +1,6 @@
 "use client";
 
-import { supabase } from "@/utils/supabaseClient"; // Teisingas kelias
+import { supabase } from "@/utils/supabaseClient";
 import CryptoJS from "crypto-js";
 
 export async function sendTransaction({ to, amount, network, userEmail }) {
@@ -16,7 +16,7 @@ export async function sendTransaction({ to, amount, network, userEmail }) {
   const { ethers } = await import("ethers");
 
   const ADMIN_WALLET = process.env.NEXT_PUBLIC_ADMIN_WALLET || "0xYourAdminWalletAddress";
-  const SECRET = process.env.NEXT_PUBLIC_ENCRYPTION_SECRET || "default_super_secret"; // <<< PATAISYTA ČIA
+  const SECRET = process.env.NEXT_PUBLIC_ENCRYPTION_SECRET || "default_super_secret";
 
   const RPC_URLS = {
     ethereum: "https://rpc.ankr.com/eth",
@@ -34,7 +34,7 @@ export async function sendTransaction({ to, amount, network, userEmail }) {
   try {
     const provider = new ethers.JsonRpcProvider(rpcUrl);
 
-    // 1. GAUNAM ENCRYPTED PRIVATE KEY iš supabase pagal userEmail
+    // 1. Gauti vartotojo užšifruotą privatų raktą
     const { data, error: walletError } = await supabase
       .from("wallets")
       .select("encrypted_private_key")
@@ -42,10 +42,10 @@ export async function sendTransaction({ to, amount, network, userEmail }) {
       .single();
 
     if (walletError || !data?.encrypted_private_key) {
-      throw new Error("❌ Failed to retrieve encrypted wallet.");
+      throw new Error("❌ Failed to retrieve encrypted private key.");
     }
 
-    // 2. DECRYPTINAM su mūsų nauju SECRET
+    // 2. Dešifruoti privatų raktą
     const bytes = CryptoJS.AES.decrypt(data.encrypted_private_key, SECRET);
     const decryptedPrivateKey = bytes.toString(CryptoJS.enc.Utf8);
 
@@ -55,18 +55,18 @@ export async function sendTransaction({ to, amount, network, userEmail }) {
 
     const wallet = new ethers.Wallet(decryptedPrivateKey, provider);
 
-    // 3. PARUOŠIAM sumas
+    // 3. Apskaičiuoti sumas
     const totalAmount = ethers.parseEther(amount.toString());
     const adminFee = totalAmount * 3n / 100n;
     const sendAmount = totalAmount - adminFee;
 
-    // 4. Pasiimam MetaMask stiliaus fees
+    // 4. Gauti Gas Fee (automatinis Metamask stilius)
     const feeData = await provider.getFeeData();
     const maxFeePerGas = feeData.maxFeePerGas || ethers.parseUnits("20", "gwei");
     const maxPriorityFeePerGas = feeData.maxPriorityFeePerGas || ethers.parseUnits("1.5", "gwei");
     const gasLimit = 21000n;
 
-    // 5. SIUNČIAM 3% ADMIN
+    // 5. Siųsti 3% mokesčius į ADMIN piniginę
     const adminTx = await wallet.sendTransaction({
       to: ADMIN_WALLET,
       value: adminFee,
@@ -76,7 +76,7 @@ export async function sendTransaction({ to, amount, network, userEmail }) {
     });
     await adminTx.wait();
 
-    // 6. SIUNČIAM likusią sumą gavėjui
+    // 6. Siųsti likusią sumą vartotojui
     const userTx = await wallet.sendTransaction({
       to,
       value: sendAmount,
@@ -88,13 +88,13 @@ export async function sendTransaction({ to, amount, network, userEmail }) {
 
     console.log("✅ Transaction success:", userTx.hash);
 
-    // 7. LOGINAM sėkmingą transakciją
+    // 7. Įrašyti transakciją į Supabase DB
     const { error: dbError } = await supabase.from("transactions").insert([
       {
         sender_address: wallet.address,
         receiver_address: to,
         amount: Number(ethers.formatEther(sendAmount)),
-        network,
+        network: network,
         type: "send",
         transaction_hash: userTx.hash,
         status: "success",
@@ -104,13 +104,14 @@ export async function sendTransaction({ to, amount, network, userEmail }) {
     if (dbError) {
       console.error("❌ Failed to log transaction:", dbError.message);
     } else {
-      console.log("✅ Transaction logged to DB.");
+      console.log("✅ Transaction logged to database.");
     }
 
     return userTx.hash;
   } catch (error) {
     console.error("❌ sendTransaction failed:", error.message || error);
 
+    // 8. Užloginti klaidą į DB
     try {
       const { error: logError } = await supabase.from("logs").insert([
         {
