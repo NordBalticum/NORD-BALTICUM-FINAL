@@ -61,7 +61,14 @@ export default function SendPage() {
   const { gasFee, loading: feesLoading, refetchFees } = useFeeCalculator(network);
 
   const adminFee = useMemo(() => parsedAmount > 0 ? parsedAmount * 0.03 : 0, [parsedAmount]);
-  const afterFees = useMemo(() => parsedAmount > 0 ? parsedAmount - adminFee : 0, [parsedAmount, adminFee]);
+  const totalFee = useMemo(() => adminFee + gasFee, [adminFee, gasFee]);
+  const finalReceiveAmount = useMemo(() => {
+    if (parsedAmount > 0) {
+      const receive = parsedAmount - adminFee - gasFee;
+      return receive > 0 ? receive : 0;
+    }
+    return 0;
+  }, [parsedAmount, adminFee, gasFee]);
 
   const usdBalance = useMemo(() => {
     const price = prices?.[network]?.usd || 0;
@@ -222,8 +229,8 @@ export default function SendPage() {
           </div>
 
           <p className={styles.feeBreakdown}>
-            Admin Fee: <strong>{adminFee.toFixed(6)} {shortName}</strong><br />
-            You Receive: <strong>{afterFees > 0 ? afterFees.toFixed(6) : "0.000000"} {shortName}</strong>
+            Fees: <strong>{totalFee.toFixed(6)} {shortName}</strong><br />
+            You Receive: <strong>{finalReceiveAmount.toFixed(6)} {shortName}</strong>
           </p>
 
           <motion.button
