@@ -229,6 +229,7 @@ export default function SendPage() {
           </p>
 
           <motion.button
+            key={network}
             whileHover={{ scale: 1.04 }}
             whileTap={{ scale: 0.98 }}
             onClick={handleSend}
