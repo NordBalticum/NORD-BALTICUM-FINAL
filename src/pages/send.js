@@ -153,11 +153,11 @@ export default function SendPage() {
     }
   }, [amount, network, refetchFees]);
 
-  // ✅ Automatinis balansų atnaujinimas kas 10 sekundžių (background polling)
+  // ✅ Automatinis balansų atnaujinimas kas 10 sekundžių
   useEffect(() => {
     const interval = setInterval(() => {
       refetch();
-    }, 10000); // kas 10s
+    }, 10000);
 
     return () => clearInterval(interval);
   }, [refetch]);
@@ -245,6 +245,7 @@ export default function SendPage() {
               fontFamily: "var(--font-crypto)",
               border: "2px solid white",
               cursor: sending ? "not-allowed" : "pointer",
+              transition: "background-color 0.4s ease", // smooth color transition
             }}
           >
             {sending ? (
