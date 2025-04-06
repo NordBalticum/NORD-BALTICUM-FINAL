@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 
-import { supabase } from "@/utils/supabaseClient"; // ✅ Tiesioginis importas
+import { supabase } from "@/utils/supabaseClient"; 
 import { useAuth } from "@/contexts/AuthContext";
 import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
 import styles from "@/styles/history.module.css";
@@ -30,13 +30,13 @@ export default function HistoryPage() {
   }, [isClient, authLoading, user, router]);
 
   const fetchUserTransactions = useCallback(async () => {
-    if (!user?.email) return;
+    if (!wallet?.wallet?.address) return;
     try {
       setLoadingTransactions(true);
       const { data, error } = await supabase
         .from("transactions")
         .select("*")
-        .eq("sender_email", user.email)
+        .or(`sender_address.eq.${wallet.wallet.address},receiver_address.eq.${wallet.wallet.address}`)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -48,11 +48,11 @@ export default function HistoryPage() {
     } finally {
       setLoadingTransactions(false);
     }
-  }, [user]);
+  }, [wallet]);
 
   useEffect(() => {
     fetchUserTransactions();
-    const interval = setInterval(fetchUserTransactions, 30000); // ✅ Kas 30s
+    const interval = setInterval(fetchUserTransactions, 30000); // ✅ Kas 30 sekundžių
     return () => clearInterval(interval);
   }, [fetchUserTransactions]);
 
@@ -85,12 +85,13 @@ export default function HistoryPage() {
         ) : error ? (
           <div className={styles.error}>{error}</div>
         ) : transactions.length === 0 ? (
-          <div className={styles.loading}>No transactions found.</div>
+          <div className={styles.loading}>No transactions found.
+          </div>
         ) : (
           <div className={styles.transactionList}>
             {transactions.map((tx, index) => (
               <motion.div
-                key={tx.tx_hash + index}
+                key={tx.transaction_hash + index}
                 className={styles.transactionCard}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -115,11 +116,11 @@ export default function HistoryPage() {
 
                 <p className={styles.transactionDetail}>
                   <strong>{tx.type === "receive" ? "From:" : "To:"}</strong>{" "}
-                  {truncateAddress(tx.type === "receive" ? tx.from_address : tx.to_address)}
+                  {truncateAddress(tx.type === "receive" ? tx.sender_address : tx.receiver_address)}
                 </p>
 
                 <p className={styles.transactionDetail}>
-                  <strong>Fee:</strong> {Number(tx.fee || 0).toFixed(6)} {tx.network?.toUpperCase()}
+                  <strong>Fee:</strong> {Number(tx.fee ?? 0).toFixed(6)} {tx.network?.toUpperCase()}
                 </p>
 
                 <p className={styles.transactionDate}>
@@ -132,9 +133,9 @@ export default function HistoryPage() {
                   })}
                 </p>
 
-                {tx.tx_hash && (
+                {tx.transaction_hash && (
                   <a
-                    href={getExplorerURL(tx.tx_hash, tx.network)}
+                    href={getExplorerURL(tx.transaction_hash, tx.network)}
                     target="_blank"
                     rel="noopener noreferrer"
                     className={styles.transactionLink}
@@ -159,11 +160,11 @@ function truncateAddress(address) {
 
 function getExplorerURL(hash, network) {
   const baseURLs = {
+    ethereum: "https://etherscan.io/tx/",
     bsc: "https://bscscan.com/tx/",
     tbnb: "https://testnet.bscscan.com/tx/",
-    eth: "https://etherscan.io/tx/",
-    matic: "https://polygonscan.com/tx/",
-    avax: "https://snowtrace.io/tx/",
+    polygon: "https://polygonscan.com/tx/",
+    avalanche: "https://snowtrace.io/tx/",
   };
   return baseURLs[network?.toLowerCase()] + hash;
 }
