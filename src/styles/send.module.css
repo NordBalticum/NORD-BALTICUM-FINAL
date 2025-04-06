@@ -9,11 +9,22 @@
   align-items: flex-start;
   position: relative;
   z-index: 0;
-  animation: fadeInUp 0.7s cubic-bezier(0.25, 1, 0.5, 1); /* Updated to match Dashboard */
+  animation: fadeInUp 0.7s cubic-bezier(0.25, 1, 0.5, 1);
   overflow: hidden;
 }
 
-/* === FADE IN UP ANIMACIJA KAIP DASHBOARD === */
+/* === DASHBOARD LYGIO ANIMACIJOS === */
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @keyframes fadeInUp {
   from {
     opacity: 0;
@@ -229,10 +240,10 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* === Responsive Fixes – Premium Zoom-Out === */
+/* === Responsive Fixes === */
 @media screen and (max-width: 768px) {
   .wrapper {
-    transform: scale(0.86) translateY(2%);
+    transform: scale(0.90) translateY(1%);
     transform-origin: top center;
   }
 }
