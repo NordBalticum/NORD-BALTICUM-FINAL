@@ -9,12 +9,20 @@
   align-items: flex-start;
   position: relative;
   z-index: 0;
-  animation: fadeInUp 0.6s ease-in-out;
+  animation: fadeInUp 0.7s cubic-bezier(0.25, 1, 0.5, 1); /* Updated to match Dashboard */
+  overflow: hidden;
 }
 
+/* === FADE IN UP ANIMACIJA KAIP DASHBOARD === */
 @keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(24px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .wrapper {
@@ -62,7 +70,7 @@
   color: white;
   font-size: 0.95rem;
   line-height: 1.6;
-  text-align: center; /* <<< Centruotas! */
+  text-align: center;
 }
 
 .whiteText {
@@ -221,10 +229,10 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* === Responsive Fixes === */
+/* === Responsive Fixes – Premium Zoom-Out === */
 @media screen and (max-width: 768px) {
   .wrapper {
-    transform: scale(0.90) translateY(1%);
+    transform: scale(0.86) translateY(2%);
     transform-origin: top center;
   }
 }
