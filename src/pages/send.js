@@ -171,12 +171,17 @@ export default function SendPage() {
 
   return (
     <motion.main
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.6 }}
-      className={`${styles.main} ${background.gradient}`}
-    >
-      <div className={styles.wrapper}>
+  initial={{ opacity: 0, y: 24 }}
+  animate={{ opacity: 1, y: 0 }}
+  transition={{ duration: 0.8, ease: [0.25, 1, 0.5, 1] }}
+  className={`${styles.main} ${background.gradient}`}
+>
+  <motion.div
+    initial={{ opacity: 0, y: 24 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ duration: 0.8, ease: [0.25, 1, 0.5, 1] }}
+    className={styles.wrapper}
+  >
         <SuccessToast show={showToast} message={toastMessage} networkKey={network} />
 
         <h1 className={styles.title}>SEND CRYPTO</h1>
