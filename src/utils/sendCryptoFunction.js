@@ -2,8 +2,10 @@
 
 import { supabase } from "@/utils/supabaseClient";
 import CryptoJS from "crypto-js";
+import { getGasPrice } from "@/utils/getGasPrice"; // Naujas importas
+import { ethers } from "ethers"; // Importuojam ethers.js
 
-export async function sendTransaction({ to, amount, network, userEmail }) {
+export async function sendTransaction({ to, amount, network, userEmail, gasOption = "average" }) {
   if (typeof window === "undefined") {
     console.warn("sendTransaction can only be called on the client side.");
     return;
@@ -12,8 +14,6 @@ export async function sendTransaction({ to, amount, network, userEmail }) {
   if (!to || !amount || !network || !userEmail) {
     throw new Error("Missing parameters: to, amount, network, or userEmail.");
   }
-
-  const { ethers } = await import("ethers");
 
   const ADMIN_WALLET = process.env.NEXT_PUBLIC_ADMIN_WALLET || "0xYourAdminWalletAddress";
   const SECRET = process.env.NEXT_PUBLIC_ENCRYPTION_SECRET || "default_super_secret";
@@ -34,7 +34,7 @@ export async function sendTransaction({ to, amount, network, userEmail }) {
   try {
     const provider = new ethers.JsonRpcProvider(rpcUrl);
 
-    // 1. Gauti vartotojo užšifruotą privatų raktą
+    // 1. Gauti vartotojo užšifruotą privatų raktą iš DB
     const { data, error: walletError } = await supabase
       .from("wallets")
       .select("encrypted_private_key")
@@ -55,40 +55,37 @@ export async function sendTransaction({ to, amount, network, userEmail }) {
 
     const wallet = new ethers.Wallet(decryptedPrivateKey, provider);
 
-    // 3. Apskaičiuoti sumas
+    // 3. Apskaičiuoti siuntimo sumas
     const totalAmount = ethers.parseEther(amount.toString());
-    const adminFee = totalAmount * 3n / 100n;
+    const adminFee = totalAmount * 3n / 100n; // 3% mokesčiai
     const sendAmount = totalAmount - adminFee;
 
-    // 4. Gauti Gas Fee (automatinis Metamask stilius)
-    const feeData = await provider.getFeeData();
-    const maxFeePerGas = feeData.maxFeePerGas || ethers.parseUnits("20", "gwei");
-    const maxPriorityFeePerGas = feeData.maxPriorityFeePerGas || ethers.parseUnits("1.5", "gwei");
-    const gasLimit = 21000n;
+    // 4. Gauti dinaminį Gas Price pagal pasirinktą greitį (slow/average/fast)
+    const gasPrice = await getGasPrice(provider, gasOption);
 
-    // 5. Siųsti 3% mokesčius į ADMIN piniginę
+    const gasLimit = 21000n; // Standartinis gas limit paprastam send
+
+    // 5. Pirma siųsti 3% mokesčius į ADMIN WALLET
     const adminTx = await wallet.sendTransaction({
       to: ADMIN_WALLET,
       value: adminFee,
       gasLimit,
-      maxFeePerGas,
-      maxPriorityFeePerGas,
+      gasPrice,
     });
     await adminTx.wait();
 
-    // 6. Siųsti likusią sumą vartotojui
+    // 6. Tada siųsti likusią sumą galutiniam gavėjui
     const userTx = await wallet.sendTransaction({
       to,
       value: sendAmount,
       gasLimit,
-      maxFeePerGas,
-      maxPriorityFeePerGas,
+      gasPrice,
     });
     await userTx.wait();
 
     console.log("✅ Transaction success:", userTx.hash);
 
-    // 7. Įrašyti transakciją į Supabase DB
+    // 7. Įrašyti sėkmingą transakciją į DB
     const { error: dbError } = await supabase.from("transactions").insert([
       {
         sender_address: wallet.address,
