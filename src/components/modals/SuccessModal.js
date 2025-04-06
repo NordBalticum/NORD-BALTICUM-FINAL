@@ -2,12 +2,25 @@
 
 import { useEffect } from "react";
 import { motion } from "framer-motion";
-import styles from "@/components/modals/successmodal.module.css";
+import styles from "@/components/modals/successmodal.module.css"; // Tavo modal CSS
+
+// Tinklų exploreriai
+const explorers = {
+  ethereum: "https://etherscan.io/tx/",
+  bsc: "https://bscscan.com/tx/",
+  tbnb: "https://testnet.bscscan.com/tx/",
+  polygon: "https://polygonscan.com/tx/",
+  avalanche: "https://snowtrace.io/tx/",
+};
 
 export default function SuccessModal({
   message = "✅ Transaction Successful!",
   onClose = () => {},
+  transactionHash,
+  network,
 }) {
+  const explorerLink = explorers[network] ? `${explorers[network]}${transactionHash}` : "";
+
   // ✅ Auto-close po 5 sekundžių
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -16,7 +29,7 @@ export default function SuccessModal({
       }
     }, 5000);
 
-    return () => clearTimeout(timer); // ✅ Saugu - išvalom timer
+    return () => clearTimeout(timer);
   }, [onClose]);
 
   return (
@@ -66,10 +79,30 @@ export default function SuccessModal({
               color: "#00ff00",
               fontWeight: "600",
               fontSize: "1.1rem",
+              marginBottom: "16px",
             }}
           >
             {message}
           </p>
+
+          {/* Explorer Link */}
+          {transactionHash && explorerLink && (
+            <a
+              href={explorerLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={styles.explorerLink}
+              style={{
+                display: "inline-block",
+                marginTop: "10px",
+                color: "#00bfff",
+                textDecoration: "underline",
+                fontSize: "1rem",
+              }}
+            >
+              View Transaction on {networkShortName(network)}
+            </a>
+          )}
         </div>
 
         {/* Bottom Close Button */}
@@ -87,4 +120,16 @@ export default function SuccessModal({
       </motion.div>
     </motion.div>
   );
+}
+
+// Helper funkcija pavadinimams
+function networkShortName(network) {
+  const names = {
+    ethereum: "Etherscan",
+    bsc: "BscScan",
+    tbnb: "BscScan Testnet",
+    polygon: "PolygonScan",
+    avalanche: "Snowtrace",
+  };
+  return names[network] || "Explorer";
 }
