@@ -13,11 +13,11 @@ const TOKEN_IDS = {
 
 // ✅ Atsarginės (fallback) kainos
 const FALLBACK_PRICES = {
-  ethereum: 2900,
-  bsc: 450,
-  matic: 1.5,
-  avalanche: 30,
-  tbnb: 450,
+  ethereum: { eur: 2900, usd: 3100 },
+  bsc: { eur: 450, usd: 480 },
+  matic: { eur: 1.5, usd: 1.6 },
+  avalanche: { eur: 30, usd: 32 },
+  tbnb: { eur: 450, usd: 480 },
 };
 
 // ✅ Ultimate Price Hook
@@ -28,7 +28,7 @@ export function usePrices() {
   const fetchPrices = useCallback(async () => {
     try {
       const ids = Object.values(TOKEN_IDS).join(",");
-      const response = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=eur`, {
+      const response = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=eur,usd`, {
         cache: "no-store", // ✅ Neima cache
       });
 
@@ -38,7 +38,10 @@ export function usePrices() {
       const formatted = {};
 
       for (const [symbol, id] of Object.entries(TOKEN_IDS)) {
-        formatted[symbol] = data[id]?.eur || FALLBACK_PRICES[symbol];
+        formatted[symbol] = {
+          eur: data[id]?.eur || FALLBACK_PRICES[symbol].eur,
+          usd: data[id]?.usd || FALLBACK_PRICES[symbol].usd,
+        };
       }
 
       setPrices(formatted);
