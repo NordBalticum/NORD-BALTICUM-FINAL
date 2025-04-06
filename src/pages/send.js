@@ -16,7 +16,7 @@ import SuccessModal from "@/components/modals/SuccessModal";
 import ErrorModal from "@/components/modals/ErrorModal";
 import SuccessToast from "@/components/SuccessToast";
 
-import { supabase } from "@/utils/supabaseClient"; // ✅ Real-time history update
+import { supabase } from "@/utils/supabaseClient";
 
 import styles from "@/styles/send.module.css";
 import background from "@/styles/background.module.css";
@@ -120,7 +120,6 @@ export default function SendPage() {
         console.log("✅ Transaction successful, hash:", hash);
         setTransactionHash(hash);
 
-        // ✅ Insert into history in real-time
         await supabase.from("transactions").insert([{
           sender_email: user.email,
           to_address: receiver.trim(),
@@ -153,6 +152,15 @@ export default function SendPage() {
       refetchFees();
     }
   }, [amount, network, refetchFees]);
+
+  // ✅ Automatinis balansų atnaujinimas kas 10 sekundžių (background polling)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      refetch();
+    }, 10000); // kas 10s
+
+    return () => clearInterval(interval);
+  }, [refetch]);
 
   if (!isReady || initialLoading || feesLoading) {
     return (
@@ -318,4 +326,4 @@ export default function SendPage() {
       </div>
     </motion.main>
   );
-          }
+}
