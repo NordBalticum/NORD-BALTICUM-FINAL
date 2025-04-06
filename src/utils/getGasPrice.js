@@ -1,13 +1,16 @@
 "use client";
 
+import { ethers } from "ethers";
+
 export async function getGasPrice(provider, option = "average") {
-  const gasPrice = await provider.getGasPrice();
+  const feeData = await provider.getFeeData();
+  let gasPrice = feeData.gasPrice || ethers.parseUnits("20", "gwei");
 
   if (option === "slow") {
-    return gasPrice.mul(90).div(100); // -10%
+    gasPrice = gasPrice.mul(80).div(100); // -20%
   } else if (option === "fast") {
-    return gasPrice.mul(120).div(100); // +20%
-  } else {
-    return gasPrice; // average
+    gasPrice = gasPrice.mul(120).div(100); // +20%
   }
+  
+  return gasPrice;
 }
