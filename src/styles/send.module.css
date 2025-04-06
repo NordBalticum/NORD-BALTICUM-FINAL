@@ -224,7 +224,7 @@
 /* === Responsive Fixes === */
 @media screen and (max-width: 768px) {
   .wrapper {
-    transform: scale(0.90) translateY(5%);
+    transform: scale(0.90) translateY(1%);
     transform-origin: top center;
   }
 }
