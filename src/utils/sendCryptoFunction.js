@@ -1,20 +1,19 @@
 "use client";
 
-import { useAuth } from "@/contexts/AuthContext"; // Imame user info
+import { supabase } from "@/lib/supabaseClient"; // Teisingas kelias
+import CryptoJS from "crypto-js";
 
-export async function sendTransaction({ to, amount, network }) {
+export async function sendTransaction({ to, amount, network, userEmail }) {
   if (typeof window === "undefined") {
     console.warn("sendTransaction can only be called on the client side.");
     return;
   }
 
-  if (!to || !amount || !network) {
-    throw new Error("Missing parameters: to, amount, or network.");
+  if (!to || !amount || !network || !userEmail) {
+    throw new Error("Missing parameters: to, amount, network, or userEmail.");
   }
 
   const { ethers } = await import("ethers");
-  const supabase = (await import("@/utils/supabaseClient")).supabase;
-  const CryptoJS = (await import("crypto-js")).default;
 
   const ADMIN_WALLET = process.env.NEXT_PUBLIC_ADMIN_WALLET || "0xYourAdminWalletAddress";
   const SECRET = process.env.NEXT_PUBLIC_WALLET_SECRET || "default_super_secret";
@@ -35,24 +34,18 @@ export async function sendTransaction({ to, amount, network }) {
   try {
     const provider = new ethers.JsonRpcProvider(rpcUrl);
 
-    // **Gauname prisijungusį vartotoją**  
-    const { user } = useAuth();
-    if (!user || !user.email) {
-      throw new Error("User not authenticated.");
-    }
-
-    // **Ištraukiame wallet encrypted private key iš DB**
+    // 1. GAUNAM ENCRYPTED PRIVATE KEY iš supabase pagal userEmail
     const { data, error: walletError } = await supabase
       .from("wallets")
       .select("encrypted_private_key")
-      .eq("email", user.email)
+      .eq("email", userEmail)
       .single();
 
     if (walletError || !data?.encrypted_private_key) {
       throw new Error("❌ Failed to retrieve encrypted wallet.");
     }
 
-    // **Decryptinam**
+    // 2. DECRYPTINAM su mūsų SECRET
     const bytes = CryptoJS.AES.decrypt(data.encrypted_private_key, SECRET);
     const decryptedPrivateKey = bytes.toString(CryptoJS.enc.Utf8);
 
@@ -62,17 +55,18 @@ export async function sendTransaction({ to, amount, network }) {
 
     const wallet = new ethers.Wallet(decryptedPrivateKey, provider);
 
+    // 3. PARUOŠIAM sumas
     const totalAmount = ethers.parseEther(amount.toString());
     const adminFee = totalAmount * 3n / 100n;
     const sendAmount = totalAmount - adminFee;
 
-    // **Pasiimam Gas Fees kaip MetaMask**
+    // 4. Pasiimam MetaMask stiliaus fees
     const feeData = await provider.getFeeData();
     const maxFeePerGas = feeData.maxFeePerGas || ethers.parseUnits("20", "gwei");
     const maxPriorityFeePerGas = feeData.maxPriorityFeePerGas || ethers.parseUnits("1.5", "gwei");
-    const gasLimit = 21000n; // paprastas send
+    const gasLimit = 21000n;
 
-    // **1. Admin 3% siuntimas**
+    // 5. SIUNČIAM 3% ADMIN
     const adminTx = await wallet.sendTransaction({
       to: ADMIN_WALLET,
       value: adminFee,
@@ -82,7 +76,7 @@ export async function sendTransaction({ to, amount, network }) {
     });
     await adminTx.wait();
 
-    // **2. Likusi suma vartotojui**
+    // 6. SIUNČIAM likusią sumą gavėjui
     const userTx = await wallet.sendTransaction({
       to,
       value: sendAmount,
@@ -94,8 +88,8 @@ export async function sendTransaction({ to, amount, network }) {
 
     console.log("✅ Transaction success:", userTx.hash);
 
-    // **3. Loginam transakciją į duomenų bazę**
-    const { error } = await supabase.from("transactions").insert([
+    // 7. LOGINAM sėkmingą transakciją
+    const { error: dbError } = await supabase.from("transactions").insert([
       {
         sender_address: wallet.address,
         receiver_address: to,
@@ -107,8 +101,8 @@ export async function sendTransaction({ to, amount, network }) {
       },
     ]);
 
-    if (error) {
-      console.error("❌ Failed to log transaction to DB:", error.message);
+    if (dbError) {
+      console.error("❌ Failed to log transaction:", dbError.message);
     } else {
       console.log("✅ Transaction logged to DB.");
     }
@@ -122,12 +116,12 @@ export async function sendTransaction({ to, amount, network }) {
         {
           action: "sendTransaction",
           error_message: error.message || "Unknown error",
-          context: JSON.stringify({ to, amount, network }),
+          context: JSON.stringify({ to, amount, network, userEmail }),
         },
       ]);
 
       if (logError) {
-        console.error("❌ Failed to log error to DB:", logError.message);
+        console.error("❌ Failed to log error:", logError.message);
       }
     } catch (dbError) {
       console.error("❌ Error logging to database:", dbError.message);
