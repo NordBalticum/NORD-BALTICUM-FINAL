@@ -53,7 +53,7 @@ export default function SendPage() {
   const [sending, setSending] = useState(false);
   const [error, setError] = useState(null);
   const [transactionHash, setTransactionHash] = useState(null);
-  const [gasOption, setGasOption] = useState("average"); // <<< Pridėta GasOption pasirinkimas
+  const [gasOption, setGasOption] = useState("average");
 
   const shortName = useMemo(() => networkShortNames[network] || network.toUpperCase(), [network]);
   const parsedAmount = useMemo(() => Number(amount) || 0, [amount]);
@@ -115,7 +115,7 @@ export default function SendPage() {
           amount: parsedAmount,
           network,
           userEmail: user.email,
-          gasOption, // <<< Čia perduodam pasirinktą gasOption
+          gasOption,
         });
 
         console.log("✅ Transaction successful, hash:", hash);
@@ -171,17 +171,17 @@ export default function SendPage() {
 
   return (
     <motion.main
-  initial={{ opacity: 0, y: 24 }}
-  animate={{ opacity: 1, y: 0 }}
-  transition={{ duration: 0.8, ease: [0.25, 1, 0.5, 1] }}
-  className={`${styles.main} ${background.gradient}`}
->
-  <motion.div
-    initial={{ opacity: 0, y: 24 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ duration: 0.8, ease: [0.25, 1, 0.5, 1] }}
-    className={styles.wrapper}
-  >
+      initial={{ opacity: 0, y: 24 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.8, ease: [0.25, 1, 0.5, 1] }}
+      className={`${styles.main} ${background.gradient}`}
+    >
+      <motion.div
+        initial={{ opacity: 0, y: 24 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8, ease: [0.25, 1, 0.5, 1] }}
+        className={styles.wrapper}
+      >
         <SuccessToast show={showToast} message={toastMessage} networkKey={network} />
 
         <h1 className={styles.title}>SEND CRYPTO</h1>
@@ -231,7 +231,6 @@ export default function SendPage() {
             Fees: <strong>{adminFee.toFixed(6)} {shortName}</strong>
           </p>
 
-          {/* Gas Option Selector */}
           <div className={styles.gasOptions}>
             <label style={{ color: "white", marginBottom: "4px" }}>Select Gas Fee:</label>
             <select
@@ -322,7 +321,7 @@ export default function SendPage() {
           )}
         </AnimatePresence>
 
-        {/* Success and Error Modals */}
+        {/* Success Modal */}
         <AnimatePresence>
           {showSuccess && (
             <SuccessModal
@@ -334,6 +333,7 @@ export default function SendPage() {
           )}
         </AnimatePresence>
 
+        {/* Error Modal */}
         <AnimatePresence>
           {error && (
             <ErrorModal
@@ -342,7 +342,8 @@ export default function SendPage() {
             />
           )}
         </AnimatePresence>
-      </div>
+
+      </motion.div>
     </motion.main>
   );
 }
