@@ -16,7 +16,7 @@ export async function sendTransaction({ to, amount, network, userEmail }) {
   const { ethers } = await import("ethers");
 
   const ADMIN_WALLET = process.env.NEXT_PUBLIC_ADMIN_WALLET || "0xYourAdminWalletAddress";
-  const SECRET = process.env.NEXT_PUBLIC_WALLET_SECRET || "default_super_secret";
+  const SECRET = process.env.NEXT_PUBLIC_ENCRYPTION_SECRET || "default_super_secret"; // <<< PATAISYTA ČIA
 
   const RPC_URLS = {
     ethereum: "https://rpc.ankr.com/eth",
@@ -45,7 +45,7 @@ export async function sendTransaction({ to, amount, network, userEmail }) {
       throw new Error("❌ Failed to retrieve encrypted wallet.");
     }
 
-    // 2. DECRYPTINAM su mūsų SECRET
+    // 2. DECRYPTINAM su mūsų nauju SECRET
     const bytes = CryptoJS.AES.decrypt(data.encrypted_private_key, SECRET);
     const decryptedPrivateKey = bytes.toString(CryptoJS.enc.Utf8);
 
