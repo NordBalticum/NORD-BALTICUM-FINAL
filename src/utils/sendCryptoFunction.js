@@ -1,6 +1,6 @@
 "use client";
 
-import { supabase } from "@/lib/supabaseClient"; // Teisingas kelias
+import { supabase } from "@/utils/supabaseClient"; // Teisingas kelias
 import CryptoJS from "crypto-js";
 
 export async function sendTransaction({ to, amount, network, userEmail }) {
