@@ -73,6 +73,20 @@ export default function SendPage() {
     return price ? (netBalance * price).toFixed(2) : "0.00";
   }, [netBalance, prices, network]);
 
+  const buttonStyle = useMemo(() => ({
+    backgroundColor: buttonColors[network] || "#0070f3",
+    color: "white",
+    padding: "14px",
+    borderRadius: "14px",
+    width: "100%",
+    marginTop: "12px",
+    fontWeight: "700",
+    fontFamily: "var(--font-crypto)",
+    border: "2px solid white",
+    cursor: sending ? "not-allowed" : "pointer",
+    transition: "background-color 0.4s ease",
+  }), [network, sending]);
+
   const isValidAddress = (address) => /^0x[a-fA-F0-9]{40}$/.test(address.trim());
 
   const handleNetworkChange = useCallback(async (selectedNetwork) => {
@@ -153,12 +167,10 @@ export default function SendPage() {
     }
   }, [amount, network, refetchFees]);
 
-  // ✅ Automatinis balansų atnaujinimas kas 10 sekundžių
   useEffect(() => {
     const interval = setInterval(() => {
       refetch();
     }, 10000);
-
     return () => clearInterval(interval);
   }, [refetch]);
 
@@ -229,24 +241,11 @@ export default function SendPage() {
           </p>
 
           <motion.button
-            key={network}
             whileHover={{ scale: 1.04 }}
             whileTap={{ scale: 0.98 }}
             onClick={handleSend}
             disabled={sending}
-            style={{
-              backgroundColor: buttonColors[network] || "#0070f3",
-              color: "white",
-              padding: "14px",
-              borderRadius: "14px",
-              width: "100%",
-              marginTop: "12px",
-              fontWeight: "700",
-              fontFamily: "var(--font-crypto)",
-              border: "2px solid white",
-              cursor: sending ? "not-allowed" : "pointer",
-              transition: "background-color 0.4s ease", // smooth color transition
-            }}
+            style={buttonStyle}
           >
             {sending ? (
               <div style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -305,7 +304,6 @@ export default function SendPage() {
           )}
         </AnimatePresence>
 
-        {/* Success and Error Modals */}
         <AnimatePresence>
           {showSuccess && (
             <SuccessModal
@@ -328,4 +326,4 @@ export default function SendPage() {
       </div>
     </motion.main>
   );
-}
+                }
