@@ -1,4 +1,4 @@
-/* === SEND MODULE FINAL ULTRA PREMIUM (PERFECT FULLSCREEN & SCALE) === */
+/* === SEND MODULE FINAL ULTRA PREMIUM v2 (PERFECT FULLSCREEN & SCALE) === */
 
 /* ✅ MAIN BACKGROUND FULLSCREEN */
 .main {
@@ -12,7 +12,7 @@
   background-size: cover;
   position: relative;
   z-index: 0;
-  padding-top: 14vh; /* Pakeliam visą turinį */
+  padding-top: 10vh; /* Pakeliam dar aukščiau */
   transform: scale(0.8); /* Mastelio mažinimas -20% */
   transform-origin: top center;
   animation: fadeIn 1s cubic-bezier(0.25, 1, 0.5, 1) forwards;
@@ -34,7 +34,7 @@
 .wrapper {
   width: 140vw;
   max-width: none;
-  max-height: none;
+  height: calc(100vh - 160px); /* Aukštis su plius 160px užpildymu */
   padding: clamp(24px, 4vw, 48px);
   display: flex;
   flex-direction: column;
