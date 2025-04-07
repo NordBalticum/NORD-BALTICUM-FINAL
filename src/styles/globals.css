@@ -1,3 +1,4 @@
+/* === GLOBAL ROOT VARIABLES === */
 :root {
   --max-width: 1440px;
   --min-width: 320px;
@@ -6,7 +7,7 @@
   --transition: all 0.3s ease-in-out;
   --safe-area-inset-bottom: env(safe-area-inset-bottom);
 
-  /* Spalviniai kintamieji */
+  /* SPALVOS (nustatomos theme.css) */
   --font-crypto: 'Share Tech Mono', monospace;
   --white-gold: #FFD700;
   --gold-glow: rgba(255, 215, 0, 0.3);
@@ -20,7 +21,7 @@
   -webkit-tap-highlight-color: transparent;
 }
 
-/* === HTML & BODY STRUCTURE === */
+/* === HTML & BODY – FULLSCREEN === */
 html,
 body {
   width: 100%;
@@ -29,35 +30,31 @@ body {
   font-family: 'Poppins', sans-serif;
   font-size: 100%;
   color: var(--primary-text);
-  scroll-behavior: none !important;
+  background: radial-gradient(ellipse at center, var(--primary-bg) 20%, var(--primary-bg-dark) 100%) no-repeat center center fixed;
+  background-size: cover;
+  scroll-behavior: none;
   -webkit-font-smoothing: antialiased;
-  overflow: hidden !important;
-  touch-action: none !important;
-  user-select: none !important;
+  overflow: hidden;
+  touch-action: none;
+  user-select: none;
   position: fixed;
   inset: 0;
   zoom: reset;
   overscroll-behavior: none;
 }
 
-/* === SCROLLBAR OFF (visiems naršyklės engine) === */
-::-webkit-scrollbar {
-  display: none !important;
-  width: 0 !important;
-  height: 0 !important;
+/* === SCROLLBAR OFF VISIEMS ENGINE === */
+::-webkit-scrollbar, body::-moz-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
 }
-::-webkit-scrollbar-thumb {
-  background: transparent !important;
-}
-::-webkit-scrollbar-track {
-  background: transparent !important;
-}
-body::-moz-scrollbar {
-  display: none !important;
+::-webkit-scrollbar-thumb, ::-webkit-scrollbar-track {
+  background: transparent;
 }
 body {
-  -ms-overflow-style: none !important;
-  scrollbar-width: none !important;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 /* === GLOBAL FULLSCREEN CONTAINER === */
@@ -65,25 +62,34 @@ body {
   position: fixed;
   top: 50%;
   left: 50%;
-  width: 100vw;
-  height: 100vh;
-  transform: translate(-50%, -50%);
+  width: calc(100vw - 160px);
+  height: calc(100vh - 160px);
   display: flex;
-  justify-content: center;
   align-items: center;
-  padding-inline: clamp(16px, 4vw, 64px);
-  transition: var(--transition);
+  justify-content: center;
+  transform: translate(-50%, -50%);
+  background: inherit;
+  background-size: cover;
+  background-position: center;
   overflow: visible;
+  padding: clamp(16px, 4vw, 64px);
+  transition: var(--transition);
   z-index: 1;
 }
 
-/* === RESPONSIVE FIX === */
-@media (max-width: 768px) {
-  .globalContainer {
-    transform: scale(0.75) translateY(6%);
-    transform-origin: top center;
-    padding-inline: clamp(8px, 5vw, 24px);
-  }
+/* === CONTENT WRAPPER INSIDE GLOBAL === */
+.contentWrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: clamp(24px, 5vw, 48px);
+  border-radius: var(--radius);
+  backdrop-filter: blur(15px);
+  background: linear-gradient(160deg, var(--primary-bg) 0%, var(--primary-bg-dark) 100%);
+  box-shadow: 0 0 30px var(--gold-glow);
+  max-width: 640px;
+  width: 100%;
 }
 
 /* === UTILITY CLASSES === */
@@ -105,5 +111,77 @@ body {
   100% { opacity: 1; transform: translateY(0); }
 }
 .fadeIn {
-  animation: fadeIn 0.4s ease;
+  animation: fadeIn 0.5s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+@keyframes fadeOut {
+  0% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(12px); }
+}
+.fadeOut {
+  animation: fadeOut 0.5s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+/* === RESPONSIVE PREMIUM SCALE FIXES === */
+@media (max-width: 1600px) {
+  .globalContainer {
+    width: calc(100vw - 140px);
+    height: calc(100vh - 140px);
+    background-size: 180% 180%;
+  }
+}
+@media (max-width: 1200px) {
+  .globalContainer {
+    width: calc(100vw - 120px);
+    height: calc(100vh - 120px);
+    background-size: 160% 160%;
+  }
+}
+@media (max-width: 992px) {
+  .globalContainer {
+    width: calc(100vw - 100px);
+    height: calc(100vh - 100px);
+    background-size: 140% 140%;
+  }
+}
+@media (max-width: 768px) {
+  .globalContainer {
+    width: calc(100vw - 80px);
+    height: calc(100vh - 80px);
+    background-size: 120% 120%;
+    transform: scale(0.90) translateY(6%);
+    transform-origin: top center;
+  }
+}
+@media (max-width: 576px) {
+  .globalContainer {
+    width: 100vw;
+    height: 100vh;
+    background-size: 100% 100%;
+    transform: scale(0.88) translateY(8%);
+  }
+}
+@media (max-width: 460px) {
+  .globalContainer {
+    width: 100vw;
+    height: 100vh;
+    background-size: 100% 100%;
+    transform: scale(0.86) translateY(10%);
+  }
+}
+@media (max-width: 400px) {
+  .globalContainer {
+    width: 100vw;
+    height: 100vh;
+    background-size: 100% 100%;
+    transform: scale(0.84) translateY(12%);
+  }
+}
+@media (max-width: 360px) {
+  .globalContainer {
+    width: 100vw;
+    height: 100vh;
+    background-size: 100% 100%;
+    transform: scale(0.82) translateY(14%);
+  }
 }
