@@ -1,17 +1,5 @@
 /* === SEND MODULE ULTRA PREMIUM FINAL (TrustWallet / Coinbase style) === */
 
-/* ✅ BODY BACKGROUND (vieningas visam puslapiui) */
-body {
-  margin: 0;
-  padding: 0;
-  width: 100%;
-  height: 100%;
-  background: radial-gradient(circle at center, #0a122a 20%, #1b2370 65%, #2b37ff 100%) no-repeat center center fixed;
-  background-size: cover;
-  overflow-x: hidden;
-  font-family: var(--font-crypto);
-}
-
 /* ✅ MAIN */
 .main {
   display: flex;
@@ -26,7 +14,7 @@ body {
   animation: fadeIn 1s cubic-bezier(0.25, 1, 0.5, 1) forwards;
 }
 
-/* ✅ WRAPPER (PAGRINDINIS TURINYS) */
+/* ✅ WRAPPER */
 .wrapper {
   width: 100%;
   max-width: clamp(320px, 90vw, 720px);
