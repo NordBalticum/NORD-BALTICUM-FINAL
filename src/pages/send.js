@@ -170,7 +170,7 @@ export default function SendPage() {
 
   return (
     <main className={`${styles.main} ${background.gradient} fadeIn`}>
-      <div className={styles.wrapper}>
+      <div className={`${styles.wrapper} fadeDown`}>
         <SuccessToast show={showToast} message={toastMessage} networkKey={network} />
 
         <h1 className={styles.title}>SEND CRYPTO</h1>
@@ -243,13 +243,7 @@ export default function SendPage() {
               transition: "background-color 0.4s ease",
             }}
           >
-            {sending ? (
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
-                Sending <MiniLoadingSpinner />
-              </div>
-            ) : (
-              "SEND NOW"
-            )}
+            {sending ? "Sending..." : "SEND NOW"}
           </button>
         </div>
 
@@ -282,4 +276,4 @@ export default function SendPage() {
       </div>
     </main>
   );
-        }
+              }
