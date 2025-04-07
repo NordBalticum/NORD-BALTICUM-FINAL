@@ -11,7 +11,7 @@
   scroll-behavior: smooth;
   -webkit-font-smoothing: antialiased;
   z-index: 1;
-  overflow: hidden; /* SCROLL FIX – no scrollbars */
+  overflow: hidden;
 }
 
 .container::before {
@@ -22,7 +22,7 @@
   background-repeat: repeat;
   background-position: center;
   background-size: cover;
-  opacity: 0.18;
+  opacity: 0.15;
   z-index: 0;
   pointer-events: none;
 }
@@ -44,8 +44,8 @@
   width: 100%;
   max-width: 960px;
   margin-bottom: 16px;
-  border-radius: 20px;
-  background: rgba(255, 255, 255, 0.04);
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.05);
   backdrop-filter: blur(18px) saturate(140%);
   box-shadow: 0 0 28px rgba(255, 255, 255, 0.05);
   overflow: hidden;
@@ -67,7 +67,7 @@
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 12px;
-  color: white;
+  color: var(--primary-text);
   cursor: pointer;
   transition: 0.3s ease;
 }
@@ -86,13 +86,13 @@
 
 .assetItem {
   background: rgba(255, 255, 255, 0.05);
-  border: 1px solid white;
+  border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 22px;
   padding: 18px 24px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  transition: 0.3s ease;
+  transition: var(--transition);
   backdrop-filter: blur(22px) saturate(160%);
   box-shadow: 0 0 28px rgba(255, 255, 255, 0.05);
   cursor: pointer;
@@ -100,7 +100,7 @@
 
 .assetItem:hover {
   transform: scale(1.02);
-  box-shadow: 0 0 36px rgba(255, 255, 255, 0.2);
+  box-shadow: 0 0 36px var(--gold-glow);
 }
 
 .assetLeft {
@@ -113,7 +113,7 @@
   width: 42px;
   height: 42px;
   border-radius: 50%;
-  background: white;
+  background: rgba(255, 255, 255, 0.08);
   padding: 4px;
   object-fit: contain;
   box-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
@@ -128,14 +128,14 @@
 .assetSymbol {
   font-weight: 700;
   font-size: 1.1rem;
-  color: white;
+  color: var(--white-gold);
   font-family: var(--font-crypto);
 }
 
 .assetName {
   font-size: 0.9rem;
   opacity: 0.7;
-  color: white;
+  color: var(--primary-text);
   font-family: var(--font-crypto);
 }
 
@@ -149,57 +149,39 @@
 .assetAmount {
   font-weight: 600;
   font-size: 1rem;
-  color: white;
+  color: var(--white-gold);
   font-family: var(--font-crypto);
 }
 
 .assetEur {
   font-size: 0.85rem;
   opacity: 0.7;
-  color: white;
+  color: var(--primary-text);
   font-family: var(--font-crypto);
 }
 
-/* Animacijos */
+/* ✅ ANIMACIJOS */
 @keyframes fadeInDown {
-  from {
-    opacity: 0;
-    transform: translateY(-24px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(-24px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(24px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes pulseGlow {
-  0% {
-    text-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
-  }
-  50% {
-    text-shadow: 0 0 20px rgba(255, 255, 255, 0.4);
-  }
-  100% {
-    text-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
-  }
+  0%   { text-shadow: 0 0 10px rgba(255, 255, 255, 0.2); }
+  50%  { text-shadow: 0 0 20px rgba(255, 255, 255, 0.4); }
+  100% { text-shadow: 0 0 10px rgba(255, 255, 255, 0.2); }
 }
 
-/* Responsive */
+/* ✅ RESPONSIVE */
 @media (max-width: 768px) {
   .dashboardWrapper {
     padding: 20px 18px 80px;
-    transform: scale(0.96) translateY(3%);
+    transform: scale(0.95) translateY(3%);
     transform-origin: top center;
   }
 
