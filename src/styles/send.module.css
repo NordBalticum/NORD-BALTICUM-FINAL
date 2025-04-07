@@ -1,20 +1,33 @@
-/* === SEND MODULE ULTRA PREMIUM FINAL (TrustWallet / Coinbase style) === */
+/* === SEND MODULE FINAL ULTRA PREMIUM === */
 
-/* ✅ MAIN */
+/* ✅ MAIN BACKGROUND FULLSCREEN */
 .main {
   display: flex;
   justify-content: center;
   align-items: center;
-  width: 100vw;
+  width: 140vw; /* platesnis fonas, kad nekirstų */
   height: 100vh;
-  overflow: visible;
-  background: transparent;
+  overflow: hidden;
+  background: radial-gradient(circle at center, var(--primary-bg) 20%, var(--primary-bg-dark) 80%) no-repeat center center fixed;
+  background-size: cover;
   position: relative;
-  z-index: 1;
+  z-index: 0;
   animation: fadeIn 1s cubic-bezier(0.25, 1, 0.5, 1) forwards;
 }
 
-/* ✅ WRAPPER */
+/* ✅ FADE IN EFFECT */
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* ✅ WRAPPER (VISAS TURINYS) */
 .wrapper {
   width: 100%;
   max-width: clamp(320px, 90vw, 720px);
@@ -29,22 +42,9 @@
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 20px;
   box-shadow: 0 0 40px rgba(255, 255, 255, 0.1);
-  transform: translateY(15%);
 }
 
-/* ✅ FADE IN ANIMACIJA */
-@keyframes fadeIn {
-  0% {
-    opacity: 0;
-    transform: translateY(30px) scale(0.98);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(15%) scale(1);
-  }
-}
-
-/* ✅ BALANCE TABLE */
+/* ✅ BALANCE TABLE + FEES */
 .balanceTable,
 .feeBreakdown {
   width: 100%;
@@ -60,7 +60,7 @@
   font-size: 0.95rem;
 }
 
-/* ✅ INPUTAI */
+/* ✅ INPUT FIELDS */
 .walletActions {
   width: 100%;
   display: flex;
@@ -94,7 +94,7 @@
   margin-bottom: 6px;
 }
 
-/* ✅ OVERLAY (MODAL) */
+/* ✅ MODAL OVERLAY */
 .overlay {
   position: fixed;
   inset: 0;
@@ -106,7 +106,7 @@
   z-index: 9999;
 }
 
-/* ✅ MODAL TURINYS */
+/* ✅ MODAL CONTENT */
 .confirmModal {
   background: rgba(15, 20, 40, 0.95);
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -117,7 +117,7 @@
   text-align: center;
 }
 
-/* ✅ MODAL TEKSTAI */
+/* ✅ MODAL TEXT */
 .modalTitle {
   font-size: 1.4rem;
   font-weight: 700;
@@ -158,24 +158,34 @@
   background: linear-gradient(to right, #ff3c3c, #c71d1d);
 }
 
-/* ✅ RESPONSIVE PREMIUM SCALE */
+/* ✅ RESPONSIVE TOBULAS SCALE */
+@media (max-width: 1600px) {
+  .main {
+    width: 140vw;
+  }
+}
 @media (max-width: 1200px) {
-  .wrapper {
-    transform: translateY(10%);
+  .main {
+    width: 140vw;
+  }
+}
+@media (max-width: 992px) {
+  .main {
+    width: 140vw;
   }
 }
 @media (max-width: 768px) {
-  .wrapper {
-    transform: translateY(8%);
+  .main {
+    width: 140vw;
   }
 }
 @media (max-width: 576px) {
-  .wrapper {
-    transform: translateY(6%);
+  .main {
+    width: 140vw;
   }
 }
 @media (max-width: 460px) {
-  .wrapper {
-    transform: translateY(4%);
+  .main {
+    width: 140vw;
   }
 }
