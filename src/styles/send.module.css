@@ -11,7 +11,7 @@
   z-index: 0;
   overflow: hidden;
   padding-top: clamp(60px, 8vh, 100px);
-  transform: scale(0.80);
+  transform: scale(0.85); /* <<< Pataisyta scale */
   transform-origin: top center;
 }
 
@@ -35,7 +35,7 @@
 /* === WRAPPER === */
 .wrapper {
   width: 100%;
-  max-width: 600px;
+  max-width: 720px; /* <<< Išplėsta iki 720px */
   padding: clamp(24px, 4vw, 48px);
   display: flex;
   flex-direction: column;
@@ -68,7 +68,7 @@
 .balanceTable,
 .feeBreakdown {
   width: 100%;
-  max-width: 540px;
+  max-width: 640px;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 16px;
@@ -105,7 +105,7 @@
   flex-direction: column;
   gap: 12px;
   width: 100%;
-  max-width: 540px;
+  max-width: 640px;
   margin-top: 8px;
 }
 
@@ -148,7 +148,7 @@
   border-radius: 18px;
   box-shadow: 0 0 24px rgba(255, 255, 255, 0.1);
   width: 100%;
-  max-width: 460px;
+  max-width: 480px;
   color: white;
   text-align: left;
 }
@@ -204,7 +204,7 @@
 /* === RESPONSIVE PREMIUM SCALING === */
 @media screen and (max-width: 950px) {
   .main {
-    transform: scale(0.72);
+    transform: scale(0.80); /* <<< Didesnis scale nei prieš tai */
     transform-origin: top center;
     padding-top: 4vh;
   }
@@ -212,7 +212,7 @@
 
 @media screen and (max-width: 540px) {
   .main {
-    transform: scale(0.70);
+    transform: scale(0.78); /* <<< Didesnis scale nei prieš tai */
     transform-origin: top center;
     padding-top: 2vh;
   }
@@ -220,18 +220,18 @@
 
 @media screen and (min-width: 1600px) {
   .wrapper {
-    max-width: 720px;
+    max-width: 820px;
   }
 }
 
 @media screen and (min-width: 2560px) {
   .wrapper {
-    max-width: 820px;
+    max-width: 900px;
   }
 }
 
 @media screen and (min-width: 4000px) {
   .wrapper {
-    max-width: 960px;
+    max-width: 1080px;
   }
 }
