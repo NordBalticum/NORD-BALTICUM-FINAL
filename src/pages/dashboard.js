@@ -94,7 +94,7 @@ export default function Dashboard() {
               const eurValue = balance * eurRate;
               const usdValue = balance * usdRate;
 
-              const routeSymbol = routeNames[network] || network; // ✅ Saugus route
+              const routeSymbol = routeNames[network] || network;
 
               return (
                 <div
@@ -119,7 +119,7 @@ export default function Dashboard() {
                         {symbol?.toUpperCase() || network.toUpperCase()}
                       </div>
                       <div className={styles.assetName}>
-                        {names[network] || "Unknown"}
+                        {names[network] || "Unknown Network"}
                       </div>
                     </div>
                   </div>
