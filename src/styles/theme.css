@@ -1,39 +1,29 @@
 /* === THEME.CSS — NordBalticum Ferrari Ultra Final (Unified Background) === */
 
-/* =============================== */
-/* ✅ GOOGLE FONTAS               */
-/* =============================== */
+/* ✅ GOOGLE FONTAS */
 @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
 
-/* =============================== */
-/* ✅ GLOBALUS BACKGROUND         */
-/* =============================== */
+/* ✅ GLOBAL BACKGROUND */
 body {
-  background: radial-gradient(circle at center, #0a122a 15%, #1b2370 65%, #2b37ff 100%);
+  background: radial-gradient(circle at center, #0a122a 15%, #1b2370 65%, #2b37ff 100%) no-repeat center center fixed;
   background-size: cover;
-  background-repeat: no-repeat;
-  background-position: center;
   filter: brightness(93%);
   color: var(--primary-text);
+  font-family: var(--font-crypto);
   transition: var(--transition);
-  font-family: 'Share Tech Mono', monospace;
   overflow: visible;
   position: relative;
   z-index: 1;
 }
 
-/* =============================== */
-/* ✅ TYPOGRAFIJA                 */
-/* =============================== */
+/* ✅ TYPOGRAFIJA */
 h1, h2, h3, h4, h5, h6, p, span, label {
   color: var(--primary-text);
   text-shadow: 0 0 4px rgba(255, 255, 255, 0.1);
   letter-spacing: 0.03em;
 }
 
-/* =============================== */
-/* ✅ BUTTON BASE STILIAI         */
-/* =============================== */
+/* ✅ BUTTON BASE */
 .buttonBase {
   padding: 14px 22px;
   font-weight: 700;
@@ -60,14 +50,12 @@ h1, h2, h3, h4, h5, h6, p, span, label {
   content: '';
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at center, rgba(255,255,255,0.06), transparent);
+  background: radial-gradient(circle at center, rgba(255, 255, 255, 0.06), transparent);
   animation: pulseGlow 4s ease-in-out infinite;
   z-index: -1;
 }
 
-/* =============================== */
-/* ✅ GLASSMORPHISM ELEMENTAI     */
-/* =============================== */
+/* ✅ GLASSMORPHISM BOX */
 .glassBox {
   background: rgba(255, 255, 255, 0.06);
   backdrop-filter: blur(24px) saturate(180%);
@@ -79,9 +67,7 @@ h1, h2, h3, h4, h5, h6, p, span, label {
   transition: var(--transition);
 }
 
-/* =============================== */
-/* ✅ INPUTAI                     */
-/* =============================== */
+/* ✅ INPUTS */
 input, textarea {
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.2);
@@ -98,9 +84,7 @@ input:focus, textarea:focus {
   background: rgba(255, 255, 255, 0.06);
 }
 
-/* =============================== */
-/* ✅ LOGO / ICONAI               */
-/* =============================== */
+/* ✅ LOGO EFFECT */
 .logoImage {
   filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.2));
   transition: transform 0.4s ease, filter 0.4s ease;
@@ -111,9 +95,7 @@ input:focus, textarea:focus {
   filter: drop-shadow(0 0 32px rgba(255, 255, 255, 0.4));
 }
 
-/* =============================== */
-/* ✅ GRADIENŲ BACKGROUND UTILS   */
-/* =============================== */
+/* ✅ GRADIENT ANIMATED BACKGROUND */
 .gradientBg {
   background: linear-gradient(
     135deg,
@@ -125,9 +107,7 @@ input:focus, textarea:focus {
   animation: moveGradient 6s ease infinite;
 }
 
-/* =============================== */
-/* ✅ ANIMACIJOS                  */
-/* =============================== */
+/* ✅ ANIMATIONS */
 @keyframes moveGradient {
   0%   { background-position: 0% 50%; }
   50%  { background-position: 100% 50%; }
@@ -161,9 +141,7 @@ input:focus, textarea:focus {
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* =============================== */
-/* ✅ NAUDOJAMI UI UTILS          */
-/* =============================== */
+/* ✅ UI UTILITIES */
 .flexCenter {
   display: flex;
   align-items: center;
@@ -191,9 +169,7 @@ input:focus, textarea:focus {
   box-shadow: 0 0 32px rgba(255, 255, 255, 0.06), 0 0 18px var(--white-gold);
 }
 
-/* =============================== */
-/* ✅ RESPONSIVE SCALE FIX        */
-/* =============================== */
+/* ✅ RESPONSIVE SCALE FIX */
 @media (max-width: 768px) {
   .centerWrapper {
     transform: scale(0.75) translateY(6%);
