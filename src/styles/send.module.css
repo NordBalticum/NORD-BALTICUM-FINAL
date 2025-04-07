@@ -172,14 +172,14 @@
 /* === Responsive Scaling – su premium zoom-out pojūčiu === */
 @media screen and (max-width: 768px) {
   .main {
-    transform: scale(0.88) translateY(-5%);
+    transform: scale(0.85) translateY(-10%);
     transform-origin: top center;
   }
 }
 
 @media screen and (max-width: 480px) {
   .main {
-    transform: scale(0.86) translateY(-8%);
+    transform: scale(0.83) translateY(-13%);
     transform-origin: top center;
   }
 }
