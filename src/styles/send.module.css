@@ -1,13 +1,13 @@
-/* === SEND MODULE FINAL PREMIUM — NordBalticum Ferrari Ultra === */
+/* === SEND MODULE FINAL ULTRA PREMIUM — NordBalticum Ferrari === */
 
-/* ✅ GLOBAL BACKGROUND + SCALING + CENTER */
+/* ✅ GLOBAL BACKGROUND + SMOOTH SCALING */
 .main {
   width: calc(100vw - 160px);
   height: calc(100vh - 160px);
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  padding-top: clamp(60px, 8vh, 100px);
+  padding-top: clamp(50px, 8vh, 80px);
   overflow: hidden;
   position: relative;
   z-index: 0;
@@ -15,21 +15,21 @@
   background-size: cover;
   transform: scale(0.85);
   transform-origin: top center;
-  animation: fadeIn 0.8s ease forwards;
+  animation: fadeIn 1s cubic-bezier(0.25, 1, 0.5, 1) forwards;
   filter: brightness(93%);
 }
 
-/* ✅ FADE IN ANIMACIJOS */
+/* ✅ ULTRA SMOOTH FADE-IN */
 @keyframes fadeIn {
-  0% { opacity: 0; transform: translateY(12px); }
-  100% { opacity: 1; transform: translateY(0); }
+  0% { opacity: 0; transform: translateY(24px) scale(0.98); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 .fadeIn {
-  animation: fadeIn 0.6s ease forwards;
+  animation: fadeIn 1s cubic-bezier(0.25, 1, 0.5, 1) forwards;
 }
 
-/* ✅ PAGRINDINIS WRAPPER */
+/* ✅ WRAPPER */
 .wrapper {
   width: 100%;
   max-width: clamp(320px, 90vw, 720px);
@@ -41,35 +41,17 @@
   text-align: center;
   position: relative;
   z-index: 5;
-  animation: fadeIn 0.8s ease forwards;
+  animation: fadeIn 1s cubic-bezier(0.25, 1, 0.5, 1) forwards;
 }
 
-/* ✅ PAGRINDINIS TEKSTAS */
-.title {
-  font-size: clamp(28px, 6vw, 48px);
-  font-weight: 900;
-  font-family: var(--font-crypto);
-  color: var(--white-gold);
-  text-shadow: 0 0 8px var(--gold-glow);
-  letter-spacing: 0.5px;
-}
-
-.subtext {
-  font-size: clamp(14px, 2.5vw, 20px);
-  color: var(--primary-text);
-  font-weight: 500;
-  font-family: var(--font-crypto);
-  margin-top: -8px;
-}
-
-/* ✅ BALANCE LENTELE */
+/* ✅ BALANCE TABLE */
 .balanceTable, .feeBreakdown {
   width: 100%;
   max-width: clamp(280px, 90vw, 640px);
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: var(--radius);
-  padding: 14px 18px;
+  padding: 16px 20px;
   backdrop-filter: blur(18px) saturate(180%);
   box-shadow: 0 0 24px rgba(255, 255, 255, 0.08);
   font-family: var(--font-crypto);
@@ -86,30 +68,29 @@
   font-size: 1rem;
   line-height: 1.6;
   text-align: center;
-  text-shadow: 0 0 8px rgba(255, 255, 255, 0.08);
+  text-shadow: 0 0 6px rgba(255, 255, 255, 0.12);
 }
 
-/* ✅ BALANCE SUMOS */
+/* ✅ SUMOS */
 .balanceAmount {
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
-  font-weight: 600;
+  font-weight: 700;
 }
 
-/* ✅ WALLET ACTIONS */
+/* ✅ INPUTAI */
 .walletActions {
   display: flex;
   flex-direction: column;
   gap: 12px;
   width: 100%;
   max-width: clamp(280px, 90vw, 640px);
-  margin-top: 8px;
+  margin-top: 12px;
 }
 
-/* ✅ INPUTAI */
 .inputField {
   width: 100%;
-  padding: 13px 16px;
+  padding: 14px 18px;
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: var(--radius);
@@ -117,14 +98,23 @@
   font-size: 1rem;
   font-family: var(--font-crypto);
   outline: none;
-  transition: background 0.2s ease;
+  transition: background 0.3s ease;
 }
 
 .inputField:focus {
   background: rgba(255, 255, 255, 0.07);
 }
 
-/* ✅ MODAL OVERLAY */
+/* ✅ GAS FEE SELECT */
+.gasOptions label {
+  color: white;
+  font-family: var(--font-crypto);
+  font-size: 0.95rem;
+  margin-bottom: 6px;
+  display: block;
+}
+
+/* ✅ OVERLAY */
 .overlay {
   position: fixed;
   inset: 0;
@@ -135,7 +125,7 @@
   justify-content: center;
   z-index: 9999;
   padding: 20px;
-  animation: fadeIn 0.6s ease forwards;
+  animation: fadeIn 0.8s ease forwards;
 }
 
 /* ✅ CONFIRM MODAL */
@@ -151,9 +141,9 @@
   text-align: center;
 }
 
-/* ✅ MODALO TEKSTAS */
+/* ✅ MODAL TITLES & TEXT */
 .modalTitle {
-  font-size: 1.3rem;
+  font-size: 1.4rem;
   font-weight: 700;
   margin-bottom: 1rem;
   color: white;
@@ -167,7 +157,7 @@
   color: white;
 }
 
-/* ✅ MODALO VEIKSMAI */
+/* ✅ MODAL VEIKSMAI */
 .modalActions {
   display: flex;
   justify-content: center;
@@ -175,7 +165,7 @@
   gap: 1rem;
 }
 
-/* ✅ MODALO MYGTUKAI */
+/* ✅ MODAL BUTTONS */
 .modalButton {
   flex: 1;
   background: linear-gradient(to right, #00c6ff, #0072ff);
@@ -198,46 +188,22 @@
   background: linear-gradient(to right, #ff3c3c, #c71d1d);
 }
 
-/* ✅ RESPONSIVE MAXIMUM PREMIUM */
+/* ✅ RESPONSIVE 100% */
 @media (max-width: 1600px) {
-  .main {
-    width: calc(100vw - 140px);
-    height: calc(100vh - 140px);
-    transform: scale(0.83);
-  }
+  .main { width: calc(100vw - 140px); height: calc(100vh - 140px); transform: scale(0.83); }
 }
 @media (max-width: 1200px) {
-  .main {
-    width: calc(100vw - 120px);
-    height: calc(100vh - 120px);
-    transform: scale(0.81);
-  }
+  .main { width: calc(100vw - 120px); height: calc(100vh - 120px); transform: scale(0.81); }
 }
 @media (max-width: 992px) {
-  .main {
-    width: calc(100vw - 100px);
-    height: calc(100vh - 100px);
-    transform: scale(0.78);
-  }
+  .main { width: calc(100vw - 100px); height: calc(100vh - 100px); transform: scale(0.78); }
 }
 @media (max-width: 768px) {
-  .main {
-    width: calc(100vw - 80px);
-    height: calc(100vh - 80px);
-    transform: scale(0.75);
-  }
+  .main { width: calc(100vw - 80px); height: calc(100vh - 80px); transform: scale(0.75); }
 }
 @media (max-width: 576px) {
-  .main {
-    width: 100vw;
-    height: 100vh;
-    transform: scale(0.72);
-  }
+  .main { width: 100vw; height: 100vh; transform: scale(0.72); }
 }
 @media (max-width: 460px) {
-  .main {
-    width: 100vw;
-    height: 100vh;
-    transform: scale(0.7);
-  }
+  .main { width: 100vw; height: 100vh; transform: scale(0.7); }
 }
