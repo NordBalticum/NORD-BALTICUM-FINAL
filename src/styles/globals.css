@@ -1,19 +1,19 @@
-/* === GLOBAL ROOT VARIABLES === */
+/* === GLOBAL ROOT VARIABLES — NordBalticum Ferrari Ultra Supreme === */
 :root {
   --max-width: 1440px;
   --min-width: 320px;
   --main-padding: clamp(16px, 5vw, 32px);
   --radius: 18px;
-  --transition: all 0.3s ease-in-out;
+  --transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
   --safe-area-inset-bottom: env(safe-area-inset-bottom);
 
-  /* SPALVOS (nustatomos theme.css) */
+  /* SPALVOS */
   --font-crypto: 'Share Tech Mono', monospace;
   --white-gold: #FFD700;
   --gold-glow: rgba(255, 215, 0, 0.3);
 }
 
-/* === RESET === */
+/* === RESETAS — ULTRA CLEAN === */
 * {
   margin: 0;
   padding: 0;
@@ -21,33 +21,28 @@
   -webkit-tap-highlight-color: transparent;
 }
 
-/* === HTML & BODY – FULLSCREEN === */
-html,
-body {
+/* === HTML & BODY — FULLSCREEN FIX === */
+html, body {
   width: 100%;
   height: 100%;
   min-height: 100vh;
-  font-family: 'Poppins', sans-serif;
+  font-family: var(--font-crypto);
   font-size: 100%;
-  color: var(--primary-text);
-  background: radial-gradient(ellipse at center, var(--primary-bg) 20%, var(--primary-bg-dark) 100%) no-repeat center center fixed;
+  color: white;
+  background: radial-gradient(circle at center, #0a122a 15%, #1b2370 60%, #2b37ff 95%) no-repeat center center fixed;
   background-size: cover;
-  scroll-behavior: none;
-  -webkit-font-smoothing: antialiased;
+  background-attachment: fixed;
   overflow: hidden;
-  touch-action: none;
-  user-select: none;
   position: fixed;
   inset: 0;
-  zoom: reset;
-  overscroll-behavior: none;
+  touch-action: none;
+  user-select: none;
+  -webkit-font-smoothing: antialiased;
 }
 
-/* === SCROLLBAR OFF VISIEMS ENGINE === */
+/* === SCROLLBAR — OFF VISIEM === */
 ::-webkit-scrollbar, body::-moz-scrollbar {
   display: none;
-  width: 0;
-  height: 0;
 }
 ::-webkit-scrollbar-thumb, ::-webkit-scrollbar-track {
   background: transparent;
@@ -85,9 +80,9 @@ body {
   text-align: center;
   padding: clamp(24px, 5vw, 48px);
   border-radius: var(--radius);
-  backdrop-filter: blur(15px);
-  background: linear-gradient(160deg, var(--primary-bg) 0%, var(--primary-bg-dark) 100%);
-  box-shadow: 0 0 30px var(--gold-glow);
+  backdrop-filter: blur(18px) saturate(160%);
+  background: rgba(255, 255, 255, 0.06);
+  box-shadow: 0 0 28px var(--gold-glow);
   max-width: 640px;
   width: 100%;
 }
@@ -105,13 +100,13 @@ body {
   padding-bottom: calc(80px + var(--safe-area-inset-bottom));
 }
 
-/* === ANIMATIONS === */
+/* === ANIMATIONS — SMOOTH PREMIUM === */
 @keyframes fadeIn {
-  0% { opacity: 0; transform: translateY(12px); }
-  100% { opacity: 1; transform: translateY(0); }
+  0% { opacity: 0; transform: translateY(20px) scale(0.98); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
 }
 .fadeIn {
-  animation: fadeIn 0.5s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+  animation: fadeIn 0.6s cubic-bezier(0.25, 1, 0.5, 1) forwards;
 }
 
 @keyframes fadeOut {
@@ -122,7 +117,7 @@ body {
   animation: fadeOut 0.5s cubic-bezier(0.25, 1, 0.5, 1) forwards;
 }
 
-/* === RESPONSIVE PREMIUM SCALE FIXES === */
+/* === RESPONSIVE — GALUTINIS PREMIUM LYGIS === */
 @media (max-width: 1600px) {
   .globalContainer {
     width: calc(100vw - 140px);
@@ -149,7 +144,7 @@ body {
     width: calc(100vw - 80px);
     height: calc(100vh - 80px);
     background-size: 120% 120%;
-    transform: scale(0.90) translateY(6%);
+    transform: scale(0.92) translateY(5%);
     transform-origin: top center;
   }
 }
@@ -158,7 +153,7 @@ body {
     width: 100vw;
     height: 100vh;
     background-size: 100% 100%;
-    transform: scale(0.88) translateY(8%);
+    transform: scale(0.90) translateY(8%);
   }
 }
 @media (max-width: 460px) {
@@ -166,7 +161,7 @@ body {
     width: 100vw;
     height: 100vh;
     background-size: 100% 100%;
-    transform: scale(0.86) translateY(10%);
+    transform: scale(0.88) translateY(10%);
   }
 }
 @media (max-width: 400px) {
@@ -174,7 +169,7 @@ body {
     width: 100vw;
     height: 100vh;
     background-size: 100% 100%;
-    transform: scale(0.84) translateY(12%);
+    transform: scale(0.86) translateY(12%);
   }
 }
 @media (max-width: 360px) {
@@ -182,6 +177,6 @@ body {
     width: 100vw;
     height: 100vh;
     background-size: 100% 100%;
-    transform: scale(0.82) translateY(14%);
+    transform: scale(0.84) translateY(14%);
   }
 }
