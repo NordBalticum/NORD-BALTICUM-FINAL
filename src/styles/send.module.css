@@ -1,4 +1,4 @@
-/* === SEND MODULE FINAL ULTRA PREMIUM v3 (MOBILE + PC PERFECT) === */
+/* === SEND MODULE FINAL ULTRA PREMIUM v4 (MOBILE + PC PERFECT) === */
 
 /* ✅ MAIN BACKGROUND FULLSCREEN */
 .main {
@@ -34,11 +34,12 @@
 .wrapper {
   width: 140vw;
   max-width: none;
-  height: calc(100vh - 120px); /* Truputį ilgesnė lentelė */
+  height: calc(100vh - 80px); /* Padidintas aukštis +40px */
   padding: clamp(24px, 4vw, 48px);
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: flex-start;
   text-align: center;
   gap: 20px;
   background: rgba(255, 255, 255, 0.03);
@@ -46,6 +47,7 @@
   border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 30px;
   box-shadow: 0 0 60px rgba(255, 255, 255, 0.1);
+  overflow: hidden; /* Neleidžiam niekam išlįsti */
 }
 
 /* ✅ BALANCE TABLE + FEES */
@@ -97,6 +99,28 @@
   font-size: 0.95rem;
   font-family: var(--font-crypto);
   margin-bottom: 8px;
+}
+
+/* ✅ SEND NOW BUTTON (MYGTUKAS) */
+.sendNowButton {
+  width: 100%;
+  max-width: 720px;
+  padding: 16px 24px;
+  margin-top: auto; /* Push į apačią, bet išlikti viduje */
+  background: linear-gradient(to right, #ff4b4b, #ff1c1c);
+  border: 2px solid white;
+  border-radius: 18px;
+  font-weight: bold;
+  color: white;
+  font-family: var(--font-crypto);
+  font-size: 1rem;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.sendNowButton:hover {
+  transform: scale(1.04);
 }
 
 /* ✅ OVERLAY (MODAL) */
@@ -166,24 +190,29 @@
 /* ✅ RESPONSIVE PERFECT FULLSCREEN + PREMIUM PC VERSION */
 @media (min-width: 1280px) {
   .wrapper {
-    max-width: 860px;
-    padding: 32px 48px;
+    max-width: 920px; /* Platesnė lentelė PC vartotojams */
+    padding: 40px 60px;
   }
 
   .balanceTable,
   .feeBreakdown {
-    max-width: 860px;
-    padding: 24px 32px;
+    max-width: 920px;
+    padding: 28px 36px;
   }
 
   .walletActions {
-    max-width: 860px;
-    gap: 18px;
+    max-width: 920px;
+    gap: 20px;
   }
 
   .inputField {
+    font-size: 1.15rem;
+    padding: 20px 26px;
+  }
+
+  .sendNowButton {
+    max-width: 920px;
     font-size: 1.1rem;
-    padding: 18px 24px;
   }
 }
 
