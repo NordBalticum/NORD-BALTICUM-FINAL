@@ -57,7 +57,6 @@ export default function SendPage() {
   const shortName = useMemo(() => networkShortNames[network] || network.toUpperCase(), [network]);
   const parsedAmount = useMemo(() => Number(amount) || 0, [amount]);
   const netBalance = useMemo(() => balances?.[network]?.balance ? parseFloat(balances[network].balance) : 0, [balances, network]);
-
   const { gasFee, loading: feesLoading, refetchFees } = useFeeCalculator(network);
 
   const adminFee = useMemo(() => parsedAmount > 0 ? parsedAmount * 0.03 : 0, [parsedAmount]);
@@ -243,20 +242,43 @@ export default function SendPage() {
               transition: "background-color 0.4s ease",
             }}
           >
-            {sending ? "Sending..." : "SEND NOW"}
+            {sending ? (
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+                Sending <MiniLoadingSpinner />
+              </div>
+            ) : (
+              "SEND NOW"
+            )}
           </button>
         </div>
 
-        {/* Confirm Modal */}
         {showConfirm && (
           <div className={styles.overlay}>
             <div className={styles.confirmModal}>
-              {/* Modal Content */}
+              <div className={styles.modalTitle}>Confirm Transaction</div>
+              <div className={styles.modalInfo}>
+                <p><strong>Network:</strong> {shortName}</p>
+                <p><strong>Receiver:</strong> {receiver}</p>
+                <p><strong>Amount:</strong> {parsedAmount.toFixed(6)} {shortName}</p>
+                <p><strong>Gas Fee:</strong> {gasFee.toFixed(6)} {shortName}</p>
+                <p><strong>Admin Fee:</strong> {adminFee.toFixed(6)} {shortName}</p>
+                <p><strong>After Fees:</strong> {(parsedAmount - gasFee - adminFee).toFixed(6)} {shortName}</p>
+              </div>
+              <div className={styles.modalActions}>
+                <button className={styles.modalButton} onClick={confirmSend} disabled={sending}>
+                  {sending ? "Confirming..." : "Confirm"}
+                </button>
+                <button
+                  className={`${styles.modalButton} ${styles.cancel}`}
+                  onClick={() => setShowConfirm(false)}
+                >
+                  Cancel
+                </button>
+              </div>
             </div>
           </div>
         )}
 
-        {/* Success Modal */}
         {showSuccess && (
           <SuccessModal
             message="✅ Transaction Successful!"
@@ -266,7 +288,6 @@ export default function SendPage() {
           />
         )}
 
-        {/* Error Modal */}
         {error && (
           <ErrorModal
             error={error}
@@ -276,4 +297,4 @@ export default function SendPage() {
       </div>
     </main>
   );
-              }
+        }
