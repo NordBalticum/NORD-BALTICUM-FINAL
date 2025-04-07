@@ -11,6 +11,7 @@
   z-index: 0;
   animation: fadeInUp 0.7s cubic-bezier(0.25, 1, 0.5, 1);
   overflow: hidden;
+  padding-top: clamp(60px, 8vh, 100px);
 }
 
 /* === DASHBOARD LYGIO ANIMACIJOS === */
@@ -47,7 +48,8 @@
   text-align: center;
   position: relative;
   z-index: 5;
-  transform: translateY(clamp(4%, 6%, 8%));
+  transform: translateY(0);
+  animation: fadeInDown 1s cubic-bezier(0.25, 1, 0.5, 1);
 }
 
 .title {
@@ -105,7 +107,7 @@
   gap: 12px;
   width: 100%;
   max-width: 540px;
-  margin-top: 4px;
+  margin-top: 8px;
 }
 
 .inputField {
@@ -240,10 +242,10 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* === Responsive Fixes === */
+/* === Responsive Fixes – su zoom out kaip buvo === */
 @media screen and (max-width: 768px) {
   .wrapper {
-    transform: scale(0.90) translateY(1%);
+    transform: scale(0.88) translateY(0%);
     transform-origin: top center;
   }
 }
@@ -252,6 +254,7 @@
   .wrapper {
     padding: 16px;
     gap: 20px;
+    transform: scale(0.86) translateY(-2%);
   }
 
   .inputField,
