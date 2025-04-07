@@ -12,7 +12,7 @@
   animation: fadeInUp 0.7s cubic-bezier(0.25, 1, 0.5, 1);
   overflow: hidden;
   padding-top: clamp(60px, 8vh, 100px);
-  transform: scale(0.90); /* <<< BENDRAS ZOOM OUT visam puslapiui */
+  transform: scale(0.80); /* <<< BENDRAS ZOOM OUT visam puslapiui */
   transform-origin: top center;
 }
 
@@ -172,7 +172,7 @@
 /* === Responsive Scaling – su premium zoom-out pojūčiu === */
 @media screen and (max-width: 950px) {
   .main {
-    transform: scale(0.80);
+    transform: scale(0.72);
     transform-origin: top center;
     padding-top: 4vh; /* <<< Pakelia turinį aukštyn! */
   }
@@ -180,7 +180,7 @@
 
 @media screen and (max-width: 540px) {
   .main {
-    transform: scale(0.78);
+    transform: scale(0.70);
     transform-origin: top center;
     padding-top: 2vh; /* <<< Dar daugiau pakelia ant mažų telefonų */
   }
