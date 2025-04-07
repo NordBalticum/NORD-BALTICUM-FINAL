@@ -1,4 +1,4 @@
-/* === SEND MODULE FINAL ULTRA PREMIUM — NordBalticum Ferrari === */
+/* === SEND MODULE FINAL ULTRA PREMIUM + TRANSLATE FIX === */
 
 /* ✅ GLOBAL BACKGROUND + SMOOTH SCALING */
 .main {
@@ -7,13 +7,13 @@
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  padding-top: clamp(50px, 8vh, 80px);
+  padding-top: clamp(40px, 6vh, 80px);
   overflow: hidden;
   position: relative;
   z-index: 0;
   background: radial-gradient(circle at center, #0a122a 15%, #1b2370 65%, #2b37ff 100%) no-repeat center center fixed;
   background-size: cover;
-  transform: scale(0.85);
+  transform: scale(0.85) translateY(-10%);
   transform-origin: top center;
   animation: fadeIn 1s cubic-bezier(0.25, 1, 0.5, 1) forwards;
   filter: brightness(93%);
@@ -22,7 +22,7 @@
 /* ✅ ULTRA SMOOTH FADE-IN */
 @keyframes fadeIn {
   0% { opacity: 0; transform: translateY(24px) scale(0.98); }
-  100% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 1; transform: translateY(-10%) scale(0.85); }
 }
 
 .fadeIn {
@@ -45,7 +45,8 @@
 }
 
 /* ✅ BALANCE TABLE */
-.balanceTable, .feeBreakdown {
+.balanceTable,
+.feeBreakdown {
   width: 100%;
   max-width: clamp(280px, 90vw, 640px);
   background: rgba(255, 255, 255, 0.05);
@@ -188,22 +189,51 @@
   background: linear-gradient(to right, #ff3c3c, #c71d1d);
 }
 
-/* ✅ RESPONSIVE 100% */
+/* ✅ RESPONSIVE + TRANSLATE FIX */
 @media (max-width: 1600px) {
-  .main { width: calc(100vw - 140px); height: calc(100vh - 140px); transform: scale(0.83); }
+  .main {
+    width: calc(100vw - 140px);
+    height: calc(100vh - 140px);
+    transform: scale(0.83) translateY(-12%);
+  }
 }
+
 @media (max-width: 1200px) {
-  .main { width: calc(100vw - 120px); height: calc(100vh - 120px); transform: scale(0.81); }
+  .main {
+    width: calc(100vw - 120px);
+    height: calc(100vh - 120px);
+    transform: scale(0.81) translateY(-14%);
+  }
 }
+
 @media (max-width: 992px) {
-  .main { width: calc(100vw - 100px); height: calc(100vh - 100px); transform: scale(0.78); }
+  .main {
+    width: calc(100vw - 100px);
+    height: calc(100vh - 100px);
+    transform: scale(0.78) translateY(-16%);
+  }
 }
+
 @media (max-width: 768px) {
-  .main { width: calc(100vw - 80px); height: calc(100vh - 80px); transform: scale(0.75); }
+  .main {
+    width: calc(100vw - 80px);
+    height: calc(100vh - 80px);
+    transform: scale(0.75) translateY(-18%);
+  }
 }
+
 @media (max-width: 576px) {
-  .main { width: 100vw; height: 100vh; transform: scale(0.72); }
+  .main {
+    width: 100vw;
+    height: 100vh;
+    transform: scale(0.72) translateY(-20%);
+  }
 }
+
 @media (max-width: 460px) {
-  .main { width: 100vw; height: 100vh; transform: scale(0.7); }
+  .main {
+    width: 100vw;
+    height: 100vh;
+    transform: scale(0.7) translateY(-22%);
+  }
 }
