@@ -1,11 +1,11 @@
-/* === SEND MODULE FINAL ULTRA PREMIUM === */
+/* === SEND MODULE FINAL ULTRA PREMIUM (PERFECT FULLSCREEN) === */
 
 /* ✅ MAIN BACKGROUND FULLSCREEN */
 .main {
   display: flex;
   justify-content: center;
-  align-items: center;
-  width: 140vw; /* platesnis fonas, kad nekirstų */
+  align-items: flex-start;
+  width: 140vw; /* Platesnis fonas */
   height: 100vh;
   overflow: hidden;
   background: radial-gradient(circle at center, var(--primary-bg) 20%, var(--primary-bg-dark) 80%) no-repeat center center fixed;
@@ -13,6 +13,7 @@
   position: relative;
   z-index: 0;
   animation: fadeIn 1s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+  padding-top: 14vh; /* Pakeliam visą turinį į viršų */
 }
 
 /* ✅ FADE IN EFFECT */
@@ -27,30 +28,32 @@
   }
 }
 
-/* ✅ WRAPPER (VISAS TURINYS) */
+/* ✅ WRAPPER (PILNAS TURINYS) */
 .wrapper {
-  width: 100%;
-  max-width: clamp(320px, 90vw, 720px);
+  width: 140vw; /* išplečiam lentelę pilnai */
+  height: calc(100vh - 140px); /* truputį mažiau negu pilnas ekranas */
+  max-width: none;
+  max-height: none;
   padding: clamp(24px, 4vw, 48px);
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
   gap: 18px;
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(255, 255, 255, 0.03); /* silpnas efektas */
   backdrop-filter: blur(30px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 20px;
-  box-shadow: 0 0 40px rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 30px;
+  box-shadow: 0 0 60px rgba(255, 255, 255, 0.1);
 }
 
 /* ✅ BALANCE TABLE + FEES */
 .balanceTable,
 .feeBreakdown {
   width: 100%;
-  max-width: clamp(280px, 90vw, 640px);
+  max-width: 720px;
   background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 18px;
   padding: 16px 20px;
   backdrop-filter: blur(20px) saturate(180%);
@@ -63,6 +66,7 @@
 /* ✅ INPUT FIELDS */
 .walletActions {
   width: 100%;
+  max-width: 720px;
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -73,7 +77,7 @@
   width: 100%;
   padding: 14px 18px;
   background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 18px;
   color: white;
   font-size: 1rem;
@@ -94,7 +98,7 @@
   margin-bottom: 6px;
 }
 
-/* ✅ MODAL OVERLAY */
+/* ✅ OVERLAY (MODAL) */
 .overlay {
   position: fixed;
   inset: 0;
@@ -158,34 +162,34 @@
   background: linear-gradient(to right, #ff3c3c, #c71d1d);
 }
 
-/* ✅ RESPONSIVE TOBULAS SCALE */
+/* ✅ RESPONSIVE PERFECT FULLSCREEN */
 @media (max-width: 1600px) {
-  .main {
+  .main, .wrapper {
     width: 140vw;
   }
 }
 @media (max-width: 1200px) {
-  .main {
+  .main, .wrapper {
     width: 140vw;
   }
 }
 @media (max-width: 992px) {
-  .main {
+  .main, .wrapper {
     width: 140vw;
   }
 }
 @media (max-width: 768px) {
-  .main {
+  .main, .wrapper {
     width: 140vw;
   }
 }
 @media (max-width: 576px) {
-  .main {
+  .main, .wrapper {
     width: 140vw;
   }
 }
 @media (max-width: 460px) {
-  .main {
+  .main, .wrapper {
     width: 140vw;
   }
 }
