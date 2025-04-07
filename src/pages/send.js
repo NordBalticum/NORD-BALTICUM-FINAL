@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useMemo, useCallback, useEffect } from "react";
-
 import { useAuth } from "@/contexts/AuthContext";
 import { useBalance } from "@/hooks/useBalance";
 import { usePageReady } from "@/hooks/usePageReady";
@@ -124,7 +123,7 @@ export default function SendPage() {
           to_address: receiver.trim(),
           amount: parsedAmount,
           fee: adminFee,
-          network: network,
+          network,
           type: "send",
           tx_hash: hash,
         }]);
@@ -170,13 +169,14 @@ export default function SendPage() {
   return (
     <main className={`${styles.main} ${background.gradient} fadeIn`}>
       <div className={`${styles.wrapper} fadeDown`}>
+
+        {/* ✅ Success Toast */}
         <SuccessToast show={showToast} message={toastMessage} networkKey={network} />
 
-        <h1 className={styles.title}>SEND CRYPTO</h1>
-        <p className={styles.subtext}>Transfer crypto securely & instantly</p>
-
+        {/* ✅ Network Selector */}
         <SwipeSelector onSelect={handleNetworkChange} />
 
+        {/* ✅ Balance Info */}
         <div className={styles.balanceTable}>
           <p className={styles.whiteText}>
             Your Balance:&nbsp;
@@ -189,6 +189,7 @@ export default function SendPage() {
           </p>
         </div>
 
+        {/* ✅ Send Form */}
         <div className={styles.walletActions}>
           <input
             type="text"
@@ -207,10 +208,12 @@ export default function SendPage() {
             disabled={sending}
           />
 
+          {/* ✅ Fees */}
           <p className={styles.feeBreakdown}>
             Fees: <strong>{adminFee.toFixed(6)} {shortName}</strong>
           </p>
 
+          {/* ✅ Gas Fee Selector */}
           <div className={styles.gasOptions}>
             <label style={{ color: "white", marginBottom: "4px" }}>Select Gas Fee:</label>
             <select
@@ -225,6 +228,7 @@ export default function SendPage() {
             </select>
           </div>
 
+          {/* ✅ Send Now Button */}
           <button
             onClick={handleSend}
             disabled={sending}
@@ -252,6 +256,7 @@ export default function SendPage() {
           </button>
         </div>
 
+        {/* ✅ Confirmation Modal */}
         {showConfirm && (
           <div className={styles.overlay}>
             <div className={styles.confirmModal}>
@@ -279,6 +284,7 @@ export default function SendPage() {
           </div>
         )}
 
+        {/* ✅ Success & Error Modals */}
         {showSuccess && (
           <SuccessModal
             message="✅ Transaction Successful!"
@@ -287,7 +293,6 @@ export default function SendPage() {
             network={network}
           />
         )}
-
         {error && (
           <ErrorModal
             error={error}
