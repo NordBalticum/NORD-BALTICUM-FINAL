@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useMemo, useCallback, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
 
 import { useAuth } from "@/contexts/AuthContext";
 import { useBalance } from "@/hooks/useBalance";
@@ -170,18 +169,8 @@ export default function SendPage() {
   }
 
   return (
-    <motion.main
-      initial={{ opacity: 0, y: 24 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.8, ease: [0.25, 1, 0.5, 1] }}
-      className={`${styles.main} ${background.gradient}`}
-    >
-      <motion.div
-        initial={{ opacity: 0, y: 24 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8, ease: [0.25, 1, 0.5, 1] }}
-        className={styles.wrapper}
-      >
+    <main className={`${styles.main} ${background.gradient} fadeIn`}>
+      <div className={styles.wrapper}>
         <SuccessToast show={showToast} message={toastMessage} networkKey={network} />
 
         <h1 className={styles.title}>SEND CRYPTO</h1>
@@ -192,15 +181,9 @@ export default function SendPage() {
         <div className={styles.balanceTable}>
           <p className={styles.whiteText}>
             Your Balance:&nbsp;
-            <motion.span
-              className={styles.balanceAmount}
-              key={netBalance}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.4 }}
-            >
+            <span className={styles.balanceAmount}>
               {netBalance.toFixed(6)} {shortName}
-            </motion.span>
+            </span>
           </p>
           <p className={styles.whiteText}>
             ≈ €{eurBalance} | ${usdBalance}
@@ -216,16 +199,14 @@ export default function SendPage() {
             className={styles.inputField}
             disabled={sending}
           />
-          <div style={{ display: "flex", gap: "6px" }}>
-            <input
-              type="number"
-              placeholder="Amount to send"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              className={styles.inputField}
-              disabled={sending}
-            />
-          </div>
+          <input
+            type="number"
+            placeholder="Amount to send"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            className={styles.inputField}
+            disabled={sending}
+          />
 
           <p className={styles.feeBreakdown}>
             Fees: <strong>{adminFee.toFixed(6)} {shortName}</strong>
@@ -245,9 +226,7 @@ export default function SendPage() {
             </select>
           </div>
 
-          <motion.button
-            whileHover={{ scale: 1.04 }}
-            whileTap={{ scale: 0.98 }}
+          <button
             onClick={handleSend}
             disabled={sending}
             style={{
@@ -271,79 +250,36 @@ export default function SendPage() {
             ) : (
               "SEND NOW"
             )}
-          </motion.button>
+          </button>
         </div>
 
         {/* Confirm Modal */}
-        <AnimatePresence>
-          {showConfirm && (
-            <motion.div
-              className={styles.overlay}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-            >
-              <motion.div
-                className={styles.confirmModal}
-                initial={{ scale: 0.8 }}
-                animate={{ scale: 1 }}
-                exit={{ scale: 0.8 }}
-                transition={{ duration: 0.4 }}
-              >
-                <div className={styles.modalTitle}>Confirm Transaction</div>
-                <div className={styles.modalInfo}>
-                  <p><strong>Network:</strong> {shortName}</p>
-                  <p><strong>Receiver:</strong> {receiver}</p>
-                  <p><strong>Amount:</strong> {parsedAmount.toFixed(6)} {shortName}</p>
-                  <p><strong>Gas Fee:</strong> {gasFee.toFixed(6)} {shortName}</p>
-                  <p><strong>Admin Fee:</strong> {adminFee.toFixed(6)} {shortName}</p>
-                  <p><strong>After Fees:</strong> {(parsedAmount - gasFee - adminFee).toFixed(6)} {shortName}</p>
-                </div>
-                <div className={styles.modalActions}>
-                  <button className={styles.modalButton} onClick={confirmSend} disabled={sending}>
-                    {sending ? (
-                      <div style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
-                        Confirming <MiniLoadingSpinner />
-                      </div>
-                    ) : (
-                      "Confirm"
-                    )}
-                  </button>
-                  <button
-                    className={`${styles.modalButton} ${styles.cancel}`}
-                    onClick={() => setShowConfirm(false)}
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {showConfirm && (
+          <div className={styles.overlay}>
+            <div className={styles.confirmModal}>
+              {/* Modal Content */}
+            </div>
+          </div>
+        )}
 
         {/* Success Modal */}
-        <AnimatePresence>
-          {showSuccess && (
-            <SuccessModal
-              message="✅ Transaction Successful!"
-              onClose={() => setShowSuccess(false)}
-              transactionHash={transactionHash}
-              network={network}
-            />
-          )}
-        </AnimatePresence>
+        {showSuccess && (
+          <SuccessModal
+            message="✅ Transaction Successful!"
+            onClose={() => setShowSuccess(false)}
+            transactionHash={transactionHash}
+            network={network}
+          />
+        )}
 
         {/* Error Modal */}
-        <AnimatePresence>
-          {error && (
-            <ErrorModal
-              error={error}
-              onRetry={handleRetry}
-            />
-          )}
-        </AnimatePresence>
-
-      </motion.div>
-    </motion.main>
+        {error && (
+          <ErrorModal
+            error={error}
+            onRetry={handleRetry}
+          />
+        )}
+      </div>
+    </main>
   );
-}
+        }
