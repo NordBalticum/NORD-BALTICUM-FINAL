@@ -172,7 +172,7 @@
 /* === Responsive Scaling – su premium zoom-out pojūčiu === */
 @media screen and (max-width: 950px) {
   .main {
-    transform: scale(0.88);
+    transform: scale(0.80);
     transform-origin: top center;
     padding-top: 4vh; /* <<< Pakelia turinį aukštyn! */
   }
@@ -180,7 +180,7 @@
 
 @media screen and (max-width: 540px) {
   .main {
-    transform: scale(0.86);
+    transform: scale(0.78);
     transform-origin: top center;
     padding-top: 2vh; /* <<< Dar daugiau pakelia ant mažų telefonų */
   }
