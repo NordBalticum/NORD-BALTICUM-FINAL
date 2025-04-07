@@ -1,36 +1,41 @@
-/* === GLOBAL FADE ANIMATIONS === */
-@keyframes fadeIn {
-  0% { opacity: 0; transform: translateY(12px); }
-  100% { opacity: 1; transform: translateY(0); }
-}
-.fadeIn {
-  animation: fadeIn 0.8s ease forwards;
-}
+/* === SEND MODULE FINAL UPGRADE – NordBalticum Bank Premium === */
 
-@keyframes fadeDown {
-  0% { opacity: 0; transform: translateY(-24px); }
-  100% { opacity: 1; transform: translateY(0); }
-}
-.fadeDown {
-  animation: fadeDown 0.8s ease forwards;
-}
-
-/* === MAIN CONTAINER === */
+/* ✅ PAGRINDINIS FONAS IR SCALING */
 .main {
   width: 100vw;
   height: 100vh;
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  padding-top: clamp(60px, 8vh, 100px);
   overflow: hidden;
-  background: transparent;
-  transform: scale(clamp(0.70, 80vw/1200, 0.88));
+  position: relative;
+  z-index: 0;
+  padding-top: clamp(60px, 8vh, 100px);
+  transform: scale(0.85);
   transform-origin: top center;
-  animation: fadeIn 1s ease forwards;
+  animation: fadeIn 0.8s ease forwards;
+  background: transparent;
 }
 
-/* === WRAPPER === */
+/* ✅ FADE ANIMACIJOS */
+@keyframes fadeIn {
+  0% { opacity: 0; transform: translateY(12px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeDown {
+  0% { opacity: 0; transform: translateY(-24px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+.fadeIn {
+  animation: fadeIn 0.6s ease forwards;
+}
+.fadeDown {
+  animation: fadeDown 0.7s ease forwards;
+}
+
+/* ✅ PAGRINDINIS WRAPPERIS */
 .wrapper {
   width: 100%;
   max-width: clamp(320px, 90vw, 720px);
@@ -42,38 +47,38 @@
   text-align: center;
   position: relative;
   z-index: 5;
-  animation: fadeDown 1s ease forwards;
+  animation: fadeDown 0.8s ease forwards;
 }
 
-/* === TITLE & SUBTEXT === */
+/* ✅ PAGRINDINIS TEKSTAS */
 .title {
   font-size: clamp(28px, 6vw, 48px);
   font-weight: 900;
   font-family: var(--font-crypto);
-  color: white;
+  color: var(--white-gold);
   letter-spacing: 0.5px;
-  text-shadow: 0 0 6px rgba(255, 255, 255, 0.12);
+  text-shadow: 0 0 8px var(--gold-glow);
 }
 
 .subtext {
   font-size: clamp(14px, 2.5vw, 20px);
-  color: rgba(255, 255, 255, 0.85);
+  color: var(--primary-text);
   font-weight: 500;
   font-family: var(--font-crypto);
   margin-top: -8px;
 }
 
-/* === BALANCE TABLE & FEE BREAKDOWN === */
+/* ✅ BALANCE LENTELE */
 .balanceTable,
 .feeBreakdown {
   width: 100%;
   max-width: clamp(280px, 90vw, 640px);
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 16px;
+  border-radius: var(--radius);
   padding: 14px 18px;
   backdrop-filter: blur(18px) saturate(180%);
-  box-shadow: 0 0 22px rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 24px rgba(255, 255, 255, 0.08);
   font-family: var(--font-crypto);
   color: white;
   font-size: 0.95rem;
@@ -81,7 +86,7 @@
   text-align: center;
 }
 
-/* === TEXT STYLES === */
+/* ✅ BALTAS TEKSTAS */
 .whiteText {
   color: white;
   font-family: var(--font-crypto);
@@ -91,13 +96,14 @@
   text-shadow: 0 0 8px rgba(255, 255, 255, 0.08);
 }
 
+/* ✅ BALANCE SUMOS */
 .balanceAmount {
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
   font-weight: 600;
 }
 
-/* === WALLET ACTIONS === */
+/* ✅ WALLET ACTIONS */
 .walletActions {
   display: flex;
   flex-direction: column;
@@ -107,13 +113,13 @@
   margin-top: 8px;
 }
 
-/* === INPUT FIELDS === */
+/* ✅ INPUTAI */
 .inputField {
   width: 100%;
   padding: 13px 16px;
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 14px;
+  border-radius: var(--radius);
   color: white;
   font-size: 1rem;
   font-family: var(--font-crypto);
@@ -125,7 +131,7 @@
   background: rgba(255, 255, 255, 0.07);
 }
 
-/* === OVERLAY + MODAL === */
+/* ✅ OVERLAY & MODALAI */
 .overlay {
   position: fixed;
   inset: 0;
@@ -136,22 +142,22 @@
   justify-content: center;
   z-index: 9999;
   padding: 20px;
-  animation: fadeIn 0.8s ease forwards;
+  animation: fadeIn 0.6s ease forwards;
 }
 
 .confirmModal {
   background: rgba(15, 20, 40, 0.95);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  padding: 2rem;
-  border-radius: 18px;
-  box-shadow: 0 0 24px rgba(255, 255, 255, 0.1);
+  padding: clamp(24px, 5vw, 48px);
+  border-radius: var(--radius);
+  box-shadow: 0 0 32px rgba(255, 255, 255, 0.1);
   width: 100%;
-  max-width: clamp(300px, 85vw, 480px);
+  max-width: clamp(300px, 90vw, 480px);
   color: white;
   text-align: center;
 }
 
-/* === MODAL CONTENT === */
+/* ✅ MODALO TEKSTAS */
 .modalTitle {
   font-size: 1.3rem;
   font-weight: 700;
@@ -163,12 +169,11 @@
 .modalInfo p {
   margin: 6px 0;
   font-size: 0.95rem;
-  line-height: 1.4;
   font-family: var(--font-crypto);
   color: white;
-  text-align: center;
 }
 
+/* ✅ MODALO VEIKSMAI */
 .modalActions {
   display: flex;
   justify-content: center;
@@ -176,7 +181,7 @@
   gap: 1rem;
 }
 
-/* === MODAL BUTTONS === */
+/* ✅ MODALO MYGTUKAI */
 .modalButton {
   flex: 1;
   background: linear-gradient(to right, #00c6ff, #0072ff);
@@ -184,7 +189,7 @@
   padding: 12px 16px;
   color: white;
   font-weight: bold;
-  border-radius: 12px;
+  border-radius: var(--radius);
   cursor: pointer;
   transition: transform 0.3s ease, background 0.3s ease;
   font-family: var(--font-crypto);
@@ -199,44 +204,54 @@
   background: linear-gradient(to right, #ff3c3c, #c71d1d);
 }
 
-/* === RESPONSIVE PREMIUM (FULLSCREEN ZOOM OUT) === */
-@media screen and (max-width: 1400px) {
+/* ✅ RESPONSIVE PREMIUM SCALE (telefonams, tabletams, dideliems ekranams) */
+@media (max-width: 1200px) {
   .main {
-    transform: scale(0.80);
+    transform: scale(0.8);
+  }
+}
+@media (max-width: 950px) {
+  .main {
+    transform: scale(0.75);
+  }
+}
+@media (max-width: 768px) {
+  .main {
+    transform: scale(0.7);
+    padding-top: 6vh;
+  }
+}
+@media (max-width: 600px) {
+  .main {
+    transform: scale(0.68);
+    padding-top: 6vh;
+  }
+}
+@media (max-width: 460px) {
+  .main {
+    transform: scale(0.66);
+    padding-top: 4vh;
+  }
+}
+@media (max-width: 380px) {
+  .main {
+    transform: scale(0.64);
+    padding-top: 4vh;
   }
 }
 
-@media screen and (max-width: 1024px) {
-  .main {
-    transform: scale(0.78);
-  }
-}
-
-@media screen and (max-width: 768px) {
-  .main {
-    transform: scale(0.72);
-  }
-}
-
-@media screen and (max-width: 460px) {
-  .main {
-    transform: scale(0.70);
-  }
-}
-
-@media screen and (min-width: 1600px) {
+/* ✅ MAX PREMIUM WIDESCREEN */
+@media (min-width: 1600px) {
   .wrapper {
     max-width: 820px;
   }
 }
-
-@media screen and (min-width: 2560px) {
+@media (min-width: 2560px) {
   .wrapper {
     max-width: 960px;
   }
 }
-
-@media screen and (min-width: 4000px) {
+@media (min-width: 4000px) {
   .wrapper {
     max-width: 1080px;
   }
