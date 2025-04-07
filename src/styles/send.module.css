@@ -1,37 +1,38 @@
-/* === SEND MODULE FINAL ULTRA PREMIUM (PERFECT FULLSCREEN) === */
+/* === SEND MODULE FINAL ULTRA PREMIUM (PERFECT FULLSCREEN & SCALE) === */
 
 /* ✅ MAIN BACKGROUND FULLSCREEN */
 .main {
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  width: 140vw; /* Platesnis fonas */
+  width: 140vw;
   height: 100vh;
   overflow: hidden;
   background: radial-gradient(circle at center, var(--primary-bg) 20%, var(--primary-bg-dark) 80%) no-repeat center center fixed;
   background-size: cover;
   position: relative;
   z-index: 0;
+  padding-top: 14vh; /* Pakeliam visą turinį */
+  transform: scale(0.8); /* Mastelio mažinimas -20% */
+  transform-origin: top center;
   animation: fadeIn 1s cubic-bezier(0.25, 1, 0.5, 1) forwards;
-  padding-top: 14vh; /* Pakeliam visą turinį į viršų */
 }
 
 /* ✅ FADE IN EFFECT */
 @keyframes fadeIn {
   0% {
     opacity: 0;
-    transform: scale(0.98);
+    transform: scale(0.78);
   }
   100% {
     opacity: 1;
-    transform: scale(1);
+    transform: scale(0.8);
   }
 }
 
-/* ✅ WRAPPER (PILNAS TURINYS) */
+/* ✅ WRAPPER (VISAS TURINYS) */
 .wrapper {
-  width: 140vw; /* išplečiam lentelę pilnai */
-  height: calc(100vh - 140px); /* truputį mažiau negu pilnas ekranas */
+  width: 140vw;
   max-width: none;
   max-height: none;
   padding: clamp(24px, 4vw, 48px);
@@ -40,7 +41,7 @@
   align-items: center;
   text-align: center;
   gap: 18px;
-  background: rgba(255, 255, 255, 0.03); /* silpnas efektas */
+  background: rgba(255, 255, 255, 0.03); /* silpnas blur */
   backdrop-filter: blur(30px) saturate(180%);
   border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 30px;
@@ -162,34 +163,40 @@
   background: linear-gradient(to right, #ff3c3c, #c71d1d);
 }
 
-/* ✅ RESPONSIVE PERFECT FULLSCREEN */
+/* ✅ RESPONSIVE PERFECT FULLSCREEN + SCALE */
 @media (max-width: 1600px) {
   .main, .wrapper {
     width: 140vw;
+    transform: scale(0.8);
   }
 }
 @media (max-width: 1200px) {
   .main, .wrapper {
     width: 140vw;
+    transform: scale(0.8);
   }
 }
 @media (max-width: 992px) {
   .main, .wrapper {
     width: 140vw;
+    transform: scale(0.8);
   }
 }
 @media (max-width: 768px) {
   .main, .wrapper {
     width: 140vw;
+    transform: scale(0.8);
   }
 }
 @media (max-width: 576px) {
   .main, .wrapper {
     width: 140vw;
+    transform: scale(0.8);
   }
 }
 @media (max-width: 460px) {
   .main, .wrapper {
     width: 140vw;
+    transform: scale(0.8);
   }
 }
