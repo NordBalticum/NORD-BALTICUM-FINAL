@@ -1,16 +1,3 @@
-/* === SEND MODULE FINAL ULTRA PREMIUM FULLSCREEN (Coinbase/TrustWallet style) === */
-
-/* ✅ GLOBAL BACKGROUND NUO BODY */
-body {
-  background: radial-gradient(circle at center, #0a122a 15%, #1b2370 65%, #2b37ff 100%) no-repeat center center fixed;
-  background-size: cover;
-  margin: 0;
-  padding: 0;
-  width: 100%;
-  height: 100%;
-  overflow: visible;
-}
-
 /* ✅ MAIN BE FONO — PERSKAIDRINTAS */
 .main {
   width: 100vw;
