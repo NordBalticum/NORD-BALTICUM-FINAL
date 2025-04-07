@@ -1,25 +1,31 @@
-/* === THEME.CSS — NordBalticum Ferrari Ultra Final (Unified Background) === */
+/* === THEME.CSS — NordBalticum Ferrari Ultra Final REMASTERED === */
 
-/* ✅ GOOGLE FONTAS */
+/* ✅ GOOGLE FONT */
 @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
 
-/* ✅ GLOBAL BACKGROUND */
-body {
-  background: radial-gradient(circle at center, #0a122a 15%, #1b2370 65%, #2b37ff 100%) no-repeat center center fixed;
+/* ✅ ABSOLUTE FULL BACKGROUND */
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100vw;
+  height: 100vh;
+  background: radial-gradient(circle at center, #0a122a 10%, #1b2370 55%, #2b37ff 90%) no-repeat center center fixed;
   background-size: cover;
-  filter: brightness(93%);
-  color: var(--primary-text);
-  font-family: var(--font-crypto);
-  transition: var(--transition);
-  overflow: visible;
+  background-attachment: fixed;
+  overflow-x: hidden;
+  overflow-y: auto;
+  filter: brightness(95%);
+  font-family: 'Share Tech Mono', monospace;
+  color: white;
+  -webkit-font-smoothing: antialiased;
   position: relative;
   z-index: 1;
 }
 
-/* ✅ TYPOGRAFIJA */
-h1, h2, h3, h4, h5, h6, p, span, label {
-  color: var(--primary-text);
-  text-shadow: 0 0 4px rgba(255, 255, 255, 0.1);
+/* ✅ TYPOGRAPHY PURE WHITE */
+h1, h2, h3, h4, h5, h6, p, span, label, a, input, textarea, select, button {
+  color: white;
+  text-shadow: 0 0 6px rgba(255, 255, 255, 0.1);
   letter-spacing: 0.03em;
 }
 
@@ -28,60 +34,49 @@ h1, h2, h3, h4, h5, h6, p, span, label {
   padding: 14px 22px;
   font-weight: 700;
   text-transform: uppercase;
-  border-radius: var(--radius);
-  border: 2px solid #fff;
-  background: #000;
-  color: var(--primary-text);
-  box-shadow: 0 0 12px rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  border: 2px solid white;
+  background: black;
+  color: white;
+  box-shadow: 0 0 14px rgba(255, 255, 255, 0.15);
   cursor: pointer;
-  transition: var(--transition);
-  position: relative;
-  z-index: 1;
+  transition: 0.4s ease;
 }
 
 .buttonBase:hover {
-  background: var(--primary-text);
-  color: #000;
-  transform: scale(1.05);
-  box-shadow: 0 0 24px var(--white-gold);
+  background: white;
+  color: black;
+  transform: scale(1.06);
+  box-shadow: 0 0 28px #FFD700;
 }
 
-.buttonBase::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(circle at center, rgba(255, 255, 255, 0.06), transparent);
-  animation: pulseGlow 4s ease-in-out infinite;
-  z-index: -1;
-}
-
-/* ✅ GLASSMORPHISM BOX */
+/* ✅ GLASS EFFECT BOX */
 .glassBox {
   background: rgba(255, 255, 255, 0.06);
-  backdrop-filter: blur(24px) saturate(180%);
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
   border: 1px solid rgba(255, 255, 255, 0.15);
-  box-shadow: 0 0 32px rgba(255, 255, 255, 0.04);
-  border-radius: var(--radius);
+  border-radius: 16px;
+  box-shadow: 0 0 32px rgba(255, 255, 255, 0.06);
   padding: clamp(24px, 5vw, 48px);
-  transition: var(--transition);
 }
 
-/* ✅ INPUTS */
-input, textarea {
+/* ✅ INPUT FIELDS */
+input, textarea, select {
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: var(--radius);
-  color: var(--primary-text);
-  padding: 12px 18px;
+  border-radius: 16px;
+  color: white;
+  padding: 14px 20px;
   outline: none;
-  transition: var(--transition);
+  font-family: 'Share Tech Mono', monospace;
+  transition: 0.4s ease;
 }
 
-input:focus, textarea:focus {
-  border-color: var(--white-gold);
-  box-shadow: 0 0 12px rgba(255, 255, 255, 0.3);
-  background: rgba(255, 255, 255, 0.06);
+input:focus, textarea:focus, select:focus {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: #FFD700;
+  box-shadow: 0 0 16px rgba(255, 255, 255, 0.3);
 }
 
 /* ✅ LOGO EFFECT */
@@ -91,11 +86,17 @@ input:focus, textarea:focus {
 }
 
 .logoImage:hover {
-  transform: scale(1.06);
-  filter: drop-shadow(0 0 32px rgba(255, 255, 255, 0.4));
+  transform: scale(1.05);
+  filter: drop-shadow(0 0 24px rgba(255, 255, 255, 0.4));
 }
 
-/* ✅ GRADIENT ANIMATED BACKGROUND */
+/* ✅ BACKGROUND ANIMATION */
+@keyframes moveGradient {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
 .gradientBg {
   background: linear-gradient(
     135deg,
@@ -108,71 +109,32 @@ input:focus, textarea:focus {
 }
 
 /* ✅ ANIMATIONS */
-@keyframes moveGradient {
-  0%   { background-position: 0% 50%; }
-  50%  { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-}
-
-@keyframes pulseGlow {
-  0%, 100% { transform: scale(1); opacity: 0.2; }
-  50%      { transform: scale(1.1); opacity: 0.5; }
-}
-
-@keyframes glowWaves {
-  0%   { transform: scale(1) rotate(0deg); }
-  50%  { transform: scale(1.02) rotate(180deg); }
-  100% { transform: scale(1) rotate(360deg); }
-}
-
-@keyframes fadeMessage {
-  0%   { transform: scale(0.92); opacity: 0; }
-  60%  { transform: scale(1.02); opacity: 1; }
-  100% { transform: scale(1); }
-}
-
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(20px) scale(0.98); }
   to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-@keyframes fadeInDown {
-  from { opacity: 0; transform: translateY(-20px); }
-  to   { opacity: 1; transform: translateY(0); }
+@keyframes pulseGlow {
+  0%, 100% { transform: scale(1); opacity: 0.2; }
+  50% { transform: scale(1.1); opacity: 0.5; }
 }
 
-/* ✅ UI UTILITIES */
+/* ✅ UTILITIES */
 .flexCenter {
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.textUpper {
-  text-transform: uppercase;
-}
-
 .hidden {
   display: none !important;
 }
 
-.neonText {
-  color: var(--white-gold);
-  text-shadow:
-    0 0 6px var(--white-gold),
-    0 0 12px var(--white-gold),
-    0 0 24px var(--white-gold);
-}
-
-.glowBox {
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 0 32px rgba(255, 255, 255, 0.06), 0 0 18px var(--white-gold);
-}
-
-/* ✅ RESPONSIVE SCALE FIX */
+/* ✅ RESPONSIVE FULL SCREEN */
 @media (max-width: 768px) {
-  .centerWrapper {
-    transform: scale(0.75) translateY(6%);
-    transform-origin: top center;
+  html, body {
+    width: 100vw;
+    height: 100vh;
+    background-size: cover;
   }
 }
