@@ -111,11 +111,11 @@ export default function SendPage() {
     setError(null);
 
     try {
-      if (typeof window !== "undefined") {
+      if (typeof window !== "undefined" && user?.email) {
         const { sendTransaction } = await import("@/utils/sendCryptoFunction");
 
         const hash = await sendTransaction({
-          to: receiver.trim(),
+          to: receiver.trim().toLowerCase(),
           amount: parsedAmount,
           network,
           userEmail: user.email,
@@ -127,7 +127,7 @@ export default function SendPage() {
 
         await supabase.from("transactions").insert([{
           sender_email: user.email,
-          to_address: receiver.trim(),
+          to_address: receiver.trim().toLowerCase(),
           amount: parsedAmount,
           fee: adminFee,
           network,
@@ -150,7 +150,8 @@ export default function SendPage() {
 
   const handleRetry = () => setError(null);
 
-  // ✅ Real-time Gas Fees
+  const finalFee = useMemo(() => estimatedFeeError ? fallbackFee : estimatedFee, [estimatedFeeError, fallbackFee, estimatedFee]);
+
   useEffect(() => {
     async function fetchGasFee() {
       if (!network || !gasOption) return;
@@ -167,16 +168,17 @@ export default function SendPage() {
       }
     }
     fetchGasFee();
+
+    const gasFeeInterval = setInterval(fetchGasFee, 30000); // 30s refresh
+    return () => clearInterval(gasFeeInterval);
   }, [network, gasOption]);
 
   useEffect(() => {
-    const interval = setInterval(() => {
+    const balanceInterval = setInterval(() => {
       refetch();
-    }, 10000);
-    return () => clearInterval(interval);
+    }, 30000); // 30s refresh
+    return () => clearInterval(balanceInterval);
   }, [refetch]);
-
-  const finalFee = estimatedFeeError ? fallbackFee : estimatedFee;
 
   if (!isReady || initialLoading || balancesLoading) {
     return (
@@ -224,7 +226,6 @@ export default function SendPage() {
             disabled={sending}
           />
 
-          {/* ✅ Fees */}
           <p className={styles.feeBreakdown}>
             Admin Fee: <strong>{adminFee.toFixed(6)} {shortName}</strong><br />
             Gas Fee (Est.):&nbsp;
@@ -276,7 +277,7 @@ export default function SendPage() {
           </button>
         </div>
 
-        {/* ✅ Confirmation Modal */}
+        {/* Confirmation Modal */}
         {showConfirm && (
           <div className={styles.overlay}>
             <div className={styles.confirmModal}>
@@ -286,9 +287,9 @@ export default function SendPage() {
                 <p><strong>Receiver:</strong> {receiver}</p>
                 <p><strong>Amount:</strong> {parsedAmount.toFixed(6)} {shortName}</p>
                 <p><strong>Admin Fee:</strong> {adminFee.toFixed(6)} {shortName}</p>
-                <p><strong>Estimated Gas Fee (both tx):</strong> {estimatedFeeLoading ? "Loading..." : finalFee ? `${finalFee.toFixed(6)} ${shortName}` : "Error"}</p>
-                <p><strong>Total Deducted:</strong> {(parsedAmount + (finalFee || 0) + adminFee).toFixed(6)} {shortName}</p>
-                <p><strong>Remaining Balance:</strong> {(netBalance - parsedAmount - (finalFee || 0) - adminFee).toFixed(6)} {shortName}</p>
+                <p><strong>Estimated Gas Fee:</strong> {estimatedFeeLoading ? "Loading..." : finalFee ? `${finalFee.toFixed(6)} ${shortName}` : "Error"}</p>
+                <p><strong>Total Deducted:</strong> {(parsedAmount + adminFee + (finalFee || 0)).toFixed(6)} {shortName}</p>
+                <p><strong>Remaining Balance:</strong> {(netBalance - parsedAmount - adminFee - (finalFee || 0)).toFixed(6)} {shortName}</p>
               </div>
               <div className={styles.modalActions}>
                 <button className={styles.modalButton} onClick={confirmSend} disabled={sending}>
@@ -305,7 +306,7 @@ export default function SendPage() {
           </div>
         )}
 
-        {/* ✅ Success & Error Modals */}
+        {/* Success & Error Modals */}
         {showSuccess && (
           <SuccessModal
             message="✅ Transaction Successful!"
@@ -323,4 +324,4 @@ export default function SendPage() {
       </div>
     </main>
   );
-          }
+        }
