@@ -36,8 +36,8 @@ const buttonColors = {
 };
 
 export default function SendPage() {
+  const isReady = usePageReady();
   const { user } = useAuth();
-  const isPageReady = usePageReady();
   const { balances, loading: balancesLoading, initialLoading, refetch: refetchBalances } = useBalance();
   const { prices } = usePrices();
 
@@ -158,9 +158,7 @@ export default function SendPage() {
     }
   }, [parsedAmount, gasOption, network, refetchFees]);
 
-  const isLoading = !isPageReady || !user || initialLoading || balancesLoading || !balances || !prices;
-
-  if (isLoading) {
+  if (!isReady || initialLoading || balancesLoading) {
     return (
       <div className={styles.loading}>
         <LoadingSpinner />
@@ -171,7 +169,9 @@ export default function SendPage() {
   return (
     <main className={`${styles.main} ${background.gradient} fadeIn`}>
       <div className={`${styles.wrapper} fadeDown`}>
+
         <SuccessToast show={showToast} message={toastMessage} networkKey={network} />
+
         <SwipeSelector onSelect={handleNetworkChange} />
 
         <div className={styles.balanceTable}>
@@ -256,7 +256,6 @@ export default function SendPage() {
           </button>
         </div>
 
-        {/* Modals */}
         {showConfirm && (
           <div className={styles.overlay}>
             <div className={styles.confirmModal}>
@@ -265,7 +264,7 @@ export default function SendPage() {
                 <p><strong>Network:</strong> {shortName}</p>
                 <p><strong>Receiver:</strong> {receiver}</p>
                 <p><strong>Amount:</strong> {parsedAmount.toFixed(6)} {shortName}</p>
-                <p><strong>Total Fee:</strong> {feeLoading ? "Loading..." : feeError ? "Error" : `${totalFee.toFixed(6)} ${shortName}`}</p>
+                <p><strong>Total Fee (2x Gas + 3% Admin):</strong> {feeLoading ? "Loading..." : feeError ? "Error" : `${totalFee.toFixed(6)} ${shortName}`}</p>
                 <p><strong>Total Deducted:</strong> {(parsedAmount + (totalFee || 0)).toFixed(6)} {shortName}</p>
                 <p><strong>Remaining Balance:</strong> {(netBalance - parsedAmount - (totalFee || 0)).toFixed(6)} {shortName}</p>
               </div>
@@ -273,7 +272,10 @@ export default function SendPage() {
                 <button className={styles.modalButton} onClick={confirmSend} disabled={sending}>
                   {sending ? "Confirming..." : "Confirm"}
                 </button>
-                <button className={`${styles.modalButton} ${styles.cancel}`} onClick={() => setShowConfirm(false)}>
+                <button
+                  className={`${styles.modalButton} ${styles.cancel}`}
+                  onClick={() => setShowConfirm(false)}
+                >
                   Cancel
                 </button>
               </div>
