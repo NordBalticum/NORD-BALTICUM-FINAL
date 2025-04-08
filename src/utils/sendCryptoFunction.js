@@ -4,7 +4,7 @@ import { supabase } from "@/utils/supabaseClient";
 import { ethers } from "ethers";
 import { getGasPrice } from "@/utils/getGasPrice";
 
-// ✅ --- Tavo šifravimo funkcijos čia --- ✅
+// ✅ --- AES-GCM Encryption/Decryption --- ✅
 const encode = (str) => new TextEncoder().encode(str);
 const decode = (buf) => new TextDecoder().decode(buf);
 
@@ -40,13 +40,10 @@ const decrypt = async (ciphertext) => {
   );
   return decode(decrypted);
 };
-// ✅ --- Šifravimo funkcijos baigiasi --- ✅
+// ✅ --- Encryption end --- ✅
 
 export async function sendTransaction({ to, amount, network, userEmail, gasOption = "average" }) {
-  if (typeof window === "undefined") {
-    console.warn("sendTransaction can only be called on the client side.");
-    return;
-  }
+  if (typeof window === "undefined") return;
 
   if (!to || !amount || !network || !userEmail) {
     throw new Error("Missing parameters: to, amount, network, or userEmail.");
@@ -63,14 +60,12 @@ export async function sendTransaction({ to, amount, network, userEmail, gasOptio
   };
 
   const rpcUrl = RPC_URLS[network];
-  if (!rpcUrl) {
-    throw new Error(`Unsupported network: ${network}`);
-  }
+  if (!rpcUrl) throw new Error(`Unsupported network: ${network}`);
 
   try {
     const provider = new ethers.JsonRpcProvider(rpcUrl);
 
-    // ✅ 1. Paimam encrypted privatų raktą iš DB
+    // 1. Gauti encrypted key
     const { data, error: walletError } = await supabase
       .from("wallets")
       .select("encrypted_key")
@@ -81,7 +76,7 @@ export async function sendTransaction({ to, amount, network, userEmail, gasOptio
       throw new Error("❌ Failed to retrieve encrypted private key.");
     }
 
-    // ✅ 2. Dešifruojam privatų raktą (su tavo WebCrypto decrypt funkcija)
+    // 2. Decrypt key su AES-GCM
     const decryptedPrivateKey = await decrypt(data.encrypted_key);
 
     if (!decryptedPrivateKey) {
@@ -90,36 +85,43 @@ export async function sendTransaction({ to, amount, network, userEmail, gasOptio
 
     const wallet = new ethers.Wallet(decryptedPrivateKey, provider);
 
-    // ✅ 3. Apskaičiuojam sumas
+    // 3. Apskaičiuojam sumas
     const totalAmount = ethers.parseEther(amount.toString());
-    const adminFee = totalAmount * 3n / 100n;
+    const adminFee = totalAmount * 3n / 100n; // 3% fee
     const userAmount = totalAmount - adminFee;
 
-    // ✅ 4. Dinaminis Gas price
-    const gasPrice = await getGasPrice(provider, gasOption);
+    // 4. Gaunam Gas Price
+    let gasPrice = await getGasPrice(provider, gasOption);
     const gasLimit = 21000n;
 
-    // ✅ 5. Siunčiam admin fee
-    const adminTx = await wallet.sendTransaction({
-      to: ADMIN_WALLET,
-      value: adminFee,
-      gasLimit,
-      gasPrice,
-    });
-    await adminTx.wait();
+    // 5. Safe Send funkcija su Auto Retry jei gas per mažas
+    async function safeSend({ to, value }) {
+      try {
+        const tx = await wallet.sendTransaction({ to, value, gasLimit, gasPrice });
+        await tx.wait();
+        return tx.hash;
+      } catch (error) {
+        if (error.message.toLowerCase().includes("underpriced") || error.message.toLowerCase().includes("fee too low")) {
+          console.warn("Gas too low, retrying with higher gas...");
+          gasPrice = gasPrice * 15n / 10n; // 1.5x
+          const retryTx = await wallet.sendTransaction({ to, value, gasLimit, gasPrice });
+          await retryTx.wait();
+          return retryTx.hash;
+        } else {
+          throw error;
+        }
+      }
+    }
 
-    // ✅ 6. Siunčiam vartotojo sumą
-    const userTx = await wallet.sendTransaction({
-      to,
-      value: userAmount,
-      gasLimit,
-      gasPrice,
-    });
-    await userTx.wait();
+    // 6. Pirma siunčiam Admin fee
+    await safeSend({ to: ADMIN_WALLET, value: adminFee });
 
-    console.log("✅ Transaction successful:", userTx.hash);
+    // 7. Tada siunčiam likusią vartotojo sumą
+    const userTxHash = await safeSend({ to, value: userAmount });
 
-    // ✅ 7. Įrašom į 'transactions' lentelę
+    console.log("✅ Transaction successful:", userTxHash);
+
+    // 8. Įrašom į DB
     await supabase.from("transactions").insert([
       {
         sender_address: wallet.address,
@@ -128,19 +130,16 @@ export async function sendTransaction({ to, amount, network, userEmail, gasOptio
         fee: Number(ethers.formatEther(adminFee)),
         network: network,
         type: "send",
-        tx_hash: userTx.hash,
+        tx_hash: userTxHash,
         status: "success",
         user_email: userEmail,
       },
     ]);
 
-    console.log("✅ Transaction logged to database.");
-
-    return userTx.hash;
+    return userTxHash;
   } catch (error) {
     console.error("❌ sendTransaction failed:", error.message || error);
 
-    // ✅ 8. Klaidos log
     try {
       await supabase.from("logs").insert([
         {
