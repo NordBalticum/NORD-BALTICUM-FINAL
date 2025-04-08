@@ -153,8 +153,10 @@ export default function SendPage() {
   }, [refetchBalances, refetchFees]);
 
   useEffect(() => {
+  if (parsedAmount > 0) {
     refetchFees();
-  }, [amount, gasOption, network, refetchFees]);
+  }
+}, [parsedAmount, gasOption, network, refetchFees]);
 
   if (!isReady || initialLoading || balancesLoading) {
     return (
