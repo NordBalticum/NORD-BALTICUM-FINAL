@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { ethers } from "ethers";
 
-// RPC URL'ai pagal tinklą
+// RPC URL'ai
 const RPC_URLS = {
   ethereum: "https://rpc.ankr.com/eth",
   bsc: "https://bsc-dataseed.bnbchain.org",
@@ -12,9 +12,8 @@ const RPC_URLS = {
   tbnb: "https://data-seed-prebsc-1-s1.binance.org:8545",
 };
 
-// Admin Fee konstantos
 const BASE_GAS_LIMIT = 21000n;
-const ADMIN_FEE_PERCENT = 3; // 3%
+const ADMIN_FEE_PERCENT = 3;
 
 export function useTotalFeeCalculator(network, amount, gasOption = "average") {
   const [gasFee, setGasFee] = useState(0);
@@ -23,9 +22,8 @@ export function useTotalFeeCalculator(network, amount, gasOption = "average") {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const fetchFees = useCallback(async () => {
+  async function fetchFees() {
     if (!network || !amount || amount <= 0) {
-      // Jeigu duomenų nėra arba amount <= 0, resetinam
       setGasFee(0);
       setAdminFee(0);
       setTotalFee(0);
@@ -46,18 +44,18 @@ export function useTotalFeeCalculator(network, amount, gasOption = "average") {
       let gasPrice = feeData?.gasPrice;
 
       if (!gasPrice) {
-        console.warn("⚠️ Gas price null, fallback 5 Gwei");
+        console.warn("⚠️ gasPrice is null, fallback 5 gwei");
         gasPrice = ethers.parseUnits("5", "gwei");
       }
 
       if (gasOption === "slow") {
-        gasPrice = gasPrice * 8n / 10n; // -20%
+        gasPrice = gasPrice * 8n / 10n;
       } else if (gasOption === "fast") {
-        gasPrice = gasPrice * 12n / 10n; // +20%
+        gasPrice = gasPrice * 12n / 10n;
       }
 
       const singleTxGasFee = (gasPrice * BASE_GAS_LIMIT) / ethers.parseUnits("1", "ether");
-      const totalGasFee = Number(singleTxGasFee) * 2; // 2 transakcijos: admin + user
+      const totalGasFee = Number(singleTxGasFee) * 2;
 
       const calculatedAdminFee = (Number(amount) * ADMIN_FEE_PERCENT) / 100;
       const totalCalculatedFee = totalGasFee + calculatedAdminFee;
@@ -66,7 +64,7 @@ export function useTotalFeeCalculator(network, amount, gasOption = "average") {
       setAdminFee(calculatedAdminFee);
       setTotalFee(totalCalculatedFee);
     } catch (err) {
-      console.error("❌ Fee fetch error:", err.message);
+      console.error("❌ Error fetching fees:", err.message);
       setError(err.message || "Failed to fetch fees");
       setGasFee(0);
       setAdminFee(0);
@@ -74,18 +72,25 @@ export function useTotalFeeCalculator(network, amount, gasOption = "average") {
     } finally {
       setLoading(false);
     }
-  }, [network, amount, gasOption]);
+  }
 
   useEffect(() => {
-    fetchFees();
-  }, [fetchFees]);
+    if (amount > 0) {
+      fetchFees();
+    } else {
+      setGasFee(0);
+      setAdminFee(0);
+      setTotalFee(0);
+    }
+    // ❗️NEKIŠAM fetchFees į priklausomybes, todėl NĖRA INFINITE LOOP
+  }, [amount, network, gasOption]);
 
   return {
-    gasFee,        // 2x Gas Fee (admin + user)
-    adminFee,      // 3% Admin Fee
-    totalFee,      // Viso bendros fees
-    loading,       // Loading indikatorius
-    error,         // Klaidos tekstas jei yra
+    gasFee,
+    adminFee,
+    totalFee,
+    loading,
+    error,
     refetch: fetchFees, // Rankinis refetch
   };
 }
