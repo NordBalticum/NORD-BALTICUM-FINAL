@@ -1,10 +1,9 @@
-// utils/getEstimatedGasFee.js
-
 "use client";
 
 import { ethers } from "ethers";
 
-export async function getEstimatedGasFee(network) {
+// ✅ Gauti estimated gas fee priklausomai nuo pasirinkimo
+export async function getEstimatedGasFee(network, speed = "average") {
   const RPC_URLS = {
     ethereum: "https://rpc.ankr.com/eth",
     bsc: "https://bsc-dataseed.bnbchain.org",
@@ -20,10 +19,19 @@ export async function getEstimatedGasFee(network) {
   const feeData = await provider.getFeeData();
   const gasPrice = feeData.gasPrice;
 
-  if (!gasPrice) throw new Error("Failed to fetch gas price");
+  if (!gasPrice) throw new Error("❌ Failed to fetch gas price");
 
-  const gasLimit = 21000n; // Normal ETH send
-  const estimatedFee = (gasPrice * gasLimit) / ethers.parseUnits("1", "ether"); // ETH/BSC gas fees are per 1 ETH unit
+  let finalGasPrice = gasPrice;
+
+  // ✅ Priklausomai nuo vartotojo pasirinkimo (slow / average / fast)
+  if (speed === "slow") {
+    finalGasPrice = gasPrice * 8n / 10n; // 0.8x
+  } else if (speed === "fast") {
+    finalGasPrice = gasPrice * 15n / 10n; // 1.5x
+  }
+
+  const gasLimit = 21000n; // Normalus transfer
+  const estimatedFee = (finalGasPrice * gasLimit) / ethers.parseUnits("1", "ether");
 
   return Number(estimatedFee);
 }
