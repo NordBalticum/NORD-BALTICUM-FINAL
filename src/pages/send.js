@@ -15,7 +15,6 @@ import ErrorModal from "@/components/modals/ErrorModal";
 import SuccessToast from "@/components/SuccessToast";
 
 import { supabase } from "@/utils/supabaseClient";
-import { getEstimatedGasFee } from "@/utils/getEstimatedGasFee";
 
 import styles from "@/styles/send.module.css";
 import background from "@/styles/background.module.css";
@@ -54,19 +53,11 @@ export default function SendPage() {
   const [transactionHash, setTransactionHash] = useState(null);
   const [gasOption, setGasOption] = useState("average");
 
-  const [estimatedFee, setEstimatedFee] = useState(null);
-  const [estimatedFeeLoading, setEstimatedFeeLoading] = useState(false);
-  const [estimatedFeeError, setEstimatedFeeError] = useState(false);
-
-  const { gasFee: fallbackFee, loading: fallbackFeeLoading, refetchFees } = useFeeCalculator(network);
-  
-  const [firstLoadDone, setFirstLoadDone] = useState(false); // FIX infinite loading!
-
   const shortName = useMemo(() => networkShortNames[network] || network.toUpperCase(), [network]);
   const parsedAmount = useMemo(() => Number(amount) || 0, [amount]);
   const netBalance = useMemo(() => balances?.[network]?.balance ? parseFloat(balances[network].balance) : 0, [balances, network]);
 
-  const adminFee = useMemo(() => parsedAmount > 0 ? parsedAmount * 0.03 : 0, [parsedAmount]);
+  const { gasFee, adminFee, totalFee, loading: feeLoading, error: feeError, refetchFees } = useFeeCalculator(network, parsedAmount, gasOption);
 
   const usdBalance = useMemo(() => {
     const price = prices?.[network]?.usd || 0;
@@ -152,42 +143,15 @@ export default function SendPage() {
 
   const handleRetry = () => setError(null);
 
-  const finalFee = useMemo(() => estimatedFeeError ? fallbackFee : estimatedFee, [estimatedFeeError, fallbackFee, estimatedFee]);
-
-  useEffect(() => {
-    if (!initialLoading && !balancesLoading && !firstLoadDone) {
-      setFirstLoadDone(true);
-    }
-  }, [initialLoading, balancesLoading, firstLoadDone]);
-
-  useEffect(() => {
-    async function fetchGasFee() {
-      if (!network || !gasOption) return;
-      try {
-        setEstimatedFeeLoading(true);
-        const fee = await getEstimatedGasFee(network, gasOption);
-        setEstimatedFee(fee);
-        setEstimatedFeeError(false);
-      } catch (error) {
-        console.error("Failed to fetch gas fee:", error.message);
-        setEstimatedFeeError(true);
-      } finally {
-        setEstimatedFeeLoading(false);
-      }
-    }
-    fetchGasFee();
-    const gasFeeInterval = setInterval(fetchGasFee, 30000);
-    return () => clearInterval(gasFeeInterval);
-  }, [network, gasOption]);
-
   useEffect(() => {
     const balanceInterval = setInterval(() => {
       refetch();
-    }, 30000);
+      refetchFees();
+    }, 30000); // 30s refresh
     return () => clearInterval(balanceInterval);
-  }, [refetch]);
+  }, [refetch, refetchFees]);
 
-  if (!isReady || !firstLoadDone) {
+  if (!isReady || initialLoading || balancesLoading) {
     return (
       <div className={styles.loading}>
         <LoadingSpinner />
@@ -236,10 +200,12 @@ export default function SendPage() {
           <p className={styles.feeBreakdown}>
             Admin Fee: <strong>{adminFee.toFixed(6)} {shortName}</strong><br />
             Gas Fee (Est.):&nbsp;
-            {estimatedFeeLoading ? (
+            {feeLoading ? (
               <span>Loading...</span>
+            ) : feeError ? (
+              <span style={{ color: "red" }}>Error</span>
             ) : (
-              <strong>{finalFee?.toFixed(6)} {shortName}</strong>
+              <strong>{gasFee.toFixed(6)} {shortName}</strong>
             )}
           </p>
 
@@ -284,6 +250,7 @@ export default function SendPage() {
           </button>
         </div>
 
+        {/* Confirmation Modal */}
         {showConfirm && (
           <div className={styles.overlay}>
             <div className={styles.confirmModal}>
@@ -293,9 +260,9 @@ export default function SendPage() {
                 <p><strong>Receiver:</strong> {receiver}</p>
                 <p><strong>Amount:</strong> {parsedAmount.toFixed(6)} {shortName}</p>
                 <p><strong>Admin Fee:</strong> {adminFee.toFixed(6)} {shortName}</p>
-                <p><strong>Estimated Gas Fee:</strong> {estimatedFeeLoading ? "Loading..." : finalFee ? `${finalFee.toFixed(6)} ${shortName}` : "Error"}</p>
-                <p><strong>Total Deducted:</strong> {(parsedAmount + adminFee + (finalFee || 0)).toFixed(6)} {shortName}</p>
-                <p><strong>Remaining Balance:</strong> {(netBalance - parsedAmount - adminFee - (finalFee || 0)).toFixed(6)} {shortName}</p>
+                <p><strong>Estimated Gas Fee:</strong> {feeLoading ? "Loading..." : feeError ? "Error" : `${gasFee.toFixed(6)} ${shortName}`}</p>
+                <p><strong>Total Deducted:</strong> {(parsedAmount + adminFee + (gasFee || 0)).toFixed(6)} {shortName}</p>
+                <p><strong>Remaining Balance:</strong> {(netBalance - parsedAmount - adminFee - (gasFee || 0)).toFixed(6)} {shortName}</p>
               </div>
               <div className={styles.modalActions}>
                 <button className={styles.modalButton} onClick={confirmSend} disabled={sending}>
@@ -312,6 +279,7 @@ export default function SendPage() {
           </div>
         )}
 
+        {/* Success & Error Modals */}
         {showSuccess && (
           <SuccessModal
             message="✅ Transaction Successful!"
@@ -329,4 +297,4 @@ export default function SendPage() {
       </div>
     </main>
   );
-              }
+        }
