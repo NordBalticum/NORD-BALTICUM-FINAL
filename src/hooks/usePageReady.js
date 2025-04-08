@@ -1,25 +1,32 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useState, useEffect } from "react";
+import { useBalance } from "@/hooks/useBalance";
+import { usePrices } from "@/hooks/usePrices";
 
 export function usePageReady() {
-  const { authLoading, walletLoading, user, wallet, balances } = useAuth();
-  const [isClient, setIsClient] = useState(false);
+  const { user } = useAuth();
+  const { balances, loading: balancesLoading, initialLoading } = useBalance();
+  const { prices } = usePrices();
+
+  const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      setIsClient(true);
-    }
-  }, []);
+    const checkReady = () => {
+      const balancesLoaded = balances && !initialLoading && !balancesLoading;
+      const pricesLoaded = prices && Object.keys(prices).length > 0;
+      const userLoaded = !!user;
 
-  const isReady =
-    isClient &&
-    !authLoading &&
-    !walletLoading &&
-    !!user?.id &&
-    !!wallet?.wallet?.address &&
-    balances !== null;
+      if (balancesLoaded && pricesLoaded && userLoaded) {
+        setIsReady(true);
+      } else {
+        setIsReady(false);
+      }
+    };
+
+    checkReady();
+  }, [user, balances, balancesLoading, initialLoading, prices]);
 
   return isReady;
 }
