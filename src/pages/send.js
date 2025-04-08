@@ -15,6 +15,7 @@ import ErrorModal from "@/components/modals/ErrorModal";
 import SuccessToast from "@/components/SuccessToast";
 
 import { supabase } from "@/utils/supabaseClient";
+import { getEstimatedGasFee } from "@/utils/getEstimatedGasFee";
 
 import styles from "@/styles/send.module.css";
 import background from "@/styles/background.module.css";
@@ -52,6 +53,7 @@ export default function SendPage() {
   const [error, setError] = useState(null);
   const [transactionHash, setTransactionHash] = useState(null);
   const [gasOption, setGasOption] = useState("average");
+  const [estimatedFee, setEstimatedFee] = useState(null);
 
   const shortName = useMemo(() => networkShortNames[network] || network.toUpperCase(), [network]);
   const parsedAmount = useMemo(() => Number(amount) || 0, [amount]);
@@ -145,6 +147,19 @@ export default function SendPage() {
     setError(null);
   };
 
+  // ✅ Fees ir Gas Fees perskaičiavimas real-time
+  useEffect(() => {
+    async function fetchGasFee() {
+      if (network && gasOption) {
+        const fee = await getEstimatedGasFee(network, gasOption);
+        if (fee) {
+          setEstimatedFee(fee * 2); // *2 už 2 pavedimus
+        }
+      }
+    }
+    fetchGasFee();
+  }, [network, gasOption]);
+
   useEffect(() => {
     if (amount || network) {
       refetchFees();
@@ -210,7 +225,8 @@ export default function SendPage() {
 
           {/* ✅ Fees */}
           <p className={styles.feeBreakdown}>
-            Fees: <strong>{adminFee.toFixed(6)} {shortName}</strong>
+            Admin Fee: <strong>{adminFee.toFixed(6)} {shortName}</strong><br />
+            Gas Fee (Est.): <strong>{estimatedFee ? estimatedFee.toFixed(6) : "Loading..."} {shortName}</strong>
           </p>
 
           {/* ✅ Gas Fee Selector */}
@@ -265,9 +281,9 @@ export default function SendPage() {
                 <p><strong>Network:</strong> {shortName}</p>
                 <p><strong>Receiver:</strong> {receiver}</p>
                 <p><strong>Amount:</strong> {parsedAmount.toFixed(6)} {shortName}</p>
-                <p><strong>Gas Fee:</strong> {gasFee.toFixed(6)} {shortName}</p>
                 <p><strong>Admin Fee:</strong> {adminFee.toFixed(6)} {shortName}</p>
-                <p><strong>After Fees:</strong> {(parsedAmount - gasFee - adminFee).toFixed(6)} {shortName}</p>
+                <p><strong>Estimated Gas Fee:</strong> {estimatedFee ? estimatedFee.toFixed(6) : "Loading..."} {shortName}</p>
+                <p><strong>After Fees:</strong> {(parsedAmount - adminFee - (estimatedFee || 0)).toFixed(6)} {shortName}</p>
               </div>
               <div className={styles.modalActions}>
                 <button className={styles.modalButton} onClick={confirmSend} disabled={sending}>
