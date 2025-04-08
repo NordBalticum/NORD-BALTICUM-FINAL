@@ -53,7 +53,10 @@ export default function SendPage() {
   const [error, setError] = useState(null);
   const [transactionHash, setTransactionHash] = useState(null);
   const [gasOption, setGasOption] = useState("average");
+
   const [estimatedFee, setEstimatedFee] = useState(null);
+  const [estimatedFeeLoading, setEstimatedFeeLoading] = useState(false);
+  const [estimatedFeeError, setEstimatedFeeError] = useState(null);
 
   const shortName = useMemo(() => networkShortNames[network] || network.toUpperCase(), [network]);
   const parsedAmount = useMemo(() => Number(amount) || 0, [amount]);
@@ -147,13 +150,21 @@ export default function SendPage() {
     setError(null);
   };
 
-  // ✅ Fees ir Gas Fees perskaičiavimas real-time
+  // ✅ Real-time Gas Fees (Metamask level)
   useEffect(() => {
     async function fetchGasFee() {
       if (network && gasOption) {
-        const fee = await getEstimatedGasFee(network, gasOption);
-        if (fee) {
-          setEstimatedFee(fee * 2); // *2 už 2 pavedimus
+        try {
+          setEstimatedFeeLoading(true);
+          setEstimatedFeeError(null);
+          const fee = await getEstimatedGasFee(network, gasOption);
+          setEstimatedFee(fee); // already *2 included in utils
+        } catch (error) {
+          console.error("Failed to fetch gas fee:", error.message);
+          setEstimatedFeeError(error.message);
+          setEstimatedFee(null);
+        } finally {
+          setEstimatedFeeLoading(false);
         }
       }
     }
@@ -226,7 +237,14 @@ export default function SendPage() {
           {/* ✅ Fees */}
           <p className={styles.feeBreakdown}>
             Admin Fee: <strong>{adminFee.toFixed(6)} {shortName}</strong><br />
-            Gas Fee (Est.): <strong>{estimatedFee ? estimatedFee.toFixed(6) : "Loading..."} {shortName}</strong>
+            Gas Fee (Est.):&nbsp;
+            {estimatedFeeLoading ? (
+              <span>Loading...</span>
+            ) : estimatedFeeError ? (
+              <span style={{ color: "red" }}>Error</span>
+            ) : (
+              <strong>{estimatedFee?.toFixed(6)} {shortName}</strong>
+            )}
           </p>
 
           {/* ✅ Gas Fee Selector */}
@@ -282,8 +300,9 @@ export default function SendPage() {
                 <p><strong>Receiver:</strong> {receiver}</p>
                 <p><strong>Amount:</strong> {parsedAmount.toFixed(6)} {shortName}</p>
                 <p><strong>Admin Fee:</strong> {adminFee.toFixed(6)} {shortName}</p>
-                <p><strong>Estimated Gas Fee:</strong> {estimatedFee ? estimatedFee.toFixed(6) : "Loading..."} {shortName}</p>
-                <p><strong>After Fees:</strong> {(parsedAmount - adminFee - (estimatedFee || 0)).toFixed(6)} {shortName}</p>
+                <p><strong>Estimated Gas Fee (both tx):</strong> {estimatedFeeLoading ? "Loading..." : estimatedFee ? `${estimatedFee.toFixed(6)} ${shortName}` : "Error"}</p>
+                <p><strong>Total Deducted:</strong> {(parsedAmount + (estimatedFee || 0) + adminFee).toFixed(6)} {shortName}</p>
+                <p><strong>Remaining Balance:</strong> {(netBalance - parsedAmount - (estimatedFee || 0) - adminFee).toFixed(6)} {shortName}</p>
               </div>
               <div className={styles.modalActions}>
                 <button className={styles.modalButton} onClick={confirmSend} disabled={sending}>
