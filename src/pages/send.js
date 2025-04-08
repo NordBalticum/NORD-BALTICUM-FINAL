@@ -59,6 +59,8 @@ export default function SendPage() {
   const [estimatedFeeError, setEstimatedFeeError] = useState(false);
 
   const { gasFee: fallbackFee, loading: fallbackFeeLoading, refetchFees } = useFeeCalculator(network);
+  
+  const [firstLoadDone, setFirstLoadDone] = useState(false); // FIX infinite loading!
 
   const shortName = useMemo(() => networkShortNames[network] || network.toUpperCase(), [network]);
   const parsedAmount = useMemo(() => Number(amount) || 0, [amount]);
@@ -153,6 +155,12 @@ export default function SendPage() {
   const finalFee = useMemo(() => estimatedFeeError ? fallbackFee : estimatedFee, [estimatedFeeError, fallbackFee, estimatedFee]);
 
   useEffect(() => {
+    if (!initialLoading && !balancesLoading && !firstLoadDone) {
+      setFirstLoadDone(true);
+    }
+  }, [initialLoading, balancesLoading, firstLoadDone]);
+
+  useEffect(() => {
     async function fetchGasFee() {
       if (!network || !gasOption) return;
       try {
@@ -168,19 +176,18 @@ export default function SendPage() {
       }
     }
     fetchGasFee();
-
-    const gasFeeInterval = setInterval(fetchGasFee, 30000); // 30s refresh
+    const gasFeeInterval = setInterval(fetchGasFee, 30000);
     return () => clearInterval(gasFeeInterval);
   }, [network, gasOption]);
 
   useEffect(() => {
     const balanceInterval = setInterval(() => {
       refetch();
-    }, 30000); // 30s refresh
+    }, 30000);
     return () => clearInterval(balanceInterval);
   }, [refetch]);
 
-  if (!isReady || initialLoading || balancesLoading) {
+  if (!isReady || !firstLoadDone) {
     return (
       <div className={styles.loading}>
         <LoadingSpinner />
@@ -277,7 +284,6 @@ export default function SendPage() {
           </button>
         </div>
 
-        {/* Confirmation Modal */}
         {showConfirm && (
           <div className={styles.overlay}>
             <div className={styles.confirmModal}>
@@ -306,7 +312,6 @@ export default function SendPage() {
           </div>
         )}
 
-        {/* Success & Error Modals */}
         {showSuccess && (
           <SuccessModal
             message="✅ Transaction Successful!"
@@ -324,4 +329,4 @@ export default function SendPage() {
       </div>
     </main>
   );
-        }
+              }
