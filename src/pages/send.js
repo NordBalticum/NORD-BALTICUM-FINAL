@@ -5,7 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useBalance } from "@/hooks/useBalance";
 import { usePageReady } from "@/hooks/usePageReady";
 import { usePrices } from "@/hooks/usePrices";
-import { useTotalFeeCalculator } from "@/hooks/useTotalFeeCalculator"; // ✅ NAUJAS HOOK
+import { useTotalFeeCalculator } from "@/hooks/useTotalFeeCalculator";
 
 import SwipeSelector from "@/components/SwipeSelector";
 import LoadingSpinner from "@/components/LoadingSpinner";
@@ -38,7 +38,7 @@ const buttonColors = {
 export default function SendPage() {
   const isReady = usePageReady();
   const { user } = useAuth();
-  const { balances, loading: balancesLoading, initialLoading, refetch } = useBalance();
+  const { balances, loading: balancesLoading, initialLoading, refetch: refetchBalances } = useBalance();
   const { prices } = usePrices();
 
   const [network, setNetwork] = useState("bsc");
@@ -57,17 +57,17 @@ export default function SendPage() {
   const parsedAmount = useMemo(() => Number(amount) || 0, [amount]);
   const netBalance = useMemo(() => balances?.[network]?.balance ? parseFloat(balances[network].balance) : 0, [balances, network]);
 
-  const { gasFee, adminFee, totalFee, loading: feeLoading, error: feeError, refetch } = useTotalFeeCalculator(network, parsedAmount, gasOption); // ✅
+  const { gasFee, adminFee, totalFee, loading: feeLoading, error: feeError, refetch: refetchFees } = useTotalFeeCalculator(network, parsedAmount, gasOption);
 
-  const usdBalance = useMemo(() => {
+  const usdValue = useMemo(() => {
     const price = prices?.[network]?.usd || 0;
-    return price ? (netBalance * price).toFixed(2) : "0.00";
-  }, [netBalance, prices, network]);
+    return parsedAmount > 0 && price ? (parsedAmount * price).toFixed(2) : "0.00";
+  }, [parsedAmount, prices, network]);
 
-  const eurBalance = useMemo(() => {
+  const eurValue = useMemo(() => {
     const price = prices?.[network]?.eur || 0;
-    return price ? (netBalance * price).toFixed(2) : "0.00";
-  }, [netBalance, prices, network]);
+    return parsedAmount > 0 && price ? (parsedAmount * price).toFixed(2) : "0.00";
+  }, [parsedAmount, prices, network]);
 
   const isValidAddress = (address) => /^0x[a-fA-F0-9]{40}$/.test(address.trim());
 
@@ -75,11 +75,12 @@ export default function SendPage() {
     if (!selectedNetwork) return;
     setNetwork(selectedNetwork);
     setAmount("");
-    await refetch();
+    await refetchBalances();
+    await refetchFees();
     setToastMessage(`Switched to ${networkShortNames[selectedNetwork] || selectedNetwork.toUpperCase()}`);
     setShowToast(true);
     setTimeout(() => setShowToast(false), 1500);
-  }, [refetch]);
+  }, [refetchBalances, refetchFees]);
 
   const handleSend = () => {
     if (!isValidAddress(receiver)) {
@@ -129,7 +130,8 @@ export default function SendPage() {
 
         setReceiver("");
         setAmount("");
-        await refetch();
+        await refetchBalances();
+        await refetchFees();
         setShowSuccess(true);
       }
     } catch (err) {
@@ -144,10 +146,15 @@ export default function SendPage() {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      refetch();
+      refetchBalances();
+      refetchFees();
     }, 30000);
     return () => clearInterval(interval);
-  }, [refetch]);
+  }, [refetchBalances, refetchFees]);
+
+  useEffect(() => {
+    refetchFees();
+  }, [amount, gasOption, network, refetchFees]);
 
   if (!isReady || initialLoading || balancesLoading) {
     return (
@@ -173,7 +180,7 @@ export default function SendPage() {
             </span>
           </p>
           <p className={styles.whiteText}>
-            ≈ €{eurBalance} | ${usdBalance}
+            ≈ €{eurValue} | ${usdValue}
           </p>
         </div>
 
@@ -196,7 +203,7 @@ export default function SendPage() {
           />
 
           <p className={styles.feeBreakdown}>
-            Total Fee (2x Gas + Admin):&nbsp;
+            Total Fee (2x Gas + 3% Admin):&nbsp;
             {feeLoading ? (
               <span>Loading...</span>
             ) : feeError ? (
@@ -256,7 +263,7 @@ export default function SendPage() {
                 <p><strong>Network:</strong> {shortName}</p>
                 <p><strong>Receiver:</strong> {receiver}</p>
                 <p><strong>Amount:</strong> {parsedAmount.toFixed(6)} {shortName}</p>
-                <p><strong>Total Fee (Gas + Admin):</strong> {feeLoading ? "Loading..." : feeError ? "Error" : `${totalFee.toFixed(6)} ${shortName}`}</p>
+                <p><strong>Total Fee (2x Gas + 3% Admin):</strong> {feeLoading ? "Loading..." : feeError ? "Error" : `${totalFee.toFixed(6)} ${shortName}`}</p>
                 <p><strong>Total Deducted:</strong> {(parsedAmount + (totalFee || 0)).toFixed(6)} {shortName}</p>
                 <p><strong>Remaining Balance:</strong> {(netBalance - parsedAmount - (totalFee || 0)).toFixed(6)} {shortName}</p>
               </div>
