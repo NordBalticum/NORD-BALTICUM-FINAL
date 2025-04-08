@@ -4,7 +4,6 @@ import { useState, useMemo, useCallback, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBalance } from "@/hooks/useBalance";
 import { usePageReady } from "@/hooks/usePageReady";
-import { useFeeCalculator } from "@/hooks/useFeeCalculator";
 import { usePrices } from "@/hooks/usePrices";
 
 import SwipeSelector from "@/components/SwipeSelector";
@@ -53,7 +52,6 @@ export default function SendPage() {
   const [error, setError] = useState(null);
   const [transactionHash, setTransactionHash] = useState(null);
   const [gasOption, setGasOption] = useState("average");
-
   const [estimatedFee, setEstimatedFee] = useState(null);
   const [estimatedFeeLoading, setEstimatedFeeLoading] = useState(false);
   const [estimatedFeeError, setEstimatedFeeError] = useState(null);
@@ -61,7 +59,6 @@ export default function SendPage() {
   const shortName = useMemo(() => networkShortNames[network] || network.toUpperCase(), [network]);
   const parsedAmount = useMemo(() => Number(amount) || 0, [amount]);
   const netBalance = useMemo(() => balances?.[network]?.balance ? parseFloat(balances[network].balance) : 0, [balances, network]);
-  const { gasFee, loading: feesLoading, refetchFees } = useFeeCalculator(network);
 
   const adminFee = useMemo(() => parsedAmount > 0 ? parsedAmount * 0.03 : 0, [parsedAmount]);
 
@@ -123,16 +120,6 @@ export default function SendPage() {
         console.log("✅ Transaction successful, hash:", hash);
         setTransactionHash(hash);
 
-        await supabase.from("transactions").insert([{
-          sender_email: user.email,
-          to_address: receiver.trim(),
-          amount: parsedAmount,
-          fee: adminFee,
-          network,
-          type: "send",
-          tx_hash: hash,
-        }]);
-
         setReceiver("");
         setAmount("");
         await refetch();
@@ -150,7 +137,7 @@ export default function SendPage() {
     setError(null);
   };
 
-  // ✅ Real-time Gas Fees (Metamask level)
+  // ✅ Fees ir Gas Fees perskaičiavimas
   useEffect(() => {
     async function fetchGasFee() {
       if (network && gasOption) {
@@ -158,7 +145,7 @@ export default function SendPage() {
           setEstimatedFeeLoading(true);
           setEstimatedFeeError(null);
           const fee = await getEstimatedGasFee(network, gasOption);
-          setEstimatedFee(fee); // already *2 included in utils
+          setEstimatedFee(fee);
         } catch (error) {
           console.error("Failed to fetch gas fee:", error.message);
           setEstimatedFeeError(error.message);
@@ -172,19 +159,13 @@ export default function SendPage() {
   }, [network, gasOption]);
 
   useEffect(() => {
-    if (amount || network) {
-      refetchFees();
-    }
-  }, [amount, network, refetchFees]);
-
-  useEffect(() => {
     const interval = setInterval(() => {
       refetch();
     }, 10000);
     return () => clearInterval(interval);
   }, [refetch]);
 
-  if (!isReady || initialLoading || feesLoading) {
+  if (!isReady || initialLoading || balancesLoading || estimatedFeeLoading) {
     return (
       <div className={styles.loading}>
         <LoadingSpinner />
@@ -195,14 +176,10 @@ export default function SendPage() {
   return (
     <main className={`${styles.main} ${background.gradient} fadeIn`}>
       <div className={`${styles.wrapper} fadeDown`}>
-
-        {/* ✅ Success Toast */}
         <SuccessToast show={showToast} message={toastMessage} networkKey={network} />
 
-        {/* ✅ Network Selector */}
         <SwipeSelector onSelect={handleNetworkChange} />
 
-        {/* ✅ Balance Info */}
         <div className={styles.balanceTable}>
           <p className={styles.whiteText}>
             Your Balance:&nbsp;
@@ -215,7 +192,6 @@ export default function SendPage() {
           </p>
         </div>
 
-        {/* ✅ Send Form */}
         <div className={styles.walletActions}>
           <input
             type="text"
@@ -234,7 +210,6 @@ export default function SendPage() {
             disabled={sending}
           />
 
-          {/* ✅ Fees */}
           <p className={styles.feeBreakdown}>
             Admin Fee: <strong>{adminFee.toFixed(6)} {shortName}</strong><br />
             Gas Fee (Est.):&nbsp;
@@ -247,7 +222,6 @@ export default function SendPage() {
             )}
           </p>
 
-          {/* ✅ Gas Fee Selector */}
           <div className={styles.gasOptions}>
             <label style={{ color: "white", marginBottom: "4px" }}>Select Gas Fee:</label>
             <select
@@ -262,7 +236,6 @@ export default function SendPage() {
             </select>
           </div>
 
-          {/* ✅ Send Now Button */}
           <button
             onClick={handleSend}
             disabled={sending}
@@ -290,7 +263,6 @@ export default function SendPage() {
           </button>
         </div>
 
-        {/* ✅ Confirmation Modal */}
         {showConfirm && (
           <div className={styles.overlay}>
             <div className={styles.confirmModal}>
@@ -301,17 +273,14 @@ export default function SendPage() {
                 <p><strong>Amount:</strong> {parsedAmount.toFixed(6)} {shortName}</p>
                 <p><strong>Admin Fee:</strong> {adminFee.toFixed(6)} {shortName}</p>
                 <p><strong>Estimated Gas Fee (both tx):</strong> {estimatedFeeLoading ? "Loading..." : estimatedFee ? `${estimatedFee.toFixed(6)} ${shortName}` : "Error"}</p>
-                <p><strong>Total Deducted:</strong> {(parsedAmount + (estimatedFee || 0) + adminFee).toFixed(6)} {shortName}</p>
-                <p><strong>Remaining Balance:</strong> {(netBalance - parsedAmount - (estimatedFee || 0) - adminFee).toFixed(6)} {shortName}</p>
+                <p><strong>Total Deducted:</strong> {(parsedAmount + adminFee + (estimatedFee || 0)).toFixed(6)} {shortName}</p>
+                <p><strong>Remaining Balance:</strong> {(netBalance - parsedAmount - adminFee - (estimatedFee || 0)).toFixed(6)} {shortName}</p>
               </div>
               <div className={styles.modalActions}>
                 <button className={styles.modalButton} onClick={confirmSend} disabled={sending}>
                   {sending ? "Confirming..." : "Confirm"}
                 </button>
-                <button
-                  className={`${styles.modalButton} ${styles.cancel}`}
-                  onClick={() => setShowConfirm(false)}
-                >
+                <button className={`${styles.modalButton} ${styles.cancel}`} onClick={() => setShowConfirm(false)}>
                   Cancel
                 </button>
               </div>
@@ -319,7 +288,6 @@ export default function SendPage() {
           </div>
         )}
 
-        {/* ✅ Success & Error Modals */}
         {showSuccess && (
           <SuccessModal
             message="✅ Transaction Successful!"
