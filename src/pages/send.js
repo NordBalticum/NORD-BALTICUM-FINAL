@@ -4,8 +4,8 @@ import { useState, useMemo, useCallback, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBalance } from "@/hooks/useBalance";
 import { usePageReady } from "@/hooks/usePageReady";
-import { useFeeCalculator } from "@/hooks/useFeeCalculator";
 import { usePrices } from "@/hooks/usePrices";
+import { useTotalFeeCalculator } from "@/hooks/useTotalFeeCalculator"; // ✅ NAUJAS HOOK
 
 import SwipeSelector from "@/components/SwipeSelector";
 import LoadingSpinner from "@/components/LoadingSpinner";
@@ -44,6 +44,7 @@ export default function SendPage() {
   const [network, setNetwork] = useState("bsc");
   const [receiver, setReceiver] = useState("");
   const [amount, setAmount] = useState("");
+  const [gasOption, setGasOption] = useState("average");
   const [showConfirm, setShowConfirm] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [showToast, setShowToast] = useState(false);
@@ -51,13 +52,12 @@ export default function SendPage() {
   const [sending, setSending] = useState(false);
   const [error, setError] = useState(null);
   const [transactionHash, setTransactionHash] = useState(null);
-  const [gasOption, setGasOption] = useState("average");
 
   const shortName = useMemo(() => networkShortNames[network] || network.toUpperCase(), [network]);
   const parsedAmount = useMemo(() => Number(amount) || 0, [amount]);
   const netBalance = useMemo(() => balances?.[network]?.balance ? parseFloat(balances[network].balance) : 0, [balances, network]);
 
-  const { gasFee, adminFee, totalFee, loading: feeLoading, error: feeError, refetchFees } = useFeeCalculator(network, parsedAmount, gasOption);
+  const { gasFee, adminFee, totalFee, loading: feeLoading, error: feeError, refetch } = useTotalFeeCalculator(network, parsedAmount, gasOption); // ✅
 
   const usdBalance = useMemo(() => {
     const price = prices?.[network]?.usd || 0;
@@ -74,13 +74,12 @@ export default function SendPage() {
   const handleNetworkChange = useCallback(async (selectedNetwork) => {
     if (!selectedNetwork) return;
     setNetwork(selectedNetwork);
-    await refetch();
-    await refetchFees();
     setAmount("");
+    await refetch();
     setToastMessage(`Switched to ${networkShortNames[selectedNetwork] || selectedNetwork.toUpperCase()}`);
     setShowToast(true);
     setTimeout(() => setShowToast(false), 1500);
-  }, [refetch, refetchFees]);
+  }, [refetch]);
 
   const handleSend = () => {
     if (!isValidAddress(receiver)) {
@@ -91,8 +90,8 @@ export default function SendPage() {
       alert("❌ Enter a valid amount.");
       return;
     }
-    if (parsedAmount + adminFee > netBalance) {
-      alert(`❌ Insufficient balance. Required: ${(parsedAmount + adminFee).toFixed(6)} ${shortName}`);
+    if (parsedAmount + totalFee > netBalance) {
+      alert(`❌ Insufficient balance. Required: ${(parsedAmount + totalFee).toFixed(6)} ${shortName}`);
       return;
     }
     setShowConfirm(true);
@@ -144,12 +143,11 @@ export default function SendPage() {
   const handleRetry = () => setError(null);
 
   useEffect(() => {
-    const balanceInterval = setInterval(() => {
+    const interval = setInterval(() => {
       refetch();
-      refetchFees();
-    }, 30000); // 30s refresh
-    return () => clearInterval(balanceInterval);
-  }, [refetch, refetchFees]);
+    }, 30000);
+    return () => clearInterval(interval);
+  }, [refetch]);
 
   if (!isReady || initialLoading || balancesLoading) {
     return (
@@ -198,14 +196,13 @@ export default function SendPage() {
           />
 
           <p className={styles.feeBreakdown}>
-            Admin Fee: <strong>{adminFee.toFixed(6)} {shortName}</strong><br />
-            Gas Fee (Est.):&nbsp;
+            Total Fee (2x Gas + Admin):&nbsp;
             {feeLoading ? (
               <span>Loading...</span>
             ) : feeError ? (
               <span style={{ color: "red" }}>Error</span>
             ) : (
-              <strong>{gasFee.toFixed(6)} {shortName}</strong>
+              <strong>{totalFee.toFixed(6)} {shortName}</strong>
             )}
           </p>
 
@@ -259,10 +256,9 @@ export default function SendPage() {
                 <p><strong>Network:</strong> {shortName}</p>
                 <p><strong>Receiver:</strong> {receiver}</p>
                 <p><strong>Amount:</strong> {parsedAmount.toFixed(6)} {shortName}</p>
-                <p><strong>Admin Fee:</strong> {adminFee.toFixed(6)} {shortName}</p>
-                <p><strong>Estimated Gas Fee:</strong> {feeLoading ? "Loading..." : feeError ? "Error" : `${gasFee.toFixed(6)} ${shortName}`}</p>
-                <p><strong>Total Deducted:</strong> {(parsedAmount + adminFee + (gasFee || 0)).toFixed(6)} {shortName}</p>
-                <p><strong>Remaining Balance:</strong> {(netBalance - parsedAmount - adminFee - (gasFee || 0)).toFixed(6)} {shortName}</p>
+                <p><strong>Total Fee (Gas + Admin):</strong> {feeLoading ? "Loading..." : feeError ? "Error" : `${totalFee.toFixed(6)} ${shortName}`}</p>
+                <p><strong>Total Deducted:</strong> {(parsedAmount + (totalFee || 0)).toFixed(6)} {shortName}</p>
+                <p><strong>Remaining Balance:</strong> {(netBalance - parsedAmount - (totalFee || 0)).toFixed(6)} {shortName}</p>
               </div>
               <div className={styles.modalActions}>
                 <button className={styles.modalButton} onClick={confirmSend} disabled={sending}>
