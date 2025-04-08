@@ -19,6 +19,14 @@ import { supabase } from "@/utils/supabaseClient";
 import styles from "@/styles/send.module.css";
 import background from "@/styles/background.module.css";
 
+const networkOptions = [
+  { key: "ethereum", label: "Ethereum" },
+  { key: "bsc", label: "BNB" },
+  { key: "tbnb", label: "Testnet BNB" },
+  { key: "polygon", label: "Polygon" },
+  { key: "avalanche", label: "Avalanche" },
+];
+
 const networkShortNames = {
   ethereum: "ETH",
   bsc: "BNB",
@@ -172,7 +180,11 @@ export default function SendPage() {
 
         <SuccessToast show={showToast} message={toastMessage} networkKey={network} />
 
-        <SwipeSelector onSelect={handleNetworkChange} />
+        <SwipeSelector
+          options={networkOptions}
+          selected={network}
+          onSelect={handleNetworkChange}
+        />
 
         <div className={styles.balanceTable}>
           <p className={styles.whiteText}>
