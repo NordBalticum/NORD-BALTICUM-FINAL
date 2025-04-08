@@ -1,83 +1,96 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { ethers } from "ethers";
 
-// ✅ RPC URLs
+// RPC URL'ai
 const RPC_URLS = {
   ethereum: "https://rpc.ankr.com/eth",
   bsc: "https://bsc-dataseed.bnbchain.org",
-  tbnb: "https://data-seed-prebsc-1-s1.binance.org:8545",
   polygon: "https://polygon-rpc.com",
   avalanche: "https://api.avax.network/ext/bc/C/rpc",
+  tbnb: "https://data-seed-prebsc-1-s1.binance.org:8545",
 };
 
-const BASE_GAS_LIMIT = 21000n; // Basic gas limit 21k
-const ADMIN_FEE_PERCENT = 3;    // 3% Admin Fee
+const BASE_GAS_LIMIT = 21000n;
+const ADMIN_FEE_PERCENT = 3;
 
 export function useTotalFeeCalculator(network, amount, gasOption = "average") {
   const [gasFee, setGasFee] = useState(0);
   const [adminFee, setAdminFee] = useState(0);
   const [totalFee, setTotalFee] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  const fetchFees = useCallback(async () => {
-    if (!network || !amount) return;
-
-    setLoading(true);
-    setError(false);
+  async function fetchFees() {
+    if (!network || !amount || amount <= 0) {
+      setGasFee(0);
+      setAdminFee(0);
+      setTotalFee(0);
+      return;
+    }
 
     try {
+      setLoading(true);
+      setError(null);
+
       const rpcUrl = RPC_URLS[network];
-      if (!rpcUrl) throw new Error("Unsupported network.");
+      if (!rpcUrl) {
+        throw new Error(`Unsupported network: ${network}`);
+      }
 
       const provider = new ethers.JsonRpcProvider(rpcUrl);
       const feeData = await provider.getFeeData();
-      let gasPrice = feeData.gasPrice || ethers.parseUnits("5", "gwei"); // fallback 5 Gwei
+      let gasPrice = feeData?.gasPrice;
 
-      if (gasOption === "slow") {
-        gasPrice = gasPrice * 8n / 10n; // -20%
-      } else if (gasOption === "fast") {
-        gasPrice = gasPrice * 12n / 10n; // +20%
+      if (!gasPrice) {
+        console.warn("⚠️ gasPrice is null, fallback 5 gwei");
+        gasPrice = ethers.parseUnits("5", "gwei");
       }
 
-      // Gas fee for one tx
-      const oneTxFee = (gasPrice * BASE_GAS_LIMIT) / ethers.parseUnits("1", "ether");
-      const doubleTxFee = Number(oneTxFee) * 2; // Admin + User tx
+      if (gasOption === "slow") {
+        gasPrice = gasPrice * 8n / 10n;
+      } else if (gasOption === "fast") {
+        gasPrice = gasPrice * 12n / 10n;
+      }
 
-      // Admin fee 3%
-      const admin = (Number(amount) * ADMIN_FEE_PERCENT) / 100;
+      const singleTxGasFee = (gasPrice * BASE_GAS_LIMIT) / ethers.parseUnits("1", "ether");
+      const totalGasFee = Number(singleTxGasFee) * 2;
 
-      // Total = 2x gas + 3% admin
-      const total = doubleTxFee + admin;
+      const calculatedAdminFee = (Number(amount) * ADMIN_FEE_PERCENT) / 100;
+      const totalCalculatedFee = totalGasFee + calculatedAdminFee;
 
-      setGasFee(doubleTxFee);
-      setAdminFee(admin);
-      setTotalFee(total);
+      setGasFee(totalGasFee);
+      setAdminFee(calculatedAdminFee);
+      setTotalFee(totalCalculatedFee);
     } catch (err) {
-      console.error("❌ Fee calculation error:", err.message);
-      setError(true);
+      console.error("❌ Error fetching fees:", err.message);
+      setError(err.message || "Failed to fetch fees");
       setGasFee(0);
       setAdminFee(0);
       setTotalFee(0);
     } finally {
       setLoading(false);
     }
-  }, [network, amount, gasOption]);
+  }
 
   useEffect(() => {
-    fetchFees();
-    const interval = setInterval(fetchFees, 30000); // Refresh every 30s
-    return () => clearInterval(interval);
-  }, [fetchFees]);
+    if (amount > 0) {
+      fetchFees();
+    } else {
+      setGasFee(0);
+      setAdminFee(0);
+      setTotalFee(0);
+    }
+    // ❗️NEKIŠAM fetchFees į priklausomybes, todėl NĖRA INFINITE LOOP
+  }, [amount, network, gasOption]);
 
   return {
-    gasFee,    // 2x Gas Fee
-    adminFee,  // 3% Admin Fee
-    totalFee,  // Total Fee
-    loading,   // Loading state
-    error,     // Error state
-    refetch: fetchFees, // Manual refetch
+    gasFee,
+    adminFee,
+    totalFee,
+    loading,
+    error,
+    refetch: fetchFees, // Rankinis refetch
   };
 }
