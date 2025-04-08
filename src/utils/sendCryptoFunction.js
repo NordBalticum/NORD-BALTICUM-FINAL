@@ -2,9 +2,10 @@
 
 import { supabase } from "@/utils/supabaseClient";
 import CryptoJS from "crypto-js";
-import { getGasPrice } from "@/utils/getGasPrice"; // Naujas importas
-import { ethers } from "ethers"; // Importuojam ethers.js
+import { ethers } from "ethers";
+import { getGasPrice } from "@/utils/getGasPrice"; // Dinaminis gas kainų gavimas
 
+// ✅ Tobula siuntimo funkcija
 export async function sendTransaction({ to, amount, network, userEmail, gasOption = "average" }) {
   if (typeof window === "undefined") {
     console.warn("sendTransaction can only be called on the client side.");
@@ -18,6 +19,7 @@ export async function sendTransaction({ to, amount, network, userEmail, gasOptio
   const ADMIN_WALLET = process.env.NEXT_PUBLIC_ADMIN_WALLET || "0xYourAdminWalletAddress";
   const SECRET = process.env.NEXT_PUBLIC_ENCRYPTION_SECRET || "default_super_secret";
 
+  // ✅ RPC adresai pagal tinklą
   const RPC_URLS = {
     ethereum: "https://rpc.ankr.com/eth",
     bsc: "https://bsc-dataseed.bnbchain.org",
@@ -34,19 +36,19 @@ export async function sendTransaction({ to, amount, network, userEmail, gasOptio
   try {
     const provider = new ethers.JsonRpcProvider(rpcUrl);
 
-    // 1. Gauti vartotojo užšifruotą privatų raktą iš DB
+    // ✅ 1. Paimam encrypted privatų raktą iš DB
     const { data, error: walletError } = await supabase
       .from("wallets")
-      .select("encrypted_private_key")
-      .eq("email", userEmail)
+      .select("encrypted_key")
+      .eq("user_email", userEmail)
       .single();
 
-    if (walletError || !data?.encrypted_private_key) {
+    if (walletError || !data?.encrypted_key) {
       throw new Error("❌ Failed to retrieve encrypted private key.");
     }
 
-    // 2. Dešifruoti privatų raktą
-    const bytes = CryptoJS.AES.decrypt(data.encrypted_private_key, SECRET);
+    // ✅ 2. Decryptinam privatų raktą
+    const bytes = CryptoJS.AES.decrypt(data.encrypted_key, SECRET);
     const decryptedPrivateKey = bytes.toString(CryptoJS.enc.Utf8);
 
     if (!decryptedPrivateKey) {
@@ -55,17 +57,16 @@ export async function sendTransaction({ to, amount, network, userEmail, gasOptio
 
     const wallet = new ethers.Wallet(decryptedPrivateKey, provider);
 
-    // 3. Apskaičiuoti siuntimo sumas
+    // ✅ 3. Apskaičiuojam sumas
     const totalAmount = ethers.parseEther(amount.toString());
-    const adminFee = totalAmount * 3n / 100n; // 3% mokesčiai
-    const sendAmount = totalAmount - adminFee;
+    const adminFee = totalAmount * 3n / 100n; // 3% mokestis
+    const userAmount = totalAmount - adminFee;
 
-    // 4. Gauti dinaminį Gas Price pagal pasirinktą greitį (slow/average/fast)
+    // ✅ 4. Dinaminis Gas price
     const gasPrice = await getGasPrice(provider, gasOption);
+    const gasLimit = 21000n;
 
-    const gasLimit = 21000n; // Standartinis gas limit paprastam send
-
-    // 5. Pirma siųsti 3% mokesčius į ADMIN WALLET
+    // ✅ 5. Siunčiam admin mokesčius
     const adminTx = await wallet.sendTransaction({
       to: ADMIN_WALLET,
       value: adminFee,
@@ -74,55 +75,49 @@ export async function sendTransaction({ to, amount, network, userEmail, gasOptio
     });
     await adminTx.wait();
 
-    // 6. Tada siųsti likusią sumą galutiniam gavėjui
+    // ✅ 6. Siunčiam vartotojo likutį
     const userTx = await wallet.sendTransaction({
       to,
-      value: sendAmount,
+      value: userAmount,
       gasLimit,
       gasPrice,
     });
     await userTx.wait();
 
-    console.log("✅ Transaction success:", userTx.hash);
+    console.log("✅ Transaction successful:", userTx.hash);
 
-    // 7. Įrašyti sėkmingą transakciją į DB
-    const { error: dbError } = await supabase.from("transactions").insert([
+    // ✅ 7. Įrašom į 'transactions' lentelę
+    await supabase.from("transactions").insert([
       {
         sender_address: wallet.address,
         receiver_address: to,
-        amount: Number(ethers.formatEther(sendAmount)),
+        amount: Number(ethers.formatEther(userAmount)),
+        fee: Number(ethers.formatEther(adminFee)),
         network: network,
         type: "send",
-        transaction_hash: userTx.hash,
+        tx_hash: userTx.hash,
         status: "success",
+        user_email: userEmail,
       },
     ]);
 
-    if (dbError) {
-      console.error("❌ Failed to log transaction:", dbError.message);
-    } else {
-      console.log("✅ Transaction logged to database.");
-    }
+    console.log("✅ Transaction logged to database.");
 
     return userTx.hash;
   } catch (error) {
     console.error("❌ sendTransaction failed:", error.message || error);
 
-    // 8. Užloginti klaidą į DB
+    // ✅ 8. Loginam klaidą į 'logs'
     try {
-      const { error: logError } = await supabase.from("logs").insert([
+      await supabase.from("logs").insert([
         {
-          action: "sendTransaction",
-          error_message: error.message || "Unknown error",
-          context: JSON.stringify({ to, amount, network, userEmail }),
+          user_email: userEmail,
+          type: "transaction_error",
+          message: error.message || "Unknown error",
         },
       ]);
-
-      if (logError) {
-        console.error("❌ Failed to log error:", logError.message);
-      }
-    } catch (dbError) {
-      console.error("❌ Error logging to database:", dbError.message);
+    } catch (logError) {
+      console.error("❌ Failed to log error:", logError.message);
     }
 
     throw new Error(error.message || "Transaction failed.");
