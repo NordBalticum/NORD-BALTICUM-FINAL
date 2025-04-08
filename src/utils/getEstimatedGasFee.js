@@ -2,7 +2,6 @@
 
 import { ethers } from "ethers";
 
-// ✅ Gauti estimated gas fee priklausomai nuo pasirinkimo
 export async function getEstimatedGasFee(network, speed = "average") {
   const RPC_URLS = {
     ethereum: "https://rpc.ankr.com/eth",
@@ -17,21 +16,20 @@ export async function getEstimatedGasFee(network, speed = "average") {
 
   const provider = new ethers.JsonRpcProvider(rpcUrl);
   const feeData = await provider.getFeeData();
-  const gasPrice = feeData.gasPrice;
 
-  if (!gasPrice) throw new Error("❌ Failed to fetch gas price");
+  if (!feeData.gasPrice) throw new Error("Failed to fetch gas price");
 
-  let finalGasPrice = gasPrice;
+  let gasPrice = feeData.gasPrice;
 
-  // ✅ Priklausomai nuo vartotojo pasirinkimo (slow / average / fast)
+  // Pritaikome pasirinkimą
   if (speed === "slow") {
-    finalGasPrice = gasPrice * 8n / 10n; // 0.8x
+    gasPrice = gasPrice * 8n / 10n; // -20%
   } else if (speed === "fast") {
-    finalGasPrice = gasPrice * 15n / 10n; // 1.5x
+    gasPrice = gasPrice * 12n / 10n; // +20%
   }
 
-  const gasLimit = 21000n; // Normalus transfer
-  const estimatedFee = (finalGasPrice * gasLimit) / ethers.parseUnits("1", "ether");
+  const gasLimit = 21000n; // Basic ETH send gas limit
+  const estimatedFee = (gasPrice * gasLimit) / ethers.parseUnits("1", "ether");
 
-  return Number(estimatedFee);
+  return Number(estimatedFee) * 2; // ❗ Nes DVI transakcijos: 1 admin, 1 user
 }
