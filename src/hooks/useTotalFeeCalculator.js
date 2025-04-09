@@ -1,39 +1,60 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { estimateGasFee } from "@/utils/gasEstimator"; // Arba savo funkcija
-import { calculateAdminFee } from "@/utils/adminFeeCalculator"; // Jei turi
+import { useState, useEffect, useCallback } from "react";
+import { estimateGasFee } from "@/utils/gasEstimator";
+import { calculateAdminFee } from "@/utils/adminFeeCalculator";
 
+/**
+ * Ultimate Total Fee Calculator Hook
+ * - Automatiškai apskaičiuoja Gas Fee (2x) + Admin Fee (3%) sumą
+ * - Grąžina visas reikšmes: gasFee, adminFee, totalFee
+ */
 export function useTotalFeeCalculator(network, amount, gasOption) {
   const [gasFee, setGasFee] = useState(0);
   const [adminFee, setAdminFee] = useState(0);
   const [totalFee, setTotalFee] = useState(0);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
-  const refetch = async () => {
-    if (!amount || amount <= 0) return; // ✅ Ne refetch jei amount nėra
+  const fetchFees = useCallback(async () => {
+    if (!network || !amount || amount <= 0) {
+      setError(true);
+      setLoading(false);
+      return;
+    }
 
     setLoading(true);
-    setError(null);
+    setError(false);
 
     try {
-      const gas = await estimateGasFee(network, gasOption);
-      const admin = calculateAdminFee(amount);
-      setGasFee(gas);
-      setAdminFee(admin);
-      setTotalFee(gas * 2 + admin);
+      const singleGasFee = await estimateGasFee(network, gasOption);
+      const doubleGasFee = singleGasFee * 2; // 2x nes 2 pavedimai (admin + receiver)
+
+      const adminFeeValue = calculateAdminFee(amount);
+
+      const total = doubleGasFee + adminFeeValue;
+
+      setGasFee(doubleGasFee);
+      setAdminFee(adminFeeValue);
+      setTotalFee(total);
     } catch (err) {
       console.error("❌ Fee calculation error:", err?.message || err);
-      setError(err?.message || "Fee calculation failed.");
+      setError(true);
     } finally {
       setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    refetch();
   }, [network, amount, gasOption]);
 
-  return { gasFee, adminFee, totalFee, loading, error, refetch };
+  useEffect(() => {
+    fetchFees();
+  }, [fetchFees]);
+
+  return {
+    gasFee,
+    adminFee,
+    totalFee,
+    loading,
+    error,
+    refetch: fetchFees,
+  };
 }
