@@ -18,7 +18,6 @@ export function useTotalFeeCalculator(network, amount, gasOption = "average") {
       setTotalFee(0);
       return;
     }
-
     try {
       setLoading(true);
       setError(null);
@@ -35,7 +34,6 @@ export function useTotalFeeCalculator(network, amount, gasOption = "average") {
       if (!rpcUrl) throw new Error(`Unsupported network: ${network}`);
 
       const provider = new ethers.JsonRpcProvider(rpcUrl);
-
       const gasPrice = await getGasPrice(provider, gasOption);
 
       const estimatedGasFee = Number(ethers.formatEther(gasPrice * 21000n * 2n));
@@ -67,6 +65,6 @@ export function useTotalFeeCalculator(network, amount, gasOption = "average") {
     totalFee,
     loading,
     error,
-    refetchFees: calculateFees, // <- ŠITĄ TURI RETURN'INTI!
+    refetchFees: calculateFees, // <--- BŪTINAI ŠITAIP!!!
   };
 }
