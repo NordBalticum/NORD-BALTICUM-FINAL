@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback, useEffect } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBalance } from "@/hooks/useBalance";
 import { usePageReady } from "@/hooks/usePageReady";
@@ -66,16 +66,9 @@ export default function SendPage() {
 
   const shortName = useMemo(() => networkShortNames[network] || network.toUpperCase(), [network]);
   const parsedAmount = useMemo(() => Number(amount) || 0, [amount]);
-  const debouncedAmount = useDebounce(parsedAmount, 300);
+  const debouncedAmount = useDebounce(parsedAmount, 500);
 
-  const {
-    gasFee,
-    adminFee,
-    totalFee,
-    loading: feeLoading,
-    error: feeError,
-    refetch: refetchFees
-  } = useTotalFeeCalculator(network, debouncedAmount, gasOption);
+  const { gasFee, adminFee, totalFee, loading: feeLoading, error: feeError, refetchFees } = useTotalFeeCalculator(network, debouncedAmount, gasOption);
 
   const netBalance = useMemo(
     () => balances?.[network]?.balance ? parseFloat(balances[network].balance) : 0,
@@ -104,16 +97,10 @@ export default function SendPage() {
     setTimeout(() => setShowToast(false), 1500);
   }, []);
 
-  const handleAmountChange = (e) => {
-    let value = e.target.value;
-    if (Number(value) > netBalance) value = netBalance.toFixed(6); // Max limit
-    setAmount(value);
-  };
-
   const handleGasOptionChange = async (e) => {
     const selected = e.target.value;
     setGasOption(selected);
-    await refetchFees(); // Refetch immediately
+    await refetchFees();
   };
 
   const handleSend = () => {
@@ -140,7 +127,8 @@ export default function SendPage() {
     try {
       if (typeof window !== "undefined" && user?.email) {
         const { sendTransaction } = await import("@/utils/sendCryptoFunction");
-        await refetchFees();
+        await refetchFees(); // Perrašom Fees real-time
+
         const hash = await sendTransaction({
           to: receiver.trim().toLowerCase(),
           amount: parsedAmount,
@@ -148,6 +136,7 @@ export default function SendPage() {
           userEmail: user.email,
           gasOption,
         });
+
         setTransactionHash(hash);
 
         await supabase.from("transactions").insert([{
@@ -174,10 +163,6 @@ export default function SendPage() {
 
   const handleRetry = () => setError(null);
 
-  useEffect(() => {
-    refetchFees(); // Refetch on amount change
-  }, [debouncedAmount, network]);
-
   if (!isReady || !swipeReady || initialLoading) {
     return (
       <div className={styles.loading}>
@@ -199,9 +184,7 @@ export default function SendPage() {
 
         <div className={styles.balanceTable}>
           <p className={styles.whiteText}>
-            Your Balance: <span className={styles.balanceAmount}>
-              {netBalance.toFixed(6)} {shortName}
-            </span>
+            Your Balance: <span className={styles.balanceAmount}>{netBalance.toFixed(6)} {shortName}</span>
           </p>
           <p className={styles.whiteText}>
             ≈ €{eurValue} | ${usdValue}
@@ -221,7 +204,7 @@ export default function SendPage() {
             type="number"
             placeholder="Amount to send"
             value={amount}
-            onChange={handleAmountChange}
+            onChange={(e) => setAmount(e.target.value)}
             className={styles.inputField}
             disabled={sending}
           />
@@ -238,6 +221,19 @@ export default function SendPage() {
               <option value="average">Average (Recommended)</option>
               <option value="fast">Fast (Priority)</option>
             </select>
+          </div>
+
+          {/* Realtime Fees display */}
+          <div className={styles.feesInfo}>
+            {feeLoading ? (
+              <p style={{ color: "white" }}>Calculating Fees... <MiniLoadingSpinner /></p>
+            ) : feeError ? (
+              <p style={{ color: "red" }}>Failed to load fees.</p>
+            ) : (
+              <p className={styles.whiteText}>
+                Estimated Fees: {(gasFee + adminFee).toFixed(6)} {shortName}
+              </p>
+            )}
           </div>
 
           <button
@@ -267,6 +263,7 @@ export default function SendPage() {
           </button>
         </div>
 
+        {/* Confirm Modal */}
         {showConfirm && (
           <div className={styles.overlay}>
             <div className={styles.confirmModal}>
@@ -276,9 +273,7 @@ export default function SendPage() {
                 <p><strong>Receiver:</strong> {receiver}</p>
                 <p><strong>Amount:</strong> {parsedAmount.toFixed(6)} {shortName}</p>
                 {feeLoading ? (
-                  <p style={{ marginTop: "16px", color: "white" }}>
-                    Calculating Fees... <MiniLoadingSpinner />
-                  </p>
+                  <p style={{ marginTop: "16px", color: "white" }}>Calculating Fees... <MiniLoadingSpinner /></p>
                 ) : feeError ? (
                   <p style={{ color: "red" }}>Failed to load fees.</p>
                 ) : (
@@ -308,6 +303,7 @@ export default function SendPage() {
           </div>
         )}
 
+        {/* Success Modal */}
         {showSuccess && transactionHash && network && (
           <SuccessModal
             message="✅ Transaction Successful!"
@@ -317,6 +313,7 @@ export default function SendPage() {
           />
         )}
 
+        {/* Error Modal */}
         {error && (
           <ErrorModal
             error={error}
@@ -326,4 +323,4 @@ export default function SendPage() {
       </div>
     </main>
   );
-                         }
+        }
