@@ -2,38 +2,38 @@
 
 import { ethers } from "ethers";
 
-const RPC_URLS = {
-  ethereum: "https://rpc.ankr.com/eth",
-  bsc: "https://bsc-dataseed.bnbchain.org",
-  tbnb: "https://data-seed-prebsc-1-s1.binance.org:8545",
-  polygon: "https://polygon-rpc.com",
-  avalanche: "https://api.avax.network/ext/bc/C/rpc",
-};
-
-export async function getGasPrice(network, speed = "average") {
-  const rpcUrl = RPC_URLS[network];
-  if (!rpcUrl) throw new Error(`Unsupported network: ${network}`);
-
-  const provider = new ethers.JsonRpcProvider(rpcUrl);
-
-  let feeData;
+/**
+ * Ultimate getGasPrice funkcija
+ * - Gali pasirinkti: slow, average, fast
+ * - Jei RPC negrąžina normalios kainos, defaultinam į safe fallback
+ * 
+ * @param {ethers.JsonRpcProvider} provider 
+ * @param {"slow" | "average" | "fast"} speed 
+ * @returns {Promise<bigint>}
+ */
+export async function getGasPrice(provider, speed = "average") {
   try {
-    feeData = await provider.getFeeData();
+    const gasPrice = await provider.getGasPrice(); // Grąžina BigInt
+
+    if (!gasPrice) {
+      console.warn("⚠️ Gas price not found, using fallback value.");
+      return ethers.parseUnits("5", "gwei"); // Default fallback 5 Gwei
+    }
+
+    // ✅ Parenkam multiplier pagal greitį
+    let multiplier = 1n;
+    if (speed === "slow") multiplier = 9n / 10n; // 0.9x (lėtesnis ir pigesnis)
+    if (speed === "fast") multiplier = 12n / 10n; // 1.2x (greitesnis)
+
+    const adjustedGasPrice = gasPrice * multiplier;
+
+    console.log(`⛽ Gas Price (${speed}):`, ethers.formatUnits(adjustedGasPrice, "gwei"), "Gwei");
+
+    return adjustedGasPrice;
   } catch (error) {
-    throw new Error("❌ Failed to fetch fee data from RPC.");
-  }
+    console.error("❌ Failed to get gas price:", error?.message || error);
 
-  let gasPrice = feeData?.gasPrice;
-  if (!gasPrice) {
-    console.warn("⚠️ Gas price is null, using fallback 5 Gwei.");
-    gasPrice = ethers.parseUnits("5", "gwei");
+    // Jei klaida – fallback į saugų variantą
+    return ethers.parseUnits("5", "gwei");
   }
-
-  if (speed === "slow") {
-    gasPrice = gasPrice.mul(80).div(100); // -20%
-  } else if (speed === "fast") {
-    gasPrice = gasPrice.mul(120).div(100); // +20%
-  }
-
-  return gasPrice;
 }
