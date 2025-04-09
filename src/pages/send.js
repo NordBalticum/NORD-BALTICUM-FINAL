@@ -4,7 +4,7 @@ import { useState, useMemo, useCallback, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBalance } from "@/hooks/useBalance";
 import { usePageReady } from "@/hooks/usePageReady";
-import { useSwipeReady } from "@/hooks/useSwipeReady"; // ✅ Pridėtas
+import { useSwipeReady } from "@/hooks/useSwipeReady";
 import { usePrices } from "@/hooks/usePrices";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useTotalFeeCalculator } from "@/hooks/useTotalFeeCalculator";
@@ -47,7 +47,7 @@ const buttonColors = {
 
 export default function SendPage() {
   const isReady = usePageReady();
-  const swipeReady = useSwipeReady(); // ✅ SwipeReady
+  const swipeReady = useSwipeReady();
   const { user } = useAuth();
   const { balances, loading: balancesLoading, initialLoading, refetch: refetchBalances } = useBalance();
   const { prices } = usePrices();
@@ -69,7 +69,14 @@ export default function SendPage() {
   const debouncedAmount = useDebounce(parsedAmount, 500);
   const netBalance = useMemo(() => balances?.[network]?.balance ? parseFloat(balances[network].balance) : 0, [balances, network]);
 
-  const { gasFee, adminFee, totalFee, loading: feeLoading, error: feeError, refetch: refetchFees } = useTotalFeeCalculator(network, debouncedAmount, gasOption);
+  const {
+    gasFee,
+    adminFee,
+    totalFee,
+    loading: feeLoading,
+    error: feeError,
+    refetch: refetchFees,
+  } = useTotalFeeCalculator(network, debouncedAmount, gasOption);
 
   const usdValue = useMemo(() => {
     const price = prices?.[network]?.usd || 0;
@@ -170,6 +177,7 @@ export default function SendPage() {
     }
   }, [debouncedAmount, gasOption, network, refetchFees]);
 
+  // ✅ DABAR LOADING PRIKLAUSO TIK NUO PAGE READY + SWIPE READY + BALANCES, NE FEE
   if (!isReady || !swipeReady || initialLoading || balancesLoading) {
     return (
       <div className={styles.loading}>
