@@ -11,7 +11,6 @@ export function useTotalFeeCalculator(network, amount, gasOption = "average") {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // ✅ Sukuriam calculateFees funkciją, kad būtų galima refetchint
   const calculateFees = useCallback(async () => {
     if (!network || !amount || amount <= 0) {
       setGasFee(0);
@@ -39,7 +38,7 @@ export function useTotalFeeCalculator(network, amount, gasOption = "average") {
 
       const gasPrice = await getGasPrice(provider, gasOption);
 
-      const estimatedGasFee = Number(ethers.formatEther(gasPrice * 21000n * 2n)); 
+      const estimatedGasFee = Number(ethers.formatEther(gasPrice * 21000n * 2n));
       const parsedAmount = Number(amount);
       const estimatedAdminFee = parsedAmount * 0.03;
       const total = estimatedGasFee + estimatedAdminFee;
@@ -59,7 +58,7 @@ export function useTotalFeeCalculator(network, amount, gasOption = "average") {
   }, [network, amount, gasOption]);
 
   useEffect(() => {
-    calculateFees(); // automatiškai kai keičiasi
+    calculateFees();
   }, [calculateFees]);
 
   return {
@@ -68,6 +67,6 @@ export function useTotalFeeCalculator(network, amount, gasOption = "average") {
     totalFee,
     loading,
     error,
-    refetchFees: calculateFees, // <<< ČIA PAGRINDINIS DALIUKAS
+    refetchFees: calculateFees, // <- ŠITĄ TURI RETURN'INTI!
   };
 }
