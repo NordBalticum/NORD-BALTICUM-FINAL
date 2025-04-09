@@ -5,10 +5,6 @@ import { useState, useEffect } from "react";
 
 /**
  * ULTRA-ULTIMATE SwipeSelector readiness hook
- * - Tikrina naršyklę
- * - Tikrina activeNetwork ir setActiveNetwork
- * - Tikrina inicializaciją
- * - Prideda stabilumo delay (~150ms)
  * 
  * @returns {boolean} - Ar SwipeSelector yra 100% stabiliai paruoštas
  */
@@ -18,7 +14,7 @@ export function useSwipeReady() {
   const [hasInitialized, setHasInitialized] = useState(false);
   const [delayedReady, setDelayedReady] = useState(false);
 
-  // Patikrinam ar esam browseryje
+  // Patikrinam ar esam naršyklėje
   useEffect(() => {
     if (typeof window !== "undefined") {
       setIsClient(true);
@@ -37,7 +33,7 @@ export function useSwipeReady() {
     if (hasInitialized) {
       const timer = setTimeout(() => {
         setDelayedReady(true);
-      }, 150); // ✅ 150ms laukimas saugiam UX
+      }, 150); 
 
       return () => clearTimeout(timer);
     }
