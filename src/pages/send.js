@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useBalance } from "@/hooks/useBalance";
 import { usePageReady } from "@/hooks/usePageReady";
 import { useSwipeReady } from "@/hooks/useSwipeReady";
+import { useIsBalancesReady } from "@/hooks/useIsBalancesReady";
 import { usePrices } from "@/hooks/usePrices";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useTotalFeeCalculator } from "@/hooks/useTotalFeeCalculator";
@@ -46,11 +47,13 @@ const buttonColors = {
 };
 
 export default function SendPage() {
-  const isReady = usePageReady();
-  const swipeReady = useSwipeReady();
   const { user } = useAuth();
   const { balances, loading: balancesLoading, initialLoading, refetch: refetchBalances } = useBalance();
   const { prices } = usePrices();
+
+  const isReady = usePageReady();
+  const swipeReady = useSwipeReady();
+  const balancesReady = useIsBalancesReady();
 
   const [network, setNetwork] = useState("bsc");
   const [receiver, setReceiver] = useState("");
@@ -69,14 +72,7 @@ export default function SendPage() {
   const debouncedAmount = useDebounce(parsedAmount, 500);
   const netBalance = useMemo(() => balances?.[network]?.balance ? parseFloat(balances[network].balance) : 0, [balances, network]);
 
-  const {
-    gasFee,
-    adminFee,
-    totalFee,
-    loading: feeLoading,
-    error: feeError,
-    refetch: refetchFees,
-  } = useTotalFeeCalculator(network, debouncedAmount, gasOption);
+  const { gasFee, adminFee, totalFee, loading: feeLoading, error: feeError, refetch: refetchFees } = useTotalFeeCalculator(network, debouncedAmount, gasOption);
 
   const usdValue = useMemo(() => {
     const price = prices?.[network]?.usd || 0;
@@ -94,12 +90,14 @@ export default function SendPage() {
     if (!selectedNetwork) return;
     setNetwork(selectedNetwork);
     setAmount("");
-    await refetchBalances();
-    await refetchFees();
+    if (isReady && user?.email) {
+      await refetchBalances();
+      await refetchFees();
+    }
     setToastMessage(`Switched to ${networkShortNames[selectedNetwork] || selectedNetwork.toUpperCase()}`);
     setShowToast(true);
     setTimeout(() => setShowToast(false), 1500);
-  }, [refetchBalances, refetchFees]);
+  }, [isReady, user?.email, refetchBalances, refetchFees]);
 
   const handleSend = () => {
     if (!isValidAddress(receiver)) {
@@ -163,22 +161,25 @@ export default function SendPage() {
 
   const handleRetry = () => setError(null);
 
+  // ✅ Tik kai PUSLAPIS READY ir yra USER
   useEffect(() => {
+    if (!isReady || !user?.email) return;
     const interval = setInterval(() => {
       refetchBalances();
       refetchFees();
     }, 30000);
     return () => clearInterval(interval);
-  }, [refetchBalances, refetchFees]);
+  }, [isReady, user?.email, refetchBalances, refetchFees]);
 
   useEffect(() => {
+    if (!isReady) return;
     if (debouncedAmount > 0) {
       refetchFees();
     }
-  }, [debouncedAmount, gasOption, network, refetchFees]);
+  }, [isReady, debouncedAmount, gasOption, network, refetchFees]);
 
-  // ✅ DABAR LOADING PRIKLAUSO TIK NUO PAGE READY + SWIPE READY + BALANCES, NE FEE
-  if (!isReady || !swipeReady || initialLoading || balancesLoading) {
+  // ✅ Loading screen jeigu kas nors NE ready
+  if (!isReady || !swipeReady || !balancesReady || initialLoading || balancesLoading) {
     return (
       <div className={styles.loading}>
         <LoadingSpinner />
@@ -288,7 +289,7 @@ export default function SendPage() {
                 <p><strong>Network:</strong> {shortName}</p>
                 <p><strong>Receiver:</strong> {receiver}</p>
                 <p><strong>Amount:</strong> {parsedAmount.toFixed(6)} {shortName}</p>
-                <p><strong>Total Fee (2x Gas + 3% Admin):</strong> {feeLoading ? "Loading..." : feeError ? "Error" : `${totalFee.toFixed(6)} ${shortName}`}</p>
+                <p><strong>Total Fee:</strong> {feeLoading ? "Loading..." : feeError ? "Error" : `${totalFee.toFixed(6)} ${shortName}`}</p>
                 <p><strong>Total Deducted:</strong> {(parsedAmount + (totalFee || 0)).toFixed(6)} {shortName}</p>
                 <p><strong>Remaining Balance:</strong> {(netBalance - parsedAmount - (totalFee || 0)).toFixed(6)} {shortName}</p>
               </div>
