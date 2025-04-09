@@ -149,20 +149,29 @@ export default function SendPage() {
   const sendButtonStyle = {
     backgroundColor: buttonColors[network] || "#ffffff",
     color: network === "bsc" || network === "tbnb" ? "#000000" : "#ffffff",
-    border: "none",
+    border: "2px solid #ffffff",
     width: "100%",
-    padding: "12px",
+    padding: "14px",
     fontSize: "18px",
-    borderRadius: "12px",
+    fontWeight: "bold",
+    borderRadius: "16px",
     cursor: "pointer",
-    transition: "background-color 0.3s ease",
-    marginTop: "16px",
+    transition: "all 0.3s ease",
+    boxShadow: "0px 4px 20px rgba(255, 255, 255, 0.3), 0px 8px 32px rgba(0,0,0,0.6)",
+    transform: "perspective(600px) rotateX(0deg) rotateY(0deg)",
+    marginTop: "20px",
+    backdropFilter: "blur(5px)",
+  };
+
+  const toastStyle = {
+    right: "10%", // perstumtas toast į dešinę
+    left: "auto",
   };
 
   return (
     <main className={`${styles.main} ${background.gradient}`}>
       <div className={styles.wrapper}>
-        <SuccessToast show={showToast} message={toastMessage} networkKey={network} />
+        <SuccessToast show={showToast} message={toastMessage} networkKey={network} style={toastStyle} />
 
         <SwipeSelector options={networkOptions} selected={network} onSelect={handleNetworkChange} />
 
