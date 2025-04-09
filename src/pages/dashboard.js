@@ -75,7 +75,11 @@ export default function Dashboard() {
         <LivePriceTable />
 
         <div className={styles.assetList}>
-          {tokens.length === 0 ? (
+          {isLoading ? (
+            <div className={styles.loading}>
+              <LoadingSpinner />
+            </div>
+          ) : tokens.length === 0 ? (
             <div className={styles.loading}>No assets found.</div>
           ) : (
             tokens.map((network) => {
