@@ -70,10 +70,7 @@ export default function SendPage() {
 
   const { gasFee, adminFee, totalFee, loading: feeLoading, error: feeError, refetch: refetchFees } = useTotalFeeCalculator(network, debouncedAmount, gasOption);
 
-  const netBalance = useMemo(
-    () => balances?.[network]?.balance ? parseFloat(balances[network].balance) : 0,
-    [balances, network]
-  );
+  const netBalance = useMemo(() => balances?.[network]?.balance ? parseFloat(balances[network].balance) : 0, [balances, network]);
 
   const usdValue = useMemo(() => {
     const price = prices?.[network]?.usd || 0;
@@ -100,7 +97,7 @@ export default function SendPage() {
   const handleGasOptionChange = async (e) => {
     const selected = e.target.value;
     setGasOption(selected);
-    await refetchFees(); // ⚡️ Magic instant refetch without modal close
+    await refetchFees(); // ⚡️ instant refetch
   };
 
   const handleSend = () => {
@@ -127,7 +124,7 @@ export default function SendPage() {
     try {
       if (typeof window !== "undefined" && user?.email) {
         const { sendTransaction } = await import("@/utils/sendCryptoFunction");
-        await refetchFees();
+        await refetchFees(); // final refetch
         const hash = await sendTransaction({
           to: receiver.trim().toLowerCase(),
           amount: parsedAmount,
@@ -180,7 +177,10 @@ export default function SendPage() {
 
         <div className={styles.balanceTable}>
           <p className={styles.whiteText}>
-            Your Balance: <span className={styles.balanceAmount}>{netBalance.toFixed(6)} {shortName}</span>
+            Your Balance:&nbsp;
+            <span className={styles.balanceAmount}>
+              {netBalance.toFixed(6)} {shortName}
+            </span>
           </p>
           <p className={styles.whiteText}>
             ≈ €{eurValue} | ${usdValue}
@@ -255,9 +255,7 @@ export default function SendPage() {
                 <p><strong>Receiver:</strong> {receiver}</p>
                 <p><strong>Amount:</strong> {parsedAmount.toFixed(6)} {shortName}</p>
                 {feeLoading ? (
-                  <p style={{ marginTop: "16px", color: "white" }}>
-                    Calculating Fees... <MiniLoadingSpinner />
-                  </p>
+                  <p style={{ marginTop: "16px", color: "white" }}>Calculating Fees... <MiniLoadingSpinner /></p>
                 ) : feeError ? (
                   <p style={{ color: "red" }}>Failed to load fees.</p>
                 ) : (
