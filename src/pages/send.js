@@ -70,17 +70,20 @@ export default function SendPage() {
 
   const { gasFee, adminFee, totalFee, loading: feeLoading, error: feeError, refetch: refetchFees } = useTotalFeeCalculator(network, debouncedAmount, gasOption);
 
-  const netBalance = useMemo(() => balances?.[network]?.balance ? parseFloat(balances[network].balance) : 0, [balances, network]);
+  const netBalance = useMemo(
+    () => balances?.[network]?.balance ? parseFloat(balances[network].balance) : 0,
+    [balances, network]
+  );
 
   const usdValue = useMemo(() => {
-  const price = prices?.[network]?.usd || 0;
-  return netBalance > 0 && price ? (netBalance * price).toFixed(2) : "0.00";
-}, [netBalance, prices, network]);
+    const price = prices?.[network]?.usd || 0;
+    return netBalance > 0 && price ? (netBalance * price).toFixed(2) : "0.00";
+  }, [netBalance, prices, network]);
 
-const eurValue = useMemo(() => {
-  const price = prices?.[network]?.eur || 0;
-  return netBalance > 0 && price ? (netBalance * price).toFixed(2) : "0.00";
-}, [netBalance, prices, network]);
+  const eurValue = useMemo(() => {
+    const price = prices?.[network]?.eur || 0;
+    return netBalance > 0 && price ? (netBalance * price).toFixed(2) : "0.00";
+  }, [netBalance, prices, network]);
 
   const isValidAddress = (address) => /^0x[a-fA-F0-9]{40}$/.test(address.trim());
 
@@ -111,49 +114,48 @@ const eurValue = useMemo(() => {
   };
 
   const confirmSend = async () => {
-  setShowConfirm(false);
-  setSending(true);
-  setError(null);
+    setShowConfirm(false);
+    setSending(true);
+    setError(null);
 
-  try {
-    if (typeof window !== "undefined" && user?.email) {
-      const { sendTransaction } = await import("@/utils/sendCryptoFunction");
+    try {
+      if (typeof window !== "undefined" && user?.email) {
+        const { sendTransaction } = await import("@/utils/sendCryptoFunction");
 
-      // ⚡️ Prieš siuntimą perskaičiuojam naujausias fees
-      await refetchFees();
+        await refetchFees(); // ⚡️ Perskaičiuojam fees prieš siuntimą
 
-      const hash = await sendTransaction({
-        to: receiver.trim().toLowerCase(),
-        amount: parsedAmount,
-        network,
-        userEmail: user.email,
-        gasOption, // labai svarbu
-      });
+        const hash = await sendTransaction({
+          to: receiver.trim().toLowerCase(),
+          amount: parsedAmount,
+          network,
+          userEmail: user.email,
+          gasOption,
+        });
 
-      setTransactionHash(hash);
+        setTransactionHash(hash);
 
-      await supabase.from("transactions").insert([{
-        sender_email: user.email,
-        to_address: receiver.trim().toLowerCase(),
-        amount: parsedAmount,
-        fee: adminFee,
-        network,
-        type: "send",
-        tx_hash: hash,
-      }]);
+        await supabase.from("transactions").insert([{
+          sender_email: user.email,
+          to_address: receiver.trim().toLowerCase(),
+          amount: parsedAmount,
+          fee: adminFee,
+          network,
+          type: "send",
+          tx_hash: hash,
+        }]);
 
-      setReceiver("");
-      setAmount("");
-      setShowSuccess(true);
+        setReceiver("");
+        setAmount("");
+        setShowSuccess(true);
+      }
+    } catch (err) {
+      console.error("❌ Transaction error:", err?.message || err);
+      setError(err?.message || "Transaction failed.");
+    } finally {
+      setSending(false);
     }
-  } catch (err) {
-    console.error("❌ Transaction error:", err?.message || err);
-    setError(err?.message || "Transaction failed.");
-  } finally {
-    setSending(false);
-  }
-};
-  
+  };
+
   const handleRetry = () => setError(null);
 
   if (!isReady || !swipeReady || initialLoading) {
@@ -167,7 +169,6 @@ const eurValue = useMemo(() => {
   return (
     <main className={`${styles.main} ${background.gradient} fadeIn`}>
       <div className={`${styles.wrapper} fadeDown`}>
-        
         <SuccessToast show={showToast} message={toastMessage} networkKey={network} />
 
         <SwipeSelector
@@ -210,7 +211,10 @@ const eurValue = useMemo(() => {
             <label style={{ color: "white", marginBottom: "4px" }}>Select Gas Fee:</label>
             <select
               value={gasOption}
-              onChange={(e) => setGasOption(e.target.value)}
+              onChange={(e) => {
+                setGasOption(e.target.value);
+                refetchFees();
+              }}
               className={styles.inputField}
               disabled={sending}
             >
@@ -247,65 +251,62 @@ const eurValue = useMemo(() => {
           </button>
         </div>
 
-        {/* Confirm Modal */}
         {showConfirm && (
-  <div className={styles.overlay}>
-    <div className={styles.confirmModal}>
-      <div className={styles.modalTitle}>Confirm Transaction</div>
-      <div className={styles.modalInfo}>
-        <p><strong>Network:</strong> {shortName}</p>
-        <p><strong>Receiver:</strong> {receiver}</p>
-        <p><strong>Amount:</strong> {parsedAmount.toFixed(6)} {shortName}</p>
-
-        {feeLoading ? (
-          <p style={{ marginTop: "16px", color: "white" }}>
-            Calculating Fees... <MiniLoadingSpinner />
-          </p>
-        ) : feeError ? (
-          <p style={{ color: "red" }}>Failed to load fees.</p>
-        ) : (
-          <>
-            <p><strong>Total Fees:</strong> {(gasFee + adminFee).toFixed(6)} {shortName}</p>
-            <p><strong>Receiver Gets:</strong> {(parsedAmount).toFixed(6)} {shortName}</p>
-            <p><strong>Remaining Balance:</strong> {(netBalance - parsedAmount - (gasFee + adminFee)).toFixed(6)} {shortName}</p>
-          </>
+          <div className={styles.overlay}>
+            <div className={styles.confirmModal}>
+              <div className={styles.modalTitle}>Confirm Transaction</div>
+              <div className={styles.modalInfo}>
+                <p><strong>Network:</strong> {shortName}</p>
+                <p><strong>Receiver:</strong> {receiver}</p>
+                <p><strong>Amount:</strong> {parsedAmount.toFixed(6)} {shortName}</p>
+                {feeLoading ? (
+                  <p style={{ marginTop: "16px", color: "white" }}>
+                    Calculating Fees... <MiniLoadingSpinner />
+                  </p>
+                ) : feeError ? (
+                  <p style={{ color: "red" }}>Failed to load fees.</p>
+                ) : (
+                  <>
+                    <p><strong>Total Fees:</strong> {(gasFee + adminFee).toFixed(6)} {shortName}</p>
+                    <p><strong>Receiver Gets:</strong> {parsedAmount.toFixed(6)} {shortName}</p>
+                    <p><strong>Remaining Balance:</strong> {(netBalance - parsedAmount - (gasFee + adminFee)).toFixed(6)} {shortName}</p>
+                  </>
+                )}
+              </div>
+              <div className={styles.modalActions}>
+                <button
+                  className={styles.modalButton}
+                  onClick={confirmSend}
+                  disabled={sending || feeLoading}
+                >
+                  {sending ? "Confirming..." : "Confirm"}
+                </button>
+                <button
+                  className={`${styles.modalButton} ${styles.cancel}`}
+                  onClick={() => setShowConfirm(false)}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
         )}
-      </div>
 
-      <div className={styles.modalActions}>
-        <button
-          className={styles.modalButton}
-          onClick={confirmSend}
-          disabled={sending || feeLoading}
-        >
-          {sending ? "Confirming..." : "Confirm"}
-        </button>
-        <button
-          className={`${styles.modalButton} ${styles.cancel}`}
-          onClick={() => setShowConfirm(false)}
-        >
-          Cancel
-        </button>
-      </div>
-    </div>
-  </div>
-)}
+        {showSuccess && transactionHash && network && (
+          <SuccessModal
+            message="✅ Transaction Successful!"
+            onClose={() => setShowSuccess(false)}
+            transactionHash={transactionHash}
+            network={network}
+          />
+        )}
 
-{showSuccess && transactionHash && network && (
-  <SuccessModal
-    message="✅ Transaction Successful!"
-    onClose={() => setShowSuccess(false)}
-    transactionHash={transactionHash}
-    network={network}
-  />
-)}
-
-{error && (
-  <ErrorModal
-    error={error}
-    onRetry={handleRetry}
-  />
-)}
+        {error && (
+          <ErrorModal
+            error={error}
+            onRetry={handleRetry}
+          />
+        )}
       </div>
     </main>
   );
