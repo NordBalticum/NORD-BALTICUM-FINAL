@@ -16,8 +16,6 @@ import SuccessModal from "@/components/modals/SuccessModal";
 import ErrorModal from "@/components/modals/ErrorModal";
 import SuccessToast from "@/components/SuccessToast";
 
-import { supabase } from "@/utils/supabaseClient";
-
 import styles from "@/styles/send.module.css";
 import background from "@/styles/background.module.css";
 
@@ -47,7 +45,7 @@ const buttonColors = {
 
 export default function SendPage() {
   const { user } = useAuth();
-  const { balances, initialLoading } = useBalance();
+  const { balances, initialLoading, refetch } = useBalance(); // ✅ PRIDĖTA refetch
   const { prices } = usePrices();
   const isReady = usePageReady();
   const swipeReady = useSwipeReady();
@@ -69,8 +67,8 @@ export default function SendPage() {
 
   const { gasFee, adminFee, totalFee, loading: feeLoading, error: feeError } = useTotalFeeCalculator(network, debouncedAmount);
 
-  const netBalance = useMemo(() => 
-    balances?.[network]?.balance ? parseFloat(balances[network].balance) : 0, 
+  const netBalance = useMemo(
+    () => balances?.[network]?.balance ? parseFloat(balances[network].balance) : 0,
     [balances, network]
   );
 
@@ -130,15 +128,7 @@ export default function SendPage() {
 
         setTransactionHash(hash);
 
-        await supabase.from("transactions").insert([{
-          sender_email: user.email,
-          to_address: receiver.trim().toLowerCase(),
-          amount: parsedAmount,
-          fee: adminFee,
-          network,
-          type: "send",
-          tx_hash: hash,
-        }]);
+        await refetch(); // ✅ Refetch balances after successful send
 
         setReceiver("");
         setAmount("");
