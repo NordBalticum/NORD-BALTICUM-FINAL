@@ -1,24 +1,24 @@
-/* === SUCCESS TOAST FINAL ULTRA PREMIUM v6 === */
+/* === SUCCESS TOAST FINAL ULTRA PREMIUM v7 === */
 
 /* ✅ TOAST MAIN STYLE */
 .toast {
   position: fixed;
-  top: 20px;
+  top: 24px;
   right: 10%;
   left: auto;
-  background: rgba(0, 0, 0, 0.85);
+  background: rgba(15, 15, 15, 0.95);
   padding: 12px 24px;
-  border-radius: 14px;
+  border-radius: 16px;
   color: white;
-  font-weight: bold;
+  font-weight: 700;
   font-size: 16px;
   font-family: var(--font-crypto);
   z-index: 9999;
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5), 0 4px 20px rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px) saturate(180%);
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
   transition: all 0.4s ease, transform 0.4s ease;
   animation: slideIn 0.6s ease forwards;
 }
@@ -35,15 +35,16 @@
   }
 }
 
-/* ✅ TOAST LOGO WRAPPER */
+/* ✅ LOGO WRAPPER */
 .logoWrapper {
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-/* ✅ TOAST MESSAGE */
+/* ✅ MESSAGE */
 .message {
   white-space: nowrap;
+  font-family: var(--font-crypto);
   font-weight: 600;
 }
