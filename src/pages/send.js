@@ -144,34 +144,40 @@ export default function SendPage() {
 
   const handleRetry = () => setError(null);
 
-  if (!isReady || !swipeReady || initialLoading) return null;
+  // ✅ Show premium spinner while loading
+  if (!isReady || !swipeReady || initialLoading) {
+    return (
+      <div style={{
+        width: "100vw",
+        height: "100vh",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        background: "transparent",
+      }}>
+        <MiniLoadingSpinner />
+      </div>
+    );
+  }
 
   const sendButtonStyle = {
     backgroundColor: buttonColors[network] || "#ffffff",
     color: network === "bsc" || network === "tbnb" ? "#000000" : "#ffffff",
-    border: "2px solid #ffffff",
+    border: "2px solid white",
     width: "100%",
-    padding: "14px",
+    padding: "12px",
     fontSize: "18px",
-    fontWeight: "bold",
-    borderRadius: "16px",
+    borderRadius: "12px",
     cursor: "pointer",
-    transition: "all 0.3s ease",
-    boxShadow: "0px 4px 20px rgba(255, 255, 255, 0.3), 0px 8px 32px rgba(0,0,0,0.6)",
-    transform: "perspective(600px) rotateX(0deg) rotateY(0deg)",
-    marginTop: "20px",
-    backdropFilter: "blur(5px)",
-  };
-
-  const toastStyle = {
-    right: "10%", // perstumtas toast į dešinę
-    left: "auto",
+    transition: "background-color 0.3s ease, transform 0.3s ease",
+    marginTop: "16px",
+    boxShadow: "0 8px 24px rgba(0, 0, 0, 0.2)",
   };
 
   return (
     <main className={`${styles.main} ${background.gradient}`}>
       <div className={styles.wrapper}>
-        <SuccessToast show={showToast} message={toastMessage} networkKey={network} style={toastStyle} />
+        <SuccessToast show={showToast} message={toastMessage} networkKey={network} />
 
         <SwipeSelector options={networkOptions} selected={network} onSelect={handleNetworkChange} />
 
@@ -233,6 +239,7 @@ export default function SendPage() {
           </button>
         </div>
 
+        {/* Success + Error Modals */}
         {showConfirm && (
           <div className={styles.overlay}>
             <div className={styles.confirmModal}>
@@ -281,4 +288,4 @@ export default function SendPage() {
       </div>
     </main>
   );
-        }
+}
