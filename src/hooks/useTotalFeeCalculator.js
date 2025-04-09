@@ -1,53 +1,58 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { estimateGasFee } from "@/utils/gasEstimator";
-import { calculateAdminFee } from "@/utils/adminFeeCalculator";
+import { useState, useEffect } from "react";
+import { getGasPrice } from "@/utils/getGasPrice";
 
 /**
- * Ultimate Total Fee Calculator Hook
- * - Automatiškai apskaičiuoja Gas Fee (2x) + Admin Fee (3%) sumą
- * - Grąžina visas reikšmes: gasFee, adminFee, totalFee
+ * Ultimate Total Fee Calculator
+ * - 2x Gas Fee (už du pavedimus)
+ * - 3% Admin Fee (iš amount)
  */
-export function useTotalFeeCalculator(network, amount, gasOption) {
+export function useTotalFeeCalculator(network, amount, gasOption = "average") {
   const [gasFee, setGasFee] = useState(0);
   const [adminFee, setAdminFee] = useState(0);
   const [totalFee, setTotalFee] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  const fetchFees = useCallback(async () => {
+  async function calculateFees() {
     if (!network || !amount || amount <= 0) {
-      setError(true);
-      setLoading(false);
+      setGasFee(0);
+      setAdminFee(0);
+      setTotalFee(0);
       return;
     }
 
     setLoading(true);
-    setError(false);
+    setError(null);
 
     try {
-      const singleGasFee = await estimateGasFee(network, gasOption);
-      const doubleGasFee = singleGasFee * 2; // 2x nes 2 pavedimai (admin + receiver)
+      // 1. Gauti gas price
+      const gasPrice = await getGasPrice(network, gasOption);
+      const gasPerTx = gasPrice * 21000n; // kiekvienas pavedimas 21000 gas
+      const totalGasFee = Number(gasPerTx * 2n) / 1e18; // 2 pavedimai
 
-      const adminFeeValue = calculateAdminFee(amount);
+      // 2. Paskaičiuoti Admin Fee (3%)
+      const adminFeeCalc = Number(amount) * 0.03;
 
-      const total = doubleGasFee + adminFeeValue;
+      // 3. Paskaičiuoti bendrą Total Fee
+      const totalFeeCalc = totalGasFee + adminFeeCalc;
 
-      setGasFee(doubleGasFee);
-      setAdminFee(adminFeeValue);
-      setTotalFee(total);
+      // 4. Išsaugoti
+      setGasFee(totalGasFee);
+      setAdminFee(adminFeeCalc);
+      setTotalFee(totalFeeCalc);
     } catch (err) {
       console.error("❌ Fee calculation error:", err?.message || err);
-      setError(true);
+      setError(err?.message || "Fee calculation error.");
     } finally {
       setLoading(false);
     }
-  }, [network, amount, gasOption]);
+  }
 
   useEffect(() => {
-    fetchFees();
-  }, [fetchFees]);
+    calculateFees();
+  }, [network, amount, gasOption]);
 
   return {
     gasFee,
@@ -55,6 +60,6 @@ export function useTotalFeeCalculator(network, amount, gasOption) {
     totalFee,
     loading,
     error,
-    refetch: fetchFees,
+    refetch: calculateFees,
   };
 }
