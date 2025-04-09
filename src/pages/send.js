@@ -1,11 +1,11 @@
 "use client";
 
 import { useState, useMemo, useCallback, useEffect } from "react";
-import { useDebounce } from "@/hooks/useDebounce"; // ✅ PRIDEDAM
 import { useAuth } from "@/contexts/AuthContext";
 import { useBalance } from "@/hooks/useBalance";
 import { usePageReady } from "@/hooks/usePageReady";
 import { usePrices } from "@/hooks/usePrices";
+import { useDebounce } from "@/hooks/useDebounce";
 import { useTotalFeeCalculator } from "@/hooks/useTotalFeeCalculator";
 
 import SwipeSelector from "@/components/SwipeSelector";
@@ -64,9 +64,10 @@ export default function SendPage() {
 
   const shortName = useMemo(() => networkShortNames[network] || network.toUpperCase(), [network]);
   const parsedAmount = useMemo(() => Number(amount) || 0, [amount]);
+  const debouncedAmount = useDebounce(parsedAmount, 500);
   const netBalance = useMemo(() => balances?.[network]?.balance ? parseFloat(balances[network].balance) : 0, [balances, network]);
 
-  const { gasFee, adminFee, totalFee, loading: feeLoading, error: feeError, refetch: refetchFees } = useTotalFeeCalculator(network, parsedAmount, gasOption);
+  const { gasFee, adminFee, totalFee, loading: feeLoading, error: feeError, refetch: refetchFees } = useTotalFeeCalculator(network, debouncedAmount, gasOption);
 
   const usdValue = useMemo(() => {
     const price = prices?.[network]?.usd || 0;
@@ -77,8 +78,6 @@ export default function SendPage() {
     const price = prices?.[network]?.eur || 0;
     return parsedAmount > 0 && price ? (parsedAmount * price).toFixed(2) : "0.00";
   }, [parsedAmount, prices, network]);
-
-  const debouncedAmount = useDebounce(amount, 500); // ✅
 
   const isValidAddress = (address) => /^0x[a-fA-F0-9]{40}$/.test(address.trim());
 
@@ -159,7 +158,7 @@ export default function SendPage() {
     const interval = setInterval(() => {
       refetchBalances();
       refetchFees();
-    }, 30000);
+    }, 30000); // ✅ Every 30s
     return () => clearInterval(interval);
   }, [refetchBalances, refetchFees]);
 
@@ -167,7 +166,7 @@ export default function SendPage() {
     if (debouncedAmount > 0) {
       refetchFees();
     }
-  }, [debouncedAmount, gasOption, network, refetchFees]); // ✅ su debounce
+  }, [debouncedAmount, gasOption, network, refetchFees]);
 
   if (!isReady || initialLoading || balancesLoading) {
     return (
@@ -315,4 +314,4 @@ export default function SendPage() {
       </div>
     </main>
   );
-              }
+        }
