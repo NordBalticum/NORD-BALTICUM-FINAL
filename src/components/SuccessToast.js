@@ -2,7 +2,7 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
-import styles from "@/components/successtoast.module.css"; // ✅ tavo stiliai
+import styles from "@/styles/SuccessToast.module.css"; // ✅ pritaikytas prie naujo
 
 // ✅ Tinklų logotipai
 const networkLogos = {
@@ -21,10 +21,10 @@ export default function SuccessToast({ show, message = "", networkKey = "" }) {
       {show && (
         <motion.div
           className={styles.toast}
-          initial={{ opacity: 0, y: -30 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -30 }}
-          transition={{ duration: 0.4 }}
+          initial={{ opacity: 0, x: 50 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: 50 }}
+          transition={{ duration: 0.5 }}
         >
           {logoSrc && (
             <div className={styles.logoWrapper}>
