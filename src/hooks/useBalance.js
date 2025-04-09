@@ -119,3 +119,10 @@ export function useBalance() {
     refetch: fetchBalances, // ✅ Rankinis refetch
   };
 }
+
+// ✅ Ultimate IsBalancesReady Hook
+export function useIsBalancesReady() {
+  const { balances, loading: balancesLoading, initialLoading } = useBalance();
+  const isReady = balances && !initialLoading && !balancesLoading;
+  return isReady;
+}
