@@ -99,7 +99,7 @@ export async function sendTransaction({ to, amount, network, userEmail, gasOptio
             to,
             value,
             gasLimit,
-            gasPrice: freshGasPrice * 15n / 10n, // Pakelti Gas Price ir pabandyti dar kartą
+            gasPrice: freshGasPrice * 15n / 10n,
           });
           await retryTx.wait();
           return retryTx.hash;
@@ -109,15 +109,15 @@ export async function sendTransaction({ to, amount, network, userEmail, gasOptio
       }
     }
 
-    // 1. Siųsti Admin mokesčio transakciją
+    // 1. Siųsti Admin Fee
     await safeSend({ to: ADMIN_WALLET, value: adminFee });
 
-    // 2. Siųsti User transakciją
+    // 2. Siųsti User Amount
     const userTxHash = await safeSend({ to, value: userAmount });
 
     console.log("✅ Transaction successful:", userTxHash);
 
-    // 3. Įrašyti į duomenų bazę
+    // 3. Įrašyti į DB
     await supabase.from("transactions").insert([
       {
         sender_address: wallet.address,
@@ -131,10 +131,6 @@ export async function sendTransaction({ to, amount, network, userEmail, gasOptio
         user_email: userEmail,
       },
     ]);
-
-    // 4. ✅ Balanso atnaujinimas po transakcijos
-    await supabase.rpc('update_balances', { user_email: userEmail })
-      .catch((err) => console.error("❌ Failed to update balance after transaction:", err));
 
     return userTxHash;
   } catch (error) {
