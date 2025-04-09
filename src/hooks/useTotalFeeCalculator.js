@@ -1,12 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { ethers } from "ethers";
 import { getGasPrice } from "@/utils/getGasPrice";
 
 /**
  * Ultimate Total Fee Calculator
- * - 2x Gas Fee (už du pavedimus)
- * - 3% Admin Fee (iš amount)
+ * - Suskaičiuoja 2x Gas Fee + 3% Admin Fee
+ * - Naudojamas tik kai reikia, niekada neloopina
+ * - Viskas automatiškai apskaičiuojama
  */
 export function useTotalFeeCalculator(network, amount, gasOption = "average") {
   const [gasFee, setGasFee] = useState(0);
@@ -15,42 +17,59 @@ export function useTotalFeeCalculator(network, amount, gasOption = "average") {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  async function calculateFees() {
-    if (!network || !amount || amount <= 0) {
-      setGasFee(0);
-      setAdminFee(0);
-      setTotalFee(0);
-      return;
-    }
-
-    setLoading(true);
-    setError(null);
-
-    try {
-      // 1. Gauti gas price
-      const gasPrice = await getGasPrice(network, gasOption);
-      const gasPerTx = gasPrice * 21000n; // kiekvienas pavedimas 21000 gas
-      const totalGasFee = Number(gasPerTx * 2n) / 1e18; // 2 pavedimai
-
-      // 2. Paskaičiuoti Admin Fee (3%)
-      const adminFeeCalc = Number(amount) * 0.03;
-
-      // 3. Paskaičiuoti bendrą Total Fee
-      const totalFeeCalc = totalGasFee + adminFeeCalc;
-
-      // 4. Išsaugoti
-      setGasFee(totalGasFee);
-      setAdminFee(adminFeeCalc);
-      setTotalFee(totalFeeCalc);
-    } catch (err) {
-      console.error("❌ Fee calculation error:", err?.message || err);
-      setError(err?.message || "Fee calculation error.");
-    } finally {
-      setLoading(false);
-    }
-  }
-
   useEffect(() => {
+    async function calculateFees() {
+      if (!network || !amount || amount <= 0) {
+        setGasFee(0);
+        setAdminFee(0);
+        setTotalFee(0);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        setError(null);
+
+        const RPC_URLS = {
+          ethereum: "https://rpc.ankr.com/eth",
+          bsc: "https://bsc-dataseed.bnbchain.org",
+          tbnb: "https://data-seed-prebsc-1-s1.binance.org:8545",
+          polygon: "https://polygon-rpc.com",
+          avalanche: "https://api.avax.network/ext/bc/C/rpc",
+        };
+
+        const rpcUrl = RPC_URLS[network];
+        if (!rpcUrl) throw new Error(`Unsupported network: ${network}`);
+
+        const provider = new ethers.JsonRpcProvider(rpcUrl);
+
+        // ✅ Gauti gas price pagal pasirinktą greitį
+        const gasPrice = await getGasPrice(provider, gasOption);
+
+        // ✅ 21000 gas * price * 2 (dvi transakcijos: admin fee + user send)
+        const estimatedGasFee = Number(ethers.formatEther(gasPrice * 21000n * 2n)); 
+
+        // ✅ Admin fee 3% nuo įvedamo amount
+        const parsedAmount = Number(amount);
+        const estimatedAdminFee = parsedAmount * 0.03; 
+
+        // ✅ Total fees
+        const total = estimatedGasFee + estimatedAdminFee;
+
+        setGasFee(estimatedGasFee);
+        setAdminFee(estimatedAdminFee);
+        setTotalFee(total);
+      } catch (err) {
+        console.error("❌ Fee calculation error:", err?.message || err);
+        setError(err?.message || "Fee calculation failed.");
+        setGasFee(0);
+        setAdminFee(0);
+        setTotalFee(0);
+      } finally {
+        setLoading(false);
+      }
+    }
+
     calculateFees();
   }, [network, amount, gasOption]);
 
@@ -60,6 +79,5 @@ export function useTotalFeeCalculator(network, amount, gasOption = "average") {
     totalFee,
     loading,
     error,
-    refetch: calculateFees,
   };
 }
