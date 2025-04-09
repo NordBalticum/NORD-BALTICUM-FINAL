@@ -119,7 +119,7 @@ export default function SendPage() {
       if (typeof window !== "undefined" && user?.email) {
         const { sendTransaction } = await import("@/utils/sendCryptoFunction");
 
-        await refetchFees(); // ⚡️ Perskaičiuojam fees prieš siuntimą
+        await refetchFees(); // Perskaičiuoti dar kartą fees prieš siuntimą
 
         const hash = await sendTransaction({
           to: receiver.trim().toLowerCase(),
@@ -154,6 +154,16 @@ export default function SendPage() {
   };
 
   const handleRetry = () => setError(null);
+
+  const handleGasOptionChange = async (e) => {
+    const selected = e.target.value;
+    setGasOption(selected);
+    setShowConfirm(false); // 1. Uždaro modalą
+    await refetchFees();   // 2. Refetchina fees
+    setTimeout(() => {
+      setShowConfirm(true); // 3. Vėl atidaro modalą
+    }, 100);
+  };
 
   if (!isReady || !swipeReady || initialLoading) {
     return (
@@ -208,15 +218,7 @@ export default function SendPage() {
             <label style={{ color: "white", marginBottom: "4px" }}>Select Gas Fee:</label>
             <select
               value={gasOption}
-              onChange={(e) => {
-                setGasOption(e.target.value);
-                refetchFees();           // Perskaičiuoja fees
-                setShowConfirm(false);   // Uždaro modalą
-                setTimeout(() => setShowConfirm(true), 100); // Atidaro modalą po 100ms
-                setToastMessage("✅ Gas fee updated!");
-                setShowToast(true);
-                setTimeout(() => setShowToast(false), 1200);
-              }}
+              onChange={handleGasOptionChange}
               className={styles.inputField}
               disabled={sending}
             >
