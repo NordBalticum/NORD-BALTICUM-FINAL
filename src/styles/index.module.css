@@ -194,11 +194,10 @@
   .container {
     transform: scale(0.88) translateY(-4%);
     transform-origin: top center;
-    animation: fadeInSlideLeftMobile 1.7s ease-out; /* ✅ Animacija vyksta čia! */
+    animation: fadeInSlideLeftMobile 1.7s ease-out forwards;
   }
 }
 
-/* === Default (Desktop) Animacija === */
 @media screen and (min-width: 769px) {
   .container {
     animation: fadeInSlideLeftDesktop 1.7s ease-out;
