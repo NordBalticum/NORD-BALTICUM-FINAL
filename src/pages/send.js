@@ -1,17 +1,16 @@
 "use client";
 
-import { useState, useMemo, useCallback, useEffect } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBalance } from "@/hooks/useBalance";
 import { usePageReady } from "@/hooks/usePageReady";
 import { useSwipeReady } from "@/hooks/useSwipeReady";
-import { useIsBalancesReady } from "@/hooks/useIsBalancesReady";
 import { usePrices } from "@/hooks/usePrices";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useTotalFeeCalculator } from "@/hooks/useTotalFeeCalculator";
 
-import SwipeSelector from "@/components/SwipeSelector";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import SwipeSelector from "@/components/SwipeSelector";
 import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
 import SuccessModal from "@/components/modals/SuccessModal";
 import ErrorModal from "@/components/modals/ErrorModal";
@@ -48,31 +47,30 @@ const buttonColors = {
 
 export default function SendPage() {
   const { user } = useAuth();
-  const { balances, loading: balancesLoading, initialLoading, refetch: refetchBalances } = useBalance();
+  const { balances, initialLoading } = useBalance();
   const { prices } = usePrices();
-
   const isReady = usePageReady();
   const swipeReady = useSwipeReady();
-  const balancesReady = useIsBalancesReady();
 
   const [network, setNetwork] = useState("bsc");
   const [receiver, setReceiver] = useState("");
   const [amount, setAmount] = useState("");
   const [gasOption, setGasOption] = useState("average");
+  const [sending, setSending] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
-  const [sending, setSending] = useState(false);
   const [error, setError] = useState(null);
   const [transactionHash, setTransactionHash] = useState(null);
 
   const shortName = useMemo(() => networkShortNames[network] || network.toUpperCase(), [network]);
   const parsedAmount = useMemo(() => Number(amount) || 0, [amount]);
   const debouncedAmount = useDebounce(parsedAmount, 500);
-  const netBalance = useMemo(() => balances?.[network]?.balance ? parseFloat(balances[network].balance) : 0, [balances, network]);
 
   const { gasFee, adminFee, totalFee, loading: feeLoading, error: feeError, refetch: refetchFees } = useTotalFeeCalculator(network, debouncedAmount, gasOption);
+
+  const netBalance = useMemo(() => balances?.[network]?.balance ? parseFloat(balances[network].balance) : 0, [balances, network]);
 
   const usdValue = useMemo(() => {
     const price = prices?.[network]?.usd || 0;
@@ -90,14 +88,11 @@ export default function SendPage() {
     if (!selectedNetwork) return;
     setNetwork(selectedNetwork);
     setAmount("");
-    if (isReady && user?.email) {
-      await refetchBalances();
-      await refetchFees();
-    }
+    setReceiver("");
     setToastMessage(`Switched to ${networkShortNames[selectedNetwork] || selectedNetwork.toUpperCase()}`);
     setShowToast(true);
     setTimeout(() => setShowToast(false), 1500);
-  }, [isReady, user?.email, refetchBalances, refetchFees]);
+  }, []);
 
   const handleSend = () => {
     if (!isValidAddress(receiver)) {
@@ -132,7 +127,6 @@ export default function SendPage() {
           gasOption,
         });
 
-        console.log("✅ Transaction successful, hash:", hash);
         setTransactionHash(hash);
 
         await supabase.from("transactions").insert([{
@@ -147,13 +141,11 @@ export default function SendPage() {
 
         setReceiver("");
         setAmount("");
-        await refetchBalances();
-        await refetchFees();
         setShowSuccess(true);
       }
     } catch (err) {
-      console.error("❌ Transaction error:", err.message || err);
-      setError(err.message || "Transaction failed.");
+      console.error("❌ Transaction error:", err?.message || err);
+      setError(err?.message || "Transaction failed.");
     } finally {
       setSending(false);
     }
@@ -161,25 +153,7 @@ export default function SendPage() {
 
   const handleRetry = () => setError(null);
 
-  // ✅ Tik kai PUSLAPIS READY ir yra USER
-  useEffect(() => {
-    if (!isReady || !user?.email) return;
-    const interval = setInterval(() => {
-      refetchBalances();
-      refetchFees();
-    }, 30000);
-    return () => clearInterval(interval);
-  }, [isReady, user?.email, refetchBalances, refetchFees]);
-
-  useEffect(() => {
-    if (!isReady) return;
-    if (debouncedAmount > 0) {
-      refetchFees();
-    }
-  }, [isReady, debouncedAmount, gasOption, network, refetchFees]);
-
-  // ✅ Loading screen jeigu kas nors NE ready
-  if (!isReady || !swipeReady || !balancesReady || initialLoading || balancesLoading) {
+  if (!isReady || !swipeReady || initialLoading) {
     return (
       <div className={styles.loading}>
         <LoadingSpinner />
@@ -190,7 +164,7 @@ export default function SendPage() {
   return (
     <main className={`${styles.main} ${background.gradient} fadeIn`}>
       <div className={`${styles.wrapper} fadeDown`}>
-
+        
         <SuccessToast show={showToast} message={toastMessage} networkKey={network} />
 
         <SwipeSelector
