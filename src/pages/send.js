@@ -148,8 +148,9 @@ export default function SendPage() {
   };
 
   const handleMaxSend = () => {
-    if (netBalance > 0 && totalFee > 0) {
-      const maxAmount = Math.max(netBalance - totalFee, 0).toFixed(6);
+    if (netBalance > 0 && !feeLoading && gasFee !== undefined && adminFee !== undefined) {
+      const availableBalance = netBalance - (gasFee + adminFee);
+      const maxAmount = Math.max(availableBalance, 0).toFixed(6);
       setAmount(maxAmount);
     }
   };
@@ -157,13 +158,12 @@ export default function SendPage() {
   const handleRetry = () => setError(null);
 
   if (!isReady || !swipeReady || initialLoading) {
-    return null; // NO SPINNER
+    return null; // No loading spinner, just blank until ready
   }
 
   return (
     <main className={`${styles.main} ${background.gradient}`}>
       <div className={styles.wrapper}>
-
         <SuccessToast show={showToast} message={toastMessage} networkKey={network} />
 
         <SwipeSelector options={networkOptions} selected={network} onSelect={handleNetworkChange} />
@@ -228,7 +228,7 @@ export default function SendPage() {
 
           <button
             onClick={handleMaxSend}
-            disabled={sending}
+            disabled={sending || feeLoading}
             className={styles.sendMaxButton}
           >
             SEND MAX
