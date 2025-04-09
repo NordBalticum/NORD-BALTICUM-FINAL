@@ -84,7 +84,7 @@ export default function SendPage() {
 
   const isValidAddress = (address) => /^0x[a-fA-F0-9]{40}$/.test(address.trim());
 
-  const handleNetworkChange = useCallback(async (selectedNetwork) => {
+  const handleNetworkChange = useCallback((selectedNetwork) => {
     if (!selectedNetwork) return;
     setNetwork(selectedNetwork);
     setAmount("");
@@ -101,6 +101,10 @@ export default function SendPage() {
     }
     if (parsedAmount <= 0) {
       alert("❌ Enter a valid amount.");
+      return;
+    }
+    if (feeError || feeLoading) {
+      alert("❌ Fees are not ready yet. Please wait.");
       return;
     }
     if (parsedAmount + totalFee > netBalance) {
@@ -203,17 +207,6 @@ export default function SendPage() {
             disabled={sending}
           />
 
-          <p className={styles.feeBreakdown}>
-            Total Fee (2x Gas + 3% Admin):&nbsp;
-            {feeLoading ? (
-              <span>Loading...</span>
-            ) : feeError ? (
-              <span style={{ color: "red" }}>Error</span>
-            ) : (
-              <strong>{totalFee.toFixed(6)} {shortName}</strong>
-            )}
-          </p>
-
           <div className={styles.gasOptions}>
             <label style={{ color: "white", marginBottom: "4px" }}>Select Gas Fee:</label>
             <select
@@ -263,18 +256,22 @@ export default function SendPage() {
                 <p><strong>Network:</strong> {shortName}</p>
                 <p><strong>Receiver:</strong> {receiver}</p>
                 <p><strong>Amount:</strong> {parsedAmount.toFixed(6)} {shortName}</p>
-                <p><strong>Total Fee:</strong> {feeLoading ? "Loading..." : feeError ? "Error" : `${totalFee.toFixed(6)} ${shortName}`}</p>
+
+                <div className={styles.feesBreakdown}>
+                  <p><strong>Gas Fee:</strong> {gasFee ? `${(gasFee * 2).toFixed(6)} ${shortName}` : "Loading..."}</p>
+                  <p><strong>Admin Fee:</strong> {adminFee ? `${adminFee.toFixed(6)} ${shortName}` : "Loading..."}</p>
+                  <p><strong>Total Fee:</strong> {totalFee ? `${totalFee.toFixed(6)} ${shortName}` : "Loading..."}</p>
+                </div>
+
                 <p><strong>Total Deducted:</strong> {(parsedAmount + (totalFee || 0)).toFixed(6)} {shortName}</p>
                 <p><strong>Remaining Balance:</strong> {(netBalance - parsedAmount - (totalFee || 0)).toFixed(6)} {shortName}</p>
               </div>
+
               <div className={styles.modalActions}>
                 <button className={styles.modalButton} onClick={confirmSend} disabled={sending}>
                   {sending ? "Confirming..." : "Confirm"}
                 </button>
-                <button
-                  className={`${styles.modalButton} ${styles.cancel}`}
-                  onClick={() => setShowConfirm(false)}
-                >
+                <button className={`${styles.modalButton} ${styles.cancel}`} onClick={() => setShowConfirm(false)}>
                   Cancel
                 </button>
               </div>
@@ -299,4 +296,4 @@ export default function SendPage() {
       </div>
     </main>
   );
-        }
+    }
