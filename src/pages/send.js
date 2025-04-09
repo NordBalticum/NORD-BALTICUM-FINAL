@@ -9,12 +9,12 @@ import { usePrices } from "@/hooks/usePrices";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useTotalFeeCalculator } from "@/hooks/useTotalFeeCalculator";
 
-import LoadingSpinner from "@/components/LoadingSpinner";
 import SwipeSelector from "@/components/SwipeSelector";
 import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
 import SuccessModal from "@/components/modals/SuccessModal";
 import ErrorModal from "@/components/modals/ErrorModal";
 import SuccessToast from "@/components/SuccessToast";
+import Image from "next/image";
 
 import styles from "@/styles/send.module.css";
 import background from "@/styles/background.module.css";
@@ -43,9 +43,17 @@ const buttonColors = {
   avalanche: "#e84142",
 };
 
+const minAmounts = {
+  ethereum: 0.001,
+  bsc: 0.0005,
+  tbnb: 0.0005,
+  polygon: 0.1,
+  avalanche: 0.01,
+};
+
 export default function SendPage() {
   const { user } = useAuth();
-  const { balances, initialLoading, refetch } = useBalance(); // ✅ PRIDĖTA refetch
+  const { balances, initialLoading, refetch } = useBalance();
   const { prices } = usePrices();
   const isReady = usePageReady();
   const swipeReady = useSwipeReady();
@@ -67,10 +75,9 @@ export default function SendPage() {
 
   const { gasFee, adminFee, totalFee, loading: feeLoading, error: feeError } = useTotalFeeCalculator(network, debouncedAmount);
 
-  const netBalance = useMemo(
-    () => balances?.[network]?.balance ? parseFloat(balances[network].balance) : 0,
-    [balances, network]
-  );
+  const netBalance = useMemo(() => {
+    return balances?.[network]?.balance ? parseFloat(balances[network].balance) : 0;
+  }, [balances, network]);
 
   const usdValue = useMemo(() => {
     const price = prices?.[network]?.usd || 0;
@@ -99,8 +106,8 @@ export default function SendPage() {
       alert("❌ Invalid wallet address.");
       return;
     }
-    if (parsedAmount <= 0) {
-      alert("❌ Enter a valid amount.");
+    if (parsedAmount < minAmounts[network]) {
+      alert(`❌ Minimum to send is ${minAmounts[network]} ${shortName}`);
       return;
     }
     if (parsedAmount + totalFee > netBalance) {
@@ -128,8 +135,7 @@ export default function SendPage() {
 
         setTransactionHash(hash);
 
-        await refetch(); // ✅ Refetch balances after successful send
-
+        await refetch();
         setReceiver("");
         setAmount("");
         setShowSuccess(true);
@@ -142,19 +148,25 @@ export default function SendPage() {
     }
   };
 
+  const handleMaxSend = () => {
+    if (netBalance > 0 && totalFee > 0) {
+      const maxAmount = Math.max(netBalance - totalFee, 0).toFixed(6);
+      setAmount(maxAmount);
+    }
+  };
+
   const handleRetry = () => setError(null);
 
   if (!isReady || !swipeReady || initialLoading) {
-    return (
-      <div className={styles.loading}>
-        <LoadingSpinner />
-      </div>
-    );
+    return null; // NO SPINNER, tiesiog tuščias, kaip Web3 projektai
   }
 
   return (
-    <main className={`${styles.main} ${background.gradient} fadeIn`}>
-      <div className={`${styles.wrapper} fadeDown`}>
+    <main className={`${styles.main} ${background.gradient}`}>
+      <div className={styles.wrapper}>
+        
+        <Image src="/icons/logo.svg" alt="Logo" width={82} height={82} className={styles.pageLogo} />
+
         <SuccessToast show={showToast} message={toastMessage} networkKey={network} />
 
         <SwipeSelector options={networkOptions} selected={network} onSelect={handleNetworkChange} />
@@ -188,32 +200,25 @@ export default function SendPage() {
 
           <div className={styles.feesInfo}>
             {feeLoading ? (
-              <p style={{ color: "white" }}>Calculating Fees... <MiniLoadingSpinner /></p>
+              <p className={styles.whiteText}>Calculating Fees... <MiniLoadingSpinner /></p>
             ) : feeError ? (
               <p style={{ color: "red" }}>Failed to load fees.</p>
             ) : (
-              <p className={styles.whiteText}>
-                Estimated Total Fees: {(gasFee + adminFee).toFixed(6)} {shortName}
-              </p>
+              <>
+                <p className={styles.whiteText}>
+                  Estimated Total Fees: {(gasFee + adminFee).toFixed(6)} {shortName}
+                </p>
+                <p className={styles.minimumText}>
+                  Minimum to send: {minAmounts[network]} {shortName}
+                </p>
+              </>
             )}
           </div>
 
           <button
             onClick={handleSend}
             disabled={sending}
-            style={{
-              backgroundColor: buttonColors[network] || "#0070f3",
-              color: "white",
-              padding: "14px",
-              borderRadius: "14px",
-              width: "100%",
-              marginTop: "12px",
-              fontWeight: "700",
-              fontFamily: "var(--font-crypto)",
-              border: "2px solid white",
-              cursor: sending ? "not-allowed" : "pointer",
-              transition: "background-color 0.4s ease",
-            }}
+            className={styles.sendNowButton}
           >
             {sending ? (
               <div style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -222,6 +227,14 @@ export default function SendPage() {
             ) : (
               "SEND NOW"
             )}
+          </button>
+
+          <button
+            onClick={handleMaxSend}
+            disabled={sending}
+            className={styles.sendMaxButton}
+          >
+            SEND MAX
           </button>
         </div>
 
