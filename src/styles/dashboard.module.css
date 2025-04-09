@@ -211,3 +211,19 @@
     align-items: flex-end;
   }
 }
+
+.tableLoading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 240px; /* ✅ Spinneris gražiai per vidurį lentelės */
+}
+
+.noAssets {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 240px;
+  color: #ccc;
+  font-size: 1rem;
+}
