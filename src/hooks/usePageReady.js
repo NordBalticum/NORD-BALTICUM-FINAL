@@ -2,32 +2,33 @@
 
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useIsBalancesReady } from "@/hooks/useBalance"; // ✅ Naudojam čia
+import { useBalance } from "@/hooks/useBalance";
 import { usePrices } from "@/hooks/usePrices";
 
 /**
  * Ultimate safe Page Ready Hook
- * - Tik pirmai užkrovimo fazei
- * - Po to niekada nebepereina atgal į loading
+ * - Tikrina User + Balances + Prices
+ * - Tik pirmam užkrovimui
  */
 export function usePageReady() {
   const { user } = useAuth();
-  const balancesReady = useIsBalancesReady(); // ✅ Naudojam naują hook'ą
+  const { balances, loading: balancesLoading, initialLoading } = useBalance();
   const { prices } = usePrices();
 
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
-    if (isReady) return; // ✅ Jei jau ready, daugiau nieko nedarom.
+    if (isReady) return;
 
+    const balancesLoaded = balances && !initialLoading && !balancesLoading;
     const pricesLoaded = prices && Object.keys(prices).length > 0;
     const userLoaded = !!user;
 
-    if (balancesReady && pricesLoaded && userLoaded) {
-      console.log("✅ Page ready!");
+    if (balancesLoaded && pricesLoaded && userLoaded) {
+      console.log("✅ Page Ready!");
       setIsReady(true);
     }
-  }, [user, balancesReady, prices, isReady]);
+  }, [user, balances, initialLoading, balancesLoading, prices, isReady]);
 
   return isReady;
 }
