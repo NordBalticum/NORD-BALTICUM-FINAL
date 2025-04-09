@@ -4,9 +4,11 @@ import { supabase } from "@/utils/supabaseClient";
 import { ethers } from "ethers";
 import { getGasPrice } from "@/utils/getGasPrice";
 
+// ✅ Encoder / Decoder
 const encode = (str) => new TextEncoder().encode(str);
 const decode = (buf) => new TextDecoder().decode(buf);
 
+// ✅ Paimam AES raktą
 const getKey = async () => {
   const keyMaterial = await window.crypto.subtle.importKey(
     "raw",
@@ -29,6 +31,7 @@ const getKey = async () => {
   );
 };
 
+// ✅ Decryptinam privatų raktą
 const decrypt = async (ciphertext) => {
   const { iv, data } = JSON.parse(atob(ciphertext));
   const key = await getKey();
@@ -40,6 +43,7 @@ const decrypt = async (ciphertext) => {
   return decode(decrypted);
 };
 
+// ✅ Finalinė siuntimo funkcija
 export async function sendTransaction({ to, amount, network, userEmail, gasOption = "average" }) {
   if (typeof window === "undefined") return;
 
@@ -63,6 +67,7 @@ export async function sendTransaction({ to, amount, network, userEmail, gasOptio
   try {
     const provider = new ethers.JsonRpcProvider(rpcUrl);
 
+    // ✅ Gaunam iš Supabase užšifruotą privatų raktą
     const { data, error: walletError } = await supabase
       .from("wallets")
       .select("encrypted_key")
@@ -85,13 +90,19 @@ export async function sendTransaction({ to, amount, network, userEmail, gasOptio
     const adminFee = totalAmount * 3n / 100n;
     const userAmount = totalAmount - adminFee;
 
-    // ✅ Čia NAUJAS GAS PRICE
+    // ✅ GAUNAM realią Gas Price pagal pasirinktą greitį!
     const freshGasPrice = await getGasPrice(provider, gasOption);
-    const gasLimit = 21000n;
+    const gasLimit = 21000n; // Paprasta native transfer gas limit
 
+    // ✅ Saugus siuntimas su retry jei GasPrice underpriced
     async function safeSend({ to, value }) {
       try {
-        const tx = await wallet.sendTransaction({ to, value, gasLimit, gasPrice: freshGasPrice });
+        const tx = await wallet.sendTransaction({
+          to,
+          value,
+          gasLimit,
+          gasPrice: freshGasPrice,
+        });
         await tx.wait();
         return tx.hash;
       } catch (error) {
@@ -100,7 +111,7 @@ export async function sendTransaction({ to, amount, network, userEmail, gasOptio
             to,
             value,
             gasLimit,
-            gasPrice: freshGasPrice * 15n / 10n, // retry
+            gasPrice: freshGasPrice * 15n / 10n, // pakeliam gas kainą 1.5x
           });
           await retryTx.wait();
           return retryTx.hash;
@@ -110,14 +121,15 @@ export async function sendTransaction({ to, amount, network, userEmail, gasOptio
       }
     }
 
-    // ✅ Pirma siunčiam Admin Fee
+    // ✅ Siunčiam Admin Fee pirmiau
     await safeSend({ to: ADMIN_WALLET, value: adminFee });
 
-    // ✅ Tada siunčiam vartotojui
+    // ✅ Po to siunčiam pagrindinę transakciją
     const userTxHash = await safeSend({ to, value: userAmount });
 
     console.log("✅ Transaction successful:", userTxHash);
 
+    // ✅ Išsaugom transakciją į Supabase
     await supabase.from("transactions").insert([
       {
         sender_address: wallet.address,
