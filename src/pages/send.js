@@ -207,20 +207,20 @@ export default function SendPage() {
             disabled={sending}
           />
 
-          <div className={styles.gasOptions}>
-            <label style={{ color: "white", marginBottom: "4px" }}>Select Gas Fee:</label>
-            <select
-              value={gasOption}
-              onChange={(e) => {
-                setGasOption(e.target.value);
-                refetchFees(); // ⚡️ iškart perskaičiuoja fees
-                setToastMessage("✅ Gas fee updated!");
-                setShowToast(true);
-                setTimeout(() => setShowToast(false), 1200);
-              }}
-              className={styles.inputField}
-              disabled={sending}
-            >
+          <select
+  value={gasOption}
+  onChange={(e) => {
+    setGasOption(e.target.value);
+    refetchFees();       // Perkrauna fees
+    setShowConfirm(false); // Uždaro modalą
+    setTimeout(() => setShowConfirm(true), 100); // Ir po 100ms atidaro vėl
+    setToastMessage("✅ Gas fee updated!");
+    setShowToast(true);
+    setTimeout(() => setShowToast(false), 1200);
+  }}
+  className={styles.inputField}
+  disabled={sending}
+>
               <option value="slow">Slow (Cheapest)</option>
               <option value="average">Average (Recommended)</option>
               <option value="fast">Fast (Priority)</option>
