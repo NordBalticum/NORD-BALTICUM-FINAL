@@ -246,62 +246,63 @@ const eurValue = useMemo(() => {
 
         {/* Confirm Modal */}
         {showConfirm && (
-          <div className={styles.overlay}>
-            <div className={styles.confirmModal}>
-              <div className={styles.modalTitle}>Confirm Transaction</div>
-              <div className={styles.modalInfo}>
-                <p><strong>Network:</strong> {shortName}</p>
-                <p><strong>Receiver:</strong> {receiver}</p>
-                <p><strong>Amount:</strong> {parsedAmount.toFixed(6)} {shortName}</p>
+  <div className={styles.overlay}>
+    <div className={styles.confirmModal}>
+      <div className={styles.modalTitle}>Confirm Transaction</div>
+      <div className={styles.modalInfo}>
+        <p><strong>Network:</strong> {shortName}</p>
+        <p><strong>Receiver:</strong> {receiver}</p>
+        <p><strong>Amount:</strong> {parsedAmount.toFixed(6)} {shortName}</p>
 
-                {feeLoading ? (
-                  <p style={{ marginTop: "16px", color: "white" }}>
-                    Calculating Fees... <MiniLoadingSpinner />
-                  </p>
-                ) : feeError ? (
-                  <p style={{ color: "red" }}>Failed to load fees.</p>
-                ) : (
-                  <>
-                    <p><strong>Total Fees:</strong> {(gasFee + adminFee).toFixed(6)} {shortName}</p>
-                    <p><strong>Receiver Gets:</strong> {(parsedAmount).toFixed(6)} {shortName}</p>
-                    <p><strong>Remaining Balance:</strong> {(netBalance - parsedAmount - (gasFee + adminFee)).toFixed(6)} {shortName}</p>
-                  </>
-                )}
-              </div>
+        {feeLoading ? (
+          <p style={{ marginTop: "16px", color: "white" }}>
+            Calculating Fees... <MiniLoadingSpinner />
+          </p>
+        ) : feeError ? (
+          <p style={{ color: "red" }}>Failed to load fees.</p>
+        ) : (
+          <>
+            <p><strong>Total Fees:</strong> {(gasFee + adminFee).toFixed(6)} {shortName}</p>
+            <p><strong>Receiver Gets:</strong> {(parsedAmount).toFixed(6)} {shortName}</p>
+            <p><strong>Remaining Balance:</strong> {(netBalance - parsedAmount - (gasFee + adminFee)).toFixed(6)} {shortName}</p>
+          </>
+        )}
+      </div>
 
-              <div className={styles.modalActions}>
-                <button
-                  className={styles.modalButton}
-                  onClick={confirmSend}
-                  disabled={sending || feeLoading}
-                >
-                  {sending ? "Confirming..." : "Confirm"}
-                </button>
-                <button
-                  className={`${styles.modalButton} ${styles.cancel}`}
-                  onClick={() => setShowConfirm(false)}
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+      <div className={styles.modalActions}>
+        <button
+          className={styles.modalButton}
+          onClick={confirmSend}
+          disabled={sending || feeLoading}
+        >
+          {sending ? "Confirming..." : "Confirm"}
+        </button>
+        <button
+          className={`${styles.modalButton} ${styles.cancel}`}
+          onClick={() => setShowConfirm(false)}
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+)}
 
-        {showSuccess && (
-          <SuccessModal
-            message="✅ Transaction Successful!"
-            onClose={() => setShowSuccess(false)}
-            transactionHash={transactionHash}
-            network={network}
-          />
-        )}
-        {error && (
-          <ErrorModal
-            error={error}
-            onRetry={handleRetry}
-          />
-        )}
+{showSuccess && transactionHash && network && (
+  <SuccessModal
+    message="✅ Transaction Successful!"
+    onClose={() => setShowSuccess(false)}
+    transactionHash={transactionHash}
+    network={network}
+  />
+)}
+
+{error && (
+  <ErrorModal
+    error={error}
+    onRetry={handleRetry}
+  />
+)}
       </div>
     </main>
   );
