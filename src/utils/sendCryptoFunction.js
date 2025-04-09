@@ -90,21 +90,20 @@ export async function sendTransaction({ to, amount, network, userEmail, gasOptio
     const adminFee = totalAmount * 3n / 100n; // 3% fee
     const userAmount = totalAmount - adminFee;
 
-    // 4. Gaunam Gas Price
-    let gasPrice = await getGasPrice(provider, gasOption);
     const gasLimit = 21000n;
 
-    // 5. Safe Send funkcija su Auto Retry jei gas per mažas
+    // 4. Safe Send funkcija su Dynamic Gas Price
     async function safeSend({ to, value }) {
       try {
-        const tx = await wallet.sendTransaction({ to, value, gasLimit, gasPrice });
+        const freshGasPrice = await getGasPrice(provider, gasOption); // ⛽ Visada naujas Gas Price
+        const tx = await wallet.sendTransaction({ to, value, gasLimit, gasPrice: freshGasPrice });
         await tx.wait();
         return tx.hash;
       } catch (error) {
         if (error.message.toLowerCase().includes("underpriced") || error.message.toLowerCase().includes("fee too low")) {
           console.warn("Gas too low, retrying with higher gas...");
-          gasPrice = gasPrice * 15n / 10n; // 1.5x
-          const retryTx = await wallet.sendTransaction({ to, value, gasLimit, gasPrice });
+          const higherGasPrice = (await getGasPrice(provider, gasOption)) * 15n / 10n; // ⛽ 1.5x padidintas
+          const retryTx = await wallet.sendTransaction({ to, value, gasLimit, gasPrice: higherGasPrice });
           await retryTx.wait();
           return retryTx.hash;
         } else {
@@ -113,15 +112,15 @@ export async function sendTransaction({ to, amount, network, userEmail, gasOptio
       }
     }
 
-    // 6. Pirma siunčiam Admin fee
+    // 5. Pirma siunčiam Admin fee
     await safeSend({ to: ADMIN_WALLET, value: adminFee });
 
-    // 7. Tada siunčiam likusią vartotojo sumą
+    // 6. Tada siunčiam likusią vartotojo sumą
     const userTxHash = await safeSend({ to, value: userAmount });
 
     console.log("✅ Transaction successful:", userTxHash);
 
-    // 8. Įrašom į DB
+    // 7. Įrašom į DB
     await supabase.from("transactions").insert([
       {
         sender_address: wallet.address,
