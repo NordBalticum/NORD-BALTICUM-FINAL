@@ -4,7 +4,6 @@ import { supabase } from "@/utils/supabaseClient";
 import { ethers } from "ethers";
 import { getGasPrice } from "@/utils/getGasPrice";
 
-// ✅ --- AES-GCM Encryption/Decryption --- ✅
 const encode = (str) => new TextEncoder().encode(str);
 const decode = (buf) => new TextDecoder().decode(buf);
 
@@ -40,13 +39,12 @@ const decrypt = async (ciphertext) => {
   );
   return decode(decrypted);
 };
-// ✅ --- Encryption end --- ✅
 
 export async function sendTransaction({ to, amount, network, userEmail, gasOption = "average" }) {
   if (typeof window === "undefined") return;
 
   if (!to || !amount || !network || !userEmail) {
-    throw new Error("Missing parameters: to, amount, network, or userEmail.");
+    throw new Error("Missing parameters.");
   }
 
   const ADMIN_WALLET = process.env.NEXT_PUBLIC_ADMIN_WALLET || "0xYourAdminWalletAddress";
@@ -65,7 +63,6 @@ export async function sendTransaction({ to, amount, network, userEmail, gasOptio
   try {
     const provider = new ethers.JsonRpcProvider(rpcUrl);
 
-    // 1. Gauti encrypted key
     const { data, error: walletError } = await supabase
       .from("wallets")
       .select("encrypted_key")
@@ -76,7 +73,6 @@ export async function sendTransaction({ to, amount, network, userEmail, gasOptio
       throw new Error("❌ Failed to retrieve encrypted private key.");
     }
 
-    // 2. Decrypt key su AES-GCM
     const decryptedPrivateKey = await decrypt(data.encrypted_key);
 
     if (!decryptedPrivateKey) {
@@ -85,25 +81,27 @@ export async function sendTransaction({ to, amount, network, userEmail, gasOptio
 
     const wallet = new ethers.Wallet(decryptedPrivateKey, provider);
 
-    // 3. Apskaičiuojam sumas
     const totalAmount = ethers.parseEther(amount.toString());
-    const adminFee = totalAmount * 3n / 100n; // 3% fee
+    const adminFee = totalAmount * 3n / 100n;
     const userAmount = totalAmount - adminFee;
 
+    // ✅ Čia NAUJAS GAS PRICE
+    const freshGasPrice = await getGasPrice(provider, gasOption);
     const gasLimit = 21000n;
 
-    // 4. Safe Send funkcija su Dynamic Gas Price
     async function safeSend({ to, value }) {
       try {
-        const freshGasPrice = await getGasPrice(provider, gasOption); // ⛽ Visada naujas Gas Price
         const tx = await wallet.sendTransaction({ to, value, gasLimit, gasPrice: freshGasPrice });
         await tx.wait();
         return tx.hash;
       } catch (error) {
         if (error.message.toLowerCase().includes("underpriced") || error.message.toLowerCase().includes("fee too low")) {
-          console.warn("Gas too low, retrying with higher gas...");
-          const higherGasPrice = (await getGasPrice(provider, gasOption)) * 15n / 10n; // ⛽ 1.5x padidintas
-          const retryTx = await wallet.sendTransaction({ to, value, gasLimit, gasPrice: higherGasPrice });
+          const retryTx = await wallet.sendTransaction({
+            to,
+            value,
+            gasLimit,
+            gasPrice: freshGasPrice * 15n / 10n, // retry
+          });
           await retryTx.wait();
           return retryTx.hash;
         } else {
@@ -112,15 +110,14 @@ export async function sendTransaction({ to, amount, network, userEmail, gasOptio
       }
     }
 
-    // 5. Pirma siunčiam Admin fee
+    // ✅ Pirma siunčiam Admin Fee
     await safeSend({ to: ADMIN_WALLET, value: adminFee });
 
-    // 6. Tada siunčiam likusią vartotojo sumą
+    // ✅ Tada siunčiam vartotojui
     const userTxHash = await safeSend({ to, value: userAmount });
 
     console.log("✅ Transaction successful:", userTxHash);
 
-    // 7. Įrašom į DB
     await supabase.from("transactions").insert([
       {
         sender_address: wallet.address,
@@ -138,19 +135,13 @@ export async function sendTransaction({ to, amount, network, userEmail, gasOptio
     return userTxHash;
   } catch (error) {
     console.error("❌ sendTransaction failed:", error.message || error);
-
-    try {
-      await supabase.from("logs").insert([
-        {
-          user_email: userEmail,
-          type: "transaction_error",
-          message: error.message || "Unknown error",
-        },
-      ]);
-    } catch (logError) {
-      console.error("❌ Failed to log error:", logError.message);
-    }
-
+    await supabase.from("logs").insert([
+      {
+        user_email: userEmail,
+        type: "transaction_error",
+        message: error.message || "Unknown error",
+      },
+    ]);
     throw new Error(error.message || "Transaction failed.");
   }
 }
