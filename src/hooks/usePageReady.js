@@ -4,26 +4,33 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBalance } from "@/hooks/useBalance";
 import { usePrices } from "@/hooks/usePrices";
+import { useTotalFeeCalculator } from "@/hooks/useTotalFeeCalculator";
 
-export function usePageReady() {
+/**
+ * ULTIMATE PAGE READY HOOK
+ * - Užtikrina, kad visi duomenys pilnai užkrauti prieš rodyti puslapį
+ */
+export function usePageReady(network, amount, gasOption) {
   const { user } = useAuth();
-  const { balances, initialLoading } = useBalance();
+  const { balances, loading: balancesLoading, initialLoading } = useBalance();
   const { prices } = usePrices();
+  const { loading: feeLoading } = useTotalFeeCalculator(network, amount, gasOption);
 
-  const [ready, setReady] = useState(false);
+  const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
-    if (ready) return; // ✅ Jei jau ready, daugiau neliesti
+    if (isReady) return;
 
-    const balancesLoaded = balances && Object.keys(balances).length > 0;
+    const balancesLoaded = balances && !initialLoading && !balancesLoading;
     const pricesLoaded = prices && Object.keys(prices).length > 0;
     const userLoaded = !!user;
+    const feesLoaded = !feeLoading;
 
-    if (!initialLoading && balancesLoaded && pricesLoaded && userLoaded) {
-      console.log("✅ Page ready.");
-      setReady(true); // ✅ Once ready, forever ready
+    if (balancesLoaded && pricesLoaded && userLoaded && feesLoaded) {
+      console.log("✅ Page is fully ready!");
+      setIsReady(true);
     }
-  }, [balances, initialLoading, prices, user, ready]);
+  }, [user, balances, initialLoading, balancesLoading, prices, feeLoading, isReady]);
 
-  return ready;
+  return isReady;
 }
