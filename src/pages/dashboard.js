@@ -76,11 +76,11 @@ export default function Dashboard() {
 
         <div className={styles.assetList}>
           {isLoading ? (
-            <div className={styles.loading}>
+            <div className={styles.tableLoading}>
               <LoadingSpinner />
             </div>
           ) : tokens.length === 0 ? (
-            <div className={styles.loading}>No assets found.</div>
+            <div className={styles.noAssets}>No assets found.</div>
           ) : (
             tokens.map((network) => {
               const info = balances?.[network];
