@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBalance } from "@/hooks/useBalance";
 import { usePageReady } from "@/hooks/usePageReady";
@@ -68,9 +68,19 @@ export default function SendPage() {
   const parsedAmount = useMemo(() => Number(amount) || 0, [amount]);
   const debouncedAmount = useDebounce(parsedAmount, 500);
 
-  const { gasFee, adminFee, totalFee, loading: feeLoading, error: feeError, refetch: refetchFees } = useTotalFeeCalculator(network, debouncedAmount, gasOption);
+  const {
+    gasFee,
+    adminFee,
+    totalFee,
+    loading: feeLoading,
+    error: feeError,
+    refetch: refetchFees,
+  } = useTotalFeeCalculator(network, debouncedAmount, gasOption);
 
-  const netBalance = useMemo(() => balances?.[network]?.balance ? parseFloat(balances[network].balance) : 0, [balances, network]);
+  const netBalance = useMemo(() => 
+    balances?.[network]?.balance ? parseFloat(balances[network].balance) : 0, 
+    [balances, network]
+  );
 
   const usdValue = useMemo(() => {
     const price = prices?.[network]?.usd || 0;
@@ -97,7 +107,7 @@ export default function SendPage() {
   const handleGasOptionChange = async (e) => {
     const selected = e.target.value;
     setGasOption(selected);
-    await refetchFees(); // ⚡️ instant refetch
+    await refetchFees(); // ⚡️ Immediately refetch fees on gas speed change
   };
 
   const handleSend = () => {
@@ -124,7 +134,7 @@ export default function SendPage() {
     try {
       if (typeof window !== "undefined" && user?.email) {
         const { sendTransaction } = await import("@/utils/sendCryptoFunction");
-        await refetchFees(); // final refetch
+        await refetchFees(); // ⚡️ Make sure to re-fetch fees right before sending
         const hash = await sendTransaction({
           to: receiver.trim().toLowerCase(),
           amount: parsedAmount,
@@ -155,6 +165,13 @@ export default function SendPage() {
   };
 
   const handleRetry = () => setError(null);
+
+  // MAGIC FIX: Kai atsidaro Confirm Modal, iškart refetchinam fees
+  useEffect(() => {
+    if (showConfirm) {
+      refetchFees();
+    }
+  }, [showConfirm]);
 
   if (!isReady || !swipeReady || initialLoading) {
     return (
@@ -303,4 +320,4 @@ export default function SendPage() {
       </div>
     </main>
   );
-        }
+          }
