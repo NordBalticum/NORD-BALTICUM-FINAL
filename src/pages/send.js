@@ -34,14 +34,6 @@ const networkShortNames = {
   avalanche: "AVAX",
 };
 
-const buttonColors = {
-  ethereum: "#0072ff",
-  bsc: "#f0b90b",
-  tbnb: "#f0b90b",
-  polygon: "#8247e5",
-  avalanche: "#e84142",
-};
-
 const minAmounts = {
   ethereum: 0.001,
   bsc: 0.0005,
@@ -52,7 +44,7 @@ const minAmounts = {
 
 export default function SendPage() {
   const { user } = useAuth();
-  const { balances, initialLoading, refetch } = useBalance();
+  const { balances, initialLoading } = useBalance();
   const { prices } = usePrices();
   const isReady = usePageReady();
   const swipeReady = useSwipeReady();
@@ -70,22 +62,20 @@ export default function SendPage() {
 
   const shortName = useMemo(() => networkShortNames[network] || network.toUpperCase(), [network]);
   const parsedAmount = useMemo(() => Number(amount) || 0, [amount]);
-  const debouncedAmount = useDebounce(parsedAmount, 500);
+  const debouncedAmount = useDebounce(parsedAmount, 400);
 
   const { gasFee, adminFee, totalFee, loading: feeLoading, error: feeError } = useTotalFeeCalculator(network, debouncedAmount);
 
-  const netBalance = useMemo(() => {
-    return balances?.[network]?.balance ? parseFloat(balances[network].balance) : 0;
-  }, [balances, network]);
+  const netBalance = useMemo(() => balances?.[network]?.balance ? parseFloat(balances[network].balance) : 0, [balances, network]);
 
   const usdValue = useMemo(() => {
     const price = prices?.[network]?.usd || 0;
-    return netBalance && price ? (netBalance * price).toFixed(2) : "0.00";
+    return (netBalance * price).toFixed(2);
   }, [netBalance, prices, network]);
 
   const eurValue = useMemo(() => {
     const price = prices?.[network]?.eur || 0;
-    return netBalance && price ? (netBalance * price).toFixed(2) : "0.00";
+    return (netBalance * price).toFixed(2);
   }, [netBalance, prices, network]);
 
   const isValidAddress = (address) => /^0x[a-fA-F0-9]{40}$/.test(address.trim());
@@ -124,7 +114,6 @@ export default function SendPage() {
     try {
       if (typeof window !== "undefined" && user?.email) {
         const { sendTransaction } = await import("@/utils/sendCryptoFunction");
-
         const hash = await sendTransaction({
           to: receiver.trim().toLowerCase(),
           amount: parsedAmount,
@@ -133,8 +122,6 @@ export default function SendPage() {
         });
 
         setTransactionHash(hash);
-
-        await refetch();
         setReceiver("");
         setAmount("");
         setShowSuccess(true);
@@ -147,19 +134,9 @@ export default function SendPage() {
     }
   };
 
-  const handleMaxSend = () => {
-    if (netBalance > 0 && !feeLoading && gasFee !== undefined && adminFee !== undefined) {
-      const availableBalance = netBalance - (gasFee + adminFee);
-      const maxAmount = Math.max(availableBalance, 0).toFixed(6);
-      setAmount(maxAmount);
-    }
-  };
-
   const handleRetry = () => setError(null);
 
-  if (!isReady || !swipeReady || initialLoading) {
-    return null; // No loading spinner, just blank until ready
-  }
+  if (!isReady || !swipeReady || initialLoading) return null;
 
   return (
     <main className={`${styles.main} ${background.gradient}`}>
@@ -185,6 +162,8 @@ export default function SendPage() {
             onChange={(e) => setReceiver(e.target.value)}
             className={styles.inputField}
             disabled={sending}
+            autoComplete="off"
+            spellCheck="false"
           />
           <input
             type="number"
@@ -193,11 +172,14 @@ export default function SendPage() {
             onChange={(e) => setAmount(e.target.value)}
             className={styles.inputField}
             disabled={sending}
+            autoComplete="off"
+            spellCheck="false"
+            min="0"
           />
 
           <div className={styles.feesInfo}>
             {feeLoading ? (
-              <p className={styles.whiteText}>Calculating Fees... <MiniLoadingSpinner /></p>
+              <p className={styles.whiteText}>Calculating Fees...</p>
             ) : feeError ? (
               <p style={{ color: "red" }}>Failed to load fees.</p>
             ) : (
@@ -214,24 +196,10 @@ export default function SendPage() {
 
           <button
             onClick={handleSend}
-            disabled={sending}
+            disabled={sending || feeLoading}
             className={styles.sendNowButton}
           >
-            {sending ? (
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
-                Sending <MiniLoadingSpinner />
-              </div>
-            ) : (
-              "SEND NOW"
-            )}
-          </button>
-
-          <button
-            onClick={handleMaxSend}
-            disabled={sending || feeLoading}
-            className={styles.sendMaxButton}
-          >
-            SEND MAX
+            {sending ? "Sending..." : "SEND NOW"}
           </button>
         </div>
 
@@ -265,7 +233,7 @@ export default function SendPage() {
           </div>
         )}
 
-        {showSuccess && transactionHash && network && (
+        {showSuccess && transactionHash && (
           <SuccessModal
             message="✅ Transaction Successful!"
             onClose={() => setShowSuccess(false)}
