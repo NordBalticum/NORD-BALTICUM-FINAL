@@ -4,6 +4,7 @@ import { useState, useMemo, useCallback, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBalance } from "@/hooks/useBalance";
 import { usePageReady } from "@/hooks/usePageReady";
+import { useSwipeReady } from "@/hooks/useSwipeReady"; // ✅ Pridėtas
 import { usePrices } from "@/hooks/usePrices";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useTotalFeeCalculator } from "@/hooks/useTotalFeeCalculator";
@@ -46,6 +47,7 @@ const buttonColors = {
 
 export default function SendPage() {
   const isReady = usePageReady();
+  const swipeReady = useSwipeReady(); // ✅ SwipeReady
   const { user } = useAuth();
   const { balances, loading: balancesLoading, initialLoading, refetch: refetchBalances } = useBalance();
   const { prices } = usePrices();
@@ -158,7 +160,7 @@ export default function SendPage() {
     const interval = setInterval(() => {
       refetchBalances();
       refetchFees();
-    }, 30000); // ✅ Every 30s
+    }, 30000);
     return () => clearInterval(interval);
   }, [refetchBalances, refetchFees]);
 
@@ -168,7 +170,7 @@ export default function SendPage() {
     }
   }, [debouncedAmount, gasOption, network, refetchFees]);
 
-  if (!isReady || initialLoading || balancesLoading) {
+  if (!isReady || !swipeReady || initialLoading || balancesLoading) {
     return (
       <div className={styles.loading}>
         <LoadingSpinner />
