@@ -73,14 +73,14 @@ export default function SendPage() {
   const netBalance = useMemo(() => balances?.[network]?.balance ? parseFloat(balances[network].balance) : 0, [balances, network]);
 
   const usdValue = useMemo(() => {
-    const price = prices?.[network]?.usd || 0;
-    return parsedAmount > 0 && price ? (parsedAmount * price).toFixed(2) : "0.00";
-  }, [parsedAmount, prices, network]);
+  const price = prices?.[network]?.usd || 0;
+  return netBalance > 0 && price ? (netBalance * price).toFixed(2) : "0.00";
+}, [netBalance, prices, network]);
 
-  const eurValue = useMemo(() => {
-    const price = prices?.[network]?.eur || 0;
-    return parsedAmount > 0 && price ? (parsedAmount * price).toFixed(2) : "0.00";
-  }, [parsedAmount, prices, network]);
+const eurValue = useMemo(() => {
+  const price = prices?.[network]?.eur || 0;
+  return netBalance > 0 && price ? (netBalance * price).toFixed(2) : "0.00";
+}, [netBalance, prices, network]);
 
   const isValidAddress = (address) => /^0x[a-fA-F0-9]{40}$/.test(address.trim());
 
