@@ -212,18 +212,17 @@
   }
 }
 
-.tableLoading {
+.loaderWrapper {
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 240px; /* ✅ Spinneris gražiai per vidurį lentelės */
+  min-height: 200px; /* ✅ Tik tiek kiek reikia spinneriui */
+  width: 100%;
+  background: transparent; /* ✅ Jokio background */
 }
 
 .noAssets {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 240px;
-  color: #ccc;
-  font-size: 1rem;
+  text-align: center;
+  color: white;
+  padding: 20px;
 }
