@@ -68,10 +68,6 @@ export default function Dashboard() {
 
   const isLoading = !isClient || authLoading || balancesLoading || pricesLoading;
 
-  if (isLoading) {
-    return <LoadingSpinner />;
-  }
-
   return (
     <main className={styles.container}>
       <div className={styles.dashboardWrapper}>
