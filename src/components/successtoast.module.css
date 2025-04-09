@@ -1,28 +1,49 @@
+/* === SUCCESS TOAST FINAL ULTRA PREMIUM v6 === */
+
+/* ✅ TOAST MAIN STYLE */
 .toast {
   position: fixed;
   top: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #0f0f0f;
-  color: #fff;
-  padding: 12px 20px;
+  right: 10%;
+  left: auto;
+  background: rgba(0, 0, 0, 0.85);
+  padding: 12px 24px;
   border-radius: 14px;
+  color: white;
+  font-weight: bold;
+  font-size: 16px;
+  font-family: var(--font-crypto);
+  z-index: 9999;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5), 0 4px 20px rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
   display: flex;
   align-items: center;
   gap: 12px;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
-  z-index: 1000;
-  font-weight: 600;
-  font-size: 16px;
-  backdrop-filter: blur(10px);
+  transition: all 0.4s ease, transform 0.4s ease;
+  animation: slideIn 0.6s ease forwards;
 }
 
+/* ✅ SMOOTH SLIDE IN ANIMATION */
+@keyframes slideIn {
+  from {
+    transform: translateX(150%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* ✅ TOAST LOGO WRAPPER */
 .logoWrapper {
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
+/* ✅ TOAST MESSAGE */
 .message {
   white-space: nowrap;
+  font-weight: 600;
 }
