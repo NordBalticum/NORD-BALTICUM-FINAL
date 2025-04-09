@@ -2,7 +2,7 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
-import styles from "@/styles/SuccessToast.module.css"; // ✅ pritaikytas prie naujo
+import styles from "@/components/successtoast.module.css"; // ✅ pritaikytas prie naujo
 
 // ✅ Tinklų logotipai
 const networkLogos = {
