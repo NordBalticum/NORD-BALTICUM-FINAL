@@ -14,7 +14,6 @@ import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
 import SuccessModal from "@/components/modals/SuccessModal";
 import ErrorModal from "@/components/modals/ErrorModal";
 import SuccessToast from "@/components/SuccessToast";
-import Image from "next/image";
 
 import styles from "@/styles/send.module.css";
 import background from "@/styles/background.module.css";
@@ -158,14 +157,12 @@ export default function SendPage() {
   const handleRetry = () => setError(null);
 
   if (!isReady || !swipeReady || initialLoading) {
-    return null; // NO SPINNER, tiesiog tuščias, kaip Web3 projektai
+    return null; // NO SPINNER
   }
 
   return (
     <main className={`${styles.main} ${background.gradient}`}>
       <div className={styles.wrapper}>
-        
-        <Image src="/icons/logo.svg" alt="Logo" width={82} height={82} className={styles.pageLogo} />
 
         <SuccessToast show={showToast} message={toastMessage} networkKey={network} />
 
