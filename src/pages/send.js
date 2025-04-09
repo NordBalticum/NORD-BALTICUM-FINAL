@@ -68,7 +68,7 @@ export default function SendPage() {
   const parsedAmount = useMemo(() => Number(amount) || 0, [amount]);
   const debouncedAmount = useDebounce(parsedAmount, 500);
 
-  const { gasFee, adminFee, totalFee, loading: feeLoading, error: feeError, refetch: refetchFees } = useTotalFeeCalculator(network, debouncedAmount, gasOption);
+  const { gasFee, adminFee, totalFee, loading: feeLoading, error: feeError, refetchFees } = useTotalFeeCalculator(network, debouncedAmount, gasOption);
 
   const netBalance = useMemo(
     () => balances?.[network]?.balance ? parseFloat(balances[network].balance) : 0,
@@ -213,7 +213,10 @@ export default function SendPage() {
               value={gasOption}
               onChange={(e) => {
                 setGasOption(e.target.value);
-                refetchFees();
+                refetchFees(); // ⚡️ iškart perskaičiuoja fees
+                setToastMessage("✅ Gas fee updated!");
+                setShowToast(true);
+                setTimeout(() => setShowToast(false), 1200);
               }}
               className={styles.inputField}
               disabled={sending}
