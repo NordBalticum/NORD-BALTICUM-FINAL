@@ -70,7 +70,10 @@ export default function SendPage() {
 
   const { gasFee, adminFee, totalFee, loading: feeLoading, error: feeError, refetch: refetchFees } = useTotalFeeCalculator(network, debouncedAmount, gasOption);
 
-  const netBalance = useMemo(() => balances?.[network]?.balance ? parseFloat(balances[network].balance) : 0, [balances, network]);
+  const netBalance = useMemo(
+    () => balances?.[network]?.balance ? parseFloat(balances[network].balance) : 0,
+    [balances, network]
+  );
 
   const usdValue = useMemo(() => {
     const price = prices?.[network]?.usd || 0;
@@ -93,6 +96,12 @@ export default function SendPage() {
     setShowToast(true);
     setTimeout(() => setShowToast(false), 1500);
   }, []);
+
+  const handleGasOptionChange = async (e) => {
+    const selected = e.target.value;
+    setGasOption(selected);
+    await refetchFees(); // ⚡️ Magic instant refetch without modal close
+  };
 
   const handleSend = () => {
     if (!isValidAddress(receiver)) {
@@ -118,9 +127,7 @@ export default function SendPage() {
     try {
       if (typeof window !== "undefined" && user?.email) {
         const { sendTransaction } = await import("@/utils/sendCryptoFunction");
-
-        await refetchFees(); // Perskaičiuoti dar kartą fees prieš siuntimą
-
+        await refetchFees();
         const hash = await sendTransaction({
           to: receiver.trim().toLowerCase(),
           amount: parsedAmount,
@@ -128,9 +135,7 @@ export default function SendPage() {
           userEmail: user.email,
           gasOption,
         });
-
         setTransactionHash(hash);
-
         await supabase.from("transactions").insert([{
           sender_email: user.email,
           to_address: receiver.trim().toLowerCase(),
@@ -140,7 +145,6 @@ export default function SendPage() {
           type: "send",
           tx_hash: hash,
         }]);
-
         setReceiver("");
         setAmount("");
         setShowSuccess(true);
@@ -154,16 +158,6 @@ export default function SendPage() {
   };
 
   const handleRetry = () => setError(null);
-
-  const handleGasOptionChange = async (e) => {
-    const selected = e.target.value;
-    setGasOption(selected);
-    setShowConfirm(false); // 1. Uždaro modalą
-    await refetchFees();   // 2. Refetchina fees
-    setTimeout(() => {
-      setShowConfirm(true); // 3. Vėl atidaro modalą
-    }, 100);
-  };
 
   if (!isReady || !swipeReady || initialLoading) {
     return (
@@ -186,10 +180,7 @@ export default function SendPage() {
 
         <div className={styles.balanceTable}>
           <p className={styles.whiteText}>
-            Your Balance:&nbsp;
-            <span className={styles.balanceAmount}>
-              {netBalance.toFixed(6)} {shortName}
-            </span>
+            Your Balance: <span className={styles.balanceAmount}>{netBalance.toFixed(6)} {shortName}</span>
           </p>
           <p className={styles.whiteText}>
             ≈ €{eurValue} | ${usdValue}
