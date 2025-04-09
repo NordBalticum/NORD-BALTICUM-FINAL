@@ -111,46 +111,49 @@ const eurValue = useMemo(() => {
   };
 
   const confirmSend = async () => {
-    setShowConfirm(false);
-    setSending(true);
-    setError(null);
+  setShowConfirm(false);
+  setSending(true);
+  setError(null);
 
-    try {
-      if (typeof window !== "undefined" && user?.email) {
-        const { sendTransaction } = await import("@/utils/sendCryptoFunction");
+  try {
+    if (typeof window !== "undefined" && user?.email) {
+      const { sendTransaction } = await import("@/utils/sendCryptoFunction");
 
-        const hash = await sendTransaction({
-          to: receiver.trim().toLowerCase(),
-          amount: parsedAmount,
-          network,
-          userEmail: user.email,
-          gasOption,
-        });
+      // ⚡️ Prieš siuntimą perskaičiuojam naujausias fees
+      await refetchFees();
 
-        setTransactionHash(hash);
+      const hash = await sendTransaction({
+        to: receiver.trim().toLowerCase(),
+        amount: parsedAmount,
+        network,
+        userEmail: user.email,
+        gasOption, // labai svarbu
+      });
 
-        await supabase.from("transactions").insert([{
-          sender_email: user.email,
-          to_address: receiver.trim().toLowerCase(),
-          amount: parsedAmount,
-          fee: adminFee,
-          network,
-          type: "send",
-          tx_hash: hash,
-        }]);
+      setTransactionHash(hash);
 
-        setReceiver("");
-        setAmount("");
-        setShowSuccess(true);
-      }
-    } catch (err) {
-      console.error("❌ Transaction error:", err?.message || err);
-      setError(err?.message || "Transaction failed.");
-    } finally {
-      setSending(false);
+      await supabase.from("transactions").insert([{
+        sender_email: user.email,
+        to_address: receiver.trim().toLowerCase(),
+        amount: parsedAmount,
+        fee: adminFee,
+        network,
+        type: "send",
+        tx_hash: hash,
+      }]);
+
+      setReceiver("");
+      setAmount("");
+      setShowSuccess(true);
     }
-  };
-
+  } catch (err) {
+    console.error("❌ Transaction error:", err?.message || err);
+    setError(err?.message || "Transaction failed.");
+  } finally {
+    setSending(false);
+  }
+};
+  
   const handleRetry = () => setError(null);
 
   if (!isReady || !swipeReady || initialLoading) {
