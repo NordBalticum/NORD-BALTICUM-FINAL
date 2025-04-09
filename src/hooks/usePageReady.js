@@ -13,20 +13,16 @@ export function usePageReady() {
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
-    const checkReady = () => {
-      const balancesLoaded = balances && !initialLoading && !balancesLoading;
-      const pricesLoaded = prices && Object.keys(prices).length > 0;
-      const userLoaded = !!user;
+    if (isReady) return; // ❗️ Jei jau ready, daugiau netikrinam
 
-      if (balancesLoaded && pricesLoaded && userLoaded) {
-        setIsReady(true);
-      } else {
-        setIsReady(false);
-      }
-    };
+    const balancesLoaded = balances && !initialLoading && !balancesLoading;
+    const pricesLoaded = prices && Object.keys(prices).length > 0;
+    const userLoaded = !!user;
 
-    checkReady();
-  }, [user, balances, balancesLoading, initialLoading, prices]);
+    if (balancesLoaded && pricesLoaded && userLoaded) {
+      setIsReady(true);
+    }
+  }, [user, balances, balancesLoading, initialLoading, prices, isReady]);
 
   return isReady;
 }
