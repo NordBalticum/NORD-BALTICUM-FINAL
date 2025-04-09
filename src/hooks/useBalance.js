@@ -4,7 +4,6 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { ethers } from "ethers";
 import { useAuth } from "@/contexts/AuthContext";
 
-// ✅ Patikimi RPC endpointai su simboliais
 const NETWORKS = {
   ethereum: { rpc: "https://rpc.ankr.com/eth", symbol: "ETH" },
   bsc: { rpc: "https://bsc-dataseed.bnbchain.org", symbol: "BNB" },
@@ -13,7 +12,6 @@ const NETWORKS = {
   tbnb: { rpc: "https://data-seed-prebsc-1-s1.binance.org:8545", symbol: "TBNB" },
 };
 
-// ✅ Funkcija gauti balansus su retry mechanizmu
 async function getBalances(address, retries = 2) {
   if (!address) throw new Error("❌ Wallet address is required!");
 
@@ -35,7 +33,6 @@ async function getBalances(address, retries = 2) {
         success = true;
       } catch (error) {
         attempt++;
-        console.error(`❌ Failed to fetch ${network} (attempt ${attempt}):`, error?.message || error);
         if (attempt > retries) {
           balances[network] = {
             symbol: config.symbol,
@@ -49,17 +46,15 @@ async function getBalances(address, retries = 2) {
   return balances;
 }
 
-// ✅ Ultimate Web3 Banking useBalance Hook
 export function useBalance() {
   const { wallet } = useAuth();
   const [balances, setBalances] = useState({});
-  const [loading, setLoading] = useState(false);         // ✅ loading tik kai rankinis refetch
-  const [initialLoading, setInitialLoading] = useState(true); // ✅ loading tik pirmam kartui
-  const [isOnline, setIsOnline] = useState(true);         // ✅ Anti-disconnect statusas
+  const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
   const intervalRef = useRef(null);
 
   const fetchBalances = useCallback(async () => {
-    if (!wallet?.wallet?.address || !isOnline) return;
+    if (!wallet?.wallet?.address) return;
 
     setLoading(true);
     try {
@@ -71,58 +66,24 @@ export function useBalance() {
       setLoading(false);
       setInitialLoading(false);
     }
-  }, [wallet?.wallet?.address, isOnline]);
+  }, [wallet?.wallet?.address]);
 
-  // ✅ Auto-refetch kas 15s
   useEffect(() => {
     if (!wallet?.wallet?.address) return;
 
-    fetchBalances(); // ✅ Pirmas užkrovimas
+    fetchBalances(); // ✅ First load
 
-    intervalRef.current = setInterval(fetchBalances, 15000); // ✅ Kas 15s update
-    console.log("✅ Balance updater started.");
-
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        console.log("🧹 Balance updater cleared.");
-      }
-    };
-  }, [fetchBalances]);
-
-  // ✅ Interneto disconnect / reconnect detektavimas
-  useEffect(() => {
-    const handleOnline = () => {
-      console.log("🌐 Back online.");
-      setIsOnline(true);
-      fetchBalances(); // ✅ Kai prisijungia vėl - refetch
-    };
-
-    const handleOffline = () => {
-      console.warn("⚡ Lost internet connection.");
-      setIsOnline(false);
-    };
-
-    window.addEventListener("online", handleOnline);
-    window.addEventListener("offline", handleOffline);
+    intervalRef.current = setInterval(fetchBalances, 30000); // ✅ Background every 30s
 
     return () => {
-      window.removeEventListener("online", handleOnline);
-      window.removeEventListener("offline", handleOffline);
+      clearInterval(intervalRef.current);
     };
   }, [fetchBalances]);
 
   return {
-    balances,        // ✅ Visi balansai
-    loading,         // ✅ Tik fono loading
-    initialLoading,  // ✅ Tik pirmas puslapio loading
-    refetch: fetchBalances, // ✅ Rankinis refetch
+    balances,
+    loading,          // Tik fono loading
+    initialLoading,   // Tik pirmam kartui
+    refetch: fetchBalances,
   };
-}
-
-// ✅ Ultimate IsBalancesReady Hook
-export function useIsBalancesReady() {
-  const { balances, loading: balancesLoading, initialLoading } = useBalance();
-  const isReady = balances && !initialLoading && !balancesLoading;
-  return isReady;
 }
