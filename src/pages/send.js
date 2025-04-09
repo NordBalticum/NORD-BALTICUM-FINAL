@@ -68,12 +68,9 @@ export default function SendPage() {
   const parsedAmount = useMemo(() => Number(amount) || 0, [amount]);
   const debouncedAmount = useDebounce(parsedAmount, 500);
 
-  const { gasFee, adminFee, totalFee, loading: feeLoading, error: feeError, refetchFees } = useTotalFeeCalculator(network, debouncedAmount, gasOption);
+  const { gasFee, adminFee, totalFee, loading: feeLoading, error: feeError, refetch: refetchFees } = useTotalFeeCalculator(network, debouncedAmount, gasOption);
 
-  const netBalance = useMemo(
-    () => balances?.[network]?.balance ? parseFloat(balances[network].balance) : 0,
-    [balances, network]
-  );
+  const netBalance = useMemo(() => balances?.[network]?.balance ? parseFloat(balances[network].balance) : 0, [balances, network]);
 
   const usdValue = useMemo(() => {
     const price = prices?.[network]?.usd || 0;
@@ -207,20 +204,22 @@ export default function SendPage() {
             disabled={sending}
           />
 
-          <select
-  value={gasOption}
-  onChange={(e) => {
-    setGasOption(e.target.value);
-    refetchFees();       // Perkrauna fees
-    setShowConfirm(false); // Uždaro modalą
-    setTimeout(() => setShowConfirm(true), 100); // Ir po 100ms atidaro vėl
-    setToastMessage("✅ Gas fee updated!");
-    setShowToast(true);
-    setTimeout(() => setShowToast(false), 1200);
-  }}
-  className={styles.inputField}
-  disabled={sending}
->
+          <div className={styles.gasOptions}>
+            <label style={{ color: "white", marginBottom: "4px" }}>Select Gas Fee:</label>
+            <select
+              value={gasOption}
+              onChange={(e) => {
+                setGasOption(e.target.value);
+                refetchFees();           // Perskaičiuoja fees
+                setShowConfirm(false);   // Uždaro modalą
+                setTimeout(() => setShowConfirm(true), 100); // Atidaro modalą po 100ms
+                setToastMessage("✅ Gas fee updated!");
+                setShowToast(true);
+                setTimeout(() => setShowToast(false), 1200);
+              }}
+              className={styles.inputField}
+              disabled={sending}
+            >
               <option value="slow">Slow (Cheapest)</option>
               <option value="average">Average (Recommended)</option>
               <option value="fast">Fast (Priority)</option>
