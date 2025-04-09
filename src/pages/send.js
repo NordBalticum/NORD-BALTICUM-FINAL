@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback, useEffect } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBalance } from "@/hooks/useBalance";
 import { usePageReady } from "@/hooks/usePageReady";
@@ -101,6 +101,10 @@ export default function SendPage() {
     const selected = e.target.value;
     setGasOption(selected);
     await refetchFees();
+    if (showConfirm) {
+      setShowConfirm(false);
+      setTimeout(() => setShowConfirm(true), 50);
+    }
   };
 
   const handleSend = () => {
@@ -163,12 +167,6 @@ export default function SendPage() {
 
   const handleRetry = () => setError(null);
 
-  useEffect(() => {
-    if (debouncedAmount > 0) {
-      refetchFees();
-    }
-  }, [debouncedAmount, network, gasOption]);
-
   if (!isReady || !swipeReady || initialLoading) {
     return (
       <div className={styles.loading}>
@@ -229,15 +227,14 @@ export default function SendPage() {
             </select>
           </div>
 
-          {/* Realtime Fees display */}
-          <div className={styles.feesInfo} style={{ marginBottom: "10px" }}>
+          <div className={styles.feesInfo}>
             {feeLoading ? (
-              <p style={{ color: "white" }}>Calculating Total... <MiniLoadingSpinner /></p>
+              <p style={{ color: "white" }}>Calculating Fees... <MiniLoadingSpinner /></p>
             ) : feeError ? (
-              <p style={{ color: "red" }}>Failed to calculate total.</p>
+              <p style={{ color: "red" }}>Failed to load fees.</p>
             ) : (
               <p className={styles.whiteText}>
-                <strong>Estimated Total:</strong> {(parsedAmount + gasFee + adminFee).toFixed(6)} {shortName}
+                Estimated Fees: {(gasFee + adminFee).toFixed(6)} {shortName}
               </p>
             )}
           </div>
@@ -256,12 +253,8 @@ export default function SendPage() {
               fontFamily: "var(--font-crypto)",
               border: "2px solid white",
               cursor: sending ? "not-allowed" : "pointer",
-              transition: "all 0.3s ease",
-              boxShadow: sending ? "none" : "0 5px 15px rgba(255,255,255,0.3)",
-              transform: sending ? "scale(1)" : "scale(1.02)",
+              transition: "background-color 0.4s ease",
             }}
-            onMouseOver={(e) => { if (!sending) e.currentTarget.style.transform = "scale(1.05)"; }}
-            onMouseOut={(e) => { if (!sending) e.currentTarget.style.transform = "scale(1.02)"; }}
           >
             {sending ? (
               <div style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -273,7 +266,6 @@ export default function SendPage() {
           </button>
         </div>
 
-        {/* Confirm Modal */}
         {showConfirm && (
           <div className={styles.overlay}>
             <div className={styles.confirmModal}>
@@ -313,20 +305,15 @@ export default function SendPage() {
           </div>
         )}
 
-        {/* Success Modal */}
         {showSuccess && transactionHash && network && (
           <SuccessModal
             message="✅ Transaction Successful!"
-            onClose={() => {
-              setShowSuccess(false);
-              setTransactionHash(null);
-            }}
+            onClose={() => setShowSuccess(false)}
             transactionHash={transactionHash}
             network={network}
           />
         )}
 
-        {/* Error Modal */}
         {error && (
           <ErrorModal
             error={error}
@@ -336,4 +323,4 @@ export default function SendPage() {
       </div>
     </main>
   );
-}
+        }
