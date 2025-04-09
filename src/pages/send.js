@@ -34,6 +34,14 @@ const networkShortNames = {
   avalanche: "AVAX",
 };
 
+const buttonColors = {
+  ethereum: "#0072ff",
+  bsc: "#f0b90b",
+  tbnb: "#f0b90b",
+  polygon: "#8247e5",
+  avalanche: "#e84142",
+};
+
 const minAmounts = {
   ethereum: 0.001,
   bsc: 0.0005,
@@ -138,6 +146,19 @@ export default function SendPage() {
 
   if (!isReady || !swipeReady || initialLoading) return null;
 
+  const sendButtonStyle = {
+    backgroundColor: buttonColors[network] || "#ffffff",
+    color: network === "bsc" || network === "tbnb" ? "#000000" : "#ffffff",
+    border: "none",
+    width: "100%",
+    padding: "12px",
+    fontSize: "18px",
+    borderRadius: "12px",
+    cursor: "pointer",
+    transition: "background-color 0.3s ease",
+    marginTop: "16px",
+  };
+
   return (
     <main className={`${styles.main} ${background.gradient}`}>
       <div className={styles.wrapper}>
@@ -197,7 +218,7 @@ export default function SendPage() {
           <button
             onClick={handleSend}
             disabled={sending || feeLoading}
-            className={styles.sendNowButton}
+            style={sendButtonStyle}
           >
             {sending ? "Sending..." : "SEND NOW"}
           </button>
