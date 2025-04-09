@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 
 /**
  * ULTRA-ULTIMATE SwipeSelector readiness hook
+ * - Užtikrina, kad SwipeSelector būtų 100% paruoštas su AuthContext
  */
 export function useSwipeReady() {
   const { activeNetwork, setActiveNetwork } = useAuth();
