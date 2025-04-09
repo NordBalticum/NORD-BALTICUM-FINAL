@@ -55,7 +55,6 @@ export default function SendPage() {
   const [network, setNetwork] = useState("bsc");
   const [receiver, setReceiver] = useState("");
   const [amount, setAmount] = useState("");
-  const [gasOption, setGasOption] = useState("average");
   const [sending, setSending] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -68,7 +67,7 @@ export default function SendPage() {
   const parsedAmount = useMemo(() => Number(amount) || 0, [amount]);
   const debouncedAmount = useDebounce(parsedAmount, 500);
 
-  const { gasFee, adminFee, totalFee, loading: feeLoading, error: feeError, refetchFees } = useTotalFeeCalculator(network, debouncedAmount, gasOption);
+  const { gasFee, adminFee, totalFee, loading: feeLoading, error: feeError } = useTotalFeeCalculator(network, debouncedAmount);
 
   const netBalance = useMemo(
     () => balances?.[network]?.balance ? parseFloat(balances[network].balance) : 0,
@@ -87,7 +86,7 @@ export default function SendPage() {
 
   const isValidAddress = (address) => /^0x[a-fA-F0-9]{40}$/.test(address.trim());
 
-  const handleNetworkChange = useCallback(async (selectedNetwork) => {
+  const handleNetworkChange = useCallback((selectedNetwork) => {
     if (!selectedNetwork) return;
     setNetwork(selectedNetwork);
     setAmount("");
@@ -96,16 +95,6 @@ export default function SendPage() {
     setShowToast(true);
     setTimeout(() => setShowToast(false), 1500);
   }, []);
-
-  const handleGasOptionChange = async (e) => {
-    const selected = e.target.value;
-    setGasOption(selected);
-    await refetchFees();
-    if (showConfirm) {
-      setShowConfirm(false);
-      setTimeout(() => setShowConfirm(true), 50);
-    }
-  };
 
   const handleSend = () => {
     if (!isValidAddress(receiver)) {
@@ -131,14 +120,12 @@ export default function SendPage() {
     try {
       if (typeof window !== "undefined" && user?.email) {
         const { sendTransaction } = await import("@/utils/sendCryptoFunction");
-        await refetchFees();
 
         const hash = await sendTransaction({
           to: receiver.trim().toLowerCase(),
           amount: parsedAmount,
           network,
           userEmail: user.email,
-          gasOption,
         });
 
         setTransactionHash(hash);
@@ -180,11 +167,7 @@ export default function SendPage() {
       <div className={`${styles.wrapper} fadeDown`}>
         <SuccessToast show={showToast} message={toastMessage} networkKey={network} />
 
-        <SwipeSelector
-          options={networkOptions}
-          selected={network}
-          onSelect={handleNetworkChange}
-        />
+        <SwipeSelector options={networkOptions} selected={network} onSelect={handleNetworkChange} />
 
         <div className={styles.balanceTable}>
           <p className={styles.whiteText}>
@@ -213,20 +196,6 @@ export default function SendPage() {
             disabled={sending}
           />
 
-          <div className={styles.gasOptions}>
-            <label style={{ color: "white", marginBottom: "4px" }}>Select Gas Fee:</label>
-            <select
-              value={gasOption}
-              onChange={handleGasOptionChange}
-              className={styles.inputField}
-              disabled={sending}
-            >
-              <option value="slow">Slow (Cheapest)</option>
-              <option value="average">Average (Recommended)</option>
-              <option value="fast">Fast (Priority)</option>
-            </select>
-          </div>
-
           <div className={styles.feesInfo}>
             {feeLoading ? (
               <p style={{ color: "white" }}>Calculating Fees... <MiniLoadingSpinner /></p>
@@ -234,7 +203,7 @@ export default function SendPage() {
               <p style={{ color: "red" }}>Failed to load fees.</p>
             ) : (
               <p className={styles.whiteText}>
-                Estimated Fees: {(gasFee + adminFee).toFixed(6)} {shortName}
+                Estimated Total Fees: {(gasFee + adminFee).toFixed(6)} {shortName}
               </p>
             )}
           </div>
@@ -274,23 +243,14 @@ export default function SendPage() {
                 <p><strong>Network:</strong> {shortName}</p>
                 <p><strong>Receiver:</strong> {receiver}</p>
                 <p><strong>Amount:</strong> {parsedAmount.toFixed(6)} {shortName}</p>
-                {feeLoading ? (
-                  <p style={{ marginTop: "16px", color: "white" }}>Calculating Fees... <MiniLoadingSpinner /></p>
-                ) : feeError ? (
-                  <p style={{ color: "red" }}>Failed to load fees.</p>
-                ) : (
-                  <>
-                    <p><strong>Total Fees:</strong> {(gasFee + adminFee).toFixed(6)} {shortName}</p>
-                    <p><strong>Receiver Gets:</strong> {parsedAmount.toFixed(6)} {shortName}</p>
-                    <p><strong>Remaining Balance:</strong> {(netBalance - parsedAmount - (gasFee + adminFee)).toFixed(6)} {shortName}</p>
-                  </>
-                )}
+                <p><strong>Total Fees:</strong> {(gasFee + adminFee).toFixed(6)} {shortName}</p>
+                <p><strong>Remaining Balance:</strong> {(netBalance - parsedAmount - (gasFee + adminFee)).toFixed(6)} {shortName}</p>
               </div>
               <div className={styles.modalActions}>
                 <button
                   className={styles.modalButton}
                   onClick={confirmSend}
-                  disabled={sending || feeLoading}
+                  disabled={sending}
                 >
                   {sending ? "Confirming..." : "Confirm"}
                 </button>
