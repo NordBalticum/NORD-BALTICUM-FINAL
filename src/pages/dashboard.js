@@ -10,7 +10,7 @@ import { useBalance } from "@/hooks/useBalance";
 import { usePrices } from "@/hooks/usePrices";
 
 import styles from "@/styles/dashboard.module.css";
-import LoadingSpinner from "@/components/LoadingSpinner";
+import MiniLoadingSpinner from "@/components/MiniLoadingSpinner"; // ✅ naudoti Mini spinnerį, premium
 
 // ✅ Dynamic Live Price Table
 const LivePriceTable = dynamic(() => import("@/components/LivePriceTable"), { ssr: false });
@@ -76,8 +76,8 @@ export default function Dashboard() {
 
         <div className={styles.assetList}>
           {isLoading ? (
-            <div className={styles.tableLoading}>
-              <LoadingSpinner />
+            <div className={styles.loaderWrapper}>
+              <MiniLoadingSpinner />
             </div>
           ) : tokens.length === 0 ? (
             <div className={styles.noAssets}>No assets found.</div>
