@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBalance } from "@/hooks/useBalance";
 import { usePageReady } from "@/hooks/usePageReady";
@@ -127,7 +127,7 @@ export default function SendPage() {
     try {
       if (typeof window !== "undefined" && user?.email) {
         const { sendTransaction } = await import("@/utils/sendCryptoFunction");
-        await refetchFees(); // Perrašom Fees real-time
+        await refetchFees();
 
         const hash = await sendTransaction({
           to: receiver.trim().toLowerCase(),
@@ -162,6 +162,12 @@ export default function SendPage() {
   };
 
   const handleRetry = () => setError(null);
+
+  useEffect(() => {
+    if (debouncedAmount > 0) {
+      refetchFees();
+    }
+  }, [debouncedAmount, network, gasOption]);
 
   if (!isReady || !swipeReady || initialLoading) {
     return (
@@ -224,14 +230,14 @@ export default function SendPage() {
           </div>
 
           {/* Realtime Fees display */}
-          <div className={styles.feesInfo}>
+          <div className={styles.feesInfo} style={{ marginBottom: "10px" }}>
             {feeLoading ? (
-              <p style={{ color: "white" }}>Calculating Fees... <MiniLoadingSpinner /></p>
+              <p style={{ color: "white" }}>Calculating Total... <MiniLoadingSpinner /></p>
             ) : feeError ? (
-              <p style={{ color: "red" }}>Failed to load fees.</p>
+              <p style={{ color: "red" }}>Failed to calculate total.</p>
             ) : (
               <p className={styles.whiteText}>
-                Estimated Fees: {(gasFee + adminFee).toFixed(6)} {shortName}
+                <strong>Estimated Total:</strong> {(parsedAmount + gasFee + adminFee).toFixed(6)} {shortName}
               </p>
             )}
           </div>
@@ -250,8 +256,12 @@ export default function SendPage() {
               fontFamily: "var(--font-crypto)",
               border: "2px solid white",
               cursor: sending ? "not-allowed" : "pointer",
-              transition: "background-color 0.4s ease",
+              transition: "all 0.3s ease",
+              boxShadow: sending ? "none" : "0 5px 15px rgba(255,255,255,0.3)",
+              transform: sending ? "scale(1)" : "scale(1.02)",
             }}
+            onMouseOver={(e) => { if (!sending) e.currentTarget.style.transform = "scale(1.05)"; }}
+            onMouseOut={(e) => { if (!sending) e.currentTarget.style.transform = "scale(1.02)"; }}
           >
             {sending ? (
               <div style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -307,7 +317,10 @@ export default function SendPage() {
         {showSuccess && transactionHash && network && (
           <SuccessModal
             message="✅ Transaction Successful!"
-            onClose={() => setShowSuccess(false)}
+            onClose={() => {
+              setShowSuccess(false);
+              setTransactionHash(null);
+            }}
             transactionHash={transactionHash}
             network={network}
           />
@@ -323,4 +336,4 @@ export default function SendPage() {
       </div>
     </main>
   );
-        }
+}
