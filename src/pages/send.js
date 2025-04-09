@@ -66,7 +66,7 @@ export default function SendPage() {
 
   const shortName = useMemo(() => networkShortNames[network] || network.toUpperCase(), [network]);
   const parsedAmount = useMemo(() => Number(amount) || 0, [amount]);
-  const debouncedAmount = useDebounce(parsedAmount, 500);
+  const debouncedAmount = useDebounce(parsedAmount, 300);
 
   const {
     gasFee,
@@ -74,11 +74,11 @@ export default function SendPage() {
     totalFee,
     loading: feeLoading,
     error: feeError,
-    refetch: refetchFees,
+    refetch: refetchFees
   } = useTotalFeeCalculator(network, debouncedAmount, gasOption);
 
-  const netBalance = useMemo(() => 
-    balances?.[network]?.balance ? parseFloat(balances[network].balance) : 0, 
+  const netBalance = useMemo(
+    () => balances?.[network]?.balance ? parseFloat(balances[network].balance) : 0,
     [balances, network]
   );
 
@@ -104,10 +104,16 @@ export default function SendPage() {
     setTimeout(() => setShowToast(false), 1500);
   }, []);
 
+  const handleAmountChange = (e) => {
+    let value = e.target.value;
+    if (Number(value) > netBalance) value = netBalance.toFixed(6); // Max limit
+    setAmount(value);
+  };
+
   const handleGasOptionChange = async (e) => {
     const selected = e.target.value;
     setGasOption(selected);
-    await refetchFees(); // ⚡️ Immediately refetch fees on gas speed change
+    await refetchFees(); // Refetch immediately
   };
 
   const handleSend = () => {
@@ -134,7 +140,7 @@ export default function SendPage() {
     try {
       if (typeof window !== "undefined" && user?.email) {
         const { sendTransaction } = await import("@/utils/sendCryptoFunction");
-        await refetchFees(); // ⚡️ Make sure to re-fetch fees right before sending
+        await refetchFees();
         const hash = await sendTransaction({
           to: receiver.trim().toLowerCase(),
           amount: parsedAmount,
@@ -143,6 +149,7 @@ export default function SendPage() {
           gasOption,
         });
         setTransactionHash(hash);
+
         await supabase.from("transactions").insert([{
           sender_email: user.email,
           to_address: receiver.trim().toLowerCase(),
@@ -152,6 +159,7 @@ export default function SendPage() {
           type: "send",
           tx_hash: hash,
         }]);
+
         setReceiver("");
         setAmount("");
         setShowSuccess(true);
@@ -166,12 +174,9 @@ export default function SendPage() {
 
   const handleRetry = () => setError(null);
 
-  // MAGIC FIX: Kai atsidaro Confirm Modal, iškart refetchinam fees
   useEffect(() => {
-    if (showConfirm) {
-      refetchFees();
-    }
-  }, [showConfirm]);
+    refetchFees(); // Refetch on amount change
+  }, [debouncedAmount, network]);
 
   if (!isReady || !swipeReady || initialLoading) {
     return (
@@ -194,8 +199,7 @@ export default function SendPage() {
 
         <div className={styles.balanceTable}>
           <p className={styles.whiteText}>
-            Your Balance:&nbsp;
-            <span className={styles.balanceAmount}>
+            Your Balance: <span className={styles.balanceAmount}>
               {netBalance.toFixed(6)} {shortName}
             </span>
           </p>
@@ -217,7 +221,7 @@ export default function SendPage() {
             type="number"
             placeholder="Amount to send"
             value={amount}
-            onChange={(e) => setAmount(e.target.value)}
+            onChange={handleAmountChange}
             className={styles.inputField}
             disabled={sending}
           />
@@ -272,7 +276,9 @@ export default function SendPage() {
                 <p><strong>Receiver:</strong> {receiver}</p>
                 <p><strong>Amount:</strong> {parsedAmount.toFixed(6)} {shortName}</p>
                 {feeLoading ? (
-                  <p style={{ marginTop: "16px", color: "white" }}>Calculating Fees... <MiniLoadingSpinner /></p>
+                  <p style={{ marginTop: "16px", color: "white" }}>
+                    Calculating Fees... <MiniLoadingSpinner />
+                  </p>
                 ) : feeError ? (
                   <p style={{ color: "red" }}>Failed to load fees.</p>
                 ) : (
@@ -320,4 +326,4 @@ export default function SendPage() {
       </div>
     </main>
   );
-          }
+                         }
