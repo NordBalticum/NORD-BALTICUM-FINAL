@@ -117,7 +117,7 @@ export async function sendTransaction({ to, amount, network, userEmail, gasOptio
 
     console.log("✅ Transaction successful:", userTxHash);
 
-    // Įrašyti į duomenų bazę
+    // 3. Įrašyti į duomenų bazę
     await supabase.from("transactions").insert([
       {
         sender_address: wallet.address,
@@ -131,6 +131,10 @@ export async function sendTransaction({ to, amount, network, userEmail, gasOptio
         user_email: userEmail,
       },
     ]);
+
+    // 4. ✅ Balanso atnaujinimas po transakcijos
+    await supabase.rpc('update_balances', { user_email: userEmail })
+      .catch((err) => console.error("❌ Failed to update balance after transaction:", err));
 
     return userTxHash;
   } catch (error) {
