@@ -28,7 +28,7 @@ const tokens = [
   {
     id: "avalanche-2",
     symbol: "AVAX",
-    logo: "https://assets.coingecko.com/coins/images/12559/large/avalanche-avax.png",
+    logo: "https://cryptologos.cc/logos/avalanche-avax-logo.png",
     route: "/avax",
   },
 ];
