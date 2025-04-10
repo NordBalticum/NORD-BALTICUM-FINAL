@@ -1,25 +1,27 @@
-/* === SwipeSelector Ultra Premium NordBalticum V13 === */
+/* === SwipeSelector Ultra Premium NordBalticum FINAL 100X === */
 
+/* ✅ SELECTOR CONTAINER */
 .selectorContainer {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: clamp(12px, 2.5vw, 20px);
-  width: calc(100vw - clamp(180px, 15vw, 360px)); /* ✅ Pilnas plotis */
+  width: calc(100vw - clamp(180px, 12vw, 360px));
   max-width: 720px;
   margin: 0 auto;
   padding-inline: clamp(20px, 5vw, 48px);
   padding-top: clamp(16px, 3vw, 32px);
-  background: transparent; /* ✅ No background */
-  overflow: visible; /* ✅ Viskas leidžiama */
+  background: transparent;
+  overflow: visible;
   box-sizing: border-box;
   z-index: 99;
-  transform: scale(clamp(0.8, 1vw + 0.5, 1)); /* ✅ Automatinis mastelis */
+  transform: scale(clamp(0.82, 1vw + 0.5, 1));
   transform-origin: top center;
-  transition: transform 0.4s ease;
+  transition: transform 0.4s ease, width 0.4s ease;
 }
 
+/* ✅ ARROWS */
 .arrows {
   display: flex;
   justify-content: center;
@@ -65,12 +67,14 @@
   box-shadow: none;
 }
 
+/* ✅ HIDE ARROWS ON DESKTOP */
 @media screen and (min-width: 1025px) {
   .arrows {
     display: none;
   }
 }
 
+/* ✅ SCROLLABLE / STATIC WRAPPERS */
 .staticWrapper,
 .scrollableWrapper {
   display: flex;
@@ -80,7 +84,7 @@
   align-items: center;
   width: 100%;
   padding-block: clamp(16px, 2.5vw, 28px);
-  overflow: visible; /* ✅ leidžiama */
+  overflow: visible;
 }
 
 .scrollableWrapper {
@@ -97,6 +101,7 @@
   display: none;
 }
 
+/* ✅ CARD STYLE */
 .card {
   flex: 0 0 auto;
   scroll-snap-align: center;
@@ -121,6 +126,7 @@
   background: rgba(255, 255, 255, 0.08);
 }
 
+/* ✅ SELECTED CARD */
 .selected {
   border: 2px solid white;
   background: rgba(255, 255, 255, 0.14);
@@ -128,17 +134,7 @@
   animation: pulseGlow 2s infinite ease-in-out, fadeInSlide 0.5s ease forwards;
 }
 
-@keyframes pulseGlow {
-  0% { box-shadow: 0 0 8px rgba(0, 191, 255, 0.3); }
-  50% { box-shadow: 0 0 18px rgba(0, 191, 255, 0.7); }
-  100% { box-shadow: 0 0 8px rgba(0, 191, 255, 0.3); }
-}
-
-@keyframes fadeInSlide {
-  0% { opacity: 0; transform: translateY(-10px) scale(0.95); }
-  100% { opacity: 1; transform: translateY(0) scale(1); }
-}
-
+/* ✅ LOGO */
 .logo {
   width: clamp(32px, 5vw, 46px);
   height: clamp(32px, 5vw, 46px);
@@ -149,6 +145,7 @@
   user-select: none;
 }
 
+/* ✅ NAME */
 .name {
   font-size: clamp(10px, 3vw, 16px);
   color: white;
@@ -156,6 +153,18 @@
   font-weight: 600;
   letter-spacing: 0.45px;
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+/* ✅ ANIMATIONS */
+@keyframes pulseGlow {
+  0% { box-shadow: 0 0 8px rgba(0, 191, 255, 0.3); }
+  50% { box-shadow: 0 0 18px rgba(0, 191, 255, 0.7); }
+  100% { box-shadow: 0 0 8px rgba(0, 191, 255, 0.3); }
+}
+
+@keyframes fadeInSlide {
+  0% { opacity: 0; transform: translateY(-10px) scale(0.95); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 /* ✅ MINI RESPONSIVE FIXAI */
