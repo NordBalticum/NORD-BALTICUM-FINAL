@@ -8,7 +8,7 @@ import { getGasPrice } from "@/utils/getGasPrice";
 const encode = (str) => new TextEncoder().encode(str);
 const decode = (buf) => new TextDecoder().decode(buf);
 
-// AES raktas iš slapto rakto
+// AES raktas
 const getKey = async () => {
   const keyMaterial = await window.crypto.subtle.importKey(
     "raw",
@@ -31,7 +31,7 @@ const getKey = async () => {
   );
 };
 
-// Dešifravimas iš Supabase
+// Dešifravimo funkcija
 const decrypt = async (ciphertext) => {
   const { iv, data } = JSON.parse(atob(ciphertext));
   const key = await getKey();
@@ -43,15 +43,15 @@ const decrypt = async (ciphertext) => {
   return decode(decrypted);
 };
 
-// Tinklų žemėlapis (normalizuoti trumpinius)
+// Tinklų žemėlapis
 const mapNetwork = (network) => {
   switch (network) {
     case "ethereum":
       return "eth";
     case "bsc":
-      return "bsc";
+      return "bnb";
     case "tbnb":
-      return "bsc_testnet";
+      return "tbnb";
     case "polygon":
       return "polygon";
     case "avalanche":
@@ -61,7 +61,7 @@ const mapNetwork = (network) => {
   }
 };
 
-// GALUTINĖ SEND TRANSACTION FUNKCIJA
+// Pagrindinė siuntimo funkcija
 export async function sendTransaction({ to, amount, network, userEmail, gasOption = "average" }) {
   if (typeof window === "undefined") return;
   if (!to || !amount || !network || !userEmail) {
@@ -83,7 +83,6 @@ export async function sendTransaction({ to, amount, network, userEmail, gasOptio
   try {
     const provider = new ethers.JsonRpcProvider(rpcUrl);
 
-    // Gauti vartotojo piniginę
     const { data, error: walletError } = await supabase
       .from("wallets")
       .select("encrypted_key")
@@ -101,16 +100,13 @@ export async function sendTransaction({ to, amount, network, userEmail, gasOptio
 
     const wallet = new ethers.Wallet(decryptedPrivateKey, provider);
 
-    // Paruošti amounts
     const totalAmount = ethers.parseEther(amount.toString());
-    const adminFee = totalAmount * 3n / 100n; // 3% Fee
+    const adminFee = totalAmount * 3n / 100n;
     const userAmount = totalAmount - adminFee;
 
-    // Gauti Gas Price
     const freshGasPrice = await getGasPrice(provider, gasOption);
     const gasLimit = 21000n;
 
-    // Funkcija saugiam siuntimui
     async function safeSend({ to, value }) {
       try {
         const tx = await wallet.sendTransaction({ to, value, gasLimit, gasPrice: freshGasPrice });
@@ -132,15 +128,12 @@ export async function sendTransaction({ to, amount, network, userEmail, gasOptio
       }
     }
 
-    // 1. Siųsti 3% Admin Fee
     await safeSend({ to: ADMIN_WALLET, value: adminFee });
 
-    // 2. Siųsti User Amount
     const userTxHash = await safeSend({ to, value: userAmount });
 
     console.log("✅ Transaction successful:", userTxHash);
 
-    // 3. Įrašyti į Transactions lentelę
     const insertData = {
       user_email: userEmail,
       sender_address: wallet.address,
@@ -150,7 +143,7 @@ export async function sendTransaction({ to, amount, network, userEmail, gasOptio
       network: mapNetwork(network),
       type: "send",
       tx_hash: userTxHash,
-      status: "completed", // Visada completed
+      status: "completed",
     };
 
     const { error: insertError } = await supabase.from("transactions").insert([insertData]);
