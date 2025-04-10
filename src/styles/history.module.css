@@ -187,17 +187,3 @@
     font-size: 0.75rem;
   }
 }
-
-/* ✅ BOTTOM NAVIGATION SPECIAL STYLE FOR HISTORY PAGE */
-.historyBottomWrapper {
-  background: rgba(0, 0, 0, 0.85);
-  backdrop-filter: blur(16px) saturate(200%);
-  border-top: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 -4px 20px rgba(255, 255, 255, 0.08);
-  /* REMOVE fixed */
-  position: relative; /* ✅ Kad judėtų kartu su puslapiu */
-  width: 100%;
-  height: 64px;
-  margin-top: 2rem; /* ✅ Kad truputį atsiskirtų nuo turinio */
-  z-index: 10;
-}
