@@ -7,7 +7,7 @@ import QRCode from "react-qr-code";
 import { supabase } from "@/utils/supabaseClient";
 import { toast } from "react-hot-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import ReceiveSuccessModal from "@/components/ReceiveSuccessModal";
+import ReceiveSuccessModal from "@/components/modals/ReceiveSuccessModal";
 import styles from "@/styles/receive.module.css";
 import background from "@/styles/background.module.css";
 
