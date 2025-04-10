@@ -167,25 +167,73 @@
 
 @media (max-width: 768px) {
   .wrapper {
-    width: calc(100vw - 40px);
+    width: 100%;
     height: auto;
-    padding: 24px 16px 100px;
-    gap: 28px;
+    padding: 20px 14px 100px;
+    gap: 24px;
+    transform: scale(0.87); /* ✅ Švelnus sumažinimas */
+    transform-origin: center top; /* ✅ Kad "nenuslinktų" dizainas į šoną */
+  }
+
+  .transactionList {
+    max-width: 95%;
   }
 
   .transactionCard {
-    padding: 14px;
+    padding: 12px;
+    border-radius: 14px;
   }
 
   .transactionType {
-    font-size: 0.8rem;
+    font-size: 0.75rem;
   }
 
   .transactionDetail {
-    font-size: 0.75rem;
+    font-size: 0.7rem;
   }
 
   .transactionLink {
-    font-size: 0.75rem;
+    font-size: 0.7rem;
+  }
+
+  .title {
+    font-size: clamp(20px, 6vw, 32px); /* ✅ Sumažintas titulas */
+  }
+
+  .subtext {
+    font-size: clamp(12px, 2.5vw, 16px); /* ✅ Sumažintas subtitulas */
+  }
+}
+
+@media (max-width: 468px) {
+  .wrapper {
+    transform: scale(0.80); /* ✅ Dar mažesnis mastelis mažiems telefonams */
+    transform-origin: center top;
+    padding: 18px 12px 80px;
+  }
+
+  .transactionCard {
+    padding: 10px;
+    border-radius: 12px;
+  }
+
+  .transactionType {
+    font-size: 0.7rem;
+  }
+
+  .transactionDetail {
+    font-size: 0.65rem;
+  }
+
+  .transactionLink {
+    font-size: 0.65rem;
+  }
+
+  .title {
+    font-size: clamp(18px, 6vw, 28px);
+  }
+
+  .subtext {
+    font-size: clamp(10px, 2.5vw, 14px);
   }
 }
