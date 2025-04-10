@@ -7,7 +7,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useSwipeReady } from "@/hooks/useSwipeReady";
 import styles from "@/components/swipeselector.module.css";
 
-// ✅ Supported Networks
 const supportedNetworks = [
   { name: "Ethereum", symbol: "eth", logo: "https://cryptologos.cc/logos/ethereum-eth-logo.png" },
   { name: "BNB Chain", symbol: "bnb", logo: "https://cryptologos.cc/logos/binance-coin-bnb-logo.png" },
@@ -66,7 +65,7 @@ export default function SwipeSelector({ onSelect }) {
     onSelect?.(selectedSymbol);
 
     if (typeof window !== "undefined" && "vibrate" in navigator) {
-      navigator.vibrate(10); // ✅ Short Vibration
+      navigator.vibrate(10);
     }
 
     if (isMobile) scrollToCenter(index);
@@ -100,9 +99,9 @@ export default function SwipeSelector({ onSelect }) {
       </div>
 
       <div
-  ref={containerRef}
-  className={styles.staticWrapper}
->
+        ref={containerRef}
+        className={isMobile ? styles.scrollableWrapper : styles.staticWrapper}
+      >
         {supportedNetworks.map((net, index) => (
           <motion.div
             key={net.symbol}
