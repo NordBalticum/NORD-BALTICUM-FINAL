@@ -1,4 +1,4 @@
-/* === HISTORY MODULE – NordBalticum Ultra Premium v2.0 === */
+/* === HISTORY MODULE – NordBalticum Ultra Premium FINAL === */
 
 .container {
   position: fixed;
@@ -165,23 +165,41 @@
   }
 }
 
+/* === MOBILE OPTIMIZATION (MAX 768px) === */
 @media (max-width: 768px) {
   .wrapper {
-    width: 100%;
+    width: calc(100vw - 20px);
     height: auto;
-    padding: 20px 14px 100px;
-    gap: 24px;
-    transform: scale(0.87); /* ✅ Švelnus sumažinimas */
-    transform-origin: center top; /* ✅ Kad "nenuslinktų" dizainas į šoną */
+    padding: 16px 10px 100px;
+    gap: 20px;
+    scale: 0.92;
+    transform: translateY(-10px);
+  }
+
+  .title {
+    font-size: clamp(20px, 6vw, 28px);
+    text-shadow: 0 0 8px rgba(255, 255, 255, 0.25);
+  }
+
+  .subtext {
+    font-size: clamp(11px, 4vw, 16px);
+    margin-top: -2px;
   }
 
   .transactionList {
-    max-width: 95%;
+    gap: 14px;
+    padding-bottom: 40px;
   }
 
   .transactionCard {
     padding: 12px;
     border-radius: 14px;
+    font-size: 0.8rem;
+  }
+
+  .transactionHeader {
+    font-size: 0.8rem;
+    margin-bottom: 4px;
   }
 
   .transactionType {
@@ -190,50 +208,21 @@
 
   .transactionDetail {
     font-size: 0.7rem;
+    opacity: 0.8;
+  }
+
+  .transactionDate {
+    font-size: 0.65rem;
+    opacity: 0.65;
+    margin-top: 4px;
   }
 
   .transactionLink {
     font-size: 0.7rem;
+    margin-top: 8px;
   }
 
-  .title {
-    font-size: clamp(20px, 6vw, 32px); /* ✅ Sumažintas titulas */
-  }
-
-  .subtext {
-    font-size: clamp(12px, 2.5vw, 16px); /* ✅ Sumažintas subtitulas */
-  }
-}
-
-@media (max-width: 468px) {
-  .wrapper {
-    transform: scale(0.80); /* ✅ Dar mažesnis mastelis mažiems telefonams */
-    transform-origin: center top;
-    padding: 18px 12px 80px;
-  }
-
-  .transactionCard {
-    padding: 10px;
-    border-radius: 12px;
-  }
-
-  .transactionType {
-    font-size: 0.7rem;
-  }
-
-  .transactionDetail {
-    font-size: 0.65rem;
-  }
-
-  .transactionLink {
-    font-size: 0.65rem;
-  }
-
-  .title {
-    font-size: clamp(18px, 6vw, 28px);
-  }
-
-  .subtext {
-    font-size: clamp(10px, 2.5vw, 14px);
+  .loading {
+    font-size: 0.9rem;
   }
 }
