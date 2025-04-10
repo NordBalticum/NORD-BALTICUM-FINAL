@@ -1,10 +1,10 @@
-/* === SETTINGS MODULE – NordBalticum Ultra Premium v16 FINAL === */
+/* === SETTINGS MODULE – NordBalticum Ultra Premium FINAL === */
 
-/* ✅ CONTAINER – visam fullscreen */
+/* ✅ CONTAINER */
 .settingsContainer {
   position: relative;
   width: 100vw;
-  min-height: 130vh;
+  min-height: 100vh;
   display: flex;
   justify-content: center;
   align-items: flex-start;
@@ -16,25 +16,25 @@
   z-index: 1;
 }
 
-/* ✅ WRAPPER – kaip history.module.css */
+/* ✅ WRAPPER */
 .settingsWrapper {
-  width: calc(100vw - clamp(180px, 15vw, 360px)); /* ✅ Automatinis prisitaikymas */
+  width: calc(100vw - clamp(180px, 15vw, 360px));
   max-width: 960px;
-  min-height: calc(100vh - clamp(180px, 15vh, 360px)); /* ✅ Automatinis aukštis */
+  min-height: calc(100vh - clamp(180px, 15vh, 360px));
   padding: clamp(24px, 5vw, 48px);
   background: transparent;
   backdrop-filter: none;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: clamp(20px, 4vh, 40px);
+  gap: clamp(24px, 4vh, 48px);
   box-sizing: border-box;
-  transform: scale(clamp(0.8, 1vw + 0.5, 1)); /* ✅ AUTOMATINIS MASTELIS! */
+  transform: scale(clamp(0.8, 1vw + 0.5, 1));
   transform-origin: top center;
   transition: transform 0.4s ease;
 }
 
-/* ✅ BOX – turinio kortelė */
+/* ✅ BOXES */
 .settingsBox {
   background: rgba(255, 255, 255, 0.06);
   backdrop-filter: blur(24px) saturate(160%);
@@ -53,6 +53,106 @@
   animation: fadeInUp 0.8s ease both;
 }
 
+/* ✅ WALLET */
+.walletBox {
+  background: rgba(255, 255, 255, 0.07);
+  padding: clamp(10px, 2vw, 14px);
+  border-radius: 12px;
+  font-family: monospace;
+  font-size: clamp(13px, 2vw, 15px);
+  word-break: break-word;
+  user-select: all;
+  border: 1px solid white;
+  transition: 0.3s ease;
+  cursor: pointer;
+  width: 100%;
+  text-align: center;
+}
+
+.walletBox:hover {
+  background: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 0 18px rgba(255, 255, 255, 0.12);
+}
+
+.walletAddress {
+  opacity: 0.85;
+  margin-top: 4px;
+  font-size: clamp(11px, 1.4vw, 13px);
+}
+
+.copyStatus {
+  margin-top: 8px;
+  font-size: 14px;
+  color: #00FF00;
+  opacity: 0.8;
+}
+
+/* ✅ INPUT */
+.input {
+  padding: 14px 20px;
+  background: rgba(255, 255, 255, 0.08);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  outline: none;
+  font-family: var(--font-crypto);
+  font-size: 15px;
+  width: 100%;
+  transition: 0.3s ease;
+}
+
+.input::placeholder {
+  text-align: center;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.input:focus {
+  border-color: white;
+  box-shadow: 0 0 6px #ffd700;
+}
+
+/* ✅ BUTTON */
+.button,
+.logoutButton {
+  padding: clamp(12px, 2.5vw, 18px);
+  background: black;
+  color: white;
+  font-weight: 700;
+  border: 1px solid white;
+  border-radius: 12px;
+  font-size: clamp(14px, 2vw, 16px);
+  cursor: pointer;
+  transition: 0.3s ease;
+  width: 100%;
+}
+
+.button:hover,
+.logoutButton:hover {
+  background: white;
+  color: black;
+}
+
+/* ✅ LOGOUT SPECIAL */
+.logoutButton {
+  opacity: 0.5;
+  font-size: 12px;
+  padding: 10px;
+  width: 160px;
+  margin-top: 32px;
+}
+
+/* ✅ SECTION TITLE */
+.sectionTitle {
+  font-family: var(--font-crypto);
+  font-size: clamp(24px, 5vw, 36px);
+  font-weight: 900;
+  text-align: center;
+  background: linear-gradient(to right, #ffffff, #ffd700, #ffffff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 0 14px rgba(255, 255, 255, 0.3);
+}
+
 /* ✅ DANGER BOX */
 .dangerBox {
   background: rgba(255, 0, 0, 0.05);
@@ -66,7 +166,6 @@
   margin-top: clamp(32px, 6vh, 64px);
 }
 
-/* ✅ DANGER ZONE */
 .dangerTitle {
   font-size: clamp(20px, 4vw, 28px);
   color: #ff4d4d;
@@ -92,112 +191,7 @@
   color: white;
 }
 
-/* ✅ LOGO */
-.logo {
-  display: block;
-  margin: 0 auto;
-}
-
-/* ✅ WALLET */
-.walletBox {
-  background: rgba(255, 255, 255, 0.07);
-  padding: clamp(10px, 2vw, 14px);
-  border-radius: 12px;
-  font-family: monospace;
-  font-size: clamp(13px, 2vw, 15px);
-  word-break: break-word;
-  user-select: all;
-  border: 1px solid white;
-  transition: 0.3s ease;
-  cursor: pointer;
-}
-
-.walletBox:hover {
-  background: rgba(255, 255, 255, 0.12);
-  box-shadow: 0 0 18px rgba(255, 255, 255, 0.12);
-}
-
-.walletAddress {
-  opacity: 0.85;
-  margin-top: 4px;
-  font-size: clamp(11px, 1.6vw, 13px);
-}
-
-/* ✅ HEADING */
-.heading {
-  font-family: var(--font-crypto);
-  font-size: clamp(24px, 5vw, 42px);
-  font-weight: 900;
-  text-align: center;
-  background: linear-gradient(to right, #ffffff, #ffd700, #ffffff);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  text-shadow: 0 0 14px rgba(255, 255, 255, 0.3);
-  animation: glow 4s ease-in-out infinite;
-}
-
-/* ✅ INPUT */
-.input {
-  padding: clamp(12px, 2.5vw, 18px);
-  background: rgba(255, 255, 255, 0.08);
-  color: white;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 12px;
-  outline: none;
-  font-family: var(--font-crypto);
-  font-size: clamp(14px, 2vw, 16px);
-  text-align: center;
-  transition: 0.3s ease;
-}
-
-.input::placeholder {
-  text-align: center;
-  color: rgba(255, 255, 255, 0.4);
-}
-
-.input:focus {
-  border-color: white;
-  box-shadow: 0 0 6px #ffd700;
-}
-
-/* ✅ BUTTONS */
-.button,
-.logoutButton {
-  padding: clamp(12px, 2.5vw, 18px);
-  background: black;
-  color: white;
-  font-weight: 700;
-  border: 1px solid white;
-  border-radius: 12px;
-  font-size: clamp(14px, 2vw, 16px);
-  cursor: pointer;
-  transition: 0.3s ease;
-  margin-top: 16px;
-}
-
-.button:hover,
-.logoutButton:hover {
-  background: white;
-  color: black;
-}
-
-/* ✅ SPECIAL LOGOUT BUTTON */
-.logoutButton {
-  opacity: 0.5;
-  font-size: 12px;
-  padding: 10px;
-  width: 160px;
-}
-
-/* ✅ DIVIDER */
-.divider {
-  height: 2px;
-  width: 100%;
-  background: rgba(255, 255, 255, 0.08);
-  margin: 24px 0;
-}
-
-/* ✅ MODAL (BLUR + ANIMATION) */
+/* ✅ MODAL */
 .modalOverlay {
   position: fixed;
   top: 0;
@@ -266,12 +260,6 @@
 }
 
 /* ✅ ANIMATIONS */
-@keyframes glow {
-  0% { text-shadow: 0 0 8px #fff, 0 0 16px #ffd700; }
-  50% { text-shadow: 0 0 16px #fffacd, 0 0 24px #ffd700; }
-  100% { text-shadow: 0 0 8px #fff, 0 0 16px #ffd700; }
-}
-
 @keyframes fadeInUp {
   from { opacity: 0; transform: translateY(24px); }
   to { opacity: 1; transform: translateY(0); }
@@ -287,7 +275,7 @@
   to { opacity: 1; transform: scale(1); }
 }
 
-/* ✅ RESPONSIVE – TABLET / MOBILE */
+/* ✅ RESPONSIVE */
 @media (max-width: 768px) {
   .settingsWrapper {
     width: calc(100vw - 40px);
@@ -312,12 +300,11 @@
     font-size: 13px;
   }
 
-  .heading {
+  .sectionTitle {
     font-size: clamp(20px, 5vw, 26px);
   }
 }
 
-/* ✅ MINI PHONES */
 @media (max-width: 480px) {
   .settingsWrapper {
     transform: scale(0.92);
