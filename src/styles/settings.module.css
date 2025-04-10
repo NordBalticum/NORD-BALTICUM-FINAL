@@ -67,6 +67,38 @@
   line-height: 1.2; /* ✅ Kompaktiškiau */
 }
 
+/* === SECTION TITLE SPECIAL TWEAKS === */
+
+/* ✅ IMPORT WALLET (pakeltas šiek tiek aukščiau) */
+.importWalletTitle {
+  font-family: var(--font-crypto);
+  font-size: clamp(24px, 5vw, 32px);
+  font-weight: 900;
+  background: linear-gradient(to right, #ffffff, #ffd700, #ffffff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 0 12px rgba(255, 255, 255, 0.2);
+  margin-top: -8px; /* ✅ Pakelta aukščiau */
+  margin-bottom: clamp(16px, 3vh, 24px);
+  line-height: 1.2;
+  text-align: center;
+}
+
+/* ✅ CHANGE EMAIL (nuleistas truputį žemiau) */
+.changeEmailTitle {
+  font-family: var(--font-crypto);
+  font-size: clamp(24px, 5vw, 32px);
+  font-weight: 900;
+  background: linear-gradient(to right, #ffffff, #ffd700, #ffffff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 0 12px rgba(255, 255, 255, 0.2);
+  margin-top: 12px; /* ✅ Nuleista žemiau */
+  margin-bottom: clamp(16px, 3vh, 24px);
+  line-height: 1.2;
+  text-align: center;
+}
+
 /* ✅ WALLET BOX */
 .walletBox {
   background: rgba(255, 255, 255, 0.07);
