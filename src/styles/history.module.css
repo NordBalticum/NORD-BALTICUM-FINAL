@@ -1,6 +1,5 @@
-/* === HISTORY MODULE – NordBalticum Web3 Fullscreen Ultra Bank Grade FINAL v2 === */
+/* === HISTORY MODULE – NordBalticum Ultra Premium v2.0 === */
 
-/* ✅ MAIN CONTAINER */
 .container {
   position: fixed;
   top: 50%;
@@ -9,30 +8,22 @@
   height: 100vh;
   transform: translate(-50%, -50%);
   background: transparent;
-  background-color: inherit;
-  background-size: cover;
-  background-position: center;
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: clamp(16px, 5vw, 48px);
+  padding: clamp(16px, 5vw, 64px);
   box-sizing: border-box;
   overflow: hidden;
   z-index: 1;
 }
 
-/* ✅ INNER WRAPPER */
 .wrapper {
-  width: calc(100vw - 140px);
-  height: calc(100vh - 140px);
-  max-width: 900px;
-  max-height: 880px;
-  padding: clamp(24px, 4vw, 48px);
-  background: rgba(255, 255, 255, 0.04);
-  backdrop-filter: blur(20px) saturate(160%);
-  border-radius: 24px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.45);
+  width: calc(100vw - 160px);
+  height: calc(100vh - 160px);
+  max-width: 960px;
+  padding: clamp(24px, 5vw, 48px);
+  background: transparent;
+  backdrop-filter: none;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -40,84 +31,81 @@
   overflow-x: hidden;
   gap: clamp(20px, 4vh, 40px);
   z-index: 2;
-  transition: all 0.4s ease;
 }
 
-/* ✅ TITLE */
 .title {
-  font-size: clamp(26px, 5vw, 42px);
+  font-size: clamp(24px, 5vw, 42px);
   font-weight: 900;
   text-align: center;
   font-family: var(--font-crypto);
   background: linear-gradient(to right, #ffffff, #ffd700, #ffffff);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  text-shadow: 0 0 18px rgba(255, 255, 255, 0.35);
-  animation: glowTitle 3s ease-in-out infinite;
+  text-shadow: 0 0 14px rgba(255, 255, 255, 0.3);
+  animation: glowTitle 4s ease-in-out infinite;
 }
 
-/* ✅ SUBTEXT */
+@keyframes glowTitle {
+  0% { text-shadow: 0 0 8px #fff, 0 0 16px #ffd700; }
+  50% { text-shadow: 0 0 16px #fffacd, 0 0 24px #ffd700; }
+  100% { text-shadow: 0 0 8px #fff, 0 0 16px #ffd700; }
+}
+
 .subtext {
-  font-size: clamp(14px, 2vw, 18px);
-  color: rgba(255, 255, 255, 0.85);
+  font-size: clamp(13px, 2.5vw, 18px);
+  color: rgba(255, 255, 255, 0.8);
   text-align: center;
   font-family: var(--font-crypto);
   font-weight: 500;
+  opacity: 0.8;
   margin-top: -4px;
-  opacity: 0.85;
 }
 
-/* ✅ TRANSACTION LIST */
 .transactionList {
   width: 100%;
-  max-width: 620px;
+  max-width: 540px;
   display: flex;
   flex-direction: column;
-  gap: 18px;
-  padding-bottom: 80px;
+  gap: clamp(14px, 2.5vw, 20px);
+  padding-bottom: 60px;
 }
 
-/* ✅ INDIVIDUAL CARD */
 .transactionCard {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 20px;
-  padding: 20px;
-  box-shadow: 0 0 24px rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(18px);
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  padding: clamp(14px, 2vw, 20px);
+  box-shadow: 0 0 16px rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(16px);
   transition: all 0.3s ease;
-  animation: fadeIn 0.35s ease forwards;
+  animation: fadeIn 0.4s ease;
   color: white;
   font-family: var(--font-crypto);
-  cursor: pointer;
 }
 
-/* ✅ HOVER STATE */
 .transactionCard:hover {
-  box-shadow: 0 0 40px rgba(0, 255, 255, 0.25);
-  transform: scale(1.015);
+  box-shadow: 0 0 24px rgba(255, 215, 0, 0.25);
+  transform: scale(1.02);
 }
 
-/* ✅ HEADER (From, To, Value) */
 .transactionHeader {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
+  margin-bottom: 6px;
   font-weight: 600;
-  font-size: 1rem;
+  font-size: clamp(13px, 2vw, 15px);
 }
 
-/* ✅ TYPE LABEL */
 .transactionType {
   color: white;
   text-transform: uppercase;
   font-family: var(--font-crypto);
   letter-spacing: 0.5px;
   font-weight: 700;
+  font-size: clamp(12px, 2vw, 14px);
 }
 
-/* ✅ AMOUNT COLORS */
 .transactionAmountSend {
   color: #ff6b6b;
   font-weight: 700;
@@ -128,27 +116,24 @@
   font-weight: 700;
 }
 
-/* ✅ DETAILS */
 .transactionDetail {
-  font-size: 0.95rem;
-  opacity: 0.9;
+  font-size: clamp(11px, 1.8vw, 13px);
+  opacity: 0.85;
   margin-top: 4px;
 }
 
-/* ✅ DATE STYLE */
 .transactionDate {
-  font-size: 0.85rem;
+  font-size: clamp(10px, 1.8vw, 12px);
   opacity: 0.7;
   margin-top: 6px;
   font-style: italic;
 }
 
-/* ✅ EXPLORER LINK */
 .transactionLink {
   margin-top: 10px;
   display: inline-block;
-  font-size: 0.88rem;
-  color: #00ffd0;
+  font-size: clamp(11px, 2vw, 13px);
+  color: white;
   text-decoration: underline;
   font-weight: 600;
   transition: all 0.3s ease;
@@ -158,22 +143,21 @@
   opacity: 0.9;
   color: #ffd700;
   transform: scale(1.02);
+  text-shadow: 0 0 6px #ffd700;
 }
 
-/* ✅ LOADING */
 .loading {
-  font-size: 1.2rem;
+  font-size: 1rem;
   color: white;
   text-align: center;
   font-family: var(--font-crypto);
-  margin-top: 80px;
+  margin-top: 60px;
 }
 
-/* ✅ FADE IN ANIMATION */
 @keyframes fadeIn {
   from {
     opacity: 0;
-    transform: translateY(14px);
+    transform: translateY(12px);
   }
   to {
     opacity: 1;
@@ -181,46 +165,27 @@
   }
 }
 
-/* ✅ GLOW TITLE ANIMATION */
-@keyframes glowTitle {
-  0% { text-shadow: 0 0 10px #fff, 0 0 20px #ffd700; }
-  50% { text-shadow: 0 0 18px #fffacd, 0 0 28px #ffd700; }
-  100% { text-shadow: 0 0 10px #fff, 0 0 20px #ffd700; }
-}
-
-/* ✅ RESPONSIVE (Mobile + Galaxy Ultra) */
-@media (max-width: 1024px) {
+@media (max-width: 768px) {
   .wrapper {
-    width: calc(100vw - 48px);
+    width: calc(100vw - 40px);
     height: auto;
-    max-height: none;
-    padding: 24px 16px 120px;
+    padding: 24px 16px 100px;
     gap: 28px;
   }
 
   .transactionCard {
-    padding: 18px;
+    padding: 14px;
   }
 
   .transactionType {
-    font-size: 0.92rem;
+    font-size: 0.8rem;
   }
 
   .transactionDetail {
-    font-size: 0.88rem;
+    font-size: 0.75rem;
   }
 
   .transactionLink {
-    font-size: 0.85rem;
-  }
-}
-
-@media (max-width: 468px) {
-  .title {
-    font-size: 26px;
-  }
-
-  .subtext {
-    font-size: 14px;
+    font-size: 0.75rem;
   }
 }
