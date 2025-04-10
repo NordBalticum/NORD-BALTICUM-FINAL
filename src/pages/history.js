@@ -3,11 +3,12 @@
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { supabase } from "@/utils/supabaseClient";
-import { scanBlockchain } from "@/utils/scanBlockchain";
-import { useAuth } from "@/contexts/AuthContext";
-import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
 import { toast } from "react-hot-toast";
+
+import { supabase } from "@/utils/supabaseClient";
+import { useAuth } from "@/contexts/AuthContext";
+import { scanBlockchain } from "@/utils/scanBlockchain";
+import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
 import styles from "@/styles/history.module.css";
 import background from "@/styles/background.module.css";
 
@@ -17,11 +18,12 @@ export default function HistoryPage() {
 
   const [transactions, setTransactions] = useState([]);
   const [loadingTransactions, setLoadingTransactions] = useState(true);
+  const [lastSynced, setLastSynced] = useState(null);
   const [error, setError] = useState(null);
   const [isClient, setIsClient] = useState(false);
+
   const [filterNetwork, setFilterNetwork] = useState("All");
   const [filterStatus, setFilterStatus] = useState("All");
-  const [lastSynced, setLastSynced] = useState(null);
 
   useEffect(() => {
     if (typeof window !== "undefined") setIsClient(true);
@@ -54,22 +56,25 @@ export default function HistoryPage() {
   }, [user, wallet]);
 
   useEffect(() => {
-    const syncAndFetch = async () => {
-      try {
-        toast.loading("Syncing blockchain...", { id: "sync" });
-        await scanBlockchain(wallet.wallet.address, user.email);
-        await fetchUserTransactions();
-        setLastSynced(new Date().toLocaleString());
-        toast.success("Blockchain synced!", { id: "sync" });
-      } catch (error) {
-        console.error(error);
-        toast.error("Failed to sync blockchain.", { id: "sync" });
-      }
-    };
-
     if (user && wallet?.wallet?.address) {
-      syncAndFetch();
+      (async () => {
+        await scanBlockchain(wallet.wallet.address, user.email);
+        toast.success("✅ Blockchain scan complete!");
+        setLastSynced(new Date());
+        await fetchUserTransactions();
+      })();
     }
+
+    const subscription = supabase
+      .channel('realtime:transactions')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'transactions' }, () => {
+        fetchUserTransactions();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(subscription);
+    };
   }, [user, wallet, fetchUserTransactions]);
 
   const filteredTransactions = transactions.filter((tx) => {
@@ -79,9 +84,13 @@ export default function HistoryPage() {
   });
 
   const renderStatusBadge = (status) => {
-    if (status === "completed") return <span style={{ color: "limegreen" }}>✔️ Completed</span>;
-    if (status === "pending") return <span style={{ color: "orange" }}>⏳ Pending</span>;
-    return <span style={{ color: "red" }}>❌ Failed</span>;
+    if (status === "completed") {
+      return <span style={{ color: "limegreen", fontWeight: "bold" }}>✔️ Completed</span>;
+    }
+    if (status === "pending") {
+      return <span style={{ color: "orange", fontWeight: "bold" }}>⏳ Pending</span>;
+    }
+    return <span style={{ color: "red", fontWeight: "bold" }}>❌ Failed</span>;
   };
 
   const getNetworkLogo = (network) => {
@@ -100,6 +109,17 @@ export default function HistoryPage() {
     }
   };
 
+  const getExplorerLink = (network, txHash) => {
+    switch (network) {
+      case "bnb": return `https://bscscan.com/tx/${txHash}`;
+      case "tbnb": return `https://testnet.bscscan.com/tx/${txHash}`;
+      case "eth": return `https://etherscan.io/tx/${txHash}`;
+      case "polygon": return `https://polygonscan.com/tx/${txHash}`;
+      case "avax": return `https://snowtrace.io/tx/${txHash}`;
+      default: return "#";
+    }
+  };
+
   if (!isClient || authLoading) {
     return <div className={styles.loading}><MiniLoadingSpinner /> Loading profile...</div>;
   }
@@ -112,13 +132,16 @@ export default function HistoryPage() {
     <main className={`${styles.container} ${background.gradient}`}>
       <div className={styles.wrapper}>
         <h1 className={styles.title}>TRANSACTION HISTORY</h1>
-        <p className={styles.subtext}>Your latest crypto activity</p>
+        <p className={styles.subtext}>View and manage your crypto activity</p>
+
+        {/* Last Synced */}
         {lastSynced && (
-          <p style={{ color: "#888", marginBottom: "1rem", fontSize: "0.9rem" }}>
-            Last Synced: {lastSynced}
-          </p>
+          <div style={{ marginBottom: "1rem", color: "#0f0", fontWeight: "bold", fontSize: "0.9rem" }}>
+            Last Synced: {lastSynced.toLocaleString()}
+          </div>
         )}
 
+        {/* Filters */}
         <div style={{ display: "flex", gap: "1rem", alignItems: "center", marginBottom: "2rem" }}>
           <select
             value={filterNetwork}
@@ -135,9 +158,9 @@ export default function HistoryPage() {
             <option value="All">All Networks</option>
             <option value="bnb">BNB Mainnet</option>
             <option value="tbnb">BNB Testnet</option>
-            <option value="eth">Ethereum</option>
-            <option value="polygon">Polygon</option>
-            <option value="avax">Avalanche</option>
+            <option value="eth">Ethereum Mainnet</option>
+            <option value="polygon">Polygon Mainnet</option>
+            <option value="avax">Avalanche Mainnet</option>
           </select>
 
           <select
@@ -159,6 +182,7 @@ export default function HistoryPage() {
           </select>
         </div>
 
+        {/* Transaction list */}
         {loadingTransactions ? (
           <div className={styles.loading}><MiniLoadingSpinner /> Loading transactions...</div>
         ) : error ? (
@@ -171,12 +195,19 @@ export default function HistoryPage() {
               {filteredTransactions.map((tx, index) => (
                 <motion.div
                   key={index}
+                  className={styles.transactionCard}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 20 }}
                   transition={{ duration: 0.4, delay: index * 0.04 }}
-                  className={styles.transactionCard}
-                  whileHover={{ scale: 1.03 }}
+                  whileHover={{ scale: 1.03, boxShadow: "0 0 25px rgba(0, 255, 255, 0.3)" }}
+                  style={{
+                    backgroundColor: tx.status === "completed" ? "rgba(0,255,0,0.08)" : "rgba(255,0,0,0.08)",
+                    borderRadius: "20px",
+                    padding: "1.5rem",
+                    marginBottom: "1.2rem",
+                    backdropFilter: "blur(12px)",
+                  }}
                 >
                   <div style={{ display: "flex", alignItems: "center", marginBottom: "0.5rem" }}>
                     <img src={getNetworkLogo(tx.network)} alt="network" style={{ width: "24px", height: "24px", marginRight: "0.5rem" }} />
@@ -184,9 +215,10 @@ export default function HistoryPage() {
                   </div>
                   <p><strong>Type:</strong> {tx.type}</p>
                   <p><strong>Amount:</strong> {tx.amount}</p>
-                  <p><strong>Sender:</strong> {tx.sender_address?.slice(0, 6)}...{tx.sender_address?.slice(-4)}</p>
-                  <p><strong>Receiver:</strong> {tx.receiver_address?.slice(0, 6)}...{tx.receiver_address?.slice(-4)}</p>
+                  <p><strong>Sender:</strong> {tx.sender_address.slice(0, 6)}...{tx.sender_address.slice(-4)}</p>
+                  <p><strong>Receiver:</strong> {tx.receiver_address.slice(0, 6)}...{tx.receiver_address.slice(-4)}</p>
                   <p><strong>Status:</strong> {renderStatusBadge(tx.status)}</p>
+                  <p><strong>Tx Hash:</strong> <a href={getExplorerLink(tx.network, tx.tx_hash)} target="_blank" rel="noopener noreferrer" style={{ color: "#00FF00" }}>{tx.tx_hash.slice(0, 8)}...{tx.tx_hash.slice(-6)}</a></p>
                   <p><strong>Date:</strong> {new Date(tx.created_at).toLocaleString()}</p>
                 </motion.div>
               ))}
