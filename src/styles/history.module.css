@@ -1,6 +1,4 @@
-/* === HISTORY MODULE – NordBalticum Ultra Premium v12 Scroll Fixed === */
-
-/* ✅ CONTAINER */
+/* === GLOBAL CONTAINER === */
 .container {
   position: relative;
   width: 100vw;
@@ -14,11 +12,14 @@
   overflow-y: auto;
   box-sizing: border-box;
   z-index: 1;
+  transform: scale(0.8); /* ✅ Default scale 0.8 */
+  transform-origin: top center;
 }
 
-/* ✅ WRAPPER */
+/* === WRAPPER === */
 .wrapper {
-  width: calc(100vw - 160px);
+  width: clamp(320px, 80vw, 960px);
+  min-width: 320px;
   max-width: 960px;
   padding: clamp(24px, 5vw, 48px);
   background: transparent;
@@ -30,7 +31,7 @@
   box-sizing: border-box;
 }
 
-/* ✅ TITLE */
+/* === TITLE === */
 .title {
   font-size: clamp(24px, 5vw, 42px);
   font-weight: 900;
@@ -43,7 +44,7 @@
   animation: glowTitle 4s ease-in-out infinite;
 }
 
-/* ✅ SUBTEXT */
+/* === SUBTEXT === */
 .subtext {
   font-size: clamp(13px, 2.5vw, 18px);
   color: rgba(255, 255, 255, 0.8);
@@ -54,17 +55,18 @@
   margin-top: -4px;
 }
 
-/* ✅ TRANSACTION LIST */
+/* === TRANSACTION LIST === */
 .transactionList {
   width: 100%;
   max-width: 540px;
+  min-width: 300px;
   display: flex;
   flex-direction: column;
   gap: clamp(14px, 2.5vw, 20px);
-  padding-bottom: 80px;
+  padding-bottom: clamp(80px, 10vh, 120px);
 }
 
-/* ✅ TRANSACTION CARD */
+/* === TRANSACTION CARD === */
 .transactionCard {
   background: rgba(255, 255, 255, 0.035);
   border: 1px solid rgba(255, 255, 255, 0.12);
@@ -76,6 +78,7 @@
   animation: fadeIn 0.4s ease;
   color: white;
   font-family: var(--font-crypto);
+  min-width: 280px;
 }
 
 .transactionCard:hover {
@@ -83,7 +86,7 @@
   transform: scale(1.02);
 }
 
-/* ✅ TRANSACTION TEXTS */
+/* === TRANSACTION TEXTS === */
 .transactionHeader {
   display: flex;
   justify-content: space-between;
@@ -142,16 +145,16 @@
   text-shadow: 0 0 6px #ffd700;
 }
 
-/* ✅ LOADING */
+/* === LOADING TEXT === */
 .loading {
-  font-size: 1rem;
+  font-size: clamp(14px, 2.5vw, 18px);
   color: white;
   text-align: center;
   font-family: var(--font-crypto);
   margin-top: 60px;
 }
 
-/* ✅ ANIMATIONS */
+/* === ANIMATIONS === */
 @keyframes glowTitle {
   0% { text-shadow: 0 0 8px #fff, 0 0 16px #ffd700; }
   50% { text-shadow: 0 0 16px #fffacd, 0 0 24px #ffd700; }
@@ -163,17 +166,22 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* === MOBILE RESPONSIVE + SCALE EFFECT === */
+/* === MOBILE PERFECT SCALE @media === */
 @media (max-width: 768px) {
   .container {
-    transform: scale(0.8);
-    transform-origin: top center;
+    transform: scale(0.85); /* ✅ Mažesnis scale */
+    padding: clamp(12px, 5vw, 24px);
   }
 
   .wrapper {
-    width: calc(100vw - 40px);
-    padding: 24px 16px 100px;
-    gap: 28px;
+    width: clamp(320px, 90vw, 600px);
+    padding: clamp(20px, 5vw, 32px);
+    gap: clamp(18px, 4vh, 32px);
+  }
+
+  .transactionList {
+    max-width: 100%;
+    padding-bottom: 100px;
   }
 
   .transactionCard {
@@ -181,32 +189,32 @@
   }
 
   .transactionType {
-    font-size: 0.8rem;
+    font-size: clamp(11px, 2vw, 13px);
   }
 
   .transactionDetail {
-    font-size: 0.75rem;
+    font-size: clamp(10px, 1.8vw, 12px);
   }
 
   .transactionLink {
-    font-size: 0.75rem;
+    font-size: clamp(10px, 2vw, 12px);
   }
 }
 
-/* === MINI MOBILE (Galaxy S24 Ultra ir mažesni) === */
+/* === EXTRA SMALL (IPHONE MINI) === */
 @media (max-width: 480px) {
   .container {
-    transform: scale(0.8);
-    transform-origin: top center;
+    transform: scale(0.8); /* ✅ Dar mažesnis scale */
+    padding: clamp(10px, 5vw, 20px);
   }
 
   .wrapper {
-    width: calc(100vw - 24px);
-    padding: 20px 12px 80px;
-    gap: 24px;
+    width: clamp(300px, 95vw, 560px);
+    padding: clamp(18px, 5vw, 28px);
+    gap: clamp(16px, 4vh, 28px);
   }
 
-  .transactionCard {
-    padding: 12px;
+  .transactionList {
+    padding-bottom: 80px;
   }
 }
