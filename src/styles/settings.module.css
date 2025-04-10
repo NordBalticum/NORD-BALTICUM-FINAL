@@ -86,17 +86,20 @@
 
 /* ✅ WALLET BOX */
 .walletBox {
-  background: rgba(255, 255, 255, 0.07);
-  padding: clamp(12px, 2vw, 16px);
-  border-radius: 12px;
-  font-family: monospace;
-  font-size: clamp(13px, 2vw, 14px); /* ✅ Šiek tiek mažesnis šriftas */
-  word-break: break-word;
-  user-select: all;
-  border: 1px solid white;
-  transition: 0.3s ease;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(24px) saturate(180%);
+  border-radius: 22px;
+  box-shadow: 0 0 24px rgba(255, 255, 255, 0.12), 0 0 32px rgba(43, 55, 255, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: clamp(24px, 5vw, 32px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   width: 100%;
+  max-width: 440px;
   text-align: center;
+  margin-bottom: clamp(24px, 5vh, 48px);
+  animation: fadeInUp 0.8s ease both;
 }
 
 .walletBox:hover {
