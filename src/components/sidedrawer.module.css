@@ -1,4 +1,4 @@
-/* === SIDEDRAWER MODULE – NordBalticum Ultra Premium 2025 FINAL BOSS LEVEL === */
+/* === SIDEDRAWER MODULE – NordBalticum Ultra Premium 2025 FINAL FINAL === */
 
 /* ✅ HAMBURGER BUTTON */
 .hamburger {
@@ -113,7 +113,6 @@
   background: rgba(255, 255, 255, 0.06);
 }
 
-/* ✅ USER BOX TOP LINE */
 .userBox::before {
   content: "";
   position: absolute;
@@ -138,7 +137,6 @@
   animation: fadeInDown 1s ease both;
 }
 
-/* ✅ FADE IN DOWN LOGO */
 @keyframes fadeInDown {
   from { opacity: 0; transform: translateY(-20px); }
   to { opacity: 1; transform: translateY(0); }
@@ -249,7 +247,7 @@
   transform: scale(1.06);
 }
 
-/* ✅ RESPONSIVE */
+/* ✅ RESPONSIVE (768px) */
 @media (max-width: 768px) {
   .drawer {
     width: 220px;
@@ -259,6 +257,11 @@
   .logo {
     width: 72px;
     height: 72px;
+  }
+
+  .email {
+    font-size: 0.58rem;
+    padding: 8px 18px;
   }
 
   .nav {
