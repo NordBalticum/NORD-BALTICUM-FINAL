@@ -151,20 +151,6 @@
   margin-top: 60px;
 }
 
-/* ✅ BOTTOM NAVIGATION SPECIAL STYLE FOR HISTORY PAGE */
-.historyBottomWrapper {
-  background: rgba(0, 0, 0, 0.85); /* Šiek tiek tamsesnis fonas */
-  backdrop-filter: blur(16px) saturate(200%);
-  border-top: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 -4px 20px rgba(255, 255, 255, 0.08);
-  position: fixed; /* Svarbu! Kad būtų fixed apačioje */
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  height: 64px;
-  z-index: 9999;
-}
-
 /* ✅ ANIMATIONS */
 @keyframes glowTitle {
   0% { text-shadow: 0 0 8px #fff, 0 0 16px #ffd700; }
@@ -201,3 +187,18 @@
     font-size: 0.75rem;
   }
 }
+
+/* ✅ BOTTOM NAVIGATION SPECIAL STYLE FOR HISTORY PAGE */
+.historyBottomWrapper {
+  background: rgba(0, 0, 0, 0.85); /* Šiek tiek tamsesnis fonas */
+  backdrop-filter: blur(16px) saturate(200%);
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 -4px 20px rgba(255, 255, 255, 0.08);
+  position: fixed; /* Svarbu! Kad būtų fixed apačioje */
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 64px;
+  z-index: 9999;
+}
+
