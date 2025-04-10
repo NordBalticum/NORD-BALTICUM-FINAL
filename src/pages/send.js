@@ -302,11 +302,11 @@ export default function SendPage() {
         )}
 
         {error && (
-          <ErrorModal
-            error={error}
-            onRetry={handleRetry}
-          />
-        )}
+  <ErrorModal
+    error={error}
+    onClose={handleRetry} // <- senasis onRetry tiesiog pavadintas kitaip
+  />
+)}
       </div>
     </main>
   );
