@@ -75,7 +75,7 @@
   font-size: clamp(18px, 3.5vw, 24px);
   font-weight: 800;
   color: #ffffff;
-  margin-top: -8px; /* ✅ Pritraukti viršų */
+  margin-top: -1px; /* ✅ Pritraukti viršų */
   margin-bottom: clamp(12px, 2vh, 18px);
   line-height: 1.2;
   text-align: center;
