@@ -21,7 +21,7 @@ const navItems = [
   { path: "/settings", icon: <FaUserCircle />, label: "Settings" },
 ];
 
-export default function BottomNavigation() {
+export default function BottomNavigation({ extraClass = "" }) {
   const pathname = usePathname();
   const [isMobile, setIsMobile] = useState(false);
 
@@ -40,7 +40,7 @@ export default function BottomNavigation() {
     <AnimatePresence mode="wait">
       <motion.div
         key={pathname}
-        className={styles.bottomWrapper}
+        className={`${styles.bottomWrapper} ${extraClass}`}
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: 16 }}
