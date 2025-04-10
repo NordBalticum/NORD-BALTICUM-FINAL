@@ -1,4 +1,4 @@
-/* === SwipeSelector Bank v2.0 FINAL === */
+/* === SwipeSelector Bank v2.1 FINAL CENTERED === */
 
 .selectorContainer {
   display: flex;
@@ -13,7 +13,6 @@
   padding-top: clamp(16px, 3vw, 32px);
   overflow: visible;
   z-index: 99;
-  transform: translateX(20%);
 }
 
 .arrows {
@@ -74,7 +73,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: clamp(20px, 3vw, 36px);
-  justify-content: flex-start;
+  justify-content: center; /* ✅ CENTRUOTA! */
   align-items: center;
   width: 100%;
   padding-block: clamp(16px, 2.5vw, 28px);
