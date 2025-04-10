@@ -173,7 +173,6 @@
 
 /* === SPECIAL FOR HISTORY PAGE – PERFECT MATCH FINAL ULTIMATE === */
 .historyBottomWrapperContainer {
-  position: relative;
   width: 100%;
   max-width: 520px;
   margin: 2rem auto 0 auto;
