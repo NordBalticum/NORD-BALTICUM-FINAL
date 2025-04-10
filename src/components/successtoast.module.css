@@ -3,7 +3,7 @@
 .toast {
   position: fixed;
   top: 24px;
-  right: 17%;
+  right: 23%;
   background: rgba(15, 15, 15, 0.92);
   padding: 14px 28px;
   border-radius: 18px;
@@ -18,7 +18,7 @@
   align-items: center;
   gap: 14px;
   min-width: 260px;
-  min-height: 64px;
+  min-height: 55px;
   pointer-events: none;
   transition: opacity 0.45s ease, transform 0.45s ease;
 }
