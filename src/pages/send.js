@@ -23,11 +23,11 @@ import background from "@/styles/background.module.css";
 
 // ✅ Tinklai
 const networkOptions = [
-  { key: "ethereum", label: "Ethereum" },
-  { key: "bsc", label: "BNB" },
-  { key: "tbnb", label: "Testnet BNB" },
-  { key: "polygon", label: "Polygon" },
-  { key: "avalanche", label: "Avalanche" },
+  { key: "eth", label: "Ethereum" },
+  { key: "bnb", label: "BNB" },
+  { key: "tbnb", label: "Testnet" },
+  { key: "matic", label: "Polygon" },
+  { key: "avax", label: "Avalanche" },
 ];
 
 // ✅ Trumpi pavadinimai
