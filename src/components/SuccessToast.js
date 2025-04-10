@@ -2,7 +2,7 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
-import styles from "@/components/successtoast.module.css"; // ✅ Premium CSS
+import styles from "@/components/successtoast.module.css";
 
 const networkLogos = {
   eth: "https://cryptologos.cc/logos/ethereum-eth-logo.png",
@@ -16,7 +16,7 @@ export default function SuccessToast({ show, message = "", networkKey = "" }) {
   const logoSrc = networkLogos[networkKey?.toLowerCase()] || null;
 
   return (
-    <AnimatePresence mode="wait">
+    <AnimatePresence mode="wait"> {/* ✅ Super smooth mode */}
       {show && (
         <motion.div
           className={styles.toast}
@@ -25,7 +25,7 @@ export default function SuccessToast({ show, message = "", networkKey = "" }) {
           exit={{ opacity: 0, y: -20, scale: 0.95 }}
           transition={{
             duration: 0.45,
-            ease: [0.25, 1, 0.5, 1], // ✅ Super smooth
+            ease: [0.25, 1, 0.5, 1],
           }}
         >
           {logoSrc && (
