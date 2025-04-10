@@ -25,9 +25,9 @@
 
 /* ✅ WRAPPER */
 .wrapper {
-  width: calc(100vw - clamp(180px, 12vw, 360px));
-  max-width: 960px;
-  min-height: calc(100vh - clamp(180px, 12vh, 360px));
+  width: 100%;
+  max-width: 1440px; /* ✅ Paliekam lubas ultra-wide ekranams */
+  min-height: 100vh;
   padding: clamp(24px, 5vw, 48px);
   background: transparent;
   backdrop-filter: none;
@@ -38,7 +38,7 @@
   text-align: center;
   gap: clamp(20px, 4vh, 40px);
   box-sizing: border-box;
-  transform: scale(clamp(0.82, 1vw + 0.5, 1));
+  transform: scale(clamp(0.82, 1vw + 0.5, 1)); /* ✅ Tobulas auto scaling visur */
   transform-origin: top center;
   transition: transform 0.4s ease, width 0.4s ease, min-height 0.4s ease;
 }
