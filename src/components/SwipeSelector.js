@@ -7,18 +7,19 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useSwipeReady } from "@/hooks/useSwipeReady";
 import styles from "@/components/swipeselector.module.css";
 
+// ✅ Visų tinklų žemėlapis
 const supportedNetworks = [
+  { name: "Ethereum", symbol: "eth", logo: "https://cryptologos.cc/logos/ethereum-eth-logo.png" },
+  { name: "BNB Chain", symbol: "bnb", logo: "https://cryptologos.cc/logos/binance-coin-bnb-logo.png" },
   { name: "BNB Testnet", symbol: "tbnb", logo: "https://cryptologos.cc/logos/binance-coin-bnb-logo.png" },
-  { name: "BNB Chain", symbol: "bsc", logo: "https://cryptologos.cc/logos/binance-coin-bnb-logo.png" },
-  { name: "Ethereum", symbol: "ethereum", logo: "https://cryptologos.cc/logos/ethereum-eth-logo.png" },
-  { name: "Polygon", symbol: "polygon", logo: "https://cryptologos.cc/logos/polygon-matic-logo.png" },
-  { name: "Avalanche", symbol: "avalanche", logo: "https://cryptologos.cc/logos/avalanche-avax-logo.png" },
+  { name: "Polygon", symbol: "matic", logo: "https://cryptologos.cc/logos/polygon-matic-logo.png" },
+  { name: "Avalanche", symbol: "avax", logo: "https://cryptologos.cc/logos/avalanche-avax-logo.png" },
 ];
 
 export default function SwipeSelector({ onSelect }) {
   const { activeNetwork, setActiveNetwork } = useAuth();
   const containerRef = useRef(null);
-  const [selectedIndex, setSelectedIndex] = useState(2);
+  const [selectedIndex, setSelectedIndex] = useState(1); // Default BNB (index 1)
   const [isMobile, setIsMobile] = useState(false);
   const hasInitialized = useRef(false);
   const isSwipeReady = useSwipeReady();
@@ -65,7 +66,7 @@ export default function SwipeSelector({ onSelect }) {
     onSelect?.(selectedSymbol);
 
     if (typeof window !== "undefined" && "vibrate" in navigator) {
-      navigator.vibrate(10); // ✅ Trumpa vibracija paspaudus kortelę
+      navigator.vibrate(10); // ✅ Trumpa vibracija
     }
 
     if (isMobile) scrollToCenter(index);
@@ -107,7 +108,7 @@ export default function SwipeSelector({ onSelect }) {
             key={net.symbol}
             className={`${styles.card} ${selectedIndex === index ? styles.selected : ""}`}
             onClick={() => handleSelect(index)}
-            whileTap={{ scale: 0.95 }} // ✅ bounce
+            whileTap={{ scale: 0.95 }}
             role="button"
             tabIndex={0}
           >
