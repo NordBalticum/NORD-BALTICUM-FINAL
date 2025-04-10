@@ -1,5 +1,6 @@
-/* === HISTORY MODULE – NordBalticum Web3 Fullscreen Ultra Bank Grade === */
+/* === HISTORY MODULE – NordBalticum Web3 Fullscreen Ultra Bank Grade FINAL v2 === */
 
+/* ✅ MAIN CONTAINER */
 .container {
   position: fixed;
   top: 50%;
@@ -14,101 +15,109 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: clamp(16px, 5vw, 64px);
+  padding: clamp(16px, 5vw, 48px);
   box-sizing: border-box;
   overflow: hidden;
   z-index: 1;
 }
 
+/* ✅ INNER WRAPPER */
 .wrapper {
-  width: calc(100vw - 160px);
-  height: calc(100vh - 160px);
-  max-width: 960px;
-  padding: clamp(24px, 5vw, 64px);
-  background: transparent;
-  backdrop-filter: none;
-  box-sizing: border-box;
+  width: calc(100vw - 140px);
+  height: calc(100vh - 140px);
+  max-width: 900px;
+  max-height: 880px;
+  padding: clamp(24px, 4vw, 48px);
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(20px) saturate(160%);
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.45);
   display: flex;
   flex-direction: column;
   align-items: center;
   overflow-y: auto;
   overflow-x: hidden;
-  gap: clamp(24px, 4vh, 48px);
+  gap: clamp(20px, 4vh, 40px);
   z-index: 2;
+  transition: all 0.4s ease;
 }
 
+/* ✅ TITLE */
 .title {
-  font-size: clamp(28px, 6vw, 48px);
+  font-size: clamp(26px, 5vw, 42px);
   font-weight: 900;
   text-align: center;
   font-family: var(--font-crypto);
   background: linear-gradient(to right, #ffffff, #ffd700, #ffffff);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  text-shadow: 0 0 16px rgba(255, 255, 255, 0.3);
+  text-shadow: 0 0 18px rgba(255, 255, 255, 0.35);
   animation: glowTitle 3s ease-in-out infinite;
 }
 
-@keyframes glowTitle {
-  0% { text-shadow: 0 0 10px #fff, 0 0 20px #ffd700; }
-  50% { text-shadow: 0 0 18px #fffacd, 0 0 30px #ffd700; }
-  100% { text-shadow: 0 0 10px #fff, 0 0 20px #ffd700; }
-}
-
+/* ✅ SUBTEXT */
 .subtext {
-  font-size: clamp(14px, 2.5vw, 20px);
+  font-size: clamp(14px, 2vw, 18px);
   color: rgba(255, 255, 255, 0.85);
   text-align: center;
   font-family: var(--font-crypto);
   font-weight: 500;
+  margin-top: -4px;
   opacity: 0.85;
-  margin-top: -6px;
 }
 
+/* ✅ TRANSACTION LIST */
 .transactionList {
   width: 100%;
-  max-width: 600px;
+  max-width: 620px;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 18px;
   padding-bottom: 80px;
 }
 
+/* ✅ INDIVIDUAL CARD */
 .transactionCard {
   background: rgba(255, 255, 255, 0.05);
-  border: 1px solid white;
+  border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 20px;
-  padding: 22px;
-  box-shadow: 0 0 28px rgba(255, 255, 255, 0.12);
-  backdrop-filter: blur(20px);
+  padding: 20px;
+  box-shadow: 0 0 24px rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(18px);
   transition: all 0.3s ease;
-  animation: fadeIn 0.3s ease;
+  animation: fadeIn 0.35s ease forwards;
   color: white;
   font-family: var(--font-crypto);
+  cursor: pointer;
 }
 
+/* ✅ HOVER STATE */
 .transactionCard:hover {
-  box-shadow: 0 0 45px rgba(255, 255, 255, 0.3);
+  box-shadow: 0 0 40px rgba(0, 255, 255, 0.25);
   transform: scale(1.015);
 }
 
+/* ✅ HEADER (From, To, Value) */
 .transactionHeader {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
   font-weight: 600;
   font-size: 1rem;
 }
 
+/* ✅ TYPE LABEL */
 .transactionType {
   color: white;
   text-transform: uppercase;
   font-family: var(--font-crypto);
-  letter-spacing: 0.6px;
+  letter-spacing: 0.5px;
   font-weight: 700;
 }
 
+/* ✅ AMOUNT COLORS */
 .transactionAmountSend {
   color: #ff6b6b;
   font-weight: 700;
@@ -119,12 +128,14 @@
   font-weight: 700;
 }
 
+/* ✅ DETAILS */
 .transactionDetail {
   font-size: 0.95rem;
   opacity: 0.9;
   margin-top: 4px;
 }
 
+/* ✅ DATE STYLE */
 .transactionDate {
   font-size: 0.85rem;
   opacity: 0.7;
@@ -132,11 +143,12 @@
   font-style: italic;
 }
 
+/* ✅ EXPLORER LINK */
 .transactionLink {
-  margin-top: 12px;
+  margin-top: 10px;
   display: inline-block;
   font-size: 0.88rem;
-  color: white;
+  color: #00ffd0;
   text-decoration: underline;
   font-weight: 600;
   transition: all 0.3s ease;
@@ -148,6 +160,7 @@
   transform: scale(1.02);
 }
 
+/* ✅ LOADING */
 .loading {
   font-size: 1.2rem;
   color: white;
@@ -156,10 +169,11 @@
   margin-top: 80px;
 }
 
+/* ✅ FADE IN ANIMATION */
 @keyframes fadeIn {
   from {
     opacity: 0;
-    transform: translateY(12px);
+    transform: translateY(14px);
   }
   to {
     opacity: 1;
@@ -167,12 +181,21 @@
   }
 }
 
-@media (max-width: 768px) {
+/* ✅ GLOW TITLE ANIMATION */
+@keyframes glowTitle {
+  0% { text-shadow: 0 0 10px #fff, 0 0 20px #ffd700; }
+  50% { text-shadow: 0 0 18px #fffacd, 0 0 28px #ffd700; }
+  100% { text-shadow: 0 0 10px #fff, 0 0 20px #ffd700; }
+}
+
+/* ✅ RESPONSIVE (Mobile + Galaxy Ultra) */
+@media (max-width: 1024px) {
   .wrapper {
     width: calc(100vw - 48px);
     height: auto;
+    max-height: none;
     padding: 24px 16px 120px;
-    gap: 32px;
+    gap: 28px;
   }
 
   .transactionCard {
@@ -180,14 +203,24 @@
   }
 
   .transactionType {
-    font-size: 0.95rem;
+    font-size: 0.92rem;
   }
 
   .transactionDetail {
-    font-size: 0.9rem;
+    font-size: 0.88rem;
   }
 
   .transactionLink {
     font-size: 0.85rem;
+  }
+}
+
+@media (max-width: 468px) {
+  .title {
+    font-size: 26px;
+  }
+
+  .subtext {
+    font-size: 14px;
   }
 }
