@@ -3,11 +3,10 @@
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { toast } from "react-hot-toast";
-
 import { supabase } from "@/utils/supabaseClient";
+import { scanBlockchain } from "@/utils/scanBlockchain"; // ✅ Importas
 import { useAuth } from "@/contexts/AuthContext";
-import { scanBlockchain } from "@/utils/scanBlockchain";
+import { toast } from "react-hot-toast";
 import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
 import styles from "@/styles/history.module.css";
 import background from "@/styles/background.module.css";
@@ -18,12 +17,11 @@ export default function HistoryPage() {
 
   const [transactions, setTransactions] = useState([]);
   const [loadingTransactions, setLoadingTransactions] = useState(true);
-  const [lastSynced, setLastSynced] = useState(null);
   const [error, setError] = useState(null);
   const [isClient, setIsClient] = useState(false);
-
   const [filterNetwork, setFilterNetwork] = useState("All");
   const [filterStatus, setFilterStatus] = useState("All");
+  const [lastSynced, setLastSynced] = useState(null);
 
   useEffect(() => {
     if (typeof window !== "undefined") setIsClient(true);
@@ -56,25 +54,19 @@ export default function HistoryPage() {
   }, [user, wallet]);
 
   useEffect(() => {
-    if (user && wallet?.wallet?.address) {
-      (async () => {
-        await scanBlockchain(wallet.wallet.address, user.email);
-        toast.success("✅ Blockchain scan complete!");
-        setLastSynced(new Date());
-        await fetchUserTransactions();
-      })();
-    }
+    if (!user || !wallet?.wallet?.address) return;
 
-    const subscription = supabase
-      .channel('realtime:transactions')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'transactions' }, () => {
-        fetchUserTransactions();
-      })
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(subscription);
+    const syncAndFetch = async () => {
+      await scanBlockchain(wallet.wallet.address, user.email);
+      await fetchUserTransactions();
+      setLastSynced(new Date());
     };
+
+    syncAndFetch(); // ✅ Auto-scan iškart kai atsidaro
+
+    const interval = setInterval(syncAndFetch, 10 * 60 * 1000); // ✅ Auto kas 10 min
+
+    return () => clearInterval(interval);
   }, [user, wallet, fetchUserTransactions]);
 
   const filteredTransactions = transactions.filter((tx) => {
@@ -132,13 +124,13 @@ export default function HistoryPage() {
     <main className={`${styles.container} ${background.gradient}`}>
       <div className={styles.wrapper}>
         <h1 className={styles.title}>TRANSACTION HISTORY</h1>
-        <p className={styles.subtext}>View and manage your crypto activity</p>
+        <p className={styles.subtext}>View and manage your full crypto activity</p>
 
-        {/* Last Synced */}
+        {/* Last Synced info */}
         {lastSynced && (
-          <div style={{ marginBottom: "1rem", color: "#0f0", fontWeight: "bold", fontSize: "0.9rem" }}>
+          <p style={{ fontSize: "0.8rem", marginBottom: "1rem", color: "#aaa" }}>
             Last Synced: {lastSynced.toLocaleString()}
-          </div>
+          </p>
         )}
 
         {/* Filters */}
@@ -202,7 +194,7 @@ export default function HistoryPage() {
                   transition={{ duration: 0.4, delay: index * 0.04 }}
                   whileHover={{ scale: 1.03, boxShadow: "0 0 25px rgba(0, 255, 255, 0.3)" }}
                   style={{
-                    backgroundColor: tx.status === "completed" ? "rgba(0,255,0,0.08)" : "rgba(255,0,0,0.08)",
+                    backgroundColor: tx.type === "receive" ? "rgba(0,255,0,0.08)" : "rgba(0,0,255,0.08)",
                     borderRadius: "20px",
                     padding: "1.5rem",
                     marginBottom: "1.2rem",
@@ -213,7 +205,7 @@ export default function HistoryPage() {
                     <img src={getNetworkLogo(tx.network)} alt="network" style={{ width: "24px", height: "24px", marginRight: "0.5rem" }} />
                     <strong>{tx.network.toUpperCase()}</strong>
                   </div>
-                  <p><strong>Type:</strong> {tx.type}</p>
+                  <p><strong>Type:</strong> {tx.type.toUpperCase()}</p>
                   <p><strong>Amount:</strong> {tx.amount}</p>
                   <p><strong>Sender:</strong> {tx.sender_address.slice(0, 6)}...{tx.sender_address.slice(-4)}</p>
                   <p><strong>Receiver:</strong> {tx.receiver_address.slice(0, 6)}...{tx.receiver_address.slice(-4)}</p>
