@@ -1,4 +1,4 @@
-/* === SEND MODULE – NordBalticum Ultra Premium V15 FINAL 100X === */
+/* === SEND MODULE – NordBalticum Ultra Premium FINAL 101X === */
 
 /* ✅ MAIN BACKGROUND FULLSCREEN */
 .main {
@@ -7,7 +7,7 @@
   align-items: flex-start;
   width: 100vw;
   min-height: 100vh;
-  overflow: hidden;
+  overflow: visible;
   background: radial-gradient(circle at center, var(--primary-bg) 20%, var(--primary-bg-dark) 80%) no-repeat center center fixed;
   background-size: cover;
   position: relative;
@@ -17,17 +17,17 @@
   animation: fadeIn 1.2s cubic-bezier(0.25, 1, 0.5, 1) forwards;
 }
 
-/* ✅ FADE IN EFFECT */
+/* ✅ FADE IN */
 @keyframes fadeIn {
   0% { opacity: 0; transform: scale(0.78); }
   100% { opacity: 1; transform: scale(0.8); }
 }
 
-/* ✅ WRAPPER */
+/* ✅ WRAPPER FULLSCREEN */
 .wrapper {
-  width: 100%;
-  max-width: 1440px; /* ✅ Paliekam lubas ultra-wide ekranams */
-  min-height: 100vh;
+  width: calc(100vw - clamp(180px, 12vw, 360px));
+  min-width: 320px;
+  min-height: calc(100vh - clamp(180px, 12vh, 360px));
   padding: clamp(24px, 5vw, 48px);
   background: transparent;
   backdrop-filter: none;
@@ -38,31 +38,28 @@
   text-align: center;
   gap: clamp(20px, 4vh, 40px);
   box-sizing: border-box;
-  transform: scale(clamp(0.82, 1vw + 0.5, 1)); /* ✅ Tobulas auto scaling visur */
+  transform: scale(clamp(0.82, 1vw + 0.5, 1));
   transform-origin: top center;
-  transition: transform 0.4s ease, width 0.4s ease, min-height 0.4s ease;
+  overflow: visible;
+  transition: all 0.4s ease;
 }
 
 /* ✅ BALANCE TABLE + FEES */
-.balanceTable,
-.feeBreakdown {
+.balanceTable, .feeBreakdown {
   width: 100%;
-  max-width: 540px;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 18px;
+  border-radius: 20px;
   padding: clamp(20px, 5vw, 28px);
-  backdrop-filter: blur(20px) saturate(180%);
+  backdrop-filter: blur(24px) saturate(180%);
   box-shadow: 0 0 24px rgba(255, 255, 255, 0.08);
-  font-family: var(--font-crypto);
   color: white;
-  font-size: 1rem;
+  font-family: var(--font-crypto);
 }
 
 /* ✅ INPUT FIELDS */
 .walletActions {
   width: 100%;
-  max-width: 540px;
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -78,27 +75,25 @@
   color: white;
   font-size: 1.15rem;
   font-family: var(--font-crypto);
-  outline: none;
   transition: background 0.3s ease;
+  outline: none;
 }
 
 .inputField:focus {
   background: rgba(255, 255, 255, 0.08);
 }
 
-/* ✅ WHITE TEXT */
+/* ✅ TEXT */
 .whiteText {
   color: white;
   font-family: var(--font-crypto);
 }
 
-/* ✅ FEES INFO */
 .feesInfo {
   margin-top: 10px;
   font-size: 0.9rem;
 }
 
-/* ✅ MINIMUM TEXT */
 .minimumText {
   margin-top: 6px;
   font-size: 0.8rem;
@@ -106,29 +101,27 @@
   font-family: var(--font-crypto);
 }
 
-/* ✅ SEND NOW BUTTON */
+/* ✅ BUTTON */
 .sendNowButton {
   width: 100%;
-  max-width: 540px;
   padding: 16px 24px;
   margin-top: auto;
   background: linear-gradient(135deg, #ff4b4b, #ff1c1c);
   border: 2px solid white;
   border-radius: 18px;
   font-weight: bold;
+  font-size: 1.1rem;
   color: white;
   font-family: var(--font-crypto);
-  font-size: 1.1rem;
   text-transform: uppercase;
   cursor: pointer;
-  transition: all 0.4s ease, transform 0.3s ease, box-shadow 0.4s ease;
+  transition: all 0.4s ease;
   box-shadow: 0 8px 24px rgba(255, 0, 0, 0.3), 0 4px 12px rgba(255, 0, 0, 0.2);
 }
 
 .sendNowButton:hover {
   transform: scale(1.05);
   background: linear-gradient(135deg, #ff6b6b, #ff3c3c);
-  box-shadow: 0 10px 28px rgba(255, 0, 0, 0.4), 0 6px 14px rgba(255, 0, 0, 0.25);
 }
 
 /* ✅ MODALS */
@@ -138,8 +131,8 @@
   background: rgba(0, 0, 0, 0.75);
   backdrop-filter: blur(10px);
   display: flex;
-  align-items: center;
   justify-content: center;
+  align-items: center;
   z-index: 9999;
 }
 
@@ -174,14 +167,12 @@
   flex: 1;
   padding: 14px 18px;
   background: linear-gradient(to right, #00c6ff, #0072ff);
-  border: none;
   border-radius: 18px;
   font-weight: bold;
   color: white;
-  font-family: var(--font-crypto);
   text-transform: uppercase;
   cursor: pointer;
-  transition: transform 0.3s ease, background 0.3s ease;
+  transition: 0.3s;
 }
 
 .modalButton:hover {
@@ -192,39 +183,24 @@
   background: linear-gradient(to right, #ff3c3c, #c71d1d);
 }
 
-/* === RESPONSIVE OPTIMIZATION FINAL === */
-
-/* ✅ MINI PHONES (iPhone 14 Pro, Galaxy S24 Ultra) */
-@media (max-width: 400px) {
+/* === RESPONSIVE FULLSCREEN FIX === */
+@media (max-width: 768px) {
   .wrapper {
-    width: calc(100vw - 16px);
-    min-height: calc(100vh - 80px);
-    transform: scale(0.88);
-    padding: 20px 12px 80px;
-  }
-}
-
-/* ✅ LARGE PHONES (Galaxy Fold atidarytas) */
-@media (max-width: 768px) and (min-width: 480px) {
-  .wrapper {
-    width: calc(100vw - 40px);
+    width: calc(100vw - clamp(60px, 10vw, 100px));
     min-height: calc(100vh - 100px);
-    transform: scale(0.94);
     padding: 24px 16px 90px;
+    transform: scale(0.95);
   }
 }
 
-/* ✅ TABLETS (iPad, Galaxy Tab) */
-@media (min-width: 769px) and (max-width: 1024px) {
+@media (max-width: 480px) {
   .wrapper {
-    width: calc(100vw - 80px);
-    min-height: calc(100vh - 120px);
-    transform: scale(0.96);
-    padding: 32px 24px 100px;
+    width: calc(100vw - 20px);
+    min-height: calc(100vh - 80px);
+    transform: scale(0.92);
   }
 }
 
-/* ✅ DESKTOP ULTRA HD (2K - 4K) */
 @media (min-width: 1920px) {
   .wrapper {
     width: calc(100vw - clamp(240px, 12vw, 360px));
@@ -233,7 +209,6 @@
   }
 }
 
-/* ✅ 8K ULTRA HD */
 @media (min-width: 3840px) {
   .wrapper {
     width: calc(100vw - 320px);
