@@ -173,14 +173,14 @@
 
 /* === SPECIAL FOR HISTORY PAGE – PERFECT MATCH FINAL ULTIMATE === */
 .historyBottomWrapperContainer {
-  position: relative;
+  position: relative; /* ✅ Slinka su turiniu */
   width: 100%;
   max-width: 520px;
   margin: 2rem auto 0 auto;
   border-radius: 20px;
   overflow: hidden;
-  background: rgba(12, 18, 36, 0.92);
-  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.45);
+  background: transparent; /* ✅ Fonas tampa SKAIDRUS */
+  box-shadow: none; /* ✅ Pašalinam šešėlį */
 }
 
 .historyBottomWrapper {
@@ -189,7 +189,10 @@
   display: flex;
   justify-content: space-around;
   align-items: center;
-  backdrop-filter: blur(20px) saturate(180%);
+  backdrop-filter: blur(20px) saturate(180%); /* ✅ Blur efektas išlieka */
+  background: rgba(12, 18, 36, 0.92); /* ✅ Foną PERKELIAM ČIA */
   padding: 0 clamp(6px, 2vw, 14px);
   box-sizing: border-box;
+  border: 1px solid rgba(255, 255, 255, 0.08); /* ✅ Premium border */
+  border-radius: 20px; /* ✅ Kad išliktų apvalus blur */
 }
