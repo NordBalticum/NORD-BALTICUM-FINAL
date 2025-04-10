@@ -1,11 +1,9 @@
-/* === SUCCESS TOAST FINAL ULTRA PREMIUM v9.0 === */
+/* === SUCCESS TOAST FINAL ULTRA PREMIUM v10 === */
 
-/* ✅ TOAST MAIN STYLE */
 .toast {
   position: fixed;
   top: 24px;
   right: 17%;
-  left: auto;
   background: rgba(15, 15, 15, 0.92);
   padding: 14px 28px;
   border-radius: 18px;
@@ -21,8 +19,8 @@
   gap: 14px;
   min-width: 260px;
   min-height: 64px;
+  pointer-events: none;
   transition: opacity 0.4s ease, transform 0.4s ease;
-  pointer-events: none; /* ✅ Kad netrukdytų paspaudimams */
 }
 
 /* ✅ LOGO WRAPPER */
@@ -43,27 +41,6 @@
   display: flex;
   align-items: center;
   line-height: 1;
-}
-
-/* ✅ SUPER SMOOTH ENTRANCE + EXIT ANIMATIONS */
-.toast-enter {
-  transform: translateX(150%);
-  opacity: 0;
-}
-.toast-enter-active {
-  transform: translateX(0);
-  opacity: 1;
-  transition: transform 0.5s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.5s ease;
-}
-
-.toast-exit {
-  transform: translateX(0);
-  opacity: 1;
-}
-.toast-exit-active {
-  transform: translateX(150%);
-  opacity: 0;
-  transition: transform 0.45s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.45s ease;
 }
 
 /* ✅ RESPONSIVE CENTERED */
