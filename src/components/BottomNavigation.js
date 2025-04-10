@@ -3,13 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  FaWallet,
-  FaArrowUp,
-  FaArrowDown,
-  FaClock,
-  FaUserCircle,
-} from "react-icons/fa";
+import { FaWallet, FaArrowUp, FaArrowDown, FaClock, FaUserCircle } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
 import styles from "@/components/bottomnav.module.css"; // ✅ Premium CSS
 
@@ -21,7 +15,7 @@ const navItems = [
   { path: "/settings", icon: <FaUserCircle />, label: "Settings" },
 ];
 
-export default function BottomNavigation({ extraClass = "" }) {
+export default function BottomNavigation() {
   const pathname = usePathname();
   const [isMobile, setIsMobile] = useState(false);
 
@@ -36,11 +30,14 @@ export default function BottomNavigation({ extraClass = "" }) {
 
   if (!isMobile) return null;
 
+  // ✅ Automatiškai taikome specialią klasę jei /history puslapyje
+  const isHistoryPage = pathname === "/history";
+
   return (
     <AnimatePresence mode="wait">
       <motion.div
         key={pathname}
-        className={`${styles.bottomWrapper} ${extraClass}`}
+        className={`${styles.bottomWrapper} ${isHistoryPage ? styles.historyBottomWrapper : ""}`}
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: 16 }}
