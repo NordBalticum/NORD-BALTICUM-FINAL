@@ -27,7 +27,6 @@ export default function HistoryPage() {
   const [loading, setLoading] = useState(false);
   const [visibleCount, setVisibleCount] = useState(5);
 
-  // ✅ Tik leidžiam vertikalų scroll, draudžiam horizontalų
   useEffect(() => {
     document.body.style.overflowX = "hidden";
     document.body.style.overflowY = "auto";
@@ -197,8 +196,8 @@ export default function HistoryPage() {
         )}
       </div>
 
-      {/* ✅ BottomNavigation jau importuojasi globaliai, čia atiduodam propsą */}
-      {/* nieko daugiau rašyti nereikia! */}
+      {/* ✅ BottomNavigation globalus, nieko importuoti nereikia */}
+      {/* jis tiesiog rodomas per visą aplikaciją */}
     </main>
   );
 }
