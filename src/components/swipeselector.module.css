@@ -1,4 +1,4 @@
-/* === SwipeSelector Bank v2.1 FINAL CENTERED === */
+/* === SwipeSelector Ultra Premium FINAL CSS === */
 
 .selectorContainer {
   display: flex;
@@ -73,7 +73,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: clamp(20px, 3vw, 36px);
-  justify-content: center; /* ✅ CENTRUOTA! */
+  justify-content: center;
   align-items: center;
   width: 100%;
   padding-block: clamp(16px, 2.5vw, 28px);
@@ -82,12 +82,12 @@
 
 .scrollableWrapper {
   flex-wrap: nowrap;
-  overflow-x: hidden; /* ✅ uždarom scroll */
-  scroll-snap-type: none;
-  -webkit-overflow-scrolling: none;
-  scroll-behavior: auto;
-  min-width: 100%;
-  touch-action: none; /* ✅ neleidžiam jokio swipe */
+  overflow-x: hidden; /* ✅ Disable scroll */
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: none; /* ✅ Disable iOS bounce */
+  scroll-behavior: smooth;
+  min-width: max-content;
+  touch-action: none; /* ✅ Disable touch and zoom */
 }
 
 .scrollableWrapper::-webkit-scrollbar {
@@ -177,7 +177,6 @@
   .logo {
     width: 34px;
     height: 34px;
-    margin-bottom: 8px;
   }
   .name {
     font-size: 11.5px;
