@@ -1,4 +1,4 @@
-/* === SETTINGS MODULE – NordBalticum Ultra Premium FINAL === */
+/* === SETTINGS MODULE – NordBalticum Ultra Premium v15 FINAL === */
 
 /* ✅ CONTAINER – visam fullscreen */
 .settingsContainer {
@@ -344,6 +344,7 @@
   }
 }
 
+/* ✅ MINI PHONES */
 @media (max-width: 480px) {
   .settingsWrapper {
     transform: scale(0.92);
