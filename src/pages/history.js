@@ -196,6 +196,9 @@ export default function HistoryPage() {
           </div>
         )}
       </div>
+
+      {/* ✅ BottomNavigation jau importuojasi globaliai, čia atiduodam propsą */}
+      {/* nieko daugiau rašyti nereikia! */}
     </main>
   );
 }
