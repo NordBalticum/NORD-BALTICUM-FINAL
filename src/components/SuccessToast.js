@@ -16,14 +16,17 @@ export default function SuccessToast({ show, message = "", networkKey = "" }) {
   const logoSrc = networkLogos[networkKey?.toLowerCase()] || null;
 
   return (
-    <AnimatePresence>
+    <AnimatePresence mode="wait"> {/* ✅ SUPER SMOOTH mode */}
       {show && (
         <motion.div
           className={styles.toast}
-          initial={{ opacity: 0, x: 50 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: 50 }}
-          transition={{ duration: 0.5 }}
+          initial={{ opacity: 0, y: -30, scale: 0.95 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: -20, scale: 0.95 }}
+          transition={{
+            duration: 0.45,
+            ease: [0.25, 1, 0.5, 1], // ✅ Super Smooth Bezier
+          }}
         >
           {logoSrc && (
             <div className={styles.logoWrapper}>
