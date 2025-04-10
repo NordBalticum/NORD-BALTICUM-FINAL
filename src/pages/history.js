@@ -2,9 +2,9 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 
-import { supabase } from "@/utils/supabaseClient"; 
+import { supabase } from "@/utils/supabaseClient";
 import { useAuth } from "@/contexts/AuthContext";
 import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
 import styles from "@/styles/history.module.css";
@@ -19,6 +19,10 @@ export default function HistoryPage() {
   const [error, setError] = useState(null);
   const [isClient, setIsClient] = useState(false);
 
+  const [filterNetwork, setFilterNetwork] = useState("All");
+  const [filterStatus, setFilterStatus] = useState("All");
+  const [showMainnetOnly, setShowMainnetOnly] = useState(false);
+
   useEffect(() => {
     if (typeof window !== "undefined") setIsClient(true);
   }, []);
@@ -30,13 +34,12 @@ export default function HistoryPage() {
   }, [isClient, authLoading, user, router]);
 
   const fetchUserTransactions = useCallback(async () => {
-    if (!wallet?.wallet?.address) return;
+    if (!user?.email || !wallet?.wallet?.address) return;
     try {
-      setLoadingTransactions(true);
       const { data, error } = await supabase
         .from("transactions")
         .select("*")
-        .or(`sender_address.eq.${wallet.wallet.address},receiver_address.eq.${wallet.wallet.address}`)
+        .or(`user_email.eq.${user.email},sender_address.eq.${wallet.wallet.address},receiver_address.eq.${wallet.wallet.address}`)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -48,13 +51,60 @@ export default function HistoryPage() {
     } finally {
       setLoadingTransactions(false);
     }
-  }, [wallet]);
+  }, [user, wallet]);
 
   useEffect(() => {
     fetchUserTransactions();
-    const interval = setInterval(fetchUserTransactions, 30000); // ✅ Kas 30 sekundžių
-    return () => clearInterval(interval);
+
+    const subscription = supabase
+      .channel('realtime:transactions')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'transactions' }, () => {
+        fetchUserTransactions();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(subscription);
+    };
   }, [fetchUserTransactions]);
+
+  const isTestnet = (network) => {
+    return network === "bsc_testnet" || network === "avax_testnet";
+  };
+
+  const filteredTransactions = transactions.filter((tx) => {
+    const networkMatch = filterNetwork === "All" || tx.network === filterNetwork;
+    const statusMatch = filterStatus === "All" || tx.status === filterStatus;
+    const mainnetMatch = showMainnetOnly ? !isTestnet(tx.network) : true;
+    return networkMatch && statusMatch && mainnetMatch;
+  });
+
+  const renderStatusBadge = (status) => {
+    if (status === "completed") {
+      return <span style={{ color: "limegreen", fontWeight: "bold", fontSize: "0.9rem" }}>● Completed</span>;
+    }
+    if (status === "pending") {
+      return <span style={{ color: "orange", fontWeight: "bold", fontSize: "0.9rem" }}>● Pending</span>;
+    }
+    return <span style={{ color: "red", fontWeight: "bold", fontSize: "0.9rem" }}>● Failed</span>;
+  };
+
+  const getNetworkLogo = (network) => {
+    switch (network) {
+      case "bsc":
+      case "bsc_testnet":
+        return "https://cryptologos.cc/logos/binance-coin-bnb-logo.png";
+      case "eth":
+        return "https://cryptologos.cc/logos/ethereum-eth-logo.png";
+      case "polygon":
+        return "https://cryptologos.cc/logos/polygon-matic-logo.png";
+      case "avax":
+      case "avax_testnet":
+        return "https://cryptologos.cc/logos/avalanche-avax-logo.png";
+      default:
+        return "https://cryptologos.cc/logos/question-mark.svg";
+    }
+  };
 
   if (!isClient || authLoading) {
     return (
@@ -67,7 +117,7 @@ export default function HistoryPage() {
   if (!user || !wallet?.wallet?.address) {
     return (
       <div className={styles.loading}>
-        <MiniLoadingSpinner /> Preparing wallet...
+        <MiniLoadingSpinner /> Preparing user...
       </div>
     );
   }
@@ -78,93 +128,123 @@ export default function HistoryPage() {
         <h1 className={styles.title}>TRANSACTION HISTORY</h1>
         <p className={styles.subtext}>Your latest crypto activity</p>
 
+        {/* Filter + Mainnet Toggle */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "1rem", marginBottom: "1.5rem" }}>
+          <button
+            onClick={() => setShowMainnetOnly(!showMainnetOnly)}
+            style={{
+              padding: "0.6rem 1.2rem",
+              borderRadius: "10px",
+              border: "1px solid #444",
+              backgroundColor: showMainnetOnly ? "#0f0" : "#0a0a0a",
+              color: showMainnetOnly ? "#000" : "#fff",
+              fontWeight: "bold",
+              cursor: "pointer",
+              fontSize: "0.9rem",
+              transition: "all 0.3s ease",
+            }}
+          >
+            {showMainnetOnly ? "Showing Mainnet Only ✅" : "Showing All Networks"}
+          </button>
+
+          <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
+            <select
+              value={filterNetwork}
+              onChange={(e) => setFilterNetwork(e.target.value)}
+              style={{
+                padding: "0.6rem 1rem",
+                borderRadius: "10px",
+                border: "1px solid #444",
+                backgroundColor: "#0a0a0a",
+                color: "#fff",
+                fontSize: "0.9rem",
+              }}
+            >
+              <option value="All">All Networks</option>
+              <option value="bsc">BSC Mainnet</option>
+              <option value="bsc_testnet">BSC Testnet</option>
+              <option value="eth">Ethereum Mainnet</option>
+              <option value="polygon">Polygon Mainnet</option>
+              <option value="avax">Avalanche Mainnet</option>
+              <option value="avax_testnet">Avalanche Testnet</option>
+            </select>
+
+            <select
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}
+              style={{
+                padding: "0.6rem 1rem",
+                borderRadius: "10px",
+                border: "1px solid #444",
+                backgroundColor: "#0a0a0a",
+                color: "#fff",
+                fontSize: "0.9rem",
+              }}
+            >
+              <option value="All">All Status</option>
+              <option value="completed">Completed</option>
+              <option value="pending">Pending</option>
+              <option value="failed">Failed</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Transaction list */}
         {loadingTransactions ? (
           <div className={styles.loading}>
             <MiniLoadingSpinner /> Loading transactions...
           </div>
         ) : error ? (
           <div className={styles.error}>{error}</div>
-        ) : transactions.length === 0 ? (
-          <div className={styles.loading}>No transactions found.
-          </div>
+        ) : filteredTransactions.length === 0 ? (
+          <div className={styles.loading}>No transactions found.</div>
         ) : (
           <div className={styles.transactionList}>
-            {transactions.map((tx, index) => (
-              <motion.div
-                key={tx.transaction_hash + index}
-                className={styles.transactionCard}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                whileHover={{ scale: 1.03, boxShadow: "0px 0px 15px rgba(255,255,255,0.2)" }}
-                transition={{ duration: 0.35, delay: index * 0.07 }}
-              >
-                <div className={styles.transactionHeader}>
-                  <span className={styles.transactionType}>
-                    {tx.type?.toUpperCase()} • {tx.network?.toUpperCase()}
-                  </span>
-                  <span
-                    className={
-                      tx.type === "receive"
-                        ? styles.transactionAmountReceive
-                        : styles.transactionAmountSend
-                    }
-                  >
-                    {tx.type === "receive" ? "+" : "-"}
-                    {Number(tx.amount).toFixed(6)} {tx.network?.toUpperCase()}
-                  </span>
-                </div>
-
-                <p className={styles.transactionDetail}>
-                  <strong>{tx.type === "receive" ? "From:" : "To:"}</strong>{" "}
-                  {truncateAddress(tx.type === "receive" ? tx.sender_address : tx.receiver_address)}
-                </p>
-
-                <p className={styles.transactionDetail}>
-                  <strong>Fee:</strong> {Number(tx.fee ?? 0).toFixed(6)} {tx.network?.toUpperCase()}
-                </p>
-
-                <p className={styles.transactionDate}>
-                  {new Date(tx.created_at).toLocaleString("en-US", {
-                    year: "numeric",
-                    month: "short",
-                    day: "numeric",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                </p>
-
-                {tx.transaction_hash && (
-                  <a
-                    href={getExplorerURL(tx.transaction_hash, tx.network)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={styles.transactionLink}
-                  >
-                    View on Explorer
-                  </a>
-                )}
-              </motion.div>
-            ))}
+            <AnimatePresence>
+              {filteredTransactions.map((tx, index) => (
+                <motion.div
+                  key={index}
+                  className={styles.transactionCard}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 20 }}
+                  transition={{ duration: 0.4, delay: index * 0.05 }}
+                  style={{
+                    backgroundColor: tx.status === "completed"
+                      ? "rgba(0, 255, 0, 0.08)"
+                      : tx.status === "failed"
+                      ? "rgba(255, 0, 0, 0.08)"
+                      : "rgba(255, 255, 255, 0.03)",
+                    borderRadius: "20px",
+                    padding: "1.5rem",
+                    marginBottom: "1.2rem",
+                    boxShadow: tx.status === "completed"
+                      ? "0 0 20px rgba(0, 255, 0, 0.4)"
+                      : tx.status === "failed"
+                      ? "0 0 20px rgba(255, 0, 0, 0.4)"
+                      : "0 0 15px rgba(0, 255, 255, 0.08)",
+                    backdropFilter: "blur(10px)",
+                    transition: "all 0.3s ease-in-out",
+                  }}
+                  whileHover={{
+                    scale: 1.03,
+                    boxShadow: "0 0 25px rgba(0, 255, 255, 0.3)",
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", marginBottom: "0.5rem" }}>
+                    <img src={getNetworkLogo(tx.network)} alt="network" style={{ width: "24px", height: "24px", marginRight: "0.5rem" }} />
+                    <strong>{tx.network.toUpperCase()}</strong>
+                  </div>
+                  <p><strong>Type:</strong> {tx.type}</p>
+                  <p><strong>Amount:</strong> {tx.amount}</p>
+                  <p><strong>Status:</strong> {renderStatusBadge(tx.status)}</p>
+                  <p><strong>Date:</strong> {new Date(tx.created_at).toLocaleString()}</p>
+                </motion.div>
+              ))}
+            </AnimatePresence>
           </div>
         )}
       </div>
     </main>
   );
-}
-
-// ✅ Helperiai
-function truncateAddress(address) {
-  if (!address || typeof address !== "string") return "Unknown";
-  return `${address.slice(0, 6)}...${address.slice(-4)}`;
-}
-
-function getExplorerURL(hash, network) {
-  const baseURLs = {
-    ethereum: "https://etherscan.io/tx/",
-    bsc: "https://bscscan.com/tx/",
-    tbnb: "https://testnet.bscscan.com/tx/",
-    polygon: "https://polygonscan.com/tx/",
-    avalanche: "https://snowtrace.io/tx/",
-  };
-  return baseURLs[network?.toLowerCase()] + hash;
 }
