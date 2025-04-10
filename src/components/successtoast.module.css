@@ -1,4 +1,4 @@
-/* === SUCCESS TOAST FINAL ULTRA PREMIUM v8 (FIXED POSITION + SIZE) === */
+/* === SUCCESS TOAST FINAL ULTRA PREMIUM v9.0 === */
 
 /* ✅ TOAST MAIN STYLE */
 .toast {
@@ -6,35 +6,23 @@
   top: 24px;
   right: 17%;
   left: auto;
-  background: rgba(15, 15, 15, 0.95);
-  padding: 14px 26px;
-  border-radius: 16px;
-  color: white;
+  background: rgba(15, 15, 15, 0.92);
+  padding: 14px 28px;
+  border-radius: 18px;
+  color: #ffffff;
   font-weight: 700;
   font-size: 16px;
   font-family: var(--font-crypto);
   z-index: 9999;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5), 0 4px 20px rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(10px) saturate(180%);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6), 0 4px 20px rgba(0, 191, 255, 0.25);
+  backdrop-filter: blur(14px) saturate(180%);
   display: flex;
   align-items: center;
-  gap: 12px;
-  min-width: 240px;
-  min-height: 60px;
-  transition: all 0.4s ease, transform 0.4s ease;
-  animation: slideIn 0.6s ease forwards;
-}
-
-/* ✅ SMOOTH SLIDE IN ANIMATION */
-@keyframes slideIn {
-  from {
-    transform: translateX(150%);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
+  gap: 14px;
+  min-width: 260px;
+  min-height: 64px;
+  transition: opacity 0.4s ease, transform 0.4s ease;
+  pointer-events: none; /* ✅ Kad netrukdytų paspaudimams */
 }
 
 /* ✅ LOGO WRAPPER */
@@ -42,6 +30,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  min-width: 32px;
+  min-height: 32px;
 }
 
 /* ✅ MESSAGE */
@@ -50,7 +40,48 @@
   font-family: var(--font-crypto);
   font-weight: 600;
   font-size: 16px;
-  line-height: 1;
   display: flex;
   align-items: center;
+  line-height: 1;
+}
+
+/* ✅ SUPER SMOOTH ENTRANCE + EXIT ANIMATIONS */
+.toast-enter {
+  transform: translateX(150%);
+  opacity: 0;
+}
+.toast-enter-active {
+  transform: translateX(0);
+  opacity: 1;
+  transition: transform 0.5s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.5s ease;
+}
+
+.toast-exit {
+  transform: translateX(0);
+  opacity: 1;
+}
+.toast-exit-active {
+  transform: translateX(150%);
+  opacity: 0;
+  transition: transform 0.45s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.45s ease;
+}
+
+/* ✅ RESPONSIVE CENTERED */
+@media screen and (max-width: 1024px) {
+  .toast {
+    right: 50%;
+    transform: translateX(50%);
+    padding: 12px 24px;
+    min-width: 220px;
+  }
+}
+@media screen and (max-width: 480px) {
+  .toast {
+    right: 50%;
+    transform: translateX(50%);
+    padding: 10px 20px;
+    min-width: 200px;
+    font-size: 14px;
+    gap: 10px;
+  }
 }
