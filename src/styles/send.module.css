@@ -1,4 +1,4 @@
-/* === SEND MODULE – NordBalticum Ultra Premium v12 === */
+/* === SEND MODULE – NordBalticum Ultra Premium V15 FINAL 100X === */
 
 /* ✅ MAIN BACKGROUND FULLSCREEN */
 .main {
@@ -19,23 +19,17 @@
 
 /* ✅ FADE IN EFFECT */
 @keyframes fadeIn {
-  0% {
-    opacity: 0;
-    transform: scale(0.78);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(0.8);
-  }
+  0% { opacity: 0; transform: scale(0.78); }
+  100% { opacity: 1; transform: scale(0.8); }
 }
 
 /* ✅ WRAPPER */
 .wrapper {
-  width: calc(100vw - clamp(180px, 15vw, 360px)); /* ✅ Automatinis plotis */
+  width: calc(100vw - clamp(180px, 12vw, 360px));
   max-width: 960px;
-  min-height: calc(100vh - clamp(180px, 15vh, 360px)); /* ✅ Automatinis aukštis */
+  min-height: calc(100vh - clamp(180px, 12vh, 360px));
   padding: clamp(24px, 5vw, 48px);
-  background: transparent; /* ✅ FONAS FULL TRANSPARENT */
+  background: transparent;
   backdrop-filter: none;
   display: flex;
   flex-direction: column;
@@ -44,9 +38,9 @@
   text-align: center;
   gap: clamp(20px, 4vh, 40px);
   box-sizing: border-box;
-  transform: scale(clamp(0.8, 1vw + 0.5, 1)); /* ✅ AUTOMATINIS MASTELIS */
+  transform: scale(clamp(0.82, 1vw + 0.5, 1));
   transform-origin: top center;
-  transition: transform 0.4s ease;
+  transition: transform 0.4s ease, width 0.4s ease, min-height 0.4s ease;
 }
 
 /* ✅ BALANCE TABLE + FEES */
@@ -198,20 +192,53 @@
   background: linear-gradient(to right, #ff3c3c, #c71d1d);
 }
 
-/* ✅ RESPONSIVE PC & MOBILE */
-@media (max-width: 768px) {
+/* === RESPONSIVE OPTIMIZATION FINAL === */
+
+/* ✅ MINI PHONES (iPhone 14 Pro, Galaxy S24 Ultra) */
+@media (max-width: 400px) {
   .wrapper {
-    width: calc(100vw - 40px);
-    min-height: calc(100vh - 120px);
-    transform: scale(0.95); /* ✅ Telefoniukams */
-    padding: 24px 16px 100px;
+    width: calc(100vw - 16px);
+    min-height: calc(100vh - 80px);
+    transform: scale(0.88);
+    padding: 20px 12px 80px;
   }
 }
 
-@media (max-width: 480px) {
+/* ✅ LARGE PHONES (Galaxy Fold atidarytas) */
+@media (max-width: 768px) and (min-width: 480px) {
   .wrapper {
-    transform: scale(0.92); /* ✅ Mini telefonams */
-    width: calc(100vw - 20px);
+    width: calc(100vw - 40px);
     min-height: calc(100vh - 100px);
+    transform: scale(0.94);
+    padding: 24px 16px 90px;
+  }
+}
+
+/* ✅ TABLETS (iPad, Galaxy Tab) */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .wrapper {
+    width: calc(100vw - 80px);
+    min-height: calc(100vh - 120px);
+    transform: scale(0.96);
+    padding: 32px 24px 100px;
+  }
+}
+
+/* ✅ DESKTOP ULTRA HD (2K - 4K) */
+@media (min-width: 1920px) {
+  .wrapper {
+    width: calc(100vw - clamp(240px, 12vw, 360px));
+    transform: scale(0.85);
+    padding: 48px 32px 120px;
+  }
+}
+
+/* ✅ 8K ULTRA HD */
+@media (min-width: 3840px) {
+  .wrapper {
+    width: calc(100vw - 320px);
+    min-height: calc(100vh - 300px);
+    transform: scale(0.82);
+    padding: 60px 40px 140px;
   }
 }
