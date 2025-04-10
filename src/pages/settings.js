@@ -161,7 +161,6 @@ export default function SettingsPage() {
 
           {/* === SECTION 2: IMPORT WALLET === */}
           <div className={styles.settingsBox}>
-            <h2 className={styles.importWalletTitle}>Import Wallet (Private Key)</h2>
             <WalletImport />
           </div>
 
