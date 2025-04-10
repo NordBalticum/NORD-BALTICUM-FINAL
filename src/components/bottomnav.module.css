@@ -171,11 +171,12 @@
   }
 }
 
-/* === SPECIAL FOR HISTORY PAGE – PERFECT MATCH FINAL === */
+/* === SPECIAL FOR HISTORY PAGE – PERFECT MATCH FINAL ULTIMATE === */
 .historyBottomWrapper {
   position: relative; /* ✅ Slinka su turiniu */
-  margin: 2rem auto 0 auto; /* ✅ Centruotas + tarpas viršuje */
-  width: clamp(280px, 90vw, 520px); /* ✅ Tikslus plotis kaip .navbar */
+  margin: 2rem 0 0 0; /* ✅ Tik viršuje tarpas, jokių auto marginų */
+  width: 100%; /* ✅ Full plotis be apribojimų */
+  max-width: 520px; /* ✅ Tik ribojam max-width kaip originalas */
   height: var(--nav-height, 64px); /* ✅ Tikslus aukštis */
   background: rgba(12, 18, 36, 0.92); /* ✅ IDENTIŠKAS fonas */
   border: 1px solid rgba(255, 255, 255, 0.08); /* ✅ IDENTIŠKAS borderis */
