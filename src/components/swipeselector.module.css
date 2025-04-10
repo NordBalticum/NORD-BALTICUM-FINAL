@@ -1,4 +1,4 @@
-/* === SwipeSelector Ultimate Bank-Level CSS === */
+/* === SwipeSelector Bank v2.0 FINAL === */
 
 .selectorContainer {
   display: flex;
@@ -13,6 +13,7 @@
   padding-top: clamp(16px, 3vw, 32px);
   overflow: visible;
   z-index: 99;
+  transform: translateX(20%);
 }
 
 .arrows {
@@ -35,30 +36,25 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0; /* Kad tekstas netrukdytų */
+  font-size: 0;
   font-weight: 700;
   color: white;
   cursor: pointer;
-  transition: all 0.25s ease;
+  transition: all 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease;
   box-shadow: inset 0 0 6px rgba(255, 255, 255, 0.2), 0 4px 8px rgba(255, 255, 255, 0.08);
   user-select: none;
-}
-
-.arrowBtn svg {
-  width: 22px;
-  height: 22px;
 }
 
 .arrowBtn:hover {
   background: rgba(255, 255, 255, 0.95);
   color: black;
-  transform: scale(1.1);
-  box-shadow: inset 0 0 8px rgba(255, 255, 255, 0.3), 0 6px 12px rgba(255, 255, 255, 0.15);
+  transform: scale(1.12);
+  box-shadow: inset 0 0 10px rgba(255, 255, 255, 0.4), 0 8px 16px rgba(255, 255, 255, 0.15);
 }
 
 .arrowBtn:active {
   transform: scale(0.92);
-  box-shadow: inset 0 0 10px rgba(255, 255, 255, 0.4), 0 2px 6px rgba(255, 255, 255, 0.2);
+  box-shadow: inset 0 0 12px rgba(255, 255, 255, 0.6), 0 2px 6px rgba(255, 255, 255, 0.2);
 }
 
 .arrowBtn:disabled {
@@ -73,13 +69,12 @@
   }
 }
 
-/* Kortelių Wrapperiai */
 .staticWrapper,
 .scrollableWrapper {
   display: flex;
   flex-wrap: wrap;
   gap: clamp(20px, 3vw, 36px);
-  justify-content: center;
+  justify-content: flex-start;
   align-items: center;
   width: 100%;
   padding-block: clamp(16px, 2.5vw, 28px);
@@ -100,7 +95,6 @@
   display: none;
 }
 
-/* Kortelės */
 .card {
   flex: 0 0 auto;
   scroll-snap-align: center;
@@ -116,47 +110,45 @@
   justify-content: center;
   align-items: center;
   text-align: center;
-  transition: transform 0.35s ease, background 0.35s ease;
+  transition: transform 0.35s ease, background 0.35s ease, box-shadow 0.35s ease;
   cursor: pointer;
-  box-shadow: none; /* No default glow */
-  overflow: visible;
 }
 
 .card:hover {
-  transform: scale(1.07);
+  transform: perspective(800px) rotateY(5deg) scale(1.06);
   background: rgba(255, 255, 255, 0.08);
 }
 
-/* ✅ 3D efektas tik su pele (Desktop) */
-@media (hover: hover) and (pointer: fine) {
-  .card:hover {
-    transform: perspective(800px) rotateY(4deg) scale(1.06);
-    background: rgba(255, 255, 255, 0.08);
-  }
-}
-
-/* Aktyvi kortelė */
 .selected {
   border: 2px solid white;
   background: rgba(255, 255, 255, 0.14);
   transform: scale(1.14);
-  animation: pulseGlow 2s infinite ease-in-out;
+  animation: pulseGlow 2s infinite ease-in-out, fadeInSlide 0.5s ease forwards;
 }
 
-/* ✅ Švelnus pulsavimas aktyviai kortelei */
 @keyframes pulseGlow {
   0% {
-    box-shadow: 0 0 6px rgba(255, 255, 255, 0.2);
+    box-shadow: 0 0 8px rgba(0, 191, 255, 0.3);
   }
   50% {
-    box-shadow: 0 0 12px rgba(255, 255, 255, 0.35);
+    box-shadow: 0 0 18px rgba(0, 191, 255, 0.7);
   }
   100% {
-    box-shadow: 0 0 6px rgba(255, 255, 255, 0.2);
+    box-shadow: 0 0 8px rgba(0, 191, 255, 0.3);
   }
 }
 
-/* Logotipai */
+@keyframes fadeInSlide {
+  0% {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
 .logo {
   width: 46px;
   height: 46px;
@@ -167,7 +159,6 @@
   user-select: none;
 }
 
-/* Pavadinimai */
 .name {
   font-size: 16px;
   color: white;
@@ -177,7 +168,6 @@
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
 }
 
-/* Responsyvūs Dydžiai */
 @media screen and (max-width: 1024px) {
   .card {
     width: 92px;
@@ -185,22 +175,13 @@
     padding: 6px;
     border-radius: 14px;
   }
-
   .logo {
     width: 34px;
     height: 34px;
     margin-bottom: 8px;
   }
-
   .name {
     font-size: 11.5px;
-  }
-
-  .arrowBtn {
-    width: 36px;
-    height: 36px;
-    font-size: 14px;
-    border-radius: 8px;
   }
 }
 
@@ -211,22 +192,12 @@
     padding: 5px;
     border-radius: 13px;
   }
-
   .logo {
     width: 32px;
     height: 32px;
-    margin-bottom: 6px;
   }
-
   .name {
     font-size: 10.5px;
-  }
-
-  .arrowBtn {
-    width: 34px;
-    height: 34px;
-    font-size: 13px;
-    border-radius: 7px;
   }
 }
 
@@ -234,23 +205,12 @@
   .card {
     width: 78px;
     height: 92px;
-    padding: 5px;
-    border-radius: 10px;
   }
-
   .logo {
     width: 30px;
     height: 30px;
   }
-
   .name {
     font-size: 10px;
-  }
-
-  .arrowBtn {
-    width: 32px;
-    height: 32px;
-    font-size: 12px;
-    border-radius: 7px;
   }
 }
