@@ -174,12 +174,9 @@
 /* === SPECIAL FOR HISTORY PAGE – PERFECT MATCH === */
 .historyBottomWrapper {
   position: relative; /* ✅ Kad slinktų su turiniu */
-  margin: 0.5rem auto 0 auto; /* ✅ labai mažas tarpas viršuje */
   width: clamp(280px, 90vw, 520px);
   height: var(--nav-height, 64px);
   background: rgba(12, 18, 36, 0.92);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 20px;
   display: flex;
   justify-content: space-around;
   align-items: center;
