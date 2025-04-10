@@ -77,62 +77,64 @@ export default function SettingsPage() {
   }
 
   return (
-    <main className={`${styles.container} ${background.gradient}`}>
-      <div className={styles.box}>
-        {/* Logo */}
-        <Image
-          src="/icons/logo.svg"
-          alt="NordBalticum Logo"
-          width={220}
-          height={80}
-          priority
-          className={styles.logo}
-        />
-
-        {/* Wallet */}
-        <div
-          className={styles.walletBox}
-          onClick={handleCopyWallet}
-          title="Click to copy wallet address"
-        >
-          <p className={styles.walletLabel}>Your Wallet:</p>
-          <p className={styles.walletAddress}>
-            {walletAddress}
-          </p>
-          {copied && <p className={styles.copyStatus}>✅ Copied!</p>}
-        </div>
-
-        {/* Email */}
-        <div className={styles.section}>
-          <h4>Change Email</h4>
-          <p className={styles.currentEmail}>
-            Current: <strong>{user.email}</strong>
-          </p>
-          <input
-            type="email"
-            placeholder="New email address"
-            value={emailInput}
-            onChange={(e) => setEmailInput(e.target.value)}
-            className={styles.input}
+    <main className={`${styles.settingsContainer} ${background.gradient}`}>
+      <div className={styles.settingsWrapper}>
+        <div className={styles.settingsBox}>
+          {/* Logo */}
+          <Image
+            src="/icons/logo.svg"
+            alt="NordBalticum Logo"
+            width={220}
+            height={80}
+            priority
+            className={styles.logo}
           />
-          <button
-            className={styles.button}
-            onClick={handleChangeEmail}
-            disabled={!emailInput.trim()}
-          >
-            Send Magic Link
-          </button>
-          {emailStatus && (
-            <p className={styles.emailStatus}>
-              {emailStatus}
-            </p>
-          )}
-        </div>
 
-        {/* Logout */}
-        <button className={styles.logout} onClick={handleLogout}>
-          Log Out
-        </button>
+          {/* Wallet */}
+          <div
+            className={styles.walletBox}
+            onClick={handleCopyWallet}
+            title="Click to copy wallet address"
+          >
+            <p className={styles.walletLabel}>Your Wallet:</p>
+            <p className={styles.walletAddress}>
+              {walletAddress}
+            </p>
+            {copied && <p className={styles.copyStatus}>✅ Copied!</p>}
+          </div>
+
+          {/* Email */}
+          <div className={styles.section}>
+            <h4>Change Email</h4>
+            <p className={styles.currentEmail}>
+              Current: <strong>{user.email}</strong>
+            </p>
+            <input
+              type="email"
+              placeholder="New email address"
+              value={emailInput}
+              onChange={(e) => setEmailInput(e.target.value)}
+              className={styles.input}
+            />
+            <button
+              className={styles.button}
+              onClick={handleChangeEmail}
+              disabled={!emailInput.trim()}
+            >
+              Send Magic Link
+            </button>
+            {emailStatus && (
+              <p className={styles.emailStatus}>
+                {emailStatus}
+              </p>
+            )}
+          </div>
+
+          {/* Logout */}
+          <button className={styles.logout} onClick={handleLogout}>
+            Log Out
+          </button>
+        </div>
       </div>
     </main>
   );
