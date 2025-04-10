@@ -5,10 +5,10 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import toast, { Toaster } from "react-hot-toast";
 
-import { useAuth } from "@/contexts/AuthContext"; 
+import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/utils/supabaseClient";
 
-import WalletImport from "@/components/WalletImport"; 
+import WalletImport from "@/components/WalletImport";
 import styles from "@/styles/settings.module.css";
 import background from "@/styles/background.module.css";
 
@@ -34,6 +34,10 @@ export default function SettingsPage() {
     }
   }, [wallet]);
 
+  const isValidEmail = (email) => {
+    return /\S+@\S+\.\S+/.test(email);
+  };
+
   const handleChangeEmail = async () => {
     const email = emailInput.trim();
     if (!email) {
@@ -58,8 +62,8 @@ export default function SettingsPage() {
     if (!walletAddress) return;
     try {
       await navigator.clipboard.writeText(walletAddress);
+      toast.success("✅ Wallet address copied!", { duration: 2000 });
       setCopied(true);
-      toast.success("✅ Wallet address copied successfully!");
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
       console.error("Clipboard error:", err);
@@ -73,9 +77,9 @@ export default function SettingsPage() {
       const newWallet = wallet.wallet.createRandom();
       const encrypted = await encrypt(newWallet.privateKey);
       await supabase.from("wallets")
-        .update({ 
-          encrypted_key: encrypted, 
-          eth_address: newWallet.address 
+        .update({
+          encrypted_key: encrypted,
+          eth_address: newWallet.address
         })
         .eq("user_email", user.email);
 
@@ -122,10 +126,10 @@ export default function SettingsPage() {
   }
 
   return (
-    <main 
-  style={{ width: "100vw", height: "100vh", overflowY: "auto" }} 
-  className={`${styles.container} ${background.gradient}`}
->
+    <main
+      style={{ width: "100vw", height: "100vh", overflowY: "auto" }}
+      className={`${styles.container} ${background.gradient}`}
+    >
       <Toaster position="top-center" reverseOrder={false} />
 
       <div className={styles.settingsContainer}>
@@ -155,34 +159,52 @@ export default function SettingsPage() {
             </div>
           </div>
 
-{/* === SECTION 2: CHANGE EMAIL === */}
-<div className={styles.settingsBox}>
-  <h3 className={styles.sectionTitle}>Change Email</h3>
-  <input
-    type="email"
-    placeholder="New email address"
-    value={emailInput}
-    onChange={(e) => setEmailInput(e.target.value)}
-    className={styles.input}
-    style={{
-      padding: "14px 20px",   // ✅ Didesnis horizontalus paddingas, mažesnis vertikalus
-      fontSize: "15px",        // ✅ Šiek tiek mažesnis šriftas
-      width: "100%",           // ✅ Užpildo visą kortelės plotį
-      borderRadius: "12px",    // ✅ Apvalesni kampai kaip wallet input
-    }}
-  />
-  <button
-    className={styles.button}
-    onClick={handleChangeEmail}
-    disabled={!emailInput.trim() || loadingEmail}
-  >
-    {loadingEmail ? "Sending..." : "Send Magic Link"}
-  </button>
-</div>
-
-          {/* === SECTION 3: IMPORT WALLET === */}
+          {/* === SECTION 2: IMPORT WALLET === */}
           <div className={styles.settingsBox}>
             <WalletImport />
+          </div>
+
+          {/* === SECTION 3: CHANGE EMAIL === */}
+          <div className={styles.settingsBox}>
+            <h3 className={styles.sectionTitle}>Change Email</h3>
+            <div style={{ position: "relative", width: "100%" }}>
+              <input
+                type="email"
+                placeholder="New email address"
+                value={emailInput}
+                onChange={(e) => setEmailInput(e.target.value)}
+                className={styles.input}
+                style={{
+                  padding: "14px 20px",
+                  fontSize: "15px",
+                  width: "100%",
+                  borderRadius: "12px",
+                  paddingRight: "48px",
+                }}
+              />
+              {isValidEmail(emailInput) && (
+                <span
+                  style={{
+                    position: "absolute",
+                    right: "16px",
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    fontSize: "18px",
+                    color: "#00FF00",
+                    opacity: 0.8,
+                  }}
+                >
+                  ✅
+                </span>
+              )}
+            </div>
+            <button
+              className={styles.button}
+              onClick={handleChangeEmail}
+              disabled={!emailInput.trim() || loadingEmail}
+            >
+              {loadingEmail ? "Sending..." : "Send Magic Link"}
+            </button>
           </div>
 
           {/* === SECTION 4: DANGER ZONE === */}
