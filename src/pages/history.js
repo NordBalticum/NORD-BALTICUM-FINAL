@@ -69,7 +69,7 @@ export default function HistoryPage() {
   }, [fetchUserTransactions]);
 
   const isTestnet = (network) => {
-    return network === "bsc_testnet" || network === "avax_testnet";
+    return network === "bsc_testnet"; // Tik BSC Testnet
   };
 
   const filteredTransactions = transactions.filter((tx) => {
@@ -99,7 +99,6 @@ export default function HistoryPage() {
       case "polygon":
         return "https://cryptologos.cc/logos/polygon-matic-logo.png";
       case "avax":
-      case "avax_testnet":
         return "https://cryptologos.cc/logos/avalanche-avax-logo.png";
       default:
         return "https://cryptologos.cc/logos/question-mark.svg";
@@ -166,7 +165,6 @@ export default function HistoryPage() {
               <option value="eth">Ethereum Mainnet</option>
               <option value="polygon">Polygon Mainnet</option>
               <option value="avax">Avalanche Mainnet</option>
-              <option value="avax_testnet">Avalanche Testnet</option>
             </select>
 
             <select
