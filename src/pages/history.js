@@ -69,7 +69,7 @@ export default function HistoryPage() {
   }, [fetchUserTransactions]);
 
   const isTestnet = (network) => {
-    return network === "bsc_testnet"; // Tik BSC Testnet
+    return network === "tbnb"; // Tik TBNB laikom testnet
   };
 
   const filteredTransactions = transactions.filter((tx) => {
@@ -91,8 +91,8 @@ export default function HistoryPage() {
 
   const getNetworkLogo = (network) => {
     switch (network) {
-      case "bsc":
-      case "bsc_testnet":
+      case "bnb":
+      case "tbnb":
         return "https://cryptologos.cc/logos/binance-coin-bnb-logo.png";
       case "eth":
         return "https://cryptologos.cc/logos/ethereum-eth-logo.png";
@@ -116,7 +116,7 @@ export default function HistoryPage() {
   if (!user || !wallet?.wallet?.address) {
     return (
       <div className={styles.loading}>
-        <MiniLoadingSpinner /> Preparing user...
+        <MiniLoadingSpinner /> Preparing wallet...
       </div>
     );
   }
@@ -127,7 +127,7 @@ export default function HistoryPage() {
         <h1 className={styles.title}>TRANSACTION HISTORY</h1>
         <p className={styles.subtext}>Your latest crypto activity</p>
 
-        {/* Filter + Mainnet Toggle */}
+        {/* Filters */}
         <div style={{ display: "flex", flexDirection: "column", gap: "1rem", marginBottom: "1.5rem" }}>
           <button
             onClick={() => setShowMainnetOnly(!showMainnetOnly)}
@@ -160,8 +160,8 @@ export default function HistoryPage() {
               }}
             >
               <option value="All">All Networks</option>
-              <option value="bsc">BSC Mainnet</option>
-              <option value="bsc_testnet">BSC Testnet</option>
+              <option value="bnb">BNB Mainnet</option>
+              <option value="tbnb">BNB Testnet</option>
               <option value="eth">Ethereum Mainnet</option>
               <option value="polygon">Polygon Mainnet</option>
               <option value="avax">Avalanche Mainnet</option>
