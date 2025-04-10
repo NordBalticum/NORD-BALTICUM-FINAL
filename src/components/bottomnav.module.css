@@ -173,13 +173,14 @@
 
 /* === SPECIAL FOR HISTORY PAGE – PERFECT MATCH FINAL ULTIMATE === */
 .historyBottomWrapperContainer {
+  position: relative; /* ✅ Slinka su turiniu */
   width: 100%;
   max-width: 520px;
   margin: 2rem auto 0 auto;
   border-radius: 20px;
-  overflow: hidden;
-  background: transparent;
-  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.45);
+  overflow: visible; /* ✅ Leisti blur'ui natūraliai plisti */
+  background: transparent; /* ✅ Skaidrus fonas */
+  box-shadow: none; /* ✅ JOKIO šešėlio */
 }
 
 .historyBottomWrapper {
@@ -188,7 +189,11 @@
   display: flex;
   justify-content: space-around;
   align-items: center;
-  backdrop-filter: blur(20px) saturate(180%);
+  backdrop-filter: blur(20px) saturate(180%); /* ✅ Tik blur efektas */
+  background: rgba(12, 18, 36, 0.6); /* ✅ Tik lengvas permatomas fonas */
   padding: 0 clamp(6px, 2vw, 14px);
   box-sizing: border-box;
+  border: 1px solid rgba(255, 255, 255, 0.08); /* ✅ Plonas borderis */
+  border-radius: 20px;
 }
+
