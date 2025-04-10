@@ -1,24 +1,24 @@
-/* === SUCCESS TOAST FINAL ULTRA PREMIUM V11 === */
+/* === SUCCESS TOAST FINAL ULTRA PREMIUM V12 === */
 
 .toast {
   position: fixed;
-  top: 24px;
-  right: 25%;
+  top: clamp(18px, 5vw, 32px); /* ✅ Aukštis dinamiškas - nesikerta su rodyklėm */
+  right: clamp(6%, 17%, 18%);
   background: rgba(15, 15, 15, 0.92);
-  padding: 14px 28px;
-  border-radius: 18px;
+  padding: clamp(10px, 2vw, 14px) clamp(18px, 4vw, 28px);
+  border-radius: clamp(14px, 2vw, 18px);
   color: #ffffff;
   font-weight: 700;
-  font-size: 16px;
+  font-size: clamp(14px, 1.5vw, 16px);
   font-family: var(--font-crypto);
   z-index: 9999;
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6), 0 4px 20px rgba(0, 191, 255, 0.25);
   backdrop-filter: blur(14px) saturate(180%);
   display: flex;
   align-items: center;
-  gap: 14px;
-  min-width: 260px;
-  min-height: 50px;
+  gap: clamp(10px, 2vw, 14px);
+  min-width: clamp(200px, 30vw, 260px);
+  min-height: clamp(52px, 7vh, 64px);
   pointer-events: none;
   transition: opacity 0.45s ease, transform 0.45s ease;
 }
@@ -28,8 +28,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  min-width: 32px;
-  min-height: 32px;
+  min-width: clamp(28px, 3vw, 32px);
+  min-height: clamp(28px, 3vw, 32px);
 }
 
 /* ✅ MESSAGE */
@@ -37,47 +37,13 @@
   white-space: nowrap;
   font-family: var(--font-crypto);
   font-weight: 600;
-  font-size: 16px;
+  font-size: clamp(14px, 1.5vw, 16px);
   display: flex;
   align-items: center;
   line-height: 1;
 }
 
-/* ✅ RESPONSIVE TWEAKS */
-@media screen and (max-width: 1024px) {
-  .toast {
-    right: 18%;
-    min-height: 60px;
-    padding: 12px 24px;
-    min-width: 240px;
-    font-size: 15px;
-    gap: 12px;
-  }
-}
-
-@media screen and (max-width: 768px) {
-  .toast {
-    right: 14%;
-    min-height: 56px;
-    padding: 10px 20px;
-    min-width: 220px;
-    font-size: 14px;
-    gap: 10px;
-  }
-}
-
-@media screen and (max-width: 480px) {
-  .toast {
-    right: 12%;
-    min-height: 52px;
-    padding: 8px 18px;
-    min-width: 200px;
-    font-size: 13.5px;
-    gap: 8px;
-  }
-}
-
-/* ✅ ANIMATIONS SUPER SMOOTH */
+/* ✅ SUPER SMOOTH ENTRANCE + EXIT ANIMATIONS */
 .toast-enter {
   transform: translateX(150%);
   opacity: 0;
