@@ -8,7 +8,7 @@ import { getGasPrice } from "@/utils/getGasPrice";
 const encode = (str) => new TextEncoder().encode(str);
 const decode = (buf) => new TextDecoder().decode(buf);
 
-// Gauti AES raktą
+// AES raktas
 const getKey = async () => {
   const keyMaterial = await window.crypto.subtle.importKey(
     "raw",
@@ -43,6 +43,24 @@ const decrypt = async (ciphertext) => {
   return decode(decrypted);
 };
 
+// Žemėlapis tinklams (kad būtų teisingi trumpiniai)
+const mapNetwork = (network) => {
+  switch (network) {
+    case "ethereum":
+      return "eth";
+    case "bsc":
+      return "bsc";
+    case "tbnb":
+      return "bsc_testnet";
+    case "polygon":
+      return "polygon";
+    case "avalanche":
+      return "avax";
+    default:
+      return network;
+  }
+};
+
 // Pagrindinė siuntimo funkcija
 export async function sendTransaction({ to, amount, network, userEmail, gasOption = "average" }) {
   if (typeof window === "undefined") return;
@@ -65,29 +83,34 @@ export async function sendTransaction({ to, amount, network, userEmail, gasOptio
   try {
     const provider = new ethers.JsonRpcProvider(rpcUrl);
 
-    // Gauti ir dešifruoti vartotojo privatų raktą
+    // Gauti vartotojo piniginę iš DB
     const { data, error: walletError } = await supabase
       .from("wallets")
       .select("encrypted_key")
       .eq("user_email", userEmail)
       .single();
-    if (walletError || !data?.encrypted_key) throw new Error("❌ Failed to retrieve encrypted private key.");
+
+    if (walletError || !data?.encrypted_key) {
+      throw new Error("❌ Failed to retrieve encrypted private key.");
+    }
 
     const decryptedPrivateKey = await decrypt(data.encrypted_key);
-    if (!decryptedPrivateKey) throw new Error("❌ Failed to decrypt private key.");
+    if (!decryptedPrivateKey) {
+      throw new Error("❌ Failed to decrypt private key.");
+    }
 
     const wallet = new ethers.Wallet(decryptedPrivateKey, provider);
 
     // Apskaičiuoti sumas
     const totalAmount = ethers.parseEther(amount.toString());
-    const adminFee = totalAmount * 3n / 100n; // 3% mokesčio
+    const adminFee = totalAmount * 3n / 100n; // 3% fee
     const userAmount = totalAmount - adminFee;
 
-    // Gauti pasirinktą Gas Price
+    // Gauti šviežią Gas Price
     const freshGasPrice = await getGasPrice(provider, gasOption);
-    const gasLimit = 21000n; // Paprasta ETH/BSC transakcija
+    const gasLimit = 21000n;
 
-    // Saugiai siųsti transakciją
+    // Funkcija saugiam siuntimui
     async function safeSend({ to, value }) {
       try {
         const tx = await wallet.sendTransaction({ to, value, gasLimit, gasPrice: freshGasPrice });
@@ -117,17 +140,17 @@ export async function sendTransaction({ to, amount, network, userEmail, gasOptio
 
     console.log("✅ Transaction successful:", userTxHash);
 
-    // 3. Įrašyti į DB
+    // 3. Įrašyti į Transactions lentelę
     await supabase.from("transactions").insert([
       {
         sender_address: wallet.address,
         receiver_address: to,
         amount: Number(ethers.formatEther(userAmount)),
         fee: Number(ethers.formatEther(adminFee)),
-        network,
+        network: mapNetwork(network),
         type: "send",
         tx_hash: userTxHash,
-        status: "success",
+        status: "completed", // completed kad veiktų history.js
         user_email: userEmail,
       },
     ]);
