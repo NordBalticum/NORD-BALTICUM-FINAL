@@ -100,9 +100,9 @@ export default function SwipeSelector({ onSelect }) {
       </div>
 
       <div
-        ref={containerRef}
-        className={isMobile ? styles.scrollableWrapper : styles.staticWrapper}
-      >
+  ref={containerRef}
+  className={styles.staticWrapper}
+>
         {supportedNetworks.map((net, index) => (
           <motion.div
             key={net.symbol}
