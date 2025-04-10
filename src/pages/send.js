@@ -50,11 +50,11 @@ const buttonColors = {
 
 // ✅ Minimalios sumos
 const minAmounts = {
-  ethereum: 0.001,
-  bsc: 0.0005,
+  eth: 0.001,
+  bnb: 0.0005,
   tbnb: 0.0005,
-  polygon: 0.1,
-  avalanche: 0.01,
+  matic: 0.1,
+  avax: 0.01,
 };
 
 export default function SendPage() {
