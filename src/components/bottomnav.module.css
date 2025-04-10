@@ -186,7 +186,6 @@
   backdrop-filter: blur(20px) saturate(180%);
   box-shadow: 0 12px 36px rgba(0, 0, 0, 0.45);
   padding: 0 clamp(6px, 2vw, 14px);
-  transform: scale(0.97);
   animation: fadeInUp 0.5s ease-out;
   transition: all 0.3s ease;
   pointer-events: auto;
