@@ -181,6 +181,7 @@
   background: rgba(12, 18, 36, 0.92); /* ✅ IDENTIŠKAS fonas */
   border: 1px solid rgba(255, 255, 255, 0.08); /* ✅ IDENTIŠKAS borderis */
   border-radius: 20px; /* ✅ IDENTIŠKAS kampų užapvalinimas */
+  overflow: hidden;
   display: flex;
   justify-content: space-around;
   align-items: center;
