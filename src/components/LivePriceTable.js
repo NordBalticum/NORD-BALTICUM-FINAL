@@ -7,10 +7,30 @@ import axios from "axios";
 import styles from "./livepricetable.module.css";
 
 const tokens = [
-  { id: "binancecoin", symbol: "BNB", logo: "https://cryptologos.cc/logos/binance-coin-bnb-logo.png", route: "/bnb" },
-  { id: "ethereum", symbol: "ETH", logo: "https://cryptologos.cc/logos/ethereum-eth-logo.png", route: "/eth" },
-  { id: "matic-network", symbol: "MATIC", logo: "https://cryptologos.cc/logos/polygon-matic-logo.png", route: "/matic" },
-  { id: "avalanche-2", symbol: "AVAX", logo: "https://cryptologos.cc/logos/avalanche-avax-logo.png", route: "/avax" },
+  {
+    id: "binancecoin",
+    symbol: "BNB",
+    logo: "https://assets.coingecko.com/coins/images/825/large/bnb-icon2_2x.png",
+    route: "/bnb",
+  },
+  {
+    id: "ethereum",
+    symbol: "ETH",
+    logo: "https://assets.coingecko.com/coins/images/279/large/ethereum.png",
+    route: "/eth",
+  },
+  {
+    id: "matic-network",
+    symbol: "MATIC",
+    logo: "https://assets.coingecko.com/coins/images/4713/large/matic-token-icon.png",
+    route: "/matic",
+  },
+  {
+    id: "avalanche-2",
+    symbol: "AVAX",
+    logo: "https://assets.coingecko.com/coins/images/12559/large/Avalanche_Circle_RedWhite_Logo.png",
+    route: "/avax",
+  },
 ];
 
 const currencies = ["eur", "usd"];
