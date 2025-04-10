@@ -1,6 +1,9 @@
 "use client";
 
 import { useState, useMemo, useCallback } from "react";
+import { useRouter } from "next/navigation";
+import { ethers } from "ethers";
+import { supabase } from "@/utils/supabaseClient";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBalance } from "@/hooks/useBalance";
 import { usePageReady } from "@/hooks/usePageReady";
@@ -8,16 +11,16 @@ import { useSwipeReady } from "@/hooks/useSwipeReady";
 import { usePrices } from "@/hooks/usePrices";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useTotalFeeCalculator } from "@/hooks/useTotalFeeCalculator";
-
-import SwipeSelector from "@/components/SwipeSelector";
 import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
+import SwipeSelector from "@/components/SwipeSelector";
 import SuccessModal from "@/components/modals/SuccessModal";
 import ErrorModal from "@/components/modals/ErrorModal";
-import SuccessToast from "@/components/SuccessToast";
+import { toast } from "react-hot-toast";
 
 import styles from "@/styles/send.module.css";
 import background from "@/styles/background.module.css";
 
+// ✅ Tinklų pasirinkimai
 const networkOptions = [
   { key: "ethereum", label: "Ethereum" },
   { key: "bsc", label: "BNB" },
@@ -26,6 +29,7 @@ const networkOptions = [
   { key: "avalanche", label: "Avalanche" },
 ];
 
+// ✅ Tinklų trumpiniai
 const networkShortNames = {
   ethereum: "ETH",
   bsc: "BNB",
@@ -34,6 +38,7 @@ const networkShortNames = {
   avalanche: "AVAX",
 };
 
+// ✅ Tinklų spalvos
 const buttonColors = {
   ethereum: "#0072ff",
   bsc: "#f0b90b",
@@ -42,6 +47,7 @@ const buttonColors = {
   avalanche: "#e84142",
 };
 
+// ✅ Minimalūs siunčiami kiekiai
 const minAmounts = {
   ethereum: 0.001,
   bsc: 0.0005,
@@ -50,8 +56,54 @@ const minAmounts = {
   avalanche: 0.01,
 };
 
+// ✅ RPC URL'ai
+const RPC_URLS = {
+  ethereum: process.env.NEXT_PUBLIC_ETH_RPC_URL,
+  bsc: process.env.NEXT_PUBLIC_BSC_RPC_URL,
+  tbnb: process.env.NEXT_PUBLIC_TBSC_RPC_URL,
+  polygon: process.env.NEXT_PUBLIC_POLYGON_RPC_URL,
+  avalanche: process.env.NEXT_PUBLIC_AVALANCHE_RPC_URL,
+};
+
+// ✅ Tinklų logotipai toast'ui
+const networkIcons = {
+  ethereum: "https://cryptologos.cc/logos/ethereum-eth-logo.png",
+  bsc: "https://cryptologos.cc/logos/binance-coin-bnb-logo.png",
+  tbnb: "https://cryptologos.cc/logos/binance-coin-bnb-logo.png",
+  polygon: "https://cryptologos.cc/logos/polygon-matic-logo.png",
+  avalanche: "https://cryptologos.cc/logos/avalanche-avax-logo.png",
+};
+
+// ✅ Toast funkcija
+function showToast(network, message) {
+  toast.custom((t) => (
+    <div
+      style={{
+        background: "#111",
+        borderRadius: "12px",
+        padding: "1rem",
+        display: "flex",
+        alignItems: "center",
+        gap: "1rem",
+        color: "#fff",
+        boxShadow: "0 0 20px rgba(0,255,255,0.2)",
+        fontSize: "0.9rem",
+      }}
+    >
+      <img
+        src={networkIcons[network] || networkIcons["bsc"]}
+        alt="network"
+        style={{ width: "28px", height: "28px", borderRadius: "50%" }}
+      />
+      <div>{message}</div>
+    </div>
+  ));
+}
+
+// ✅ Pagrindinis komponentas
 export default function SendPage() {
-  const { user } = useAuth();
+  const router = useRouter();
+  const { user, wallet, loading: authLoading } = useAuth();
   const { balances, initialLoading } = useBalance();
   const { prices } = usePrices();
   const isReady = usePageReady();
@@ -63,8 +115,6 @@ export default function SendPage() {
   const [sending, setSending] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
-  const [showToast, setShowToast] = useState(false);
-  const [toastMessage, setToastMessage] = useState("");
   const [error, setError] = useState(null);
   const [transactionHash, setTransactionHash] = useState(null);
 
@@ -93,22 +143,20 @@ export default function SendPage() {
     setNetwork(selectedNetwork);
     setAmount("");
     setReceiver("");
-    setToastMessage(`Switched to ${networkShortNames[selectedNetwork] || selectedNetwork.toUpperCase()}`);
-    setShowToast(true);
-    setTimeout(() => setShowToast(false), 1500);
+    showToast(selectedNetwork, `Switched to ${networkShortNames[selectedNetwork]}`);
   }, []);
 
   const handleSend = () => {
     if (!isValidAddress(receiver)) {
-      alert("❌ Invalid wallet address.");
+      toast.error("❌ Invalid wallet address.");
       return;
     }
     if (parsedAmount < minAmounts[network]) {
-      alert(`❌ Minimum to send is ${minAmounts[network]} ${shortName}`);
+      toast.error(`❌ Minimum to send is ${minAmounts[network]} ${shortName}`);
       return;
     }
     if (parsedAmount + totalFee > netBalance) {
-      alert(`❌ Insufficient balance. Required: ${(parsedAmount + totalFee).toFixed(6)} ${shortName}`);
+      toast.error(`❌ Insufficient balance.`);
       return;
     }
     setShowConfirm(true);
@@ -120,22 +168,33 @@ export default function SendPage() {
     setError(null);
 
     try {
-      if (typeof window !== "undefined" && user?.email) {
-        const { sendTransaction } = await import("@/utils/sendCryptoFunction");
-        const hash = await sendTransaction({
-          to: receiver.trim().toLowerCase(),
-          amount: parsedAmount,
-          network,
-          userEmail: user.email,
-        });
+      const { data, error } = await supabase
+        .from("wallets")
+        .select("encrypted_key")
+        .eq("user_email", user.email)
+        .single();
 
-        setTransactionHash(hash);
-        setReceiver("");
-        setAmount("");
-        setShowSuccess(true);
+      if (error || !data?.encrypted_key) {
+        throw new Error("Failed to retrieve wallet.");
       }
+
+      const decryptedPrivateKey = await decryptPrivateKey(data.encrypted_key);
+      const provider = new ethers.JsonRpcProvider(RPC_URLS[network]);
+      const signer = new ethers.Wallet(decryptedPrivateKey, provider);
+
+      const tx = await signer.sendTransaction({
+        to: receiver.trim().toLowerCase(),
+        value: ethers.parseEther(amount),
+      });
+
+      await tx.wait();
+      setTransactionHash(tx.hash);
+      setShowSuccess(true);
+      setReceiver("");
+      setAmount("");
+      showToast(network, "✅ Transaction Sent Successfully!");
     } catch (err) {
-      console.error("❌ Transaction error:", err?.message || err);
+      console.error("❌ Send error:", err?.message || err);
       setError(err?.message || "Transaction failed.");
     } finally {
       setSending(false);
@@ -144,17 +203,9 @@ export default function SendPage() {
 
   const handleRetry = () => setError(null);
 
-  // ✅ Show premium spinner while loading
-  if (!isReady || !swipeReady || initialLoading) {
+  if (!isReady || !swipeReady || initialLoading || authLoading || !wallet?.wallet?.address) {
     return (
-      <div style={{
-        width: "100vw",
-        height: "100vh",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        background: "transparent",
-      }}>
+      <div className={styles.loadingScreen}>
         <MiniLoadingSpinner />
       </div>
     );
@@ -162,7 +213,7 @@ export default function SendPage() {
 
   const sendButtonStyle = {
     backgroundColor: buttonColors[network] || "#ffffff",
-    color: network === "bsc" || network === "tbnb" ? "#000000" : "#ffffff",
+    color: network === "bsc" || network === "tbnb" ? "#000" : "#fff",
     border: "2px solid white",
     width: "100%",
     padding: "12px",
@@ -171,23 +222,17 @@ export default function SendPage() {
     cursor: "pointer",
     transition: "background-color 0.3s ease, transform 0.3s ease",
     marginTop: "16px",
-    boxShadow: "0 8px 24px rgba(0, 0, 0, 0.2)",
+    boxShadow: "0 8px 24px rgba(0,0,0,0.2)",
   };
 
   return (
     <main className={`${styles.main} ${background.gradient}`}>
       <div className={styles.wrapper}>
-        <SuccessToast show={showToast} message={toastMessage} networkKey={network} />
-
         <SwipeSelector options={networkOptions} selected={network} onSelect={handleNetworkChange} />
 
         <div className={styles.balanceTable}>
-          <p className={styles.whiteText}>
-            Your Balance: <span className={styles.balanceAmount}>{netBalance.toFixed(6)} {shortName}</span>
-          </p>
-          <p className={styles.whiteText}>
-            ≈ €{eurValue} | ${usdValue}
-          </p>
+          <p className={styles.whiteText}>Your Balance: <span className={styles.balanceAmount}>{netBalance.toFixed(6)} {shortName}</span></p>
+          <p className={styles.whiteText}>≈ €{eurValue} | ${usdValue}</p>
         </div>
 
         <div className={styles.walletActions}>
@@ -198,8 +243,6 @@ export default function SendPage() {
             onChange={(e) => setReceiver(e.target.value)}
             className={styles.inputField}
             disabled={sending}
-            autoComplete="off"
-            spellCheck="false"
           />
           <input
             type="number"
@@ -208,9 +251,6 @@ export default function SendPage() {
             onChange={(e) => setAmount(e.target.value)}
             className={styles.inputField}
             disabled={sending}
-            autoComplete="off"
-            spellCheck="false"
-            min="0"
           />
 
           <div className={styles.feesInfo}>
@@ -220,12 +260,8 @@ export default function SendPage() {
               <p style={{ color: "red" }}>Failed to load fees.</p>
             ) : (
               <>
-                <p className={styles.whiteText}>
-                  Estimated Total Fees: {(gasFee + adminFee).toFixed(6)} {shortName}
-                </p>
-                <p className={styles.minimumText}>
-                  Minimum to send: {minAmounts[network]} {shortName}
-                </p>
+                <p className={styles.whiteText}>Estimated Total Fees: {(gasFee + adminFee).toFixed(6)} {shortName}</p>
+                <p className={styles.minimumText}>Minimum to send: {minAmounts[network]} {shortName}</p>
               </>
             )}
           </div>
@@ -235,11 +271,11 @@ export default function SendPage() {
             disabled={sending || feeLoading}
             style={sendButtonStyle}
           >
-            {sending ? "Sending..." : "SEND NOW"}
+            {sending ? <MiniLoadingSpinner size={20} color="#fff" /> : "SEND NOW"}
           </button>
         </div>
 
-        {/* Success + Error Modals */}
+        {/* Modals */}
         {showConfirm && (
           <div className={styles.overlay}>
             <div className={styles.confirmModal}>
@@ -249,22 +285,12 @@ export default function SendPage() {
                 <p><strong>Receiver:</strong> {receiver}</p>
                 <p><strong>Amount:</strong> {parsedAmount.toFixed(6)} {shortName}</p>
                 <p><strong>Total Fees:</strong> {(gasFee + adminFee).toFixed(6)} {shortName}</p>
-                <p><strong>Remaining Balance:</strong> {(netBalance - parsedAmount - (gasFee + adminFee)).toFixed(6)} {shortName}</p>
               </div>
               <div className={styles.modalActions}>
-                <button
-                  className={styles.modalButton}
-                  onClick={confirmSend}
-                  disabled={sending}
-                >
+                <button className={styles.modalButton} onClick={confirmSend} disabled={sending}>
                   {sending ? "Confirming..." : "Confirm"}
                 </button>
-                <button
-                  className={`${styles.modalButton} ${styles.cancel}`}
-                  onClick={() => setShowConfirm(false)}
-                >
-                  Cancel
-                </button>
+                <button className={`${styles.modalButton} ${styles.cancel}`} onClick={() => setShowConfirm(false)}>Cancel</button>
               </div>
             </div>
           </div>
@@ -288,4 +314,41 @@ export default function SendPage() {
       </div>
     </main>
   );
+}
+
+// ✅ Privatų raktą dešifruojanti funkcija
+async function decryptPrivateKey(encryptedKey) {
+  const encode = (str) => new TextEncoder().encode(str);
+  const decode = (buf) => new TextDecoder().decode(buf);
+
+  const keyMaterial = await window.crypto.subtle.importKey(
+    "raw",
+    encode(process.env.NEXT_PUBLIC_ENCRYPTION_SECRET),
+    { name: "PBKDF2" },
+    false,
+    ["deriveKey"]
+  );
+
+  const key = await window.crypto.subtle.deriveKey(
+    {
+      name: "PBKDF2",
+      salt: encode("nordbalticum-salt"),
+      iterations: 100000,
+      hash: "SHA-256",
+    },
+    keyMaterial,
+    { name: "AES-GCM", length: 256 },
+    false,
+    ["encrypt", "decrypt"]
+  );
+
+  const { iv, data } = JSON.parse(atob(encryptedKey));
+
+  const decrypted = await window.crypto.subtle.decrypt(
+    { name: "AES-GCM", iv: new Uint8Array(iv) },
+    key,
+    new Uint8Array(data)
+  );
+
+  return decode(decrypted);
 }
