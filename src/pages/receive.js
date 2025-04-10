@@ -5,8 +5,9 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import QRCode from "react-qr-code";
 import { supabase } from "@/utils/supabaseClient";
-
-import { useAuth } from "@/contexts/AuthContext"; 
+import { toast } from "react-hot-toast";
+import { useAuth } from "@/contexts/AuthContext";
+import ReceiveSuccessModal from "@/components/modals/ReceiveSuccessModal";
 import styles from "@/styles/receive.module.css";
 import background from "@/styles/background.module.css";
 
@@ -16,10 +17,26 @@ export default function Receive() {
 
   const [isClient, setIsClient] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [receivedAmount, setReceivedAmount] = useState("");
+  const [receivedNetwork, setReceivedNetwork] = useState("");
+  const [receivedTxHash, setReceivedTxHash] = useState("");
+
+  const playReceiveSound = () => {
+    const audio = new Audio("https://assets.mixkit.co/sfx/preview/mixkit-bell-notification-933.mp3");
+    audio.play();
+  };
+
+  const requestNotificationPermission = async () => {
+    if ("Notification" in window && Notification.permission !== "granted") {
+      await Notification.requestPermission();
+    }
+  };
 
   useEffect(() => {
     if (typeof window !== "undefined") {
       setIsClient(true);
+      requestNotificationPermission(); // Paprašom leidimo iškart
     }
   }, []);
 
@@ -50,7 +67,52 @@ export default function Receive() {
         const { new: tx } = payload;
         if (tx?.receiver_address?.toLowerCase() === wallet.wallet.address.toLowerCase()) {
           console.log("✅ New Incoming Transaction Received:", tx);
-          // Galima būtų rodyti "Transaction Received!" notification (bonus)
+
+          playReceiveSound();
+
+          // Modal info
+          setReceivedAmount(tx.amount);
+          setReceivedNetwork(tx.network);
+          setReceivedTxHash(tx.tx_hash);
+          setModalOpen(true);
+
+          // Bounce Toast
+          toast.success(
+            (t) => (
+              <span>
+                +{tx.amount} {tx.network.toUpperCase()} received!
+                <br />
+                <a
+                  href={getExplorerUrl(tx.network, tx.tx_hash)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ color: "#00FF00", textDecoration: "underline", fontSize: "0.85rem" }}
+                >
+                  View on Explorer
+                </a>
+              </span>
+            ),
+            {
+              style: {
+                background: "#0a0a0a",
+                color: "#fff",
+                border: "2px solid #00FF00",
+                animation: "bounce 0.5s ease",
+              },
+              iconTheme: {
+                primary: "#00FF00",
+                secondary: "#0a0a0a",
+              },
+            }
+          );
+
+          // Desktop notification
+          if ("Notification" in window && Notification.permission === "granted") {
+            new Notification("Received Crypto", {
+              body: `+${tx.amount} ${tx.network.toUpperCase()} received!`,
+              icon: "https://cryptologos.cc/logos/binance-coin-bnb-logo.png", // ar kitą ikoną
+            });
+          }
         }
       })
       .subscribe();
@@ -59,6 +121,23 @@ export default function Receive() {
       supabase.removeChannel(subscription);
     };
   }, [wallet]);
+
+  const getExplorerUrl = (network, txHash) => {
+    switch (network) {
+      case "bsc":
+        return `https://bscscan.com/tx/${txHash}`;
+      case "bsc_testnet":
+        return `https://testnet.bscscan.com/tx/${txHash}`;
+      case "eth":
+        return `https://etherscan.io/tx/${txHash}`;
+      case "polygon":
+        return `https://polygonscan.com/tx/${txHash}`;
+      case "avax":
+        return `https://snowtrace.io/tx/${txHash}`;
+      default:
+        return "#";
+    }
+  };
 
   if (!isClient || loading) {
     return <div className={styles.loadingScreen}>Loading Wallet...</div>;
@@ -77,20 +156,19 @@ export default function Receive() {
       transition={{ duration: 0.6 }}
       className={`${styles.main} ${background.gradient}`}
     >
+      <ReceiveSuccessModal
+        show={modalOpen}
+        onClose={() => setModalOpen(false)}
+        amount={receivedAmount}
+        network={receivedNetwork}
+      />
+
       <div className={styles.globalContainer}>
         <motion.div
           className={styles.wrapper}
           initial={{ scale: 0.95, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ duration: 0.8, ease: "easeOut" }}
-          style={{
-            background: "rgba(255, 255, 255, 0.05)",
-            borderRadius: "20px",
-            boxShadow: "0 8px 32px rgba(31, 38, 135, 0.37)",
-            backdropFilter: "blur(10px)",
-            border: "1px solid rgba(255, 255, 255, 0.18)",
-            padding: "2rem",
-          }}
         >
           <h1 className={styles.title}>RECEIVE</h1>
           <p className={styles.subtext}>Your MultiNetwork Receiving Address</p>
@@ -100,12 +178,6 @@ export default function Receive() {
             whileHover={{ scale: 1.05 }}
             className={styles.qrWrapper}
             onClick={() => handleCopy(address)}
-            style={{
-              padding: "1rem",
-              borderRadius: "20px",
-              background: "rgba(255, 255, 255, 0.02)",
-              boxShadow: "0 0 20px rgba(0, 255, 255, 0.3)",
-            }}
           >
             <QRCode
               value={address}
@@ -145,4 +217,4 @@ export default function Receive() {
       </div>
     </motion.main>
   );
-}
+              }
