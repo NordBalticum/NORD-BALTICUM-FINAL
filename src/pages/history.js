@@ -29,14 +29,6 @@ export default function HistoryPage() {
   const [visibleCount, setVisibleCount] = useState(5);
 
   useEffect(() => {
-    document.body.style.overflowX = "hidden";
-    document.body.style.overflowY = "auto";
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, []);
-
-  useEffect(() => {
     if (typeof window !== "undefined") setIsClient(true);
   }, []);
 
@@ -96,7 +88,10 @@ export default function HistoryPage() {
   }
 
   return (
-    <main className={`${styles.container} ${background.gradient}`}>
+    <main
+      style={{ width: "100vw", height: "100vh", overflowY: "auto" }}
+      className={`${styles.container} ${background.gradient}`}
+    >
       <div className={styles.wrapper}>
         <h1 className={styles.title}>TRANSACTION HISTORY</h1>
         <p className={styles.subtext}>Real-Time Blockchain History</p>
