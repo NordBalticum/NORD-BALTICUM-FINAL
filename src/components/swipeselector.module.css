@@ -82,12 +82,12 @@
 
 .scrollableWrapper {
   flex-wrap: nowrap;
-  overflow-x: auto;
-  scroll-snap-type: x mandatory;
-  -webkit-overflow-scrolling: touch;
-  scroll-behavior: smooth;
-  min-width: max-content;
-  touch-action: pan-x;
+  overflow-x: hidden; /* ✅ uždarom scroll */
+  scroll-snap-type: none;
+  -webkit-overflow-scrolling: none;
+  scroll-behavior: auto;
+  min-width: 100%;
+  touch-action: none; /* ✅ neleidžiam jokio swipe */
 }
 
 .scrollableWrapper::-webkit-scrollbar {
