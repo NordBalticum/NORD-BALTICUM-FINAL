@@ -3,10 +3,13 @@
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { ethers } from "ethers";
+import { toast } from "react-hot-toast";
+
 import { supabase } from "@/utils/supabaseClient";
 import { useAuth } from "@/contexts/AuthContext";
+import { scanBlockchain } from "@/utils/scanBlockchain"; // ✅ Import
 import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
+
 import styles from "@/styles/history.module.css";
 import background from "@/styles/background.module.css";
 
@@ -16,20 +19,12 @@ export default function HistoryPage() {
 
   const [transactions, setTransactions] = useState([]);
   const [loadingTransactions, setLoadingTransactions] = useState(true);
-  const [scanning, setScanning] = useState(false);
   const [error, setError] = useState(null);
   const [isClient, setIsClient] = useState(false);
+  const [lastSynced, setLastSynced] = useState(null);
 
   const [filterNetwork, setFilterNetwork] = useState("All");
   const [filterStatus, setFilterStatus] = useState("All");
-
-  const RPC_URLS = {
-    bnb: "https://bsc-dataseed.bnbchain.org",
-    tbnb: "https://data-seed-prebsc-1-s1.binance.org:8545",
-    eth: "https://rpc.ankr.com/eth",
-    polygon: "https://polygon-rpc.com",
-    avax: "https://api.avax.network/ext/bc/C/rpc",
-  };
 
   useEffect(() => {
     if (typeof window !== "undefined") setIsClient(true);
@@ -76,48 +71,24 @@ export default function HistoryPage() {
     };
   }, [fetchUserTransactions]);
 
-  const scanBlockchain = async () => {
-    if (!wallet?.wallet?.address) return;
+  const fullScan = useCallback(async () => {
+    if (!wallet?.wallet?.address || !user?.email) return;
     try {
-      setScanning(true);
-
-      for (const [networkKey, rpcUrl] of Object.entries(RPC_URLS)) {
-        const provider = new ethers.JsonRpcProvider(rpcUrl);
-        const history = await provider.getHistory(wallet.wallet.address);
-
-        if (history.length > 0) {
-          for (const tx of history.reverse()) {
-            const { data: existingTx } = await supabase
-              .from("transactions")
-              .select("tx_hash")
-              .eq("tx_hash", tx.hash)
-              .single();
-
-            if (!existingTx) {
-              await supabase.from("transactions").insert([
-                {
-                  sender_address: tx.from,
-                  receiver_address: tx.to,
-                  amount: Number(ethers.formatEther(tx.value)),
-                  network: networkKey,
-                  type: "receive",
-                  tx_hash: tx.hash,
-                  status: tx.confirmations > 0 ? "completed" : "pending",
-                  user_email: user.email,
-                },
-              ]);
-            }
-          }
-        }
-      }
-
+      await scanBlockchain(wallet.wallet.address, user.email);
       await fetchUserTransactions();
+      setLastSynced(new Date());
+      toast.success("✅ Synced transactions successfully!");
     } catch (error) {
-      console.error("❌ Scan blockchain error:", error.message || error);
-    } finally {
-      setScanning(false);
+      console.error("❌ Blockchain scan error:", error.message || error);
+      toast.error("❌ Blockchain scan failed.");
     }
-  };
+  }, [wallet, user, fetchUserTransactions]);
+
+  useEffect(() => {
+    if (isClient && wallet?.wallet?.address && user?.email) {
+      fullScan();
+    }
+  }, [fullScan, isClient, wallet, user]);
 
   const filteredTransactions = transactions.filter((tx) => {
     const networkMatch = filterNetwork === "All" || tx.network === filterNetwork;
@@ -176,26 +147,8 @@ export default function HistoryPage() {
         <h1 className={styles.title}>TRANSACTION HISTORY</h1>
         <p className={styles.subtext}>View and manage your crypto activity</p>
 
-        {/* Filter controls */}
+        {/* Filters */}
         <div style={{ display: "flex", gap: "1rem", alignItems: "center", marginBottom: "2rem" }}>
-          <button
-            onClick={scanBlockchain}
-            disabled={scanning}
-            style={{
-              padding: "0.6rem 1.2rem",
-              borderRadius: "10px",
-              border: "1px solid #0070f3",
-              backgroundColor: scanning ? "#222" : "#0070f3",
-              color: "#fff",
-              fontWeight: "bold",
-              fontSize: "0.9rem",
-              cursor: "pointer",
-              transition: "all 0.3s ease",
-            }}
-          >
-            {scanning ? "Scanning..." : "Scan Blockchain"}
-          </button>
-
           <select
             value={filterNetwork}
             onChange={(e) => setFilterNetwork(e.target.value)}
@@ -268,14 +221,21 @@ export default function HistoryPage() {
                   </div>
                   <p><strong>Type:</strong> {tx.type}</p>
                   <p><strong>Amount:</strong> {tx.amount}</p>
-                  <p><strong>Sender:</strong> {tx.sender_address.slice(0, 6)}...{tx.sender_address.slice(-4)}</p>
-                  <p><strong>Receiver:</strong> {tx.receiver_address.slice(0, 6)}...{tx.receiver_address.slice(-4)}</p>
+                  <p><strong>Sender:</strong> {tx.sender_address?.slice(0, 6)}...{tx.sender_address?.slice(-4)}</p>
+                  <p><strong>Receiver:</strong> {tx.receiver_address?.slice(0, 6)}...{tx.receiver_address?.slice(-4)}</p>
                   <p><strong>Status:</strong> {renderStatusBadge(tx.status)}</p>
                   <p><strong>Tx Hash:</strong> <a href={getExplorerLink(tx.network, tx.tx_hash)} target="_blank" rel="noopener noreferrer" style={{ color: "#00FF00" }}>{tx.tx_hash.slice(0, 8)}...{tx.tx_hash.slice(-6)}</a></p>
                   <p><strong>Date:</strong> {new Date(tx.created_at).toLocaleString()}</p>
                 </motion.div>
               ))}
             </AnimatePresence>
+          </div>
+        )}
+
+        {/* Last Synced */}
+        {lastSynced && (
+          <div style={{ marginTop: "2rem", fontSize: "0.85rem", color: "#ccc", textAlign: "center" }}>
+            Last Synced: {lastSynced.toLocaleTimeString()}
           </div>
         )}
       </div>
