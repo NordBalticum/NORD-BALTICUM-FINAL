@@ -31,7 +31,7 @@ const supportedNetworks = [
   {
     name: "Avalanche",
     symbol: "avax",
-    logo: "https://assets.coingecko.com/coins/images/12559/large/Avalanche_Circle_RedWhite_Logo.png",
+    logo: "https://assets.coingecko.com/coins/images/12559/large/avalanche-avax.png",
   },
 ];
 
