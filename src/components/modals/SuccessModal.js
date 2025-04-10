@@ -4,12 +4,34 @@ import { useEffect } from "react";
 import { motion } from "framer-motion";
 import styles from "@/components/modals/successmodal.module.css"; // Tavo modal CSS
 
-const explorers = {
-  ethereum: "https://etherscan.io/tx/",
-  bsc: "https://bscscan.com/tx/",
-  tbnb: "https://testnet.bscscan.com/tx/",
-  polygon: "https://polygonscan.com/tx/",
-  avalanche: "https://snowtrace.io/tx/",
+// ✅ Tikslūs explorer linkai pagal tinklą
+const getExplorerLink = (network, txHash) => {
+  switch (network) {
+    case "eth":
+      return `https://etherscan.io/tx/${txHash}`;
+    case "bnb":
+      return `https://bscscan.com/tx/${txHash}`;
+    case "tbnb":
+      return `https://testnet.bscscan.com/tx/${txHash}`;
+    case "matic":
+      return `https://polygonscan.com/tx/${txHash}`;
+    case "avax":
+      return `https://snowtrace.io/tx/${txHash}`;
+    default:
+      return "";
+  }
+};
+
+// ✅ Draugiški explorer vardai
+const networkShortName = (network) => {
+  const names = {
+    eth: "Etherscan",
+    bnb: "BscScan",
+    tbnb: "BscScan Testnet",
+    matic: "PolygonScan",
+    avax: "Snowtrace",
+  };
+  return names[network] || "Explorer";
 };
 
 export default function SuccessModal({
@@ -18,7 +40,7 @@ export default function SuccessModal({
   transactionHash,
   network,
 }) {
-  const explorerLink = explorers[network] ? `${explorers[network]}${transactionHash}` : "";
+  const explorerLink = getExplorerLink(network, transactionHash);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -51,7 +73,7 @@ export default function SuccessModal({
         exit={{ scale: 0.8 }}
         transition={{ duration: 0.4 }}
       >
-        {/* X Close button */}
+        {/* ❌ Close Button */}
         <button
           onClick={typeof onClose === "function" ? onClose : () => {}}
           style={{
@@ -68,7 +90,7 @@ export default function SuccessModal({
           ✖
         </button>
 
-        {/* Modal Content */}
+        {/* ✅ Modal Content */}
         <div className={styles.modalTitle}>Transaction Completed!</div>
 
         <div className={styles.modalInfo} style={{ textAlign: "center" }}>
@@ -83,7 +105,7 @@ export default function SuccessModal({
             {message}
           </p>
 
-          {/* Explorer Link Button */}
+          {/* ✅ View on Explorer Button */}
           {transactionHash && explorerLink && (
             <a
               href={explorerLink}
@@ -112,7 +134,7 @@ export default function SuccessModal({
           )}
         </div>
 
-        {/* Bottom Close Button */}
+        {/* ✅ Close Button Bottom */}
         <div
           className={styles.modalActions}
           style={{ justifyContent: "center", marginTop: "24px" }}
@@ -127,16 +149,4 @@ export default function SuccessModal({
       </motion.div>
     </motion.div>
   );
-}
-
-// Helper: Friendly explorer names
-function networkShortName(network) {
-  const names = {
-    ethereum: "Etherscan",
-    bsc: "BscScan",
-    tbnb: "BscScan Testnet",
-    polygon: "PolygonScan",
-    avalanche: "Snowtrace",
-  };
-  return names[network] || "Explorer";
 }
