@@ -173,7 +173,7 @@
     padding: 16px 10px 100px;
     gap: 20px;
     scale: 0.50;
-    transform: translateY(-10px);
+    transform: translateY(-1px);
   }
 
   .title {
