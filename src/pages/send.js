@@ -16,11 +16,12 @@ import SuccessModal from "@/components/modals/SuccessModal";
 import ErrorModal from "@/components/modals/ErrorModal";
 import SuccessToast from "@/components/SuccessToast";
 
-import { sendTransaction } from "@/utils/sendCryptoFunction"; // ✅ Nauja siuntimo funkcija
+import { sendTransaction } from "@/utils/sendCryptoFunction";
 
 import styles from "@/styles/send.module.css";
 import background from "@/styles/background.module.css";
 
+// ✅ Tinklai
 const networkOptions = [
   { key: "ethereum", label: "Ethereum" },
   { key: "bsc", label: "BNB" },
@@ -29,6 +30,7 @@ const networkOptions = [
   { key: "avalanche", label: "Avalanche" },
 ];
 
+// ✅ Trumpi pavadinimai
 const networkShortNames = {
   ethereum: "ETH",
   bsc: "BNB",
@@ -37,6 +39,7 @@ const networkShortNames = {
   avalanche: "AVAX",
 };
 
+// ✅ Mygtukų spalvos
 const buttonColors = {
   ethereum: "#0072ff",
   bsc: "#f0b90b",
@@ -45,6 +48,7 @@ const buttonColors = {
   avalanche: "#e84142",
 };
 
+// ✅ Minimalios sumos
 const minAmounts = {
   ethereum: 0.001,
   bsc: 0.0005,
@@ -59,6 +63,7 @@ export default function SendPage() {
   const { prices } = usePrices();
   const isReady = usePageReady();
   const swipeReady = useSwipeReady();
+  const router = useRouter();
 
   const [network, setNetwork] = useState("bsc");
   const [receiver, setReceiver] = useState("");
@@ -244,7 +249,6 @@ export default function SendPage() {
           </button>
         </div>
 
-        {/* Success + Error Modals */}
         {showConfirm && (
           <div className={styles.overlay}>
             <div className={styles.confirmModal}>
@@ -278,7 +282,10 @@ export default function SendPage() {
         {showSuccess && transactionHash && (
           <SuccessModal
             message="✅ Transaction Successful!"
-            onClose={() => setShowSuccess(false)}
+            onClose={() => {
+              setShowSuccess(false);
+              router.push("/app/dashboard"); // ✅ Po success grįžtam į dashboard
+            }}
             transactionHash={transactionHash}
             network={network}
           />
