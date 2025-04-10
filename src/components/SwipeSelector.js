@@ -8,11 +8,31 @@ import { useSwipeReady } from "@/hooks/useSwipeReady";
 import styles from "@/components/swipeselector.module.css";
 
 const supportedNetworks = [
-  { name: "Ethereum", symbol: "eth", logo: "https://cryptologos.cc/logos/ethereum-eth-logo.png" },
-  { name: "BNB Chain", symbol: "bnb", logo: "https://cryptologos.cc/logos/binance-coin-bnb-logo.png" },
-  { name: "BNB Testnet", symbol: "tbnb", logo: "https://cryptologos.cc/logos/binance-coin-bnb-logo.png" },
-  { name: "Polygon", symbol: "matic", logo: "https://cryptologos.cc/logos/polygon-matic-logo.png" },
-  { name: "Avalanche", symbol: "avax", logo: "https://cryptologos.cc/logos/avalanche-avax-logo.png" },
+  {
+    name: "Ethereum",
+    symbol: "eth",
+    logo: "https://assets.coingecko.com/coins/images/279/large/ethereum.png",
+  },
+  {
+    name: "BNB Chain",
+    symbol: "bnb",
+    logo: "https://assets.coingecko.com/coins/images/825/large/bnb-icon2_2x.png",
+  },
+  {
+    name: "BNB Testnet",
+    symbol: "tbnb",
+    logo: "https://assets.coingecko.com/coins/images/825/large/bnb-icon2_2x.png",
+  },
+  {
+    name: "Polygon",
+    symbol: "matic",
+    logo: "https://assets.coingecko.com/coins/images/4713/large/matic-token-icon.png",
+  },
+  {
+    name: "Avalanche",
+    symbol: "avax",
+    logo: "https://assets.coingecko.com/coins/images/12559/large/Avalanche_Circle_RedWhite_Logo.png",
+  },
 ];
 
 export default function SwipeSelector({ onSelect }) {
