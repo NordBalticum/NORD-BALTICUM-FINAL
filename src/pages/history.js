@@ -196,8 +196,10 @@ export default function HistoryPage() {
         )}
       </div>
 
-      {/* ✅ BottomNavigation globalus, nieko importuoti nereikia */}
-      {/* jis tiesiog rodomas per visą aplikaciją */}
+      {/* ✅ PRIDĖTAS BOTTOM NAVIGATION */}
+      <div className={styles.historyBottomWrapper}>
+        <BottomNavigation />
+      </div>
     </main>
   );
 }
