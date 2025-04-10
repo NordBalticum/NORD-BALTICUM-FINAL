@@ -163,8 +163,13 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* ✅ MOBILE RESPONSIVE */
+/* === MOBILE RESPONSIVE + SCALE EFFECT === */
 @media (max-width: 768px) {
+  .container {
+    transform: scale(0.8);
+    transform-origin: top center;
+  }
+
   .wrapper {
     width: calc(100vw - 40px);
     padding: 24px 16px 100px;
@@ -185,5 +190,23 @@
 
   .transactionLink {
     font-size: 0.75rem;
+  }
+}
+
+/* === MINI MOBILE (Galaxy S24 Ultra ir mažesni) === */
+@media (max-width: 480px) {
+  .container {
+    transform: scale(0.8);
+    transform-origin: top center;
+  }
+
+  .wrapper {
+    width: calc(100vw - 24px);
+    padding: 20px 12px 80px;
+    gap: 24px;
+  }
+
+  .transactionCard {
+    padding: 12px;
   }
 }
