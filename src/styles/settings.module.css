@@ -1,6 +1,6 @@
-/* === SETTINGS MODULE – NordBalticum Ultra Premium v13 Style === */
+/* === SETTINGS MODULE – NordBalticum Ultra Premium v13 FINAL === */
 
-/* ✅ CONTAINER */
+/* ✅ CONTAINER – Visam puslapiui */
 .container {
   position: relative;
   width: 100vw;
@@ -14,13 +14,19 @@
   overflow-y: auto;
   box-sizing: border-box;
   z-index: 1;
+  
+  /* ✅ VISAS MASTELIO VALDYMAS */
+  transform: scale(clamp(0.8, 1vw + 0.5, 1));
+  transform-origin: top center;
+  transition: transform 0.4s ease;
+  animation: fadeInContainer 0.6s ease both;
 }
 
-/* ✅ BOX (vietoj wrapper) */
+/* ✅ BOX – Vidinė dėžutė */
 .box {
-  width: calc(100vw - clamp(180px, 15vw, 360px)); /* ✅ Automatinis prisitaikymas kaip history */
+  width: calc(100vw - clamp(180px, 15vw, 360px)); /* Automatinis plotis */
   max-width: 540px;
-  min-height: calc(100vh - clamp(180px, 15vh, 360px)); /* ✅ Automatinis aukštis */
+  min-height: calc(100vh - clamp(180px, 15vh, 360px)); /* Automatinis aukštis */
   background: rgba(255, 255, 255, 0.06);
   backdrop-filter: blur(24px) saturate(160%);
   border-radius: 24px;
@@ -30,12 +36,11 @@
   flex-direction: column;
   align-items: center;
   gap: clamp(20px, 4vh, 40px);
-  transform: scale(clamp(0.8, 1vw + 0.5, 1)); /* ✅ Automatinis mastelis */
-  transform-origin: top center;
-  transition: transform 0.4s ease;
+  box-sizing: border-box;
   color: white;
   border: 1px solid rgba(255, 255, 255, 0.15);
   z-index: 2;
+  animation: fadeInUp 0.8s ease both;
 }
 
 /* ✅ LOGO */
@@ -50,18 +55,11 @@
   font-size: clamp(24px, 5vw, 42px);
   font-weight: 900;
   text-align: center;
-  background: linear-gradient(to right, #fff, #ffd700, #fff);
+  background: linear-gradient(to right, #ffffff, #ffd700, #ffffff);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   text-shadow: 0 0 14px rgba(255, 255, 255, 0.3);
   animation: glow 4s ease-in-out infinite;
-}
-
-/* ✅ GLOW */
-@keyframes glow {
-  0% { text-shadow: 0 0 8px #fff, 0 0 16px #ffd700; }
-  50% { text-shadow: 0 0 16px #fffacd, 0 0 24px #ffd700; }
-  100% { text-shadow: 0 0 8px #fff, 0 0 16px #ffd700; }
 }
 
 /* ✅ SECTION */
@@ -96,7 +94,8 @@
 }
 
 /* ✅ BUTTONS */
-.button, .logout {
+.button,
+.logout {
   padding: clamp(12px, 2.5vw, 18px);
   background: black;
   color: white;
@@ -108,12 +107,13 @@
   transition: 0.3s ease;
 }
 
-.button:hover, .logout:hover {
+.button:hover,
+.logout:hover {
   background: white;
   color: black;
 }
 
-/* ✅ WALLET */
+/* ✅ WALLET BOX */
 .walletBox {
   background: rgba(255, 255, 255, 0.07);
   padding: clamp(10px, 2vw, 14px);
@@ -160,6 +160,23 @@
 }
 
 /* ✅ ANIMATIONS */
+@keyframes glow {
+  0% { text-shadow: 0 0 8px #fff, 0 0 16px #ffd700; }
+  50% { text-shadow: 0 0 16px #fffacd, 0 0 24px #ffd700; }
+  100% { text-shadow: 0 0 8px #fff, 0 0 16px #ffd700; }
+}
+
+@keyframes fadeInContainer {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(clamp(0.8, 1vw + 0.5, 1));
+  }
+}
+
 @keyframes fadeInUp {
   from {
     opacity: 0;
@@ -171,12 +188,11 @@
   }
 }
 
-/* ✅ RESPONSIVE – TELEFONAMS (max-width: 768px) */
+/* ✅ RESPONSIVE – TABLET / MOBILE */
 @media (max-width: 768px) {
   .box {
     width: calc(100vw - 40px);
     min-height: calc(100vh - 120px);
-    transform: scale(0.95); /* ✅ TELEFONAMS ŠIEK TIEK MAŽIAU */
     padding: 24px 16px 100px;
     gap: 28px;
   }
@@ -197,11 +213,10 @@
   }
 }
 
-/* ✅ MINI PHONES (max-width: 480px) */
+/* ✅ RESPONSIVE – MINI PHONES */
 @media (max-width: 480px) {
   .box {
-    transform: scale(0.92); /* ✅ Mažiausiems ekranams */
     width: calc(100vw - 20px);
     min-height: calc(100vh - 100px);
   }
-}
+                   }
