@@ -1,3 +1,6 @@
+/* === SIDEDRAWER MODULE – NordBalticum Ultra Premium 2025 FINAL BOSS LEVEL === */
+
+/* ✅ HAMBURGER BUTTON */
 .hamburger {
   position: fixed;
   top: clamp(16px, 3vw, 24px);
@@ -8,151 +11,194 @@
   color: white;
   cursor: pointer;
   padding: 0;
-  transition: transform 0.25s ease, color 0.25s ease;
+  filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.25));
+  transition: transform 0.3s ease, color 0.3s ease, filter 0.3s ease;
 }
 
 .hamburger:hover {
-  transform: scale(1.14);
+  transform: scale(1.18);
   color: #ffd700;
+  filter: drop-shadow(0 0 10px #ffd700);
 }
 
+.hamburger.active {
+  transform: rotate(90deg) scale(1.2);
+  color: #ffd700;
+  filter: drop-shadow(0 0 14px #ffd700aa);
+}
+
+/* ✅ BACKDROP */
 .backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(10, 18, 42, 0.75);
-  backdrop-filter: blur(12px) brightness(0.9);
+  background: radial-gradient(circle at center, rgba(10, 18, 42, 0.85) 0%, rgba(5, 10, 22, 0.92) 100%);
+  backdrop-filter: blur(20px) brightness(0.9) saturate(140%);
   z-index: 9998;
+  animation: fadeInBackdrop 0.5s ease both;
 }
 
+@keyframes fadeInBackdrop {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ✅ DRAWER */
 .drawer {
   position: fixed;
   top: 0;
   left: 0;
   width: 280px;
   height: 100vh;
-  background: radial-gradient(circle at top left, rgba(10, 18, 42, 0.95), rgba(8, 12, 30, 0.95));
-  backdrop-filter: blur(22px) saturate(160%);
+  background: radial-gradient(circle at top left, rgba(14, 22, 55, 0.98), rgba(8, 14, 30, 0.95));
+  backdrop-filter: blur(24px) saturate(180%);
   border-right: 1px solid rgba(255, 255, 255, 0.08);
-  z-index: 9999;
-  padding: 32px 24px;
+  box-shadow: 12px 0 28px rgba(0, 0, 0, 0.7);
+  padding: 36px 24px;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-  box-shadow: 8px 0 24px rgba(0, 0, 0, 0.6);
-  animation: fadeInDrawer 0.6s ease forwards;
+  animation: bounceDrawer 0.7s cubic-bezier(0.68, -0.55, 0.27, 1.55) both;
+  z-index: 9999;
 }
 
-@keyframes fadeInDrawer {
-  from {
-    opacity: 0;
-    transform: translateX(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
+@keyframes bounceDrawer {
+  0% { opacity: 0; transform: translateX(-80px) scale(0.92); }
+  60% { opacity: 1; transform: translateX(10px) scale(1.04); }
+  100% { transform: translateX(0) scale(1); }
 }
 
+/* ✅ DRAWER HEADER */
 .drawerHeader {
   display: flex;
   justify-content: flex-end;
 }
 
+/* ✅ CLOSE ICON */
 .closeIcon {
   background: none;
   border: none;
   color: white;
   cursor: pointer;
   padding: 8px;
-  transition: transform 0.25s ease, color 0.25s ease;
+  transition: transform 0.3s ease, color 0.3s ease;
 }
 
 .closeIcon:hover {
-  transform: scale(1.14);
+  transform: rotate(90deg) scale(1.2);
   color: #ffd700;
 }
 
+/* ✅ USER BOX */
 .userBox {
   text-align: center;
-  margin-top: 26px;
-  margin-bottom: 34px;
-  padding: 28px 18px;
+  margin-top: 24px;
+  margin-bottom: 36px;
+  padding: 28px 20px;
   background: rgba(255, 255, 255, 0.04);
-  border-radius: 24px;
-  backdrop-filter: blur(32px) saturate(220%);
-  box-shadow: 0 0 20px rgba(255, 255, 255, 0.15);
+  border-radius: 28px;
+  backdrop-filter: blur(36px) saturate(220%);
+  box-shadow: 0 0 24px rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.08);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 14px;
+  gap: 16px;
   position: relative;
   overflow: hidden;
+  transition: all 0.3s ease;
 }
 
+.userBox:hover {
+  box-shadow: 0 0 36px rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+/* ✅ USER BOX TOP LINE */
 .userBox::before {
   content: "";
   position: absolute;
-  top: -10px;
+  top: -8px;
   left: 50%;
   transform: translateX(-50%);
   width: 70%;
   height: 1px;
-  background: linear-gradient(to right, transparent, white, transparent);
+  background: linear-gradient(to right, transparent, #ffffff80, transparent);
 }
 
+/* ✅ LOGO */
 .logo {
-  width: 96px;
-  height: 96px;
+  width: 92px;
+  height: 92px;
   display: block;
-  filter: drop-shadow(0 0 16px rgba(255, 255, 255, 0.4));
-  animation: fadeInDown 0.7s ease forwards;
+  filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.35));
+  background: linear-gradient(120deg, #ffffff, #ffd700);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: fadeInDown 1s ease both;
 }
 
+/* ✅ FADE IN DOWN LOGO */
+@keyframes fadeInDown {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ✅ EMAIL */
 .email {
-  font-size: 0.6rem;
+  font-size: 0.66rem;
   font-weight: 500;
   color: white;
-  opacity: 0.92;
+  opacity: 0.9;
   font-family: var(--font-crypto);
   background: rgba(255, 255, 255, 0.05);
-  padding: 8px 26px;
-  border-radius: 16px;
+  padding: 10px 24px;
+  border-radius: 18px;
   max-width: 100%;
   word-break: break-word;
   text-align: center;
+  transition: background 0.3s ease, box-shadow 0.3s ease;
 }
 
+.email:hover {
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.2);
+}
+
+/* ✅ NAVIGATION */
 .nav {
   display: flex;
   flex-direction: column;
-  gap: 1.6rem;
+  gap: 1.8rem;
   font-family: var(--font-crypto);
   align-items: flex-start;
-  transform: translateY(-10px);
+  transform: translateY(-6px);
 }
 
+/* ✅ LINKS */
 .link {
   color: white;
   text-decoration: none;
-  font-size: 1.05rem;
+  font-size: 1.08rem;
+  font-weight: 500;
   position: relative;
   transition: all 0.3s ease;
 }
 
 .link:hover {
   color: #ffd700;
-  transform: translateX(6px);
+  transform: translateX(8px) scale(1.02);
+  filter: brightness(1.4);
 }
 
 .link::before {
   content: "";
   position: absolute;
   left: 0;
-  bottom: -4px;
+  bottom: -6px;
   width: 0%;
   height: 2px;
-  background: linear-gradient(to right, #ffd700, white);
+  background: linear-gradient(90deg, #ffd700, #ffffff, #ffd700);
   transition: width 0.3s ease;
 }
 
@@ -160,51 +206,62 @@
   width: 100%;
 }
 
+/* ✅ ACTIVE LINK */
 .active {
   color: #ffd700;
   font-weight: 600;
+  text-shadow: 0 0 8px #ffd70099;
+  transform: scale(1.02);
 }
 
 .active::before {
   content: "";
   position: absolute;
   left: 0;
-  bottom: -4px;
+  bottom: -6px;
   width: 100%;
   height: 2px;
-  background: linear-gradient(to right, #ffd700, white);
+  background: linear-gradient(90deg, #ffd700, #ffffff, #ffd700);
 }
 
+/* ✅ LOGOUT BUTTON */
 .logout {
-  margin-top: 32px;
-  padding: 10px 18px;
+  margin-top: 36px;
+  padding: 12px 20px;
   width: 72%;
-  background: rgba(10, 18, 42, 0.8);
+  background: rgba(14, 22, 55, 0.8);
   color: white;
   border: 1px solid white;
-  border-radius: 14px;
+  border-radius: 16px;
   font-family: var(--font-crypto);
-  font-size: 0.92rem;
+  font-size: 0.95rem;
   cursor: pointer;
   transition: all 0.3s ease;
   align-self: center;
-  transform: translateY(-10px);
+  transform: translateY(-6px);
 }
 
 .logout:hover {
   background: #ffd700;
   color: #0a122a;
   border-color: #ffd700;
-  transform: scale(1.05);
+  box-shadow: 0 0 14px #ffd700cc;
+  transform: scale(1.06);
 }
 
-@keyframes fadeInDown {
-  from {
-    opacity: 0;
-    transform: translateY(-20px);
+/* ✅ RESPONSIVE */
+@media (max-width: 768px) {
+  .drawer {
+    width: 220px;
+    padding: 28px 20px;
   }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+
+  .logo {
+    width: 72px;
+    height: 72px;
+  }
+
+  .nav {
+    gap: 1.4rem;
   }
 }
