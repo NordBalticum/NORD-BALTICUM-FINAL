@@ -1,25 +1,24 @@
-/* === HISTORY MODULE – NordBalticum Ultra Premium FINAL === */
+/* === HISTORY MODULE – NordBalticum Ultra Premium v12 Scroll Fixed === */
 
+/* ✅ CONTAINER */
 .container {
-  position: fixed;
-  top: 50%;
-  left: 50%;
+  position: relative; /* BUVO fixed – KEIČIAM */
   width: 100vw;
-  height: 100vh;
-  transform: translate(-50%, -50%);
-  background: transparent;
+  min-height: 100vh; /* BUVO height: 100vh – KEIČIAM */
   display: flex;
   justify-content: center;
-  align-items: center;
+  align-items: flex-start; /* Flex Start – kad turinys būtų viršuje */
   padding: clamp(16px, 5vw, 64px);
+  background: transparent;
+  overflow-x: hidden; /* ✅ Jokio horizontal scroll */
+  overflow-y: auto;   /* ✅ Leidžiam scroll žemyn */
   box-sizing: border-box;
-  overflow: hidden;
   z-index: 1;
 }
 
+/* ✅ WRAPPER */
 .wrapper {
   width: calc(100vw - 160px);
-  height: calc(100vh - 160px);
   max-width: 960px;
   padding: clamp(24px, 5vw, 48px);
   background: transparent;
@@ -27,12 +26,11 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  overflow-y: auto;
-  overflow-x: hidden;
   gap: clamp(20px, 4vh, 40px);
-  z-index: 2;
+  box-sizing: border-box;
 }
 
+/* ✅ TITLE */
 .title {
   font-size: clamp(24px, 5vw, 42px);
   font-weight: 900;
@@ -45,12 +43,7 @@
   animation: glowTitle 4s ease-in-out infinite;
 }
 
-@keyframes glowTitle {
-  0% { text-shadow: 0 0 8px #fff, 0 0 16px #ffd700; }
-  50% { text-shadow: 0 0 16px #fffacd, 0 0 24px #ffd700; }
-  100% { text-shadow: 0 0 8px #fff, 0 0 16px #ffd700; }
-}
-
+/* ✅ SUBTEXT */
 .subtext {
   font-size: clamp(13px, 2.5vw, 18px);
   color: rgba(255, 255, 255, 0.8);
@@ -61,15 +54,17 @@
   margin-top: -4px;
 }
 
+/* ✅ TRANSACTION LIST */
 .transactionList {
   width: 100%;
   max-width: 540px;
   display: flex;
   flex-direction: column;
   gap: clamp(14px, 2.5vw, 20px);
-  padding-bottom: 60px;
+  padding-bottom: 80px;
 }
 
+/* ✅ TRANSACTION CARD */
 .transactionCard {
   background: rgba(255, 255, 255, 0.035);
   border: 1px solid rgba(255, 255, 255, 0.12);
@@ -88,6 +83,7 @@
   transform: scale(1.02);
 }
 
+/* ✅ TRANSACTION TEXTS */
 .transactionHeader {
   display: flex;
   justify-content: space-between;
@@ -146,6 +142,7 @@
   text-shadow: 0 0 6px #ffd700;
 }
 
+/* ✅ LOADING */
 .loading {
   font-size: 1rem;
   color: white;
@@ -154,75 +151,39 @@
   margin-top: 60px;
 }
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(12px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+/* ✅ ANIMATIONS */
+@keyframes glowTitle {
+  0% { text-shadow: 0 0 8px #fff, 0 0 16px #ffd700; }
+  50% { text-shadow: 0 0 16px #fffacd, 0 0 24px #ffd700; }
+  100% { text-shadow: 0 0 8px #fff, 0 0 16px #ffd700; }
 }
 
-/* === MOBILE OPTIMIZATION (MAX 768px) === */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ✅ MOBILE RESPONSIVE */
 @media (max-width: 768px) {
   .wrapper {
-    width: calc(100vw - 20px);
-    height: auto;
-    padding: 16px 10px 100px;
-    gap: 20px;
-    scale: 0.50;
-    transform: translateY(10px);
-  }
-
-  .title {
-    font-size: clamp(20px, 6vw, 28px);
-    text-shadow: 0 0 8px rgba(255, 255, 255, 0.25);
-  }
-
-  .subtext {
-    font-size: clamp(11px, 4vw, 16px);
-    margin-top: -2px;
-  }
-
-  .transactionList {
-    gap: 14px;
-    padding-bottom: 40px;
+    width: calc(100vw - 40px);
+    padding: 24px 16px 100px;
+    gap: 28px;
   }
 
   .transactionCard {
-    padding: 12px;
-    border-radius: 14px;
-    font-size: 0.8rem;
-  }
-
-  .transactionHeader {
-    font-size: 0.8rem;
-    margin-bottom: 4px;
+    padding: 14px;
   }
 
   .transactionType {
-    font-size: 0.75rem;
+    font-size: 0.8rem;
   }
 
   .transactionDetail {
-    font-size: 0.7rem;
-    opacity: 0.8;
-  }
-
-  .transactionDate {
-    font-size: 0.65rem;
-    opacity: 0.65;
-    margin-top: 4px;
+    font-size: 0.75rem;
   }
 
   .transactionLink {
-    font-size: 0.7rem;
-    margin-top: 8px;
-  }
-
-  .loading {
-    font-size: 0.9rem;
+    font-size: 0.75rem;
   }
 }
