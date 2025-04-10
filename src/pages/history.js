@@ -1,108 +1,66 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { supabase } from "@/utils/supabaseClient";
-import { scanBlockchain } from "@/utils/scanBlockchain"; // ✅ Importas
+import { useRouter } from "next/navigation";
+import { fetchNetworkTransactions } from "@/utils/networkApi"; // ✅
 import { useAuth } from "@/contexts/AuthContext";
-import { toast } from "react-hot-toast";
 import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
 import styles from "@/styles/history.module.css";
 import background from "@/styles/background.module.css";
 
-export default function HistoryPage() {
-  const router = useRouter();
-  const { user, wallet, loading: authLoading } = useAuth();
+const NETWORK_OPTIONS = [
+  { label: "BNB Mainnet", value: "bnb" },
+  { label: "BNB Testnet", value: "tbnb" },
+  { label: "Ethereum Mainnet", value: "eth" },
+  { label: "Polygon Mainnet", value: "polygon" },
+  { label: "Avalanche Mainnet", value: "avax" },
+];
 
-  const [transactions, setTransactions] = useState([]);
-  const [loadingTransactions, setLoadingTransactions] = useState(true);
-  const [error, setError] = useState(null);
+export default function HistoryPage() {
+  const { wallet, loading: authLoading } = useAuth();
+  const router = useRouter();
+
   const [isClient, setIsClient] = useState(false);
-  const [filterNetwork, setFilterNetwork] = useState("All");
-  const [filterStatus, setFilterStatus] = useState("All");
-  const [lastSynced, setLastSynced] = useState(null);
+  const [network, setNetwork] = useState("bnb");
+  const [transactions, setTransactions] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(5);
 
   useEffect(() => {
     if (typeof window !== "undefined") setIsClient(true);
   }, []);
 
   useEffect(() => {
-    if (isClient && !authLoading && !user) {
+    if (isClient && !authLoading && !wallet?.wallet?.address) {
       router.replace("/");
     }
-  }, [isClient, authLoading, user, router]);
+  }, [isClient, authLoading, wallet, router]);
 
-  const fetchUserTransactions = useCallback(async () => {
-    if (!user?.email || !wallet?.wallet?.address) return;
+  const fetchTransactions = async () => {
+    if (!wallet?.wallet?.address) return;
     try {
-      const { data, error } = await supabase
-        .from("transactions")
-        .select("*")
-        .or(`user_email.eq.${user.email},sender_address.eq.${wallet.wallet.address},receiver_address.eq.${wallet.wallet.address}`)
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-      setTransactions(data || []);
-      setError(null);
+      setLoading(true);
+      const txs = await fetchNetworkTransactions(network, wallet.wallet.address);
+      setTransactions(txs);
     } catch (err) {
-      console.error("❌ Fetch transactions error:", err.message || err);
-      setError("❌ Failed to load transactions.");
+      console.error("❌ Error fetching transactions:", err);
+      setTransactions([]);
     } finally {
-      setLoadingTransactions(false);
+      setLoading(false);
     }
-  }, [user, wallet]);
+  };
 
   useEffect(() => {
-    if (!user || !wallet?.wallet?.address) return;
-
-    const syncAndFetch = async () => {
-      await scanBlockchain(wallet.wallet.address, user.email);
-      await fetchUserTransactions();
-      setLastSynced(new Date());
-    };
-
-    syncAndFetch(); // ✅ Auto-scan iškart kai atsidaro
-
-    const interval = setInterval(syncAndFetch, 10 * 60 * 1000); // ✅ Auto kas 10 min
-
-    return () => clearInterval(interval);
-  }, [user, wallet, fetchUserTransactions]);
-
-  const filteredTransactions = transactions.filter((tx) => {
-    const networkMatch = filterNetwork === "All" || tx.network === filterNetwork;
-    const statusMatch = filterStatus === "All" || tx.status === filterStatus;
-    return networkMatch && statusMatch;
-  });
-
-  const renderStatusBadge = (status) => {
-    if (status === "completed") {
-      return <span style={{ color: "limegreen", fontWeight: "bold" }}>✔️ Completed</span>;
+    if (wallet?.wallet?.address) {
+      fetchTransactions();
+      const interval = setInterval(fetchTransactions, 60 * 1000); // ✅ Refresh every 1 min
+      return () => clearInterval(interval);
     }
-    if (status === "pending") {
-      return <span style={{ color: "orange", fontWeight: "bold" }}>⏳ Pending</span>;
-    }
-    return <span style={{ color: "red", fontWeight: "bold" }}>❌ Failed</span>;
-  };
+  }, [wallet, network]);
 
-  const getNetworkLogo = (network) => {
-    switch (network) {
-      case "bnb":
-      case "tbnb":
-        return "https://cryptologos.cc/logos/binance-coin-bnb-logo.png";
-      case "eth":
-        return "https://cryptologos.cc/logos/ethereum-eth-logo.png";
-      case "polygon":
-        return "https://cryptologos.cc/logos/polygon-matic-logo.png";
-      case "avax":
-        return "https://cryptologos.cc/logos/avalanche-avax-logo.png";
-      default:
-        return "https://cryptologos.cc/logos/question-mark.svg";
-    }
-  };
-
-  const getExplorerLink = (network, txHash) => {
-    switch (network) {
+  const getExplorerLink = (net, txHash) => {
+    switch (net) {
       case "bnb": return `https://bscscan.com/tx/${txHash}`;
       case "tbnb": return `https://testnet.bscscan.com/tx/${txHash}`;
       case "eth": return `https://etherscan.io/tx/${txHash}`;
@@ -112,109 +70,120 @@ export default function HistoryPage() {
     }
   };
 
-  if (!isClient || authLoading) {
-    return <div className={styles.loading}><MiniLoadingSpinner /> Loading profile...</div>;
-  }
+  const renderStatusBadge = (tx) => {
+    if (tx.isError === "0" || tx.txreceipt_status === "1") {
+      return <span style={{ color: "limegreen", fontWeight: "bold" }}>✔️ Success</span>;
+    }
+    if (tx.txreceipt_status === "0") {
+      return <span style={{ color: "red", fontWeight: "bold" }}>❌ Failed</span>;
+    }
+    return <span style={{ color: "orange", fontWeight: "bold" }}>⏳ Pending</span>;
+  };
 
-  if (!user || !wallet?.wallet?.address) {
-    return <div className={styles.loading}><MiniLoadingSpinner /> Preparing wallet...</div>;
+  if (!isClient || authLoading) {
+    return <div className={styles.loading}><MiniLoadingSpinner /> Loading wallet...</div>;
   }
 
   return (
     <main className={`${styles.container} ${background.gradient}`}>
       <div className={styles.wrapper}>
         <h1 className={styles.title}>TRANSACTION HISTORY</h1>
-        <p className={styles.subtext}>View and manage your full crypto activity</p>
+        <p className={styles.subtext}>Real-Time Blockchain History</p>
 
-        {/* Last Synced info */}
-        {lastSynced && (
-          <p style={{ fontSize: "0.8rem", marginBottom: "1rem", color: "#aaa" }}>
-            Last Synced: {lastSynced.toLocaleString()}
-          </p>
-        )}
-
-        {/* Filters */}
-        <div style={{ display: "flex", gap: "1rem", alignItems: "center", marginBottom: "2rem" }}>
+        {/* Network Dropdown */}
+        <div style={{ position: "relative", marginBottom: "2rem" }}>
           <select
-            value={filterNetwork}
-            onChange={(e) => setFilterNetwork(e.target.value)}
+            value={network}
+            onChange={(e) => {
+              setNetwork(e.target.value);
+              setVisibleCount(5); // ✅ Reset visible count on network change
+            }}
+            disabled={loading}
             style={{
-              padding: "0.6rem 1rem",
-              borderRadius: "10px",
-              border: "1px solid #444",
+              width: "100%",
+              padding: "0.8rem 1.2rem",
+              borderRadius: "12px",
+              border: "1px solid #333",
               backgroundColor: "#0a0a0a",
               color: "#fff",
-              fontSize: "0.9rem",
+              fontSize: "1rem",
+              appearance: "none",
+              position: "relative",
+              zIndex: 2,
             }}
           >
-            <option value="All">All Networks</option>
-            <option value="bnb">BNB Mainnet</option>
-            <option value="tbnb">BNB Testnet</option>
-            <option value="eth">Ethereum Mainnet</option>
-            <option value="polygon">Polygon Mainnet</option>
-            <option value="avax">Avalanche Mainnet</option>
+            {NETWORK_OPTIONS.map((net) => (
+              <option key={net.value} value={net.value}>{net.label}</option>
+            ))}
           </select>
 
-          <select
-            value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
-            style={{
-              padding: "0.6rem 1rem",
-              borderRadius: "10px",
-              border: "1px solid #444",
-              backgroundColor: "#0a0a0a",
-              color: "#fff",
-              fontSize: "0.9rem",
-            }}
-          >
-            <option value="All">All Status</option>
-            <option value="completed">Completed</option>
-            <option value="pending">Pending</option>
-            <option value="failed">Failed</option>
-          </select>
+          {loading && (
+            <div style={{
+              position: "absolute",
+              top: "50%",
+              right: "12px",
+              transform: "translateY(-50%)",
+              zIndex: 3,
+            }}>
+              <MiniLoadingSpinner size={24} />
+            </div>
+          )}
         </div>
 
-        {/* Transaction list */}
-        {loadingTransactions ? (
+        {/* Transaction List */}
+        {loading ? (
           <div className={styles.loading}><MiniLoadingSpinner /> Loading transactions...</div>
-        ) : error ? (
-          <div className={styles.error}>{error}</div>
-        ) : filteredTransactions.length === 0 ? (
+        ) : transactions.length === 0 ? (
           <div className={styles.loading}>No transactions found.</div>
         ) : (
           <div className={styles.transactionList}>
             <AnimatePresence>
-              {filteredTransactions.map((tx, index) => (
+              {transactions.slice(0, visibleCount).map((tx, index) => (
                 <motion.div
-                  key={index}
+                  key={tx.hash || index}
                   className={styles.transactionCard}
-                  initial={{ opacity: 0, y: 20 }}
+                  initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 20 }}
-                  transition={{ duration: 0.4, delay: index * 0.04 }}
-                  whileHover={{ scale: 1.03, boxShadow: "0 0 25px rgba(0, 255, 255, 0.3)" }}
+                  exit={{ opacity: 0, y: 30 }}
+                  transition={{ duration: 0.4, delay: index * 0.05 }}
+                  whileHover={{ scale: 1.03, boxShadow: "0 0 20px rgba(0, 255, 255, 0.3)" }}
                   style={{
-                    backgroundColor: tx.type === "receive" ? "rgba(0,255,0,0.08)" : "rgba(0,0,255,0.08)",
-                    borderRadius: "20px",
+                    backgroundColor: "rgba(0, 0, 0, 0.65)",
+                    borderRadius: "18px",
                     padding: "1.5rem",
                     marginBottom: "1.2rem",
-                    backdropFilter: "blur(12px)",
+                    backdropFilter: "blur(14px)",
                   }}
                 >
-                  <div style={{ display: "flex", alignItems: "center", marginBottom: "0.5rem" }}>
-                    <img src={getNetworkLogo(tx.network)} alt="network" style={{ width: "24px", height: "24px", marginRight: "0.5rem" }} />
-                    <strong>{tx.network.toUpperCase()}</strong>
-                  </div>
-                  <p><strong>Type:</strong> {tx.type.toUpperCase()}</p>
-                  <p><strong>Amount:</strong> {tx.amount}</p>
-                  <p><strong>Sender:</strong> {tx.sender_address.slice(0, 6)}...{tx.sender_address.slice(-4)}</p>
-                  <p><strong>Receiver:</strong> {tx.receiver_address.slice(0, 6)}...{tx.receiver_address.slice(-4)}</p>
-                  <p><strong>Status:</strong> {renderStatusBadge(tx.status)}</p>
-                  <p><strong>Tx Hash:</strong> <a href={getExplorerLink(tx.network, tx.tx_hash)} target="_blank" rel="noopener noreferrer" style={{ color: "#00FF00" }}>{tx.tx_hash.slice(0, 8)}...{tx.tx_hash.slice(-6)}</a></p>
-                  <p><strong>Date:</strong> {new Date(tx.created_at).toLocaleString()}</p>
+                  <p><strong>From:</strong> {tx.from.slice(0, 6)}...{tx.from.slice(-4)}</p>
+                  <p><strong>To:</strong> {tx.to.slice(0, 6)}...{tx.to.slice(-4)}</p>
+                  <p><strong>Value:</strong> {parseFloat(tx.value) / 1e18} {network.toUpperCase()}</p>
+                  <p><strong>Status:</strong> {renderStatusBadge(tx)}</p>
+                  <p><strong>Tx Hash:</strong> <a href={getExplorerLink(network, tx.hash)} target="_blank" rel="noopener noreferrer" style={{ color: "#00FF00" }}>{tx.hash.slice(0, 8)}...{tx.hash.slice(-6)}</a></p>
+                  <p><strong>Time:</strong> {new Date(tx.timeStamp * 1000).toLocaleString()}</p>
                 </motion.div>
               ))}
             </AnimatePresence>
+
+            {/* View More Button */}
+            {visibleCount < transactions.length && (
+              <button
+                onClick={() => setVisibleCount(visibleCount + 5)}
+                style={{
+                  marginTop: "1.5rem",
+                  padding: "0.8rem 1.5rem",
+                  backgroundColor: "#0a0a0a",
+                  color: "#00FF00",
+                  border: "1px solid #00FF00",
+                  borderRadius: "12px",
+                  fontSize: "1rem",
+                  cursor: "pointer",
+                  transition: "all 0.3s ease",
+                }}
+              >
+                Load More
+              </button>
+            )}
           </div>
         )}
       </div>
