@@ -41,11 +41,11 @@ const networkShortNames = {
 
 // ✅ Mygtukų spalvos
 const buttonColors = {
-  ethereum: "#0072ff",
-  bsc: "#f0b90b",
+  eth: "#0072ff",
+  bnb: "#f0b90b",
   tbnb: "#f0b90b",
-  polygon: "#8247e5",
-  avalanche: "#e84142",
+  matic: "#8247e5",
+  avax: "#e84142",
 };
 
 // ✅ Minimalios sumos
