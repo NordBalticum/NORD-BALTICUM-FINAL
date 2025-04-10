@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
-import { fetchNetworkTransactions } from "@/utils/networkApi"; // ✅
+import { fetchNetworkTransactions } from "@/utils/networkApi";
 import { useAuth } from "@/contexts/AuthContext";
 import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
 import styles from "@/styles/history.module.css";
@@ -26,6 +26,16 @@ export default function HistoryPage() {
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [visibleCount, setVisibleCount] = useState(5);
+
+  // ✅ Šitas useEffect leidžia scrollint tik žemyn ir draudžia horizontaliai
+  useEffect(() => {
+    document.body.style.overflowX = "hidden"; // Draudžiam į šoną
+    document.body.style.overflowY = "auto";   // Leidžiam tik žemyn
+
+    return () => {
+      document.body.style.overflow = ""; // Gražinam normalų scrollą kai išeinam iš puslapio
+    };
+  }, []);
 
   useEffect(() => {
     if (typeof window !== "undefined") setIsClient(true);
@@ -54,7 +64,7 @@ export default function HistoryPage() {
   useEffect(() => {
     if (wallet?.wallet?.address) {
       fetchTransactions();
-      const interval = setInterval(fetchTransactions, 60 * 1000); // ✅ Refresh every 1 min
+      const interval = setInterval(fetchTransactions, 60 * 1000); // Auto-refresh kas 1 min
       return () => clearInterval(interval);
     }
   }, [wallet, network]);
@@ -96,7 +106,7 @@ export default function HistoryPage() {
             value={network}
             onChange={(e) => {
               setNetwork(e.target.value);
-              setVisibleCount(5); // ✅ Reset visible count on network change
+              setVisibleCount(5);
             }}
             disabled={loading}
             style={{
