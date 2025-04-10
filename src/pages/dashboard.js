@@ -17,11 +17,11 @@ const LivePriceTable = dynamic(() => import("@/components/LivePriceTable"), { ss
 
 // ✅ Token ikonų URL
 const iconUrls = {
-  ethereum: "https://cryptologos.cc/logos/ethereum-eth-logo.png",
-  bsc: "https://cryptologos.cc/logos/binance-coin-bnb-logo.png",
-  tbnb: "https://cryptologos.cc/logos/binance-coin-bnb-logo.png",
-  polygon: "https://cryptologos.cc/logos/polygon-matic-logo.png",
-  avalanche: "https://cryptologos.cc/logos/avalanche-avax-logo.png",
+  ethereum: "https://assets.coingecko.com/coins/images/279/large/ethereum.png",
+  bsc: "https://assets.coingecko.com/coins/images/825/large/bnb-icon2_2x.png",
+  tbnb: "https://assets.coingecko.com/coins/images/825/large/bnb-icon2_2x.png", // tas pats BNB
+  polygon: "https://assets.coingecko.com/coins/images/4713/large/matic-token-icon.png",
+  avalanche: "https://assets.coingecko.com/coins/images/12559/large/Avalanche_Circle_RedWhite_Logo.png",
 };
 
 // ✅ Token pavadinimai
