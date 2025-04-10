@@ -177,11 +177,12 @@
   width: clamp(280px, 90vw, 520px);
   height: var(--nav-height, 64px);
   background: rgba(12, 18, 36, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
   display: flex;
   justify-content: space-around;
   align-items: center;
   backdrop-filter: blur(20px) saturate(180%);
-  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.45);
   padding: 0 clamp(6px, 2vw, 14px);
   animation: fadeInUp 0.5s ease-out;
   transition: all 0.3s ease;
