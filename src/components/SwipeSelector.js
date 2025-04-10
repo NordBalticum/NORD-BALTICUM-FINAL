@@ -7,7 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useSwipeReady } from "@/hooks/useSwipeReady";
 import styles from "@/components/swipeselector.module.css";
 
-// ✅ Visų tinklų žemėlapis
+// ✅ Supported Networks
 const supportedNetworks = [
   { name: "Ethereum", symbol: "eth", logo: "https://cryptologos.cc/logos/ethereum-eth-logo.png" },
   { name: "BNB Chain", symbol: "bnb", logo: "https://cryptologos.cc/logos/binance-coin-bnb-logo.png" },
@@ -19,7 +19,7 @@ const supportedNetworks = [
 export default function SwipeSelector({ onSelect }) {
   const { activeNetwork, setActiveNetwork } = useAuth();
   const containerRef = useRef(null);
-  const [selectedIndex, setSelectedIndex] = useState(1); // Default BNB (index 1)
+  const [selectedIndex, setSelectedIndex] = useState(1);
   const [isMobile, setIsMobile] = useState(false);
   const hasInitialized = useRef(false);
   const isSwipeReady = useSwipeReady();
@@ -66,7 +66,7 @@ export default function SwipeSelector({ onSelect }) {
     onSelect?.(selectedSymbol);
 
     if (typeof window !== "undefined" && "vibrate" in navigator) {
-      navigator.vibrate(10); // ✅ Trumpa vibracija
+      navigator.vibrate(10); // ✅ Short Vibration
     }
 
     if (isMobile) scrollToCenter(index);
