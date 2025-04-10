@@ -178,6 +178,9 @@ export default function SendPage() {
     transition: "background-color 0.3s ease, transform 0.3s ease",
     marginTop: "16px",
     boxShadow: "0 8px 24px rgba(0, 0, 0, 0.2)",
+    display: "flex",          // <-- Pridėta
+    alignItems: "center",     // <-- Pridėta
+    justifyContent: "center", // <-- Pridėta
   };
 
   return (
@@ -284,7 +287,7 @@ export default function SendPage() {
             message="✅ Transaction Successful!"
             onClose={() => {
               setShowSuccess(false);
-              router.push("/app/dashboard"); // ✅ Po success grįžtam į dashboard
+              router.push("/app/dashboard");
             }}
             transactionHash={transactionHash}
             network={network}
