@@ -195,11 +195,6 @@ export default function HistoryPage() {
           </div>
         )}
       </div>
-
-      {/* ✅ PRIDĖTAS BOTTOM NAVIGATION */}
-      <div className={styles.historyBottomWrapper}>
-        <BottomNavigation />
-      </div>
     </main>
   );
 }
