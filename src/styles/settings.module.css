@@ -38,15 +38,15 @@
 .settingsBox {
   background: rgba(255, 255, 255, 0.06);
   backdrop-filter: blur(24px) saturate(160%);
-  border-radius: 24px;
-  box-shadow: 0 0 42px rgba(255, 255, 255, 0.08);
+  border-radius: 20px; /* ✅ Sumažintas kampų užapvalinimas */
+  box-shadow: 0 0 36px rgba(255, 255, 255, 0.08);
   width: 100%;
-  max-width: 480px; /* ✅ Sumažintas, kad būtų vienodas */
-  padding: clamp(28px, 5vw, 36px); /* ✅ Tobulas padding */
+  max-width: 460px; /* ✅ Šiek tiek sumažintas lentelės plotis */
+  padding: clamp(24px, 4vw, 32px); /* ✅ Mažesnis padding lentelėse */
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: clamp(20px, 4vh, 32px); /* ✅ Mažesni tarpai */
+  gap: clamp(16px, 3vh, 28px); /* ✅ Šiek tiek sumažinti tarpai viduje */
   box-sizing: border-box;
   color: white;
   border: 1px solid rgba(255, 255, 255, 0.15);
@@ -72,11 +72,11 @@
 /* ✅ IMPORT WALLET - tobulas bankinio lygio tekstas */
 .importWalletTitle {
   font-family: var(--font-crypto);
-  font-size: clamp(20px, 4vw, 26px); /* ✅ Sumažintas dydis */
+  font-size: clamp(18px, 3.5vw, 24px); /* ✅ Dar šiek tiek sumažintas */
   font-weight: 800;
-  color: #ffffff; /* ✅ Balta spalva */
-  margin-top: 0px; /* ✅ Nebe pakeltas */
-  margin-bottom: clamp(16px, 2vh, 20px);
+  color: #ffffff;
+  margin-top: -6px; /* ✅ Šiek tiek pritrauktas viršutiniais kampais */
+  margin-bottom: clamp(12px, 2vh, 18px); /* ✅ Idealus atstumas nuo input */
   line-height: 1.2;
   text-align: center;
 }
@@ -84,11 +84,11 @@
 /* ✅ CHANGE EMAIL - tobulas bankinio lygio tekstas */
 .changeEmailTitle {
   font-family: var(--font-crypto);
-  font-size: clamp(20px, 4vw, 26px); /* ✅ Sumažintas dydis */
+  font-size: clamp(18px, 3.5vw, 24px); /* ✅ Sumažintas iki tokio pat dydžio */
   font-weight: 800;
-  color: #ffffff; /* ✅ Balta spalva */
-  margin-top: 0px; /* ✅ Nebe nuleistas */
-  margin-bottom: clamp(16px, 2vh, 20px);
+  color: #ffffff;
+  margin-top: -6px; /* ✅ Irgi šiek tiek pritrauktas */
+  margin-bottom: clamp(12px, 2vh, 18px); /* ✅ Toks pat kaip Import Wallet */
   line-height: 1.2;
   text-align: center;
 }
