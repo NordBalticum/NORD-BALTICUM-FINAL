@@ -1,9 +1,9 @@
-/* === SUCCESS TOAST FINAL ULTRA PREMIUM v10 === */
+/* === SUCCESS TOAST FINAL ULTRA ULTRA PREMIUM FIXED === */
 
 .toast {
   position: fixed;
   top: 24px;
-  right: 40%;
+  right: 17%;
   background: rgba(15, 15, 15, 0.92);
   padding: 14px 28px;
   border-radius: 18px;
@@ -43,19 +43,17 @@
   line-height: 1;
 }
 
-/* ✅ RESPONSIVE CENTERED */
+/* ✅ RESPONSIVE - VISADA DEŠINĖJE, tik mažinam right % */
 @media screen and (max-width: 1024px) {
   .toast {
-    right: 50%;
-    transform: translateX(50%);
+    right: 10%;
     padding: 12px 24px;
     min-width: 220px;
   }
 }
 @media screen and (max-width: 480px) {
   .toast {
-    right: 50%;
-    transform: translateX(50%);
+    right: 8%;
     padding: 10px 20px;
     min-width: 200px;
     font-size: 14px;
