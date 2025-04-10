@@ -29,7 +29,7 @@ export default function BottomNavigation() {
   }, []);
 
   // ✅ Pridedam filtrą - jei / arba /history puslapis, nerodyti BottomNavigation
-  if (pathname === "/" || pathname === "/history") {
+  if (pathname === "/") {
     return null;
   }
 
