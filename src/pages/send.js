@@ -25,18 +25,18 @@ import background from "@/styles/background.module.css";
 const networkOptions = [
   { key: "eth", label: "Ethereum" },
   { key: "bnb", label: "BNB" },
-  { key: "tbnb", label: "Testnet" },
+  { key: "tbnb", label: "Testnet BNB" },
   { key: "matic", label: "Polygon" },
   { key: "avax", label: "Avalanche" },
 ];
 
 // ✅ Trumpi pavadinimai
 const networkShortNames = {
-  ethereum: "ETH",
-  bsc: "BNB",
+  eth: "ETH",
+  bnb: "BNB",
   tbnb: "tBNB",
-  polygon: "MATIC",
-  avalanche: "AVAX",
+  matic: "MATIC",
+  avax: "AVAX",
 };
 
 // ✅ Mygtukų spalvos
