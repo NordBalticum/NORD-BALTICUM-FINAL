@@ -1,4 +1,4 @@
-/* === SETTINGS MODULE – NordBalticum Ultra Premium v14 FINAL === */
+/* === SETTINGS MODULE – NordBalticum Ultra Premium FINAL === */
 
 /* ✅ CONTAINER – visam fullscreen */
 .settingsContainer {
@@ -18,9 +18,9 @@
 
 /* ✅ WRAPPER – atsakingas už mastelį */
 .settingsWrapper {
-  width: calc(100vw - clamp(180px, 15vw, 360px)); /* ✅ Automatinis prisitaikymas */
+  width: calc(100vw - clamp(180px, 15vw, 360px));
   max-width: 960px;
-  min-height: calc(100vh - clamp(180px, 15vh, 360px)); /* ✅ Automatinis aukštis */
+  min-height: calc(100vh - clamp(180px, 15vh, 360px));
   padding: clamp(24px, 5vw, 48px);
   background: transparent;
   backdrop-filter: none;
@@ -29,7 +29,7 @@
   align-items: center;
   gap: clamp(20px, 4vh, 40px);
   box-sizing: border-box;
-  transform: scale(clamp(0.8, 1vw + 0.5, 1)); /* ✅ Automatinis mastelis! */
+  transform: scale(clamp(0.8, 1vw + 0.5, 1));
   transform-origin: top center;
   transition: transform 0.4s ease;
 }
@@ -51,6 +51,44 @@
   color: white;
   border: 1px solid rgba(255, 255, 255, 0.15);
   animation: fadeInUp 0.8s ease both;
+}
+
+/* ✅ DANGER BOX */
+.dangerBox {
+  background: rgba(255, 0, 0, 0.05);
+  border: 1px solid rgba(255, 0, 0, 0.5);
+  border-radius: 24px;
+  padding: clamp(24px, 4vw, 36px);
+  width: 100%;
+  max-width: 540px;
+  text-align: center;
+  box-shadow: 0 0 24px rgba(255, 0, 0, 0.15);
+  margin-top: clamp(32px, 6vh, 64px);
+}
+
+.dangerTitle {
+  font-size: clamp(20px, 4vw, 28px);
+  color: #ff4d4d;
+  margin-bottom: clamp(16px, 2vh, 24px);
+}
+
+.dangerButton {
+  width: 100%;
+  padding: clamp(12px, 2.5vw, 18px);
+  background: transparent;
+  color: #ff4d4d;
+  font-weight: 700;
+  border: 1px solid #ff4d4d;
+  border-radius: 12px;
+  font-size: clamp(14px, 2vw, 16px);
+  cursor: pointer;
+  transition: 0.3s ease;
+  margin-top: 12px;
+}
+
+.dangerButton:hover {
+  background: #ff4d4d;
+  color: white;
 }
 
 /* ✅ LOGO */
@@ -103,9 +141,9 @@
   box-shadow: 0 0 6px #ffd700;
 }
 
-/* ✅ BUTTONS */
+/* ✅ BUTTON */
 .button,
-.logout {
+.logoutButton {
   padding: clamp(12px, 2.5vw, 18px);
   background: black;
   color: white;
@@ -115,15 +153,24 @@
   font-size: clamp(14px, 2vw, 16px);
   cursor: pointer;
   transition: 0.3s ease;
+  margin-top: 16px;
 }
 
 .button:hover,
-.logout:hover {
+.logoutButton:hover {
   background: white;
   color: black;
 }
 
-/* ✅ WALLET BOX */
+/* ✅ LOGOUT BUTTON SPECIAL */
+.logoutButton {
+  opacity: 0.5;
+  font-size: 12px;
+  padding: 10px;
+  width: 160px;
+}
+
+/* ✅ WALLET */
 .walletBox {
   background: rgba(255, 255, 255, 0.07);
   padding: clamp(10px, 2vw, 14px);
@@ -169,6 +216,82 @@
   font-style: italic;
 }
 
+/* ✅ DIVIDER */
+.divider {
+  height: 2px;
+  width: 100%;
+  background: rgba(255, 255, 255, 0.08);
+  margin: 24px 0;
+}
+
+/* ✅ MODAL (BLUR + ANIMATION) */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(8px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  animation: fadeInOverlay 0.3s ease both;
+}
+
+.modal {
+  background: rgba(20, 20, 30, 0.95);
+  padding: 32px;
+  border-radius: 20px;
+  box-shadow: 0 0 24px rgba(255, 215, 0, 0.2);
+  width: 90%;
+  max-width: 400px;
+  text-align: center;
+  backdrop-filter: blur(24px);
+  animation: scaleIn 0.3s ease both;
+}
+
+.modalButtons {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 24px;
+  gap: 16px;
+}
+
+.modalConfirm {
+  flex: 1;
+  background: red;
+  color: white;
+  padding: 12px;
+  border-radius: 12px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  transition: 0.3s ease;
+}
+
+.modalCancel {
+  flex: 1;
+  background: transparent;
+  color: white;
+  border: 1px solid white;
+  padding: 12px;
+  border-radius: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.3s ease;
+}
+
+.modalConfirm:hover {
+  background: darkred;
+}
+
+.modalCancel:hover {
+  background: white;
+  color: black;
+}
+
 /* ✅ ANIMATIONS */
 @keyframes glow {
   0% { text-shadow: 0 0 8px #fff, 0 0 16px #ffd700; }
@@ -179,6 +302,16 @@
 @keyframes fadeInUp {
   from { opacity: 0; transform: translateY(24px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeInOverlay {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.8); }
+  to { opacity: 1; transform: scale(1); }
 }
 
 /* ✅ RESPONSIVE – TABLET / MOBILE */
@@ -197,7 +330,7 @@
 
   .input,
   .button,
-  .logout {
+  .logoutButton {
     font-size: 14px;
     padding: 12px;
   }
@@ -211,7 +344,6 @@
   }
 }
 
-/* ✅ MINI PHONES */
 @media (max-width: 480px) {
   .settingsWrapper {
     transform: scale(0.92);
