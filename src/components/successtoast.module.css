@@ -1,8 +1,8 @@
-/* === SUCCESS TOAST FINAL ULTRA PREMIUM V12 === */
+/* === SUCCESS TOAST FINAL ULTRA PREMIUM V12.1 === */
 
 .toast {
   position: fixed;
-  top: clamp(18px, 5vw, 32px); /* ✅ Aukštis dinamiškas - nesikerta su rodyklėm */
+  top: clamp(18px, 5vw, 32px);
   right: clamp(6%, 17%, 18%);
   background: rgba(15, 15, 15, 0.92);
   padding: clamp(10px, 2vw, 14px) clamp(18px, 4vw, 28px);
@@ -53,7 +53,6 @@
   opacity: 1;
   transition: transform 0.5s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.5s ease;
 }
-
 .toast-exit {
   transform: translateX(0);
   opacity: 1;
@@ -62,4 +61,28 @@
   transform: translateX(150%);
   opacity: 0;
   transition: transform 0.45s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.45s ease;
+}
+
+/* === RESPONSIVE MEDIA FIXAI ✅ === */
+
+/* ✅ Iki 1080px - planšetės, mažesni laptopai */
+@media screen and (max-width: 1080px) {
+  .toast {
+    right: 12%; /* Paslinktas į dešinę - daugiau vietos */
+    min-width: clamp(180px, 28vw, 240px);
+    min-height: clamp(50px, 6vh, 60px);
+    padding: 12px 24px;
+  }
+}
+
+/* ✅ Iki 468px - telefonai, Galaxy Ultra, iPhone */
+@media screen and (max-width: 468px) {
+  .toast {
+    right: 10%;
+    min-width: clamp(160px, 40vw, 200px);
+    min-height: clamp(46px, 6vh, 56px);
+    padding: 10px 20px;
+    font-size: clamp(13px, 3.5vw, 15px);
+    gap: clamp(8px, 2vw, 12px);
+  }
 }
