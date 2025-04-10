@@ -171,21 +171,22 @@
   }
 }
 
-/* === SPECIAL FOR HISTORY PAGE – PERFECT MATCH === */
+/* === SPECIAL FOR HISTORY PAGE – PERFECT MATCH FINAL === */
 .historyBottomWrapper {
-  position: relative; /* ✅ Kad slinktų su turiniu */
-  transform: scale(0.97);
-  width: clamp(280px, 90vw, 520px);
-  height: var(--nav-height, 64px);
-  background: rgba(12, 18, 36, 0.92);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 20px;
+  position: relative; /* ✅ Slinka su turiniu */
+  margin: 2rem auto 0 auto; /* ✅ Centruotas + tarpas viršuje */
+  width: clamp(280px, 90vw, 520px); /* ✅ Tikslus plotis kaip .navbar */
+  height: var(--nav-height, 64px); /* ✅ Tikslus aukštis */
+  background: rgba(12, 18, 36, 0.92); /* ✅ IDENTIŠKAS fonas */
+  border: 1px solid rgba(255, 255, 255, 0.08); /* ✅ IDENTIŠKAS borderis */
+  border-radius: 20px; /* ✅ IDENTIŠKAS kampų užapvalinimas */
   display: flex;
   justify-content: space-around;
   align-items: center;
-  backdrop-filter: blur(20px) saturate(180%);
-  padding: 0 clamp(6px, 2vw, 14px);
-  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(20px) saturate(180%); /* ✅ IDENTIŠKAS blur */
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.45); /* ✅ IDENTIŠKAS šešėlis */
+  padding: 0 clamp(6px, 2vw, 14px); /* ✅ IDENTIŠKAS padding */
+  transform: none; /* ✅ PAŠALINTAS scale(0.97) – kad nelįstų fonas lauk */
   animation: fadeInUp 0.5s ease-out;
   transition: all 0.3s ease;
   pointer-events: auto;
