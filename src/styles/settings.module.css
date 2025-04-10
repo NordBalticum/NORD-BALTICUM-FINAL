@@ -41,17 +41,17 @@
   border-radius: 24px;
   box-shadow: 0 0 42px rgba(255, 255, 255, 0.08);
   width: 100%;
-  max-width: 540px;
-  padding: clamp(24px, 4vw, 52px);
+  max-width: 480px; /* ✅ Sumažintas, kad būtų vienodas */
+  padding: clamp(28px, 5vw, 36px); /* ✅ Tobulas padding */
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: clamp(20px, 4vh, 40px);
+  gap: clamp(20px, 4vh, 32px); /* ✅ Mažesni tarpai */
   box-sizing: border-box;
   color: white;
   border: 1px solid rgba(255, 255, 255, 0.15);
   animation: fadeInUp 0.8s ease both;
-  text-align: center; /* ✅ Visi tekstai centriniai */
+  text-align: center;
 }
 
 /* ✅ SECTION TITLE (VISOMS) */
@@ -64,37 +64,31 @@
   -webkit-text-fill-color: transparent;
   text-shadow: 0 0 12px rgba(255, 255, 255, 0.2);
   margin-bottom: clamp(12px, 3vh, 24px);
-  line-height: 1.2; /* ✅ Kompaktiškiau */
+  line-height: 1.2;
 }
 
-/* === SECTION TITLE SPECIAL TWEAKS === */
+/* === SECTION TITLE SPECIAL TWEAKS FINAL === */
 
-/* ✅ IMPORT WALLET (pakeltas šiek tiek aukščiau) */
+/* ✅ IMPORT WALLET - tobulas bankinio lygio tekstas */
 .importWalletTitle {
   font-family: var(--font-crypto);
-  font-size: clamp(24px, 5vw, 32px);
-  font-weight: 900;
-  background: linear-gradient(to right, #ffffff, #ffd700, #ffffff);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  text-shadow: 0 0 12px rgba(255, 255, 255, 0.2);
-  margin-top: -8px; /* ✅ Pakelta aukščiau */
-  margin-bottom: clamp(16px, 3vh, 24px);
+  font-size: clamp(20px, 4vw, 26px); /* ✅ Sumažintas dydis */
+  font-weight: 800;
+  color: #ffffff; /* ✅ Balta spalva */
+  margin-top: 0px; /* ✅ Nebe pakeltas */
+  margin-bottom: clamp(16px, 2vh, 20px);
   line-height: 1.2;
   text-align: center;
 }
 
-/* ✅ CHANGE EMAIL (nuleistas truputį žemiau) */
+/* ✅ CHANGE EMAIL - tobulas bankinio lygio tekstas */
 .changeEmailTitle {
   font-family: var(--font-crypto);
-  font-size: clamp(24px, 5vw, 32px);
-  font-weight: 900;
-  background: linear-gradient(to right, #ffffff, #ffd700, #ffffff);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  text-shadow: 0 0 12px rgba(255, 255, 255, 0.2);
-  margin-top: 12px; /* ✅ Nuleista žemiau */
-  margin-bottom: clamp(16px, 3vh, 24px);
+  font-size: clamp(20px, 4vw, 26px); /* ✅ Sumažintas dydis */
+  font-weight: 800;
+  color: #ffffff; /* ✅ Balta spalva */
+  margin-top: 0px; /* ✅ Nebe nuleistas */
+  margin-bottom: clamp(16px, 2vh, 20px);
   line-height: 1.2;
   text-align: center;
 }
@@ -134,7 +128,7 @@
 
 /* ✅ INPUT */
 .input {
-  padding: 14px 20px;
+  padding: 12px 18px; /* ✅ Šiek tiek mažesnis padding */
   background: rgba(255, 255, 255, 0.08);
   color: white;
   border: 1px solid rgba(255, 255, 255, 0.2);
@@ -144,7 +138,7 @@
   font-size: 15px;
   width: 100%;
   transition: 0.3s ease;
-  text-align: center; /* ✅ Visi input tekstai centruoti */
+  text-align: center;
 }
 
 .input::placeholder {
@@ -159,13 +153,13 @@
 /* ✅ BUTTON */
 .button,
 .logoutButton {
-  padding: clamp(12px, 2.5vw, 18px);
+  padding: 14px 20px; /* ✅ Optimalus mygtuko dydis */
   background: black;
   color: white;
   font-weight: 700;
   border: 1px solid white;
   border-radius: 12px;
-  font-size: clamp(14px, 2vw, 16px);
+  font-size: 15px;
   cursor: pointer;
   transition: all 0.3s ease;
   width: 100%;
