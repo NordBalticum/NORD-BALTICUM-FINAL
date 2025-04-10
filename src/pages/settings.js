@@ -155,25 +155,30 @@ export default function SettingsPage() {
             </div>
           </div>
 
-          {/* === SECTION 2: CHANGE EMAIL === */}
-          <div className={styles.settingsBox}>
-            <h3 className={styles.sectionTitle}>Change Email</h3>
-            <input
-              type="email"
-              placeholder="New email address"
-              value={emailInput}
-              onChange={(e) => setEmailInput(e.target.value)}
-              className={styles.input}
-              style={{ padding: "18px", fontSize: "16px" }}
-            />
-            <button
-              className={styles.button}
-              onClick={handleChangeEmail}
-              disabled={!emailInput.trim() || loadingEmail}
-            >
-              {loadingEmail ? "Sending..." : "Send Magic Link"}
-            </button>
-          </div>
+{/* === SECTION 2: CHANGE EMAIL === */}
+<div className={styles.settingsBox}>
+  <h3 className={styles.sectionTitle}>Change Email</h3>
+  <input
+    type="email"
+    placeholder="New email address"
+    value={emailInput}
+    onChange={(e) => setEmailInput(e.target.value)}
+    className={styles.input}
+    style={{
+      padding: "14px 20px",   // ✅ Didesnis horizontalus paddingas, mažesnis vertikalus
+      fontSize: "15px",        // ✅ Šiek tiek mažesnis šriftas
+      width: "100%",           // ✅ Užpildo visą kortelės plotį
+      borderRadius: "12px",    // ✅ Apvalesni kampai kaip wallet input
+    }}
+  />
+  <button
+    className={styles.button}
+    onClick={handleChangeEmail}
+    disabled={!emailInput.trim() || loadingEmail}
+  >
+    {loadingEmail ? "Sending..." : "Send Magic Link"}
+  </button>
+</div>
 
           {/* === SECTION 3: IMPORT WALLET === */}
           <div className={styles.settingsBox}>
