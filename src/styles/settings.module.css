@@ -1,4 +1,4 @@
-/* === SETTINGS MODULE – NordBalticum Ultra Premium v15 FINAL === */
+/* === SETTINGS MODULE – NordBalticum Ultra Premium v16 FINAL === */
 
 /* ✅ CONTAINER – visam fullscreen */
 .settingsContainer {
@@ -16,11 +16,11 @@
   z-index: 1;
 }
 
-/* ✅ WRAPPER – atsakingas už mastelį */
+/* ✅ WRAPPER – kaip history.module.css */
 .settingsWrapper {
-  width: calc(100vw - clamp(180px, 15vw, 360px));
+  width: calc(100vw - clamp(180px, 15vw, 360px)); /* ✅ Automatinis prisitaikymas */
   max-width: 960px;
-  min-height: calc(100vh - clamp(180px, 15vh, 360px));
+  min-height: calc(100vh - clamp(180px, 15vh, 360px)); /* ✅ Automatinis aukštis */
   padding: clamp(24px, 5vw, 48px);
   background: transparent;
   backdrop-filter: none;
@@ -29,7 +29,7 @@
   align-items: center;
   gap: clamp(20px, 4vh, 40px);
   box-sizing: border-box;
-  transform: scale(clamp(0.8, 1vw + 0.5, 1));
+  transform: scale(clamp(0.8, 1vw + 0.5, 1)); /* ✅ AUTOMATINIS MASTELIS! */
   transform-origin: top center;
   transition: transform 0.4s ease;
 }
@@ -66,6 +66,7 @@
   margin-top: clamp(32px, 6vh, 64px);
 }
 
+/* ✅ DANGER ZONE */
 .dangerTitle {
   font-size: clamp(20px, 4vw, 28px);
   color: #ff4d4d;
@@ -97,6 +98,31 @@
   margin: 0 auto;
 }
 
+/* ✅ WALLET */
+.walletBox {
+  background: rgba(255, 255, 255, 0.07);
+  padding: clamp(10px, 2vw, 14px);
+  border-radius: 12px;
+  font-family: monospace;
+  font-size: clamp(13px, 2vw, 15px);
+  word-break: break-word;
+  user-select: all;
+  border: 1px solid white;
+  transition: 0.3s ease;
+  cursor: pointer;
+}
+
+.walletBox:hover {
+  background: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 0 18px rgba(255, 255, 255, 0.12);
+}
+
+.walletAddress {
+  opacity: 0.85;
+  margin-top: 4px;
+  font-size: clamp(11px, 1.6vw, 13px);
+}
+
 /* ✅ HEADING */
 .heading {
   font-family: var(--font-crypto);
@@ -108,13 +134,6 @@
   -webkit-text-fill-color: transparent;
   text-shadow: 0 0 14px rgba(255, 255, 255, 0.3);
   animation: glow 4s ease-in-out infinite;
-}
-
-/* ✅ SECTION */
-.section {
-  display: flex;
-  flex-direction: column;
-  gap: clamp(14px, 2.5vw, 20px);
 }
 
 /* ✅ INPUT */
@@ -141,7 +160,7 @@
   box-shadow: 0 0 6px #ffd700;
 }
 
-/* ✅ BUTTON */
+/* ✅ BUTTONS */
 .button,
 .logoutButton {
   padding: clamp(12px, 2.5vw, 18px);
@@ -162,58 +181,12 @@
   color: black;
 }
 
-/* ✅ LOGOUT BUTTON SPECIAL */
+/* ✅ SPECIAL LOGOUT BUTTON */
 .logoutButton {
   opacity: 0.5;
   font-size: 12px;
   padding: 10px;
   width: 160px;
-}
-
-/* ✅ WALLET */
-.walletBox {
-  background: rgba(255, 255, 255, 0.07);
-  padding: clamp(10px, 2vw, 14px);
-  border-radius: 12px;
-  font-family: monospace;
-  font-size: clamp(13px, 2vw, 15px);
-  word-break: break-word;
-  user-select: all;
-  border: 1px solid white;
-  transition: 0.3s ease;
-  cursor: pointer;
-}
-
-.walletBox:hover {
-  background: rgba(255, 255, 255, 0.12);
-  box-shadow: 0 0 18px rgba(255, 255, 255, 0.12);
-}
-
-.walletAddress {
-  opacity: 0.85;
-  margin-top: 4px;
-  font-size: clamp(11px, 1.6vw, 13px);
-}
-
-/* ✅ AVATAR */
-.avatarContainer {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-bottom: clamp(10px, 2vh, 28px);
-  cursor: pointer;
-  transition: 0.2s ease;
-}
-
-.avatarContainer:hover {
-  transform: scale(1.03);
-}
-
-.avatarText {
-  font-size: clamp(12px, 2vw, 14px);
-  opacity: 0.7;
-  margin-top: 6px;
-  font-style: italic;
 }
 
 /* ✅ DIVIDER */
