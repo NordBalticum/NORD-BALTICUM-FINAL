@@ -1,77 +1,86 @@
+/* === SETTINGS MODULE – NordBalticum Ultra Premium v13 Style === */
+
+/* ✅ CONTAINER */
 .container {
-  position: fixed;
-  top: 50%;
-  left: 50%;
+  position: relative;
   width: 100vw;
-  height: 100vh;
-  transform: translate(-50%, -50%);
-  background: transparent;
-  background-color: inherit;
-  overflow: hidden;
+  min-height: 100vh;
   display: flex;
   justify-content: center;
-  align-items: center;
+  align-items: flex-start;
+  padding: clamp(16px, 5vw, 64px);
+  background: transparent;
+  overflow-x: hidden;
+  overflow-y: auto;
+  box-sizing: border-box;
   z-index: 1;
 }
 
+/* ✅ BOX (vietoj wrapper) */
 .box {
+  width: calc(100vw - clamp(180px, 15vw, 360px)); /* ✅ Automatinis prisitaikymas kaip history */
+  max-width: 540px;
+  min-height: calc(100vh - clamp(180px, 15vh, 360px)); /* ✅ Automatinis aukštis */
   background: rgba(255, 255, 255, 0.06);
   backdrop-filter: blur(24px) saturate(160%);
   border-radius: 24px;
   box-shadow: 0 0 42px rgba(255, 255, 255, 0.08);
-  width: clamp(320px, 36vw, 540px);
   padding: clamp(24px, 4vw, 52px);
-  color: white;
   display: flex;
   flex-direction: column;
-  gap: clamp(20px, 2vw, 32px);
-  animation: fadeInUp 0.6s ease-in-out;
-  position: relative;
-  z-index: 2;
+  align-items: center;
+  gap: clamp(20px, 4vh, 40px);
+  transform: scale(clamp(0.8, 1vw + 0.5, 1)); /* ✅ Automatinis mastelis */
+  transform-origin: top center;
+  transition: transform 0.4s ease;
+  color: white;
   border: 1px solid rgba(255, 255, 255, 0.15);
+  z-index: 2;
 }
 
+/* ✅ LOGO */
 .logo {
   display: block;
   margin: 0 auto;
 }
 
+/* ✅ HEADING */
 .heading {
   font-family: var(--font-crypto);
-  font-size: clamp(22px, 3vw, 32px);
-  font-weight: 800;
+  font-size: clamp(24px, 5vw, 42px);
+  font-weight: 900;
   text-align: center;
   background: linear-gradient(to right, #fff, #ffd700, #fff);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  text-shadow: 0 0 18px rgba(255, 255, 255, 0.2);
-  animation: glow 3s ease-in-out infinite;
+  text-shadow: 0 0 14px rgba(255, 255, 255, 0.3);
+  animation: glow 4s ease-in-out infinite;
 }
 
+/* ✅ GLOW */
 @keyframes glow {
-  0%, 100% {
-    text-shadow: 0 0 12px #fff, 0 0 22px #ffd700;
-  }
-  50% {
-    text-shadow: 0 0 24px #fffacd, 0 0 30px #ffd700;
-  }
+  0% { text-shadow: 0 0 8px #fff, 0 0 16px #ffd700; }
+  50% { text-shadow: 0 0 16px #fffacd, 0 0 24px #ffd700; }
+  100% { text-shadow: 0 0 8px #fff, 0 0 16px #ffd700; }
 }
 
+/* ✅ SECTION */
 .section {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: clamp(14px, 2.5vw, 20px);
 }
 
+/* ✅ INPUT */
 .input {
-  padding: 14px;
+  padding: clamp(12px, 2.5vw, 18px);
   background: rgba(255, 255, 255, 0.08);
   color: white;
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 12px;
   outline: none;
   font-family: var(--font-crypto);
-  font-size: 0.95rem;
+  font-size: clamp(14px, 2vw, 16px);
   text-align: center;
   transition: 0.3s ease;
 }
@@ -86,41 +95,28 @@
   box-shadow: 0 0 6px #ffd700;
 }
 
-.button {
-  padding: 14px;
+/* ✅ BUTTONS */
+.button, .logout {
+  padding: clamp(12px, 2.5vw, 18px);
   background: black;
   color: white;
   font-weight: 700;
   border: 1px solid white;
   border-radius: 12px;
+  font-size: clamp(14px, 2vw, 16px);
   cursor: pointer;
   transition: 0.3s ease;
 }
 
-.button:hover {
+.button:hover, .logout:hover {
   background: white;
   color: black;
 }
 
-.logout {
-  margin-top: 12px;
-  padding: 14px;
-  background: transparent;
-  border: 1px solid white;
-  border-radius: 12px;
-  color: white;
-  font-weight: 700;
-  transition: 0.3s ease;
-}
-
-.logout:hover {
-  background: white;
-  color: black;
-}
-
+/* ✅ WALLET */
 .walletBox {
   background: rgba(255, 255, 255, 0.07);
-  padding: 12px 14px;
+  padding: clamp(10px, 2vw, 14px);
   border-radius: 12px;
   font-family: monospace;
   font-size: clamp(13px, 2vw, 15px);
@@ -142,6 +138,7 @@
   font-size: clamp(11px, 1.6vw, 13px);
 }
 
+/* ✅ AVATAR */
 .avatarContainer {
   display: flex;
   flex-direction: column;
@@ -156,12 +153,13 @@
 }
 
 .avatarText {
-  font-size: 13px;
+  font-size: clamp(12px, 2vw, 14px);
   opacity: 0.7;
   margin-top: 6px;
   font-style: italic;
 }
 
+/* ✅ ANIMATIONS */
 @keyframes fadeInUp {
   from {
     opacity: 0;
@@ -173,17 +171,14 @@
   }
 }
 
-/* === MOBILE OPTIMIZATION === */
+/* ✅ RESPONSIVE – TELEFONAMS (max-width: 768px) */
 @media (max-width: 768px) {
-  .container {
-    padding: 0;
-    transform: translate(-50%, -54%);
-  }
-
   .box {
-    width: clamp(280px, 90vw, 96vw);
-    padding: clamp(16px, 5vw, 36px);
-    border-radius: 20px;
+    width: calc(100vw - 40px);
+    min-height: calc(100vh - 120px);
+    transform: scale(0.95); /* ✅ TELEFONAMS ŠIEK TIEK MAŽIAU */
+    padding: 24px 16px 100px;
+    gap: 28px;
   }
 
   .input,
@@ -193,11 +188,20 @@
     padding: 12px;
   }
 
+  .walletBox {
+    font-size: 13px;
+  }
+
   .heading {
     font-size: clamp(20px, 5vw, 26px);
   }
+}
 
-  .walletBox {
-    font-size: 13px;
+/* ✅ MINI PHONES (max-width: 480px) */
+@media (max-width: 480px) {
+  .box {
+    transform: scale(0.92); /* ✅ Mažiausiems ekranams */
+    width: calc(100vw - 20px);
+    min-height: calc(100vh - 100px);
   }
 }
