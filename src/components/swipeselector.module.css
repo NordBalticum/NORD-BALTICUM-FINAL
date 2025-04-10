@@ -1,45 +1,78 @@
-/* === SwipeSelector Ultra Premium NordBalticum FINAL 101X === */
+/* === SwipeSelector Ultra Premium NordBalticum V13 === */
 
-/* ✅ SELECTOR CONTAINER FULLSCREEN */
 .selectorContainer {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: clamp(12px, 2.5vw, 20px);
-  width: calc(100vw - clamp(180px, 12vw, 360px));
-  min-width: 320px;
-  min-height: 100vh;
-  padding: clamp(24px, 5vw, 48px);
-  background: transparent;
+  width: calc(100vw - clamp(180px, 15vw, 360px)); /* ✅ Pilnas plotis */
+  max-width: 720px;
+  margin: 0 auto;
+  padding-inline: clamp(20px, 5vw, 48px);
+  padding-top: clamp(16px, 3vw, 32px);
+  background: transparent; /* ✅ No background */
+  overflow: visible; /* ✅ Viskas leidžiama */
   box-sizing: border-box;
   z-index: 99;
-  transform: scale(clamp(0.82, 1vw + 0.5, 1));
+  transform: scale(clamp(0.8, 1vw + 0.5, 1)); /* ✅ Automatinis mastelis */
   transform-origin: top center;
-  overflow: visible;
-  transition: all 0.4s ease;
+  transition: transform 0.4s ease;
 }
 
-/* ✅ ARROWS */
 .arrows {
   display: flex;
   justify-content: center;
   align-items: center;
   gap: clamp(10px, 2vw, 14px);
   margin-bottom: clamp(8px, 2vw, 12px);
+  margin-top: clamp(-4px, 1vw, 0px);
   position: relative;
   z-index: 1000;
 }
 
-/* ✅ HIDE ARROWS ON DESKTOP */
+.arrowBtn {
+  width: clamp(36px, 5vw, 48px);
+  height: clamp(36px, 5vw, 48px);
+  border: 2px solid white;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.05);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0;
+  color: white;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  box-shadow: inset 0 0 6px rgba(255, 255, 255, 0.2), 0 4px 8px rgba(255, 255, 255, 0.08);
+  user-select: none;
+}
+
+.arrowBtn:hover {
+  background: rgba(255, 255, 255, 0.95);
+  color: black;
+  transform: scale(1.12);
+  box-shadow: inset 0 0 10px rgba(255, 255, 255, 0.4), 0 8px 16px rgba(255, 255, 255, 0.15);
+}
+
+.arrowBtn:active {
+  transform: scale(0.92);
+}
+
+.arrowBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
 @media screen and (min-width: 1025px) {
   .arrows {
     display: none;
   }
 }
 
-/* ✅ SCROLLABLE / STATIC WRAPPERS */
-.staticWrapper, .scrollableWrapper {
+.staticWrapper,
+.scrollableWrapper {
   display: flex;
   flex-wrap: wrap;
   gap: clamp(20px, 3vw, 36px);
@@ -47,15 +80,16 @@
   align-items: center;
   width: 100%;
   padding-block: clamp(16px, 2.5vw, 28px);
-  overflow: visible;
+  overflow: visible; /* ✅ leidžiama */
 }
 
 .scrollableWrapper {
   flex-wrap: nowrap;
   overflow-x: hidden;
   scroll-snap-type: x mandatory;
-  min-width: max-content;
+  -webkit-overflow-scrolling: none;
   scroll-behavior: smooth;
+  min-width: max-content;
   touch-action: none;
 }
 
@@ -63,9 +97,9 @@
   display: none;
 }
 
-/* ✅ CARD */
 .card {
   flex: 0 0 auto;
+  scroll-snap-align: center;
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 28px;
@@ -78,8 +112,8 @@
   justify-content: center;
   align-items: center;
   text-align: center;
+  transition: transform 0.35s ease, background 0.35s ease, box-shadow 0.35s ease;
   cursor: pointer;
-  transition: 0.35s ease;
 }
 
 .card:hover {
@@ -87,7 +121,6 @@
   background: rgba(255, 255, 255, 0.08);
 }
 
-/* ✅ SELECTED CARD */
 .selected {
   border: 2px solid white;
   background: rgba(255, 255, 255, 0.14);
@@ -95,27 +128,6 @@
   animation: pulseGlow 2s infinite ease-in-out, fadeInSlide 0.5s ease forwards;
 }
 
-/* ✅ LOGO */
-.logo {
-  width: clamp(32px, 5vw, 46px);
-  height: clamp(32px, 5vw, 46px);
-  object-fit: contain;
-  border-radius: 14px;
-  filter: brightness(1.3);
-  user-select: none;
-  margin-bottom: clamp(10px, 2vw, 14px);
-}
-
-/* ✅ NAME */
-.name {
-  font-size: clamp(10px, 3vw, 16px);
-  color: white;
-  font-family: var(--font-crypto);
-  font-weight: 600;
-  letter-spacing: 0.45px;
-}
-
-/* ✅ ANIMATIONS */
 @keyframes pulseGlow {
   0% { box-shadow: 0 0 8px rgba(0, 191, 255, 0.3); }
   50% { box-shadow: 0 0 18px rgba(0, 191, 255, 0.7); }
@@ -127,7 +139,26 @@
   100% { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-/* ✅ MINI PHONES */
+.logo {
+  width: clamp(32px, 5vw, 46px);
+  height: clamp(32px, 5vw, 46px);
+  object-fit: contain;
+  margin-bottom: clamp(10px, 2vw, 14px);
+  border-radius: 14px;
+  filter: brightness(1.3);
+  user-select: none;
+}
+
+.name {
+  font-size: clamp(10px, 3vw, 16px);
+  color: white;
+  font-family: var(--font-crypto);
+  font-weight: 600;
+  letter-spacing: 0.45px;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+/* ✅ MINI RESPONSIVE FIXAI */
 @media screen and (max-width: 480px) {
   .card {
     width: clamp(78px, 20vw, 92px);
