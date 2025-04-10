@@ -161,12 +161,13 @@ export default function SettingsPage() {
 
           {/* === SECTION 2: IMPORT WALLET === */}
           <div className={styles.settingsBox}>
+            <h2 className={styles.importWalletTitle}>Import Wallet (Private Key)</h2>
             <WalletImport />
           </div>
 
           {/* === SECTION 3: CHANGE EMAIL === */}
           <div className={styles.settingsBox}>
-            <h3 className={styles.sectionTitle}>Change Email</h3>
+            <h2 className={styles.changeEmailTitle}>Change Email</h2>
             <div style={{ position: "relative", width: "100%" }}>
               <input
                 type="email"
