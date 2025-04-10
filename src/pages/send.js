@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBalance } from "@/hooks/useBalance";
@@ -151,6 +151,13 @@ export default function SendPage() {
 
   const handleRetry = () => setError(null);
 
+  // ✅ Pilna sesijos tikrinimo logika
+  useEffect(() => {
+    if (!user && isReady) {
+      router.replace("/");
+    }
+  }, [user, isReady, router]);
+
   if (!isReady || !swipeReady || initialLoading) {
     return (
       <div style={{
@@ -178,9 +185,9 @@ export default function SendPage() {
     transition: "background-color 0.3s ease, transform 0.3s ease",
     marginTop: "16px",
     boxShadow: "0 8px 24px rgba(0, 0, 0, 0.2)",
-    display: "flex",          // <-- Pridėta
-    alignItems: "center",     // <-- Pridėta
-    justifyContent: "center", // <-- Pridėta
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
   };
 
   return (
@@ -287,7 +294,7 @@ export default function SendPage() {
             message="✅ Transaction Successful!"
             onClose={() => {
               setShowSuccess(false);
-              router.push("/app/dashboard");
+              // NE redirectinam automatiškai
             }}
             transactionHash={transactionHash}
             network={network}
@@ -303,4 +310,4 @@ export default function SendPage() {
       </div>
     </main>
   );
-        }
+}
