@@ -4,7 +4,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import styles from "@/components/successtoast.module.css"; // ✅ pritaikytas prie naujo
 
-// ✅ Tinklų logotipai
 const networkLogos = {
   eth: "https://cryptologos.cc/logos/ethereum-eth-logo.png",
   bnb: "https://cryptologos.cc/logos/binance-coin-bnb-logo.png",
@@ -28,7 +27,13 @@ export default function SuccessToast({ show, message = "", networkKey = "" }) {
         >
           {logoSrc && (
             <div className={styles.logoWrapper}>
-              <Image src={logoSrc} alt="Network Logo" width={28} height={28} unoptimized />
+              <Image
+                src={logoSrc}
+                alt={`${networkKey.toUpperCase()} Logo`}
+                width={28}
+                height={28}
+                unoptimized
+              />
             </div>
           )}
           <div className={styles.message}>{message}</div>
