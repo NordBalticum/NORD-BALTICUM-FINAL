@@ -5,10 +5,10 @@ import Image from "next/image";
 import styles from "@/components/successtoast.module.css";
 
 const networkLogos = {
-  eth: "https://cryptologos.cc/logos/ethereum-eth-logo.png",
-  bnb: "https://cryptologos.cc/logos/binance-coin-bnb-logo.png",
-  tbnb: "https://cryptologos.cc/logos/binance-coin-bnb-logo.png",
-  matic: "https://cryptologos.cc/logos/polygon-matic-logo.png",
+  eth: "https://assets.coingecko.com/coins/images/279/large/ethereum.png",
+  bnb: "https://assets.coingecko.com/coins/images/825/large/bnb-icon2_2x.png",
+  tbnb: "https://assets.coingecko.com/coins/images/825/large/bnb-icon2_2x.png",
+  matic: "https://assets.coingecko.com/coins/images/4713/large/matic-token-icon.png",
   avax: "https://cryptologos.cc/logos/avalanche-avax-logo.png",
 };
 
