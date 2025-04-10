@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { fetchNetworkTransactions } from "@/utils/networkApi";
 import { useAuth } from "@/contexts/AuthContext";
 import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
+import BottomNavigation from "@/components/BottomNavigation"; // ✅ Pridedam čia!
 import styles from "@/styles/history.module.css";
 import background from "@/styles/background.module.css";
 
@@ -27,13 +28,12 @@ export default function HistoryPage() {
   const [loading, setLoading] = useState(false);
   const [visibleCount, setVisibleCount] = useState(5);
 
-  // ✅ Šitas useEffect leidžia scrollint tik žemyn ir draudžia horizontaliai
+  // ✅ Tik leidžiam vertikalų scroll, draudžiam horizontalų
   useEffect(() => {
-    document.body.style.overflowX = "hidden"; // Draudžiam į šoną
-    document.body.style.overflowY = "auto";   // Leidžiam tik žemyn
-
+    document.body.style.overflowX = "hidden";
+    document.body.style.overflowY = "auto";
     return () => {
-      document.body.style.overflow = ""; // Gražinam normalų scrollą kai išeinam iš puslapio
+      document.body.style.overflow = "";
     };
   }, []);
 
@@ -95,108 +95,113 @@ export default function HistoryPage() {
   }
 
   return (
-    <main className={`${styles.container} ${background.gradient}`}>
-      <div className={styles.wrapper}>
-        <h1 className={styles.title}>TRANSACTION HISTORY</h1>
-        <p className={styles.subtext}>Real-Time Blockchain History</p>
+    <>
+      <main className={`${styles.container} ${background.gradient}`}>
+        <div className={styles.wrapper}>
+          <h1 className={styles.title}>TRANSACTION HISTORY</h1>
+          <p className={styles.subtext}>Real-Time Blockchain History</p>
 
-        {/* Network Dropdown */}
-        <div style={{ position: "relative", marginBottom: "2rem" }}>
-          <select
-            value={network}
-            onChange={(e) => {
-              setNetwork(e.target.value);
-              setVisibleCount(5);
-            }}
-            disabled={loading}
-            style={{
-              width: "100%",
-              padding: "0.8rem 1.2rem",
-              borderRadius: "12px",
-              border: "1px solid #333",
-              backgroundColor: "#0a0a0a",
-              color: "#fff",
-              fontSize: "1rem",
-              appearance: "none",
-              position: "relative",
-              zIndex: 2,
-            }}
-          >
-            {NETWORK_OPTIONS.map((net) => (
-              <option key={net.value} value={net.value}>{net.label}</option>
-            ))}
-          </select>
+          {/* Network Dropdown */}
+          <div style={{ position: "relative", marginBottom: "2rem" }}>
+            <select
+              value={network}
+              onChange={(e) => {
+                setNetwork(e.target.value);
+                setVisibleCount(5);
+              }}
+              disabled={loading}
+              style={{
+                width: "100%",
+                padding: "0.8rem 1.2rem",
+                borderRadius: "12px",
+                border: "1px solid #333",
+                backgroundColor: "#0a0a0a",
+                color: "#fff",
+                fontSize: "1rem",
+                appearance: "none",
+                position: "relative",
+                zIndex: 2,
+              }}
+            >
+              {NETWORK_OPTIONS.map((net) => (
+                <option key={net.value} value={net.value}>{net.label}</option>
+              ))}
+            </select>
 
-          {loading && (
-            <div style={{
-              position: "absolute",
-              top: "50%",
-              right: "12px",
-              transform: "translateY(-50%)",
-              zIndex: 3,
-            }}>
-              <MiniLoadingSpinner size={24} />
+            {loading && (
+              <div style={{
+                position: "absolute",
+                top: "50%",
+                right: "12px",
+                transform: "translateY(-50%)",
+                zIndex: 3,
+              }}>
+                <MiniLoadingSpinner size={24} />
+              </div>
+            )}
+          </div>
+
+          {/* Transaction List */}
+          {loading ? (
+            <div className={styles.loading}><MiniLoadingSpinner /> Loading transactions...</div>
+          ) : transactions.length === 0 ? (
+            <div className={styles.loading}>No transactions found.</div>
+          ) : (
+            <div className={styles.transactionList}>
+              <AnimatePresence>
+                {transactions.slice(0, visibleCount).map((tx, index) => (
+                  <motion.div
+                    key={tx.hash || index}
+                    className={styles.transactionCard}
+                    initial={{ opacity: 0, y: 30 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 30 }}
+                    transition={{ duration: 0.4, delay: index * 0.05 }}
+                    whileHover={{ scale: 1.03, boxShadow: "0 0 20px rgba(0, 255, 255, 0.3)" }}
+                    style={{
+                      backgroundColor: "rgba(0, 0, 0, 0.65)",
+                      borderRadius: "18px",
+                      padding: "1.5rem",
+                      marginBottom: "1.2rem",
+                      backdropFilter: "blur(14px)",
+                    }}
+                  >
+                    <p><strong>From:</strong> {tx.from.slice(0, 6)}...{tx.from.slice(-4)}</p>
+                    <p><strong>To:</strong> {tx.to.slice(0, 6)}...{tx.to.slice(-4)}</p>
+                    <p><strong>Value:</strong> {parseFloat(tx.value) / 1e18} {network.toUpperCase()}</p>
+                    <p><strong>Status:</strong> {renderStatusBadge(tx)}</p>
+                    <p><strong>Tx Hash:</strong> <a href={getExplorerLink(network, tx.hash)} target="_blank" rel="noopener noreferrer" style={{ color: "#00FF00" }}>{tx.hash.slice(0, 8)}...{tx.hash.slice(-6)}</a></p>
+                    <p><strong>Time:</strong> {new Date(tx.timeStamp * 1000).toLocaleString()}</p>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+
+              {/* View More Button */}
+              {visibleCount < transactions.length && (
+                <button
+                  onClick={() => setVisibleCount(visibleCount + 5)}
+                  style={{
+                    marginTop: "1.5rem",
+                    padding: "0.8rem 1.5rem",
+                    backgroundColor: "#0a0a0a",
+                    color: "#00FF00",
+                    border: "1px solid #00FF00",
+                    borderRadius: "12px",
+                    fontSize: "1rem",
+                    cursor: "pointer",
+                    transition: "all 0.3s ease",
+                  }}
+                >
+                  Load More
+                </button>
+              )}
             </div>
           )}
         </div>
+      </main>
 
-        {/* Transaction List */}
-        {loading ? (
-          <div className={styles.loading}><MiniLoadingSpinner /> Loading transactions...</div>
-        ) : transactions.length === 0 ? (
-          <div className={styles.loading}>No transactions found.</div>
-        ) : (
-          <div className={styles.transactionList}>
-            <AnimatePresence>
-              {transactions.slice(0, visibleCount).map((tx, index) => (
-                <motion.div
-                  key={tx.hash || index}
-                  className={styles.transactionCard}
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 30 }}
-                  transition={{ duration: 0.4, delay: index * 0.05 }}
-                  whileHover={{ scale: 1.03, boxShadow: "0 0 20px rgba(0, 255, 255, 0.3)" }}
-                  style={{
-                    backgroundColor: "rgba(0, 0, 0, 0.65)",
-                    borderRadius: "18px",
-                    padding: "1.5rem",
-                    marginBottom: "1.2rem",
-                    backdropFilter: "blur(14px)",
-                  }}
-                >
-                  <p><strong>From:</strong> {tx.from.slice(0, 6)}...{tx.from.slice(-4)}</p>
-                  <p><strong>To:</strong> {tx.to.slice(0, 6)}...{tx.to.slice(-4)}</p>
-                  <p><strong>Value:</strong> {parseFloat(tx.value) / 1e18} {network.toUpperCase()}</p>
-                  <p><strong>Status:</strong> {renderStatusBadge(tx)}</p>
-                  <p><strong>Tx Hash:</strong> <a href={getExplorerLink(network, tx.hash)} target="_blank" rel="noopener noreferrer" style={{ color: "#00FF00" }}>{tx.hash.slice(0, 8)}...{tx.hash.slice(-6)}</a></p>
-                  <p><strong>Time:</strong> {new Date(tx.timeStamp * 1000).toLocaleString()}</p>
-                </motion.div>
-              ))}
-            </AnimatePresence>
-
-            {/* View More Button */}
-            {visibleCount < transactions.length && (
-              <button
-                onClick={() => setVisibleCount(visibleCount + 5)}
-                style={{
-                  marginTop: "1.5rem",
-                  padding: "0.8rem 1.5rem",
-                  backgroundColor: "#0a0a0a",
-                  color: "#00FF00",
-                  border: "1px solid #00FF00",
-                  borderRadius: "12px",
-                  fontSize: "1rem",
-                  cursor: "pointer",
-                  transition: "all 0.3s ease",
-                }}
-              >
-                Load More
-              </button>
-            )}
-          </div>
-        )}
-      </div>
-    </main>
+      {/* ✅ BottomNavigation pastoviai apačioj */}
+      <BottomNavigation />
+    </>
   );
 }
