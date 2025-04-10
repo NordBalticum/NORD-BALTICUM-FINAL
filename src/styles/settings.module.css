@@ -1,4 +1,4 @@
-/* === SETTINGS MODULE – NordBalticum Ultra Premium FINAL – NEXT LEVEL UPDATE === */
+/* === SETTINGS MODULE – NordBalticum Ultra Premium FINAL – ULTIMATE BANKING VERSION === */
 
 /* ✅ CONTAINER */
 .settingsContainer {
@@ -38,27 +38,27 @@
 .settingsBox {
   background: rgba(255, 255, 255, 0.06);
   backdrop-filter: blur(24px) saturate(160%);
-  border-radius: 18px; /* ✅ 18px kampai – premium */
+  border-radius: 18px;
   box-shadow: 0 0 36px rgba(255, 255, 255, 0.08);
   width: 100%;
-  max-width: 460px;
-  padding: clamp(24px, 4vw, 32px);
+  max-width: 440px; /* ✅ Vienodas visoms */
+  padding: clamp(20px, 4vw, 28px);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: clamp(16px, 3vh, 28px);
+  gap: clamp(14px, 3vh, 24px);
   box-sizing: border-box;
   color: white;
   border: 1px solid rgba(255, 255, 255, 0.15);
   animation: fadeInUp 0.8s ease both;
   text-align: center;
-  min-height: 340px; /* ✅ Minimalus aukštis */
+  min-height: 320px;
 }
 
 /* ✅ SECTION TITLE (VISOMS) */
 .sectionTitle {
   font-family: var(--font-crypto);
-  font-size: clamp(24px, 5vw, 32px);
+  font-size: clamp(22px, 5vw, 30px);
   font-weight: 900;
   background: linear-gradient(to right, #ffffff, #ffd700, #ffffff);
   -webkit-background-clip: text;
@@ -72,11 +72,11 @@
 .importWalletTitle,
 .changeEmailTitle {
   font-family: var(--font-crypto);
-  font-size: clamp(18px, 3.5vw, 24px);
+  font-size: clamp(17px, 3.5vw, 22px); /* ✅ Vienodas dydis */
   font-weight: 800;
   color: #ffffff;
-  margin-top: -1px; /* ✅ Pritraukti viršų */
-  margin-bottom: clamp(12px, 2vh, 18px);
+  margin-top: -4px; /* ✅ Vienoda pozicija */
+  margin-bottom: clamp(10px, 2vh, 16px); /* ✅ Vienodas tarpas */
   line-height: 1.2;
   text-align: center;
 }
@@ -87,7 +87,7 @@
   padding: clamp(12px, 2vw, 16px);
   border-radius: 12px;
   font-family: monospace;
-  font-size: clamp(13px, 2vw, 15px);
+  font-size: clamp(13px, 2vw, 14px); /* ✅ Šiek tiek mažesnis šriftas */
   word-break: break-word;
   user-select: all;
   border: 1px solid white;
@@ -116,7 +116,7 @@
 
 /* ✅ INPUT */
 .input {
-  padding: 12px 18px;
+  padding: 10px 16px; /* ✅ Kompaktiškiau */
   background: rgba(255, 255, 255, 0.08);
   color: white;
   border: 1px solid rgba(255, 255, 255, 0.2);
@@ -141,7 +141,7 @@
 /* ✅ BUTTON */
 .button,
 .logoutButton {
-  padding: 14px 20px;
+  padding: 12px 18px; /* ✅ Kompaktiškiau */
   background: black;
   color: white;
   font-weight: 700;
@@ -175,7 +175,7 @@
   border-radius: 24px;
   padding: clamp(24px, 4vw, 36px);
   width: 100%;
-  max-width: 540px;
+  max-width: 480px;
   text-align: center;
   box-shadow: 0 0 24px rgba(255, 0, 0, 0.15);
   margin-top: clamp(32px, 6vh, 64px);
@@ -183,13 +183,12 @@
 
 .dangerTitle {
   font-family: var(--font-crypto);
-  font-size: clamp(24px, 5vw, 32px);
+  font-size: clamp(24px, 5vw, 30px);
   font-weight: 900;
-  color: #ff4d4d;
   background: linear-gradient(to right, #ff4d4d, #ff9999);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  text-shadow: 0 0 12px rgba(255, 77, 77, 0.3);
+  text-shadow: 0 0 16px rgba(255, 77, 77, 0.4);
 }
 
 .dangerButton {
@@ -219,7 +218,7 @@
   width: 100vw;
   height: 100vh;
   background: rgba(0, 0, 0, 0.55);
-  backdrop-filter: blur(8px);
+  backdrop-filter: blur(12px); /* ✅ Didesnis blur */
   display: flex;
   justify-content: center;
   align-items: center;
@@ -306,7 +305,7 @@
   }
 
   .settingsBox {
-    max-width: 380px;
+    max-width: 360px;
     padding: clamp(20px, 5vw, 28px);
     gap: clamp(14px, 3vh, 24px);
   }
@@ -323,7 +322,7 @@
 
   .importWalletTitle,
   .changeEmailTitle {
-    font-size: clamp(17px, 4vw, 22px);
+    font-size: clamp(16px, 4vw, 20px);
   }
 
   .walletBox {
