@@ -59,7 +59,7 @@ export default function SettingsPage() {
     try {
       await navigator.clipboard.writeText(walletAddress);
       setCopied(true);
-      toast.success("✅ Wallet address copied.");
+      toast.success("✅ Wallet address copied successfully!");
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
       console.error("Clipboard error:", err);
@@ -95,11 +95,11 @@ export default function SettingsPage() {
       setLoadingDeleteAccount(true);
       const { error } = await supabase.auth.admin.deleteUser(user.id);
       if (error) throw error;
-      toast.success("✅ Account deleted successfully.");
+      toast.success("✅ Account deletion request sent.");
       router.replace("/");
     } catch (error) {
       console.error("Delete account error:", error.message);
-      toast.error("❌ Failed to delete account.");
+      toast.error("❌ Failed to send account deletion request.");
     } finally {
       setLoadingDeleteAccount(false);
       closeModal();
@@ -123,9 +123,9 @@ export default function SettingsPage() {
 
   return (
     <main 
-  style={{ width: "100vw", height: "100vh", overflowY: "auto" }} 
-  className={`${styles.container} ${background.gradient}`}
->
+      style={{ width: "100vw", minHeight: "100vh", overflowY: "auto" }} 
+      className={`${styles.container} ${background.gradient}`}
+    >
       <Toaster position="top-center" reverseOrder={false} />
 
       <div className={styles.settingsContainer}>
@@ -143,13 +143,19 @@ export default function SettingsPage() {
             />
 
             <div className={styles.walletBox} onClick={handleCopyWallet}>
-              <p className={styles.walletLabel}>Your Wallet:</p>
-              <p className={styles.walletAddress}>{walletAddress}</p>
-              {copied && <p className={styles.copyStatus}>✅ Copied!</p>}
+              <p className={styles.walletLabel} style={{ textAlign: "center" }}>
+                Your Wallet:
+              </p>
+              <p className={styles.walletAddress} style={{ fontSize: "clamp(11px, 1.4vw, 13px)" }}>
+                {walletAddress}
+              </p>
+              {copied && (
+                <p className={styles.copyStatus}>✅ Copied!</p>
+              )}
             </div>
           </div>
 
-          {/* === SECTION 2: EMAIL CHANGE + WALLET IMPORT === */}
+          {/* === SECTION 2: CHANGE EMAIL === */}
           <div className={styles.settingsBox}>
             <h3 className={styles.sectionTitle}>Change Email</h3>
             <input
@@ -158,6 +164,7 @@ export default function SettingsPage() {
               value={emailInput}
               onChange={(e) => setEmailInput(e.target.value)}
               className={styles.input}
+              style={{ padding: "18px", fontSize: "16px" }}
             />
             <button
               className={styles.button}
@@ -166,34 +173,34 @@ export default function SettingsPage() {
             >
               {loadingEmail ? "Sending..." : "Send Magic Link"}
             </button>
+          </div>
 
-            <div className={styles.divider} />
-
-            {/* Wallet Import */}
+          {/* === SECTION 3: IMPORT WALLET === */}
+          <div className={styles.settingsBox}>
             <WalletImport />
           </div>
 
-          {/* === SECTION 3: DANGER ZONE === */}
+          {/* === SECTION 4: DANGER ZONE === */}
           <div className={styles.dangerBox}>
             <h3 className={styles.dangerTitle}>Danger Zone</h3>
 
             <button
               className={styles.dangerButton}
               onClick={() => openModal(
-                "Reset Wallet",
-                "Are you sure you want to reset your wallet? This will generate a new private key.",
+                "Delete My Wallet",
+                "Are you sure you want to delete your wallet? This action will reset your private key.",
                 handleDeleteWallet
               )}
               disabled={loadingDeleteWallet}
             >
-              {loadingDeleteWallet ? "Resetting Wallet..." : "Delete Wallet (Reset Key)"}
+              {loadingDeleteWallet ? "Deleting Wallet..." : "Delete My Wallet"}
             </button>
 
             <button
               className={styles.dangerButton}
               onClick={() => openModal(
-                "Delete Account",
-                "Are you sure you want to delete your account? This action is irreversible.",
+                "Delete My Account",
+                "Are you sure you want to permanently delete your account?",
                 handleDeleteAccount
               )}
               disabled={loadingDeleteAccount}
@@ -202,7 +209,7 @@ export default function SettingsPage() {
             </button>
           </div>
 
-          {/* === LOGOUT (Tiny Button) === */}
+          {/* === LOGOUT === */}
           <button className={styles.logoutButton} onClick={signOut}>
             Logout
           </button>
@@ -242,4 +249,4 @@ function ConfirmModal({ isOpen, title, description, onConfirm, onCancel }) {
       </div>
     </div>
   );
-    }
+}
