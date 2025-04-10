@@ -173,13 +173,22 @@
 
 /* === SPECIAL FOR HISTORY PAGE === */
 .historyBottomWrapper {
-  background: rgba(0, 0, 0, 0.85);
-  backdrop-filter: blur(16px) saturate(200%);
-  border-top: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 -4px 20px rgba(255, 255, 255, 0.08);
-  position: relative;
-  width: 100%;
-  height: 64px;
-  margin-top: 2rem;
-  z-index: 10;
+  position: relative; /* ✅ kad slinktų su puslapiu */
+  width: clamp(280px, 90vw, 520px); /* ✅ tokio pat pločio kaip navbar */
+  height: var(--nav-height, 64px); /* ✅ tas pats aukštis */
+  background: rgba(12, 18, 36, 0.92); /* ✅ IDENTIŠKAS fonas */
+  border: 1px solid rgba(255, 255, 255, 0.08); /* ✅ IDENTIŠKAS bordas */
+  border-radius: 20px; /* ✅ IDENTIŠKAS apvalinimas */
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  backdrop-filter: blur(20px) saturate(180%); /* ✅ IDENTIŠKAS blur */
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.45); /* ✅ IDENTIŠKAS šešėlis */
+  padding: 0 clamp(6px, 2vw, 14px); /* ✅ IDENTIŠKAS padding */
+  margin: 2rem auto 0 auto; /* ✅ centras + tarpas viršuje */
+  pointer-events: auto; /* ✅ leidžia spausti */
+  transform: scale(0.97); /* ✅ IDENTIŠKAS mastelis */
+  animation: fadeInUp 0.5s ease-out; /* ✅ gražus užėjimas */
+  transition: all 0.3s ease;
+  box-sizing: border-box;
 }
