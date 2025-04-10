@@ -171,24 +171,25 @@
   }
 }
 
-/* === SPECIAL FOR HISTORY PAGE === */
+/* === SPECIAL FOR HISTORY PAGE – PERFECT MATCH === */
 .historyBottomWrapper {
-  position: relative; /* ✅ kad slinktų su puslapiu */
-  width: clamp(280px, 90vw, 520px); /* ✅ tokio pat pločio kaip navbar */
-  height: var(--nav-height, 64px); /* ✅ tas pats aukštis */
-  background: rgba(12, 18, 36, 0.92); /* ✅ IDENTIŠKAS fonas */
-  border: 1px solid rgba(255, 255, 255, 0.08); /* ✅ IDENTIŠKAS bordas */
-  border-radius: 20px; /* ✅ IDENTIŠKAS apvalinimas */
+  position: relative; /* ✅ kad slinktų kartu su puslapiu */
+  margin: 2rem auto 0 auto; /* ✅ viršuje tarpas, centre */
+  width: clamp(280px, 90vw, 520px); /* ✅ identiškas plotis */
+  height: var(--nav-height, 64px); /* ✅ identiškas aukštis */
+  background: rgba(12, 18, 36, 0.92); /* ✅ identiškas fonas */
+  border: 1px solid rgba(255, 255, 255, 0.08); /* ✅ identiškas bordas */
+  border-radius: 20px; /* ✅ identiškas apvalinimas */
   display: flex;
   justify-content: space-around;
   align-items: center;
-  backdrop-filter: blur(20px) saturate(180%); /* ✅ IDENTIŠKAS blur */
-  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.45); /* ✅ IDENTIŠKAS šešėlis */
-  padding: 0 clamp(6px, 2vw, 14px); /* ✅ IDENTIŠKAS padding */
-  margin: 2rem auto 0 auto; /* ✅ centras + tarpas viršuje */
-  pointer-events: auto; /* ✅ leidžia spausti */
-  transform: scale(0.97); /* ✅ IDENTIŠKAS mastelis */
-  animation: fadeInUp 0.5s ease-out; /* ✅ gražus užėjimas */
+  backdrop-filter: blur(20px) saturate(180%); /* ✅ identiškas blur efektas */
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.45); /* ✅ identiškas šešėlis */
+  padding: 0 clamp(6px, 2vw, 14px); /* ✅ identiškas padding */
+  transform: scale(0.97); /* ✅ identiškas mastelis */
+  animation: fadeInUp 0.5s ease-out; /* ✅ identiška animacija */
   transition: all 0.3s ease;
+  pointer-events: auto;
   box-sizing: border-box;
+  z-index: 10; /* ✅ pakankamas z-index */
 }
