@@ -1,65 +1,75 @@
-/* === SEND MODULE – NordBalticum Ultra Premium FINAL 101X === */
+/* === SEND MODULE FINAL ULTRA PREMIUM v7 (ULTIMATE) === */
 
 /* ✅ MAIN BACKGROUND FULLSCREEN */
 .main {
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  width: 100vw;
-  min-height: 100vh;
-  overflow: visible;
+  width: 140vw;
+  min-height: calc(100vh + 180px);
+  overflow: hidden;
   background: radial-gradient(circle at center, var(--primary-bg) 20%, var(--primary-bg-dark) 80%) no-repeat center center fixed;
   background-size: cover;
   position: relative;
   z-index: 0;
   padding-top: 7vh;
-  box-sizing: border-box;
+  transform: scale(0.8);
+  transform-origin: top center;
   animation: fadeIn 1.2s cubic-bezier(0.25, 1, 0.5, 1) forwards;
 }
 
-/* ✅ FADE IN */
+/* ✅ FADE IN EFFECT */
 @keyframes fadeIn {
-  0% { opacity: 0; transform: scale(0.78); }
-  100% { opacity: 1; transform: scale(0.8); }
+  0% {
+    opacity: 0;
+    transform: scale(0.78);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(0.8);
+  }
 }
 
-/* ✅ WRAPPER FULLSCREEN */
+/* ✅ WRAPPER */
 .wrapper {
-  width: calc(100vw - clamp(180px, 12vw, 360px));
-  min-width: 320px;
-  min-height: calc(100vh - clamp(180px, 12vh, 360px));
-  padding: clamp(24px, 5vw, 48px);
-  background: transparent;
-  backdrop-filter: none;
+  width: 140vw;
+  max-width: none;
+  height: calc(100vh - 80px);
+  padding: clamp(24px, 4vw, 48px);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
   text-align: center;
-  gap: clamp(20px, 4vh, 40px);
-  box-sizing: border-box;
-  transform: scale(clamp(0.82, 1vw + 0.5, 1));
-  transform-origin: top center;
-  overflow: visible;
-  transition: all 0.4s ease;
+  gap: 20px;
+  background: transparent;
+  backdrop-filter: blur(30px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 30px;
+  box-shadow: 0 0 60px rgba(255, 255, 255, 0.1);
+  overflow: hidden;
 }
 
 /* ✅ BALANCE TABLE + FEES */
-.balanceTable, .feeBreakdown {
+.balanceTable,
+.feeBreakdown {
   width: 100%;
+  max-width: 960px;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 20px;
-  padding: clamp(20px, 5vw, 28px);
-  backdrop-filter: blur(24px) saturate(180%);
+  border-radius: 18px;
+  padding: 28px 36px;
+  backdrop-filter: blur(20px) saturate(180%);
   box-shadow: 0 0 24px rgba(255, 255, 255, 0.08);
-  color: white;
   font-family: var(--font-crypto);
+  color: white;
+  font-size: 1rem;
 }
 
 /* ✅ INPUT FIELDS */
 .walletActions {
   width: 100%;
+  max-width: 960px;
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -75,25 +85,27 @@
   color: white;
   font-size: 1.15rem;
   font-family: var(--font-crypto);
-  transition: background 0.3s ease;
   outline: none;
+  transition: background 0.3s ease;
 }
 
 .inputField:focus {
   background: rgba(255, 255, 255, 0.08);
 }
 
-/* ✅ TEXT */
+/* ✅ WHITE TEXT */
 .whiteText {
   color: white;
   font-family: var(--font-crypto);
 }
 
+/* ✅ FEES INFO */
 .feesInfo {
   margin-top: 10px;
   font-size: 0.9rem;
 }
 
+/* ✅ MINIMUM TEXT */
 .minimumText {
   margin-top: 6px;
   font-size: 0.8rem;
@@ -101,41 +113,44 @@
   font-family: var(--font-crypto);
 }
 
-/* ✅ BUTTON */
+/* ✅ SEND NOW BUTTON */
 .sendNowButton {
   width: 100%;
+  max-width: 960px;
   padding: 16px 24px;
   margin-top: auto;
   background: linear-gradient(135deg, #ff4b4b, #ff1c1c);
   border: 2px solid white;
   border-radius: 18px;
   font-weight: bold;
-  font-size: 1.1rem;
   color: white;
   font-family: var(--font-crypto);
+  font-size: 1.1rem;
   text-transform: uppercase;
   cursor: pointer;
-  transition: all 0.4s ease;
+  transition: all 0.4s ease, transform 0.3s ease, box-shadow 0.4s ease;
   box-shadow: 0 8px 24px rgba(255, 0, 0, 0.3), 0 4px 12px rgba(255, 0, 0, 0.2);
 }
 
 .sendNowButton:hover {
   transform: scale(1.05);
   background: linear-gradient(135deg, #ff6b6b, #ff3c3c);
+  box-shadow: 0 10px 28px rgba(255, 0, 0, 0.4), 0 6px 14px rgba(255, 0, 0, 0.25);
 }
 
-/* ✅ MODALS */
+/* ✅ OVERLAY (MODAL) */
 .overlay {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.75);
   backdrop-filter: blur(10px);
   display: flex;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
   z-index: 9999;
 }
 
+/* ✅ MODAL CONTENT */
 .confirmModal {
   background: rgba(15, 20, 40, 0.95);
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -146,6 +161,7 @@
   text-align: center;
 }
 
+/* ✅ MODAL TEXT */
 .modalTitle {
   font-size: 1.5rem;
   font-weight: 700;
@@ -157,6 +173,7 @@
   margin: 8px 0;
 }
 
+/* ✅ MODAL BUTTONS */
 .modalActions {
   display: flex;
   gap: 1.2rem;
@@ -167,12 +184,14 @@
   flex: 1;
   padding: 14px 18px;
   background: linear-gradient(to right, #00c6ff, #0072ff);
+  border: none;
   border-radius: 18px;
   font-weight: bold;
   color: white;
+  font-family: var(--font-crypto);
   text-transform: uppercase;
   cursor: pointer;
-  transition: 0.3s;
+  transition: transform 0.3s ease, background 0.3s ease;
 }
 
 .modalButton:hover {
@@ -183,37 +202,18 @@
   background: linear-gradient(to right, #ff3c3c, #c71d1d);
 }
 
-/* === RESPONSIVE FULLSCREEN FIX === */
-@media (max-width: 768px) {
+/* ✅ RESPONSIVE PC & MOBILE */
+@media (min-width: 1280px) {
   .wrapper {
-    width: calc(100vw - clamp(60px, 10vw, 100px));
-    min-height: calc(100vh - 100px);
-    padding: 24px 16px 90px;
-    transform: scale(0.95);
+    max-width: 960px;
+    padding: 40px 60px;
   }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 1279px) {
+  .main,
   .wrapper {
-    width: calc(100vw - 20px);
-    min-height: calc(100vh - 80px);
-    transform: scale(0.92);
-  }
-}
-
-@media (min-width: 1920px) {
-  .wrapper {
-    width: calc(100vw - clamp(240px, 12vw, 360px));
-    transform: scale(0.85);
-    padding: 48px 32px 120px;
-  }
-}
-
-@media (min-width: 3840px) {
-  .wrapper {
-    width: calc(100vw - 320px);
-    min-height: calc(100vh - 300px);
-    transform: scale(0.82);
-    padding: 60px 40px 140px;
+    width: 140vw;
+    transform: scale(0.8);
   }
 }
