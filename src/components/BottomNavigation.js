@@ -36,11 +36,14 @@ export default function BottomNavigation() {
 
   if (!isMobile) return null;
 
+  // ✅ Pritaikom papildomą klasę jei eini į /history
+  const isHistoryPage = pathname === "/history";
+
   return (
     <AnimatePresence mode="wait">
       <motion.div
         key={pathname}
-        className={styles.bottomWrapper}
+        className={`${styles.bottomWrapper} ${isHistoryPage ? styles.historyBottomWrapper : ""}`}
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: 16 }}
