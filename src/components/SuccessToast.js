@@ -25,7 +25,7 @@ export default function SuccessToast({ show, message = "", networkKey = "" }) {
           exit={{ opacity: 0, y: -20, scale: 0.95 }}
           transition={{
             duration: 0.45,
-            ease: [0.25, 1, 0.5, 1], // ✅ Šilkinė kreivė
+            ease: [0.25, 1, 0.5, 1], // ✅ Super smooth
           }}
         >
           {logoSrc && (
