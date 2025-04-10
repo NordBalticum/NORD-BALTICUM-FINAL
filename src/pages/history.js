@@ -9,6 +9,7 @@ import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
 import styles from "@/styles/history.module.css";
 import background from "@/styles/background.module.css";
 
+// ✅ NETWORK OPTIONS
 const NETWORK_OPTIONS = [
   { label: "BNB Mainnet", value: "bnb" },
   { label: "BNB Testnet", value: "tbnb" },
@@ -16,6 +17,15 @@ const NETWORK_OPTIONS = [
   { label: "Polygon Mainnet", value: "polygon" },
   { label: "Avalanche Mainnet", value: "avax" },
 ];
+
+// ✅ NETWORK ICON URLS
+const iconUrls = {
+  eth: "https://assets.coingecko.com/coins/images/279/large/ethereum.png",
+  bnb: "https://assets.coingecko.com/coins/images/825/large/bnb-icon2_2x.png",
+  tbnb: "https://assets.coingecko.com/coins/images/825/large/bnb-icon2_2x.png",
+  polygon: "https://assets.coingecko.com/coins/images/4713/large/matic-token-icon.png",
+  avax: "https://cryptologos.cc/logos/avalanche-avax-logo.png",
+};
 
 export default function HistoryPage() {
   const { wallet, loading: authLoading } = useAuth();
@@ -27,7 +37,6 @@ export default function HistoryPage() {
   const [loading, setLoading] = useState(false);
   const [visibleCount, setVisibleCount] = useState(5);
 
-  // ✅ Saugus body scroll control
   useEffect(() => {
     document.body.style.overflowX = "hidden";
     document.body.style.overflowY = "auto";
@@ -36,19 +45,16 @@ export default function HistoryPage() {
     };
   }, []);
 
-  // ✅ Patikrina ar klientas
   useEffect(() => {
     if (typeof window !== "undefined") setIsClient(true);
   }, []);
 
-  // ✅ Redirect jei neprisijungęs
   useEffect(() => {
     if (isClient && !authLoading && !wallet?.wallet?.address) {
       router.replace("/");
     }
   }, [isClient, authLoading, wallet, router]);
 
-  // ✅ Transakcijų fetchas
   const fetchTransactions = async () => {
     if (!wallet?.wallet?.address) return;
     try {
@@ -63,7 +69,6 @@ export default function HistoryPage() {
     }
   };
 
-  // ✅ Auto-refresh kas 1 min
   useEffect(() => {
     if (wallet?.wallet?.address) {
       fetchTransactions();
@@ -72,7 +77,6 @@ export default function HistoryPage() {
     }
   }, [wallet, network]);
 
-  // ✅ Gauti explorer nuorodą
   const getExplorerLink = (net, txHash) => {
     switch (net) {
       case "bnb": return `https://bscscan.com/tx/${txHash}`;
@@ -84,7 +88,6 @@ export default function HistoryPage() {
     }
   };
 
-  // ✅ Rodyti status badge
   const renderStatusBadge = (tx) => {
     if (tx.isError === "0" || tx.txreceipt_status === "1") {
       return <span style={{ color: "limegreen", fontWeight: "bold" }}>✔️ Success</span>;
@@ -95,56 +98,70 @@ export default function HistoryPage() {
     return <span style={{ color: "orange", fontWeight: "bold" }}>⏳ Pending</span>;
   };
 
-  // ✅ Loading ekranas
   if (!isClient || authLoading) {
     return <div className={styles.loading}><MiniLoadingSpinner /> Loading wallet...</div>;
   }
 
-  // ✅ Finalinis renderis
   return (
     <main className={`${styles.container} ${background.gradient}`}>
       <div className={styles.wrapper}>
         <h1 className={styles.title}>TRANSACTION HISTORY</h1>
         <p className={styles.subtext}>Real-Time Blockchain History</p>
 
-        {/* Network Selector */}
-        <div style={{ position: "relative", marginBottom: "2rem" }}>
-          <select
-            value={network}
-            onChange={(e) => {
-              setNetwork(e.target.value);
-              setVisibleCount(5);
-            }}
-            disabled={loading}
+        {/* Network Selector with Icon */}
+        <div style={{ display: "flex", alignItems: "center", gap: "14px", marginBottom: "2rem" }}>
+          <img
+            src={iconUrls[network]}
+            alt={network}
             style={{
-              width: "100%",
-              padding: "0.8rem 1.2rem",
+              width: "42px",
+              height: "42px",
               borderRadius: "12px",
-              border: "1px solid #333",
-              backgroundColor: "#0a0a0a",
-              color: "#fff",
-              fontSize: "1rem",
-              appearance: "none",
-              position: "relative",
-              zIndex: 2,
+              backgroundColor: "white",
+              objectFit: "contain",
+              boxShadow: "0 0 10px rgba(255, 255, 255, 0.2)",
             }}
-          >
-            {NETWORK_OPTIONS.map((net) => (
-              <option key={net.value} value={net.value}>{net.label}</option>
-            ))}
-          </select>
+          />
+          <div style={{ position: "relative", flexGrow: 1 }}>
+            <select
+              value={network}
+              onChange={(e) => {
+                setNetwork(e.target.value);
+                setVisibleCount(5);
+              }}
+              disabled={loading}
+              style={{
+                width: "100%",
+                padding: "0.8rem 1.2rem",
+                borderRadius: "12px",
+                border: "1px solid #333",
+                backgroundColor: "#0a0a0a",
+                color: "#fff",
+                fontSize: "1rem",
+                appearance: "none",
+                position: "relative",
+                zIndex: 2,
+              }}
+            >
+              {NETWORK_OPTIONS.map((net) => (
+                <option key={net.value} value={net.value}>
+                  {net.label}
+                </option>
+              ))}
+            </select>
 
-          {loading && (
-            <div style={{
-              position: "absolute",
-              top: "50%",
-              right: "12px",
-              transform: "translateY(-50%)",
-              zIndex: 3,
-            }}>
-              <MiniLoadingSpinner size={24} />
-            </div>
-          )}
+            {loading && (
+              <div style={{
+                position: "absolute",
+                top: "50%",
+                right: "12px",
+                transform: "translateY(-50%)",
+                zIndex: 3,
+              }}>
+                <MiniLoadingSpinner size={24} />
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Transaction List */}
@@ -204,8 +221,6 @@ export default function HistoryPage() {
           </div>
         )}
       </div>
-
-      {/* ✅ BottomNavigation automatiškai globalus */}
     </main>
   );
 }
