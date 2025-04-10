@@ -123,9 +123,9 @@ export default function SettingsPage() {
 
   return (
     <main 
-      style={{ width: "100vw", minHeight: "100vh", overflowY: "auto" }} 
-      className={`${styles.container} ${background.gradient}`}
-    >
+  style={{ width: "100vw", height: "100vh", overflowY: "auto" }} 
+  className={`${styles.container} ${background.gradient}`}
+>
       <Toaster position="top-center" reverseOrder={false} />
 
       <div className={styles.settingsContainer}>
