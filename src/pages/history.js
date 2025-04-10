@@ -27,6 +27,7 @@ export default function HistoryPage() {
   const [loading, setLoading] = useState(false);
   const [visibleCount, setVisibleCount] = useState(5);
 
+  // ✅ Saugus body scroll control
   useEffect(() => {
     document.body.style.overflowX = "hidden";
     document.body.style.overflowY = "auto";
@@ -35,16 +36,19 @@ export default function HistoryPage() {
     };
   }, []);
 
+  // ✅ Patikrina ar klientas
   useEffect(() => {
     if (typeof window !== "undefined") setIsClient(true);
   }, []);
 
+  // ✅ Redirect jei neprisijungęs
   useEffect(() => {
     if (isClient && !authLoading && !wallet?.wallet?.address) {
       router.replace("/");
     }
   }, [isClient, authLoading, wallet, router]);
 
+  // ✅ Transakcijų fetchas
   const fetchTransactions = async () => {
     if (!wallet?.wallet?.address) return;
     try {
@@ -59,14 +63,16 @@ export default function HistoryPage() {
     }
   };
 
+  // ✅ Auto-refresh kas 1 min
   useEffect(() => {
     if (wallet?.wallet?.address) {
       fetchTransactions();
-      const interval = setInterval(fetchTransactions, 60 * 1000); // Auto-refresh kas 1 min
+      const interval = setInterval(fetchTransactions, 60000);
       return () => clearInterval(interval);
     }
   }, [wallet, network]);
 
+  // ✅ Gauti explorer nuorodą
   const getExplorerLink = (net, txHash) => {
     switch (net) {
       case "bnb": return `https://bscscan.com/tx/${txHash}`;
@@ -78,6 +84,7 @@ export default function HistoryPage() {
     }
   };
 
+  // ✅ Rodyti status badge
   const renderStatusBadge = (tx) => {
     if (tx.isError === "0" || tx.txreceipt_status === "1") {
       return <span style={{ color: "limegreen", fontWeight: "bold" }}>✔️ Success</span>;
@@ -88,17 +95,19 @@ export default function HistoryPage() {
     return <span style={{ color: "orange", fontWeight: "bold" }}>⏳ Pending</span>;
   };
 
+  // ✅ Loading ekranas
   if (!isClient || authLoading) {
     return <div className={styles.loading}><MiniLoadingSpinner /> Loading wallet...</div>;
   }
 
+  // ✅ Finalinis renderis
   return (
     <main className={`${styles.container} ${background.gradient}`}>
       <div className={styles.wrapper}>
         <h1 className={styles.title}>TRANSACTION HISTORY</h1>
         <p className={styles.subtext}>Real-Time Blockchain History</p>
 
-        {/* Network Dropdown */}
+        {/* Network Selector */}
         <div style={{ position: "relative", marginBottom: "2rem" }}>
           <select
             value={network}
@@ -173,7 +182,7 @@ export default function HistoryPage() {
               ))}
             </AnimatePresence>
 
-            {/* View More Button */}
+            {/* Load More Button */}
             {visibleCount < transactions.length && (
               <button
                 onClick={() => setVisibleCount(visibleCount + 5)}
@@ -195,6 +204,8 @@ export default function HistoryPage() {
           </div>
         )}
       </div>
+
+      {/* ✅ BottomNavigation automatiškai globalus */}
     </main>
   );
 }
