@@ -21,7 +21,7 @@ const iconUrls = {
   bsc: "https://assets.coingecko.com/coins/images/825/large/bnb-icon2_2x.png",
   tbnb: "https://assets.coingecko.com/coins/images/825/large/bnb-icon2_2x.png", // tas pats BNB
   polygon: "https://assets.coingecko.com/coins/images/4713/large/matic-token-icon.png",
-  avalanche: "https://assets.coingecko.com/coins/images/12559/large/Avalanche_Circle_RedWhite_Logo.png",
+  avalanche: "https://assets.coingecko.com/coins/images/12559/large/avalanche-avax.png",
 };
 
 // ✅ Token pavadinimai
