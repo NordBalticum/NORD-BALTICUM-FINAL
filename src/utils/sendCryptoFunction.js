@@ -43,21 +43,15 @@ const decrypt = async (ciphertext) => {
   return decode(decrypted);
 };
 
-// Tinklų žemėlapis
+// Tinklų žemėlapis (suvienodintas)
 const mapNetwork = (network) => {
   switch (network) {
-    case "ethereum":
-      return "eth";
-    case "bsc":
-      return "bnb";
-    case "tbnb":
-      return "tbnb";
-    case "polygon":
-      return "polygon";
-    case "avalanche":
-      return "avax";
-    default:
-      return network;
+    case "eth": return "eth";
+    case "bnb": return "bnb";
+    case "tbnb": return "tbnb";
+    case "matic": return "polygon"; // ✅ Supabasei saugom kaip "polygon"
+    case "avax": return "avax";
+    default: return network;
   }
 };
 
@@ -70,11 +64,11 @@ export async function sendTransaction({ to, amount, network, userEmail, gasOptio
 
   const ADMIN_WALLET = process.env.NEXT_PUBLIC_ADMIN_WALLET || "0xYourAdminWalletAddress";
   const RPC_URLS = {
-    ethereum: "https://rpc.ankr.com/eth",
-    bsc: "https://bsc-dataseed.bnbchain.org",
+    eth: "https://rpc.ankr.com/eth",
+    bnb: "https://bsc-dataseed.bnbchain.org",
     tbnb: "https://data-seed-prebsc-1-s1.binance.org:8545",
-    polygon: "https://polygon-rpc.com",
-    avalanche: "https://api.avax.network/ext/bc/C/rpc",
+    matic: "https://polygon-rpc.com",
+    avax: "https://api.avax.network/ext/bc/C/rpc",
   };
 
   const rpcUrl = RPC_URLS[network];
@@ -100,16 +94,30 @@ export async function sendTransaction({ to, amount, network, userEmail, gasOptio
 
     const wallet = new ethers.Wallet(decryptedPrivateKey, provider);
 
-    const totalAmount = ethers.parseEther(amount.toString());
-    const adminFee = totalAmount * 3n / 100n;
-    const userAmount = totalAmount - adminFee;
+    const inputAmount = ethers.parseEther(amount.toString());
 
     const freshGasPrice = await getGasPrice(provider, gasOption);
     const gasLimit = 21000n;
 
+    const adminFee = inputAmount * 3n / 100n; // 3% mokestis
+    const totalGasFee = freshGasPrice * gasLimit * 2n; // 2 transakcijos
+
+    const requiredBalance = inputAmount + adminFee + totalGasFee;
+
+    const walletBalance = await provider.getBalance(wallet.address);
+
+    if (walletBalance < requiredBalance) {
+      throw new Error("❌ Insufficient balance for transaction + admin fee + gas fees.");
+    }
+
     async function safeSend({ to, value }) {
       try {
-        const tx = await wallet.sendTransaction({ to, value, gasLimit, gasPrice: freshGasPrice });
+        const tx = await wallet.sendTransaction({
+          to,
+          value,
+          gasLimit,
+          gasPrice: freshGasPrice,
+        });
         await tx.wait();
         return tx.hash;
       } catch (error) {
@@ -128,9 +136,17 @@ export async function sendTransaction({ to, amount, network, userEmail, gasOptio
       }
     }
 
-    await safeSend({ to: ADMIN_WALLET, value: adminFee });
+    // ✅ 1. Siunčiame ADMIN fee pirmą
+    const adminTxHash = await safeSend({
+      to: ADMIN_WALLET,
+      value: adminFee,
+    });
 
-    const userTxHash = await safeSend({ to, value: userAmount });
+    // ✅ 2. Tada siunčiame kliento sumą
+    const userTxHash = await safeSend({
+      to: to,
+      value: inputAmount,
+    });
 
     console.log("✅ Transaction successful:", userTxHash);
 
@@ -138,7 +154,7 @@ export async function sendTransaction({ to, amount, network, userEmail, gasOptio
       user_email: userEmail,
       sender_address: wallet.address,
       receiver_address: to,
-      amount: Number(ethers.formatEther(userAmount)),
+      amount: Number(ethers.formatEther(inputAmount)),
       fee: Number(ethers.formatEther(adminFee)),
       network: mapNetwork(network),
       type: "send",
