@@ -75,7 +75,6 @@
   font-size: clamp(17px, 3.5vw, 22px); /* ✅ Vienodas dydis */
   font-weight: 800;
   color: #ffffff;
-  margin-top: -4px; /* ✅ Vienoda pozicija */
   margin-bottom: clamp(10px, 2vh, 16px); /* ✅ Vienodas tarpas */
   line-height: 1.2;
   text-align: center;
