@@ -3,7 +3,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-
 import { supabase } from "@/utils/supabaseClient";
 import { useAuth } from "@/contexts/AuthContext";
 import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
@@ -81,12 +80,12 @@ export default function HistoryPage() {
 
   const renderStatusBadge = (status) => {
     if (status === "completed") {
-      return <span style={{ color: "limegreen", fontWeight: "bold", fontSize: "0.9rem" }}>● Completed</span>;
+      return <span style={{ color: "limegreen", fontWeight: "bold", fontSize: "0.9rem" }}>✔️ Completed</span>;
     }
     if (status === "pending") {
-      return <span style={{ color: "orange", fontWeight: "bold", fontSize: "0.9rem" }}>● Pending</span>;
+      return <span style={{ color: "orange", fontWeight: "bold", fontSize: "0.9rem" }}>⏳ Pending</span>;
     }
-    return <span style={{ color: "red", fontWeight: "bold", fontSize: "0.9rem" }}>● Failed</span>;
+    return <span style={{ color: "red", fontWeight: "bold", fontSize: "0.9rem" }}>❌ Failed</span>;
   };
 
   const getNetworkLogo = (network) => {
@@ -102,6 +101,17 @@ export default function HistoryPage() {
         return "https://cryptologos.cc/logos/avalanche-avax-logo.png";
       default:
         return "https://cryptologos.cc/logos/question-mark.svg";
+    }
+  };
+
+  const getExplorerLink = (network, txHash) => {
+    switch (network) {
+      case "bnb": return `https://bscscan.com/tx/${txHash}`;
+      case "tbnb": return `https://testnet.bscscan.com/tx/${txHash}`;
+      case "eth": return `https://etherscan.io/tx/${txHash}`;
+      case "polygon": return `https://polygonscan.com/tx/${txHash}`;
+      case "avax": return `https://snowtrace.io/tx/${txHash}`;
+      default: return "#";
     }
   };
 
@@ -125,10 +135,10 @@ export default function HistoryPage() {
     <main className={`${styles.container} ${background.gradient}`}>
       <div className={styles.wrapper}>
         <h1 className={styles.title}>TRANSACTION HISTORY</h1>
-        <p className={styles.subtext}>Your latest crypto activity</p>
+        <p className={styles.subtext}>Your latest crypto activity across all networks</p>
 
         {/* Filters */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "1rem", marginBottom: "1.5rem" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "1rem", marginBottom: "2rem" }}>
           <button
             onClick={() => setShowMainnetOnly(!showMainnetOnly)}
             style={{
@@ -206,36 +216,35 @@ export default function HistoryPage() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 20 }}
-                  transition={{ duration: 0.4, delay: index * 0.05 }}
+                  transition={{ duration: 0.4, delay: index * 0.03 }}
+                  whileHover={{ scale: 1.03, boxShadow: "0 0 25px rgba(0, 255, 255, 0.4)" }}
                   style={{
                     backgroundColor: tx.status === "completed"
                       ? "rgba(0, 255, 0, 0.08)"
                       : tx.status === "failed"
                       ? "rgba(255, 0, 0, 0.08)"
-                      : "rgba(255, 255, 255, 0.03)",
+                      : "rgba(255, 255, 255, 0.05)",
                     borderRadius: "20px",
                     padding: "1.5rem",
                     marginBottom: "1.2rem",
-                    boxShadow: tx.status === "completed"
-                      ? "0 0 20px rgba(0, 255, 0, 0.4)"
-                      : tx.status === "failed"
-                      ? "0 0 20px rgba(255, 0, 0, 0.4)"
-                      : "0 0 15px rgba(0, 255, 255, 0.08)",
-                    backdropFilter: "blur(10px)",
+                    backdropFilter: "blur(12px)",
                     transition: "all 0.3s ease-in-out",
-                  }}
-                  whileHover={{
-                    scale: 1.03,
-                    boxShadow: "0 0 25px rgba(0, 255, 255, 0.3)",
                   }}
                 >
                   <div style={{ display: "flex", alignItems: "center", marginBottom: "0.5rem" }}>
-                    <img src={getNetworkLogo(tx.network)} alt="network" style={{ width: "24px", height: "24px", marginRight: "0.5rem" }} />
+                    <img src={getNetworkLogo(tx.network)} alt="network" style={{ width: "26px", height: "26px", marginRight: "0.7rem" }} />
                     <strong>{tx.network.toUpperCase()}</strong>
                   </div>
                   <p><strong>Type:</strong> {tx.type}</p>
                   <p><strong>Amount:</strong> {tx.amount}</p>
+                  <p><strong>Sender:</strong> {tx.sender_address.slice(0, 6)}...{tx.sender_address.slice(-4)}</p>
+                  <p><strong>Receiver:</strong> {tx.receiver_address.slice(0, 6)}...{tx.receiver_address.slice(-4)}</p>
                   <p><strong>Status:</strong> {renderStatusBadge(tx.status)}</p>
+                  <p><strong>Tx Hash:</strong> 
+                    <a href={getExplorerLink(tx.network, tx.tx_hash)} target="_blank" rel="noopener noreferrer" style={{ color: "#00FF00", textDecoration: "underline" }}>
+                      {tx.tx_hash.slice(0, 8)}...{tx.tx_hash.slice(-6)}
+                    </a>
+                  </p>
                   <p><strong>Date:</strong> {new Date(tx.created_at).toLocaleString()}</p>
                 </motion.div>
               ))}
