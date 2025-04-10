@@ -1,4 +1,4 @@
-/* === SUCCESS TOAST FINAL ULTRA ULTRA PREMIUM FIXED === */
+/* === SUCCESS TOAST FINAL ULTRA PREMIUM V11 === */
 
 .toast {
   position: fixed;
@@ -20,7 +20,7 @@
   min-width: 260px;
   min-height: 64px;
   pointer-events: none;
-  transition: opacity 0.4s ease, transform 0.4s ease;
+  transition: opacity 0.45s ease, transform 0.45s ease;
 }
 
 /* ✅ LOGO WRAPPER */
@@ -43,20 +43,57 @@
   line-height: 1;
 }
 
-/* ✅ RESPONSIVE - VISADA DEŠINĖJE, tik mažinam right % */
+/* ✅ RESPONSIVE TWEAKS */
 @media screen and (max-width: 1024px) {
   .toast {
-    right: 10%;
+    right: 12%;
+    min-height: 60px;
     padding: 12px 24px;
-    min-width: 220px;
+    min-width: 240px;
+    font-size: 15px;
+    gap: 12px;
   }
 }
-@media screen and (max-width: 480px) {
+
+@media screen and (max-width: 768px) {
   .toast {
     right: 8%;
+    min-height: 56px;
     padding: 10px 20px;
-    min-width: 200px;
+    min-width: 220px;
     font-size: 14px;
     gap: 10px;
   }
+}
+
+@media screen and (max-width: 480px) {
+  .toast {
+    right: 6%;
+    min-height: 52px;
+    padding: 8px 18px;
+    min-width: 200px;
+    font-size: 13.5px;
+    gap: 8px;
+  }
+}
+
+/* ✅ ANIMATIONS SUPER SMOOTH */
+.toast-enter {
+  transform: translateX(150%);
+  opacity: 0;
+}
+.toast-enter-active {
+  transform: translateX(0);
+  opacity: 1;
+  transition: transform 0.5s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.5s ease;
+}
+
+.toast-exit {
+  transform: translateX(0);
+  opacity: 1;
+}
+.toast-exit-active {
+  transform: translateX(150%);
+  opacity: 0;
+  transition: transform 0.45s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.45s ease;
 }
