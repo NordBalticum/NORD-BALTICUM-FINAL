@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import QRCode from "react-qr-code";
+import { supabase } from "@/utils/supabaseClient";
 
 import { useAuth } from "@/contexts/AuthContext"; 
 import styles from "@/styles/receive.module.css";
@@ -39,6 +40,26 @@ export default function Receive() {
     }
   };
 
+  useEffect(() => {
+    if (!wallet?.wallet?.address) return;
+
+    // Real-Time Receive Monitoring
+    const subscription = supabase
+      .channel('realtime:transactions')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'transactions' }, (payload) => {
+        const { new: tx } = payload;
+        if (tx?.receiver_address?.toLowerCase() === wallet.wallet.address.toLowerCase()) {
+          console.log("✅ New Incoming Transaction Received:", tx);
+          // Galima būtų rodyti "Transaction Received!" notification (bonus)
+        }
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(subscription);
+    };
+  }, [wallet]);
+
   if (!isClient || loading) {
     return <div className={styles.loadingScreen}>Loading Wallet...</div>;
   }
@@ -57,12 +78,35 @@ export default function Receive() {
       className={`${styles.main} ${background.gradient}`}
     >
       <div className={styles.globalContainer}>
-        <div className={styles.wrapper}>
+        <motion.div
+          className={styles.wrapper}
+          initial={{ scale: 0.95, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+          style={{
+            background: "rgba(255, 255, 255, 0.05)",
+            borderRadius: "20px",
+            boxShadow: "0 8px 32px rgba(31, 38, 135, 0.37)",
+            backdropFilter: "blur(10px)",
+            border: "1px solid rgba(255, 255, 255, 0.18)",
+            padding: "2rem",
+          }}
+        >
           <h1 className={styles.title}>RECEIVE</h1>
           <p className={styles.subtext}>Your MultiNetwork Receiving Address</p>
 
-          {/* ✅ QR kodas tiesiogiai */}
-          <div className={styles.qrWrapper} onClick={() => handleCopy(address)}>
+          {/* ✅ QR Code */}
+          <motion.div
+            whileHover={{ scale: 1.05 }}
+            className={styles.qrWrapper}
+            onClick={() => handleCopy(address)}
+            style={{
+              padding: "1rem",
+              borderRadius: "20px",
+              background: "rgba(255, 255, 255, 0.02)",
+              boxShadow: "0 0 20px rgba(0, 255, 255, 0.3)",
+            }}
+          >
             <QRCode
               value={address}
               size={180}
@@ -70,7 +114,7 @@ export default function Receive() {
               fgColor="#ffffff"
               style={{ height: "auto", maxWidth: "100%", width: "100%" }}
             />
-          </div>
+          </motion.div>
 
           {/* ✅ Wallet Address */}
           <p className={styles.addressText}>
@@ -78,20 +122,26 @@ export default function Receive() {
           </p>
 
           {/* ✅ Copy Button */}
-          <button
+          <motion.button
             onClick={() => handleCopy(address)}
             className={styles.copyButton}
+            whileHover={{ scale: 1.05 }}
           >
             {copied ? "Copied!" : "Copy Address"}
-          </button>
+          </motion.button>
 
-          {/* ✅ Small copied success message */}
+          {/* ✅ Small Copied Success */}
           {copied && (
-            <div className={styles.copied}>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5 }}
+              className={styles.copied}
+            >
               ✅ Wallet Address Copied
-            </div>
+            </motion.div>
           )}
-        </div>
+        </motion.div>
       </div>
     </motion.main>
   );
