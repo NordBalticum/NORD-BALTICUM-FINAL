@@ -1,11 +1,12 @@
 "use client";
 
+// 1️⃣ Importai
 import { createContext, useContext, useEffect, useState, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { Wallet, JsonRpcProvider, parseEther, formatEther } from "ethers";
+import { Wallet, JsonRpcProvider, formatEther } from "ethers";
 import { supabase } from "@/utils/supabaseClient";
 
-// ✅ RPC URL
+// 2️⃣ RPC URL'ai
 const RPC = {
   eth: "https://rpc.ankr.com/eth",
   bnb: "https://bsc-dataseed.binance.org/",
@@ -14,11 +15,11 @@ const RPC = {
   avax: "https://api.avax.network/ext/bc/C/rpc",
 };
 
-// ✅ ENV
+// 3️⃣ ENV kintamieji
 const ADMIN_ADDRESS = process.env.NEXT_PUBLIC_ADMIN_WALLET;
 const ENCRYPTION_SECRET = process.env.NEXT_PUBLIC_ENCRYPTION_SECRET;
 
-// ✅ Encryption helpers
+// 4️⃣ Encryption Helperiai
 const encode = (str) => new TextEncoder().encode(str);
 const decode = (buf) => new TextDecoder().decode(buf);
 
@@ -58,10 +59,11 @@ export const decrypt = async (ciphertext) => {
   return decode(decrypted);
 };
 
-// ✅ Context setup
+// 5️⃣ Context Setup
 export const AuthContext = createContext();
 export const useAuth = () => useContext(AuthContext);
 
+// 6️⃣ Provider
 export const AuthProvider = ({ children }) => {
   const router = useRouter();
   const pathname = usePathname();
@@ -78,7 +80,7 @@ export const AuthProvider = ({ children }) => {
   const inactivityTimer = useRef(null);
   const balanceInterval = useRef(null);
 
-  // ✅ Load Session
+  // 7️⃣ Load Session
   useEffect(() => {
     if (!isClient) return;
     const loadSession = async () => {
@@ -100,28 +102,28 @@ export const AuthProvider = ({ children }) => {
     return () => subscription?.unsubscribe();
   }, []);
 
-  // ✅ Auto Load Wallet kai user yra
+  // 8️⃣ Auto Load Wallet kai user yra
   useEffect(() => {
     if (!isClient || authLoading || !user?.email) return;
     loadOrCreateWallet(user.email);
-  }, [isClient, authLoading, user]);
+  }, [authLoading, user]);
 
-  // ✅ Auto redirect į dashboard
+  // 9️⃣ Auto redirect į dashboard
   useEffect(() => {
     if (!isClient) return;
     if (!authLoading && user && pathname === "/") {
       router.replace("/dashboard");
     }
-  }, [isClient, authLoading, user, pathname, router]);
+  }, [authLoading, user, pathname]);
 
-  // ✅ Inactivity Timeout (10 min)
+  // 🔟 Inactivity timeout
   useEffect(() => {
     if (!isClient) return;
     const resetTimer = () => {
       clearTimeout(inactivityTimer.current);
       inactivityTimer.current = setTimeout(() => {
         signOut();
-      }, 10 * 60 * 1000);
+      }, 10 * 60 * 1000); // 10 min timeout
     };
     window.addEventListener("mousemove", resetTimer);
     window.addEventListener("keydown", resetTimer);
@@ -131,9 +133,9 @@ export const AuthProvider = ({ children }) => {
       window.removeEventListener("mousemove", resetTimer);
       window.removeEventListener("keydown", resetTimer);
     };
-  }, [isClient]);
+  }, []);
 
-  // ✅ Load arba Create Wallet (tik login metu)
+  // ✅ Saugus Wallet load arba Create
   const loadOrCreateWallet = async (email) => {
     try {
       setWalletLoading(true);
@@ -146,22 +148,20 @@ export const AuthProvider = ({ children }) => {
 
       if (error) throw error;
 
-      if (data?.encrypted_key) {
+      if (data && Object.keys(data).length > 0 && data.encrypted_key) {
+        // ✅ WALLET YRA — Dekryptinam
         const decryptedKey = await decrypt(data.encrypted_key);
         setupWallet(decryptedKey);
+      } else if (data && Object.keys(data).length > 0 && !data.encrypted_key) {
+        // ✅ Blogas įrašas — ištrinam
+        console.warn("Found invalid wallet record. Deleting...");
+        await supabase.from("wallets").delete().eq("user_email", email);
+        await createAndStoreWallet(email);
       } else {
-        const newWallet = Wallet.createRandom();
-        const encryptedKey = await encrypt(newWallet.privateKey);
-
-        await supabase.from("wallets").insert({
-          user_email: email,
-          eth_address: newWallet.address,
-          encrypted_key: encryptedKey,
-          created_at: new Date().toISOString(),
-        });
-
-        setupWallet(newWallet.privateKey);
+        // ✅ Visiškai naujas useris — sukuriam
+        await createAndStoreWallet(email);
       }
+
     } catch (error) {
       console.error("Wallet load error:", error.message);
       setWallet(null);
@@ -170,34 +170,72 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // ✅ Importuoti naują wallet (kai vartotojas suveda privatų raktą)
-  const walletImport = async (privateKey, email) => {
+  // ✅ Wallet Create helper
+  const createAndStoreWallet = async (email) => {
+    const newWallet = Wallet.createRandom();
+    const encryptedKey = await encrypt(newWallet.privateKey);
+
+    const { error } = await supabase.from("wallets").insert({
+      user_email: email,
+      eth_address: newWallet.address,
+      encrypted_key: encryptedKey,
+      created_at: new Date().toISOString(),
+    });
+
+    if (error) throw error;
+
+    setupWallet(newWallet.privateKey);
+  };
+
+  // ✅ Setup Wallet su signers
+  const setupWallet = (privateKey) => {
+    const baseWallet = new Wallet(privateKey);
+    const signers = {};
+    Object.entries(RPC).forEach(([net, url]) => {
+      signers[net] = new Wallet(privateKey, new JsonRpcProvider(url));
+    });
+    setWallet({ wallet: baseWallet, signers });
+
+    loadBalances(signers);
+
+    if (balanceInterval.current) clearInterval(balanceInterval.current);
+    balanceInterval.current = setInterval(() => loadBalances(signers), 180000); // kas 3 min
+  };
+
+  // ✅ Load Balances
+  const loadBalances = async (signers) => {
     try {
-      setWalletLoading(true);
-
-      const encryptedKey = await encrypt(privateKey);
-      const walletInstance = new Wallet(privateKey);
-
-      await supabase.from("wallets").delete().eq("user_email", email);
-
-      const { error: insertError } = await supabase.from("wallets").insert({
-        user_email: email,
-        eth_address: walletInstance.address,
-        encrypted_key: encryptedKey,
-        created_at: new Date().toISOString(),
+      const rateData = await fetchRates();
+      const balancesData = await Promise.all(
+        Object.keys(signers).map(async (network) => {
+          const balance = await signers[network].getBalance();
+          return { network, balance: parseFloat(formatEther(balance)) };
+        })
+      );
+      const balancesObj = {};
+      balancesData.forEach(({ network, balance }) => {
+        balancesObj[network] = balance;
       });
-
-      if (insertError) throw insertError;
-
-      setupWallet(privateKey);
+      setBalances(balancesObj);
+      setRates(rateData);
     } catch (error) {
-      console.error("Wallet Import Error:", error.message);
-    } finally {
-      setWalletLoading(false);
+      console.error("Balances error:", error.message);
     }
   };
 
-  // ✅ Reload Wallet (po importo)
+  // ✅ Fetch Live Rates
+  const fetchRates = async () => {
+    try {
+      const ids = ["ethereum", "binancecoin", "polygon", "avalanche-2"].join(",");
+      const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=eur,usd`);
+      return await res.json();
+    } catch (error) {
+      console.error("Rates fetch error:", error.message);
+      return {};
+    }
+  };
+
+  // ✅ Reload Wallet (Importavus)
   const reloadWallet = async (email) => {
     try {
       setWalletLoading(true);
@@ -221,54 +259,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // ✅ Setup Wallet
-  const setupWallet = (privateKey) => {
-    const baseWallet = new Wallet(privateKey);
-    const signers = {};
-    Object.entries(RPC).forEach(([net, url]) => {
-      signers[net] = new Wallet(privateKey, new JsonRpcProvider(url));
-    });
-    setWallet({ wallet: baseWallet, signers });
-
-    loadBalances(signers);
-
-    if (balanceInterval.current) clearInterval(balanceInterval.current);
-    balanceInterval.current = setInterval(() => loadBalances(signers), 180000); // kas 3 min
-  };
-
-  // ✅ Load Balances ir Rates
-  const loadBalances = async (signers) => {
-    try {
-      const rateData = await fetchRates();
-      const balancesData = await Promise.all(
-        Object.keys(signers).map(async (network) => {
-          const balance = await signers[network].getBalance();
-          return { network, balance: parseFloat(formatEther(balance)) };
-        })
-      );
-      const balancesObj = {};
-      balancesData.forEach(({ network, balance }) => {
-        balancesObj[network] = balance;
-      });
-      setBalances(balancesObj);
-      setRates(rateData);
-    } catch (error) {
-      console.error("Balances error:", error.message);
-    }
-  };
-
-  const fetchRates = async () => {
-    try {
-      const ids = ["ethereum", "binancecoin", "polygon", "avalanche-2"].join(",");
-      const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=eur,usd`);
-      return await res.json();
-    } catch (error) {
-      console.error("Rates fetch error:", error.message);
-      return {};
-    }
-  };
-
-  // ✅ Sign In / Sign Out
+  // ✅ Auth Functions
   const signInWithMagicLink = async (email) => {
     const origin = isClient ? window.location.origin : "https://nordbalticum.com";
     const { error } = await supabase.auth.signInWithOtp({
@@ -299,7 +290,7 @@ export const AuthProvider = ({ children }) => {
     router.replace("/");
   };
 
-  // ✅ Final Context Return
+  // ✅ Return Context
   return (
     <AuthContext.Provider
       value={{
@@ -315,7 +306,6 @@ export const AuthProvider = ({ children }) => {
         signInWithGoogle,
         signOut,
         reloadWallet,
-        walletImport, // ✅ naujas import metodas
       }}
     >
       {children}
