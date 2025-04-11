@@ -27,6 +27,7 @@ export default function TBnbPage() {
   const [selectedRange, setSelectedRange] = useState('24h');
   const router = useRouter();
 
+  // ✅ Real-time auto refresh
   useEffect(() => {
     if (user && wallet) {
       fetchTransactions();
@@ -38,10 +39,12 @@ export default function TBnbPage() {
     const interval = setInterval(() => {
       refreshBalance();
       refreshPrices();
+      fetchChartData(); // atnaujinti ir charts be kraunamų spinnerių
     }, 30000);
     return () => clearInterval(interval);
   }, []);
 
+  // ✅ Inactivity timeout logout (10min)
   useEffect(() => {
     let timer;
     const resetTimer = () => {
@@ -62,6 +65,7 @@ export default function TBnbPage() {
     };
   }, []);
 
+  // ✅ Fetch transactions
   const fetchTransactions = async () => {
     setTransactionsLoading(true);
     try {
@@ -73,34 +77,29 @@ export default function TBnbPage() {
     setTransactionsLoading(false);
   };
 
+  // ✅ Fetch chart data
   const fetchChartData = async () => {
-    setChartLoading(true);
     try {
       const response = await fetch(`/api/coingecko?coin=binancecoin&range=${selectedRange}`);
       const data = await response.json();
       const rawPrices = data.prices.map(p => ({
-        time: p[0],
-        value: p[1],
+        time: new Date(p[0]).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }), // ✅ normalūs dates
+        value: (p[1] * (balances?.tbnb?.balance || 0)).toFixed(2),
       }));
-
-      const walletBalance = balances?.tbnb?.balance || 0;
-      const adjustedPrices = rawPrices.map(p => ({
-        time: p.time,
-        value: (p.value * walletBalance).toFixed(2),
-      }));
-
-      setChartData(adjustedPrices);
+      setChartData(rawPrices);
     } catch (error) {
       console.error('Failed to load chart data', error);
     }
-    setChartLoading(false);
   };
 
+  // ✅ Chart config
   const chartOptions = {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
       tooltip: {
+        mode: 'index',
+        intersect: false,
         callbacks: {
           label: function(context) {
             return `€ ${parseFloat(context.raw).toFixed(2)}`;
@@ -109,8 +108,8 @@ export default function TBnbPage() {
       },
     },
     scales: {
-      x: { display: false },
-      y: { display: false },
+      x: { ticks: { color: '#fff' } },
+      y: { ticks: { color: '#fff' } },
     },
   };
 
@@ -140,101 +139,103 @@ export default function TBnbPage() {
   if (!user || !wallet) return <MiniLoadingSpinner />;
 
   return (
-    <div className={styles.pageContainer}>
-      
-      {/* HEADER */}
-      <div className={styles.header}>
-        <Image src="/icons/bnb.svg" alt="BNB Logo" width={50} height={50} className={styles.networkLogo} priority />
-        <h1 className={styles.networkNameSmall}>Binance Smart Chain (Testnet)</h1>
+    <main className={styles.pageWrapper}>
+      <div className={styles.pageContainer}>
 
-        <div className={styles.balanceBox}>
-          {balanceLoading || pricesLoading ? (
-            <MiniLoadingSpinner />
-          ) : (
-            <>
-              <p className={styles.balanceText}>
-                {balances?.tbnb?.balance?.toFixed(4)} BNB
-              </p>
-              <p className={styles.balanceFiat}>
-                {((balances?.tbnb?.balance || 0) * (prices?.tbnb?.eur || 0)).toFixed(2)} € | {((balances?.tbnb?.balance || 0) * (prices?.tbnb?.usd || 0)).toFixed(2)} $
-              </p>
-            </>
-          )}
+        {/* Header */}
+        <div className={styles.header}>
+          <Image src="/icons/bnb.svg" alt="BNB Logo" width={50} height={50} className={styles.networkLogo} priority />
+          <h1 className={styles.networkNameSmall}>Binance Smart Chain (Testnet)</h1>
+
+          <div className={styles.balanceBox}>
+            {balanceLoading || pricesLoading ? (
+              <MiniLoadingSpinner />
+            ) : (
+              <>
+                <p className={styles.balanceText}>
+                  {balances?.tbnb?.balance?.toFixed(4)} BNB
+                </p>
+                <p className={styles.balanceFiat}>
+                  {((balances?.tbnb?.balance || 0) * (prices?.tbnb?.eur || 0)).toFixed(2)} € | {((balances?.tbnb?.balance || 0) * (prices?.tbnb?.usd || 0)).toFixed(2)} $
+                </p>
+              </>
+            )}
+          </div>
         </div>
-      </div>
 
-      {/* CHART */}
-      <div className={styles.chartWrapper}>
-        <div className={styles.chartBorder}>
-          {chartLoading ? (
-            <MiniLoadingSpinner />
-          ) : chartData ? (
-            <Line options={chartOptions} data={chartDataset} />
-          ) : (
-            <div className={styles.spinner}>No Chart Data</div>
-          )}
+        {/* Range Selector */}
+        <div className={styles.rangeSelector}>
+          {['24h', '7d', '14d', '30d'].map((range) => (
+            <button
+              key={range}
+              onClick={() => setSelectedRange(range)}
+              className={`${styles.rangeButton} ${selectedRange === range ? styles.rangeButtonActive : ''}`}
+            >
+              {range}
+            </button>
+          ))}
         </div>
-      </div>
 
-      {/* RANGE SELECTOR */}
-      <div className={styles.rangeSelector}>
-        {['24h', '7d', '14d', '30d'].map((range) => (
-          <button
-            key={range}
-            onClick={() => setSelectedRange(range)}
-            className={`${styles.rangeButton} ${selectedRange === range ? styles.rangeButtonActive : ''}`}
-          >
-            {range}
+        {/* Chart */}
+        <div className={styles.chartWrapper}>
+          <div className={styles.chartBorder}>
+            {chartLoading ? (
+              <MiniLoadingSpinner />
+            ) : chartData ? (
+              <Line options={chartOptions} data={chartDataset} />
+            ) : (
+              <div className={styles.spinner}>No Chart Data</div>
+            )}
+          </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div className={styles.actionButtons}>
+          <button onClick={handleSend} className={styles.actionButton}>
+            Send
           </button>
-        ))}
-      </div>
-
-      {/* ACTION BUTTONS */}
-      <div className={styles.actionButtons}>
-        <button onClick={handleSend} className={styles.actionButton}>
-          Send
-        </button>
-        <button onClick={handleReceive} className={styles.actionButton}>
-          Receive
-        </button>
-      </div>
-
-      {/* TRANSACTIONS */}
-      <div className={styles.transactionsContainer}>
-        <h2 className={styles.transactionsTitle}>Recent Transactions</h2>
-        <div className={styles.transactionsBox}>
-          {transactionsLoading ? (
-            <MiniLoadingSpinner />
-          ) : (
-            <AnimatePresence>
-              {transactions.map((tx, index) => (
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  transition={{ duration: 0.5 }}
-                  className={styles.transactionItem}
-                >
-                  <div className={styles.transactionLeft}>
-                    <div className={styles.transactionIcon} style={{ backgroundColor: tx.type === 'send' ? '#EF4444' : '#22C55E' }}>
-                      {tx.type === 'send' ? '↑' : '↓'}
-                    </div>
-                    <div>
-                      <div className={styles.transactionAddress}>{tx.address?.slice(0, 6)}...{tx.address?.slice(-4)}</div>
-                      <div className={styles.transactionTime}>{moment(tx.timestamp).fromNow()}</div>
-                    </div>
-                  </div>
-                  <div className={styles.transactionAmount}>
-                    {tx.type === 'send' ? '-' : '+'}{parseFloat(tx.amount).toFixed(4)} BNB
-                  </div>
-                </motion.div>
-              ))}
-            </AnimatePresence>
-          )}
+          <button onClick={handleReceive} className={styles.actionButton}>
+            Receive
+          </button>
         </div>
-      </div>
 
-    </div>
+        {/* Transactions */}
+        <div className={styles.transactionsContainer}>
+          <h2 className={styles.transactionsTitle}>Recent Transactions</h2>
+          <div className={styles.transactionsBox}>
+            {transactionsLoading ? (
+              <MiniLoadingSpinner />
+            ) : (
+              <AnimatePresence>
+                {transactions.map((tx, index) => (
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.5 }}
+                    className={styles.transactionItem}
+                  >
+                    <div className={styles.transactionLeft}>
+                      <div className={styles.transactionIcon} style={{ backgroundColor: tx.type === 'send' ? '#EF4444' : '#22C55E' }}>
+                        {tx.type === 'send' ? '↑' : '↓'}
+                      </div>
+                      <div>
+                        <div className={styles.transactionAddress}>{tx.address?.slice(0, 6)}...{tx.address?.slice(-4)}</div>
+                        <div className={styles.transactionTime}>{moment(tx.timestamp).fromNow()}</div>
+                      </div>
+                    </div>
+                    <div className={styles.transactionAmount}>
+                      {tx.type === 'send' ? '-' : '+'}{parseFloat(tx.amount).toFixed(4)} BNB
+                    </div>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            )}
+          </div>
+        </div>
+
+      </div>
+    </main>
   );
 }
