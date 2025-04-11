@@ -28,11 +28,12 @@ export default function TBnbPage() {
   const [selectedRange, setSelectedRange] = useState('24h');
   const router = useRouter();
 
+  // ✅ Real-time background refresh
   useEffect(() => {
     if (user && wallet) {
       fetchAllData();
     }
-  }, [user, wallet, selectedRange]);
+  }, [user, wallet]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -41,6 +42,7 @@ export default function TBnbPage() {
     return () => clearInterval(interval);
   }, []);
 
+  // ✅ On minimize/maximize refresh
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const handleVisibilityChange = () => {
@@ -53,6 +55,7 @@ export default function TBnbPage() {
     }
   }, []);
 
+  // ✅ Inactivity logout (10min)
   useEffect(() => {
     let timer;
     const resetTimer = () => {
@@ -131,8 +134,14 @@ export default function TBnbPage() {
       },
     },
     scales: {
-      x: { ticks: { color: '#fff' } },
-      y: { ticks: { color: '#fff' } },
+      x: {
+        ticks: { color: '#fff', autoSkip: true, maxTicksLimit: 6 },
+        grid: { display: false }
+      },
+      y: {
+        ticks: { color: '#fff', callback: value => `€${value}` },
+        grid: { display: false }
+      }
     },
   };
 
@@ -167,7 +176,7 @@ export default function TBnbPage() {
       className={styles.pageContainer}
     >
       <div className={styles.pageContent}>
-        
+
         {/* Header */}
         <div className={styles.header}>
           <Image src="/icons/bnb.svg" alt="BNB Logo" width={48} height={48} className={styles.networkLogo} priority />
