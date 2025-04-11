@@ -13,8 +13,8 @@ const NETWORKS = {
   tbnb: { rpc: "https://data-seed-prebsc-1-s1.binance.org:8545", symbol: "TBNB" },
 };
 
-// ✅ Single fetch
-async function getBalances(address, retries = 2) {
+// ✅ Fetch balances with retries
+async function getBalances(address, retries = 3) {
   if (!address) throw new Error("❌ Wallet address is required!");
 
   const balances = {};
@@ -38,7 +38,7 @@ async function getBalances(address, retries = 2) {
         if (attempt > retries) {
           balances[network] = {
             symbol: config.symbol,
-            balance: 0, // fallback į 0, kad nesikrautų "null"
+            balance: 0, // fallback to 0 if failed after retries
           };
         }
       }
@@ -48,7 +48,7 @@ async function getBalances(address, retries = 2) {
   return balances;
 }
 
-// ✅ Hook
+// ✅ Main Hook to use balance and price data
 export function useBalance() {
   const { wallet } = useAuth();
   const [balances, setBalances] = useState({});
@@ -76,17 +76,16 @@ export function useBalance() {
 
     fetchBalances(); // ✅ First load
 
-    intervalRef.current = setInterval(fetchBalances, 30000); // ✅ Refresh kas 30s
-
+    intervalRef.current = setInterval(fetchBalances, 30000); // ✅ Refresh every 30s
     return () => {
-      clearInterval(intervalRef.current);
+      clearInterval(intervalRef.current); // ✅ Clear interval on cleanup
     };
   }, [fetchBalances]);
 
   return {
     balances,
-    loading,          // fono loading
-    initialLoading,   // pirmo užkrovimo loading
-    refetch: fetchBalances,
+    loading,           // Background loading
+    initialLoading,    // First load loading
+    refetch: fetchBalances,  // Manually trigger a refresh
   };
 }
