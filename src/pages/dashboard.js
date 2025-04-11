@@ -11,10 +11,8 @@ import { usePrices } from "@/hooks/usePrices";
 import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
 import styles from "@/styles/dashboard.module.css"; 
 
-// ✅ Dynamic import
 const LivePriceTable = dynamic(() => import("@/components/LivePriceTable"), { ssr: false });
 
-// ✅ Icon mappings
 const iconUrls = {
   ethereum: "/icons/eth.svg",
   bsc: "/icons/bnb.svg",
@@ -23,7 +21,6 @@ const iconUrls = {
   avalanche: "/icons/avax.svg",
 };
 
-// ✅ Friendly names
 const names = {
   ethereum: "Ethereum",
   bsc: "BNB Smart Chain",
@@ -32,7 +29,6 @@ const names = {
   avalanche: "Avalanche",
 };
 
-// ✅ Route mappings
 const routeNames = {
   ethereum: "eth",
   bsc: "bnb",
@@ -63,7 +59,7 @@ export default function Dashboard() {
     }
   }, [isClient, authLoading, walletLoading, user, router]);
 
-  // ✅ Tokenų sąrašas tik jei turim address ir balansų
+  // ✅ Tokenų sąrašas
   const tokens = useMemo(() => {
     if (!wallet?.wallet?.address || !balances || Object.keys(balances).length === 0) {
       return [];
@@ -71,8 +67,9 @@ export default function Dashboard() {
     return Object.keys(balances);
   }, [wallet, balances]);
 
-  // ✅ Loader kol viskas kraunasi
-  const isGlobalLoading = typeof window === "undefined" || !isClient || authLoading || walletLoading || initialLoading || pricesLoading;
+  // ✅ Loader logika
+  const isWaitingWallet = !wallet?.wallet?.address; // Jei address nėra, nesikraunam balansų
+  const isGlobalLoading = typeof window === "undefined" || !isClient || authLoading || walletLoading || (!isWaitingWallet && (initialLoading || pricesLoading));
 
   if (isGlobalLoading) {
     return (
@@ -89,7 +86,7 @@ export default function Dashboard() {
     );
   }
 
-  // ✅ Kai viskas užkrauta
+  // ✅ Kai viskas OK
   return (
     <main className={styles.container}>
       <div className={styles.dashboardWrapper}>
@@ -108,7 +105,7 @@ export default function Dashboard() {
               const balanceData = balances?.[network];
               const priceData = prices?.[network === "tbnb" ? "bsc" : network];
 
-              if (!balanceData || !priceData) return null; // ✅ Apsauga jei nėra duomenų
+              if (!balanceData || !priceData) return null;
 
               const symbol = routeNames[network] || network;
               const balanceFormatted = parseFloat(balanceData.balance || 0).toFixed(6);
