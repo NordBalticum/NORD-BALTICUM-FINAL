@@ -5,11 +5,11 @@ import Image from "next/image";
 import styles from "@/components/successtoast.module.css";
 
 const networkLogos = {
-  eth: "https://assets.coingecko.com/coins/images/279/large/ethereum.png",
-  bnb: "https://assets.coingecko.com/coins/images/825/large/bnb-icon2_2x.png",
-  tbnb: "https://assets.coingecko.com/coins/images/825/large/bnb-icon2_2x.png",
-  matic: "https://assets.coingecko.com/coins/images/4713/large/matic-token-icon.png",
-  avax: "https://assets.coingecko.com/coins/images/12559/large/coinmarketcap-avalanche-200.png",
+  eth: "/icons/eth.svg",
+  bnb: "/icons/bnb.svg",
+  tbnb: "/icons/bnb.svg",     // Testnet irgi tas pats BNB
+  matic: "/icons/matic.svg",
+  avax: "/icons/avax.svg",
 };
 
 export default function SuccessToast({ show, message = "", networkKey = "" }) {
