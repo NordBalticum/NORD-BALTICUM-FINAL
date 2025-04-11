@@ -3,11 +3,11 @@
 import { useState } from "react";
 import { Wallet } from "ethers";
 import { supabase } from "@/utils/supabaseClient";
-import { useAuth } from "@/contexts/AuthContext"; 
-import { encrypt } from "@/contexts/AuthContext"; 
+import { useAuth } from "@/contexts/AuthContext";
+import { encrypt } from "@/contexts/AuthContext";
 
 export default function WalletImport() {
-  const { user } = useAuth();
+  const { user, reloadWallet } = useAuth(); // ✅ Paimam reloadWallet funkciją iš AuthContext
   const [privateKey, setPrivateKey] = useState("");
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(false);
@@ -20,16 +20,15 @@ export default function WalletImport() {
 
     try {
       setLoading(true);
-      const wallet = new Wallet(privateKey.trim()); // ✅ Validacija
+      const wallet = new Wallet(privateKey.trim());
 
-      const encrypted = await encrypt(privateKey.trim()); // ✅ Šifruojam tavo būdu
+      const encrypted = await encrypt(privateKey.trim());
 
-      // ✅ Update Supabase lentelę
       const { error } = await supabase
         .from("wallets")
         .update({
           encrypted_key: encrypted,
-          eth_address: wallet.address, // ✅ Atnaujinam adresą
+          eth_address: wallet.address,
         })
         .eq("user_email", user.email);
 
@@ -39,13 +38,11 @@ export default function WalletImport() {
         return;
       }
 
-      setStatus("✅ Wallet imported successfully! Reloading...");
+      setStatus("✅ Wallet imported successfully!");
       setPrivateKey("");
 
-      // ✅ Automatinis reload
-      setTimeout(() => {
-        window.location.reload();
-      }, 2000);
+      // ✅ Reloadinam naują wallet'ą į AuthContext
+      await reloadWallet(user.email);
 
     } catch (err) {
       console.error("Import Wallet Error:", err.message);
