@@ -7,7 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { encrypt } from "@/contexts/AuthContext";
 
 export default function WalletImport() {
-  const { user, reloadWallet } = useAuth(); // ✅ Paimam reloadWallet funkciją iš AuthContext
+  const { user, reloadWallet } = useAuth();
   const [privateKey, setPrivateKey] = useState("");
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(false);
@@ -41,14 +41,18 @@ export default function WalletImport() {
       setStatus("✅ Wallet imported successfully!");
       setPrivateKey("");
 
-      // ✅ Reloadinam naują wallet'ą į AuthContext
       await reloadWallet(user.email);
+
+      // ✅ Suteikiam sekundės prabangų pauzę kad spinneris pasimėgautų
+      setTimeout(() => {
+        window.location.reload();
+      }, 1200);
 
     } catch (err) {
       console.error("Import Wallet Error:", err.message);
       setStatus("❌ Invalid private key.");
     } finally {
-      setLoading(false);
+      // Svarbu: loading false tik po reload
     }
   };
 
@@ -60,6 +64,7 @@ export default function WalletImport() {
         placeholder="Enter your private key"
         value={privateKey}
         onChange={(e) => setPrivateKey(e.target.value)}
+        disabled={loading}
         style={{
           width: "100%",
           padding: "14px",
@@ -69,6 +74,7 @@ export default function WalletImport() {
           background: "rgba(255, 255, 255, 0.08)",
           color: "white",
           fontFamily: "var(--font-crypto)",
+          opacity: loading ? 0.6 : 1,
         }}
       />
       <button
@@ -83,15 +89,43 @@ export default function WalletImport() {
           border: "1px solid white",
           fontWeight: "700",
           cursor: loading ? "not-allowed" : "pointer",
+          position: "relative",
         }}
       >
-        {loading ? "Importing..." : "Import Wallet"}
+        {loading ? (
+          <div style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "8px"
+          }}>
+            <div className="spinner" style={{
+              width: "18px",
+              height: "18px",
+              border: "2px solid white",
+              borderTop: "2px solid transparent",
+              borderRadius: "50%",
+              animation: "spin 1s linear infinite"
+            }}></div>
+            Importing...
+          </div>
+        ) : (
+          "Import Wallet"
+        )}
       </button>
       {status && (
         <p style={{ marginTop: "10px", textAlign: "center", fontFamily: "var(--font-crypto)" }}>
           {status}
         </p>
       )}
+
+      {/* Spinner CSS */}
+      <style jsx>{`
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
     </div>
   );
 }
