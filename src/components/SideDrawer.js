@@ -38,6 +38,7 @@ export default function SideDrawer() {
     try {
       await signOut();
       setOpen(false);
+      document.body.style.overflow = "auto"; // ✅ Išvalom scroll lock po logout
       router.replace("/");
     } catch (error) {
       console.error("Logout failed:", error.message);
@@ -54,7 +55,7 @@ export default function SideDrawer() {
   ];
 
   // 7️⃣ JEI USER AR WALLET NĖRA → NERODYTI
-  if (!isClient || !user || !wallet?.wallet) return null;
+  if (!isClient || !user || !wallet?.wallet?.address) return null;
 
   // 8️⃣ UI
   return (
