@@ -25,6 +25,7 @@ export default function TBnbPage() {
   const [chartData, setChartData] = useState([]);
   const [initialChartLoading, setInitialChartLoading] = useState(true);
   const [initialBalancesLoading, setInitialBalancesLoading] = useState(true);
+  const [lastChartUpdate, setLastChartUpdate] = useState(0); // <<< čia naujas saugiklis
   const router = useRouter();
 
   useEffect(() => {
@@ -94,6 +95,7 @@ export default function TBnbPage() {
     refreshBalance();
     refreshPrices();
     fetchTransactions();
+    fetchChartData(false);
   };
 
   const fetchTransactions = async () => {
@@ -109,15 +111,29 @@ export default function TBnbPage() {
   };
 
   const fetchChartData = async (showSpinner = false) => {
+    const now = Date.now();
+    if (now - lastChartUpdate < 60000 && !showSpinner) {
+      console.log('⏳ Skipped chart update to reduce server load.');
+      return;
+    }
+
     if (showSpinner) setInitialChartLoading(true);
+
     try {
+      if (!prices?.tbnb?.eur || !prices?.tbnb?.usd) {
+        console.warn('⚠️ Prices not ready, skipping chart update.');
+        return;
+      }
+
       const response = await fetch(`/api/coingecko?coin=binancecoin&range=30d`);
       const data = await response.json();
       const rawPrices = data?.prices?.map(p => ({
         time: new Date(p[0]).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }),
-        value: (p[1] * (balances?.tbnb?.balance || 0)).toFixed(2),
+        value: ((p[1] * (prices?.tbnb?.eur || 0)) / (prices?.tbnb?.usd || 1)).toFixed(2),
       })) || [];
+
       setChartData(rawPrices);
+      setLastChartUpdate(now);
     } catch (error) {
       console.error('❌ Failed to load chart data', error);
       setChartData([]);
