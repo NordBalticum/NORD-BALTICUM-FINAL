@@ -10,25 +10,25 @@ const tokens = [
   {
     id: "binancecoin",
     symbol: "BNB",
-    logo: "https://assets.coingecko.com/coins/images/825/large/bnb-icon2_2x.png",
+    logo: "/icons/bnb.svg",
     route: "/bnb",
   },
   {
     id: "ethereum",
     symbol: "ETH",
-    logo: "https://assets.coingecko.com/coins/images/279/large/ethereum.png",
+    logo: "/icons/eth.svg",
     route: "/eth",
   },
   {
     id: "matic-network",
     symbol: "MATIC",
-    logo: "https://assets.coingecko.com/coins/images/4713/large/matic-token-icon.png",
+    logo: "/icons/matic.svg",
     route: "/matic",
   },
   {
     id: "avalanche-2",
     symbol: "AVAX",
-    logo: "https://assets.coingecko.com/coins/images/12559/large/coinmarketcap-avalanche-200.png",
+    logo: "/icons/avax.svg",
     route: "/avax",
   },
 ];
