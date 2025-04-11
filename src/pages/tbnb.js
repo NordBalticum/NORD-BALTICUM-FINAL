@@ -22,12 +22,11 @@ export default function TBnbPage() {
   const { prices, loading: pricesLoading, refetch: refreshPrices } = usePrices();
   const [transactions, setTransactions] = useState([]);
   const [transactionsLoading, setTransactionsLoading] = useState(true);
-  const [chartData, setChartData] = useState(null);
+  const [chartData, setChartData] = useState([]);
   const [chartLoading, setChartLoading] = useState(true);
   const [selectedRange, setSelectedRange] = useState('24h');
   const router = useRouter();
 
-  // ✅ Real-time auto refresh
   useEffect(() => {
     if (user && wallet) {
       fetchTransactions();
@@ -39,12 +38,11 @@ export default function TBnbPage() {
     const interval = setInterval(() => {
       refreshBalance();
       refreshPrices();
-      fetchChartData(); // Atnaujina backgrounde
+      fetchChartData();
     }, 30000);
     return () => clearInterval(interval);
   }, []);
 
-  // ✅ Inactivity timeout logout (10min)
   useEffect(() => {
     let timer;
     const resetTimer = () => {
@@ -69,25 +67,29 @@ export default function TBnbPage() {
     setTransactionsLoading(true);
     try {
       const txs = await getTransactions('tbnb', user.email);
-      setTransactions(txs.slice(0, 3));
+      setTransactions(txs || []); // NE slice(0,3) nes kitaip nebus scroll daugiau
     } catch (error) {
       console.error('❌ Failed to load transactions', error);
+      setTransactions([]);
     }
     setTransactionsLoading(false);
   };
 
   const fetchChartData = async () => {
+    setChartLoading(true);
     try {
       const response = await fetch(`/api/coingecko?coin=binancecoin&range=${selectedRange}`);
       const data = await response.json();
-      const rawPrices = data.prices.map(p => ({
+      const rawPrices = data?.prices?.map(p => ({
         time: new Date(p[0]).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }),
         value: (p[1] * (balances?.tbnb?.balance || 0)).toFixed(2),
-      }));
+      })) || [];
       setChartData(rawPrices);
     } catch (error) {
       console.error('❌ Failed to load chart data', error);
+      setChartData([]);
     }
+    setChartLoading(false);
   };
 
   const chartOptions = {
@@ -111,10 +113,10 @@ export default function TBnbPage() {
   };
 
   const chartDataset = {
-    labels: chartData?.map(p => p.time) || [],
+    labels: chartData.map(p => p.time),
     datasets: [
       {
-        data: chartData?.map(p => p.value) || [],
+        data: chartData.map(p => p.value),
         fill: true,
         backgroundColor: (context) => {
           const ctx = context.chart.ctx;
@@ -141,9 +143,10 @@ export default function TBnbPage() {
       className={styles.pageContainer}
     >
       <div className={styles.pageContent}>
+        
         {/* Header */}
         <div className={styles.header}>
-          <Image src="/icons/bnb.svg" alt="BNB Logo" width={50} height={50} className={styles.networkLogo} priority />
+          <Image src="/icons/bnb.svg" alt="BNB Logo" width={48} height={48} className={styles.networkLogo} priority />
           <h1 className={styles.networkNameSmall}>Binance Smart Chain (Testnet)</h1>
 
           <div className={styles.balanceBox}>
@@ -180,15 +183,13 @@ export default function TBnbPage() {
           <div className={styles.chartBorder}>
             {chartLoading ? (
               <MiniLoadingSpinner />
-            ) : chartData ? (
-              <Line options={chartOptions} data={chartDataset} />
             ) : (
-              <div className={styles.spinner}>No Chart Data</div>
+              <Line options={chartOptions} data={chartDataset} />
             )}
           </div>
         </div>
 
-        {/* Action Buttons */}
+        {/* Action Buttons (viena eilė) */}
         <div className={styles.actionButtons}>
           <button onClick={handleSend} className={styles.actionButton}>
             Send
@@ -204,7 +205,7 @@ export default function TBnbPage() {
           <div className={styles.transactionsBox}>
             {transactionsLoading ? (
               <MiniLoadingSpinner />
-            ) : (
+            ) : transactions.length > 0 ? (
               <AnimatePresence>
                 {transactions.map((tx, index) => (
                   <motion.div
@@ -232,9 +233,12 @@ export default function TBnbPage() {
                   </motion.div>
                 ))}
               </AnimatePresence>
+            ) : (
+              <div className={styles.spinner}>No transactions found.</div>
             )}
           </div>
         </div>
+
       </div>
     </main>
   );
