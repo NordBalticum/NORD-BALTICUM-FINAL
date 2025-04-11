@@ -10,21 +10,18 @@ import { useBalance } from "@/hooks/useBalance";
 import { usePrices } from "@/hooks/usePrices";
 
 import styles from "@/styles/dashboard.module.css";
-import MiniLoadingSpinner from "@/components/MiniLoadingSpinner"; // ✅ naudoti Mini spinnerį, premium
+import MiniLoadingSpinner from "@/components/MiniLoadingSpinner"; 
 
-// ✅ Dynamic Live Price Table
 const LivePriceTable = dynamic(() => import("@/components/LivePriceTable"), { ssr: false });
 
-// ✅ Token ikonų URL (lokalūs failai NordBalticum projekte)
 const iconUrls = {
   ethereum: "/icons/eth.svg",
   bsc: "/icons/bnb.svg",
-  tbnb: "/icons/bnb.svg", // tas pats BNB
+  tbnb: "/icons/bnb.svg",
   polygon: "/icons/matic.svg",
   avalanche: "/icons/avax.svg",
 };
 
-// ✅ Token pavadinimai
 const names = {
   ethereum: "Ethereum",
   bsc: "BNB Smart Chain",
@@ -33,7 +30,6 @@ const names = {
   avalanche: "Avalanche",
 };
 
-// ✅ Simboliai naudojami URL routing
 const routeNames = {
   ethereum: "eth",
   bsc: "bnb",
@@ -44,7 +40,7 @@ const routeNames = {
 
 export default function Dashboard() {
   const router = useRouter();
-  const { user, wallet, loading: authLoading } = useAuth();
+  const { user, wallet, authLoading, walletLoading } = useAuth(); // ✅ paimam authLoading ir walletLoading
   const { balances, loading: balancesLoading } = useBalance();
   const { prices, loading: pricesLoading } = usePrices();
   const [isClient, setIsClient] = useState(false);
@@ -66,12 +62,11 @@ export default function Dashboard() {
     return Object.keys(balances || {});
   }, [wallet, balances]);
 
-  const isLoading = !isClient || authLoading || balancesLoading || pricesLoading;
+  const isLoading = !isClient || authLoading || walletLoading || balancesLoading || pricesLoading;
 
   return (
     <main className={styles.container}>
       <div className={styles.dashboardWrapper}>
-        {/* ✅ Live Price Lentelė */}
         <LivePriceTable />
 
         <div className={styles.assetList}>
@@ -79,7 +74,7 @@ export default function Dashboard() {
             <div className={styles.loaderWrapper}>
               <MiniLoadingSpinner />
             </div>
-          ) : tokens.length === 0 ? (
+          ) : !wallet?.wallet?.address || tokens.length === 0 ? ( 
             <div className={styles.noAssets}>No assets found.</div>
           ) : (
             tokens.map((network) => {
