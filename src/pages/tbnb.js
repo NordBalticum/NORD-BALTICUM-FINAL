@@ -23,12 +23,11 @@ export default function TBnbPage() {
   const [transactions, setTransactions] = useState([]);
   const [transactionsLoading, setTransactionsLoading] = useState(true);
   const [chartData, setChartData] = useState([]);
-  const [chartLoading, setChartLoading] = useState(true);
   const [initialLoading, setInitialLoading] = useState(true);
+  const [initialChartLoading, setInitialChartLoading] = useState(true);
   const [selectedRange, setSelectedRange] = useState('24h');
   const router = useRouter();
 
-  // ✅ Real-time background refresh
   useEffect(() => {
     if (user && wallet) {
       fetchAllData();
@@ -42,7 +41,6 @@ export default function TBnbPage() {
     return () => clearInterval(interval);
   }, []);
 
-  // ✅ On minimize/maximize refresh
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const handleVisibilityChange = () => {
@@ -55,7 +53,6 @@ export default function TBnbPage() {
     }
   }, []);
 
-  // ✅ Inactivity logout (10min)
   useEffect(() => {
     let timer;
     const resetTimer = () => {
@@ -78,14 +75,14 @@ export default function TBnbPage() {
 
   const fetchAllData = async () => {
     setInitialLoading(true);
-    await Promise.all([fetchTransactions(), fetchChartData()]);
+    await Promise.all([fetchTransactions(), fetchChartData(true)]);
     setInitialLoading(false);
   };
 
   const silentRefresh = async () => {
     refreshBalance();
     refreshPrices();
-    fetchChartData();
+    fetchChartData(false);
     fetchTransactions();
   };
 
@@ -101,7 +98,8 @@ export default function TBnbPage() {
     }
   };
 
-  const fetchChartData = async () => {
+  const fetchChartData = async (showSpinner = false) => {
+    if (showSpinner) setInitialChartLoading(true);
     try {
       const response = await fetch(`/api/coingecko?coin=binancecoin&range=${selectedRange}`);
       const data = await response.json();
@@ -114,7 +112,7 @@ export default function TBnbPage() {
       console.error('❌ Failed to load chart data', error);
       setChartData([]);
     } finally {
-      setChartLoading(false);
+      if (showSpinner) setInitialChartLoading(false);
     }
   };
 
@@ -207,7 +205,7 @@ export default function TBnbPage() {
         {/* Chart */}
         <div className={styles.chartWrapper}>
           <div className={styles.chartBorder}>
-            {chartLoading ? (
+            {initialChartLoading ? (
               <MiniLoadingSpinner />
             ) : (
               <Line options={chartOptions} data={chartDataset} />
