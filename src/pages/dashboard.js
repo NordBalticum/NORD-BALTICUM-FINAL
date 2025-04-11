@@ -64,12 +64,16 @@ export default function Dashboard() {
     }
   }, [isClient, authLoading, walletLoading, user, router]);
 
-  // 8️⃣ Tokenų sąrašas
   const tokens = useMemo(() => {
-    if (!wallet?.wallet?.address) return [];
-    return Object.keys(balances || {});
-  }, [wallet, balances]);
-
+  if (!wallet?.wallet?.address) return [];
+  if (!balances) return [];
+  
+  return Object.keys(balances).filter((network) => {
+    const balance = balances[network];
+    return balance && parseFloat(balance) > 0;
+  });
+}, [wallet, balances]);
+  
   // 9️⃣ Loader kol viskas kraunasi
   const isLoading = typeof window === "undefined" || !isClient || authLoading || walletLoading || balancesLoading || pricesLoading;
 
