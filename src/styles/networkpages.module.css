@@ -17,6 +17,7 @@
   transform: scale(0.85);
   transform-origin: top center;
   min-height: calc(100vh - 360px);
+  overflow: visible;
   display: flex;
   flex-direction: column;
   align-items: center;
