@@ -9,10 +9,11 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useBalance } from "@/hooks/useBalance";
 import { usePrices } from "@/hooks/usePrices";
 import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
-import styles from "@/styles/dashboard.module.css"; 
+import styles from "@/styles/dashboard.module.css";
 
 const LivePriceTable = dynamic(() => import("@/components/LivePriceTable"), { ssr: false });
 
+// ✅ Ikonos
 const iconUrls = {
   ethereum: "/icons/eth.svg",
   bsc: "/icons/bnb.svg",
@@ -21,6 +22,7 @@ const iconUrls = {
   avalanche: "/icons/avax.svg",
 };
 
+// ✅ Pavadinimai
 const names = {
   ethereum: "Ethereum",
   bsc: "BNB Smart Chain",
@@ -29,6 +31,7 @@ const names = {
   avalanche: "Avalanche",
 };
 
+// ✅ Route mappings
 const routeNames = {
   ethereum: "eth",
   bsc: "bnb",
@@ -45,7 +48,7 @@ export default function Dashboard() {
 
   const [isClient, setIsClient] = useState(false);
 
-  // ✅ Check client-side
+  // ✅ Client detection
   useEffect(() => {
     if (typeof window !== "undefined") {
       setIsClient(true);
@@ -68,8 +71,8 @@ export default function Dashboard() {
   }, [wallet, balances]);
 
   // ✅ Loader logika
-  const isWaitingWallet = !wallet?.wallet?.address; // Jei address nėra, nesikraunam balansų
-  const isGlobalLoading = typeof window === "undefined" || !isClient || authLoading || walletLoading || (!isWaitingWallet && (initialLoading || pricesLoading));
+  const isWaitingWallet = !wallet?.wallet?.address;
+  const isGlobalLoading = typeof window === "undefined" || !isClient || authLoading || walletLoading;
 
   if (isGlobalLoading) {
     return (
@@ -96,8 +99,24 @@ export default function Dashboard() {
 
         {/* ✅ Asset List */}
         <div className={styles.assetList}>
-          {tokens.length === 0 ? (
-            <div style={{ padding: "40px", textAlign: "center", fontFamily: "var(--font-crypto)", fontSize: "18px", color: "white" }}>
+          {initialLoading || pricesLoading ? (
+            // ✅ Tik asset lentelės loading spinner
+            <div style={{
+              padding: "60px",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+            }}>
+              <MiniLoadingSpinner />
+            </div>
+          ) : tokens.length === 0 ? (
+            <div style={{
+              padding: "40px",
+              textAlign: "center",
+              fontFamily: "var(--font-crypto)",
+              fontSize: "18px",
+              color: "white",
+            }}>
               No assets found.
             </div>
           ) : (
