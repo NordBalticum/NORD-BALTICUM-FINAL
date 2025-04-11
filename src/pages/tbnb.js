@@ -198,7 +198,7 @@ export default function TBnbPage() {
 
   return (
     <main style={{ width: '100vw', height: '100vh', overflowY: 'auto' }} className={styles.pageContainer}>
-      <div className={styles.pageContent} style={{ minHeight: '100vh' }}>
+      <div className={styles.pageContent} style={{ minHeight: '100vh', width: '100%' }}>
         
         {/* Header */}
         <div className={styles.header}>
