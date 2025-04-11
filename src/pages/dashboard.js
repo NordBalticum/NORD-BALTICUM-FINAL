@@ -45,7 +45,7 @@ const routeNames = {
 export default function Dashboard() {
   const router = useRouter();
   const { user, wallet, authLoading, walletLoading } = useAuth();
-  const { balances, loading: balancesLoading } = useBalance();
+  const { balances, loading: balancesLoading, initialLoading } = useBalance();
   const { prices, loading: pricesLoading } = usePrices();
 
   const [isClient, setIsClient] = useState(false);
@@ -71,12 +71,12 @@ export default function Dashboard() {
   }, [wallet, balances]);
 
   // 9️⃣ Loader kol viskas kraunasi
-  const isLoading = typeof window === "undefined" || !isClient || authLoading || walletLoading || balancesLoading || pricesLoading;
+  const isLoading = typeof window === "undefined" || !isClient || authLoading || walletLoading || balancesLoading || pricesLoading || initialLoading;
 
   if (isLoading) {
     return (
       <div style={{
-        height: "100vh",                // ✅ Visa ekrano dalis
+        height: "100vh",
         width: "100vw",
         display: "flex",
         justifyContent: "center",
@@ -105,12 +105,12 @@ export default function Dashboard() {
               const balanceData = balances?.[network];
               const priceData = prices?.[network === "tbnb" ? "bsc" : network];
 
-              if (balanceData == null || priceData == null) return null; // ✅ Jeigu trūksta info, nerenderinam
+              if (!balanceData || !priceData) return null; // ✅ Apsauga jeigu trūksta info
 
               const symbol = routeNames[network] || network;
-              const balanceFormatted = parseFloat(balanceData || 0).toFixed(6);
-              const eurValue = (parseFloat(balanceData || 0) * (priceData.eur || 0)).toFixed(2);
-              const usdValue = (parseFloat(balanceData || 0) * (priceData.usd || 0)).toFixed(2);
+              const balanceFormatted = parseFloat(balanceData.balance || 0).toFixed(6);
+              const eurValue = (parseFloat(balanceData.balance || 0) * (priceData.eur || 0)).toFixed(2);
+              const usdValue = (parseFloat(balanceData.balance || 0) * (priceData.usd || 0)).toFixed(2);
 
               return (
                 <div
@@ -149,6 +149,7 @@ export default function Dashboard() {
             })
           )}
         </div>
+
       </div>
     </main>
   );
