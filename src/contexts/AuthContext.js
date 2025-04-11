@@ -216,6 +216,30 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // ✅ Reload Wallet (tik importui)
+  const reloadWallet = async (email) => {
+    try {
+      setWalletLoading(true);
+
+      const { data, error } = await supabase
+        .from("wallets")
+        .select("*")
+        .eq("user_email", email)
+        .maybeSingle();
+
+      if (error) throw error;
+
+      if (data?.encrypted_key) {
+        const decryptedKey = await decrypt(data.encrypted_key);
+        setupWallet(decryptedKey);
+      }
+    } catch (error) {
+      console.error("Reload Wallet Error:", error.message);
+    } finally {
+      setWalletLoading(false);
+    }
+  };
+
   // ✅ Auth Functions
   const signInWithMagicLink = async (email) => {
     const origin = isClient ? window.location.origin : "https://nordbalticum.com";
@@ -262,6 +286,7 @@ export const AuthProvider = ({ children }) => {
         signInWithMagicLink,
         signInWithGoogle,
         signOut,
+        reloadWallet, // ✅ Pridėta čia kaip prašei
       }}
     >
       {children}
