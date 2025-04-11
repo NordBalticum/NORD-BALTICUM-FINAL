@@ -5,14 +5,14 @@ import { Wallet } from "ethers";
 import { supabase } from "@/utils/supabaseClient";
 import { useAuth } from "@/contexts/AuthContext";
 import { encrypt } from "@/contexts/AuthContext";
-import MiniLoadingSpinner from "@/components/MiniLoadingSpinner"; // ✅ Importuojam tavo spinnerį
+import MiniLoadingSpinner from "@/components/MiniLoadingSpinner"; // ✅ Importuojam spinnerį
 
 export default function WalletImport() {
   const { user, reloadWallet } = useAuth();
   const [privateKey, setPrivateKey] = useState("");
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false); // ✅ Naujas state successui
+  const [success, setSuccess] = useState(false); // ✅ Success modalui
 
   const handleImport = async () => {
     if (!privateKey.trim()) {
@@ -22,34 +22,35 @@ export default function WalletImport() {
 
     try {
       setLoading(true);
-      const wallet = new Wallet(privateKey.trim());
+      const wallet = new Wallet(privateKey.trim()); // ✅ Patikrinam ar valid key
 
-      const encrypted = await encrypt(privateKey.trim());
+      const encrypted = await encrypt(privateKey.trim()); // ✅ Saugiai užšifruojam
 
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("wallets")
         .update({
           encrypted_key: encrypted,
           eth_address: wallet.address,
         })
-        .eq("user_email", user.email);
+        .eq("user_email", user.email)
+        .select(); // ✅ Imame naują įrašą po update
 
-      if (error) {
-        console.error("Supabase update error:", error.message);
+      if (error || !data || data.length === 0) {
+        console.error("Supabase update error:", error?.message);
         setStatus("❌ Failed to update wallet.");
         return;
       }
 
       setPrivateKey("");
       setStatus("");
-      setSuccess(true); // ✅ Rodom success modalą
+      setSuccess(true); // ✅ Rodo "Wallet imported successfully!"
 
-      await reloadWallet(user.email);
+      await reloadWallet(user.email); // ✅ Reload iškart naują walletą
 
-      // ✅ Dabar mažą delay + reload
+      // ✅ 1.8 sekundės delay – spinneris -> reload
       setTimeout(() => {
         window.location.reload();
-      }, 1800); // 1.8 sekundės kad jaustų maloniai modalą
+      }, 1800);
 
     } catch (err) {
       console.error("Import Wallet Error:", err.message);
@@ -65,17 +66,18 @@ export default function WalletImport() {
 
       {loading ? (
         <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "180px" }}>
-          <MiniLoadingSpinner />
+          <MiniLoadingSpinner /> {/* ✅ Jei loading - rodom spinnerį */}
         </div>
       ) : success ? (
-        <div style={{ 
-          textAlign: "center", 
-          padding: "24px", 
-          background: "rgba(255, 255, 255, 0.08)", 
-          borderRadius: "16px", 
+        <div style={{
+          textAlign: "center",
+          padding: "24px",
+          background: "rgba(255, 255, 255, 0.08)",
+          borderRadius: "16px",
           border: "1px solid rgba(255,255,255,0.2)",
           fontFamily: "var(--font-crypto)",
-          color: "white"
+          color: "white",
+          fontSize: "16px"
         }}>
           ✅ Wallet imported successfully! Reloading...
         </div>
@@ -109,6 +111,7 @@ export default function WalletImport() {
               border: "1px solid white",
               fontWeight: "700",
               cursor: "pointer",
+              fontFamily: "var(--font-crypto)",
             }}
           >
             Import Wallet
