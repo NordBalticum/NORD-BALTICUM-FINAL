@@ -139,9 +139,11 @@ export default function TBnbPage() {
   if (!user || !wallet) return <MiniLoadingSpinner />;
 
   return (
-    <main className={styles.pageWrapper}>
-      <div className={styles.pageContainer}>
-
+    <main
+  style={{ width: "100vw", height: "100vh", overflowY: "auto" }}
+  className={styles.pageContainer}
+>
+    
         {/* Header */}
         <div className={styles.header}>
           <Image src="/icons/bnb.svg" alt="BNB Logo" width={50} height={50} className={styles.networkLogo} priority />
