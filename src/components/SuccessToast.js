@@ -9,7 +9,7 @@ const networkLogos = {
   bnb: "https://assets.coingecko.com/coins/images/825/large/bnb-icon2_2x.png",
   tbnb: "https://assets.coingecko.com/coins/images/825/large/bnb-icon2_2x.png",
   matic: "https://assets.coingecko.com/coins/images/4713/large/matic-token-icon.png",
-  avax: "https://cryptologos.cc/logos/avalanche-avax-logo.png",
+  avax: "https://assets.coingecko.com/coins/images/12559/large/coinmarketcap-avalanche-200.png",
 };
 
 export default function SuccessToast({ show, message = "", networkKey = "" }) {
