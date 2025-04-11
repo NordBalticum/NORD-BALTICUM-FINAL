@@ -11,27 +11,27 @@ const supportedNetworks = [
   {
     name: "Ethereum",
     symbol: "eth",
-    logo: "https://assets.coingecko.com/coins/images/279/large/ethereum.png",
+    logo: "/icons/eth.svg",
   },
   {
     name: "BNB Chain",
     symbol: "bnb",
-    logo: "https://assets.coingecko.com/coins/images/825/large/bnb-icon2_2x.png",
+    logo: "/icons/bnb.svg",
   },
   {
     name: "BNB Testnet",
     symbol: "tbnb",
-    logo: "https://assets.coingecko.com/coins/images/825/large/bnb-icon2_2x.png",
+    logo: "/icons/bnb.svg", // ✅ tas pats kaip BNB Mainnet
   },
   {
     name: "Polygon",
     symbol: "matic",
-    logo: "https://assets.coingecko.com/coins/images/4713/large/matic-token-icon.png",
+    logo: "/icons/matic.svg",
   },
   {
     name: "Avalanche",
     symbol: "avax",
-    logo: "https://assets.coingecko.com/coins/images/12559/large/coinmarketcap-avalanche-200.png",
+    logo: "/icons/avax.svg",
   },
 ];
 
