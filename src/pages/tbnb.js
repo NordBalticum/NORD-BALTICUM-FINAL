@@ -18,15 +18,14 @@ ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement, Tooltip,
 
 export default function TBnbPage() {
   const { user, wallet, signOut } = useAuth();
-  const { balances, loading: balanceLoading, refetch: refreshBalance } = useBalance();
-  const { prices, loading: pricesLoading, refetch: refreshPrices } = usePrices();
+  const { balances, refetch: refreshBalance } = useBalance();
+  const { prices, refetch: refreshPrices } = usePrices();
   const [transactions, setTransactions] = useState([]);
   const [transactionsLoading, setTransactionsLoading] = useState(true);
   const [chartData, setChartData] = useState([]);
   const [initialChartLoading, setInitialChartLoading] = useState(true);
   const [initialBalancesLoading, setInitialBalancesLoading] = useState(true);
   const [lastChartUpdate, setLastChartUpdate] = useState(0);
-  const [isPageVisible, setIsPageVisible] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
@@ -43,17 +42,23 @@ export default function TBnbPage() {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      if (isPageVisible) {
-        silentRefresh();
-      }
+      silentRefresh();
     }, 30000);
     return () => clearInterval(interval);
-  }, [isPageVisible]);
+  }, []);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const handleVisibilityChange = () => {
-        setIsPageVisible(document.visibilityState === 'visible');
+      const handleVisibilityChange = async () => {
+        if (document.visibilityState === 'visible') {
+          console.log('👀 Tab active again, refreshing...');
+          await Promise.all([
+            refreshBalance(),
+            refreshPrices()
+          ]);
+          fetchTransactions();
+          fetchChartData(true);
+        }
       };
       document.addEventListener('visibilitychange', handleVisibilityChange);
       return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
@@ -93,8 +98,10 @@ export default function TBnbPage() {
   };
 
   const silentRefresh = async () => {
-    refreshBalance();
-    refreshPrices();
+    await Promise.all([
+      refreshBalance(),
+      refreshPrices()
+    ]);
     fetchTransactions();
     fetchChartData(false);
   };
