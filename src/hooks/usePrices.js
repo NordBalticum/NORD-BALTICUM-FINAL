@@ -11,7 +11,7 @@ const TOKEN_IDS = {
   tbnb: "binancecoin", // TBNB = BNB kaina
 };
 
-// ✅ Atsarginės (fallback) kainos
+// ✅ Atsarginės kainos (fallback jei API neveiktų)
 const FALLBACK_PRICES = {
   ethereum: { eur: 2900, usd: 3100 },
   bsc: { eur: 450, usd: 480 },
@@ -20,16 +20,19 @@ const FALLBACK_PRICES = {
   tbnb: { eur: 450, usd: 480 },
 };
 
-// ✅ Ultimate Price Hook
+// ✅ ULTIMATE Price Hook
 export function usePrices() {
-  const [prices, setPrices] = useState(FALLBACK_PRICES); // ✅ Startuoja iškart su fallback
+  const [prices, setPrices] = useState(FALLBACK_PRICES); // ✅ Startuoja iškart su fallback kainom
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null); // ✅ Extra kontrolė error'ams
 
   const fetchPrices = useCallback(async () => {
     try {
+      setLoading(true); // ✅ Nustatom kad krauna
+
       const ids = Object.values(TOKEN_IDS).join(",");
       const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=eur,usd`, {
-        cache: "no-store", // ✅ Visiškai šviežia data
+        cache: "no-store", // ✅ Visada šviežia data
       });
 
       if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
@@ -45,25 +48,27 @@ export function usePrices() {
       }
 
       setPrices(updatedPrices);
-    } catch (error) {
-      console.error("❌ Live price fetch failed:", error.message);
-      setPrices(FALLBACK_PRICES); // ✅ Jei error, fallback
+      setError(null); // ✅ Nėra klaidų
+    } catch (err) {
+      console.error("❌ Price fetch error:", err.message);
+      setPrices(FALLBACK_PRICES); // ✅ Jei klaida, automatiškai grįžtam į fallback
+      setError(err.message || "Unknown error");
     } finally {
-      setLoading(false);
+      setLoading(false); // ✅ Baigė krautis
     }
   }, []);
 
   useEffect(() => {
-    fetchPrices(); // ✅ Initial load
+    fetchPrices(); // ✅ Iškart pirmą kartą užkraunam
 
-    const interval = setInterval(fetchPrices, 15000); // ✅ Auto-refresh kas 15s
-
-    return () => clearInterval(interval);
+    const interval = setInterval(fetchPrices, 30000); // ✅ Atrodo švariau: 30s refresh (nereikia kas 15s)
+    return () => clearInterval(interval); // ✅ Švarinam intervalą kai unmount
   }, [fetchPrices]);
 
   return {
     prices,
     loading,
-    refetch: fetchPrices, // ✅ Jei reikės kažkur rankiniu būdu atnaujinti
+    error,
+    refetch: fetchPrices, // ✅ Galima rankiniu būdu dar kartą pakrauti jei reikia
   };
 }
