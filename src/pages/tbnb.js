@@ -198,86 +198,87 @@ export default function TBnbPage() {
 
   return (
     <main style={{ width: '100vw', height: '100vh', overflowY: 'auto' }} className={styles.pageContainer}>
-      {/* Viskas viduje be papildomo div.pageContent */}
+      <div className={styles.pageContent} style={{ minHeight: '100vh' }}>
         
-      {/* Header */}
-      <div className={styles.header}>
-        <Image src="/icons/bnb.svg" alt="BNB Logo" width={48} height={48} className={styles.networkLogo} priority />
-        <h1 className={styles.networkNameSmall}>Binance Smart Chain (Testnet)</h1>
+        {/* Header */}
+        <div className={styles.header}>
+          <Image src="/icons/bnb.svg" alt="BNB Logo" width={48} height={48} className={styles.networkLogo} priority />
+          <h1 className={styles.networkNameSmall}>Binance Smart Chain (Testnet)</h1>
 
-        <div className={styles.balanceBox}>
-          {initialBalancesLoading ? (
-            <MiniLoadingSpinner />
-          ) : (
-            <>
-              <p className={styles.balanceText}>
-                {balances?.tbnb?.balance?.toFixed(4)} BNB
-              </p>
-              <p className={styles.balanceFiat}>
-                {((balances?.tbnb?.balance || 0) * (prices?.tbnb?.eur || 0)).toFixed(2)} € | {((balances?.tbnb?.balance || 0) * (prices?.tbnb?.usd || 0)).toFixed(2)} $
-              </p>
-            </>
-          )}
+          <div className={styles.balanceBox}>
+            {initialBalancesLoading ? (
+              <MiniLoadingSpinner />
+            ) : (
+              <>
+                <p className={styles.balanceText}>
+                  {balances?.tbnb?.balance?.toFixed(4)} BNB
+                </p>
+                <p className={styles.balanceFiat}>
+                  {((balances?.tbnb?.balance || 0) * (prices?.tbnb?.eur || 0)).toFixed(2)} € | {((balances?.tbnb?.balance || 0) * (prices?.tbnb?.usd || 0)).toFixed(2)} $
+                </p>
+              </>
+            )}
+          </div>
         </div>
-      </div>
 
-      {/* Chart */}
-      <div className={styles.chartWrapper}>
-        <div className={styles.chartBorder}>
-          {initialChartLoading ? (
-            <MiniLoadingSpinner />
-          ) : (
-            <Line options={chartOptions} data={chartDataset} />
-          )}
+        {/* Chart */}
+        <div className={styles.chartWrapper}>
+          <div className={styles.chartBorder}>
+            {initialChartLoading ? (
+              <MiniLoadingSpinner />
+            ) : (
+              <Line options={chartOptions} data={chartDataset} />
+            )}
+          </div>
         </div>
-      </div>
 
-      {/* Action Buttons */}
-      <div className={styles.actionButtons}>
-        <button onClick={handleSend} className={styles.actionButton}>Send</button>
-        <button onClick={handleReceive} className={styles.actionButton}>Receive</button>
-      </div>
+        {/* Action Buttons */}
+        <div className={styles.actionButtons}>
+          <button onClick={handleSend} className={styles.actionButton}>Send</button>
+          <button onClick={handleReceive} className={styles.actionButton}>Receive</button>
+        </div>
 
-      {/* Transactions */}
-      <div className={styles.transactionsContainer}>
-        <h2 className={styles.transactionsTitle}>Recent Transactions</h2>
-        <div className={styles.transactionsBox}>
-          {transactionsLoading ? (
-            <MiniLoadingSpinner />
-          ) : transactions.length > 0 ? (
-            <AnimatePresence>
-              {transactions.map((tx, index) => (
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  transition={{ duration: 0.5 }}
-                  className={styles.transactionItem}
-                >
-                  <div className={styles.transactionLeft}>
-                    <div className={styles.transactionIcon} style={{ backgroundColor: tx.type === 'send' ? '#EF4444' : '#22C55E' }}>
-                      {tx.type === 'send' ? '↑' : '↓'}
-                    </div>
-                    <div>
-                      <div className={styles.transactionAddress}>
-                        {tx.address?.slice(0, 6)}...{tx.address?.slice(-4)}
+        {/* Transactions */}
+        <div className={styles.transactionsContainer}>
+          <h2 className={styles.transactionsTitle}>Recent Transactions</h2>
+          <div className={styles.transactionsBox}>
+            {transactionsLoading ? (
+              <MiniLoadingSpinner />
+            ) : transactions.length > 0 ? (
+              <AnimatePresence>
+                {transactions.map((tx, index) => (
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.5 }}
+                    className={styles.transactionItem}
+                  >
+                    <div className={styles.transactionLeft}>
+                      <div className={styles.transactionIcon} style={{ backgroundColor: tx.type === 'send' ? '#EF4444' : '#22C55E' }}>
+                        {tx.type === 'send' ? '↑' : '↓'}
                       </div>
-                      <div className={styles.transactionTime}>{moment(tx.timestamp).fromNow()}</div>
+                      <div>
+                        <div className={styles.transactionAddress}>
+                          {tx.address?.slice(0, 6)}...{tx.address?.slice(-4)}
+                        </div>
+                        <div className={styles.transactionTime}>{moment(tx.timestamp).fromNow()}</div>
+                      </div>
                     </div>
-                  </div>
-                  <div className={styles.transactionAmount}>
-                    {tx.type === 'send' ? '-' : '+'}{parseFloat(tx.amount).toFixed(4)} BNB
-                  </div>
-                </motion.div>
-              ))}
-            </AnimatePresence>
-          ) : (
-            <div className={styles.spinner}>No transactions found.</div>
-          )}
+                    <div className={styles.transactionAmount}>
+                      {tx.type === 'send' ? '-' : '+'}{parseFloat(tx.amount).toFixed(4)} BNB
+                    </div>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            ) : (
+              <div className={styles.spinner}>No transactions found.</div>
+            )}
+          </div>
         </div>
-      </div>
 
+      </div>
     </main>
   );
-        }
+          }
