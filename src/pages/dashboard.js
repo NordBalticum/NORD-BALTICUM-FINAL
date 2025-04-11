@@ -1,5 +1,6 @@
 "use client";
 
+// 1️⃣ Importai
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
@@ -8,10 +9,13 @@ import Image from "next/image";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBalance } from "@/hooks/useBalance";
 import { usePrices } from "@/hooks/usePrices";
-import MiniLoadingSpinner from "@/components/MiniLoadingSpinner"; 
+import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
+import styles from "@/styles/dashboard.module.css"; // ✅ Importuotas CSS failas
 
+// 2️⃣ Dynamic Live Prices
 const LivePriceTable = dynamic(() => import("@/components/LivePriceTable"), { ssr: false });
 
+// 3️⃣ Token ikonų URL
 const iconUrls = {
   ethereum: "/icons/eth.svg",
   bsc: "/icons/bnb.svg",
@@ -20,6 +24,7 @@ const iconUrls = {
   avalanche: "/icons/avax.svg",
 };
 
+// 4️⃣ Token pavadinimai
 const names = {
   ethereum: "Ethereum",
   bsc: "BNB Smart Chain",
@@ -28,6 +33,7 @@ const names = {
   avalanche: "Avalanche",
 };
 
+// 5️⃣ Token route mapping
 const routeNames = {
   ethereum: "eth",
   bsc: "bnb",
@@ -41,46 +47,57 @@ export default function Dashboard() {
   const { user, wallet, authLoading, walletLoading } = useAuth();
   const { balances, loading: balancesLoading } = useBalance();
   const { prices, loading: pricesLoading } = usePrices();
-  
+
   const [isClient, setIsClient] = useState(false);
 
+  // 6️⃣ Detect client side
   useEffect(() => {
     if (typeof window !== "undefined") {
       setIsClient(true);
     }
   }, []);
 
+  // 7️⃣ Redirect jei neprisijungęs
   useEffect(() => {
     if (isClient && !authLoading && !user) {
       router.replace("/");
     }
   }, [isClient, authLoading, user, router]);
 
+  // 8️⃣ Tokenų sąrašas
   const tokens = useMemo(() => {
-    if (!wallet?.wallet?.address) return []; // ✅ Saugus patikrinimas
+    if (!wallet?.wallet?.address) return [];
     return Object.keys(balances || {});
   }, [wallet, balances]);
 
+  // 9️⃣ Bendra ar rodyti loader
   const isLoading = typeof window === "undefined" || !isClient || authLoading || walletLoading || balancesLoading || pricesLoading;
 
+  if (isLoading) {
+    return (
+      <div className={styles.loaderWrapper}>
+        <MiniLoadingSpinner />
+      </div>
+    );
+  }
+
   return (
-    <main className="container">
-      <div className="dashboardWrapper">
+    <main className={styles.container}>
+      <div className={styles.dashboardWrapper}>
+        
+        {/* ✅ Live Kainos Lentelė */}
         <LivePriceTable />
 
-        <div className="assetList">
-          {isLoading ? (
-            <div className="loaderWrapper">
-              <MiniLoadingSpinner />
-            </div>
-          ) : tokens.length === 0 ? (
-            <div className="noAssets">No assets found.</div>
+        {/* ✅ Vartotojo Assetai */}
+        <div className={styles.assetList}>
+          {tokens.length === 0 ? (
+            <div className={styles.loading}>No assets found.</div>
           ) : (
             tokens.map((network) => {
               const balanceData = balances?.[network];
               const priceData = prices?.[network === "tbnb" ? "bsc" : network];
 
-              if (!balanceData || !priceData) return null; // ✅ Apsauga jei dar nespėjo užkrauti
+              if (!balanceData || !priceData) return null; // ✅ Apsauga jei trūksta duomenų
 
               const symbol = routeNames[network] || network;
               const balanceFormatted = parseFloat(balanceData.balance || 0).toFixed(6);
@@ -90,31 +107,32 @@ export default function Dashboard() {
               return (
                 <div
                   key={network}
-                  className="assetItem"
+                  className={styles.assetItem}
                   onClick={() => router.push(`/${symbol}`)}
                   role="button"
                   tabIndex={0}
                 >
-                  <div className="assetLeft">
+                  <div className={styles.assetLeft}>
                     <Image
                       src={iconUrls[network] || "/icons/default-icon.png"}
                       alt={`${symbol} logo`}
                       width={40}
                       height={40}
-                      className="assetLogo"
+                      className={styles.assetLogo}
                       priority
                       unoptimized
                     />
-                    <div className="assetInfo">
-                      <div className="assetSymbol">{symbol.toUpperCase()}</div>
-                      <div className="assetName">{names[network] || "Unknown"}</div>
+                    <div className={styles.assetInfo}>
+                      <div className={styles.assetSymbol}>{symbol.toUpperCase()}</div>
+                      <div className={styles.assetName}>{names[network]}</div>
                     </div>
                   </div>
-                  <div className="assetRight">
-                    <div className="assetAmount">
+
+                  <div className={styles.assetRight}>
+                    <div className={styles.assetAmount}>
                       {balanceFormatted} {symbol.toUpperCase()}
                     </div>
-                    <div className="assetEur">
+                    <div className={styles.assetEur}>
                       ≈ €{eurValue} | ≈ ${usdValue}
                     </div>
                   </div>
