@@ -10,11 +10,11 @@ import styles from "@/styles/history.module.css";
 import background from "@/styles/background.module.css";
 
 const NETWORK_OPTIONS = [
-  { label: "BNB Mainnet", value: "bnb", icon: "https://assets.coingecko.com/coins/images/825/large/bnb-icon2_2x.png" },
-  { label: "BNB Testnet", value: "tbnb", icon: "https://assets.coingecko.com/coins/images/825/large/bnb-icon2_2x.png" },
-  { label: "Ethereum Mainnet", value: "eth", icon: "https://assets.coingecko.com/coins/images/279/large/ethereum.png" },
-  { label: "Polygon Mainnet", value: "polygon", icon: "https://assets.coingecko.com/coins/images/4713/large/matic-token-icon.png" },
-  { label: "Avalanche Mainnet", value: "avax", icon: "https://cryptologos.cc/logos/avalanche-avax-logo.png" },
+  { label: "BNB Mainnet", value: "bnb", icon: "/icons/bnb.svg" },
+  { label: "BNB Testnet", value: "tbnb", icon: "/icons/bnb.svg" },
+  { label: "Ethereum Mainnet", value: "eth", icon: "/icons/eth.svg" },
+  { label: "Polygon Mainnet", value: "polygon", icon: "/icons/matic.svg" },
+  { label: "Avalanche Mainnet", value: "avax", icon: "/icons/avax.svg" },
 ];
 
 export default function HistoryPage() {
