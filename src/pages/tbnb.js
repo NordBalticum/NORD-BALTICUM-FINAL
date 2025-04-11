@@ -11,16 +11,10 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import moment from 'moment';
 import { motion, AnimatePresence } from 'framer-motion';
+import MiniLoadingSpinner from '@/components/MiniLoadingSpinner';
 import styles from '@/styles/networkpages.module.css';
 
 ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Filler);
-
-// ✅ Mini Loading Spinner
-const MiniSpinner = () => (
-  <div className={styles.spinner}>
-    <div className={styles.loadingCircle}></div>
-  </div>
-);
 
 export default function TBnbPage() {
   const { user, wallet, signOut } = useAuth();
@@ -40,7 +34,6 @@ export default function TBnbPage() {
     }
   }, [user, wallet, selectedRange]);
 
-  // ✅ Real-Time Auto Refresh (kas 30 sek.)
   useEffect(() => {
     const interval = setInterval(() => {
       refreshBalance();
@@ -49,14 +42,13 @@ export default function TBnbPage() {
     return () => clearInterval(interval);
   }, []);
 
-  // ✅ Inactivity Timeout (logout po 10min)
   useEffect(() => {
     let timer;
     const resetTimer = () => {
       clearTimeout(timer);
       timer = setTimeout(() => {
         signOut();
-      }, 10 * 60 * 1000); // 10 min
+      }, 10 * 60 * 1000);
     };
     if (typeof window !== 'undefined') {
       window.addEventListener('mousemove', resetTimer);
@@ -91,11 +83,10 @@ export default function TBnbPage() {
         value: p[1],
       }));
 
-      // ✅ Adjust chart to wallet balance * price
       const walletBalance = balances?.tbnb?.balance || 0;
       const adjustedPrices = rawPrices.map(p => ({
         time: p.time,
-        value: p.value * walletBalance,
+        value: (p.value * walletBalance).toFixed(2),
       }));
 
       setChartData(adjustedPrices);
@@ -110,8 +101,11 @@ export default function TBnbPage() {
     maintainAspectRatio: false,
     plugins: {
       tooltip: {
-        mode: 'index',
-        intersect: false,
+        callbacks: {
+          label: function(context) {
+            return `€ ${parseFloat(context.raw).toFixed(2)}`;
+          },
+        },
       },
     },
     scales: {
@@ -129,11 +123,11 @@ export default function TBnbPage() {
         backgroundColor: (context) => {
           const ctx = context.chart.ctx;
           const gradient = ctx.createLinearGradient(0, 0, 0, 300);
-          gradient.addColorStop(0, 'rgba(43, 55, 255, 0.4)');
-          gradient.addColorStop(1, 'rgba(10, 18, 42, 0)');
+          gradient.addColorStop(0, 'rgba(255, 255, 255, 0.2)');
+          gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
           return gradient;
         },
-        borderColor: '#2B37FF',
+        borderColor: '#ffffff',
         pointRadius: 0,
         tension: 0.4,
       },
@@ -143,37 +137,37 @@ export default function TBnbPage() {
   const handleSend = () => router.push('/send');
   const handleReceive = () => router.push('/receive');
 
-  if (!user || !wallet) return <MiniSpinner />;
+  if (!user || !wallet) return <MiniLoadingSpinner />;
 
   return (
     <div className={styles.pageContainer}>
       
-      {/* ✅ Header */}
+      {/* HEADER */}
       <div className={styles.header}>
         <Image src="/icons/bnb.svg" alt="BNB Logo" width={50} height={50} className={styles.networkLogo} priority />
         <h1 className={styles.networkNameSmall}>Binance Smart Chain (Testnet)</h1>
 
         <div className={styles.balanceBox}>
           {balanceLoading || pricesLoading ? (
-            <MiniSpinner />
+            <MiniLoadingSpinner />
           ) : (
             <>
               <p className={styles.balanceText}>
                 {balances?.tbnb?.balance?.toFixed(4)} BNB
               </p>
               <p className={styles.balanceFiat}>
-                ≈ ${((balances?.tbnb?.balance || 0) * (prices?.tbnb?.usd || 0)).toFixed(2)} / €{((balances?.tbnb?.balance || 0) * (prices?.tbnb?.eur || 0)).toFixed(2)}
+                {((balances?.tbnb?.balance || 0) * (prices?.tbnb?.eur || 0)).toFixed(2)} € | {((balances?.tbnb?.balance || 0) * (prices?.tbnb?.usd || 0)).toFixed(2)} $
               </p>
             </>
           )}
         </div>
       </div>
 
-      {/* ✅ Chart */}
+      {/* CHART */}
       <div className={styles.chartWrapper}>
-        <div className={styles.chartContainer}>
+        <div className={styles.chartBorder}>
           {chartLoading ? (
-            <MiniSpinner />
+            <MiniLoadingSpinner />
           ) : chartData ? (
             <Line options={chartOptions} data={chartDataset} />
           ) : (
@@ -182,7 +176,7 @@ export default function TBnbPage() {
         </div>
       </div>
 
-      {/* ✅ Range Selector */}
+      {/* RANGE SELECTOR */}
       <div className={styles.rangeSelector}>
         {['24h', '7d', '14d', '30d'].map((range) => (
           <button
@@ -195,7 +189,7 @@ export default function TBnbPage() {
         ))}
       </div>
 
-      {/* ✅ Actions */}
+      {/* ACTION BUTTONS */}
       <div className={styles.actionButtons}>
         <button onClick={handleSend} className={styles.actionButton}>
           Send
@@ -205,12 +199,12 @@ export default function TBnbPage() {
         </button>
       </div>
 
-      {/* ✅ Transactions */}
+      {/* TRANSACTIONS */}
       <div className={styles.transactionsContainer}>
         <h2 className={styles.transactionsTitle}>Recent Transactions</h2>
         <div className={styles.transactionsBox}>
           {transactionsLoading ? (
-            <MiniSpinner />
+            <MiniLoadingSpinner />
           ) : (
             <AnimatePresence>
               {transactions.map((tx, index) => (
