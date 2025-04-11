@@ -10,7 +10,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useBalance } from "@/hooks/useBalance";
 import { usePrices } from "@/hooks/usePrices";
 import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
-import styles from "@/styles/dashboard.module.css"; 
+import styles from "@/styles/dashboard.module.css"; // ✅ Importuotas CSS failas
 
 // 2️⃣ Dynamic Live Prices
 const LivePriceTable = dynamic(() => import("@/components/LivePriceTable"), { ssr: false });
@@ -64,23 +64,20 @@ export default function Dashboard() {
     }
   }, [isClient, authLoading, walletLoading, user, router]);
 
+  // 8️⃣ Tokenų sąrašas
   const tokens = useMemo(() => {
-  if (!wallet?.wallet?.address) return [];
-  if (!balances) return [];
-  
-  return Object.keys(balances).filter((network) => {
-    const balance = balances[network];
-    return balance && parseFloat(balance) > 0;
-  });
-}, [wallet, balances]);
-  
+    if (!wallet?.wallet?.address) return [];
+    return Object.keys(balances || {});
+  }, [wallet, balances]);
+
   // 9️⃣ Loader kol viskas kraunasi
   const isLoading = typeof window === "undefined" || !isClient || authLoading || walletLoading || balancesLoading || pricesLoading;
 
   if (isLoading) {
     return (
       <div style={{
-        height: "100vh",
+        height: "100vh",                // ✅ Visa ekrano dalis
+        width: "100vw",
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
@@ -91,7 +88,7 @@ export default function Dashboard() {
     );
   }
 
-  // 1️⃣0️⃣ Render tik kai nėra loading
+  // 1️⃣0️⃣ Render kai viskas užkrauta
   return (
     <main className={styles.container}>
       <div className={styles.dashboardWrapper}>
@@ -108,12 +105,12 @@ export default function Dashboard() {
               const balanceData = balances?.[network];
               const priceData = prices?.[network === "tbnb" ? "bsc" : network];
 
-              if (!balanceData || !priceData) return null; // ✅ Jeigu trūksta info, nerenderinam
+              if (balanceData == null || priceData == null) return null; // ✅ Jeigu trūksta info, nerenderinam
 
               const symbol = routeNames[network] || network;
-              const balanceFormatted = parseFloat(balanceData.balance || 0).toFixed(6);
-              const eurValue = (parseFloat(balanceData.balance || 0) * (priceData.eur || 0)).toFixed(2);
-              const usdValue = (parseFloat(balanceData.balance || 0) * (priceData.usd || 0)).toFixed(2);
+              const balanceFormatted = parseFloat(balanceData || 0).toFixed(6);
+              const eurValue = (parseFloat(balanceData || 0) * (priceData.eur || 0)).toFixed(2);
+              const usdValue = (parseFloat(balanceData || 0) * (priceData.usd || 0)).toFixed(2);
 
               return (
                 <div
@@ -152,7 +149,6 @@ export default function Dashboard() {
             })
           )}
         </div>
-
       </div>
     </main>
   );
