@@ -1,0 +1,197 @@
+/* src/app/styles/networkpages.module.css */
+
+.pageContainer {
+  width: 100vw;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: clamp(40px, 5vh, 80px);
+  padding-left: clamp(16px, 4vw, 32px);
+  padding-right: clamp(16px, 4vw, 32px);
+  background: radial-gradient(ellipse at center, #2B37FF 0%, #1B2370 50%, #0A122A 100%);
+  color: white;
+  overflow-x: hidden;
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: clamp(20px, 4vh, 40px);
+}
+
+.networkLogo {
+  width: clamp(48px, 10vw, 64px);
+  height: clamp(48px, 10vw, 64px);
+}
+
+.networkName {
+  font-size: clamp(1.5rem, 3vw, 2.5rem);
+  font-weight: 600;
+  margin-top: 12px;
+  text-align: center;
+}
+
+.balance {
+  margin-top: 8px;
+  font-size: clamp(1rem, 2vw, 1.5rem);
+  text-align: center;
+}
+
+.chartContainer {
+  width: 100%;
+  max-width: 700px;
+  height: clamp(180px, 40vh, 360px);
+  margin-bottom: clamp(24px, 4vh, 48px);
+  position: relative;
+}
+
+.rangeSelector {
+  display: flex;
+  gap: clamp(8px, 2vw, 16px);
+  margin-bottom: clamp(24px, 4vh, 48px);
+}
+
+.rangeButton {
+  padding: clamp(8px, 2vw, 12px) clamp(16px, 4vw, 24px);
+  border: 1px solid white;
+  border-radius: 9999px;
+  background: transparent;
+  color: white;
+  font-size: clamp(0.9rem, 2vw, 1.1rem);
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.rangeButton:hover {
+  background: white;
+  color: black;
+}
+
+.rangeButtonActive {
+  background: white;
+  color: black;
+}
+
+.actionButtons {
+  display: flex;
+  gap: clamp(20px, 5vw, 40px);
+  margin-bottom: clamp(24px, 4vh, 48px);
+}
+
+.actionButton {
+  padding: clamp(12px, 2.5vw, 20px) clamp(24px, 6vw, 48px);
+  background: black;
+  color: white;
+  border: 1px solid white;
+  border-radius: 9999px;
+  font-size: clamp(1rem, 2vw, 1.2rem);
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.actionButton:hover {
+  transform: scale(1.05);
+  background: white;
+  color: black;
+}
+
+.transactionsContainer {
+  width: 100%;
+  max-width: 700px;
+}
+
+.transactionsTitle {
+  font-size: clamp(1.2rem, 2.5vw, 1.6rem);
+  font-weight: 600;
+  margin-bottom: clamp(16px, 3vh, 24px);
+}
+
+.transactionsBox {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  border-radius: 24px;
+  padding: clamp(16px, 4vw, 32px);
+  display: flex;
+  flex-direction: column;
+  gap: clamp(12px, 3vh, 20px);
+}
+
+.transactionItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(8px);
+  border-radius: 18px;
+  padding: clamp(12px, 2vw, 20px);
+  transition: all 0.5s ease;
+}
+
+.transactionLeft {
+  display: flex;
+  align-items: center;
+  gap: clamp(8px, 2vw, 16px);
+}
+
+.transactionIcon {
+  width: clamp(32px, 8vw, 48px);
+  height: clamp(32px, 8vw, 48px);
+  border-radius: 50%;
+  background: #00c853;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: clamp(1rem, 2vw, 1.5rem);
+  color: white;
+}
+
+.transactionAddress {
+  font-size: clamp(0.9rem, 2vw, 1.2rem);
+}
+
+.transactionTime {
+  font-size: clamp(0.7rem, 2vw, 1rem);
+  color: #cbd5e1;
+}
+
+.transactionAmount {
+  font-weight: 600;
+  font-size: clamp(1rem, 2vw, 1.2rem);
+  text-align: right;
+}
+
+/* Spinner */
+.spinner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+.loadingCircle {
+  animation: spin 1s linear infinite;
+  border: 3px solid white;
+  border-top: 3px solid transparent;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Media Queries */
+@media (max-width: 768px) {
+  .chartContainer {
+    height: clamp(160px, 30vh, 280px);
+  }
+  .actionButtons {
+    flex-direction: column;
+    gap: 20px;
+  }
+}
