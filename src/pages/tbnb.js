@@ -14,6 +14,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import MiniLoadingSpinner from '@/components/MiniLoadingSpinner';
 import styles from '@/styles/networkpages.module.css';
 
+// Register Chart.js modules
 ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Filler);
 
 export default function TBnbPage() {
@@ -26,20 +27,24 @@ export default function TBnbPage() {
   const [initialChartLoading, setInitialChartLoading] = useState(true);
   const [initialBalancesLoading, setInitialBalancesLoading] = useState(true);
   const [lastChartUpdate, setLastChartUpdate] = useState(0);
+  const [chartKey, setChartKey] = useState(0); // <<< Naujas key kad chartas repaintintų
   const router = useRouter();
 
+  // Fetch all data on first load
   useEffect(() => {
     if (user && wallet) {
       fetchAllData();
     }
   }, [user, wallet]);
 
+  // Refetch chart after balances ready
   useEffect(() => {
     if (user && wallet && !initialBalancesLoading) {
       fetchChartData(true);
     }
   }, [user, wallet, initialBalancesLoading]);
 
+  // Silent background refresh kas 30s
   useEffect(() => {
     const interval = setInterval(() => {
       silentRefresh();
@@ -47,6 +52,7 @@ export default function TBnbPage() {
     return () => clearInterval(interval);
   }, []);
 
+  // Refresh duomenis kai grįžta tabas (po minimize ar tab switch)
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const handleVisibilityChange = async () => {
@@ -57,7 +63,7 @@ export default function TBnbPage() {
             refreshPrices()
           ]);
           fetchTransactions();
-          fetchChartData(true);
+          await fetchChartData(true); // Fetch chart ir perkraunam key
         }
       };
       document.addEventListener('visibilitychange', handleVisibilityChange);
@@ -65,6 +71,7 @@ export default function TBnbPage() {
     }
   }, []);
 
+  // Auto logout jei 10min nėra veiksmo
   useEffect(() => {
     let timer;
     const resetTimer = () => {
@@ -85,6 +92,7 @@ export default function TBnbPage() {
     };
   }, []);
 
+  // Viso duomenų užkrovimas
   const fetchAllData = async () => {
     await Promise.all([
       fetchTransactions(),
@@ -106,10 +114,12 @@ export default function TBnbPage() {
     fetchChartData(false);
   };
 
+  // Paskutinių 3 transakcijų užkrovimas, su rūšiavimu pagal timestamp!
   const fetchTransactions = async () => {
     try {
       const txs = await getTransactions('tbnb', user.email);
-      setTransactions(txs ? txs.slice(0, 3) : []);
+      const sortedTxs = (txs || []).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+      setTransactions(sortedTxs.slice(0, 3));
     } catch (error) {
       console.error('❌ Failed to load transactions', error);
       setTransactions([]);
@@ -118,6 +128,7 @@ export default function TBnbPage() {
     }
   };
 
+  // Chart duomenų užkrovimas + šiandienos data
   const fetchChartData = async (showSpinner = false) => {
     const now = Date.now();
     if (now - lastChartUpdate < 60000 && !showSpinner) {
@@ -134,13 +145,24 @@ export default function TBnbPage() {
 
       const response = await fetch(`/api/coingecko?coin=binancecoin&range=30d`);
       const data = await response.json();
-      const rawPrices = data?.prices?.map(p => ({
+      let rawPrices = data?.prices?.map(p => ({
         time: new Date(p[0]).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }),
         value: ((p[1] * (prices?.tbnb?.eur || 0)) / (prices?.tbnb?.usd || 1)).toFixed(2),
       })) || [];
 
+      // Pridedam šiandienos datą jei trūksta
+      if (rawPrices.length > 0) {
+        const lastPoint = rawPrices[rawPrices.length - 1];
+        const today = new Date();
+        const todayLabel = today.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+        if (lastPoint.time !== todayLabel) {
+          rawPrices.push({ time: todayLabel, value: lastPoint.value });
+        }
+      }
+
       setChartData(rawPrices);
       setLastChartUpdate(now);
+      setChartKey(prev => prev + 1); // Priverstinai repaint chart
     } catch (error) {
       console.error('❌ Failed to load chart data', error);
       setChartData([]);
@@ -149,6 +171,7 @@ export default function TBnbPage() {
     }
   };
 
+  // Chart.js options
   const chartOptions = {
     responsive: true,
     maintainAspectRatio: false,
@@ -234,7 +257,7 @@ export default function TBnbPage() {
             {initialChartLoading ? (
               <MiniLoadingSpinner />
             ) : (
-              <Line options={chartOptions} data={chartDataset} />
+              <Line key={chartKey} options={chartOptions} data={chartDataset} /> // <<< Perpiešiam pagal key
             )}
           </div>
         </div>
