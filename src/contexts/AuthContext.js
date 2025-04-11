@@ -137,38 +137,76 @@ export const AuthProvider = ({ children }) => {
 
   // ✅ Load arba Create Wallet
   const loadOrCreateWallet = async (email) => {
-    try {
-      setWalletLoading(true);
+  try {
+    setWalletLoading(true);
 
-      const { data, error } = await supabase
+    const { data, error } = await supabase
+      .from("wallets")
+      .select("*")
+      .eq("user_email", email)
+      .maybeSingle();
+
+    if (error) throw error;
+
+    if (data && data.encrypted_key) {
+      // ✅ Jei yra encrypted_key – naudojam egzistuojantį wallet
+      const decryptedKey = await decrypt(data.encrypted_key);
+      setupWallet(decryptedKey);
+
+    } else if (data && !data.encrypted_key) {
+      // ⚠️ Jei yra user įrašas be encrypted_key – AUTOMATIŠKAI IŠTRINAM BLOGĄ ĮRAŠĄ
+      console.warn("Found invalid wallet record. Deleting...");
+
+      const { error: deleteError } = await supabase
         .from("wallets")
-        .select("*")
-        .eq("user_email", email)
-        .maybeSingle();
+        .delete()
+        .eq("user_email", email);
 
-      if (error) throw error;
+      if (deleteError) throw deleteError;
 
-      if (data?.encrypted_key) {
-        const decryptedKey = await decrypt(data.encrypted_key);
-        setupWallet(decryptedKey);
-      } else {
-        const newWallet = Wallet.createRandom();
-        const encryptedKey = await encrypt(newWallet.privateKey);
-        await supabase.from("wallets").insert({
+      // ✅ Po ištrynimo – sukuriam naują wallet
+      const newWallet = Wallet.createRandom();
+      const encryptedKey = await encrypt(newWallet.privateKey);
+
+      const { error: insertError } = await supabase
+        .from("wallets")
+        .insert({
           user_email: email,
           eth_address: newWallet.address,
           encrypted_key: encryptedKey,
           created_at: new Date().toISOString(),
         });
-        setupWallet(newWallet.privateKey);
-      }
-    } catch (error) {
-      console.error("Wallet load error:", error.message);
-      setWallet(null);
-    } finally {
-      setWalletLoading(false);
+
+      if (insertError) throw insertError;
+
+      setupWallet(newWallet.privateKey);
+
+    } else {
+      // ✅ Jei nėra jokio įrašo – sukurti naują wallet
+      const newWallet = Wallet.createRandom();
+      const encryptedKey = await encrypt(newWallet.privateKey);
+
+      const { error: insertError } = await supabase
+        .from("wallets")
+        .insert({
+          user_email: email,
+          eth_address: newWallet.address,
+          encrypted_key: encryptedKey,
+          created_at: new Date().toISOString(),
+        });
+
+      if (insertError) throw insertError;
+
+      setupWallet(newWallet.privateKey);
     }
-  };
+
+  } catch (error) {
+    console.error("Wallet load error:", error.message);
+    setWallet(null);
+  } finally {
+    setWalletLoading(false);
+  }
+};
 
   // ✅ Setup Wallet
   const setupWallet = (privateKey) => {
