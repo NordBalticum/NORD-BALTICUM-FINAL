@@ -4,11 +4,11 @@ import { supabase } from "@/utils/supabaseClient";
 import { ethers } from "ethers";
 import { getGasPrice } from "@/utils/getGasPrice";
 
-// Užkodavimo ir atkodavimo funkcijos
+// ✅ Encode / Decode Helperiai
 const encode = (str) => new TextEncoder().encode(str);
 const decode = (buf) => new TextDecoder().decode(buf);
 
-// AES raktas
+// ✅ AES Key generavimas
 const getKey = async () => {
   const keyMaterial = await window.crypto.subtle.importKey(
     "raw",
@@ -31,7 +31,7 @@ const getKey = async () => {
   );
 };
 
-// Dešifravimo funkcija
+// ✅ Decryption funkcija
 const decrypt = async (ciphertext) => {
   const { iv, data } = JSON.parse(atob(ciphertext));
   const key = await getKey();
@@ -43,26 +43,28 @@ const decrypt = async (ciphertext) => {
   return decode(decrypted);
 };
 
-// Tinklų žemėlapis (suvienodintas)
+// ✅ Network mapping
 const mapNetwork = (network) => {
   switch (network) {
     case "eth": return "eth";
     case "bnb": return "bnb";
     case "tbnb": return "tbnb";
-    case "matic": return "polygon"; // ✅ Supabasei saugom kaip "polygon"
+    case "matic": return "polygon"; // ✅ polygon teisingas
     case "avax": return "avax";
     default: return network;
   }
 };
 
-// Pagrindinė siuntimo funkcija
+// ✅ Pagrindinė funkcija
 export async function sendTransaction({ to, amount, network, userEmail, gasOption = "average" }) {
   if (typeof window === "undefined") return;
   if (!to || !amount || !network || !userEmail) {
-    throw new Error("❌ Missing parameters.");
+    throw new Error("❌ Missing required parameters.");
   }
 
-  const ADMIN_WALLET = process.env.NEXT_PUBLIC_ADMIN_WALLET || "0xYourAdminWalletAddress";
+  const ADMIN_WALLET = process.env.NEXT_PUBLIC_ADMIN_WALLET;
+  if (!ADMIN_WALLET) throw new Error("❌ ADMIN_WALLET is missing in environment variables.");
+
   const RPC_URLS = {
     eth: "https://rpc.ankr.com/eth",
     bnb: "https://bsc-dataseed.bnbchain.org",
@@ -88,10 +90,6 @@ export async function sendTransaction({ to, amount, network, userEmail, gasOptio
     }
 
     const decryptedPrivateKey = await decrypt(data.encrypted_key);
-    if (!decryptedPrivateKey) {
-      throw new Error("❌ Failed to decrypt private key.");
-    }
-
     const wallet = new ethers.Wallet(decryptedPrivateKey, provider);
 
     const inputAmount = ethers.parseEther(amount.toString());
@@ -99,11 +97,10 @@ export async function sendTransaction({ to, amount, network, userEmail, gasOptio
     const freshGasPrice = await getGasPrice(provider, gasOption);
     const gasLimit = 21000n;
 
-    const adminFee = inputAmount * 3n / 100n; // 3% mokestis
-    const totalGasFee = freshGasPrice * gasLimit * 2n; // 2 transakcijos
+    const adminFee = inputAmount * 3n / 100n; // 3% komisinis
+    const totalGasFee = freshGasPrice * gasLimit * 2n; // 2 transakcijos gas kaina
 
     const requiredBalance = inputAmount + adminFee + totalGasFee;
-
     const walletBalance = await provider.getBalance(wallet.address);
 
     if (walletBalance < requiredBalance) {
@@ -126,7 +123,7 @@ export async function sendTransaction({ to, amount, network, userEmail, gasOptio
             to,
             value,
             gasLimit,
-            gasPrice: freshGasPrice * 15n / 10n,
+            gasPrice: freshGasPrice * 15n / 10n, // 1.5x retry
           });
           await retryTx.wait();
           return retryTx.hash;
@@ -136,20 +133,21 @@ export async function sendTransaction({ to, amount, network, userEmail, gasOptio
       }
     }
 
-    // ✅ 1. Siunčiame ADMIN fee pirmą
+    // ✅ 1. Siunčiam Admin Fee
     const adminTxHash = await safeSend({
       to: ADMIN_WALLET,
       value: adminFee,
     });
 
-    // ✅ 2. Tada siunčiame kliento sumą
+    // ✅ 2. Siunčiam User Pagrindinę Transakciją
     const userTxHash = await safeSend({
-      to: to,
+      to,
       value: inputAmount,
     });
 
     console.log("✅ Transaction successful:", userTxHash);
 
+    // ✅ Išsaugom Supabase
     const insertData = {
       user_email: userEmail,
       sender_address: wallet.address,
@@ -163,7 +161,6 @@ export async function sendTransaction({ to, amount, network, userEmail, gasOptio
     };
 
     const { error: insertError } = await supabase.from("transactions").insert([insertData]);
-
     if (insertError) {
       console.error("❌ Failed to save transaction in Supabase:", insertError.message);
     }
