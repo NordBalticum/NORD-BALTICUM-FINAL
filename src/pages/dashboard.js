@@ -74,12 +74,18 @@ export default function Dashboard() {
   const isLoading = typeof window === "undefined" || !isClient || authLoading || walletLoading || balancesLoading || pricesLoading;
 
   if (isLoading) {
-    return (
-      <div className={styles.loaderWrapper}>
-        <MiniLoadingSpinner />
-      </div>
-    );
-  }
+  return (
+    <div style={{
+      height: "100vh",               // ✅ Visa ekrano aukštis
+      display: "flex",               // ✅ Flexbox
+      alignItems: "center",          // ✅ Centruojam vertikaliai
+      justifyContent: "center",      // ✅ Centruojam horizontaliai
+      background: "transparent",     // ✅ Fonas paliekam švarų
+    }}>
+      <MiniLoadingSpinner />
+    </div>
+  );
+}
 
   return (
     <main className={styles.container}>
