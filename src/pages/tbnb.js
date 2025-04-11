@@ -39,7 +39,7 @@ export default function TBnbPage() {
     const interval = setInterval(() => {
       refreshBalance();
       refreshPrices();
-      fetchChartData(); // atnaujinti ir charts be kraunamų spinnerių
+      fetchChartData(); // Atnaujina backgrounde
     }, 30000);
     return () => clearInterval(interval);
   }, []);
@@ -65,34 +65,31 @@ export default function TBnbPage() {
     };
   }, []);
 
-  // ✅ Fetch transactions
   const fetchTransactions = async () => {
     setTransactionsLoading(true);
     try {
       const txs = await getTransactions('tbnb', user.email);
       setTransactions(txs.slice(0, 3));
     } catch (error) {
-      console.error('Failed to load transactions', error);
+      console.error('❌ Failed to load transactions', error);
     }
     setTransactionsLoading(false);
   };
 
-  // ✅ Fetch chart data
   const fetchChartData = async () => {
     try {
       const response = await fetch(`/api/coingecko?coin=binancecoin&range=${selectedRange}`);
       const data = await response.json();
       const rawPrices = data.prices.map(p => ({
-        time: new Date(p[0]).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }), // ✅ normalūs dates
+        time: new Date(p[0]).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }),
         value: (p[1] * (balances?.tbnb?.balance || 0)).toFixed(2),
       }));
       setChartData(rawPrices);
     } catch (error) {
-      console.error('Failed to load chart data', error);
+      console.error('❌ Failed to load chart data', error);
     }
   };
 
-  // ✅ Chart config
   const chartOptions = {
     responsive: true,
     maintainAspectRatio: false,
@@ -101,7 +98,7 @@ export default function TBnbPage() {
         mode: 'index',
         intersect: false,
         callbacks: {
-          label: function(context) {
+          label: function (context) {
             return `€ ${parseFloat(context.raw).toFixed(2)}`;
           },
         },
@@ -140,10 +137,10 @@ export default function TBnbPage() {
 
   return (
     <main
-  style={{ width: "100vw", height: "100vh", overflowY: "auto" }}
-  className={styles.pageContainer}
->
-    
+      style={{ width: '100vw', height: '100vh', overflowY: 'auto' }}
+      className={styles.pageContainer}
+    >
+      <div className={styles.pageContent}>
         {/* Header */}
         <div className={styles.header}>
           <Image src="/icons/bnb.svg" alt="BNB Logo" width={50} height={50} className={styles.networkLogo} priority />
@@ -167,7 +164,7 @@ export default function TBnbPage() {
 
         {/* Range Selector */}
         <div className={styles.rangeSelector}>
-          {['24h', '7d', '14d', '30d'].map((range) => (
+          {['24h', '7d', '14d', '30d'].map(range => (
             <button
               key={range}
               onClick={() => setSelectedRange(range)}
@@ -223,7 +220,9 @@ export default function TBnbPage() {
                         {tx.type === 'send' ? '↑' : '↓'}
                       </div>
                       <div>
-                        <div className={styles.transactionAddress}>{tx.address?.slice(0, 6)}...{tx.address?.slice(-4)}</div>
+                        <div className={styles.transactionAddress}>
+                          {tx.address?.slice(0, 6)}...{tx.address?.slice(-4)}
+                        </div>
                         <div className={styles.transactionTime}>{moment(tx.timestamp).fromNow()}</div>
                       </div>
                     </div>
@@ -236,7 +235,6 @@ export default function TBnbPage() {
             )}
           </div>
         </div>
-
       </div>
     </main>
   );
