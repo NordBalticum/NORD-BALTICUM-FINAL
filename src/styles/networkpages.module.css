@@ -1,3 +1,4 @@
+/* === PAGE WRAPPER === */
 .pageContainer {
   width: 100vw;
   height: 100vh;
@@ -5,95 +6,90 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: clamp(20px, 5vh, 60px) clamp(16px, 4vw, 32px);
-  color: white;
   overflow-x: hidden;
   overflow-y: auto;
   scroll-behavior: smooth;
 }
 
-/* HEADER */
+.pageContent {
+  width: 100%;
+  max-width: 1200px;
+  transform: scale(0.85);
+  transform-origin: top center;
+  min-height: calc(100vh - 360px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: clamp(20px, 5vh, 60px) clamp(16px, 4vw, 32px);
+  box-sizing: border-box;
+  transition: all 0.4s ease;
+}
+
+/* === HEADER === */
 .header {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 12px;
   margin-bottom: clamp(20px, 5vh, 40px);
+  text-align: center;
 }
 
 .networkLogo {
   width: clamp(48px, 10vw, 64px);
   height: clamp(48px, 10vw, 64px);
+  transition: all 0.3s ease;
 }
 
 .networkNameSmall {
   font-size: clamp(1rem, 2vw, 1.6rem);
-  font-weight: 500;
-  opacity: 0.7;
-  text-align: center;
-}
-
-/* BALANCE */
-.balanceBox {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(12px);
-  border-radius: 20px;
-  box-shadow: 0 0 25px rgba(255, 255, 255, 0.08);
-  padding: clamp(12px, 3vh, 24px) clamp(16px, 5vw, 32px);
-  margin-top: 10px;
-  text-align: center;
+  font-weight: 600;
+  opacity: 0.8;
   transition: all 0.3s ease;
 }
 
+/* === BALANCE === */
+.balanceBox {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(12px);
+  border-radius: 20px;
+  box-shadow: 0 0 30px rgba(255, 255, 255, 0.1);
+  padding: clamp(16px, 3vh, 28px) clamp(20px, 6vw, 36px);
+  margin-top: 10px;
+  text-align: center;
+  transition: all 0.4s ease;
+}
+
 .balanceText {
-  font-size: clamp(1.5rem, 3vw, 2.2rem);
+  font-size: clamp(1.6rem, 3vw, 2.4rem);
   font-weight: 700;
   color: white;
 }
 
 .balanceFiat {
-  margin-top: 6px;
+  margin-top: 8px;
   font-size: clamp(1rem, 2.5vw, 1.4rem);
   opacity: 0.8;
+  color: white;
 }
 
-/* CHART */
-.chartWrapper {
-  width: 100%;
-  max-width: 800px;
-  padding: clamp(12px, 4vw, 32px);
-  display: flex;
-  justify-content: center;
-  margin-top: clamp(20px, 4vh, 40px);
-}
-
-.chartBorder {
-  width: 100%;
-  height: clamp(220px, 40vh, 320px);
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 24px;
-  backdrop-filter: blur(8px);
-  box-shadow: 0 0 40px rgba(255, 255, 255, 0.08);
-  padding: 20px;
-}
-
-/* RANGE SELECTOR */
+/* === RANGE SELECTOR === */
 .rangeSelector {
   display: flex;
   justify-content: center;
+  flex-wrap: wrap;
   gap: clamp(8px, 2vw, 16px);
-  margin-top: clamp(20px, 3vh, 40px);
+  margin: clamp(20px, 4vh, 40px) 0;
 }
 
 .rangeButton {
-  padding: clamp(8px, 2vw, 12px) clamp(18px, 5vw, 26px);
+  padding: clamp(8px, 2vw, 12px) clamp(20px, 5vw, 30px);
   background: transparent;
   color: white;
   border: 1px solid white;
   border-radius: 9999px;
-  font-size: clamp(0.9rem, 2vw, 1.2rem);
+  font-size: clamp(1rem, 2vw, 1.2rem);
   cursor: pointer;
   transition: all 0.3s ease;
 }
@@ -109,12 +105,35 @@
   border: 1px solid white;
 }
 
-/* ACTION BUTTONS */
+/* === CHART === */
+.chartWrapper {
+  width: 100%;
+  max-width: 800px;
+  display: flex;
+  justify-content: center;
+  padding: clamp(16px, 4vw, 32px);
+  margin-top: clamp(20px, 4vh, 40px);
+}
+
+.chartBorder {
+  width: 100%;
+  height: clamp(240px, 45vh, 340px);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  border-radius: 24px;
+  box-shadow: 0 0 50px rgba(255, 255, 255, 0.1);
+  padding: 20px;
+  transition: all 0.4s ease;
+}
+
+/* === ACTION BUTTONS === */
 .actionButtons {
   display: flex;
   justify-content: center;
   gap: clamp(20px, 5vw, 40px);
   margin: clamp(24px, 4vh, 48px) 0;
+  flex-wrap: wrap;
 }
 
 .actionButton {
@@ -124,17 +143,17 @@
   border: 1px solid white;
   border-radius: 9999px;
   font-size: clamp(1rem, 2vw, 1.2rem);
-  transition: all 0.3s ease;
   cursor: pointer;
+  transition: all 0.3s ease;
 }
 
 .actionButton:hover {
-  transform: scale(1.05);
   background: white;
   color: black;
+  transform: scale(1.05);
 }
 
-/* TRANSACTIONS */
+/* === TRANSACTIONS === */
 .transactionsContainer {
   width: 100%;
   max-width: 700px;
@@ -142,7 +161,7 @@
 
 .transactionsTitle {
   font-size: clamp(1.2rem, 2.5vw, 1.6rem);
-  font-weight: 600;
+  font-weight: 700;
   margin-bottom: clamp(16px, 3vh, 24px);
   text-align: center;
 }
@@ -155,6 +174,7 @@
   display: flex;
   flex-direction: column;
   gap: clamp(12px, 3vh, 20px);
+  transition: all 0.3s ease;
 }
 
 .transactionItem {
@@ -166,7 +186,12 @@
   backdrop-filter: blur(8px);
   border-radius: 20px;
   padding: clamp(12px, 2vw, 20px);
-  transition: all 0.3s ease;
+  transition: all 0.4s ease;
+}
+
+.transactionItem:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
 }
 
 .transactionLeft {
@@ -193,16 +218,17 @@
 
 .transactionTime {
   font-size: clamp(0.7rem, 2vw, 1rem);
-  color: #cbd5e1;
+  opacity: 0.7;
 }
 
 .transactionAmount {
   font-weight: 600;
   font-size: clamp(1rem, 2vw, 1.2rem);
   text-align: right;
+  color: white;
 }
 
-/* SPINNER */
+/* === SPINNER === */
 .spinner {
   display: flex;
   align-items: center;
@@ -225,14 +251,25 @@
   100% { transform: rotate(360deg); }
 }
 
-/* RESPONSIVE */
+/* === RESPONSIVE ULTIMATE === */
 @media (max-width: 768px) {
-  .chartBorder {
-    height: clamp(180px, 30vh, 280px);
+  .pageContent {
+    transform: scale(0.92); /* arba 0.95 jeigu nori dar mažiau skirtumo */
+    padding: 20px 16px;
+    min-height: auto;
   }
   .actionButtons {
     flex-direction: column;
-    align-items: center;
     gap: 20px;
+  }
+  .networkLogo {
+    width: 48px;
+    height: 48px;
+  }
+  .chartBorder {
+    height: clamp(200px, 35vh, 280px);
+  }
+  .transactionsBox {
+    padding: 20px;
   }
 }
