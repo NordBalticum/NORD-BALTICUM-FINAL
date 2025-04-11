@@ -257,24 +257,121 @@
 }
 
 /* === RESPONSIVE ULTIMATE === */
+
+/* Mobile very small screens (mini phones) */
+@media (max-width: 468px) {
+  .pageContent {
+    transform: scale(0.95);
+    padding: 16px 12px;
+    min-height: auto;
+  }
+  .rangeSelector {
+    gap: 8px;
+    margin: 12px 0;
+  }
+  .balanceBox {
+    margin-top: 6px;
+    padding: 14px 18px;
+  }
+  .chartWrapper {
+    padding: 10px;
+    margin-top: 14px;
+  }
+  .chartBorder {
+    height: clamp(160px, 30vh, 240px);
+  }
+  .actionButtons {
+    flex-direction: column;
+    gap: 14px;
+    margin: 20px 0;
+  }
+  .transactionsBox {
+    padding: 16px;
+    gap: 12px;
+  }
+}
+
+/* Mobile normal screens (phones) */
 @media (max-width: 768px) {
   .pageContent {
     transform: scale(0.92);
     padding: 20px 16px;
     min-height: auto;
   }
-  .actionButtons {
-    flex-direction: column;
-    gap: 16px;
+  .rangeSelector {
+    gap: 10px;
+    margin: 16px 0;
   }
-  .networkLogo {
-    width: 48px;
-    height: 48px;
+  .balanceBox {
+    margin-top: 8px;
+    padding: 16px 20px;
+  }
+  .chartWrapper {
+    padding: 14px;
+    margin-top: 18px;
   }
   .chartBorder {
-    height: clamp(200px, 35vh, 280px);
+    height: clamp(180px, 35vh, 260px);
+  }
+  .actionButtons {
+    flex-direction: row; /* Eilė! */
+    gap: 16px;
+    margin: 24px 0;
+  }
+  .actionButton {
+    flex: 1 1 auto;
+    min-width: 40%;
+    text-align: center;
   }
   .transactionsBox {
-    padding: 20px;
+    padding: 18px;
+    gap: 14px;
+  }
+}
+
+/* Tablet screens */
+@media (max-width: 1098px) {
+  .pageContent {
+    transform: scale(0.9);
+    padding: 24px 20px;
+  }
+  .rangeSelector {
+    gap: 12px;
+    margin: 18px 0;
+  }
+  .chartWrapper {
+    padding: 18px;
+    margin-top: 20px;
+  }
+  .chartBorder {
+    height: clamp(220px, 38vh, 300px);
+  }
+}
+
+/* Small desktops */
+@media (max-width: 1600px) {
+  .pageContent {
+    transform: scale(0.88);
+    padding: 28px 24px;
+  }
+  .rangeSelector {
+    gap: 14px;
+    margin: 20px 0;
+  }
+}
+
+/* Full HD desktops */
+@media (max-width: 1920px) {
+  .pageContent {
+    transform: scale(0.85);
+    padding: 30px 28px;
+  }
+}
+
+/* 4K Ultra screens */
+@media (min-width: 2560px) {
+  .pageContent {
+    transform: scale(0.8);
+    padding: 32px 32px;
   }
 }
