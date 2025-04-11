@@ -6,13 +6,12 @@ import dynamic from "next/dynamic";
 import Image from "next/image";
 
 import { useAuth } from "@/contexts/AuthContext";
-import { useBalance } from "@/hooks/useBalance"; // ✅ Importuojam tavo hook
-import { usePrices } from "@/hooks/usePrices";   // ✅ Importuojam tavo hook
-import MiniLoadingSpinner from "@/components/MiniLoadingSpinner"; // ✅ Premium spinneris
+import { useBalance } from "@/hooks/useBalance";
+import { usePrices } from "@/hooks/usePrices";
+import MiniLoadingSpinner from "@/components/MiniLoadingSpinner"; 
 
 const LivePriceTable = dynamic(() => import("@/components/LivePriceTable"), { ssr: false });
 
-// ✅ Lokalios ikonėlės
 const iconUrls = {
   ethereum: "/icons/eth.svg",
   bsc: "/icons/bnb.svg",
@@ -40,8 +39,9 @@ const routeNames = {
 export default function Dashboard() {
   const router = useRouter();
   const { user, wallet, authLoading, walletLoading } = useAuth();
-  const { balances, loading: balancesLoading } = useBalance(); // ✅ Hookas
-  const { prices, loading: pricesLoading } = usePrices();       // ✅ Hookas
+  const { balances, loading: balancesLoading } = useBalance();
+  const { prices, loading: pricesLoading } = usePrices();
+  
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
@@ -57,11 +57,11 @@ export default function Dashboard() {
   }, [isClient, authLoading, user, router]);
 
   const tokens = useMemo(() => {
-    if (!wallet || !wallet.wallet || !wallet.wallet.address) return [];
+    if (!wallet?.wallet?.address) return []; // ✅ Saugus patikrinimas
     return Object.keys(balances || {});
   }, [wallet, balances]);
 
-  const isLoading = !isClient || authLoading || walletLoading || balancesLoading || pricesLoading;
+  const isLoading = typeof window === "undefined" || !isClient || authLoading || walletLoading || balancesLoading || pricesLoading;
 
   return (
     <main className="container">
@@ -77,13 +77,15 @@ export default function Dashboard() {
             <div className="noAssets">No assets found.</div>
           ) : (
             tokens.map((network) => {
-              const balance = balances?.[network] || 0;
-              const price = prices?.[network === "tbnb" ? "bsc" : network] || { eur: 0, usd: 0 };
+              const balanceData = balances?.[network];
+              const priceData = prices?.[network === "tbnb" ? "bsc" : network];
+
+              if (!balanceData || !priceData) return null; // ✅ Apsauga jei dar nespėjo užkrauti
 
               const symbol = routeNames[network] || network;
-              const balanceFormatted = balance.toFixed(6);
-              const eurValue = (balance * price.eur).toFixed(2);
-              const usdValue = (balance * price.usd).toFixed(2);
+              const balanceFormatted = parseFloat(balanceData.balance || 0).toFixed(6);
+              const eurValue = (parseFloat(balanceData.balance || 0) * (priceData.eur || 0)).toFixed(2);
+              const usdValue = (parseFloat(balanceData.balance || 0) * (priceData.usd || 0)).toFixed(2);
 
               return (
                 <div
