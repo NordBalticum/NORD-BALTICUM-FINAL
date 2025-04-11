@@ -1,15 +1,11 @@
-/* src/app/styles/networkpages.module.css */
-
 .pageContainer {
   width: 100vw;
   min-height: 100vh;
+  background: radial-gradient(ellipse at center, #2B37FF 0%, #1B2370 50%, #0A122A 100%);
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding-top: clamp(40px, 5vh, 80px);
-  padding-left: clamp(16px, 4vw, 32px);
-  padding-right: clamp(16px, 4vw, 32px);
-  background: radial-gradient(ellipse at center, #2B37FF 0%, #1B2370 50%, #0A122A 100%);
+  padding: clamp(20px, 5vh, 60px) clamp(16px, 4vw, 32px);
   color: white;
   overflow-x: hidden;
 }
@@ -26,42 +22,78 @@
   height: clamp(48px, 10vw, 64px);
 }
 
-.networkName {
-  font-size: clamp(1.5rem, 3vw, 2.5rem);
-  font-weight: 600;
-  margin-top: 12px;
+.networkNameSmall {
+  font-size: clamp(1.2rem, 2.5vw, 2rem);
+  font-weight: 500;
+  opacity: 0.8;
+  margin-top: 10px;
   text-align: center;
 }
 
-.balance {
-  margin-top: 8px;
-  font-size: clamp(1rem, 2vw, 1.5rem);
+.balanceBox {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(15px);
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
+  border-radius: 18px;
+  padding: clamp(10px, 3vh, 20px) clamp(16px, 4vw, 32px);
+  margin-top: 20px;
   text-align: center;
+  transition: 0.3s ease;
+}
+
+.balanceText {
+  font-size: clamp(1.4rem, 3vw, 2rem);
+  font-weight: 700;
+}
+
+.balanceFiat {
+  margin-top: 6px;
+  font-size: clamp(1rem, 2.5vw, 1.4rem);
+  opacity: 0.85;
+}
+
+.chartWrapper {
+  width: 100%;
+  max-width: 700px;
+  margin-top: clamp(20px, 4vh, 40px);
+  padding: clamp(16px, 4vw, 32px);
+  display: flex;
+  justify-content: center;
+}
+
+.chartBorder {
+  width: 100%;
+  height: clamp(220px, 35vh, 300px);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 20px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 0 30px rgba(255, 255, 255, 0.08);
+  padding: clamp(10px, 2vh, 20px);
 }
 
 .chartContainer {
   width: 100%;
-  max-width: 700px;
-  height: clamp(180px, 40vh, 360px);
-  margin-bottom: clamp(24px, 4vh, 48px);
-  position: relative;
+  height: 100%;
 }
 
 .rangeSelector {
   display: flex;
   gap: clamp(8px, 2vw, 16px);
+  margin-top: clamp(24px, 4vh, 48px);
   margin-bottom: clamp(24px, 4vh, 48px);
 }
 
 .rangeButton {
   padding: clamp(8px, 2vw, 12px) clamp(16px, 4vw, 24px);
-  border: 1px solid white;
-  border-radius: 9999px;
   background: transparent;
   color: white;
+  border: 1px solid white;
+  border-radius: 9999px;
   font-size: clamp(0.9rem, 2vw, 1.1rem);
-  transition: all 0.3s ease;
   cursor: pointer;
+  transition: 0.3s ease;
 }
 
 .rangeButton:hover {
@@ -70,8 +102,9 @@
 }
 
 .rangeButtonActive {
-  background: white;
-  color: black;
+  background: black;
+  color: white;
+  border: 1px solid white;
 }
 
 .actionButtons {
@@ -87,7 +120,7 @@
   border: 1px solid white;
   border-radius: 9999px;
   font-size: clamp(1rem, 2vw, 1.2rem);
-  transition: all 0.3s ease;
+  transition: 0.3s ease;
   cursor: pointer;
 }
 
@@ -106,6 +139,7 @@
   font-size: clamp(1.2rem, 2.5vw, 1.6rem);
   font-weight: 600;
   margin-bottom: clamp(16px, 3vh, 24px);
+  text-align: center;
 }
 
 .transactionsBox {
@@ -123,6 +157,7 @@
   align-items: center;
   justify-content: space-between;
   background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   backdrop-filter: blur(8px);
   border-radius: 18px;
   padding: clamp(12px, 2vw, 20px);
@@ -185,10 +220,10 @@
   100% { transform: rotate(360deg); }
 }
 
-/* Media Queries */
+/* RESPONSIVE */
 @media (max-width: 768px) {
-  .chartContainer {
-    height: clamp(160px, 30vh, 280px);
+  .chartBorder {
+    height: clamp(180px, 30vh, 280px);
   }
   .actionButtons {
     flex-direction: column;
