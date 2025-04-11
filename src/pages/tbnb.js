@@ -26,14 +26,20 @@ export default function TBnbPage() {
   const [initialLoading, setInitialLoading] = useState(true);
   const [initialChartLoading, setInitialChartLoading] = useState(true);
   const [selectedRange, setSelectedRange] = useState('24h');
+  const [initialBalancesLoading, setInitialBalancesLoading] = useState(true);
   const router = useRouter();
 
-  // ✅ Real-time background refresh
   useEffect(() => {
     if (user && wallet) {
       fetchAllData();
     }
   }, [user, wallet]);
+
+  useEffect(() => {
+    if (user && wallet) {
+      fetchChartData(true); // kai keičiamas laiko range, reikia chart'ą perkelti
+    }
+  }, [selectedRange]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -42,7 +48,6 @@ export default function TBnbPage() {
     return () => clearInterval(interval);
   }, []);
 
-  // ✅ On minimize/maximize refresh
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const handleVisibilityChange = () => {
@@ -55,7 +60,6 @@ export default function TBnbPage() {
     }
   }, []);
 
-  // ✅ Inactivity logout (10min)
   useEffect(() => {
     let timer;
     const resetTimer = () => {
@@ -78,8 +82,17 @@ export default function TBnbPage() {
 
   const fetchAllData = async () => {
     setInitialLoading(true);
-    await Promise.all([fetchTransactions(), fetchChartData(true)]);
+    await Promise.all([
+      fetchTransactions(),
+      fetchChartData(true),
+      fetchInitialBalances()
+    ]);
     setInitialLoading(false);
+  };
+
+  const fetchInitialBalances = async () => {
+    await Promise.all([refreshBalance(), refreshPrices()]);
+    setInitialBalancesLoading(false);
   };
 
   const silentRefresh = async () => {
@@ -171,19 +184,16 @@ export default function TBnbPage() {
   if (!user || !wallet || initialLoading) return <MiniLoadingSpinner />;
 
   return (
-    <main
-      style={{ width: '100vw', height: '100vh', overflowY: 'auto' }}
-      className={styles.pageContainer}
-    >
+    <main style={{ width: '100vw', height: '100vh', overflowY: 'auto' }} className={styles.pageContainer}>
       <div className={styles.pageContent}>
-
+        
         {/* Header */}
         <div className={styles.header}>
           <Image src="/icons/bnb.svg" alt="BNB Logo" width={48} height={48} className={styles.networkLogo} priority />
           <h1 className={styles.networkNameSmall}>Binance Smart Chain (Testnet)</h1>
 
           <div className={styles.balanceBox}>
-            {balanceLoading || pricesLoading ? (
+            {initialBalancesLoading ? (
               <MiniLoadingSpinner />
             ) : (
               <>
@@ -224,12 +234,8 @@ export default function TBnbPage() {
 
         {/* Action Buttons */}
         <div className={styles.actionButtons}>
-          <button onClick={handleSend} className={styles.actionButton}>
-            Send
-          </button>
-          <button onClick={handleReceive} className={styles.actionButton}>
-            Receive
-          </button>
+          <button onClick={handleSend} className={styles.actionButton}>Send</button>
+          <button onClick={handleReceive} className={styles.actionButton}>Receive</button>
         </div>
 
         {/* Transactions */}
@@ -275,4 +281,4 @@ export default function TBnbPage() {
       </div>
     </main>
   );
-}
+          }
