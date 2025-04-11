@@ -18,7 +18,7 @@ const RPC = {
 const ADMIN_ADDRESS = process.env.NEXT_PUBLIC_ADMIN_WALLET;
 const ENCRYPTION_SECRET = process.env.NEXT_PUBLIC_ENCRYPTION_SECRET;
 
-// ✅ Encryption
+// ✅ Encryption helpers
 const encode = (str) => new TextEncoder().encode(str);
 const decode = (buf) => new TextDecoder().decode(buf);
 
@@ -58,11 +58,10 @@ export const decrypt = async (ciphertext) => {
   return decode(decrypted);
 };
 
-// ✅ Context
+// ✅ Context setup
 export const AuthContext = createContext();
 export const useAuth = () => useContext(AuthContext);
 
-// ✅ Provider
 export const AuthProvider = ({ children }) => {
   const router = useRouter();
   const pathname = usePathname();
@@ -105,7 +104,7 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     if (!isClient || authLoading || !user?.email) return;
     loadOrCreateWallet(user.email);
-  }, [authLoading, user]);
+  }, [isClient, authLoading, user]);
 
   // ✅ Auto redirect į dashboard
   useEffect(() => {
@@ -113,16 +112,16 @@ export const AuthProvider = ({ children }) => {
     if (!authLoading && user && pathname === "/") {
       router.replace("/dashboard");
     }
-  }, [authLoading, user, pathname]);
+  }, [isClient, authLoading, user, pathname, router]);
 
-  // ✅ Inactivity timeout
+  // ✅ Inactivity Timeout (10 min)
   useEffect(() => {
     if (!isClient) return;
     const resetTimer = () => {
       clearTimeout(inactivityTimer.current);
       inactivityTimer.current = setTimeout(() => {
         signOut();
-      }, 10 * 60 * 1000); // 10 min timeout
+      }, 10 * 60 * 1000);
     };
     window.addEventListener("mousemove", resetTimer);
     window.addEventListener("keydown", resetTimer);
@@ -132,9 +131,9 @@ export const AuthProvider = ({ children }) => {
       window.removeEventListener("mousemove", resetTimer);
       window.removeEventListener("keydown", resetTimer);
     };
-  }, []);
+  }, [isClient]);
 
-  // ✅ Load arba Create Wallet
+  // ✅ Load arba Create Wallet (tik login metu)
   const loadOrCreateWallet = async (email) => {
     try {
       setWalletLoading(true);
@@ -147,25 +146,9 @@ export const AuthProvider = ({ children }) => {
 
       if (error) throw error;
 
-      if (data && data.encrypted_key) {
+      if (data?.encrypted_key) {
         const decryptedKey = await decrypt(data.encrypted_key);
         setupWallet(decryptedKey);
-      } else if (data && !data.encrypted_key) {
-        console.warn("Found invalid wallet record. Deleting...");
-
-        await supabase.from("wallets").delete().eq("user_email", email);
-
-        const newWallet = Wallet.createRandom();
-        const encryptedKey = await encrypt(newWallet.privateKey);
-
-        await supabase.from("wallets").insert({
-          user_email: email,
-          eth_address: newWallet.address,
-          encrypted_key: encryptedKey,
-          created_at: new Date().toISOString(),
-        });
-
-        setupWallet(newWallet.privateKey);
       } else {
         const newWallet = Wallet.createRandom();
         const encryptedKey = await encrypt(newWallet.privateKey);
@@ -179,10 +162,60 @@ export const AuthProvider = ({ children }) => {
 
         setupWallet(newWallet.privateKey);
       }
-
     } catch (error) {
       console.error("Wallet load error:", error.message);
       setWallet(null);
+    } finally {
+      setWalletLoading(false);
+    }
+  };
+
+  // ✅ Importuoti naują wallet (kai vartotojas suveda privatų raktą)
+  const walletImport = async (privateKey, email) => {
+    try {
+      setWalletLoading(true);
+
+      const encryptedKey = await encrypt(privateKey);
+      const walletInstance = new Wallet(privateKey);
+
+      await supabase.from("wallets").delete().eq("user_email", email);
+
+      const { error: insertError } = await supabase.from("wallets").insert({
+        user_email: email,
+        eth_address: walletInstance.address,
+        encrypted_key: encryptedKey,
+        created_at: new Date().toISOString(),
+      });
+
+      if (insertError) throw insertError;
+
+      setupWallet(privateKey);
+    } catch (error) {
+      console.error("Wallet Import Error:", error.message);
+    } finally {
+      setWalletLoading(false);
+    }
+  };
+
+  // ✅ Reload Wallet (po importo)
+  const reloadWallet = async (email) => {
+    try {
+      setWalletLoading(true);
+
+      const { data, error } = await supabase
+        .from("wallets")
+        .select("*")
+        .eq("user_email", email)
+        .maybeSingle();
+
+      if (error) throw error;
+
+      if (data?.encrypted_key) {
+        const decryptedKey = await decrypt(data.encrypted_key);
+        setupWallet(decryptedKey);
+      }
+    } catch (error) {
+      console.error("Reload Wallet Error:", error.message);
     } finally {
       setWalletLoading(false);
     }
@@ -235,31 +268,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // ✅ Reload Wallet (po importo)
-  const reloadWallet = async (email) => {
-    try {
-      setWalletLoading(true);
-
-      const { data, error } = await supabase
-        .from("wallets")
-        .select("*")
-        .eq("user_email", email)
-        .maybeSingle();
-
-      if (error) throw error;
-
-      if (data?.encrypted_key) {
-        const decryptedKey = await decrypt(data.encrypted_key);
-        setupWallet(decryptedKey);
-      }
-    } catch (error) {
-      console.error("Reload Wallet Error:", error.message);
-    } finally {
-      setWalletLoading(false);
-    }
-  };
-
-  // ✅ Auth Functions
+  // ✅ Sign In / Sign Out
   const signInWithMagicLink = async (email) => {
     const origin = isClient ? window.location.origin : "https://nordbalticum.com";
     const { error } = await supabase.auth.signInWithOtp({
@@ -290,7 +299,7 @@ export const AuthProvider = ({ children }) => {
     router.replace("/");
   };
 
-  // ✅ Return Context
+  // ✅ Final Context Return
   return (
     <AuthContext.Provider
       value={{
@@ -306,6 +315,7 @@ export const AuthProvider = ({ children }) => {
         signInWithGoogle,
         signOut,
         reloadWallet,
+        walletImport, // ✅ naujas import metodas
       }}
     >
       {children}
