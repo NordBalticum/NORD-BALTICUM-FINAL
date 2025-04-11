@@ -30,48 +30,52 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
-  margin-bottom: clamp(20px, 5vh, 40px);
+  gap: 10px;
+  margin-bottom: clamp(16px, 4vh, 32px);
   text-align: center;
 }
 
 .networkLogo {
-  width: clamp(48px, 10vw, 64px);
-  height: clamp(48px, 10vw, 64px);
-  transition: all 0.3s ease;
+  width: clamp(44px, 9vw, 60px);
+  height: clamp(44px, 9vw, 60px);
+  transition: transform 0.3s ease;
+}
+
+.networkLogo:hover {
+  transform: scale(1.1);
 }
 
 .networkNameSmall {
-  font-size: clamp(1rem, 2vw, 1.6rem);
+  font-size: clamp(1rem, 2vw, 1.5rem);
   font-weight: 600;
-  opacity: 0.8;
+  opacity: 0.85;
   transition: all 0.3s ease;
 }
 
 /* === BALANCE === */
 .balanceBox {
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(12px);
+  backdrop-filter: blur(14px);
   border-radius: 20px;
-  box-shadow: 0 0 30px rgba(255, 255, 255, 0.1);
-  padding: clamp(16px, 3vh, 28px) clamp(20px, 6vw, 36px);
-  margin-top: 10px;
+  box-shadow: 0 0 40px rgba(255, 255, 255, 0.08);
+  padding: clamp(16px, 3vh, 24px) clamp(20px, 6vw, 32px);
+  margin-top: 8px;
   text-align: center;
   transition: all 0.4s ease;
 }
 
 .balanceText {
-  font-size: clamp(1.6rem, 3vw, 2.4rem);
+  font-size: clamp(1.6rem, 3vw, 2.3rem);
   font-weight: 700;
   color: white;
 }
 
 .balanceFiat {
-  margin-top: 8px;
+  margin-top: 6px;
   font-size: clamp(1rem, 2.5vw, 1.4rem);
-  opacity: 0.8;
-  color: white;
+  opacity: 0.75;
+  color: #e0e7ff;
 }
 
 /* === RANGE SELECTOR === */
@@ -79,17 +83,17 @@
   display: flex;
   justify-content: center;
   flex-wrap: wrap;
-  gap: clamp(8px, 2vw, 16px);
-  margin: clamp(20px, 4vh, 40px) 0;
+  gap: clamp(6px, 1.5vw, 14px);
+  margin: clamp(16px, 4vh, 32px) 0;
 }
 
 .rangeButton {
-  padding: clamp(8px, 2vw, 12px) clamp(20px, 5vw, 30px);
+  padding: clamp(8px, 2vw, 12px) clamp(18px, 5vw, 28px);
   background: transparent;
   color: white;
   border: 1px solid white;
   border-radius: 9999px;
-  font-size: clamp(1rem, 2vw, 1.2rem);
+  font-size: clamp(1rem, 2vw, 1.1rem);
   cursor: pointer;
   transition: all 0.3s ease;
 }
@@ -111,18 +115,18 @@
   max-width: 800px;
   display: flex;
   justify-content: center;
-  padding: clamp(16px, 4vw, 32px);
-  margin-top: clamp(20px, 4vh, 40px);
+  padding: clamp(12px, 4vw, 28px);
+  margin-top: clamp(18px, 4vh, 36px);
 }
 
 .chartBorder {
   width: 100%;
-  height: clamp(240px, 45vh, 340px);
+  height: clamp(220px, 42vh, 320px);
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.15);
   backdrop-filter: blur(10px);
   border-radius: 24px;
-  box-shadow: 0 0 50px rgba(255, 255, 255, 0.1);
+  box-shadow: 0 0 40px rgba(255, 255, 255, 0.08);
   padding: 20px;
   transition: all 0.4s ease;
 }
@@ -131,13 +135,13 @@
 .actionButtons {
   display: flex;
   justify-content: center;
-  gap: clamp(20px, 5vw, 40px);
-  margin: clamp(24px, 4vh, 48px) 0;
+  gap: clamp(18px, 5vw, 36px);
+  margin: clamp(20px, 4vh, 40px) 0;
   flex-wrap: wrap;
 }
 
 .actionButton {
-  padding: clamp(12px, 2.5vw, 20px) clamp(24px, 6vw, 48px);
+  padding: clamp(10px, 2.5vw, 18px) clamp(24px, 6vw, 44px);
   background: black;
   color: white;
   border: 1px solid white;
@@ -162,18 +166,19 @@
 .transactionsTitle {
   font-size: clamp(1.2rem, 2.5vw, 1.6rem);
   font-weight: 700;
-  margin-bottom: clamp(16px, 3vh, 24px);
+  margin-bottom: clamp(14px, 3vh, 22px);
   text-align: center;
+  color: #e0e7ff;
 }
 
 .transactionsBox {
   background: rgba(255, 255, 255, 0.05);
   backdrop-filter: blur(10px);
   border-radius: 24px;
-  padding: clamp(16px, 4vw, 32px);
+  padding: clamp(14px, 4vw, 28px);
   display: flex;
   flex-direction: column;
-  gap: clamp(12px, 3vh, 20px);
+  gap: clamp(10px, 2.5vh, 18px);
   transition: all 0.3s ease;
 }
 
@@ -181,28 +186,28 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   backdrop-filter: blur(8px);
   border-radius: 20px;
-  padding: clamp(12px, 2vw, 20px);
+  padding: clamp(10px, 2vw, 18px);
   transition: all 0.4s ease;
 }
 
 .transactionItem:hover {
   transform: translateY(-2px);
-  box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+  box-shadow: 0 0 20px rgba(0, 255, 255, 0.25);
 }
 
 .transactionLeft {
   display: flex;
   align-items: center;
-  gap: clamp(8px, 2vw, 16px);
+  gap: clamp(8px, 2vw, 14px);
 }
 
 .transactionIcon {
-  width: clamp(32px, 8vw, 48px);
-  height: clamp(32px, 8vw, 48px);
+  width: clamp(30px, 7vw, 44px);
+  height: clamp(30px, 7vw, 44px);
   border-radius: 50%;
   background: #00c853;
   display: flex;
@@ -218,7 +223,7 @@
 
 .transactionTime {
   font-size: clamp(0.7rem, 2vw, 1rem);
-  opacity: 0.7;
+  opacity: 0.75;
 }
 
 .transactionAmount {
@@ -254,13 +259,13 @@
 /* === RESPONSIVE ULTIMATE === */
 @media (max-width: 768px) {
   .pageContent {
-    transform: scale(0.92); /* arba 0.95 jeigu nori dar mažiau skirtumo */
+    transform: scale(0.92);
     padding: 20px 16px;
     min-height: auto;
   }
   .actionButtons {
     flex-direction: column;
-    gap: 20px;
+    gap: 16px;
   }
   .networkLogo {
     width: 48px;
