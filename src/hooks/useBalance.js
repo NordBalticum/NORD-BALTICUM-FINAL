@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { ethers } from "ethers";
 import { useAuth } from "@/contexts/AuthContext";
 
+// ✅ Network mapping
 const NETWORKS = {
   ethereum: { rpc: "https://rpc.ankr.com/eth", symbol: "ETH" },
   bsc: { rpc: "https://bsc-dataseed.bnbchain.org", symbol: "BNB" },
@@ -12,6 +13,7 @@ const NETWORKS = {
   tbnb: { rpc: "https://data-seed-prebsc-1-s1.binance.org:8545", symbol: "TBNB" },
 };
 
+// ✅ Single fetch
 async function getBalances(address, retries = 2) {
   if (!address) throw new Error("❌ Wallet address is required!");
 
@@ -28,7 +30,7 @@ async function getBalances(address, retries = 2) {
         const formatted = ethers.formatEther(balance);
         balances[network] = {
           symbol: config.symbol,
-          balance: formatted,
+          balance: parseFloat(formatted),
         };
         success = true;
       } catch (error) {
@@ -36,7 +38,7 @@ async function getBalances(address, retries = 2) {
         if (attempt > retries) {
           balances[network] = {
             symbol: config.symbol,
-            balance: null,
+            balance: 0, // fallback į 0, kad nesikrautų "null"
           };
         }
       }
@@ -46,6 +48,7 @@ async function getBalances(address, retries = 2) {
   return balances;
 }
 
+// ✅ Hook
 export function useBalance() {
   const { wallet } = useAuth();
   const [balances, setBalances] = useState({});
@@ -58,10 +61,10 @@ export function useBalance() {
 
     setLoading(true);
     try {
-      const data = await getBalances(wallet.wallet.address);
-      setBalances(data);
+      const freshBalances = await getBalances(wallet.wallet.address);
+      setBalances(freshBalances);
     } catch (error) {
-      console.error("❌ Error fetching balances:", error?.message || error);
+      console.error("❌ Error fetching balances:", error.message || error);
     } finally {
       setLoading(false);
       setInitialLoading(false);
@@ -73,7 +76,7 @@ export function useBalance() {
 
     fetchBalances(); // ✅ First load
 
-    intervalRef.current = setInterval(fetchBalances, 30000); // ✅ Background every 30s
+    intervalRef.current = setInterval(fetchBalances, 30000); // ✅ Refresh kas 30s
 
     return () => {
       clearInterval(intervalRef.current);
@@ -82,8 +85,8 @@ export function useBalance() {
 
   return {
     balances,
-    loading,          // Tik fono loading
-    initialLoading,   // Tik pirmam kartui
+    loading,          // fono loading
+    initialLoading,   // pirmo užkrovimo loading
     refetch: fetchBalances,
   };
 }
