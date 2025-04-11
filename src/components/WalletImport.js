@@ -2,52 +2,65 @@
 
 import { useState } from "react";
 import { Wallet } from "ethers";
-import { supabase } from "@/utils/supabaseClient";
 import { useAuth } from "@/contexts/AuthContext";
-import { encrypt } from "@/contexts/AuthContext";
-import MiniLoadingSpinner from "@/components/MiniLoadingSpinner"; // ✅ Importuojam spinnerį
+import MiniLoadingSpinner from "@/components/MiniLoadingSpinner"; 
 
 export default function WalletImport() {
-  const { user, reloadWallet } = useAuth();
+  const { user, walletImport } = useAuth();
   const [privateKey, setPrivateKey] = useState("");
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false); // ✅ Success modalui
+  const [success, setSuccess] = useState(false);
+  const [isValidKey, setIsValidKey] = useState(false);
 
+  // ✅ LIVE TIKRINIMAS real-time
+  const handlePrivateKeyChange = (e) => {
+    const value = e.target.value.trim();
+    setPrivateKey(value);
+
+    try {
+      if (value.length === 66 && value.startsWith("0x")) {
+        new Wallet(value);
+        setIsValidKey(true);
+      } else {
+        setIsValidKey(false);
+      }
+    } catch {
+      setIsValidKey(false);
+    }
+  };
+
+  // ✅ PASTE iš CLIPBOARD
+  const handlePaste = async () => {
+    try {
+      const text = await navigator.clipboard.readText();
+      setPrivateKey(text.trim());
+    } catch (error) {
+      console.error("Failed to paste:", error.message);
+    }
+  };
+
+  // ✅ IMPORTO LOGINAS
   const handleImport = async () => {
-    if (!privateKey.trim()) {
-      setStatus("❌ Please enter a private key.");
+    if (!privateKey || !isValidKey) {
+      setStatus("❌ Please enter a valid private key.");
       return;
     }
 
     try {
       setLoading(true);
-      const wallet = new Wallet(privateKey.trim()); // ✅ Patikrinam ar valid key
 
-      const encrypted = await encrypt(privateKey.trim()); // ✅ Saugiai užšifruojam
-
-      const { data, error } = await supabase
-        .from("wallets")
-        .update({
-          encrypted_key: encrypted,
-          eth_address: wallet.address,
-        })
-        .eq("user_email", user.email)
-        .select(); // ✅ Imame naują įrašą po update
-
-      if (error || !data || data.length === 0) {
-        console.error("Supabase update error:", error?.message);
-        setStatus("❌ Failed to update wallet.");
-        return;
-      }
+      await walletImport(privateKey, user.email);
 
       setPrivateKey("");
       setStatus("");
-      setSuccess(true); // ✅ Rodo "Wallet imported successfully!"
+      setSuccess(true);
 
-      await reloadWallet(user.email); // ✅ Reload iškart naują walletą
+      // ✅ Vibracija (jei supportina device)
+      if (navigator.vibrate) {
+        navigator.vibrate(100);
+      }
 
-      // ✅ 1.8 sekundės delay – spinneris -> reload
       setTimeout(() => {
         window.location.reload();
       }, 1800);
@@ -62,11 +75,13 @@ export default function WalletImport() {
 
   return (
     <div style={{ marginTop: "32px", width: "100%", maxWidth: "460px" }}>
-      <h4 style={{ textAlign: "center", marginBottom: "12px" }}>Import Wallet (Private Key)</h4>
+      <h4 style={{ textAlign: "center", marginBottom: "12px" }}>
+        Import Wallet (Private Key) <span style={{ color: "#ffd700" }}>*</span>
+      </h4>
 
       {loading ? (
         <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "180px" }}>
-          <MiniLoadingSpinner /> {/* ✅ Jei loading - rodom spinnerį */}
+          <MiniLoadingSpinner />
         </div>
       ) : success ? (
         <div style={{
@@ -87,7 +102,7 @@ export default function WalletImport() {
             type="password"
             placeholder="Enter your private key"
             value={privateKey}
-            onChange={(e) => setPrivateKey(e.target.value)}
+            onChange={handlePrivateKeyChange}
             style={{
               width: "100%",
               padding: "14px",
@@ -95,27 +110,48 @@ export default function WalletImport() {
               border: "1px solid rgba(255,255,255,0.2)",
               marginBottom: "12px",
               background: "rgba(255, 255, 255, 0.08)",
-              color: "white",
+              color: isValidKey ? "#00ff99" : "white",
               fontFamily: "var(--font-crypto)",
+              transition: "all 0.3s ease",
             }}
           />
-          <button
-            onClick={handleImport}
-            disabled={loading}
-            style={{
-              width: "100%",
-              padding: "14px",
-              borderRadius: "12px",
-              background: "black",
-              color: "white",
-              border: "1px solid white",
-              fontWeight: "700",
-              cursor: "pointer",
-              fontFamily: "var(--font-crypto)",
-            }}
-          >
-            Import Wallet
-          </button>
+          <div style={{ display: "flex", gap: "12px" }}>
+            <button
+              onClick={handleImport}
+              disabled={!isValidKey || loading}
+              style={{
+                flex: 1,
+                padding: "14px",
+                borderRadius: "12px",
+                background: isValidKey ? "black" : "#555",
+                color: "white",
+                border: "1px solid white",
+                fontWeight: "700",
+                cursor: isValidKey ? "pointer" : "not-allowed",
+                fontFamily: "var(--font-crypto)",
+                transition: "all 0.3s ease",
+              }}
+            >
+              Import Wallet
+            </button>
+
+            <button
+              onClick={handlePaste}
+              style={{
+                padding: "14px",
+                borderRadius: "12px",
+                background: "#333",
+                color: "white",
+                border: "1px solid #555",
+                fontWeight: "600",
+                fontFamily: "var(--font-crypto)",
+                cursor: "pointer",
+                transition: "all 0.3s ease",
+              }}
+            >
+              Paste
+            </button>
+          </div>
         </>
       )}
 
