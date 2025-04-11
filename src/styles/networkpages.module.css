@@ -1,6 +1,6 @@
 .pageContainer {
   width: 100vw;
-  min-height: 100vh;
+  height: 100vh;
   background: radial-gradient(ellipse at center, #2B37FF 0%, #1B2370 50%, #0A122A 100%);
   display: flex;
   flex-direction: column;
