@@ -15,13 +15,13 @@ import MiniLoadingSpinner from "@/components/MiniLoadingSpinner"; // ✅ naudoti
 // ✅ Dynamic Live Price Table
 const LivePriceTable = dynamic(() => import("@/components/LivePriceTable"), { ssr: false });
 
-// ✅ Token ikonų URL
+// ✅ Token ikonų URL (lokalūs failai NordBalticum projekte)
 const iconUrls = {
-  ethereum: "https://assets.coingecko.com/coins/images/279/large/ethereum.png",
-  bsc: "https://assets.coingecko.com/coins/images/825/large/bnb-icon2_2x.png",
-  tbnb: "https://assets.coingecko.com/coins/images/825/large/bnb-icon2_2x.png", // tas pats BNB
-  polygon: "https://assets.coingecko.com/coins/images/4713/large/matic-token-icon.png",
-  avalanche: "https://seeklogo.com/images/A/avalanche-avax-logo-398226.png",
+  ethereum: "/icons/eth.svg",
+  bsc: "/icons/bnb.svg",
+  tbnb: "/icons/bnb.svg", // tas pats BNB
+  polygon: "/icons/matic.svg",
+  avalanche: "/icons/avax.svg",
 };
 
 // ✅ Token pavadinimai
