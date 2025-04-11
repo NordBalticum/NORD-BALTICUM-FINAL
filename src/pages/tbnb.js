@@ -34,6 +34,12 @@ export default function TBnbPage() {
   }, [user, wallet]);
 
   useEffect(() => {
+    if (user && wallet && !initialBalancesLoading) {
+      fetchChartData(true);
+    }
+  }, [user, wallet, initialBalancesLoading]);
+
+  useEffect(() => {
     const interval = setInterval(() => {
       silentRefresh();
     }, 30000);
@@ -75,8 +81,7 @@ export default function TBnbPage() {
   const fetchAllData = async () => {
     await Promise.all([
       fetchTransactions(),
-      fetchInitialBalances(),
-      fetchChartData(true)
+      fetchInitialBalances()
     ]);
   };
 
