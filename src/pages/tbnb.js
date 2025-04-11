@@ -13,9 +13,10 @@ import moment from 'moment';
 import { motion, AnimatePresence } from 'framer-motion';
 import styles from '@/styles/networkpages.module.css';
 
+// Registruojam Chart.js komponentus
 ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Filler);
 
-// Mini loading spinner
+// Mini loading spinneris
 const MiniSpinner = () => (
   <div className={styles.spinner}>
     <div className={styles.loadingCircle}></div>
@@ -24,14 +25,19 @@ const MiniSpinner = () => (
 
 export default function TBnbPage() {
   const { user } = useAuth();
-  const { balance, refreshBalance, loading: balanceLoading } = useBalance('tbnb');
-  const { prices, refreshPrices, loading: pricesLoading } = usePrices('binancecoin'); // Grąžina usd ir eur
+  const { balances, loading: balanceLoading, initialLoading: initialBalanceLoading, refetch: refreshBalance } = useBalance();
+  const { prices, loading: priceLoading, refetch: refreshPrices } = usePrices();
   const [transactions, setTransactions] = useState([]);
   const [transactionsLoading, setTransactionsLoading] = useState(true);
   const [chartData, setChartData] = useState(null);
   const [chartLoading, setChartLoading] = useState(true);
   const [selectedRange, setSelectedRange] = useState('24h');
   const router = useRouter();
+
+  // Balanso ir kainos kintamieji
+  const tbnbBalance = balances?.tbnb?.balance || 0;
+  const tbnbPriceUsd = prices?.tbnb?.usd || 0;
+  const tbnbPriceEur = prices?.tbnb?.eur || 0;
 
   useEffect(() => {
     if (user) {
@@ -44,17 +50,17 @@ export default function TBnbPage() {
     const interval = setInterval(() => {
       refreshBalance();
       refreshPrices();
-    }, 30000);
+    }, 30000); // Refresh every 30s
     return () => clearInterval(interval);
-  }, []);
+  }, [refreshBalance, refreshPrices]);
 
   const fetchTransactions = async () => {
     setTransactionsLoading(true);
     try {
       const txs = await getTransactions('tbnb', user.email);
-      setTransactions(txs.slice(0, 3));
+      setTransactions(txs.slice(0, 3)); // Tik 3 paskutiniai
     } catch (error) {
-      console.error('Failed to load transactions', error);
+      console.error('❌ Failed to load transactions', error);
     }
     setTransactionsLoading(false);
   };
@@ -70,7 +76,7 @@ export default function TBnbPage() {
       }));
       setChartData(prices);
     } catch (error) {
-      console.error('Failed to load chart data', error);
+      console.error('❌ Failed to load chart data', error);
     }
     setChartLoading(false);
   };
@@ -105,7 +111,7 @@ export default function TBnbPage() {
         },
         borderColor: '#2B37FF',
         pointRadius: 0,
-        tension: 0.4,
+        tension: 0.4, // Smooth curve
       },
     ],
   };
@@ -123,11 +129,11 @@ export default function TBnbPage() {
         <Image src="/icons/bnb.svg" alt="BNB Logo" width={64} height={64} className={styles.networkLogo} priority />
         <h1 className={styles.networkName}>Binance Smart Chain (Testnet)</h1>
         <p className={styles.balance}>
-          {balanceLoading || pricesLoading ? (
+          {(initialBalanceLoading || priceLoading) ? (
             <MiniSpinner />
           ) : (
             <>
-              {balance} BNB ≈ ${ (balance * prices?.usd).toFixed(2) } / €{ (balance * prices?.eur).toFixed(2) }
+              {tbnbBalance.toFixed(4)} TBNB ≈ ${ (tbnbBalance * tbnbPriceUsd).toFixed(2) } / €{ (tbnbBalance * tbnbPriceEur).toFixed(2) }
             </>
           )}
         </p>
@@ -194,7 +200,7 @@ export default function TBnbPage() {
                     </div>
                   </div>
                   <div className={styles.transactionAmount}>
-                    {tx.type === 'send' ? '-' : '+'}{parseFloat(tx.amount).toFixed(4)} BNB
+                    {tx.type === 'send' ? '-' : '+'}{parseFloat(tx.amount).toFixed(4)} TBNB
                   </div>
                 </motion.div>
               ))}
@@ -205,4 +211,4 @@ export default function TBnbPage() {
 
     </div>
   );
-                      }
+}
