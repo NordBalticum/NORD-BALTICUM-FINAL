@@ -14,7 +14,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import MiniLoadingSpinner from '@/components/MiniLoadingSpinner';
 import styles from '@/styles/networkpages.module.css';
 
-// Register Chart.js modules
 ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Filler);
 
 export default function TBnbPage() {
@@ -27,24 +26,21 @@ export default function TBnbPage() {
   const [initialChartLoading, setInitialChartLoading] = useState(true);
   const [initialBalancesLoading, setInitialBalancesLoading] = useState(true);
   const [lastChartUpdate, setLastChartUpdate] = useState(0);
-  const [chartKey, setChartKey] = useState(0); // <<< Naujas key kad chartas repaintintų
+  const [chartKey, setChartKey] = useState(0);
   const router = useRouter();
 
-  // Fetch all data on first load
   useEffect(() => {
     if (user && wallet) {
       fetchAllData();
     }
   }, [user, wallet]);
 
-  // Refetch chart after balances ready
   useEffect(() => {
     if (user && wallet && !initialBalancesLoading) {
       fetchChartData(true);
     }
   }, [user, wallet, initialBalancesLoading]);
 
-  // Silent background refresh kas 30s
   useEffect(() => {
     const interval = setInterval(() => {
       silentRefresh();
@@ -52,18 +48,14 @@ export default function TBnbPage() {
     return () => clearInterval(interval);
   }, []);
 
-  // Refresh duomenis kai grįžta tabas (po minimize ar tab switch)
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const handleVisibilityChange = async () => {
         if (document.visibilityState === 'visible') {
-          console.log('👀 Tab active again, refreshing...');
-          await Promise.all([
-            refreshBalance(),
-            refreshPrices()
-          ]);
-          fetchTransactions();
-          await fetchChartData(true); // Fetch chart ir perkraunam key
+          console.log('👀 Tab active again, refreshing safely...');
+          await Promise.all([refreshBalance(), refreshPrices()]);
+          await fetchTransactions();
+          await fetchChartData(true);
         }
       };
       document.addEventListener('visibilitychange', handleVisibilityChange);
@@ -71,7 +63,6 @@ export default function TBnbPage() {
     }
   }, []);
 
-  // Auto logout jei 10min nėra veiksmo
   useEffect(() => {
     let timer;
     const resetTimer = () => {
@@ -92,7 +83,6 @@ export default function TBnbPage() {
     };
   }, []);
 
-  // Viso duomenų užkrovimas
   const fetchAllData = async () => {
     await Promise.all([
       fetchTransactions(),
@@ -106,15 +96,11 @@ export default function TBnbPage() {
   };
 
   const silentRefresh = async () => {
-    await Promise.all([
-      refreshBalance(),
-      refreshPrices()
-    ]);
+    await Promise.all([refreshBalance(), refreshPrices()]);
     fetchTransactions();
     fetchChartData(false);
   };
 
-  // Paskutinių 3 transakcijų užkrovimas, su rūšiavimu pagal timestamp!
   const fetchTransactions = async () => {
     try {
       const txs = await getTransactions('tbnb', user.email);
@@ -128,7 +114,6 @@ export default function TBnbPage() {
     }
   };
 
-  // Chart duomenų užkrovimas + šiandienos data
   const fetchChartData = async (showSpinner = false) => {
     const now = Date.now();
     if (now - lastChartUpdate < 60000 && !showSpinner) {
@@ -150,7 +135,6 @@ export default function TBnbPage() {
         value: ((p[1] * (prices?.tbnb?.eur || 0)) / (prices?.tbnb?.usd || 1)).toFixed(2),
       })) || [];
 
-      // Pridedam šiandienos datą jei trūksta
       if (rawPrices.length > 0) {
         const lastPoint = rawPrices[rawPrices.length - 1];
         const today = new Date();
@@ -162,7 +146,7 @@ export default function TBnbPage() {
 
       setChartData(rawPrices);
       setLastChartUpdate(now);
-      setChartKey(prev => prev + 1); // Priverstinai repaint chart
+      setChartKey(prev => prev + 1);
     } catch (error) {
       console.error('❌ Failed to load chart data', error);
       setChartData([]);
@@ -171,7 +155,6 @@ export default function TBnbPage() {
     }
   };
 
-  // Chart.js options
   const chartOptions = {
     responsive: true,
     maintainAspectRatio: false,
@@ -251,21 +234,21 @@ export default function TBnbPage() {
           </div>
         </div>
 
-        {/* Chart */}
+        {/* Chart + Buttons */}
         <div className={styles.chartWrapper}>
           <div className={styles.chartBorder}>
             {initialChartLoading ? (
               <MiniLoadingSpinner />
             ) : (
-              <Line key={chartKey} options={chartOptions} data={chartDataset} /> // <<< Perpiešiam pagal key
+              <>
+                <Line key={chartKey} options={chartOptions} data={chartDataset} />
+                <div className={styles.actionButtons}>
+                  <button onClick={handleSend} className={styles.actionButton}>Send</button>
+                  <button onClick={handleReceive} className={styles.actionButton}>Receive</button>
+                </div>
+              </>
             )}
           </div>
-        </div>
-
-        {/* Action Buttons */}
-        <div className={styles.actionButtons}>
-          <button onClick={handleSend} className={styles.actionButton}>Send</button>
-          <button onClick={handleReceive} className={styles.actionButton}>Receive</button>
         </div>
 
         {/* Transactions */}
@@ -311,4 +294,4 @@ export default function TBnbPage() {
       </div>
     </main>
   );
-          }
+}
