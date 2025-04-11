@@ -6,7 +6,9 @@ import dynamic from "next/dynamic";
 import Image from "next/image";
 
 import { useAuth } from "@/contexts/AuthContext";
-import MiniLoadingSpinner from "@/components/MiniLoadingSpinner"; // ✅ Spinner premium
+import { useBalance } from "@/hooks/useBalance"; // ✅ Importuojam tavo hook
+import { usePrices } from "@/hooks/usePrices";   // ✅ Importuojam tavo hook
+import MiniLoadingSpinner from "@/components/MiniLoadingSpinner"; // ✅ Premium spinneris
 
 const LivePriceTable = dynamic(() => import("@/components/LivePriceTable"), { ssr: false });
 
@@ -37,7 +39,9 @@ const routeNames = {
 
 export default function Dashboard() {
   const router = useRouter();
-  const { user, wallet, balances, rates, authLoading, walletLoading } = useAuth();
+  const { user, wallet, authLoading, walletLoading } = useAuth();
+  const { balances, loading: balancesLoading } = useBalance(); // ✅ Hookas
+  const { prices, loading: pricesLoading } = usePrices();       // ✅ Hookas
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
@@ -57,7 +61,7 @@ export default function Dashboard() {
     return Object.keys(balances || {});
   }, [wallet, balances]);
 
-  const isLoading = !isClient || authLoading || walletLoading;
+  const isLoading = !isClient || authLoading || walletLoading || balancesLoading || pricesLoading;
 
   return (
     <main className="container">
@@ -74,7 +78,7 @@ export default function Dashboard() {
           ) : (
             tokens.map((network) => {
               const balance = balances?.[network] || 0;
-              const price = rates?.[network === "tbnb" ? "bsc" : network] || { eur: 0, usd: 0 };
+              const price = prices?.[network === "tbnb" ? "bsc" : network] || { eur: 0, usd: 0 };
 
               const symbol = routeNames[network] || network;
               const balanceFormatted = balance.toFixed(6);
