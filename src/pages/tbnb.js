@@ -24,25 +24,38 @@ export default function TBnbPage() {
   const [transactionsLoading, setTransactionsLoading] = useState(true);
   const [chartData, setChartData] = useState([]);
   const [chartLoading, setChartLoading] = useState(true);
+  const [initialLoading, setInitialLoading] = useState(true);
   const [selectedRange, setSelectedRange] = useState('24h');
   const router = useRouter();
 
+  // ✅ Real-time background refresh
   useEffect(() => {
     if (user && wallet) {
-      fetchTransactions();
-      fetchChartData();
+      fetchAllData();
     }
   }, [user, wallet, selectedRange]);
 
   useEffect(() => {
     const interval = setInterval(() => {
-      refreshBalance();
-      refreshPrices();
-      fetchChartData();
+      silentRefresh();
     }, 30000);
     return () => clearInterval(interval);
   }, []);
 
+  // ✅ On minimize/maximize refresh
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const handleVisibilityChange = () => {
+        if (document.visibilityState === 'visible') {
+          silentRefresh();
+        }
+      };
+      document.addEventListener('visibilitychange', handleVisibilityChange);
+      return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+    }
+  }, []);
+
+  // ✅ Inactivity logout (10min)
   useEffect(() => {
     let timer;
     const resetTimer = () => {
@@ -63,20 +76,32 @@ export default function TBnbPage() {
     };
   }, []);
 
+  const fetchAllData = async () => {
+    setInitialLoading(true);
+    await Promise.all([fetchTransactions(), fetchChartData()]);
+    setInitialLoading(false);
+  };
+
+  const silentRefresh = async () => {
+    refreshBalance();
+    refreshPrices();
+    fetchChartData();
+    fetchTransactions();
+  };
+
   const fetchTransactions = async () => {
-    setTransactionsLoading(true);
     try {
       const txs = await getTransactions('tbnb', user.email);
-      setTransactions(txs || []); // NE slice(0,3) nes kitaip nebus scroll daugiau
+      setTransactions(txs ? txs.slice(0, 3) : []);
     } catch (error) {
       console.error('❌ Failed to load transactions', error);
       setTransactions([]);
+    } finally {
+      setTransactionsLoading(false);
     }
-    setTransactionsLoading(false);
   };
 
   const fetchChartData = async () => {
-    setChartLoading(true);
     try {
       const response = await fetch(`/api/coingecko?coin=binancecoin&range=${selectedRange}`);
       const data = await response.json();
@@ -88,8 +113,9 @@ export default function TBnbPage() {
     } catch (error) {
       console.error('❌ Failed to load chart data', error);
       setChartData([]);
+    } finally {
+      setChartLoading(false);
     }
-    setChartLoading(false);
   };
 
   const chartOptions = {
@@ -135,7 +161,7 @@ export default function TBnbPage() {
   const handleSend = () => router.push('/send');
   const handleReceive = () => router.push('/receive');
 
-  if (!user || !wallet) return <MiniLoadingSpinner />;
+  if (!user || !wallet || initialLoading) return <MiniLoadingSpinner />;
 
   return (
     <main
@@ -189,7 +215,7 @@ export default function TBnbPage() {
           </div>
         </div>
 
-        {/* Action Buttons (viena eilė) */}
+        {/* Action Buttons */}
         <div className={styles.actionButtons}>
           <button onClick={handleSend} className={styles.actionButton}>
             Send
