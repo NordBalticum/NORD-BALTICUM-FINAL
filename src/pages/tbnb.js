@@ -23,9 +23,7 @@ export default function TBnbPage() {
   const [transactions, setTransactions] = useState([]);
   const [transactionsLoading, setTransactionsLoading] = useState(true);
   const [chartData, setChartData] = useState([]);
-  const [initialLoading, setInitialLoading] = useState(true);
   const [initialChartLoading, setInitialChartLoading] = useState(true);
-  const [selectedRange, setSelectedRange] = useState('24h');
   const [initialBalancesLoading, setInitialBalancesLoading] = useState(true);
   const router = useRouter();
 
@@ -34,12 +32,6 @@ export default function TBnbPage() {
       fetchAllData();
     }
   }, [user, wallet]);
-
-  useEffect(() => {
-    if (user && wallet) {
-      fetchChartData(true); // kai keičiamas laiko range, reikia chart'ą perkelti
-    }
-  }, [selectedRange]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -81,13 +73,11 @@ export default function TBnbPage() {
   }, []);
 
   const fetchAllData = async () => {
-    setInitialLoading(true);
     await Promise.all([
       fetchTransactions(),
-      fetchChartData(true),
-      fetchInitialBalances()
+      fetchInitialBalances(),
+      fetchChartData(true)
     ]);
-    setInitialLoading(false);
   };
 
   const fetchInitialBalances = async () => {
@@ -117,7 +107,7 @@ export default function TBnbPage() {
   const fetchChartData = async (showSpinner = false) => {
     if (showSpinner) setInitialChartLoading(true);
     try {
-      const response = await fetch(`/api/coingecko?coin=binancecoin&range=${selectedRange}`);
+      const response = await fetch(`/api/coingecko?coin=binancecoin&range=30d`);
       const data = await response.json();
       const rawPrices = data?.prices?.map(p => ({
         time: new Date(p[0]).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }),
@@ -148,11 +138,14 @@ export default function TBnbPage() {
     },
     scales: {
       x: {
-        ticks: { color: '#fff', autoSkip: true, maxTicksLimit: 6 },
+        ticks: { color: '#fff', autoSkip: true, maxTicksLimit: 8 },
         grid: { display: false }
       },
       y: {
-        ticks: { color: '#fff', callback: value => `€${value}` },
+        ticks: {
+          color: '#fff',
+          callback: value => `€${parseFloat(value).toFixed(2)}`
+        },
         grid: { display: false }
       }
     },
@@ -181,12 +174,12 @@ export default function TBnbPage() {
   const handleSend = () => router.push('/send');
   const handleReceive = () => router.push('/receive');
 
-  if (!user || !wallet || initialLoading) return <MiniLoadingSpinner />;
+  if (!user || !wallet) return <MiniLoadingSpinner />;
 
   return (
     <main style={{ width: '100vw', height: '100vh', overflowY: 'auto' }} className={styles.pageContainer}>
       <div className={styles.pageContent}>
-        
+
         {/* Header */}
         <div className={styles.header}>
           <Image src="/icons/bnb.svg" alt="BNB Logo" width={48} height={48} className={styles.networkLogo} priority />
@@ -206,19 +199,6 @@ export default function TBnbPage() {
               </>
             )}
           </div>
-        </div>
-
-        {/* Range Selector */}
-        <div className={styles.rangeSelector}>
-          {['24h', '7d', '14d', '30d'].map(range => (
-            <button
-              key={range}
-              onClick={() => setSelectedRange(range)}
-              className={`${styles.rangeButton} ${selectedRange === range ? styles.rangeButtonActive : ''}`}
-            >
-              {range}
-            </button>
-          ))}
         </div>
 
         {/* Chart */}
@@ -281,4 +261,4 @@ export default function TBnbPage() {
       </div>
     </main>
   );
-          }
+  }
