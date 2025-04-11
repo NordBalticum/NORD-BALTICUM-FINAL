@@ -1,6 +1,5 @@
 "use client";
 
-// 1️⃣ Importai
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
@@ -10,12 +9,12 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useBalance } from "@/hooks/useBalance";
 import { usePrices } from "@/hooks/usePrices";
 import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
-import styles from "@/styles/dashboard.module.css"; // ✅ Importuotas CSS failas
+import styles from "@/styles/dashboard.module.css"; 
 
-// 2️⃣ Dynamic Live Prices
+// ✅ Dynamic Live Prices
 const LivePriceTable = dynamic(() => import("@/components/LivePriceTable"), { ssr: false });
 
-// 3️⃣ Token ikonų URL
+// ✅ Token icon URLs and names
 const iconUrls = {
   ethereum: "/icons/eth.svg",
   bsc: "/icons/bnb.svg",
@@ -24,7 +23,6 @@ const iconUrls = {
   avalanche: "/icons/avax.svg",
 };
 
-// 4️⃣ Token pavadinimai
 const names = {
   ethereum: "Ethereum",
   bsc: "BNB Smart Chain",
@@ -33,7 +31,6 @@ const names = {
   avalanche: "Avalanche",
 };
 
-// 5️⃣ Token route mapping
 const routeNames = {
   ethereum: "eth",
   bsc: "bnb",
@@ -45,38 +42,35 @@ const routeNames = {
 export default function Dashboard() {
   const router = useRouter();
   const { user, wallet, authLoading, walletLoading } = useAuth();
-  const { balances, loading: balancesLoading, initialLoading } = useBalance();
+  const { balances, loading: balancesLoading } = useBalance();
   const { prices, loading: pricesLoading } = usePrices();
 
   const [isClient, setIsClient] = useState(false);
 
-  // 6️⃣ Detect client side
   useEffect(() => {
     if (typeof window !== "undefined") {
       setIsClient(true);
     }
   }, []);
 
-  // 7️⃣ Redirect jei neprisijungęs
   useEffect(() => {
     if (isClient && !authLoading && !walletLoading && !user) {
       router.replace("/");
     }
   }, [isClient, authLoading, walletLoading, user, router]);
 
-  // 8️⃣ Tokenų sąrašas
+  // Token list generation
   const tokens = useMemo(() => {
     if (!wallet?.wallet?.address) return [];
     return Object.keys(balances || {});
   }, [wallet, balances]);
 
-  // 9️⃣ Loader kol viskas kraunasi
-  const isLoading = typeof window === "undefined" || !isClient || authLoading || walletLoading || balancesLoading || pricesLoading || initialLoading;
+  const isLoading = typeof window === "undefined" || !isClient || authLoading || walletLoading || balancesLoading || pricesLoading;
 
   if (isLoading) {
     return (
       <div style={{
-        height: "100vh",
+        height: "100vh",                // Full screen height
         width: "100vw",
         display: "flex",
         justifyContent: "center",
@@ -88,7 +82,6 @@ export default function Dashboard() {
     );
   }
 
-  // 1️⃣0️⃣ Render kai viskas užkrauta
   return (
     <main className={styles.container}>
       <div className={styles.dashboardWrapper}>
@@ -105,7 +98,7 @@ export default function Dashboard() {
               const balanceData = balances?.[network];
               const priceData = prices?.[network === "tbnb" ? "bsc" : network];
 
-              if (!balanceData || !priceData) return null; // ✅ Apsauga jeigu trūksta info
+              if (balanceData == null || priceData == null) return null;
 
               const symbol = routeNames[network] || network;
               const balanceFormatted = parseFloat(balanceData.balance || 0).toFixed(6);
@@ -149,7 +142,6 @@ export default function Dashboard() {
             })
           )}
         </div>
-
       </div>
     </main>
   );
