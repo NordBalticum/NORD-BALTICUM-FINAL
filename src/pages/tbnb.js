@@ -25,7 +25,8 @@ export default function TBnbPage() {
   const [chartData, setChartData] = useState([]);
   const [initialChartLoading, setInitialChartLoading] = useState(true);
   const [initialBalancesLoading, setInitialBalancesLoading] = useState(true);
-  const [lastChartUpdate, setLastChartUpdate] = useState(0); // <<< čia naujas saugiklis
+  const [lastChartUpdate, setLastChartUpdate] = useState(0);
+  const [isPageVisible, setIsPageVisible] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
@@ -42,17 +43,17 @@ export default function TBnbPage() {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      silentRefresh();
+      if (isPageVisible) {
+        silentRefresh();
+      }
     }, 30000);
     return () => clearInterval(interval);
-  }, []);
+  }, [isPageVisible]);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const handleVisibilityChange = () => {
-        if (document.visibilityState === 'visible') {
-          silentRefresh();
-        }
+        setIsPageVisible(document.visibilityState === 'visible');
       };
       document.addEventListener('visibilitychange', handleVisibilityChange);
       return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
@@ -116,7 +117,6 @@ export default function TBnbPage() {
       console.log('⏳ Skipped chart update to reduce server load.');
       return;
     }
-
     if (showSpinner) setInitialChartLoading(true);
 
     try {
@@ -198,7 +198,7 @@ export default function TBnbPage() {
 
   return (
     <main style={{ width: '100vw', height: '100vh', overflowY: 'auto' }} className={styles.pageContainer}>
-      <div className={styles.pageContent}>
+      <div className={styles.pageContent} style={{ minHeight: '100vh' }}>
         
         {/* Header */}
         <div className={styles.header}>
@@ -281,4 +281,4 @@ export default function TBnbPage() {
       </div>
     </main>
   );
-  }
+          }
