@@ -44,14 +44,14 @@ const getKey = async () => {
   );
 };
 
-const encrypt = async (text) => {
+export const encrypt = async (text) => {
   const iv = window.crypto.getRandomValues(new Uint8Array(12));
   const key = await getKey();
   const encrypted = await window.crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, encode(text));
   return btoa(JSON.stringify({ iv: Array.from(iv), data: Array.from(new Uint8Array(encrypted)) }));
 };
 
-const decrypt = async (ciphertext) => {
+export const decrypt = async (ciphertext) => {
   const { iv, data } = JSON.parse(atob(ciphertext));
   const key = await getKey();
   const decrypted = await window.crypto.subtle.decrypt({ name: "AES-GCM", iv: new Uint8Array(iv) }, key, new Uint8Array(data));
@@ -73,7 +73,6 @@ export const AuthProvider = ({ children }) => {
   const [balances, setBalances] = useState({});
   const [rates, setRates] = useState({});
   const [activeNetwork, setActiveNetwork] = useState("eth");
-
   const [authLoading, setAuthLoading] = useState(true);
   const [walletLoading, setWalletLoading] = useState(true);
 
@@ -100,13 +99,13 @@ export const AuthProvider = ({ children }) => {
     });
 
     return () => subscription?.unsubscribe();
-  }, [isClient]);
+  }, []);
 
   // ✅ Auto Load Wallet kai user yra
   useEffect(() => {
     if (!isClient || authLoading || !user?.email) return;
     loadOrCreateWallet(user.email);
-  }, [isClient, authLoading, user]);
+  }, [authLoading, user]);
 
   // ✅ Auto redirect į dashboard
   useEffect(() => {
@@ -114,7 +113,7 @@ export const AuthProvider = ({ children }) => {
     if (!authLoading && user && pathname === "/") {
       router.replace("/dashboard");
     }
-  }, [isClient, authLoading, user, pathname, router]);
+  }, [authLoading, user, pathname]);
 
   // ✅ Inactivity timeout
   useEffect(() => {
@@ -123,7 +122,7 @@ export const AuthProvider = ({ children }) => {
       clearTimeout(inactivityTimer.current);
       inactivityTimer.current = setTimeout(() => {
         signOut();
-      }, 10 * 60 * 1000);
+      }, 10 * 60 * 1000); // 10 min timeout
     };
     window.addEventListener("mousemove", resetTimer);
     window.addEventListener("keydown", resetTimer);
@@ -133,80 +132,61 @@ export const AuthProvider = ({ children }) => {
       window.removeEventListener("mousemove", resetTimer);
       window.removeEventListener("keydown", resetTimer);
     };
-  }, [isClient]);
+  }, []);
 
   // ✅ Load arba Create Wallet
   const loadOrCreateWallet = async (email) => {
-  try {
-    setWalletLoading(true);
+    try {
+      setWalletLoading(true);
 
-    const { data, error } = await supabase
-      .from("wallets")
-      .select("*")
-      .eq("user_email", email)
-      .maybeSingle();
-
-    if (error) throw error;
-
-    if (data && data.encrypted_key) {
-      // ✅ Jei yra encrypted_key – naudojam egzistuojantį wallet
-      const decryptedKey = await decrypt(data.encrypted_key);
-      setupWallet(decryptedKey);
-
-    } else if (data && !data.encrypted_key) {
-      // ⚠️ Jei yra user įrašas be encrypted_key – AUTOMATIŠKAI IŠTRINAM BLOGĄ ĮRAŠĄ
-      console.warn("Found invalid wallet record. Deleting...");
-
-      const { error: deleteError } = await supabase
+      const { data, error } = await supabase
         .from("wallets")
-        .delete()
-        .eq("user_email", email);
+        .select("*")
+        .eq("user_email", email)
+        .maybeSingle();
 
-      if (deleteError) throw deleteError;
+      if (error) throw error;
 
-      // ✅ Po ištrynimo – sukuriam naują wallet
-      const newWallet = Wallet.createRandom();
-      const encryptedKey = await encrypt(newWallet.privateKey);
+      if (data && data.encrypted_key) {
+        const decryptedKey = await decrypt(data.encrypted_key);
+        setupWallet(decryptedKey);
+      } else if (data && !data.encrypted_key) {
+        console.warn("Found invalid wallet record. Deleting...");
 
-      const { error: insertError } = await supabase
-        .from("wallets")
-        .insert({
+        await supabase.from("wallets").delete().eq("user_email", email);
+
+        const newWallet = Wallet.createRandom();
+        const encryptedKey = await encrypt(newWallet.privateKey);
+
+        await supabase.from("wallets").insert({
           user_email: email,
           eth_address: newWallet.address,
           encrypted_key: encryptedKey,
           created_at: new Date().toISOString(),
         });
 
-      if (insertError) throw insertError;
+        setupWallet(newWallet.privateKey);
+      } else {
+        const newWallet = Wallet.createRandom();
+        const encryptedKey = await encrypt(newWallet.privateKey);
 
-      setupWallet(newWallet.privateKey);
-
-    } else {
-      // ✅ Jei nėra jokio įrašo – sukurti naują wallet
-      const newWallet = Wallet.createRandom();
-      const encryptedKey = await encrypt(newWallet.privateKey);
-
-      const { error: insertError } = await supabase
-        .from("wallets")
-        .insert({
+        await supabase.from("wallets").insert({
           user_email: email,
           eth_address: newWallet.address,
           encrypted_key: encryptedKey,
           created_at: new Date().toISOString(),
         });
 
-      if (insertError) throw insertError;
+        setupWallet(newWallet.privateKey);
+      }
 
-      setupWallet(newWallet.privateKey);
+    } catch (error) {
+      console.error("Wallet load error:", error.message);
+      setWallet(null);
+    } finally {
+      setWalletLoading(false);
     }
-
-  } catch (error) {
-    console.error("Wallet load error:", error.message);
-    setWallet(null);
-  } finally {
-    setWalletLoading(false);
-  }
-};
+  };
 
   // ✅ Setup Wallet
   const setupWallet = (privateKey) => {
@@ -216,10 +196,11 @@ export const AuthProvider = ({ children }) => {
       signers[net] = new Wallet(privateKey, new JsonRpcProvider(url));
     });
     setWallet({ wallet: baseWallet, signers });
+
     loadBalances(signers);
 
     if (balanceInterval.current) clearInterval(balanceInterval.current);
-    balanceInterval.current = setInterval(() => loadBalances(signers), 180000);
+    balanceInterval.current = setInterval(() => loadBalances(signers), 180000); // kas 3 min
   };
 
   // ✅ Load Balances ir Rates
@@ -254,7 +235,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // ✅ Reload Wallet (tik importui)
+  // ✅ Reload Wallet (po importo)
   const reloadWallet = async (email) => {
     try {
       setWalletLoading(true);
@@ -324,7 +305,7 @@ export const AuthProvider = ({ children }) => {
         signInWithMagicLink,
         signInWithGoogle,
         signOut,
-        reloadWallet, // ✅ Pridėta čia kaip prašei
+        reloadWallet,
       }}
     >
       {children}
