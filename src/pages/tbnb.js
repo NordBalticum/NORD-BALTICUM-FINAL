@@ -93,7 +93,6 @@ export default function TBnbPage() {
   const silentRefresh = async () => {
     refreshBalance();
     refreshPrices();
-    fetchChartData(false);
     fetchTransactions();
   };
 
@@ -184,7 +183,7 @@ export default function TBnbPage() {
   return (
     <main style={{ width: '100vw', height: '100vh', overflowY: 'auto' }} className={styles.pageContainer}>
       <div className={styles.pageContent}>
-
+        
         {/* Header */}
         <div className={styles.header}>
           <Image src="/icons/bnb.svg" alt="BNB Logo" width={48} height={48} className={styles.networkLogo} priority />
