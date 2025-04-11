@@ -5,12 +5,14 @@ import { Wallet } from "ethers";
 import { supabase } from "@/utils/supabaseClient";
 import { useAuth } from "@/contexts/AuthContext";
 import { encrypt } from "@/contexts/AuthContext";
+import MiniLoadingSpinner from "@/components/MiniLoadingSpinner"; // ✅ Importuojam tavo spinnerį
 
 export default function WalletImport() {
   const { user, reloadWallet } = useAuth();
   const [privateKey, setPrivateKey] = useState("");
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false); // ✅ Naujas state successui
 
   const handleImport = async () => {
     if (!privateKey.trim()) {
@@ -38,94 +40,87 @@ export default function WalletImport() {
         return;
       }
 
-      setStatus("✅ Wallet imported successfully!");
       setPrivateKey("");
+      setStatus("");
+      setSuccess(true); // ✅ Rodom success modalą
 
       await reloadWallet(user.email);
 
-      // ✅ Suteikiam sekundės prabangų pauzę kad spinneris pasimėgautų
+      // ✅ Dabar mažą delay + reload
       setTimeout(() => {
         window.location.reload();
-      }, 1200);
+      }, 1800); // 1.8 sekundės kad jaustų maloniai modalą
 
     } catch (err) {
       console.error("Import Wallet Error:", err.message);
       setStatus("❌ Invalid private key.");
     } finally {
-      // Svarbu: loading false tik po reload
+      setLoading(false);
     }
   };
 
   return (
     <div style={{ marginTop: "32px", width: "100%", maxWidth: "460px" }}>
       <h4 style={{ textAlign: "center", marginBottom: "12px" }}>Import Wallet (Private Key)</h4>
-      <input
-        type="password"
-        placeholder="Enter your private key"
-        value={privateKey}
-        onChange={(e) => setPrivateKey(e.target.value)}
-        disabled={loading}
-        style={{
-          width: "100%",
-          padding: "14px",
-          borderRadius: "12px",
+
+      {loading ? (
+        <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "180px" }}>
+          <MiniLoadingSpinner />
+        </div>
+      ) : success ? (
+        <div style={{ 
+          textAlign: "center", 
+          padding: "24px", 
+          background: "rgba(255, 255, 255, 0.08)", 
+          borderRadius: "16px", 
           border: "1px solid rgba(255,255,255,0.2)",
-          marginBottom: "12px",
-          background: "rgba(255, 255, 255, 0.08)",
-          color: "white",
           fontFamily: "var(--font-crypto)",
-          opacity: loading ? 0.6 : 1,
-        }}
-      />
-      <button
-        onClick={handleImport}
-        disabled={loading}
-        style={{
-          width: "100%",
-          padding: "14px",
-          borderRadius: "12px",
-          background: loading ? "#999" : "black",
-          color: "white",
-          border: "1px solid white",
-          fontWeight: "700",
-          cursor: loading ? "not-allowed" : "pointer",
-          position: "relative",
-        }}
-      >
-        {loading ? (
-          <div style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: "8px"
-          }}>
-            <div className="spinner" style={{
-              width: "18px",
-              height: "18px",
-              border: "2px solid white",
-              borderTop: "2px solid transparent",
-              borderRadius: "50%",
-              animation: "spin 1s linear infinite"
-            }}></div>
-            Importing...
-          </div>
-        ) : (
-          "Import Wallet"
-        )}
-      </button>
-      {status && (
-        <p style={{ marginTop: "10px", textAlign: "center", fontFamily: "var(--font-crypto)" }}>
+          color: "white"
+        }}>
+          ✅ Wallet imported successfully! Reloading...
+        </div>
+      ) : (
+        <>
+          <input
+            type="password"
+            placeholder="Enter your private key"
+            value={privateKey}
+            onChange={(e) => setPrivateKey(e.target.value)}
+            style={{
+              width: "100%",
+              padding: "14px",
+              borderRadius: "12px",
+              border: "1px solid rgba(255,255,255,0.2)",
+              marginBottom: "12px",
+              background: "rgba(255, 255, 255, 0.08)",
+              color: "white",
+              fontFamily: "var(--font-crypto)",
+            }}
+          />
+          <button
+            onClick={handleImport}
+            disabled={loading}
+            style={{
+              width: "100%",
+              padding: "14px",
+              borderRadius: "12px",
+              background: "black",
+              color: "white",
+              border: "1px solid white",
+              fontWeight: "700",
+              cursor: "pointer",
+            }}
+          >
+            Import Wallet
+          </button>
+        </>
+      )}
+
+      {status && !loading && !success && (
+        <p style={{ marginTop: "10px", textAlign: "center", fontFamily: "var(--font-crypto)", color: "white" }}>
           {status}
         </p>
       )}
-
-      {/* Spinner CSS */}
-      <style jsx>{`
-        @keyframes spin {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-      `}</style>
     </div>
   );
 }
