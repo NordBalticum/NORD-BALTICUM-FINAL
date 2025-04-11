@@ -19,6 +19,7 @@ export default function BottomNavigation() {
   const pathname = usePathname();
   const [isMobile, setIsMobile] = useState(false);
 
+  // ✅ Check ar yra mobile device
   useEffect(() => {
     if (typeof window !== "undefined") {
       const checkMobile = () => setIsMobile(window.innerWidth <= 768);
@@ -28,8 +29,8 @@ export default function BottomNavigation() {
     }
   }, []);
 
-  // ✅ Pridedam filtrą - jei / arba /history puslapis, nerodyti BottomNavigation
-  if (pathname === "/") {
+  // ✅ Nerodyti jei nėra user puslapio (pagrindiniame /)
+  if (!pathname || pathname === "/") {
     return null;
   }
 
@@ -50,22 +51,22 @@ export default function BottomNavigation() {
             const isActive = pathname === path;
 
             return (
-              <Link key={path} href={path} legacyBehavior>
-                <a
-                  className={`${styles.navItem} ${isActive ? styles.active : ""}`}
-                  aria-current={isActive ? "page" : undefined}
-                  aria-label={label}
+              <Link
+                key={path}
+                href={path}
+                className={`${styles.navItem} ${isActive ? styles.active : ""}`}
+                aria-current={isActive ? "page" : undefined}
+                aria-label={label}
+              >
+                <motion.div
+                  className={styles.icon}
+                  whileTap={{ scale: 0.92 }}
+                  whileHover={{ scale: 1.06 }}
+                  transition={{ type: "spring", stiffness: 400 }}
                 >
-                  <motion.div
-                    className={styles.icon}
-                    whileTap={{ scale: 0.92 }}
-                    whileHover={{ scale: 1.06 }}
-                    transition={{ type: "spring", stiffness: 400 }}
-                  >
-                    {icon}
-                  </motion.div>
-                  <span className={styles.label}>{label}</span>
-                </a>
+                  {icon}
+                </motion.div>
+                <span className={styles.label}>{label}</span>
               </Link>
             );
           })}
