@@ -17,6 +17,8 @@ export default function BnbChart() {
   const mountedRef = useRef(true);
   const controllerRef = useRef(null);
 
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+
   const fetchChartData = useCallback(async (showSpinner = true) => {
     if (!mountedRef.current) return;
 
@@ -44,7 +46,8 @@ export default function BnbChart() {
 
       if (!data?.prices) throw new Error('No price data');
 
-      const formatted = data.prices.map(([timestamp, price]) => ({
+      // Formatuojam ir automatiškai mažinam taškus mobile
+      let formatted = data.prices.map(([timestamp, price]) => ({
         time: new Date(timestamp).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }),
         value: parseFloat(price).toFixed(2),
       }));
@@ -54,14 +57,17 @@ export default function BnbChart() {
         formatted.push({ time: todayLabel, value: formatted[formatted.length - 1].value });
       }
 
+      // Mažinam duomenų kiekį mobile
+      if (isMobile && formatted.length > 0) {
+        formatted = formatted.filter((_, index) => index % 2 === 0);
+      }
+
       if (mountedRef.current && formatted.length > 0) {
         setChartData(formatted);
         setChartKey(prev => prev + 1);
       }
     } catch (err) {
-      if (err.name !== 'AbortError') {
-        console.error('❌ BnbChart fetch error:', err.message);
-      }
+      console.error('❌ BnbChart fetch error:', err.message);
     } finally {
       clearTimeout(timeout);
       if (mountedRef.current) {
@@ -69,7 +75,7 @@ export default function BnbChart() {
         setSilentLoading(false);
       }
     }
-  }, []);
+  }, [isMobile]);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -97,7 +103,7 @@ export default function BnbChart() {
       easing: 'easeOutBounce',
     },
     layout: {
-      padding: 0, // <<< PILNAI 0 padding
+      padding: 0, // Pilnas 0 padding, kad pilnai išsitemptų
     },
     plugins: {
       tooltip: {
@@ -121,13 +127,13 @@ export default function BnbChart() {
     },
     scales: {
       x: {
-        ticks: { color: '#aaa', font: { size: 12 } },
+        ticks: { color: '#aaa', font: { size: isMobile ? 10 : 12 } },
         grid: { display: false },
       },
       y: {
         ticks: {
           color: '#aaa',
-          font: { size: 12 },
+          font: { size: isMobile ? 10 : 12 },
           callback: (v) => `€${parseFloat(v).toFixed(2)}`,
         },
         grid: { color: 'rgba(255,255,255,0.05)' },
@@ -143,12 +149,12 @@ export default function BnbChart() {
       backgroundColor: (context) => {
         const ctx = context.chart.ctx;
         const gradient = ctx.createLinearGradient(0, 0, 0, 300);
-        gradient.addColorStop(0, 'rgba(255, 255, 255, 0.25)');
+        gradient.addColorStop(0, 'rgba(255, 255, 255, 0.3)');
         gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
         return gradient;
       },
       borderColor: '#ffffff',
-      pointRadius: 3,
+      pointRadius: isMobile ? 2 : 3,
       borderWidth: 2,
       tension: 0.35,
     }],
