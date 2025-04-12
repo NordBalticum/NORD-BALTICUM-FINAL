@@ -20,7 +20,7 @@ function debounce(func, wait) {
   };
 }
 
-export default function BnbChart({ onChartReady }) {
+export default function BnbChart({ onChartReady, onLoad }) {
   const [chartData, setChartData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [silentLoading, setSilentLoading] = useState(false);
@@ -30,6 +30,11 @@ export default function BnbChart({ onChartReady }) {
   const mountedRef = useRef(true);
   const controllerRef = useRef(null);
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+
+  // Kai komponentas mountinasi
+  useEffect(() => {
+    onLoad?.(); // Nusiunčiam signalą tėvui kad mountintas
+  }, [onLoad]);
 
   const fetchChartData = useCallback(async (showSpinner = true) => {
     if (!mountedRef.current) return;
@@ -123,16 +128,14 @@ export default function BnbChart({ onChartReady }) {
     };
   }, [fetchChartData]);
 
-  // Pranešam parentui kad grafikas paruoštas (SU UŽDELSIMU, kad būtų pilnai nupaišytas DOM)
+  // Kai grafikas užsikrovęs
   useEffect(() => {
     if (!loading && chartData.length > 0 && typeof onChartReady === 'function') {
-      setTimeout(() => {
-        onChartReady();
-      }, 0); // <--- BŪTINA dėl pilno React nupaišymo
+      onChartReady();
     }
   }, [loading, chartData, onChartReady]);
 
-  // Pilnas stabilus resize + reanimate
+  // Stabilus resize
   useEffect(() => {
     const handleResize = debounce(() => {
       requestAnimationFrame(() => {
