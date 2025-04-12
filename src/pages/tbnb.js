@@ -18,76 +18,58 @@ export default function TBnbPage() {
   const { balances, refetch: refreshBalance } = useBalance();
   const { prices, refetch: refreshPrices } = usePrices();
   const [chartData, setChartData] = useState([]);
-  const [initialChartLoading, setInitialChartLoading] = useState(true);
-  const [initialBalancesLoading, setInitialBalancesLoading] = useState(true);
-  const [lastChartUpdate, setLastChartUpdate] = useState(0);
+  const [initialLoading, setInitialLoading] = useState(true);
   const [chartKey, setChartKey] = useState(0);
-  const [pricesReady, setPricesReady] = useState(false);
+  const [lastChartUpdate, setLastChartUpdate] = useState(0);
   const router = useRouter();
 
-  // Pagrindinis pirmas užkrovimas
   useEffect(() => {
     if (user && wallet?.address) {
       fetchAllData();
     }
   }, [user, wallet]);
 
-  // Automatinis fono atnaujinimas
   useEffect(() => {
     const interval = setInterval(() => {
       silentRefresh();
-    }, 30000); // kas 30 sekundžių
+    }, 30000); // kas 30 sekundžių automatinis atnaujinimas
     return () => clearInterval(interval);
   }, []);
 
   const fetchAllData = async () => {
     try {
-      await refreshBalance();
-      await refreshPrices();
-
-      // Tikrinam ar kainos paruoštos
-      if (prices?.tbnb?.eur && prices?.tbnb?.usd) {
-        setPricesReady(true);
-        await fetchChartData(true);
-      } else {
-        const checkInterval = setInterval(async () => {
-          if (prices?.tbnb?.eur && prices?.tbnb?.usd) {
-            clearInterval(checkInterval);
-            setPricesReady(true);
-            await fetchChartData(true);
-          }
-        }, 500); // kas pusę sekundės tikrina ar jau yra kainos
-      }
-
-      setInitialBalancesLoading(false);
+      await Promise.all([
+        refreshBalance(),
+        refreshPrices()
+      ]);
+      await fetchChartData(true);
     } catch (error) {
-      console.error('❌ Failed initial fetch:', error);
-      setInitialBalancesLoading(false);
-      setInitialChartLoading(false);
+      console.error('❌ Initial fetch error:', error);
+    } finally {
+      setInitialLoading(false);
     }
   };
 
   const silentRefresh = async () => {
     try {
-      await refreshBalance();
-      await refreshPrices();
-      if (pricesReady) {
-        fetchChartData(false);
-      }
+      await Promise.all([
+        refreshBalance(),
+        refreshPrices()
+      ]);
+      fetchChartData(false);
     } catch (error) {
-      console.warn('⚠️ Silent refresh failed, ignoring.');
+      console.warn('⚠️ Silent refresh error:', error);
     }
   };
 
   const fetchChartData = async (showSpinner = false) => {
     const now = Date.now();
     if (now - lastChartUpdate < 60000 && !showSpinner) return;
-
-    if (showSpinner) setInitialChartLoading(true);
+    if (showSpinner) setInitialLoading(true);
 
     try {
       if (!prices?.tbnb?.eur || !prices?.tbnb?.usd) {
-        console.warn('⚠️ Prices still not ready, skipping chart fetch.');
+        console.warn('⚠️ Prices not ready.');
         return;
       }
 
@@ -101,7 +83,8 @@ export default function TBnbPage() {
 
       if (rawPrices.length > 0) {
         const lastPoint = rawPrices[rawPrices.length - 1];
-        const todayLabel = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+        const today = new Date();
+        const todayLabel = today.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
         if (lastPoint.time !== todayLabel) {
           rawPrices.push({ time: todayLabel, value: lastPoint.value });
         }
@@ -114,7 +97,7 @@ export default function TBnbPage() {
       console.error('❌ Failed to load chart data:', error);
       setChartData([]);
     } finally {
-      if (showSpinner) setInitialChartLoading(false);
+      if (showSpinner) setInitialLoading(false);
     }
   };
 
@@ -137,17 +120,8 @@ export default function TBnbPage() {
       },
     },
     scales: {
-      x: {
-        ticks: { color: '#fff' },
-        grid: { display: false },
-      },
-      y: {
-        ticks: {
-          color: '#fff',
-          callback: (v) => `€${parseFloat(v).toFixed(2)}`,
-        },
-        grid: { display: false },
-      },
+      x: { ticks: { color: '#fff' }, grid: { display: false } },
+      y: { ticks: { color: '#fff', callback: v => `€${parseFloat(v).toFixed(2)}` }, grid: { display: false } },
     },
   };
 
@@ -179,7 +153,7 @@ export default function TBnbPage() {
           <h1 className={styles.networkNameSmall}>Binance Smart Chain (Testnet)</h1>
 
           <div className={styles.balanceBox}>
-            {initialBalancesLoading ? (
+            {initialLoading ? (
               <MiniLoadingSpinner />
             ) : (
               <>
@@ -197,7 +171,7 @@ export default function TBnbPage() {
         {/* Chart */}
         <div className={styles.chartWrapper} style={{ width: '92%', margin: '0 auto' }}>
           <div className={styles.chartBorder}>
-            {initialChartLoading ? (
+            {initialLoading ? (
               <MiniLoadingSpinner />
             ) : chartData.length > 0 ? (
               <Line key={chartKey} options={chartOptions} data={chartDataset} />
