@@ -88,34 +88,6 @@
   color: #d1d5db;
 }
 
-/* === CHART WRAPPER + BORDER (FONO BLOKAS) === */
-.chartWrapper {
-  width: 100%;
-  max-width: 950px;
-  display: flex;
-  justify-content: center;
-  padding: clamp(10px, 3vw, 20px); /* <<< mažesnis padding, švelnesnis */
-  margin-top: clamp(12px, 3vh, 24px);
-}
-
-.chartBorder {
-  width: 100%;
-  min-height: clamp(300px, 48vh, 380px);
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  backdrop-filter: blur(12px);
-  border-radius: 26px;
-  box-shadow: 0 0 20px rgba(255, 255, 255, 0.06);
-  padding: 24px;
-  transition: all 0.4s ease;
-  overflow: hidden;
-  position: relative;
-}
-
-.chartBorder:hover {
-  box-shadow: 0 0 40px rgba(0, 140, 255, 0.2);
-}
-
 /* === ACTION BUTTONS === */
 .actionButtons {
   display: flex;
@@ -174,16 +146,6 @@
     transform: scale(0.88);
     padding: 16px;
     height: calc(100vh - 300px);
-  }
-
-  .chartWrapper {
-    padding: 10px;
-    margin-top: 16px;
-  }
-
-  .chartBorder {
-    min-height: clamp(240px, 45vh, 340px);
-    padding: 20px;
   }
 
   .actionButtons {
