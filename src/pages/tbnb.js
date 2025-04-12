@@ -6,12 +6,12 @@ import { usePrices } from '@/hooks/usePrices';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import MiniLoadingSpinner from '@/components/MiniLoadingSpinner';
-import BnbChart from '@/components/BnbChart'; // PREMIUM BnbChart komponentas
-import styles from '@/styles/tbnb.module.css'; // PREMIUM tbnb.module.css
+import BnbChart from '@/components/BnbChart';
+import styles from '@/styles/tbnb.module.css';
 
 export default function TBnbPage() {
   const { user, wallet } = useAuth();
-  const { balances, initialLoading: balancesInitialLoading } = useBalance();
+  const { balances, initialLoading: balancesLoading } = useBalance();
   const { prices, loading: pricesLoading } = usePrices();
   const router = useRouter();
 
@@ -19,10 +19,14 @@ export default function TBnbPage() {
   const handleReceive = () => router.push('/receive');
   const handleHistory = () => router.push('/history');
 
-  const isLoading = balancesInitialLoading || pricesLoading;
+  const isLoading = balancesLoading || pricesLoading;
 
   if (!user || !wallet) {
-    return <MiniLoadingSpinner />;
+    return (
+      <main className={styles.pageContainer}>
+        <MiniLoadingSpinner />
+      </main>
+    );
   }
 
   return (
@@ -34,8 +38,8 @@ export default function TBnbPage() {
           <Image 
             src="/icons/bnb.svg" 
             alt="BNB Logo" 
-            width={50} 
-            height={50} 
+            width={60} 
+            height={60} 
             className={styles.networkLogo} 
             priority 
           />
@@ -50,10 +54,10 @@ export default function TBnbPage() {
             ) : (
               <>
                 <p className={styles.balanceText}>
-                  {balances?.tbnb?.balance?.toFixed(4)} BNB
+                  {(balances?.tbnb?.balance ?? 0).toFixed(4)} BNB
                 </p>
                 <p className={styles.balanceFiat}>
-                  {(balances?.tbnb?.balance * (prices?.tbnb?.eur || 0)).toFixed(2)} € | {(balances?.tbnb?.balance * (prices?.tbnb?.usd || 0)).toFixed(2)} $
+                  {((balances?.tbnb?.balance ?? 0) * (prices?.tbnb?.eur ?? 0)).toFixed(2)} € | {((balances?.tbnb?.balance ?? 0) * (prices?.tbnb?.usd ?? 0)).toFixed(2)} $
                 </p>
               </>
             )}
@@ -73,9 +77,15 @@ export default function TBnbPage() {
 
         {/* Action Buttons */}
         <div className={styles.actionButtons}>
-          <button onClick={handleSend} className={styles.actionButton}>Send</button>
-          <button onClick={handleReceive} className={styles.actionButton}>Receive</button>
-          <button onClick={handleHistory} className={styles.actionButton}>History</button>
+          <button onClick={handleSend} className={styles.actionButton}>
+            Send
+          </button>
+          <button onClick={handleReceive} className={styles.actionButton}>
+            Receive
+          </button>
+          <button onClick={handleHistory} className={styles.actionButton}>
+            History
+          </button>
         </div>
 
       </div>
