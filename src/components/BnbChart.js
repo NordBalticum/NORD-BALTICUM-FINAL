@@ -6,7 +6,6 @@ import { Chart as ChartJS, LineElement, CategoryScale, LinearScale, PointElement
 import MiniLoadingSpinner from '@/components/MiniLoadingSpinner';
 import styles from '@/styles/tbnb.module.css';
 
-// Registruojam Chart komponentus
 ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Filler, Decimation);
 
 // Debounce funkcija
@@ -29,7 +28,19 @@ export default function BnbChart({ onChartReady }) {
 
   const mountedRef = useRef(true);
   const controllerRef = useRef(null);
-  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Tikras mobile atpažinimas
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const checkMobile = () => {
+        setIsMobile(window.innerWidth < 768);
+      };
+      checkMobile();
+      window.addEventListener('resize', checkMobile);
+      return () => window.removeEventListener('resize', checkMobile);
+    }
+  }, []);
 
   const fetchChartData = useCallback(async (showSpinner = true) => {
     if (!mountedRef.current) return;
@@ -59,13 +70,32 @@ export default function BnbChart({ onChartReady }) {
         const day = date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
         const hour = date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
         return {
-          time: `${day} ${hour}`,
+          fullLabel: `${day} ${hour}`,   // Tooltipui
+          shortLabel: `${day}`,          // Tik data be laiko
           value: parseFloat(price).toFixed(2),
+          rawDate: date.toDateString(),
+          rawHour: date.getHours(),
         };
       });
 
-      if (mountedRef.current && formatted.length > 0) {
-        setChartData(formatted);
+      // Unikalūs taškai per valandą
+      const unique = [];
+      const map = new Map();
+      for (const item of formatted) {
+        const key = `${item.rawDate}-${item.rawHour}`;
+        if (!map.has(key)) {
+          map.set(key, true);
+          unique.push(item);
+        }
+      }
+
+      let filtered = unique;
+      if (isMobile) {
+        filtered = unique.filter(item => item.rawHour === 0); // Mobile – tik 00:00 valandos
+      }
+
+      if (mountedRef.current && filtered.length > 0) {
+        setChartData(filtered);
       }
     } catch (err) {
       console.error('❌ BnbChart fetch error:', err.message);
@@ -95,7 +125,6 @@ export default function BnbChart({ onChartReady }) {
     };
   }, [fetchChartData]);
 
-  // Kai loading baigėsi ir duomenys yra – signalizuojam parentui
   useEffect(() => {
     if (!loading && chartData.length > 0 && chartRendered && typeof onChartReady === 'function') {
       onChartReady();
@@ -109,14 +138,14 @@ export default function BnbChart({ onChartReady }) {
       duration: 1000,
       easing: 'easeOutBounce',
       onComplete: () => {
-        setChartRendered(true); // Signalizuojam kai grafikas nupaišytas
+        setChartRendered(true);
       }
     },
     layout: { padding: 0 },
     plugins: {
-      tooltip: { 
-        mode: 'index', 
-        intersect: false, 
+      tooltip: {
+        mode: 'index',
+        intersect: false,
         backgroundColor: 'rgba(15,15,15,0.92)',
         titleColor: '#ffffff',
         bodyColor: '#dddddd',
@@ -126,7 +155,8 @@ export default function BnbChart({ onChartReady }) {
         cornerRadius: 8,
         displayColors: false,
         callbacks: {
-          label: (context) => `€ ${parseFloat(context.raw).toFixed(2)}`,
+          title: (tooltipItems) => tooltipItems[0].raw.fullLabel,
+          label: (context) => `€ ${parseFloat(context.raw.value).toFixed(2)}`,
         },
       },
       legend: { display: false },
@@ -164,9 +194,9 @@ export default function BnbChart({ onChartReady }) {
   };
 
   const chartDataset = {
-    labels: chartData.map(p => p.time),
+    labels: chartData.map(p => p.shortLabel),
     datasets: [{
-      data: chartData.map(p => p.value),
+      data: chartData.map(p => ({ value: p.value, fullLabel: p.fullLabel })),
       fill: true,
       backgroundColor: (ctx) => {
         const gradient = ctx.chart.ctx.createLinearGradient(0, 0, 0, 300);
