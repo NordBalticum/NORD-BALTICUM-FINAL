@@ -6,6 +6,7 @@ import { Chart as ChartJS, LineElement, CategoryScale, LinearScale, PointElement
 import MiniLoadingSpinner from '@/components/MiniLoadingSpinner';
 import styles from '@/styles/tbnb.module.css';
 
+// Registruojam Chart komponentus
 ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Filler, Decimation);
 
 // Debounce funkcija
@@ -30,7 +31,7 @@ export default function BnbChart({ onChartReady }) {
   const controllerRef = useRef(null);
   const [isMobile, setIsMobile] = useState(false);
 
-  // Tikras mobile atpažinimas
+  // Tikras Mobile atpažinimas
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const checkMobile = () => {
@@ -70,15 +71,15 @@ export default function BnbChart({ onChartReady }) {
         const day = date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
         const hour = date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
         return {
-          fullLabel: `${day} ${hour}`,   // Tooltipui
-          shortLabel: `${day}`,          // Tik data be laiko
+          fullLabel: `${day} ${hour}`,   // Tooltip
+          shortLabel: `${day}`,          // X ašyje tik data
           value: parseFloat(price).toFixed(2),
           rawDate: date.toDateString(),
           rawHour: date.getHours(),
         };
       });
 
-      // Unikalūs taškai per valandą
+      // Išfiltruojam duomenis
       const unique = [];
       const map = new Map();
       for (const item of formatted) {
@@ -91,7 +92,7 @@ export default function BnbChart({ onChartReady }) {
 
       let filtered = unique;
       if (isMobile) {
-        filtered = unique.filter(item => item.rawHour === 0); // Mobile – tik 00:00 valandos
+        filtered = unique.filter(item => item.rawHour === 0); // Mobile: tik 00:00 val.
       }
 
       if (mountedRef.current && filtered.length > 0) {
@@ -113,7 +114,7 @@ export default function BnbChart({ onChartReady }) {
     fetchChartData(true);
 
     const interval = setInterval(() => {
-      fetchChartData(false);
+      fetchChartData(false); // Silent background refresh
     }, 3600000);
 
     return () => {
@@ -155,8 +156,11 @@ export default function BnbChart({ onChartReady }) {
         cornerRadius: 8,
         displayColors: false,
         callbacks: {
-          title: (tooltipItems) => tooltipItems[0].raw.fullLabel,
-          label: (context) => `€ ${parseFloat(context.raw.value).toFixed(2)}`,
+          title: (tooltipItems) => {
+            const index = tooltipItems[0].dataIndex;
+            return chartData[index]?.fullLabel || '';
+          },
+          label: (context) => `€ ${parseFloat(context.raw).toFixed(2)}`,
         },
       },
       legend: { display: false },
@@ -196,7 +200,7 @@ export default function BnbChart({ onChartReady }) {
   const chartDataset = {
     labels: chartData.map(p => p.shortLabel),
     datasets: [{
-      data: chartData.map(p => ({ value: p.value, fullLabel: p.fullLabel })),
+      data: chartData.map(p => p.value),
       fill: true,
       backgroundColor: (ctx) => {
         const gradient = ctx.chart.ctx.createLinearGradient(0, 0, 0, 300);
