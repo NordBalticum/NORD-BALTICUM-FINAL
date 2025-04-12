@@ -6,6 +6,9 @@ import { Chart as ChartJS, LineElement, CategoryScale, LinearScale, PointElement
 import MiniLoadingSpinner from '@/components/MiniLoadingSpinner';
 import styles from '@/styles/tbnb.module.css';
 
+// Registruojam ChartJS komponentus
+ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Filler, Decimation);
+
 // Debounce funkcija
 function debounce(func, wait) {
   let timeout;
@@ -16,8 +19,6 @@ function debounce(func, wait) {
     }, wait);
   };
 }
-
-ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Filler, Decimation);
 
 export default function BnbChart({ onLoad }) {
   const [chartData, setChartData] = useState([]);
@@ -58,7 +59,7 @@ export default function BnbChart({ onLoad }) {
 
       if (!data?.prices) throw new Error('No price data');
 
-      let formatted = data.prices.map(([timestamp, price]) => {
+      const formatted = data.prices.map(([timestamp, price]) => {
         const date = new Date(timestamp);
         const day = date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
         const hour = date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
@@ -116,7 +117,7 @@ export default function BnbChart({ onLoad }) {
 
     const interval = setInterval(() => {
       fetchChartData(false);
-    }, 300000);
+    }, 300000); // kas 5 min
 
     return () => {
       mountedRef.current = false;
@@ -127,7 +128,14 @@ export default function BnbChart({ onLoad }) {
     };
   }, [fetchChartData]);
 
-  // Resize + Reanimate + Full Stability
+  // Kai užsikrauna grafikas – triggerinam onLoad parentui
+  useEffect(() => {
+    if (!loading && chartData.length > 0) {
+      onLoad?.();
+    }
+  }, [loading, chartData, onLoad]);
+
+  // Pilnas stabilus resize + reanimate
   useEffect(() => {
     const handleResize = debounce(() => {
       requestAnimationFrame(() => {
@@ -160,12 +168,9 @@ export default function BnbChart({ onLoad }) {
     };
   }, []);
 
-  // Trigger onLoad kai grafikas pilnai paruoštas
-  useEffect(() => {
-    if (!loading && chartData.length > 0) {
-      onLoad?.();
-    }
-  }, [loading, chartData, onLoad]);
+  if (loading && chartData.length === 0) {
+    return <MiniLoadingSpinner />;
+  }
 
   const chartOptions = {
     responsive: true,
@@ -242,10 +247,6 @@ export default function BnbChart({ onLoad }) {
       hoverBorderColor: '#ffd700',
     }],
   };
-
-  if (loading && chartData.length === 0) {
-    return <MiniLoadingSpinner />;
-  }
 
   return (
     <div
