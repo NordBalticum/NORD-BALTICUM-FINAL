@@ -6,7 +6,9 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 /* === CONTENT === */
@@ -44,10 +46,12 @@
   width: clamp(48px, 8vw, 60px);
   height: clamp(48px, 8vw, 60px);
   transition: transform 0.3s ease;
+  filter: drop-shadow(0 0 4px rgba(255, 215, 0, 0.5));
 }
 
 .networkLogo:hover {
   transform: scale(1.1);
+  filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.7));
 }
 
 .networkNameSmall {
@@ -55,6 +59,7 @@
   font-weight: 750;
   opacity: 0.92;
   color: white;
+  text-shadow: 0 0 6px rgba(255, 255, 255, 0.2);
 }
 
 /* === BALANCE === */
@@ -63,7 +68,7 @@
   border: 1px solid rgba(255, 255, 255, 0.12);
   backdrop-filter: blur(16px);
   border-radius: 20px;
-  box-shadow: 0 0 20px rgba(255, 255, 255, 0.04);
+  box-shadow: 0 0 30px rgba(255, 255, 255, 0.06);
   padding: clamp(18px, 3vh, 28px) clamp(24px, 5vw, 36px);
   margin-top: clamp(12px, 3vh, 24px);
   margin-bottom: clamp(10px, 2vh, 20px);
@@ -72,7 +77,7 @@
 }
 
 .balanceBox:hover {
-  box-shadow: 0 0 30px rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 50px rgba(255, 255, 255, 0.08);
 }
 
 .balanceText {
@@ -107,7 +112,7 @@
   border: 1px solid rgba(255, 255, 255, 0.08);
   backdrop-filter: blur(10px);
   border-radius: 26px;
-  box-shadow: 0 0 30px rgba(255, 255, 255, 0.06);
+  box-shadow: 0 0 40px rgba(255, 255, 255, 0.08);
   overflow: hidden;
   position: relative;
   display: flex;
@@ -118,44 +123,50 @@
 }
 
 .chartBorder:hover {
-  box-shadow: 0 0 50px rgba(255, 255, 255, 0.1);
+  box-shadow: 0 0 60px rgba(255, 255, 255, 0.12);
 }
 
-/* === BNB CHART STYLES (From bnbchart.module.css) === */
+/* === CHART CONTAINER === */
 .chartContainer {
-  width: 95%;
-  max-width: 1200px;
-  height: clamp(260px, 42vh, 380px);
+  width: 100%;
+  height: 100%;
   padding: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   position: relative;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01));
+  border: none;
   backdrop-filter: blur(10px);
   border-radius: 24px;
-  box-shadow: 0 0 40px rgba(255, 255, 255, 0.05);
+  box-shadow: inset 0 0 40px rgba(255, 255, 255, 0.05);
   transition: all 0.5s ease;
+  overflow: hidden;
   animation: fadeInPage 1.2s ease-out;
+}
+
+/* === OVERLAY === */
+.chartOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  backdrop-filter: blur(6px);
+  background: rgba(0, 0, 0, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 24px;
+  z-index: 5;
+  animation: fadeInOverlay 0.8s ease-out;
 }
 
 .updatingText {
   color: #ccc;
   font-size: 0.9rem;
   opacity: 0.85;
-}
-
-.noData {
-  color: #aaa;
-  font-size: 1rem;
-  text-align: center;
-  padding: 2rem;
-}
-
-@keyframes fadeInOverlay {
-  0% { opacity: 0; }
-  100% { opacity: 1; }
+  text-shadow: 0 0 4px rgba(255, 255, 255, 0.1);
 }
 
 /* === SILENT LOADER === */
@@ -197,13 +208,14 @@
   font-size: clamp(1rem, 2vw, 1.3rem);
   cursor: pointer;
   transition: all 0.3s ease;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
 }
 
 .actionButton:hover {
   background: white;
   color: black;
   transform: scale(1.05);
-  box-shadow: 0 0 10px white;
+  box-shadow: 0 0 15px white;
 }
 
 /* === SPINNER === */
@@ -243,14 +255,10 @@
   .chartBorder {
     width: 96%;
     height: clamp(200px, 42vh, 320px);
-    padding: 12px;
   }
   .chartContainer {
     width: 94%;
     height: clamp(220px, 40vh, 340px);
-    padding: 0.8rem;
-    border-radius: 20px;
-    box-shadow: 0 0 30px rgba(255, 255, 255, 0.04);
   }
   .updatingText {
     font-size: 0.8rem;
@@ -267,18 +275,16 @@
   }
   .actionButton {
     flex: 1 1 45%;
-    min-width: 45%;
     font-size: clamp(0.9rem, 4vw, 1.2rem);
     padding: 12px 16px;
   }
 }
 
-/* Tablets */
+/* Tablets and bigger */
 @media (max-width: 1098px) {
   .pageContent {
     transform: scale(0.88);
     padding: 14px;
-    height: calc(100vh - 300px);
   }
   .chartWrapper {
     max-width: 100%;
@@ -286,41 +292,5 @@
   .chartContainer {
     width: 94%;
     height: clamp(240px, 42vh, 360px);
-  }
-}
-
-/* Small Desktops */
-@media (max-width: 1600px) {
-  .pageContent {
-    transform: scale(0.92);
-    height: calc(100vh - 340px);
-  }
-  .chartContainer {
-    width: 93%;
-    height: clamp(260px, 44vh, 380px);
-  }
-}
-
-/* Full HD Desktops */
-@media (max-width: 1920px) {
-  .pageContent {
-    transform: scale(0.92);
-    height: calc(100vh - 360px);
-  }
-  .chartContainer {
-    width: 92%;
-    height: clamp(280px, 45vh, 400px);
-  }
-}
-
-/* 4K and Ultra HD */
-@media (min-width: 2560px) {
-  .pageContent {
-    transform: scale(0.94);
-    height: calc(100vh - 400px);
-  }
-  .chartContainer {
-    width: 90%;
-    height: clamp(320px, 46vh, 450px);
   }
 }
