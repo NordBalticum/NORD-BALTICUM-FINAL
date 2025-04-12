@@ -6,8 +6,8 @@ import { usePrices } from '@/hooks/usePrices';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import MiniLoadingSpinner from '@/components/MiniLoadingSpinner';
-import BnbChart from '@/components/BnbChart'; // <<< Naujas tobulas chart komponentas!
-import styles from '@/styles/networkpages.module.css';
+import BnbChart from '@/components/BnbChart'; // <<< Naujas PREMIUM BnbChart komponentas
+import styles from '@/styles/tbnb.module.css'; // <<< NAUJAS CSS (tbnb.module.css)
 
 export default function TBnbPage() {
   const { user, wallet } = useAuth();
@@ -22,14 +22,8 @@ export default function TBnbPage() {
   if (!user || !wallet) return <MiniLoadingSpinner />;
 
   return (
-    <main 
-      className={styles.pageContainer} 
-      style={{ width: '100vw', height: '100vh', overflowY: 'auto', background: '#0a0a0a' }}
-    >
-      <div 
-        className={styles.pageContent} 
-        style={{ minHeight: '100vh', width: '100%', animation: 'fadein 1.2s ease-out' }}
-      >
+    <main className={styles.pageContainer}>
+      <div className={styles.pageContent}>
 
         {/* Header */}
         <div className={styles.header}>
@@ -62,12 +56,11 @@ export default function TBnbPage() {
         </div>
 
         {/* Chart */}
-        <div 
-          className={styles.chartWrapper} 
-          style={{ width: '92%', margin: '0 auto', marginTop: '1.5rem' }}
-        >
+        <div className={styles.chartWrapper}>
           <div className={styles.chartBorder}>
-            <BnbChart /> {/* <<< Naudojam pilną naują komponentą */}
+            <div className={styles.chartContainer} style={{ minHeight: 'auto', width: '100%' }}>
+              <BnbChart /> {/* Naujas tobulas BnbChart */}
+            </div>
           </div>
         </div>
 
@@ -81,4 +74,4 @@ export default function TBnbPage() {
       </div>
     </main>
   );
-    }
+}
