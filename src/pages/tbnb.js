@@ -6,9 +6,15 @@ import { useBalance } from '@/hooks/useBalance';
 import { usePrices } from '@/hooks/usePrices';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import dynamic from 'next/dynamic';
 import MiniLoadingSpinner from '@/components/MiniLoadingSpinner';
-import BnbChart from '@/components/BnbChart';
 import styles from '@/styles/tbnb.module.css';
+
+// Dinaminis Chart užkrovimas su spinner fallback
+const BnbChart = dynamic(() => import('@/components/BnbChart'), {
+  loading: () => <div className={styles.chartLoading}><MiniLoadingSpinner /></div>,
+  ssr: false,
+});
 
 export default function TBnbPage() {
   const { user, wallet } = useAuth();
@@ -17,29 +23,22 @@ export default function TBnbPage() {
   const router = useRouter();
 
   const [initialLoaded, setInitialLoaded] = useState(false);
+  const [chartLoaded, setChartLoaded] = useState(false);
 
-  const isLoading = balancesLoading || pricesLoading;
+  const isLoadingBalances = balancesLoading || pricesLoading;
 
   const handleSend = () => router.push('/send');
   const handleReceive = () => router.push('/receive');
   const handleHistory = () => router.push('/history');
 
   useEffect(() => {
-    if (!isLoading) {
+    if (!isLoadingBalances) {
       setInitialLoaded(true);
     }
-  }, [isLoading]);
+  }, [isLoadingBalances]);
 
+  // Jei nėra user arba wallet – rodom spinner
   if (!user || !wallet) {
-    return (
-      <main className={styles.pageContainer}>
-        <MiniLoadingSpinner />
-      </main>
-    );
-  }
-
-  // Jei dar nėra pradinio krovimo – rodom spinner
-  if (!initialLoaded) {
     return (
       <main className={styles.pageContainer}>
         <MiniLoadingSpinner />
@@ -67,19 +66,32 @@ export default function TBnbPage() {
 
           {/* Balance Box */}
           <div className={styles.balanceBox}>
-            <p className={styles.balanceText}>
-              {(balances?.tbnb?.balance ?? 0).toFixed(4)} BNB
-            </p>
-            <p className={styles.balanceFiat}>
-              {((balances?.tbnb?.balance ?? 0) * (prices?.tbnb?.eur ?? 0)).toFixed(2)} € | {((balances?.tbnb?.balance ?? 0) * (prices?.tbnb?.usd ?? 0)).toFixed(2)} $
-            </p>
+            {initialLoaded ? (
+              <>
+                <p className={styles.balanceText}>
+                  {(balances?.tbnb?.balance ?? 0).toFixed(4)} BNB
+                </p>
+                <p className={styles.balanceFiat}>
+                  {((balances?.tbnb?.balance ?? 0) * (prices?.tbnb?.eur ?? 0)).toFixed(2)} € | {((balances?.tbnb?.balance ?? 0) * (prices?.tbnb?.usd ?? 0)).toFixed(2)} $
+                </p>
+              </>
+            ) : (
+              <MiniLoadingSpinner />
+            )}
           </div>
         </div>
 
         {/* Chart */}
         <div className={styles.chartWrapper}>
           <div className={styles.chartBorder}>
-            <BnbChart />
+            {!chartLoaded && (
+              <div className={styles.chartLoading}>
+                <MiniLoadingSpinner />
+              </div>
+            )}
+            <div style={{ opacity: chartLoaded ? 1 : 0, transition: 'opacity 0.6s ease' }}>
+              <BnbChart onLoad={() => setChartLoaded(true)} />
+            </div>
           </div>
         </div>
 
