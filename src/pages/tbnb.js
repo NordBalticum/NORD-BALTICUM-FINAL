@@ -10,7 +10,7 @@ import dynamic from 'next/dynamic';
 import MiniLoadingSpinner from '@/components/MiniLoadingSpinner';
 import styles from '@/styles/tbnb.module.css';
 
-// Dinaminis BnbChart importas su premium fallback
+// Dinaminis importas su fallback spinneriu
 const BnbChartDynamic = dynamic(() => import('@/components/BnbChart').then(mod => mod.default), {
   ssr: false,
   loading: () => (
@@ -87,7 +87,6 @@ export default function TBnbPage() {
         {/* CHART */}
         <div className={styles.chartWrapper}>
           <div className={styles.chartBorder}>
-            {/* Jeigu chartas dar neparuoštas – rodom spinner */}
             {!chartReady && (
               <div className={styles.chartLoading}>
                 <MiniLoadingSpinner />
@@ -104,7 +103,7 @@ export default function TBnbPage() {
             >
               <BnbChartDynamic
                 onChartReady={() => {
-                  console.log('✅ Chart is now fully ready!');
+                  console.log('✅ Chart FULLY READY.');
                   setChartReady(true);
                 }}
               />
