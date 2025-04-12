@@ -17,26 +17,29 @@ export default function TBnbPage() {
   const { user, wallet } = useAuth();
   const { balances, refetch: refreshBalance, initialLoading: balancesInitialLoading } = useBalance();
   const { prices, refetch: refreshPrices, loading: pricesLoading } = usePrices();
+  
   const [chartData, setChartData] = useState([]);
-  const [chartLoading, setChartLoading] = useState(true);
+  const [initialChartLoading, setInitialChartLoading] = useState(true);
   const [chartKey, setChartKey] = useState(0);
   const [lastChartUpdate, setLastChartUpdate] = useState(0);
+  const [pricesReady, setPricesReady] = useState(false);
+
   const router = useRouter();
 
-  // Pagrindinis užkrovimas
+  // 1. Pagrindinis užkrovimas
   useEffect(() => {
     if (user && wallet?.address) {
       fetchAllData();
     }
   }, [user, wallet]);
 
-  // Fono refresh
+  // 2. Fono atnaujinimas
   useEffect(() => {
     const interval = setInterval(() => {
       silentRefresh();
     }, 30000);
     return () => clearInterval(interval);
-  }, []);
+  }, [pricesReady]);
 
   const fetchAllData = async () => {
     try {
@@ -44,10 +47,23 @@ export default function TBnbPage() {
         refreshBalance(),
         refreshPrices()
       ]);
-      await fetchChartData(true);
+
+      // Tikrinam ar kainos paruoštos
+      if (prices?.tbnb?.eur && prices?.tbnb?.usd) {
+        setPricesReady(true);
+        await fetchChartData(true);
+      } else {
+        const checker = setInterval(async () => {
+          if (prices?.tbnb?.eur && prices?.tbnb?.usd) {
+            clearInterval(checker);
+            setPricesReady(true);
+            await fetchChartData(true);
+          }
+        }, 500);
+      }
     } catch (error) {
       console.error('❌ Initial load failed:', error);
-      setChartLoading(false);
+      setInitialChartLoading(false);
     }
   };
 
@@ -57,7 +73,9 @@ export default function TBnbPage() {
         refreshBalance(),
         refreshPrices()
       ]);
-      fetchChartData(false);
+      if (pricesReady) {
+        fetchChartData(false);
+      }
     } catch (error) {
       console.warn('⚠️ Silent refresh failed:', error);
     }
@@ -66,38 +84,39 @@ export default function TBnbPage() {
   const fetchChartData = async (showSpinner = false) => {
     const now = Date.now();
     if (now - lastChartUpdate < 60000 && !showSpinner) return;
-    if (showSpinner) setChartLoading(true);
+
+    if (showSpinner) setInitialChartLoading(true);
 
     try {
       if (!prices?.tbnb?.eur || !prices?.tbnb?.usd) {
-        console.warn('⚠️ Prices not ready, skipping chart fetch.');
+        console.warn('⚠️ Prices still not ready, skipping chart fetch.');
         return;
       }
 
       const response = await fetch(`/api/coingecko?coin=binancecoin&range=30d`);
       const data = await response.json();
-      const rawPrices = (data?.prices || []).map(p => ({
+
+      const formattedPrices = (data?.prices || []).map(p => ({
         time: new Date(p[0]).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }),
-        value: ((p[1] * prices.tbnb.eur) / prices.tbnb.usd).toFixed(2),
+        value: ((p[1] * prices.tbnb.eur) / prices.tbnb.usd).toFixed(2)
       }));
 
-      if (rawPrices.length > 0) {
-        const lastPoint = rawPrices[rawPrices.length - 1];
-        const today = new Date();
-        const todayLabel = today.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+      if (formattedPrices.length > 0) {
+        const lastPoint = formattedPrices[formattedPrices.length - 1];
+        const todayLabel = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
         if (lastPoint.time !== todayLabel) {
-          rawPrices.push({ time: todayLabel, value: lastPoint.value });
+          formattedPrices.push({ time: todayLabel, value: lastPoint.value });
         }
       }
 
-      setChartData(rawPrices);
+      setChartData(formattedPrices);
       setLastChartUpdate(now);
       setChartKey(prev => prev + 1);
     } catch (error) {
-      console.error('❌ Chart fetch error:', error);
+      console.error('❌ Failed fetching chart data:', error);
       setChartData([]);
     } finally {
-      if (showSpinner) setChartLoading(false);
+      if (showSpinner) setInitialChartLoading(false);
     }
   };
 
@@ -110,10 +129,19 @@ export default function TBnbPage() {
   const chartOptions = {
     responsive: true,
     maintainAspectRatio: false,
+    animation: {
+      duration: 1200,
+      easing: 'easeOutCubic',
+    },
     plugins: {
       tooltip: {
         mode: 'index',
         intersect: false,
+        backgroundColor: 'rgba(0,0,0,0.7)',
+        titleColor: '#ffffff',
+        bodyColor: '#ffffff',
+        borderColor: '#888',
+        borderWidth: 1,
         callbacks: {
           label: (context) => `€ ${parseFloat(context.raw).toFixed(2)}`,
         },
@@ -121,7 +149,7 @@ export default function TBnbPage() {
     },
     scales: {
       x: { ticks: { color: '#fff' }, grid: { display: false } },
-      y: { ticks: { color: '#fff', callback: (v) => `€${parseFloat(v).toFixed(2)}` }, grid: { display: false } },
+      y: { ticks: { color: '#fff', callback: v => `€${parseFloat(v).toFixed(2)}` }, grid: { display: false } },
     },
   };
 
@@ -133,7 +161,7 @@ export default function TBnbPage() {
       backgroundColor: (context) => {
         const ctx = context.chart.ctx;
         const gradient = ctx.createLinearGradient(0, 0, 0, 400);
-        gradient.addColorStop(0, 'rgba(255, 255, 255, 0.2)');
+        gradient.addColorStop(0, 'rgba(255, 255, 255, 0.3)');
         gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
         return gradient;
       },
@@ -145,7 +173,7 @@ export default function TBnbPage() {
 
   return (
     <main className={styles.pageContainer} style={{ width: '100vw', height: '100vh', overflowY: 'auto' }}>
-      <div className={styles.pageContent} style={{ minHeight: '100vh', width: '100%' }}>
+      <div className={styles.pageContent} style={{ minHeight: '100vh', width: '100%', animation: 'fadein 1s ease-out' }}>
 
         {/* Header */}
         <div className={styles.header}>
@@ -157,9 +185,7 @@ export default function TBnbPage() {
               <MiniLoadingSpinner />
             ) : (
               <>
-                <p className={styles.balanceText}>
-                  {balances?.tbnb?.balance?.toFixed(4)} BNB
-                </p>
+                <p className={styles.balanceText}>{balances?.tbnb?.balance?.toFixed(4)} BNB</p>
                 <p className={styles.balanceFiat}>
                   {((balances?.tbnb?.balance || 0) * (prices?.tbnb?.eur || 0)).toFixed(2)} € | {((balances?.tbnb?.balance || 0) * (prices?.tbnb?.usd || 0)).toFixed(2)} $
                 </p>
@@ -171,7 +197,7 @@ export default function TBnbPage() {
         {/* Chart */}
         <div className={styles.chartWrapper} style={{ width: '92%', margin: '0 auto' }}>
           <div className={styles.chartBorder}>
-            {chartLoading ? (
+            {initialChartLoading ? (
               <MiniLoadingSpinner />
             ) : chartData.length > 0 ? (
               <Line key={chartKey} options={chartOptions} data={chartDataset} />
