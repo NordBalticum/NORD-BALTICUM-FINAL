@@ -60,13 +60,12 @@ export default function TBnbPage() {
         {/* Chart */}
         <div className={styles.chartWrapper}>
           <div className={styles.chartBorder}>
-            <div className={styles.chartContainer}>
-              {isLoading ? (
-                <MiniLoadingSpinner />
-              ) : (
-                <BnbChart />
-              )}
-            </div>
+            {/* >>> ČIA TIESIOG Chartas, BE JOKIO papildomo div aplink */}
+            {isLoading ? (
+              <MiniLoadingSpinner />
+            ) : (
+              <BnbChart />
+            )}
           </div>
         </div>
 
@@ -80,4 +79,4 @@ export default function TBnbPage() {
       </div>
     </main>
   );
-              }
+            }
