@@ -10,8 +10,8 @@ import dynamic from 'next/dynamic';
 import MiniLoadingSpinner from '@/components/MiniLoadingSpinner';
 import styles from '@/styles/tbnb.module.css';
 
-// Dinaminis BnbChart importas su premium fallback
-const BnbChartDynamic = dynamic(() => import('@/components/BnbChart').then((mod) => mod.default), {
+// Premium Dinaminis BnbChart Importas su fallback
+const BnbChartDynamic = dynamic(() => import('@/components/BnbChart').then(mod => mod.default), {
   ssr: false,
   loading: () => (
     <div className={styles.chartLoading}>
@@ -26,7 +26,7 @@ export default function TBnbPage() {
   const { prices, loading: pricesLoading } = usePrices();
   const router = useRouter();
 
-  const [initialLoaded, setInitialLoaded] = useState(false);
+  const [balancesReady, setBalancesReady] = useState(false);
   const [chartReady, setChartReady] = useState(false);
 
   const isLoading = balancesLoading || pricesLoading;
@@ -37,7 +37,7 @@ export default function TBnbPage() {
 
   useEffect(() => {
     if (!isLoading) {
-      setInitialLoaded(true);
+      setBalancesReady(true);
     }
   }, [isLoading]);
 
@@ -69,7 +69,7 @@ export default function TBnbPage() {
 
           {/* BALANCE */}
           <div className={styles.balanceBox}>
-            {initialLoaded ? (
+            {balancesReady ? (
               <>
                 <p className={styles.balanceText}>
                   {(balances?.tbnb?.balance ?? 0).toFixed(4)} BNB
