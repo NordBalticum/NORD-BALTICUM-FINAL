@@ -13,14 +13,12 @@ export default function BnbChart() {
   const [loading, setLoading] = useState(true);
   const [silentLoading, setSilentLoading] = useState(false);
   const [chartKey, setChartKey] = useState(0);
-  const [selectedDays, setSelectedDays] = useState(7);
   const mountedRef = useRef(true);
   const controllerRef = useRef(null);
 
-  const fetchChartData = useCallback(async (days = 7, showSpinner = true) => {
+  const fetchChartData = useCallback(async (showSpinner = true) => {
     if (!mountedRef.current) return;
 
-    // Cancel previous request if still pending
     if (controllerRef.current) {
       controllerRef.current.abort();
     }
@@ -38,7 +36,7 @@ export default function BnbChart() {
 
     try {
       const res = await fetch(
-        `https://api.coingecko.com/api/v3/coins/binancecoin/market_chart?vs_currency=eur&days=${days}`,
+        `https://api.coingecko.com/api/v3/coins/binancecoin/market_chart?vs_currency=eur&days=7`,
         { signal: controller.signal }
       );
       const data = await res.json();
@@ -75,10 +73,10 @@ export default function BnbChart() {
 
   useEffect(() => {
     mountedRef.current = true;
-    fetchChartData(selectedDays, true);
+    fetchChartData(true);
 
     const interval = setInterval(() => {
-      fetchChartData(selectedDays, false);
+      fetchChartData(false);
     }, 30000);
 
     return () => {
@@ -88,12 +86,12 @@ export default function BnbChart() {
         controllerRef.current.abort();
       }
     };
-  }, [fetchChartData, selectedDays]);
+  }, [fetchChartData]);
 
   const chartOptions = {
     responsive: true,
     maintainAspectRatio: false,
-    aspectRatio: 2, // PREMIUM aspect ratio
+    aspectRatio: 2, // Premium aspect ratio
     animation: {
       duration: 1000,
       easing: 'easeOutQuart',
@@ -171,30 +169,8 @@ export default function BnbChart() {
 
   return (
     <div className={styles.chartContainer}>
-      <div className={styles.daysSelector}>
-        <button
-          className={`${styles.dayButton} ${selectedDays === 7 ? styles.active : ''}`}
-          onClick={() => setSelectedDays(7)}
-        >
-          7d
-        </button>
-        <button
-          className={`${styles.dayButton} ${selectedDays === 14 ? styles.active : ''}`}
-          onClick={() => setSelectedDays(14)}
-        >
-          14d
-        </button>
-        <button
-          className={`${styles.dayButton} ${selectedDays === 30 ? styles.active : ''}`}
-          onClick={() => setSelectedDays(30)}
-        >
-          30d
-        </button>
-      </div>
-
       {silentLoading && <div className={styles.silentLoader}>Updating...</div>}
-
       <Line key={chartKey} options={chartOptions} data={chartDataset} />
     </div>
   );
-      }
+}
