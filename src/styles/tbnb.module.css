@@ -1,31 +1,32 @@
 /* === PAGE WRAPPER === */
 .pageContainer {
   width: 100vw;
-  height: 100dvh;
+  height: 100vh;
   background: #0a0a0a;
   display: flex;
   flex-direction: column;
   align-items: center;
-  overflow: hidden;
+  overflow: hidden; /* <<< Scroll OFF */
 }
 
 /* === CONTENT === */
 .pageContent {
   width: 100%;
   max-width: 1400px;
-  height: calc(100dvh - 360px);
+  height: calc(100vh - 360px); /* Premium height minus header/footer */
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: clamp(16px, 5vh, 40px) clamp(16px, 4vw, 32px);
+  padding: clamp(20px, 5vh, 50px) clamp(16px, 4vw, 32px);
   box-sizing: border-box;
-  animation: fadeInPage 1.5s ease-out;
-  transform: scale(0.9);
+  animation: fadeInPage 1.2s ease-out;
+  transform: scale(0.92);
+  transform-origin: top center;
 }
 
 @keyframes fadeInPage {
-  0% { opacity: 0; transform: scale(0.95); }
-  100% { opacity: 1; transform: scale(0.9); }
+  0% { opacity: 0; transform: scale(0.88); }
+  100% { opacity: 1; transform: scale(0.92); }
 }
 
 /* === HEADER === */
@@ -40,8 +41,8 @@
 }
 
 .networkLogo {
-  width: clamp(48px, 9vw, 64px);
-  height: clamp(48px, 9vw, 64px);
+  width: clamp(48px, 8vw, 60px);
+  height: clamp(48px, 8vw, 60px);
   transition: transform 0.3s ease;
 }
 
@@ -63,9 +64,9 @@
   backdrop-filter: blur(16px);
   border-radius: 20px;
   box-shadow: 0 0 20px rgba(255, 255, 255, 0.04);
-  padding: clamp(16px, 3vh, 24px) clamp(24px, 5vw, 36px);
-  margin-top: 8px;
-  margin-bottom: clamp(16px, 3vh, 24px); /* NATURALUS ATSTUMAS ŽEMYN */
+  padding: clamp(18px, 3vh, 28px) clamp(24px, 5vw, 36px);
+  margin-top: clamp(12px, 3vh, 24px); /* <<< mažesnis, natūralesnis tarpas */
+  margin-bottom: clamp(10px, 2vh, 20px); /* <<< švelnus tarpas iki grafiko */
   text-align: center;
   transition: all 0.4s ease;
 }
@@ -87,19 +88,19 @@
   color: #d1d5db;
 }
 
-/* === CHART WRAPPER + BORDER === */
+/* === CHART WRAPPER + BORDER (FONO BLOKAS) === */
 .chartWrapper {
   width: 100%;
   max-width: 950px;
   display: flex;
   justify-content: center;
-  padding: clamp(12px, 3vw, 24px);
-  margin-top: clamp(12px, 3vh, 24px); /* MAŽIAU DISTANCE PO BALANCE */
+  padding: clamp(10px, 3vw, 20px); /* <<< mažesnis padding, švelnesnis */
+  margin-top: clamp(12px, 3vh, 24px);
 }
 
 .chartBorder {
   width: 100%;
-  min-height: clamp(280px, 45vh, 380px);
+  min-height: clamp(300px, 48vh, 380px);
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.12);
   backdrop-filter: blur(12px);
@@ -170,52 +171,62 @@
 /* Phones */
 @media (max-width: 768px) {
   .pageContent {
-    transform: scale(0.85);
-    padding: 16px 14px;
-    height: calc(100dvh - 340px);
+    transform: scale(0.88);
+    padding: 16px;
+    height: calc(100vh - 300px);
   }
+
   .chartWrapper {
     padding: 10px;
-    margin-top: 14px;
+    margin-top: 16px;
   }
+
   .chartBorder {
     min-height: clamp(240px, 45vh, 340px);
     padding: 20px;
   }
+
   .actionButtons {
     flex-direction: row;
     gap: 16px;
   }
+
   .actionButton {
     flex: 1 1 auto;
-    min-width: 44%;
+    min-width: 42%;
     text-align: center;
   }
 }
 
 /* Tablets */
-@media (max-width: 1024px) {
+@media (max-width: 1098px) {
   .pageContent {
-    transform: scale(0.88);
-    padding: 18px 16px;
-    height: calc(100dvh - 340px);
+    transform: scale(0.9);
+    padding: 18px;
+    height: calc(100vh - 320px);
   }
 }
 
-/* Full HD Screens */
-@media (min-width: 1920px) {
+/* Small Desktops */
+@media (max-width: 1600px) {
   .pageContent {
     transform: scale(0.92);
-    padding: 24px 32px;
-    height: calc(100dvh - 360px);
+    height: calc(100vh - 340px);
   }
 }
 
-/* 4K Screens */
+/* Full HD Desktops */
+@media (max-width: 1920px) {
+  .pageContent {
+    transform: scale(0.92);
+    height: calc(100vh - 360px);
+  }
+}
+
+/* 4K and Ultra HD */
 @media (min-width: 2560px) {
   .pageContent {
-    transform: scale(0.95);
-    padding: 32px 40px;
-    height: calc(100dvh - 360px);
+    transform: scale(0.94);
+    height: calc(100vh - 400px);
   }
 }
