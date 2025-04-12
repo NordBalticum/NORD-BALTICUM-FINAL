@@ -56,12 +56,11 @@ export default function BnbChart() {
 
       if (mountedRef.current && formatted.length > 0) {
         setChartData(formatted);
-        setChartKey(prev => prev + 1); // Key force-reload Line komponentui
+        setChartKey(prev => prev + 1);
       }
     } catch (err) {
       if (err.name !== 'AbortError') {
         console.error('❌ BnbChart fetch error:', err.message);
-        // NEIŠVALOM chartData jei klaida! Lieka esami duomenys.
       }
     } finally {
       clearTimeout(timeout);
@@ -75,11 +74,11 @@ export default function BnbChart() {
   useEffect(() => {
     mountedRef.current = true;
 
-    fetchChartData(true); // Pirma karta su spinneriu
+    fetchChartData(true);
 
     const interval = setInterval(() => {
-      fetchChartData(false); // Tylus fono atnaujinimas
-    }, 300000); // kas 5 minutes
+      fetchChartData(false);
+    }, 300000);
 
     return () => {
       mountedRef.current = false;
@@ -93,18 +92,12 @@ export default function BnbChart() {
   const chartOptions = {
     responsive: true,
     maintainAspectRatio: false,
-    aspectRatio: 2,
     animation: {
       duration: 1200,
-      easing: 'easeOutBounce', // Premium bounce efektas
+      easing: 'easeOutBounce',
     },
     layout: {
-      padding: {
-        top: 16,
-        bottom: 16,
-        left: 8,
-        right: 8,
-      },
+      padding: 0, // <<< PILNAI 0 padding
     },
     plugins: {
       tooltip: {
