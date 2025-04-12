@@ -13,6 +13,7 @@ export default function BnbChart() {
   const [loading, setLoading] = useState(true);
   const [silentLoading, setSilentLoading] = useState(false);
   const [chartKey, setChartKey] = useState(0);
+  const chartRef = useRef(null);
 
   const mountedRef = useRef(true);
   const controllerRef = useRef(null);
@@ -27,7 +28,7 @@ export default function BnbChart() {
     }
 
     const controller = new AbortController();
-    controllerRef.current = controller;
+    controllerRef = controller;
 
     if (showSpinner) {
       setLoading(true);
@@ -46,7 +47,6 @@ export default function BnbChart() {
 
       if (!data?.prices) throw new Error('No price data');
 
-      // Formatuojam ir automatiškai mažinam taškus mobile
       let formatted = data.prices.map(([timestamp, price]) => ({
         time: new Date(timestamp).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }),
         value: parseFloat(price).toFixed(2),
@@ -57,7 +57,6 @@ export default function BnbChart() {
         formatted.push({ time: todayLabel, value: formatted[formatted.length - 1].value });
       }
 
-      // Mažinam duomenų kiekį mobile
       if (isMobile && formatted.length > 0) {
         formatted = formatted.filter((_, index) => index % 2 === 0);
       }
@@ -79,12 +78,11 @@ export default function BnbChart() {
 
   useEffect(() => {
     mountedRef.current = true;
-
     fetchChartData(true);
 
     const interval = setInterval(() => {
       fetchChartData(false);
-    }, 300000);
+    }, 300000); // 5 min
 
     return () => {
       mountedRef.current = false;
@@ -99,45 +97,54 @@ export default function BnbChart() {
     responsive: true,
     maintainAspectRatio: false,
     animation: {
-      duration: 1200,
-      easing: 'easeOutBounce',
+      duration: 800,
+      easing: 'easeOutQuart',
     },
     layout: {
-      padding: 0, // Pilnas 0 padding, kad pilnai išsitemptų
+      padding: 0,
     },
     plugins: {
       tooltip: {
         mode: 'index',
         intersect: false,
-        backgroundColor: 'rgba(15,15,15,0.95)',
+        backgroundColor: 'rgba(15,15,15,0.92)',
         titleColor: '#ffffff',
-        bodyColor: '#eeeeee',
+        bodyColor: '#dddddd',
         borderColor: '#555',
         borderWidth: 1,
-        padding: 12,
+        padding: 10,
         cornerRadius: 8,
         displayColors: false,
         callbacks: {
           label: (context) => `€ ${parseFloat(context.raw).toFixed(2)}`,
         },
       },
-      legend: {
-        display: false,
-      },
+      legend: { display: false },
     },
     scales: {
       x: {
-        ticks: { color: '#aaa', font: { size: isMobile ? 10 : 12 } },
+        ticks: {
+          color: '#bbb',
+          font: { size: isMobile ? 10 : 12 },
+          padding: 6,
+          maxRotation: 45,
+          minRotation: 0,
+        },
         grid: { display: false },
       },
       y: {
         ticks: {
-          color: '#aaa',
+          color: '#bbb',
           font: { size: isMobile ? 10 : 12 },
           callback: (v) => `€${parseFloat(v).toFixed(2)}`,
+          padding: 6,
         },
         grid: { color: 'rgba(255,255,255,0.05)' },
       },
+    },
+    elements: {
+      line: { tension: 0.35 },
+      point: { radius: isMobile ? 2 : 3 },
     },
   };
 
@@ -146,15 +153,13 @@ export default function BnbChart() {
     datasets: [{
       data: chartData.map(p => p.value),
       fill: true,
-      backgroundColor: (context) => {
-        const ctx = context.chart.ctx;
-        const gradient = ctx.createLinearGradient(0, 0, 0, 300);
-        gradient.addColorStop(0, 'rgba(255, 255, 255, 0.3)');
-        gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+      backgroundColor: (ctx) => {
+        const gradient = ctx.chart.ctx.createLinearGradient(0, 0, 0, 300);
+        gradient.addColorStop(0, 'rgba(255,255,255,0.25)');
+        gradient.addColorStop(1, 'rgba(255,255,255,0)');
         return gradient;
       },
       borderColor: '#ffffff',
-      pointRadius: isMobile ? 2 : 3,
       borderWidth: 2,
       tension: 0.35,
     }],
@@ -171,7 +176,20 @@ export default function BnbChart() {
           <div className={styles.updatingText}>Updating chart...</div>
         </div>
       )}
-      <Line key={chartKey} options={chartOptions} data={chartDataset} />
+      <Line
+        ref={chartRef}
+        key={chartKey}
+        options={chartOptions}
+        data={chartDataset}
+        style={{
+          width: '100%',
+          height: '100%',
+          maxWidth: '100%',
+          maxHeight: '100%',
+          objectFit: 'contain',
+          overflow: 'hidden',
+        }}
+      />
     </div>
   );
 }
