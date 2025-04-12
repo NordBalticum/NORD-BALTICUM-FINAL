@@ -10,10 +10,14 @@ import dynamic from 'next/dynamic';
 import MiniLoadingSpinner from '@/components/MiniLoadingSpinner';
 import styles from '@/styles/tbnb.module.css';
 
-// Dinaminis BnbChart su spinner fallback
-const BnbChartDynamic = dynamic(() => import('@/components/BnbChart'), {
-  loading: () => <div className={styles.chartLoading}><MiniLoadingSpinner /></div>,
+// Dinaminis BnbChart importas su premium fallback
+const BnbChartDynamic = dynamic(() => import('@/components/BnbChart').then((mod) => mod.default), {
   ssr: false,
+  loading: () => (
+    <div className={styles.chartLoading}>
+      <MiniLoadingSpinner />
+    </div>
+  ),
 });
 
 export default function TBnbPage() {
@@ -25,17 +29,17 @@ export default function TBnbPage() {
   const [initialLoaded, setInitialLoaded] = useState(false);
   const [chartReady, setChartReady] = useState(false);
 
-  const isLoadingBalances = balancesLoading || pricesLoading;
+  const isLoading = balancesLoading || pricesLoading;
 
   const handleSend = () => router.push('/send');
   const handleReceive = () => router.push('/receive');
   const handleHistory = () => router.push('/history');
 
   useEffect(() => {
-    if (!isLoadingBalances) {
+    if (!isLoading) {
       setInitialLoaded(true);
     }
-  }, [isLoadingBalances]);
+  }, [isLoading]);
 
   if (!user || !wallet) {
     return (
@@ -49,21 +53,21 @@ export default function TBnbPage() {
     <main className={styles.pageContainer}>
       <div className={styles.pageContent}>
 
-        {/* Header */}
+        {/* HEADER */}
         <div className={styles.header}>
-          <Image 
-            src="/icons/bnb.svg" 
-            alt="BNB Logo" 
-            width={60} 
-            height={60} 
-            className={styles.networkLogo} 
+          <Image
+            src="/icons/bnb.svg"
+            alt="BNB Logo"
+            width={60}
+            height={60}
+            className={styles.networkLogo}
             priority
           />
           <h1 className={styles.networkNameSmall}>
             Binance Smart Chain (Testnet)
           </h1>
 
-          {/* Balance Box */}
+          {/* BALANCE */}
           <div className={styles.balanceBox}>
             {initialLoaded ? (
               <>
@@ -80,7 +84,7 @@ export default function TBnbPage() {
           </div>
         </div>
 
-        {/* Chart */}
+        {/* CHART */}
         <div className={styles.chartWrapper}>
           <div className={styles.chartBorder}>
             {!chartReady && (
@@ -102,7 +106,7 @@ export default function TBnbPage() {
           </div>
         </div>
 
-        {/* Action Buttons */}
+        {/* ACTION BUTTONS */}
         <div className={styles.actionButtons}>
           <button onClick={handleSend} className={styles.actionButton}>
             Send
