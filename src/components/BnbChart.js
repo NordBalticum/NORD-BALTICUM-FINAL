@@ -6,7 +6,6 @@ import { Chart as ChartJS, LineElement, CategoryScale, LinearScale, PointElement
 import MiniLoadingSpinner from '@/components/MiniLoadingSpinner';
 import styles from '@/styles/tbnb.module.css';
 
-// Registruojam Chart komponentus
 ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Filler, Decimation);
 
 export default function BnbChart({ onChartReady }) {
@@ -15,7 +14,7 @@ export default function BnbChart({ onChartReady }) {
   const [chartRendered, setChartRendered] = useState(false);
   const chartRef = useRef(null);
 
-  const mountedRef = useRef(true);
+  const mountedRef = useRef(false); // **Start false**
   const controllerRef = useRef(null);
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
 
@@ -27,7 +26,7 @@ export default function BnbChart({ onChartReady }) {
     }
 
     const controller = new AbortController();
-    controllerRef = controller;
+    controllerRef.current = controller;
 
     if (showSpinner) {
       setLoading(true);
@@ -52,7 +51,6 @@ export default function BnbChart({ onChartReady }) {
       });
 
       let filtered = formatted;
-
       if (isMobile) {
         const step = Math.ceil(formatted.length / 7);
         filtered = formatted.filter((_, index) => index % step === 0);
@@ -74,27 +72,24 @@ export default function BnbChart({ onChartReady }) {
   }, [isMobile]);
 
   useEffect(() => {
-    mountedRef.current = true;
+    mountedRef.current = true; // **Tik tada true**
     fetchChartData(true);
 
     const interval = setInterval(() => {
       fetchChartData(false);
     }, 3600000);
 
-    // **Tab / Window / Phone protection**
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'hidden') {
-        mountedRef.current = false;
         if (controllerRef.current) controllerRef.current.abort();
       } else if (document.visibilityState === 'visible') {
-        mountedRef.current = true;
-        fetchChartData(false);
+        if (mountedRef.current) fetchChartData(false);
       }
     };
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
-      mountedRef.current = false;
+      mountedRef.current = false; // **On unmount iškart false**
       clearInterval(interval);
       if (controllerRef.current) controllerRef.current.abort();
       document.removeEventListener('visibilitychange', handleVisibilityChange);
@@ -118,12 +113,7 @@ export default function BnbChart({ onChartReady }) {
       }
     },
     layout: {
-      padding: {
-        left: 15,
-        right: 15,
-        top: 0,
-        bottom: 0,
-      }
+      padding: { left: 15, right: 15, top: 0, bottom: 0 }
     },
     plugins: {
       tooltip: {
@@ -161,7 +151,7 @@ export default function BnbChart({ onChartReady }) {
           maxRotation: 45,
           minRotation: 0,
           maxTicksLimit: isMobile ? 7 : 14,
-          callback: function(value, index) {
+          callback: function (value, index) {
             return chartData[index]?.shortLabel || '';
           }
         },
