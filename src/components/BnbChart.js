@@ -6,7 +6,7 @@ import { Chart as ChartJS, LineElement, CategoryScale, LinearScale, PointElement
 import MiniLoadingSpinner from '@/components/MiniLoadingSpinner';
 import styles from '@/styles/tbnb.module.css';
 
-// Debounce funkcija (premium)
+// Debounce funkcija
 function debounce(func, wait) {
   let timeout;
   return (...args) => {
@@ -39,7 +39,7 @@ export default function BnbChart() {
     }
 
     const controller = new AbortController();
-    controllerRef.current = controller;
+    controllerRef.current = controller; // TEISINGAI čia dabar!
 
     if (showSpinner) {
       setLoading(true);
@@ -104,7 +104,7 @@ export default function BnbChart() {
     };
   }, [fetchChartData]);
 
-  // --- ČIA RESIZE FIX SU DEBOUNCE ---
+  // --- Debounce Resize Fix ---
   useEffect(() => {
     const handleResize = debounce(() => {
       if (chartRef.current) {
@@ -118,7 +118,7 @@ export default function BnbChart() {
       window.removeEventListener('resize', handleResize);
     };
   }, []);
-  // ----------------------------------
+  // ----------------------------
 
   const chartOptions = {
     responsive: true,
