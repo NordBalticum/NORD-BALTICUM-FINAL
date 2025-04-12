@@ -98,7 +98,8 @@ export default function TBnbPage() {
                 height: '100%',
               }}
             >
-              <BnbChart onLoad={() => setChartLoaded(true)} />
+              {/* PAGRINDINIS PATAISYMAS ČIA */}
+              <BnbChart onChartReady={() => setChartLoaded(true)} />
             </div>
           </div>
         </div>
