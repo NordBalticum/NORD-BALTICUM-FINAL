@@ -80,9 +80,18 @@ export default function BnbChart() {
   const chartOptions = {
     responsive: true,
     maintainAspectRatio: false,
+    aspectRatio: 2, // <<< PREMIUM aspect ratio
     animation: {
       duration: 800,
       easing: 'easeOutCubic',
+    },
+    layout: {
+      padding: {
+        top: 10,
+        bottom: 10,
+        left: 0,
+        right: 0,
+      },
     },
     plugins: {
       tooltip: {
@@ -98,6 +107,9 @@ export default function BnbChart() {
         callbacks: {
           label: (context) => `€ ${parseFloat(context.raw).toFixed(2)}`,
         },
+      },
+      legend: {
+        display: false, // <<< paslepiam legendą
       },
     },
     scales: {
