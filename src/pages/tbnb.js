@@ -30,13 +30,13 @@ export default function TBnbPage() {
   const router = useRouter();
 
   useEffect(() => {
-    if (user && wallet) {
+    if (user && wallet?.address) {
       fetchAllData();
     }
   }, [user, wallet]);
 
   useEffect(() => {
-    if (user && wallet && !initialBalancesLoading) {
+    if (user && wallet?.address && !initialBalancesLoading) {
       fetchChartData(true);
     }
   }, [user, wallet, initialBalancesLoading]);
@@ -52,10 +52,7 @@ export default function TBnbPage() {
     if (typeof window !== 'undefined') {
       const handleVisibilityChange = async () => {
         if (document.visibilityState === 'visible') {
-          console.log('👀 Tab active again, refreshing safely...');
-          await Promise.all([refreshBalance(), refreshPrices()]);
-          await fetchTransactions();
-          await fetchChartData(true);
+          await silentRefresh();
         }
       };
       document.addEventListener('visibilitychange', handleVisibilityChange);
@@ -91,14 +88,20 @@ export default function TBnbPage() {
   };
 
   const fetchInitialBalances = async () => {
-    await Promise.all([refreshBalance(), refreshPrices()]);
+    await Promise.all([
+      refreshBalance(),
+      refreshPrices()
+    ]);
     setInitialBalancesLoading(false);
   };
 
   const silentRefresh = async () => {
-    await Promise.all([refreshBalance(), refreshPrices()]);
-    fetchTransactions();
-    fetchChartData(false);
+    await Promise.all([
+      refreshBalance(),
+      refreshPrices(),
+      fetchTransactions(),
+      fetchChartData(false),
+    ]);
   };
 
   const fetchTransactions = async () => {
@@ -106,12 +109,8 @@ export default function TBnbPage() {
     try {
       setTransactionsLoading(true);
       const txs = await fetchNetworkTransactions('tbnb', wallet.address);
-      const filtered = (txs || []).filter(tx =>
-        tx.from?.toLowerCase() === wallet.address.toLowerCase() ||
-        tx.to?.toLowerCase() === wallet.address.toLowerCase()
-      );
-      const sorted = filtered.sort((a, b) => b.timeStamp - a.timeStamp);
-      setTransactions(sorted.slice(0, 3));
+      const sorted = (txs || []).sort((a, b) => b.timeStamp - a.timeStamp);
+      setTransactions(sorted.slice(0, 3)); // Tik 3 paskutiniai
     } catch (error) {
       console.error('❌ Error fetching transactions:', error);
       setTransactions([]);
@@ -122,24 +121,19 @@ export default function TBnbPage() {
 
   const fetchChartData = async (showSpinner = false) => {
     const now = Date.now();
-    if (now - lastChartUpdate < 60000 && !showSpinner) {
-      console.log('⏳ Skipped chart update to reduce server load.');
-      return;
-    }
+    if (now - lastChartUpdate < 60000 && !showSpinner) return;
+
     if (showSpinner) setInitialChartLoading(true);
 
     try {
-      if (!prices?.tbnb?.eur || !prices?.tbnb?.usd) {
-        console.warn('⚠️ Prices not ready, skipping chart update.');
-        return;
-      }
+      if (!prices?.tbnb?.eur || !prices?.tbnb?.usd) return;
 
       const response = await fetch(`/api/coingecko?coin=binancecoin&range=30d`);
       const data = await response.json();
-      const rawPrices = data?.prices?.map(p => ({
+      const rawPrices = (data?.prices || []).map(p => ({
         time: new Date(p[0]).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }),
-        value: ((p[1] * prices?.tbnb?.eur) / prices?.tbnb?.usd).toFixed(2),
-      })) || [];
+        value: ((p[1] * prices.tbnb.eur) / prices.tbnb.usd).toFixed(2),
+      }));
 
       if (rawPrices.length > 0) {
         const lastPoint = rawPrices[rawPrices.length - 1];
@@ -168,24 +162,13 @@ export default function TBnbPage() {
         mode: 'index',
         intersect: false,
         callbacks: {
-          label: function (context) {
-            return `€ ${parseFloat(context.raw).toFixed(2)}`;
-          },
+          label: (context) => `€ ${parseFloat(context.raw).toFixed(2)}`,
         },
       },
     },
     scales: {
-      x: {
-        ticks: { color: '#fff', autoSkip: true, maxTicksLimit: 8 },
-        grid: { display: false }
-      },
-      y: {
-        ticks: {
-          color: '#fff',
-          callback: value => `€${parseFloat(value).toFixed(2)}`
-        },
-        grid: { display: false }
-      }
+      x: { ticks: { color: '#fff', autoSkip: true, maxTicksLimit: 8 }, grid: { display: false } },
+      y: { ticks: { color: '#fff', callback: value => `€${parseFloat(value).toFixed(2)}` }, grid: { display: false } },
     },
   };
 
@@ -284,7 +267,9 @@ export default function TBnbPage() {
                           <div className={styles.transactionAddress}>
                             {isSent ? tx.to.slice(0, 6) : tx.from.slice(0, 6)}...{isSent ? tx.to.slice(-4) : tx.from.slice(-4)}
                           </div>
-                          <div className={styles.transactionTime}>{moment(tx.timeStamp * 1000).fromNow()}</div>
+                          <div className={styles.transactionTime}>
+                            {moment(tx.timeStamp * 1000).fromNow()}
+                          </div>
                         </div>
                       </div>
                       <div className={styles.transactionAmount}>
@@ -295,13 +280,10 @@ export default function TBnbPage() {
                 })}
               </AnimatePresence>
             ) : (
-              <div className={styles.noTransactionsFound}>
-                No transactions found.
-              </div>
+              <div className={styles.noTransactionsFound}>No transactions found.</div>
             )}
           </div>
         </div>
-
       </div>
     </main>
   );
