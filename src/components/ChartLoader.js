@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Line } from 'react-chartjs-2';
 import { Chart as ChartJS, LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Filler } from 'chart.js';
 import MiniLoadingSpinner from '@/components/MiniLoadingSpinner';
@@ -8,13 +8,22 @@ import styles from '@/styles/chartloader.module.css';
 
 ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Filler);
 
-export default function ChartLoader({ coinId = 'binancecoin', currency = 'eur', days = 30, silentRefresh = true, backgroundSilent = true }) {
+export default function ChartLoader({
+  coinId = 'binancecoin',
+  currency = 'eur',
+  days = 30,
+  silentRefresh = true,
+  backgroundSilent = true,
+}) {
   const [chartData, setChartData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [silentLoading, setSilentLoading] = useState(false);
   const [chartKey, setChartKey] = useState(0);
+  const mountedRef = useRef(true);
 
-  const fetchChartData = useCallback(async (showSpinner = true) => {
+  const fetchChartData = async (showSpinner = true) => {
+    if (!mountedRef.current) return;
+
     if (showSpinner) {
       if (backgroundSilent) {
         setSilentLoading(true);
@@ -45,30 +54,40 @@ export default function ChartLoader({ coinId = 'binancecoin', currency = 'eur', 
         formatted.push({ time: todayLabel, value: formatted[formatted.length - 1].value });
       }
 
-      setChartData(formatted);
-      setChartKey(prev => prev + 1);
+      if (mountedRef.current) {
+        setChartData(formatted);
+        setChartKey(prev => prev + 1);
+      }
     } catch (err) {
       console.error('❌ Chart fetch error:', err.message);
-      setChartData([]);
+      if (mountedRef.current) setChartData([]);
     } finally {
       clearTimeout(timeout);
-      if (backgroundSilent) {
-        setSilentLoading(false);
-      } else {
-        setLoading(false);
+      if (mountedRef.current) {
+        if (backgroundSilent) {
+          setSilentLoading(false);
+        } else {
+          setLoading(false);
+        }
       }
     }
-  }, [coinId, currency, days, backgroundSilent]);
+  };
 
   useEffect(() => {
-    fetchChartData();
+    mountedRef.current = true;
+    fetchChartData(true);
+
     if (silentRefresh) {
       const interval = setInterval(() => {
         fetchChartData(false); // Silent background refresh
       }, 30000);
       return () => clearInterval(interval);
     }
-  }, [fetchChartData, silentRefresh]);
+
+    return () => {
+      mountedRef.current = false; // Cleanup
+    };
+  }, [coinId, currency, days, silentRefresh, backgroundSilent]);
 
   const chartOptions = {
     responsive: true,
