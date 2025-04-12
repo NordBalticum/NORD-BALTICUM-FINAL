@@ -11,7 +11,7 @@ import MiniLoadingSpinner from '@/components/MiniLoadingSpinner';
 import styles from '@/styles/tbnb.module.css';
 
 // Dinaminis BnbChart su spinner fallback
-const BnbChart = dynamic(() => import('@/components/BnbChart'), {
+const BnbChartDynamic = dynamic(() => import('@/components/BnbChart'), {
   loading: () => <div className={styles.chartLoading}><MiniLoadingSpinner /></div>,
   ssr: false,
 });
@@ -37,7 +37,6 @@ export default function TBnbPage() {
     }
   }, [isLoadingBalances]);
 
-  // Jei nėra user arba wallet – rodom spinner
   if (!user || !wallet) {
     return (
       <main className={styles.pageContainer}>
@@ -98,8 +97,7 @@ export default function TBnbPage() {
                 height: '100%',
               }}
             >
-              {/* PAGRINDINIS PATAISYMAS ČIA */}
-              <BnbChart onChartReady={() => setChartLoaded(true)} />
+              <BnbChartDynamic onLoad={() => setChartLoaded(true)} />
             </div>
           </div>
         </div>
