@@ -140,22 +140,6 @@
   animation: fadeInPage 1.2s ease-out;
 }
 
-.chartOverlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  backdrop-filter: blur(5px);
-  background: rgba(0, 0, 0, 0.2);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 24px;
-  z-index: 5;
-  animation: fadeInOverlay 0.8s ease-out;
-}
-
 .updatingText {
   color: #ccc;
   font-size: 0.9rem;
