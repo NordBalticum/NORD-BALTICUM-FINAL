@@ -19,7 +19,7 @@ function debounce(func, wait) {
 
 ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Filler, Decimation);
 
-export default function BnbChart() {
+export default function BnbChart({ onLoad }) {
   const [chartData, setChartData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [silentLoading, setSilentLoading] = useState(false);
@@ -160,6 +160,13 @@ export default function BnbChart() {
     };
   }, []);
 
+  // Trigger onLoad kai grafikas pilnai paruoštas
+  useEffect(() => {
+    if (!loading && chartData.length > 0) {
+      onLoad?.();
+    }
+  }, [loading, chartData, onLoad]);
+
   const chartOptions = {
     responsive: true,
     maintainAspectRatio: false,
@@ -241,7 +248,14 @@ export default function BnbChart() {
   }
 
   return (
-    <div className={styles.chartContainer}>
+    <div
+      className={styles.chartContainer}
+      style={{
+        opacity: loading ? 0 : 1,
+        transform: loading ? 'scale(0.8)' : 'scale(1)',
+        transition: 'opacity 0.8s ease, transform 0.8s ease',
+      }}
+    >
       {silentLoading && (
         <div className={styles.chartOverlay}>
           <div className={styles.updatingText}>Updating chart...</div>
@@ -259,8 +273,6 @@ export default function BnbChart() {
           maxHeight: '100%',
           objectFit: 'contain',
           overflow: 'hidden',
-          opacity: loading ? 0 : 1,
-          transition: 'opacity 0.8s ease-in-out',
         }}
       />
     </div>
