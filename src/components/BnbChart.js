@@ -6,10 +6,10 @@ import { Chart as ChartJS, LineElement, CategoryScale, LinearScale, PointElement
 import MiniLoadingSpinner from '@/components/MiniLoadingSpinner';
 import styles from '@/styles/tbnb.module.css';
 
-// Registruojam Chart.js komponentus
+// Registruojam Chart komponentus
 ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Filler, Decimation);
 
-// Debounce funkcija
+// Debounce
 function debounce(func, wait) {
   let timeout;
   return (...args) => {
@@ -20,7 +20,7 @@ function debounce(func, wait) {
   };
 }
 
-export default function BnbChart({ onChartReady, onLoad }) {
+export default function BnbChart({ onChartReady }) {
   const [chartData, setChartData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [silentLoading, setSilentLoading] = useState(false);
@@ -30,11 +30,6 @@ export default function BnbChart({ onChartReady, onLoad }) {
   const mountedRef = useRef(true);
   const controllerRef = useRef(null);
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
-
-  // Kai komponentas mountinasi
-  useEffect(() => {
-    onLoad?.(); // Nusiunčiam signalą tėvui kad mountintas
-  }, [onLoad]);
 
   const fetchChartData = useCallback(async (showSpinner = true) => {
     if (!mountedRef.current) return;
@@ -117,7 +112,7 @@ export default function BnbChart({ onChartReady, onLoad }) {
 
     const interval = setInterval(() => {
       fetchChartData(false);
-    }, 3600000); // Kas 1 valandą (3600 sekundžių)
+    }, 3600000); // Kas 1 valandą
 
     return () => {
       mountedRef.current = false;
@@ -128,14 +123,14 @@ export default function BnbChart({ onChartReady, onLoad }) {
     };
   }, [fetchChartData]);
 
-  // Kai grafikas užsikrovęs
+  // Kai grafikas paruoštas - triggerinam parent
   useEffect(() => {
     if (!loading && chartData.length > 0 && typeof onChartReady === 'function') {
       onChartReady();
     }
   }, [loading, chartData, onChartReady]);
 
-  // Stabilus resize
+  // Resize + reanimate
   useEffect(() => {
     const handleResize = debounce(() => {
       requestAnimationFrame(() => {
@@ -168,14 +163,7 @@ export default function BnbChart({ onChartReady, onLoad }) {
     };
   }, []);
 
-  if (loading || chartData.length === 0) {
-    return (
-      <div className={styles.chartContainer}>
-        <MiniLoadingSpinner />
-      </div>
-    );
-  }
-
+  // Chart options ir dataset
   const chartOptions = {
     responsive: true,
     maintainAspectRatio: false,
