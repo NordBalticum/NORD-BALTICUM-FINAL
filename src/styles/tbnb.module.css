@@ -121,6 +121,80 @@
   box-shadow: 0 0 50px rgba(255, 255, 255, 0.1);
 }
 
+/* === BNB CHART STYLES (From bnbchart.module.css) === */
+.chartContainer {
+  width: 95%;
+  max-width: 1200px;
+  height: clamp(260px, 42vh, 380px);
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(10px);
+  border-radius: 24px;
+  box-shadow: 0 0 40px rgba(255, 255, 255, 0.05);
+  transition: all 0.5s ease;
+  animation: fadeInPage 1.2s ease-out;
+}
+
+.chartOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  backdrop-filter: blur(5px);
+  background: rgba(0, 0, 0, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 24px;
+  z-index: 5;
+  animation: fadeInOverlay 0.8s ease-out;
+}
+
+.updatingText {
+  color: #ccc;
+  font-size: 0.9rem;
+  opacity: 0.85;
+}
+
+.noData {
+  color: #aaa;
+  font-size: 1rem;
+  text-align: center;
+  padding: 2rem;
+}
+
+@keyframes fadeInOverlay {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+/* === SILENT LOADER === */
+.silentLoader {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  font-size: 0.8rem;
+  background: rgba(255, 255, 255, 0.12);
+  padding: 0.35rem 0.8rem;
+  border-radius: 10px;
+  color: #eee;
+  backdrop-filter: blur(5px);
+  animation: fadeout 2.5s forwards;
+  opacity: 1;
+}
+
+@keyframes fadeout {
+  0% { opacity: 1; }
+  70% { opacity: 0.8; }
+  100% { opacity: 0; visibility: hidden; }
+}
+
 /* === ACTION BUTTONS === */
 .actionButtons {
   display: flex;
@@ -174,18 +248,34 @@
 /* === RESPONSIVE - ULTIMATE PHONE FIX === */
 @media (max-width: 768px) {
   .pageContent {
-    transform: scale(0.82); /* <<< MAŽINAM, kad viskas tilptų normaliai */
+    transform: scale(0.82);
     padding: 10px;
     height: calc(100vh - 260px);
   }
   .chartWrapper {
-    max-width: 100%; /* <<< Platesnis grafikas */
+    max-width: 100%;
     padding: 8px;
   }
   .chartBorder {
     width: 96%;
     height: clamp(200px, 42vh, 320px);
     padding: 12px;
+  }
+  .chartContainer {
+    width: 94%;
+    height: clamp(220px, 40vh, 340px);
+    padding: 0.8rem;
+    border-radius: 20px;
+    box-shadow: 0 0 30px rgba(255, 255, 255, 0.04);
+  }
+  .updatingText {
+    font-size: 0.8rem;
+  }
+  .silentLoader {
+    top: 8px;
+    right: 10px;
+    font-size: 0.7rem;
+    padding: 0.3rem 0.6rem;
   }
   .actionButtons {
     flex-direction: row;
@@ -209,6 +299,10 @@
   .chartWrapper {
     max-width: 100%;
   }
+  .chartContainer {
+    width: 94%;
+    height: clamp(240px, 42vh, 360px);
+  }
 }
 
 /* Small Desktops */
@@ -216,6 +310,10 @@
   .pageContent {
     transform: scale(0.92);
     height: calc(100vh - 340px);
+  }
+  .chartContainer {
+    width: 93%;
+    height: clamp(260px, 44vh, 380px);
   }
 }
 
@@ -225,6 +323,10 @@
     transform: scale(0.92);
     height: calc(100vh - 360px);
   }
+  .chartContainer {
+    width: 92%;
+    height: clamp(280px, 45vh, 400px);
+  }
 }
 
 /* 4K and Ultra HD */
@@ -232,5 +334,9 @@
   .pageContent {
     transform: scale(0.94);
     height: calc(100vh - 400px);
+  }
+  .chartContainer {
+    width: 90%;
+    height: clamp(320px, 46vh, 450px);
   }
 }
