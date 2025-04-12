@@ -2,7 +2,7 @@
 .pageContainer {
   width: 100vw;
   height: 100vh;
-  background: radial-gradient(ellipse at center, #2B37FF 0%, #1B2370 50%, #0A122A 100%);
+  background: #0a0a0a; /* Premium black */
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -13,8 +13,8 @@
 
 .pageContent {
   width: 100%;
-  max-width: 1200px;
-  transform: scale(0.85);
+  max-width: 1400px;
+  transform: scale(0.9);
   transform-origin: top center;
   min-height: 100vh;
   display: flex;
@@ -30,14 +30,14 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   margin-bottom: clamp(16px, 4vh, 32px);
   text-align: center;
 }
 
 .networkLogo {
-  width: clamp(44px, 9vw, 60px);
-  height: clamp(44px, 9vw, 60px);
+  width: clamp(48px, 9vw, 64px);
+  height: clamp(48px, 9vw, 64px);
   transition: transform 0.3s ease;
 }
 
@@ -46,54 +46,77 @@
 }
 
 .networkNameSmall {
-  font-size: clamp(1rem, 2vw, 1.5rem);
-  font-weight: 600;
-  opacity: 0.85;
+  font-size: clamp(1.2rem, 2.5vw, 1.8rem);
+  font-weight: 700;
+  opacity: 0.9;
+  color: white;
   transition: all 0.3s ease;
 }
 
 /* === BALANCE === */
 .balanceBox {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(14px);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(16px);
   border-radius: 20px;
-  box-shadow: 0 0 40px rgba(255, 255, 255, 0.08);
-  padding: clamp(16px, 3vh, 24px) clamp(20px, 6vw, 32px);
-  margin-top: 8px;
+  box-shadow: 0 0 40px rgba(255, 255, 255, 0.06);
+  padding: clamp(18px, 3vh, 28px) clamp(24px, 5vw, 36px);
+  margin-top: 12px;
   text-align: center;
   transition: all 0.4s ease;
 }
 
 .balanceText {
-  font-size: clamp(1.6rem, 3vw, 2.3rem);
-  font-weight: 700;
+  font-size: clamp(1.8rem, 4vw, 2.6rem);
+  font-weight: 800;
   color: white;
 }
 
 .balanceFiat {
   margin-top: 6px;
-  font-size: clamp(1rem, 2.5vw, 1.4rem);
+  font-size: clamp(1.1rem, 2.5vw, 1.5rem);
   opacity: 0.75;
-  color: #e0e7ff;
+  color: #d1d5db;
 }
 
-/* === RANGE SELECTOR === */
+/* === CHART === */
+.chartWrapper {
+  width: 100%;
+  max-width: 950px;
+  display: flex;
+  justify-content: center;
+  padding: clamp(14px, 4vw, 30px);
+  margin-top: clamp(20px, 5vh, 40px);
+}
+
+.chartBorder {
+  width: 100%;
+  min-height: clamp(250px, 45vh, 380px);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(12px);
+  border-radius: 26px;
+  box-shadow: 0 0 50px rgba(255, 255, 255, 0.08);
+  padding: 24px;
+  transition: all 0.4s ease;
+}
+
+/* === RANGE SELECTOR (Inside Chart) === */
 .rangeSelector {
   display: flex;
   justify-content: center;
   flex-wrap: wrap;
-  gap: clamp(6px, 1.5vw, 14px);
-  margin: clamp(16px, 4vh, 32px) 0;
+  gap: clamp(8px, 1.5vw, 16px);
+  margin-bottom: clamp(12px, 3vh, 24px);
 }
 
 .rangeButton {
-  padding: clamp(8px, 2vw, 12px) clamp(18px, 5vw, 28px);
+  padding: clamp(6px, 1.5vw, 12px) clamp(16px, 5vw, 24px);
   background: transparent;
   color: white;
   border: 1px solid white;
   border-radius: 9999px;
-  font-size: clamp(1rem, 2vw, 1.1rem);
+  font-size: clamp(0.9rem, 2vw, 1.1rem);
   cursor: pointer;
   transition: all 0.3s ease;
 }
@@ -109,44 +132,22 @@
   border: 1px solid white;
 }
 
-/* === CHART === */
-.chartWrapper {
-  width: 100%;
-  max-width: 800px;
-  display: flex;
-  justify-content: center;
-  padding: clamp(12px, 4vw, 28px);
-  margin-top: clamp(18px, 4vh, 36px);
-}
-
-.chartBorder {
-  width: 100%;
-  height: clamp(220px, 42vh, 320px);
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(10px);
-  border-radius: 24px;
-  box-shadow: 0 0 40px rgba(255, 255, 255, 0.08);
-  padding: 20px;
-  transition: all 0.4s ease;
-}
-
 /* === ACTION BUTTONS === */
 .actionButtons {
   display: flex;
   justify-content: center;
-  gap: clamp(18px, 5vw, 36px);
-  margin: clamp(20px, 4vh, 40px) 0;
+  gap: clamp(20px, 5vw, 40px);
+  margin: clamp(24px, 6vh, 48px) 0;
   flex-wrap: wrap;
 }
 
 .actionButton {
-  padding: clamp(10px, 2.5vw, 18px) clamp(24px, 6vw, 44px);
+  padding: clamp(12px, 2.5vw, 18px) clamp(26px, 6vw, 48px);
   background: black;
   color: white;
   border: 1px solid white;
   border-radius: 9999px;
-  font-size: clamp(1rem, 2vw, 1.2rem);
+  font-size: clamp(1rem, 2vw, 1.3rem);
   cursor: pointer;
   transition: all 0.3s ease;
 }
@@ -155,82 +156,6 @@
   background: white;
   color: black;
   transform: scale(1.05);
-}
-
-/* === TRANSACTIONS === */
-.transactionsContainer {
-  width: 100%;
-  max-width: 700px;
-}
-
-.transactionsTitle {
-  font-size: clamp(1.2rem, 2.5vw, 1.6rem);
-  font-weight: 700;
-  margin-bottom: clamp(14px, 3vh, 22px);
-  text-align: center;
-  color: #e0e7ff;
-}
-
-.transactionsBox {
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(10px);
-  border-radius: 24px;
-  padding: clamp(14px, 4vw, 28px);
-  display: flex;
-  flex-direction: column;
-  gap: clamp(10px, 2.5vh, 18px);
-  transition: all 0.3s ease;
-}
-
-.transactionItem {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: rgba(255, 255, 255, 0.07);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  backdrop-filter: blur(8px);
-  border-radius: 20px;
-  padding: clamp(10px, 2vw, 18px);
-  transition: all 0.4s ease;
-}
-
-.transactionItem:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 0 20px rgba(0, 255, 255, 0.25);
-}
-
-.transactionLeft {
-  display: flex;
-  align-items: center;
-  gap: clamp(8px, 2vw, 14px);
-}
-
-.transactionIcon {
-  width: clamp(30px, 7vw, 44px);
-  height: clamp(30px, 7vw, 44px);
-  border-radius: 50%;
-  background: #00c853;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: clamp(1rem, 2vw, 1.5rem);
-  color: white;
-}
-
-.transactionAddress {
-  font-size: clamp(0.9rem, 2vw, 1.2rem);
-}
-
-.transactionTime {
-  font-size: clamp(0.7rem, 2vw, 1rem);
-  opacity: 0.75;
-}
-
-.transactionAmount {
-  font-weight: 600;
-  font-size: clamp(1rem, 2vw, 1.2rem);
-  text-align: right;
-  color: white;
 }
 
 /* === SPINNER === */
@@ -258,109 +183,51 @@
 
 /* === RESPONSIVE ULTIMATE === */
 
-/* Mobile very small screens (mini phones) */
-@media (max-width: 468px) {
-  .pageContent {
-    transform: scale(0.95);
-    padding: 16px 12px;
-    min-height: auto;
-  }
-  .rangeSelector {
-    gap: 8px;
-    margin: 12px 0;
-  }
-  .balanceBox {
-    margin-top: 6px;
-    padding: 14px 18px;
-  }
-  .chartWrapper {
-    padding: 10px;
-    margin-top: 14px;
-  }
-  .chartBorder {
-    height: clamp(160px, 30vh, 240px);
-  }
-  .actionButtons {
-    flex-direction: column;
-    gap: 14px;
-    margin: 20px 0;
-  }
-  .transactionsBox {
-    padding: 16px;
-    gap: 12px;
-  }
-}
-
-/* Mobile normal screens (phones) */
+/* Mobile (phones) */
 @media (max-width: 768px) {
   .pageContent {
     transform: scale(0.92);
     padding: 20px 16px;
-    min-height: auto;
-  }
-  .rangeSelector {
-    gap: 10px;
-    margin: 16px 0;
   }
   .balanceBox {
-    margin-top: 8px;
-    padding: 16px 20px;
+    padding: 18px 20px;
   }
   .chartWrapper {
-    padding: 14px;
-    margin-top: 18px;
+    padding: 12px;
+    margin-top: 16px;
   }
   .chartBorder {
-    height: clamp(180px, 35vh, 260px);
+    min-height: clamp(220px, 40vh, 340px);
+    padding: 20px;
   }
   .actionButtons {
-    flex-direction: row; /* Eilė! */
+    flex-direction: row;
     gap: 16px;
-    margin: 24px 0;
   }
   .actionButton {
     flex: 1 1 auto;
-    min-width: 40%;
+    min-width: 42%;
     text-align: center;
-  }
-  .transactionsBox {
-    padding: 18px;
-    gap: 14px;
   }
 }
 
-/* Tablet screens */
+/* Tablet */
 @media (max-width: 1098px) {
   .pageContent {
     transform: scale(0.9);
     padding: 24px 20px;
   }
-  .rangeSelector {
-    gap: 12px;
-    margin: 18px 0;
-  }
-  .chartWrapper {
-    padding: 18px;
-    margin-top: 20px;
-  }
-  .chartBorder {
-    height: clamp(220px, 38vh, 300px);
-  }
 }
 
-/* Small desktops */
+/* Small Desktop */
 @media (max-width: 1600px) {
   .pageContent {
     transform: scale(0.88);
     padding: 28px 24px;
   }
-  .rangeSelector {
-    gap: 14px;
-    margin: 20px 0;
-  }
 }
 
-/* Full HD desktops */
+/* Full HD */
 @media (max-width: 1920px) {
   .pageContent {
     transform: scale(0.85);
@@ -368,7 +235,7 @@
   }
 }
 
-/* 4K Ultra screens */
+/* 4K Screens */
 @media (min-width: 2560px) {
   .pageContent {
     transform: scale(0.8);
