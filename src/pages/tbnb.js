@@ -66,7 +66,7 @@ export default function TBnbPage() {
       clearTimeout(timer);
       timer = setTimeout(() => {
         signOut();
-      }, 10 * 60 * 1000);
+      }, 10 * 60 * 1000); // 10 min timeout
     };
     if (typeof window !== 'undefined') {
       window.addEventListener('mousemove', resetTimer);
@@ -100,7 +100,7 @@ export default function TBnbPage() {
       refreshBalance(),
       refreshPrices(),
       fetchTransactions(),
-      fetchChartData(false),
+      fetchChartData(false)
     ]);
   };
 
@@ -110,7 +110,7 @@ export default function TBnbPage() {
       setTransactionsLoading(true);
       const txs = await fetchNetworkTransactions('tbnb', wallet.address);
       const sorted = (txs || []).sort((a, b) => b.timeStamp - a.timeStamp);
-      setTransactions(sorted.slice(0, 3)); // Tik 3 paskutiniai
+      setTransactions(sorted.slice(0, 3));
     } catch (error) {
       console.error('❌ Error fetching transactions:', error);
       setTransactions([]);
@@ -126,7 +126,11 @@ export default function TBnbPage() {
     if (showSpinner) setInitialChartLoading(true);
 
     try {
-      if (!prices?.tbnb?.eur || !prices?.tbnb?.usd) return;
+      if (!prices?.tbnb?.eur || !prices?.tbnb?.usd) {
+        console.warn('⚠️ Prices not ready.');
+        if (showSpinner) setInitialChartLoading(false); // NEBLOKUOJAM SPINNER
+        return;
+      }
 
       const response = await fetch(`/api/coingecko?coin=binancecoin&range=30d`);
       const data = await response.json();
@@ -227,8 +231,12 @@ export default function TBnbPage() {
           <div className={styles.chartBorder}>
             {initialChartLoading ? (
               <MiniLoadingSpinner />
-            ) : (
+            ) : chartData.length > 0 ? (
               <Line key={chartKey} options={chartOptions} data={chartDataset} />
+            ) : (
+              <div style={{ color: '#ccc', textAlign: 'center', padding: '2rem' }}>
+                No chart data available.
+              </div>
             )}
           </div>
         </div>
@@ -284,7 +292,8 @@ export default function TBnbPage() {
             )}
           </div>
         </div>
+
       </div>
     </main>
   );
-          }
+}
