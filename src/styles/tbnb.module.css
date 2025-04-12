@@ -6,14 +6,14 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  overflow: hidden; /* <<< Scroll OFF */
+  overflow: hidden;
 }
 
 /* === CONTENT === */
 .pageContent {
   width: 100%;
   max-width: 1400px;
-  height: calc(100vh - 360px); /* Premium height minus header/footer */
+  height: calc(100vh - 360px);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -65,8 +65,8 @@
   border-radius: 20px;
   box-shadow: 0 0 20px rgba(255, 255, 255, 0.04);
   padding: clamp(18px, 3vh, 28px) clamp(24px, 5vw, 36px);
-  margin-top: clamp(12px, 3vh, 24px); /* Mažesnis, natūralesnis tarpas */
-  margin-bottom: clamp(10px, 2vh, 20px); /* Švelnus tarpas iki grafiko */
+  margin-top: clamp(12px, 3vh, 24px);
+  margin-bottom: clamp(10px, 2vh, 20px);
   text-align: center;
   transition: all 0.4s ease;
 }
@@ -91,18 +91,18 @@
 /* === CHART WRAPPER + BORDER === */
 .chartWrapper {
   width: 100%;
-  max-width: 1200px; /* PREMIUM width */
+  max-width: 1200px;
   display: flex;
   justify-content: center;
   align-items: center;
   padding: clamp(16px, 4vw, 32px);
-  margin-top: clamp(16px, 4vh, 28px); /* Premium naturalus tarpas */
+  margin-top: clamp(16px, 4vh, 28px);
   box-sizing: border-box;
 }
 
 .chartBorder {
   width: 100%;
-  height: clamp(260px, 45vh, 400px); /* Responsive aukštis */
+  height: clamp(260px, 45vh, 400px);
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.08);
   backdrop-filter: blur(10px);
@@ -171,39 +171,43 @@
   100% { transform: rotate(360deg); }
 }
 
-/* === RESPONSIVE === */
-
-/* Phones */
+/* === RESPONSIVE - ULTIMATE PHONE FIX === */
 @media (max-width: 768px) {
   .pageContent {
-    transform: scale(0.88);
-    padding: 16px;
-    height: calc(100vh - 300px);
+    transform: scale(0.82); /* <<< MAŽINAM, kad viskas tilptų normaliai */
+    padding: 10px;
+    height: calc(100vh - 260px);
+  }
+  .chartWrapper {
+    max-width: 100%; /* <<< Platesnis grafikas */
+    padding: 8px;
   }
   .chartBorder {
-    height: clamp(220px, 40vh, 340px);
-    padding: 16px;
+    width: 96%;
+    height: clamp(200px, 42vh, 320px);
+    padding: 12px;
   }
   .actionButtons {
     flex-direction: row;
-    gap: 16px;
+    gap: 12px;
   }
   .actionButton {
-    flex: 1 1 auto;
-    min-width: 42%;
-    text-align: center;
+    flex: 1 1 45%;
+    min-width: 45%;
+    font-size: clamp(0.9rem, 4vw, 1.2rem);
+    padding: 12px 16px;
   }
 }
 
 /* Tablets */
 @media (max-width: 1098px) {
   .pageContent {
-    transform: scale(0.9);
-    padding: 18px;
-    height: calc(100vh - 320px);
+    transform: scale(0.88);
+    padding: 14px;
+    height: calc(100vh - 300px);
   }
-  .chartBorder {
-    height: clamp(240px, 42vh, 360px);
+  .chartWrapper {
+    max-width: 100%;
   }
 }
 
@@ -213,9 +217,6 @@
     transform: scale(0.92);
     height: calc(100vh - 340px);
   }
-  .chartBorder {
-    height: clamp(260px, 44vh, 380px);
-  }
 }
 
 /* Full HD Desktops */
@@ -224,9 +225,6 @@
     transform: scale(0.92);
     height: calc(100vh - 360px);
   }
-  .chartBorder {
-    height: clamp(280px, 45vh, 400px);
-  }
 }
 
 /* 4K and Ultra HD */
@@ -234,8 +232,5 @@
   .pageContent {
     transform: scale(0.94);
     height: calc(100vh - 400px);
-  }
-  .chartBorder {
-    height: clamp(320px, 48vh, 500px);
   }
 }
