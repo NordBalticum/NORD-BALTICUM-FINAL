@@ -23,21 +23,30 @@ export default function TBnbPage() {
 
   return (
     <main className={styles.pageContainer} style={{ width: '100vw', height: '100vh', overflowY: 'auto', background: '#0a0a0a' }}>
-      <div className={styles.pageContent} style={{ minHeight: '100vh', width: '100%', animation: 'fadein 1s ease-out' }}>
+      <div className={styles.pageContent} style={{ minHeight: '100vh', width: '100%', animation: 'fadein 1.2s ease-out' }}>
 
         {/* Header */}
         <div className={styles.header}>
-          <Image src="/icons/bnb.svg" alt="BNB Logo" width={50} height={50} className={styles.networkLogo} priority />
+          <Image 
+            src="/icons/bnb.svg" 
+            alt="BNB Logo" 
+            width={50} 
+            height={50} 
+            className={styles.networkLogo} 
+            priority 
+          />
           <h1 className={styles.networkNameSmall}>Binance Smart Chain (Testnet)</h1>
 
           <div className={styles.balanceBox}>
-            {balancesInitialLoading || pricesLoading ? (
+            {(balancesInitialLoading || pricesLoading) ? (
               <MiniLoadingSpinner />
             ) : (
               <>
-                <p className={styles.balanceText}>{balances?.tbnb?.balance?.toFixed(4)} BNB</p>
+                <p className={styles.balanceText}>
+                  {balances?.tbnb?.balance?.toFixed(4)} BNB
+                </p>
                 <p className={styles.balanceFiat}>
-                  {((balances?.tbnb?.balance || 0) * (prices?.tbnb?.eur || 0)).toFixed(2)} € | {((balances?.tbnb?.balance || 0) * (prices?.tbnb?.usd || 0)).toFixed(2)} $
+                  {(balances?.tbnb?.balance * (prices?.tbnb?.eur || 0)).toFixed(2)} € | {(balances?.tbnb?.balance * (prices?.tbnb?.usd || 0)).toFixed(2)} $
                 </p>
               </>
             )}
@@ -47,7 +56,13 @@ export default function TBnbPage() {
         {/* Chart */}
         <div className={styles.chartWrapper} style={{ width: '92%', margin: '0 auto' }}>
           <div className={styles.chartBorder}>
-            <ChartLoader coinId="binancecoin" currency="eur" days={30} />
+            <ChartLoader
+              coinId="binancecoin"
+              currency="eur"
+              days={30}
+              silentRefresh
+              backgroundSilent
+            />
           </div>
         </div>
 
