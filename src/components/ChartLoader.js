@@ -33,7 +33,7 @@ export default function ChartLoader({
     }
 
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 6000);
+    const timeout = setTimeout(() => controller.abort(), 6000); // 6s fallback timeout
 
     try {
       const res = await fetch(
@@ -77,14 +77,15 @@ export default function ChartLoader({
     mountedRef.current = true;
     fetchChartData(true);
 
+    let interval;
     if (silentRefresh) {
-      const interval = setInterval(() => {
+      interval = setInterval(() => {
         fetchChartData(false); // Silent background refresh
       }, 30000);
-      return () => clearInterval(interval);
     }
 
     return () => {
+      if (interval) clearInterval(interval);
       mountedRef.current = false; // Cleanup
     };
   }, [coinId, currency, days, silentRefresh, backgroundSilent]);
