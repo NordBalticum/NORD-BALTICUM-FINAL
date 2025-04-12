@@ -1,25 +1,26 @@
 /* === PAGE WRAPPER === */
 .pageContainer {
   width: 100vw;
-  height: 100vh;
+  height: 100dvh;
   background: #0a0a0a;
   display: flex;
   flex-direction: column;
   align-items: center;
-  overflow: hidden; /* <<< Scroll OFF */
+  overflow: hidden;
 }
 
 /* === CONTENT === */
 .pageContent {
   width: 100%;
   max-width: 1400px;
-  height: 100%;
+  height: calc(100dvh - 360px);
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: clamp(20px, 5vh, 60px) clamp(16px, 4vw, 32px);
+  padding: clamp(16px, 5vh, 40px) clamp(16px, 4vw, 32px);
   box-sizing: border-box;
   animation: fadeInPage 1.5s ease-out;
+  transform: scale(0.9);
 }
 
 @keyframes fadeInPage {
@@ -33,7 +34,7 @@
   flex-direction: column;
   align-items: center;
   gap: 12px;
-  margin-bottom: clamp(16px, 4vh, 32px);
+  margin-bottom: clamp(12px, 3vh, 24px);
   text-align: center;
   transition: all 0.3s ease;
 }
@@ -62,8 +63,9 @@
   backdrop-filter: blur(16px);
   border-radius: 20px;
   box-shadow: 0 0 20px rgba(255, 255, 255, 0.04);
-  padding: clamp(18px, 3vh, 28px) clamp(24px, 5vw, 36px);
-  margin-top: 12px;
+  padding: clamp(16px, 3vh, 24px) clamp(24px, 5vw, 36px);
+  margin-top: 8px;
+  margin-bottom: clamp(16px, 3vh, 24px); /* NATURALUS ATSTUMAS ŽEMYN */
   text-align: center;
   transition: all 0.4s ease;
 }
@@ -91,13 +93,13 @@
   max-width: 950px;
   display: flex;
   justify-content: center;
-  padding: clamp(14px, 4vw, 30px);
-  margin-top: clamp(20px, 5vh, 40px);
+  padding: clamp(12px, 3vw, 24px);
+  margin-top: clamp(12px, 3vh, 24px); /* MAŽIAU DISTANCE PO BALANCE */
 }
 
 .chartBorder {
   width: 100%;
-  min-height: clamp(300px, 50vh, 400px);
+  min-height: clamp(280px, 45vh, 380px);
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.12);
   backdrop-filter: blur(12px);
@@ -164,17 +166,20 @@
 }
 
 /* === RESPONSIVE === */
+
+/* Phones */
 @media (max-width: 768px) {
   .pageContent {
-    transform: scale(0.92);
-    padding: 20px 16px;
+    transform: scale(0.85);
+    padding: 16px 14px;
+    height: calc(100dvh - 340px);
   }
   .chartWrapper {
-    padding: 12px;
-    margin-top: 16px;
+    padding: 10px;
+    margin-top: 14px;
   }
   .chartBorder {
-    min-height: clamp(240px, 45vh, 360px);
+    min-height: clamp(240px, 45vh, 340px);
     padding: 20px;
   }
   .actionButtons {
@@ -183,7 +188,34 @@
   }
   .actionButton {
     flex: 1 1 auto;
-    min-width: 42%;
+    min-width: 44%;
     text-align: center;
+  }
+}
+
+/* Tablets */
+@media (max-width: 1024px) {
+  .pageContent {
+    transform: scale(0.88);
+    padding: 18px 16px;
+    height: calc(100dvh - 340px);
+  }
+}
+
+/* Full HD Screens */
+@media (min-width: 1920px) {
+  .pageContent {
+    transform: scale(0.92);
+    padding: 24px 32px;
+    height: calc(100dvh - 360px);
+  }
+}
+
+/* 4K Screens */
+@media (min-width: 2560px) {
+  .pageContent {
+    transform: scale(0.95);
+    padding: 32px 40px;
+    height: calc(100dvh - 360px);
   }
 }
