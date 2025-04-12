@@ -6,32 +6,48 @@ import { Chart as ChartJS, LineElement, CategoryScale, LinearScale, PointElement
 import MiniLoadingSpinner from '@/components/MiniLoadingSpinner';
 import styles from '@/styles/tbnb.module.css';
 
+// Registruojam Chart komponentus
 ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Filler, Decimation);
 
+// Debounce funkcija
 function debounce(func, wait) {
   let timeout;
   return (...args) => {
     clearTimeout(timeout);
-    timeout = setTimeout(() => func.apply(null, args), wait);
+    timeout = setTimeout(() => {
+      func.apply(null, args);
+    }, wait);
   };
 }
 
 export default function BnbChart({ onChartReady }) {
   const [chartData, setChartData] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [silentLoading, setSilentLoading] = useState(false);
+  const [chartRendered, setChartRendered] = useState(false);
   const chartRef = useRef(null);
+
   const mountedRef = useRef(true);
   const controllerRef = useRef(null);
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
 
-  const fetchChartData = useCallback(async () => {
+  const fetchChartData = useCallback(async (showSpinner = true) => {
     if (!mountedRef.current) return;
-    if (controllerRef.current) controllerRef.current.abort();
+
+    if (controllerRef.current) {
+      controllerRef.current.abort();
+    }
 
     const controller = new AbortController();
     controllerRef.current = controller;
 
-    setLoading(true);
+    if (showSpinner) {
+      setLoading(true);
+    } else {
+      setSilentLoading(true);
+    }
+
+    const timeout = setTimeout(() => controller.abort(), 6000);
 
     try {
       const res = await fetch('https://api.coingecko.com/api/v3/coins/binancecoin/market_chart?vs_currency=eur&days=7', { signal: controller.signal });
@@ -40,90 +56,65 @@ export default function BnbChart({ onChartReady }) {
 
       const formatted = data.prices.map(([timestamp, price]) => {
         const date = new Date(timestamp);
+        const day = date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+        const hour = date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
         return {
-          time: `${date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })} ${date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`,
+          time: `${day} ${hour}`,
           value: parseFloat(price).toFixed(2),
         };
       });
 
-      const filtered = isMobile
-        ? formatted.filter(item => item.time.includes('00:00'))
-        : formatted;
-
-      if (mountedRef.current && filtered.length > 0) {
-        setChartData(filtered);
+      if (mountedRef.current && formatted.length > 0) {
+        setChartData(formatted);
       }
     } catch (err) {
-      console.error('❌ Chart fetch error:', err.message);
+      console.error('❌ BnbChart fetch error:', err.message);
     } finally {
+      clearTimeout(timeout);
       if (mountedRef.current) {
         setLoading(false);
+        setSilentLoading(false);
       }
     }
   }, [isMobile]);
 
   useEffect(() => {
     mountedRef.current = true;
-    fetchChartData();
-    const interval = setInterval(fetchChartData, 3600000);
+    fetchChartData(true);
+
+    const interval = setInterval(() => {
+      fetchChartData(false);
+    }, 3600000);
 
     return () => {
       mountedRef.current = false;
       clearInterval(interval);
-      if (controllerRef.current) controllerRef.current.abort();
+      if (controllerRef.current) {
+        controllerRef.current.abort();
+      }
     };
   }, [fetchChartData]);
 
-  // Tik kai grafikas RENDERINAS su duomenimis
+  // Kai loading baigėsi ir duomenys yra – signalizuojam parentui
   useEffect(() => {
-    if (!loading && chartData.length > 0 && chartRef.current) {
-      onChartReady?.();
+    if (!loading && chartData.length > 0 && chartRendered && typeof onChartReady === 'function') {
+      onChartReady();
     }
-  }, [loading, chartData, onChartReady]);
-
-  useEffect(() => {
-    const handleResize = debounce(() => {
-      requestAnimationFrame(() => {
-        if (chartRef.current?.resize) {
-          try {
-            chartRef.current.resize();
-            chartRef.current.update('active');
-          } catch (e) {
-            console.error('Chart resize error:', e);
-          }
-        }
-      });
-    }, 300);
-
-    window.addEventListener('resize', handleResize);
-    document.addEventListener('visibilitychange', handleResize);
-
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      document.removeEventListener('visibilitychange', handleResize);
-    };
-  }, []);
-
-  if (loading || chartData.length === 0) {
-    return (
-      <div className={styles.chartContainer}>
-        <MiniLoadingSpinner />
-      </div>
-    );
-  }
+  }, [loading, chartData, chartRendered, onChartReady]);
 
   const chartOptions = {
     responsive: true,
     maintainAspectRatio: false,
     animation: {
-      duration: 800,
+      duration: 1000,
       easing: 'easeOutBounce',
+      onComplete: () => {
+        setChartRendered(true); // Signalizuojam kai grafikas nupaišytas
+      }
     },
+    layout: { padding: 0 },
     plugins: {
-      tooltip: {
-        mode: 'index',
-        intersect: false,
-      },
+      tooltip: { mode: 'index', intersect: false },
       legend: { display: false },
       decimation: {
         enabled: true,
@@ -132,14 +123,8 @@ export default function BnbChart({ onChartReady }) {
       },
     },
     scales: {
-      x: {
-        ticks: { color: '#bbb', font: { size: isMobile ? 10 : 12 } },
-        grid: { display: false },
-      },
-      y: {
-        ticks: { color: '#bbb', font: { size: isMobile ? 10 : 12 } },
-        grid: { color: 'rgba(255,255,255,0.05)' },
-      },
+      x: { ticks: { color: '#bbb' }, grid: { display: false } },
+      y: { ticks: { color: '#bbb' }, grid: { color: 'rgba(255,255,255,0.05)' } },
     },
     elements: {
       line: { tension: 0.35 },
@@ -153,33 +138,29 @@ export default function BnbChart({ onChartReady }) {
       data: chartData.map(p => p.value),
       fill: true,
       backgroundColor: (ctx) => {
-        try {
-          const gradient = ctx.chart.ctx.createLinearGradient(0, 0, 0, 300);
-          gradient.addColorStop(0, 'rgba(255,255,255,0.3)');
-          gradient.addColorStop(1, 'rgba(255,255,255,0)');
-          return gradient;
-        } catch (e) {
-          return 'rgba(255,255,255,0.2)';
-        }
+        const gradient = ctx.chart.ctx.createLinearGradient(0, 0, 0, 300);
+        gradient.addColorStop(0, 'rgba(255,255,255,0.3)');
+        gradient.addColorStop(1, 'rgba(255,255,255,0)');
+        return gradient;
       },
       borderColor: '#ffffff',
       borderWidth: 2,
-      hoverBorderColor: '#ffd700',
     }],
   };
+
+  if (loading && chartData.length === 0) {
+    return <MiniLoadingSpinner />;
+  }
 
   return (
     <div className={styles.chartContainer}>
       <Line
         ref={chartRef}
-        key={chartKey}
-        options={chartOptions}
         data={chartDataset}
+        options={chartOptions}
         style={{
           width: '100%',
           height: '100%',
-          maxWidth: '100%',
-          maxHeight: '100%',
           objectFit: 'contain',
           overflow: 'hidden',
         }}
