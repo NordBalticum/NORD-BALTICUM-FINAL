@@ -19,9 +19,11 @@ export default function TBnbPage() {
   const handleReceive = () => router.push('/receive');
   const handleHistory = () => router.push('/history');
 
-  if (!user || !wallet) return <MiniLoadingSpinner />;
-
   const isLoading = balancesInitialLoading || pricesLoading;
+
+  if (!user || !wallet) {
+    return <MiniLoadingSpinner />;
+  }
 
   return (
     <main className={styles.pageContainer}>
@@ -41,6 +43,7 @@ export default function TBnbPage() {
             Binance Smart Chain (Testnet)
           </h1>
 
+          {/* Balance Box */}
           <div className={styles.balanceBox}>
             {isLoading ? (
               <MiniLoadingSpinner />
@@ -60,7 +63,6 @@ export default function TBnbPage() {
         {/* Chart */}
         <div className={styles.chartWrapper}>
           <div className={styles.chartBorder}>
-            {/* >>> ČIA TIESIOG Chartas, BE JOKIO papildomo div aplink */}
             {isLoading ? (
               <MiniLoadingSpinner />
             ) : (
