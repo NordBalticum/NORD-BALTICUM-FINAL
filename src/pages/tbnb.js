@@ -10,8 +10,8 @@ import dynamic from 'next/dynamic';
 import MiniLoadingSpinner from '@/components/MiniLoadingSpinner';
 import styles from '@/styles/tbnb.module.css';
 
-// Premium Dinaminis BnbChart Importas su fallback
-const BnbChartDynamic = dynamic(() => import('@/components/BnbChart').then(mod => mod.default), {
+// Teisingas dynamic import be .then
+const BnbChartDynamic = dynamic(() => import('@/components/BnbChart'), {
   ssr: false,
   loading: () => (
     <div className={styles.chartLoading}>
@@ -52,8 +52,6 @@ export default function TBnbPage() {
   return (
     <main className={styles.pageContainer}>
       <div className={styles.pageContent}>
-
-        {/* HEADER */}
         <div className={styles.header}>
           <Image
             src="/icons/bnb.svg"
@@ -67,7 +65,6 @@ export default function TBnbPage() {
             Binance Smart Chain (Testnet)
           </h1>
 
-          {/* BALANCE */}
           <div className={styles.balanceBox}>
             {balancesReady ? (
               <>
@@ -84,7 +81,6 @@ export default function TBnbPage() {
           </div>
         </div>
 
-        {/* CHART */}
         <div className={styles.chartWrapper}>
           <div className={styles.chartBorder}>
             {!chartReady && (
@@ -106,7 +102,6 @@ export default function TBnbPage() {
           </div>
         </div>
 
-        {/* ACTION BUTTONS */}
         <div className={styles.actionButtons}>
           <button onClick={handleSend} className={styles.actionButton}>
             Send
@@ -118,7 +113,6 @@ export default function TBnbPage() {
             History
           </button>
         </div>
-
       </div>
     </main>
   );
