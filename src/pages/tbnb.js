@@ -21,6 +21,8 @@ export default function TBnbPage() {
 
   if (!user || !wallet) return <MiniLoadingSpinner />;
 
+  const isLoading = balancesInitialLoading || pricesLoading;
+
   return (
     <main className={styles.pageContainer}>
       <div className={styles.pageContent}>
@@ -40,7 +42,7 @@ export default function TBnbPage() {
           </h1>
 
           <div className={styles.balanceBox}>
-            {(balancesInitialLoading || pricesLoading) ? (
+            {isLoading ? (
               <MiniLoadingSpinner />
             ) : (
               <>
@@ -59,7 +61,11 @@ export default function TBnbPage() {
         <div className={styles.chartWrapper}>
           <div className={styles.chartBorder}>
             <div className={styles.chartContainer}>
-              <BnbChart />
+              {isLoading ? (
+                <MiniLoadingSpinner />
+              ) : (
+                <BnbChart />
+              )}
             </div>
           </div>
         </div>
@@ -74,4 +80,4 @@ export default function TBnbPage() {
       </div>
     </main>
   );
-}
+              }
