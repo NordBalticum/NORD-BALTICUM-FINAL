@@ -14,7 +14,7 @@ import styles from '@/styles/networkpages.module.css';
 ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Filler);
 
 export default function TBnbPage() {
-  const { user, wallet, signOut } = useAuth();
+  const { user, wallet } = useAuth();
   const { balances, refetch: refreshBalance } = useBalance();
   const { prices, refetch: refreshPrices } = usePrices();
   const [chartData, setChartData] = useState([]);
@@ -24,46 +24,63 @@ export default function TBnbPage() {
   const [chartKey, setChartKey] = useState(0);
   const router = useRouter();
 
+  // Pagrindinis pirmas užkrovimas
   useEffect(() => {
     if (user && wallet?.address) {
       fetchAllData();
     }
   }, [user, wallet]);
 
+  // Automatinis fono atnaujinimas
   useEffect(() => {
     const interval = setInterval(() => {
       silentRefresh();
-    }, 30000);
+    }, 30000); // kas 30 sekundžių
     return () => clearInterval(interval);
   }, []);
 
   const fetchAllData = async () => {
-    await Promise.all([
-      refreshBalance(),
-      refreshPrices(),
-      fetchChartData(true),
-    ]);
-    setInitialBalancesLoading(false);
+    try {
+      await Promise.all([
+        refreshBalance(),
+        refreshPrices(),
+      ]);
+      setInitialBalancesLoading(false);
+      await fetchChartData(true);
+    } catch (error) {
+      console.error('❌ Failed initial fetch:', error);
+      setInitialBalancesLoading(false);
+      setInitialChartLoading(false);
+    }
   };
 
   const silentRefresh = async () => {
-    await Promise.all([
-      refreshBalance(),
-      refreshPrices(),
-      fetchChartData(false),
-    ]);
+    try {
+      await Promise.all([
+        refreshBalance(),
+        refreshPrices(),
+      ]);
+      fetchChartData(false);
+    } catch (error) {
+      console.warn('⚠️ Silent refresh failed, ignoring.');
+    }
   };
 
   const fetchChartData = async (showSpinner = false) => {
     const now = Date.now();
-    if (now - lastChartUpdate < 60000 && !showSpinner) return;
+    if (now - lastChartUpdate < 60000 && !showSpinner) return; // Neatnaujinti jei mažiau nei 60s
+
     if (showSpinner) setInitialChartLoading(true);
 
     try {
-      if (!prices?.tbnb?.eur || !prices?.tbnb?.usd) return;
+      if (!prices?.tbnb?.eur || !prices?.tbnb?.usd) {
+        console.warn('⚠️ Prices not ready, skipping chart fetch.');
+        return;
+      }
 
       const response = await fetch(`/api/coingecko?coin=binancecoin&range=30d`);
       const data = await response.json();
+
       const rawPrices = (data?.prices || []).map(p => ({
         time: new Date(p[0]).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }),
         value: ((p[1] * prices.tbnb.eur) / prices.tbnb.usd).toFixed(2),
@@ -81,7 +98,7 @@ export default function TBnbPage() {
       setLastChartUpdate(now);
       setChartKey(prev => prev + 1);
     } catch (error) {
-      console.error('❌ Failed to load chart data', error);
+      console.error('❌ Chart fetch failed:', error);
       setChartData([]);
     } finally {
       if (showSpinner) setInitialChartLoading(false);
@@ -107,38 +124,27 @@ export default function TBnbPage() {
       },
     },
     scales: {
-      x: {
-        ticks: { color: '#fff' },
-        grid: { display: false },
-      },
-      y: {
-        ticks: {
-          color: '#fff',
-          callback: (v) => `€${parseFloat(v).toFixed(2)}`,
-        },
-        grid: { display: false },
-      },
+      x: { ticks: { color: '#fff' }, grid: { display: false } },
+      y: { ticks: { color: '#fff', callback: v => `€${parseFloat(v).toFixed(2)}` }, grid: { display: false } },
     },
   };
 
   const chartDataset = {
     labels: chartData.map(p => p.time),
-    datasets: [
-      {
-        data: chartData.map(p => p.value),
-        fill: true,
-        backgroundColor: (context) => {
-          const ctx = context.chart.ctx;
-          const gradient = ctx.createLinearGradient(0, 0, 0, 400);
-          gradient.addColorStop(0, 'rgba(255, 255, 255, 0.2)');
-          gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
-          return gradient;
-        },
-        borderColor: '#ffffff',
-        pointRadius: 0,
-        tension: 0.4,
+    datasets: [{
+      data: chartData.map(p => p.value),
+      fill: true,
+      backgroundColor: (context) => {
+        const ctx = context.chart.ctx;
+        const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+        gradient.addColorStop(0, 'rgba(255, 255, 255, 0.2)');
+        gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+        return gradient;
       },
-    ],
+      borderColor: '#ffffff',
+      pointRadius: 0,
+      tension: 0.4,
+    }],
   };
 
   return (
