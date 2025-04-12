@@ -1,41 +1,43 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Line } from 'react-chartjs-2';
 import { Chart as ChartJS, LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Filler } from 'chart.js';
 import MiniLoadingSpinner from '@/components/MiniLoadingSpinner';
-import styles from '@/styles/chartloader.module.css'; // Sukursim css
+import styles from '@/styles/chartloader.module.css';
 
 ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Filler);
 
-export default function ChartLoader({ coinId = 'binancecoin', currency = 'eur', days = 30 }) {
+export default function ChartLoader({ coinId = 'binancecoin', currency = 'eur', days = 30, silentRefresh = true, backgroundSilent = true }) {
   const [chartData, setChartData] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [silentLoading, setSilentLoading] = useState(false);
   const [chartKey, setChartKey] = useState(0);
 
-  useEffect(() => {
-    fetchChartData();
-    const interval = setInterval(fetchChartData, 30000); // silent fono refresh
-    return () => clearInterval(interval);
-  }, []);
+  const fetchChartData = useCallback(async (showSpinner = true) => {
+    if (showSpinner) {
+      if (backgroundSilent) {
+        setSilentLoading(true);
+      } else {
+        setLoading(true);
+      }
+    }
 
-  const fetchChartData = async () => {
-    setLoading(true);
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 6000); // 6s timeout
+    const timeout = setTimeout(() => controller.abort(), 6000);
 
     try {
-      const response = await fetch(
+      const res = await fetch(
         `https://api.coingecko.com/api/v3/coins/${coinId}/market_chart?vs_currency=${currency}&days=${days}`,
         { signal: controller.signal }
       );
-      const data = await response.json();
+      const data = await res.json();
 
       if (!data?.prices) throw new Error('No price data');
 
       const formatted = data.prices.map(([timestamp, price]) => ({
         time: new Date(timestamp).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }),
-        value: parseFloat(price).toFixed(2)
+        value: parseFloat(price).toFixed(2),
       }));
 
       const todayLabel = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
@@ -45,21 +47,35 @@ export default function ChartLoader({ coinId = 'binancecoin', currency = 'eur', 
 
       setChartData(formatted);
       setChartKey(prev => prev + 1);
-    } catch (error) {
-      console.error('❌ Chart fetch error:', error.message);
+    } catch (err) {
+      console.error('❌ Chart fetch error:', err.message);
       setChartData([]);
     } finally {
       clearTimeout(timeout);
-      setLoading(false);
+      if (backgroundSilent) {
+        setSilentLoading(false);
+      } else {
+        setLoading(false);
+      }
     }
-  };
+  }, [coinId, currency, days, backgroundSilent]);
+
+  useEffect(() => {
+    fetchChartData();
+    if (silentRefresh) {
+      const interval = setInterval(() => {
+        fetchChartData(false); // Silent background refresh
+      }, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [fetchChartData, silentRefresh]);
 
   const chartOptions = {
     responsive: true,
     maintainAspectRatio: false,
     animation: {
       duration: 1000,
-      easing: 'easeOutQuart',
+      easing: 'easeOutCubic',
     },
     plugins: {
       tooltip: {
@@ -108,7 +124,7 @@ export default function ChartLoader({ coinId = 'binancecoin', currency = 'eur', 
       borderColor: '#ffffff',
       pointRadius: 2,
       borderWidth: 2,
-      tension: 0.35,
+      tension: 0.4,
     }],
   };
 
@@ -125,6 +141,9 @@ export default function ChartLoader({ coinId = 'binancecoin', currency = 'eur', 
   }
 
   return (
-    <Line key={chartKey} options={chartOptions} data={chartDataset} />
+    <>
+      {silentLoading && <div className={styles.silentLoader}>Updating chart...</div>}
+      <Line key={chartKey} options={chartOptions} data={chartDataset} />
+    </>
   );
 }
