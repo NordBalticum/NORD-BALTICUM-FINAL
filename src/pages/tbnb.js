@@ -15,24 +15,26 @@ ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement, Tooltip,
 
 export default function TBnbPage() {
   const { user, wallet } = useAuth();
-  const { balances, refetch: refreshBalance } = useBalance();
-  const { prices, refetch: refreshPrices } = usePrices();
+  const { balances, refetch: refreshBalance, initialLoading: balancesInitialLoading } = useBalance();
+  const { prices, refetch: refreshPrices, loading: pricesLoading } = usePrices();
   const [chartData, setChartData] = useState([]);
-  const [initialLoading, setInitialLoading] = useState(true);
+  const [chartLoading, setChartLoading] = useState(true);
   const [chartKey, setChartKey] = useState(0);
   const [lastChartUpdate, setLastChartUpdate] = useState(0);
   const router = useRouter();
 
+  // Pagrindinis užkrovimas
   useEffect(() => {
     if (user && wallet?.address) {
       fetchAllData();
     }
   }, [user, wallet]);
 
+  // Fono refresh
   useEffect(() => {
     const interval = setInterval(() => {
       silentRefresh();
-    }, 30000); // kas 30 sekundžių automatinis atnaujinimas
+    }, 30000);
     return () => clearInterval(interval);
   }, []);
 
@@ -44,9 +46,8 @@ export default function TBnbPage() {
       ]);
       await fetchChartData(true);
     } catch (error) {
-      console.error('❌ Initial fetch error:', error);
-    } finally {
-      setInitialLoading(false);
+      console.error('❌ Initial load failed:', error);
+      setChartLoading(false);
     }
   };
 
@@ -58,24 +59,23 @@ export default function TBnbPage() {
       ]);
       fetchChartData(false);
     } catch (error) {
-      console.warn('⚠️ Silent refresh error:', error);
+      console.warn('⚠️ Silent refresh failed:', error);
     }
   };
 
   const fetchChartData = async (showSpinner = false) => {
     const now = Date.now();
     if (now - lastChartUpdate < 60000 && !showSpinner) return;
-    if (showSpinner) setInitialLoading(true);
+    if (showSpinner) setChartLoading(true);
 
     try {
       if (!prices?.tbnb?.eur || !prices?.tbnb?.usd) {
-        console.warn('⚠️ Prices not ready.');
+        console.warn('⚠️ Prices not ready, skipping chart fetch.');
         return;
       }
 
       const response = await fetch(`/api/coingecko?coin=binancecoin&range=30d`);
       const data = await response.json();
-
       const rawPrices = (data?.prices || []).map(p => ({
         time: new Date(p[0]).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }),
         value: ((p[1] * prices.tbnb.eur) / prices.tbnb.usd).toFixed(2),
@@ -94,10 +94,10 @@ export default function TBnbPage() {
       setLastChartUpdate(now);
       setChartKey(prev => prev + 1);
     } catch (error) {
-      console.error('❌ Failed to load chart data:', error);
+      console.error('❌ Chart fetch error:', error);
       setChartData([]);
     } finally {
-      if (showSpinner) setInitialLoading(false);
+      if (showSpinner) setChartLoading(false);
     }
   };
 
@@ -121,7 +121,7 @@ export default function TBnbPage() {
     },
     scales: {
       x: { ticks: { color: '#fff' }, grid: { display: false } },
-      y: { ticks: { color: '#fff', callback: v => `€${parseFloat(v).toFixed(2)}` }, grid: { display: false } },
+      y: { ticks: { color: '#fff', callback: (v) => `€${parseFloat(v).toFixed(2)}` }, grid: { display: false } },
     },
   };
 
@@ -153,7 +153,7 @@ export default function TBnbPage() {
           <h1 className={styles.networkNameSmall}>Binance Smart Chain (Testnet)</h1>
 
           <div className={styles.balanceBox}>
-            {initialLoading ? (
+            {balancesInitialLoading || pricesLoading ? (
               <MiniLoadingSpinner />
             ) : (
               <>
@@ -171,7 +171,7 @@ export default function TBnbPage() {
         {/* Chart */}
         <div className={styles.chartWrapper} style={{ width: '92%', margin: '0 auto' }}>
           <div className={styles.chartBorder}>
-            {initialLoading ? (
+            {chartLoading ? (
               <MiniLoadingSpinner />
             ) : chartData.length > 0 ? (
               <Line key={chartKey} options={chartOptions} data={chartDataset} />
