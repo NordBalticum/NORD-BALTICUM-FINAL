@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useBalance } from '@/hooks/useBalance';
 import { usePrices } from '@/hooks/usePrices';
@@ -15,13 +16,30 @@ export default function TBnbPage() {
   const { prices, loading: pricesLoading } = usePrices();
   const router = useRouter();
 
+  const [initialLoaded, setInitialLoaded] = useState(false);
+
+  const isLoading = balancesLoading || pricesLoading;
+
   const handleSend = () => router.push('/send');
   const handleReceive = () => router.push('/receive');
   const handleHistory = () => router.push('/history');
 
-  const isLoading = balancesLoading || pricesLoading;
+  useEffect(() => {
+    if (!isLoading) {
+      setInitialLoaded(true);
+    }
+  }, [isLoading]);
 
   if (!user || !wallet) {
+    return (
+      <main className={styles.pageContainer}>
+        <MiniLoadingSpinner />
+      </main>
+    );
+  }
+
+  // Jei dar nėra pradinio krovimo – rodom spinner
+  if (!initialLoaded) {
     return (
       <main className={styles.pageContainer}>
         <MiniLoadingSpinner />
@@ -49,29 +67,19 @@ export default function TBnbPage() {
 
           {/* Balance Box */}
           <div className={styles.balanceBox}>
-            {isLoading ? (
-              <MiniLoadingSpinner />
-            ) : (
-              <>
-                <p className={styles.balanceText}>
-                  {(balances?.tbnb?.balance ?? 0).toFixed(4)} BNB
-                </p>
-                <p className={styles.balanceFiat}>
-                  {((balances?.tbnb?.balance ?? 0) * (prices?.tbnb?.eur ?? 0)).toFixed(2)} € | {((balances?.tbnb?.balance ?? 0) * (prices?.tbnb?.usd ?? 0)).toFixed(2)} $
-                </p>
-              </>
-            )}
+            <p className={styles.balanceText}>
+              {(balances?.tbnb?.balance ?? 0).toFixed(4)} BNB
+            </p>
+            <p className={styles.balanceFiat}>
+              {((balances?.tbnb?.balance ?? 0) * (prices?.tbnb?.eur ?? 0)).toFixed(2)} € | {((balances?.tbnb?.balance ?? 0) * (prices?.tbnb?.usd ?? 0)).toFixed(2)} $
+            </p>
           </div>
         </div>
 
         {/* Chart */}
         <div className={styles.chartWrapper}>
           <div className={styles.chartBorder}>
-            {isLoading ? (
-              <MiniLoadingSpinner />
-            ) : (
-              <BnbChart />
-            )}
+            <BnbChart />
           </div>
         </div>
 
@@ -91,4 +99,4 @@ export default function TBnbPage() {
       </div>
     </main>
   );
-            }
+}
