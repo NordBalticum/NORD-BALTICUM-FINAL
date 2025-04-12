@@ -6,23 +6,19 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  overflow-x: hidden;
-  overflow-y: auto;
-  scroll-behavior: smooth;
+  overflow: hidden; /* <<< Scroll OFF */
 }
 
+/* === CONTENT === */
 .pageContent {
   width: 100%;
   max-width: 1400px;
-  transform: scale(0.9);
-  transform-origin: top center;
-  min-height: 100vh;
+  height: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
   padding: clamp(20px, 5vh, 60px) clamp(16px, 4vw, 32px);
   box-sizing: border-box;
-  transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
   animation: fadeInPage 1.5s ease-out;
 }
 
@@ -57,7 +53,6 @@
   font-weight: 750;
   opacity: 0.92;
   color: white;
-  transition: all 0.3s ease;
 }
 
 /* === BALANCE === */
@@ -70,7 +65,7 @@
   padding: clamp(18px, 3vh, 28px) clamp(24px, 5vw, 36px);
   margin-top: 12px;
   text-align: center;
-  transition: all 0.4s ease, box-shadow 0.4s ease;
+  transition: all 0.4s ease;
 }
 
 .balanceBox:hover {
@@ -109,21 +104,15 @@
   border-radius: 26px;
   box-shadow: 0 0 20px rgba(255, 255, 255, 0.06);
   padding: 24px;
-  animation: fadeInChart 1s ease-out;
   transition: all 0.4s ease;
   overflow: hidden;
+  position: relative;
 }
 
 .chartBorder:hover {
   box-shadow: 0 0 40px rgba(0, 140, 255, 0.2);
 }
 
-@keyframes fadeInChart {
-  0% { opacity: 0; transform: translateY(10px); }
-  100% { opacity: 1; transform: translateY(0); }
-}
-
-/* === INSIDE CHART - DAYS SELECTOR === */
 .chartContainer {
   width: 100%;
   height: 100%;
@@ -134,12 +123,12 @@
   position: relative;
 }
 
+/* === DAYS SELECTOR === */
 .daysSelector {
   display: flex;
   gap: 0.6rem;
   margin-bottom: 1rem;
   justify-content: center;
-  align-items: center;
 }
 
 .dayButton {
@@ -156,16 +145,17 @@
 
 .dayButton:hover {
   background: rgba(255, 255, 255, 0.15);
-  color: #fff;
+  color: white;
 }
 
 .active {
-  background: #ffffff;
-  color: #0a0a0a;
-  border-color: #ffffff;
+  background: white;
+  color: black;
+  border-color: white;
   font-weight: 600;
 }
 
+/* === NO DATA === */
 .noData {
   color: #aaa;
   font-size: 1rem;
@@ -185,10 +175,8 @@
   color: #eee;
   backdrop-filter: blur(5px);
   animation: fadeout 2.5s forwards;
-  opacity: 1;
 }
 
-/* Fadeout animation */
 @keyframes fadeout {
   0% { opacity: 1; }
   70% { opacity: 0.8; }
@@ -212,7 +200,7 @@
   border-radius: 9999px;
   font-size: clamp(1rem, 2vw, 1.3rem);
   cursor: pointer;
-  transition: all 0.3s ease, box-shadow 0.3s ease;
+  transition: all 0.3s ease;
 }
 
 .actionButton:hover {
@@ -245,7 +233,7 @@
   100% { transform: rotate(360deg); }
 }
 
-/* === RESPONSIVE ULTIMATE === */
+/* === RESPONSIVE === */
 @media (max-width: 768px) {
   .pageContent {
     transform: scale(0.92);
@@ -267,33 +255,5 @@
     flex: 1 1 auto;
     min-width: 42%;
     text-align: center;
-  }
-}
-
-@media (max-width: 1098px) {
-  .pageContent {
-    transform: scale(0.9);
-    padding: 24px 20px;
-  }
-}
-
-@media (max-width: 1600px) {
-  .pageContent {
-    transform: scale(0.88);
-    padding: 28px 24px;
-  }
-}
-
-@media (max-width: 1920px) {
-  .pageContent {
-    transform: scale(0.85);
-    padding: 30px 28px;
-  }
-}
-
-@media (min-width: 2560px) {
-  .pageContent {
-    transform: scale(0.8);
-    padding: 32px 32px;
   }
 }
