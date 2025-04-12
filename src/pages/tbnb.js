@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useBalance } from '@/hooks/useBalance';
 import { usePrices } from '@/hooks/usePrices';
-import { fetchNetworkTransactions } from '@/utils/networkApi'; // PATAISYTA ČIA
+import { fetchNetworkTransactions } from '@/utils/networkApi';
 import { Line } from 'react-chartjs-2';
 import { Chart as ChartJS, LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Filler } from 'chart.js';
 import Image from 'next/image';
@@ -103,8 +103,12 @@ export default function TBnbPage() {
 
   const fetchTransactions = async () => {
     try {
-      const txs = await fetchNetworkTransactions('tbnb', wallet.address); // PATAISYTA ČIA
-      const sortedTxs = (txs || []).sort((a, b) => new Date(b.timeStamp * 1000) - new Date(a.timeStamp * 1000));
+      const txs = await fetchNetworkTransactions('tbnb', wallet.address);
+      const userTxs = (txs || []).filter(tx =>
+        tx.from?.toLowerCase() === wallet.address?.toLowerCase() ||
+        tx.to?.toLowerCase() === wallet.address?.toLowerCase()
+      );
+      const sortedTxs = userTxs.sort((a, b) => b.timeStamp - a.timeStamp);
       setTransactions(sortedTxs.slice(0, 3));
     } catch (error) {
       console.error('❌ Failed to load transactions', error);
@@ -259,31 +263,35 @@ export default function TBnbPage() {
               <MiniLoadingSpinner />
             ) : transactions.length > 0 ? (
               <AnimatePresence>
-                {transactions.map((tx, index) => (
-                  <motion.div
-                    key={index}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    transition={{ duration: 0.5 }}
-                    className={styles.transactionItem}
-                  >
-                    <div className={styles.transactionLeft}>
-                      <div className={styles.transactionIcon} style={{ backgroundColor: tx.from.toLowerCase() === wallet.address.toLowerCase() ? '#EF4444' : '#22C55E' }}>
-                        {tx.from.toLowerCase() === wallet.address.toLowerCase() ? '↑' : '↓'}
-                      </div>
-                      <div>
-                        <div className={styles.transactionAddress}>
-                          {tx.to?.slice(0, 6)}...{tx.to?.slice(-4)}
+                {transactions.map((tx, index) => {
+                  const isSent = tx.from.toLowerCase() === wallet.address.toLowerCase();
+                  const amount = (parseFloat(tx.value) / 1e18).toFixed(4);
+                  return (
+                    <motion.div
+                      key={index}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      transition={{ duration: 0.5 }}
+                      className={styles.transactionItem}
+                    >
+                      <div className={styles.transactionLeft}>
+                        <div className={styles.transactionIcon} style={{ backgroundColor: isSent ? '#EF4444' : '#22C55E' }}>
+                          {isSent ? '↑' : '↓'}
                         </div>
-                        <div className={styles.transactionTime}>{moment(tx.timeStamp * 1000).fromNow()}</div>
+                        <div>
+                          <div className={styles.transactionAddress}>
+                            {isSent ? tx.to?.slice(0, 6) : tx.from?.slice(0, 6)}...{isSent ? tx.to?.slice(-4) : tx.from?.slice(-4)}
+                          </div>
+                          <div className={styles.transactionTime}>{moment(tx.timeStamp * 1000).fromNow()}</div>
+                        </div>
                       </div>
-                    </div>
-                    <div className={styles.transactionAmount}>
-                      {(tx.from.toLowerCase() === wallet.address.toLowerCase() ? '-' : '+')}{(parseFloat(tx.value) / 1e18).toFixed(4)} BNB
-                    </div>
-                  </motion.div>
-                ))}
+                      <div className={styles.transactionAmount}>
+                        {isSent ? '-' : '+'}{amount} BNB
+                      </div>
+                    </motion.div>
+                  );
+                })}
               </AnimatePresence>
             ) : (
               <div className={styles.spinner}>No transactions found.</div>
