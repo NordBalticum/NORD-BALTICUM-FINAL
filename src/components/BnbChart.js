@@ -65,12 +65,11 @@ export default function BnbChart() {
         return {
           time: `${day} ${hour}`,
           value: parseFloat(price).toFixed(2),
-          rawDate: date.toDateString(), // Naudojam dubliams filtruoti
+          rawDate: date.toDateString(),
           rawHour: date.getHours()
         };
       });
 
-      // Pašalinam dublikatus pagal datą ir valandą
       const unique = [];
       const map = new Map();
       for (const item of formatted) {
@@ -81,7 +80,6 @@ export default function BnbChart() {
         }
       }
 
-      // Jei mobilas – atrenkam tik 7 taškus (vienas per dieną apie 24:00)
       let filtered = unique;
       if (isMobile) {
         filtered = unique.filter(item => item.time.includes('00:00'));
@@ -118,7 +116,7 @@ export default function BnbChart() {
 
     const interval = setInterval(() => {
       fetchChartData(false);
-    }, 300000); // kas 5 min
+    }, 300000);
 
     return () => {
       mountedRef.current = false;
@@ -261,6 +259,8 @@ export default function BnbChart() {
           maxHeight: '100%',
           objectFit: 'contain',
           overflow: 'hidden',
+          opacity: loading ? 0 : 1,
+          transition: 'opacity 0.8s ease-in-out',
         }}
       />
     </div>
