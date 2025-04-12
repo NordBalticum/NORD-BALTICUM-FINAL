@@ -10,8 +10,8 @@ import dynamic from 'next/dynamic';
 import MiniLoadingSpinner from '@/components/MiniLoadingSpinner';
 import styles from '@/styles/tbnb.module.css';
 
-// Dinaminis BnbChart importas su fallback
-const BnbChartDynamic = dynamic(() => import('@/components/BnbChart').then((mod) => mod.default), {
+// Dinaminis BnbChart importas su premium fallback
+const BnbChartDynamic = dynamic(() => import('@/components/BnbChart').then(mod => mod.default), {
   ssr: false,
   loading: () => (
     <div className={styles.chartLoading}>
@@ -28,7 +28,6 @@ export default function TBnbPage() {
 
   const [balancesReady, setBalancesReady] = useState(false);
   const [chartReady, setChartReady] = useState(false);
-  const [chartMounted, setChartMounted] = useState(false);
 
   const isLoadingBalances = balancesLoading || pricesLoading;
 
@@ -42,7 +41,7 @@ export default function TBnbPage() {
     }
   }, [isLoadingBalances]);
 
-  // Tik jeigu user arba wallet nėra – rodom spinner
+  // Jei nėra user ar wallet, rodom spinner
   if (!user || !wallet) {
     return (
       <main className={styles.pageContainer}>
@@ -89,16 +88,15 @@ export default function TBnbPage() {
         {/* CHART */}
         <div className={styles.chartWrapper}>
           <div className={styles.chartBorder}>
-            {/* Kol chartas dar neparuoštas – rodom spinner */}
-            {(!chartReady || !chartMounted) && (
+            {!chartReady && (
               <div className={styles.chartLoading}>
                 <MiniLoadingSpinner />
               </div>
             )}
             <div
               style={{
-                opacity: chartReady && chartMounted ? 1 : 0,
-                transform: chartReady && chartMounted ? 'scale(1)' : 'scale(0.8)',
+                opacity: chartReady ? 1 : 0,
+                transform: chartReady ? 'scale(1)' : 'scale(0.8)',
                 transition: 'opacity 0.8s ease, transform 0.8s ease',
                 width: '100%',
                 height: '100%',
@@ -106,12 +104,8 @@ export default function TBnbPage() {
             >
               <BnbChartDynamic
                 onChartReady={() => {
-                  console.log('✅ Chart Ready signal received');
+                  console.log('✅ Chart Ready');
                   setChartReady(true);
-                }}
-                onLoad={() => {
-                  console.log('✅ Chart component mounted');
-                  setChartMounted(true);
                 }}
               />
             </div>
