@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { Line } from 'react-chartjs-2';
-import { Chart as ChartJS, LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Filler } from 'chart.js';
+import { Chart as ChartJS, LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Filler, Decimation } from 'chart.js';
 import MiniLoadingSpinner from '@/components/MiniLoadingSpinner';
 import styles from '@/styles/tbnb.module.css';
 
@@ -17,7 +17,7 @@ function debounce(func, wait) {
   };
 }
 
-ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Filler);
+ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Filler, Decimation);
 
 export default function BnbChart() {
   const [chartData, setChartData] = useState([]);
@@ -39,7 +39,7 @@ export default function BnbChart() {
     }
 
     const controller = new AbortController();
-    controllerRef.current = controller; // TEISINGAI čia dabar!
+    controllerRef.current = controller;
 
     if (showSpinner) {
       setLoading(true);
@@ -58,22 +58,47 @@ export default function BnbChart() {
 
       if (!data?.prices) throw new Error('No price data');
 
-      let formatted = data.prices.map(([timestamp, price]) => ({
-        time: new Date(timestamp).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }),
-        value: parseFloat(price).toFixed(2),
-      }));
+      let formatted = data.prices.map(([timestamp, price]) => {
+        const date = new Date(timestamp);
+        const day = date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+        const hour = date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+        return {
+          time: `${day} ${hour}`,
+          value: parseFloat(price).toFixed(2),
+          rawDate: date.toDateString(), // Naudojam dubliams filtruoti
+          rawHour: date.getHours()
+        };
+      });
 
-      const todayLabel = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
-      if (formatted.length > 0 && formatted[formatted.length - 1].time !== todayLabel) {
-        formatted.push({ time: todayLabel, value: formatted[formatted.length - 1].value });
+      // Pašalinam dublikatus pagal datą ir valandą
+      const unique = [];
+      const map = new Map();
+      for (const item of formatted) {
+        const key = `${item.rawDate}-${item.rawHour}`;
+        if (!map.has(key)) {
+          map.set(key, true);
+          unique.push(item);
+        }
       }
 
-      if (isMobile && formatted.length > 0) {
-        formatted = formatted.filter((_, index) => index % 2 === 0);
+      // Jei mobilas – atrenkam tik 7 taškus (vienas per dieną apie 24:00)
+      let filtered = unique;
+      if (isMobile) {
+        filtered = unique.filter(item => item.time.includes('00:00'));
       }
 
-      if (mountedRef.current && formatted.length > 0) {
-        setChartData(formatted);
+      const today = new Date();
+      const todayLabel = today.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+      if (filtered.length > 0 && !filtered[filtered.length - 1].time.includes(todayLabel)) {
+        const last = filtered[filtered.length - 1];
+        filtered.push({
+          time: `${todayLabel} 00:00`,
+          value: last.value
+        });
+      }
+
+      if (mountedRef.current && filtered.length > 0) {
+        setChartData(filtered);
         setChartKey(prev => prev + 1);
       }
     } catch (err) {
@@ -93,7 +118,7 @@ export default function BnbChart() {
 
     const interval = setInterval(() => {
       fetchChartData(false);
-    }, 300000); // 5 min
+    }, 300000); // kas 5 min
 
     return () => {
       mountedRef.current = false;
@@ -104,32 +129,47 @@ export default function BnbChart() {
     };
   }, [fetchChartData]);
 
-  // --- Debounce Resize Fix ---
+  // Resize + Reanimate + Full Stability
   useEffect(() => {
     const handleResize = debounce(() => {
-      if (chartRef.current) {
-        chartRef.current.resize();
-      }
+      requestAnimationFrame(() => {
+        if (chartRef.current && chartRef.current.resize) {
+          try {
+            chartRef.current.resize();
+            chartRef.current.update('active');
+          } catch (e) {
+            console.error('Chart resize error:', e);
+          }
+        }
+      });
     }, 300);
 
     window.addEventListener('resize', handleResize);
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible' && chartRef.current) {
+        try {
+          chartRef.current.resize();
+          chartRef.current.update('active');
+        } catch (e) {
+          console.error('Chart visibility change error:', e);
+        }
+      }
+    });
 
     return () => {
       window.removeEventListener('resize', handleResize);
+      document.removeEventListener('visibilitychange', handleResize);
     };
   }, []);
-  // ----------------------------
 
   const chartOptions = {
     responsive: true,
     maintainAspectRatio: false,
     animation: {
-      duration: 800,
-      easing: 'easeOutQuart',
+      duration: 1000,
+      easing: 'easeOutBounce',
     },
-    layout: {
-      padding: 0,
-    },
+    layout: { padding: 0 },
     plugins: {
       tooltip: {
         mode: 'index',
@@ -147,6 +187,11 @@ export default function BnbChart() {
         },
       },
       legend: { display: false },
+      decimation: {
+        enabled: true,
+        algorithm: 'lttb',
+        samples: isMobile ? 7 : 50,
+      },
     },
     scales: {
       x: {
@@ -182,13 +227,14 @@ export default function BnbChart() {
       fill: true,
       backgroundColor: (ctx) => {
         const gradient = ctx.chart.ctx.createLinearGradient(0, 0, 0, 300);
-        gradient.addColorStop(0, 'rgba(255,255,255,0.25)');
+        gradient.addColorStop(0, 'rgba(255,255,255,0.3)');
         gradient.addColorStop(1, 'rgba(255,255,255,0)');
         return gradient;
       },
       borderColor: '#ffffff',
       borderWidth: 2,
       tension: 0.35,
+      hoverBorderColor: '#ffd700',
     }],
   };
 
