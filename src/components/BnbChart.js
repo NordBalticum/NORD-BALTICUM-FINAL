@@ -114,7 +114,21 @@ export default function BnbChart({ onChartReady }) {
     },
     layout: { padding: 0 },
     plugins: {
-      tooltip: { mode: 'index', intersect: false },
+      tooltip: { 
+        mode: 'index', 
+        intersect: false, 
+        backgroundColor: 'rgba(15,15,15,0.92)',
+        titleColor: '#ffffff',
+        bodyColor: '#dddddd',
+        borderColor: '#555',
+        borderWidth: 1,
+        padding: 10,
+        cornerRadius: 8,
+        displayColors: false,
+        callbacks: {
+          label: (context) => `€ ${parseFloat(context.raw).toFixed(2)}`,
+        },
+      },
       legend: { display: false },
       decimation: {
         enabled: true,
@@ -123,8 +137,25 @@ export default function BnbChart({ onChartReady }) {
       },
     },
     scales: {
-      x: { ticks: { color: '#bbb' }, grid: { display: false } },
-      y: { ticks: { color: '#bbb' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+      x: {
+        ticks: {
+          color: '#bbb',
+          font: { size: isMobile ? 10 : 12 },
+          padding: 6,
+          maxRotation: 45,
+          minRotation: 0,
+        },
+        grid: { display: false },
+      },
+      y: {
+        ticks: {
+          color: '#bbb',
+          font: { size: isMobile ? 10 : 12 },
+          callback: (v) => `€${parseFloat(v).toFixed(2)}`,
+          padding: 6,
+        },
+        grid: { color: 'rgba(255,255,255,0.05)' },
+      },
     },
     elements: {
       line: { tension: 0.35 },
