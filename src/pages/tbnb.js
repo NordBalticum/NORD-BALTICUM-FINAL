@@ -22,6 +22,7 @@ export default function TBnbPage() {
   const [initialBalancesLoading, setInitialBalancesLoading] = useState(true);
   const [lastChartUpdate, setLastChartUpdate] = useState(0);
   const [chartKey, setChartKey] = useState(0);
+  const [pricesReady, setPricesReady] = useState(false);
   const router = useRouter();
 
   // Pagrindinis pirmas užkrovimas
@@ -41,12 +42,24 @@ export default function TBnbPage() {
 
   const fetchAllData = async () => {
     try {
-      await Promise.all([
-        refreshBalance(),
-        refreshPrices(),
-      ]);
+      await refreshBalance();
+      await refreshPrices();
+
+      // Tikrinam ar kainos paruoštos
+      if (prices?.tbnb?.eur && prices?.tbnb?.usd) {
+        setPricesReady(true);
+        await fetchChartData(true);
+      } else {
+        const checkInterval = setInterval(async () => {
+          if (prices?.tbnb?.eur && prices?.tbnb?.usd) {
+            clearInterval(checkInterval);
+            setPricesReady(true);
+            await fetchChartData(true);
+          }
+        }, 500); // kas pusę sekundės tikrina ar jau yra kainos
+      }
+
       setInitialBalancesLoading(false);
-      await fetchChartData(true);
     } catch (error) {
       console.error('❌ Failed initial fetch:', error);
       setInitialBalancesLoading(false);
@@ -56,11 +69,11 @@ export default function TBnbPage() {
 
   const silentRefresh = async () => {
     try {
-      await Promise.all([
-        refreshBalance(),
-        refreshPrices(),
-      ]);
-      fetchChartData(false);
+      await refreshBalance();
+      await refreshPrices();
+      if (pricesReady) {
+        fetchChartData(false);
+      }
     } catch (error) {
       console.warn('⚠️ Silent refresh failed, ignoring.');
     }
@@ -68,13 +81,13 @@ export default function TBnbPage() {
 
   const fetchChartData = async (showSpinner = false) => {
     const now = Date.now();
-    if (now - lastChartUpdate < 60000 && !showSpinner) return; // Neatnaujinti jei mažiau nei 60s
+    if (now - lastChartUpdate < 60000 && !showSpinner) return;
 
     if (showSpinner) setInitialChartLoading(true);
 
     try {
       if (!prices?.tbnb?.eur || !prices?.tbnb?.usd) {
-        console.warn('⚠️ Prices not ready, skipping chart fetch.');
+        console.warn('⚠️ Prices still not ready, skipping chart fetch.');
         return;
       }
 
@@ -98,7 +111,7 @@ export default function TBnbPage() {
       setLastChartUpdate(now);
       setChartKey(prev => prev + 1);
     } catch (error) {
-      console.error('❌ Chart fetch failed:', error);
+      console.error('❌ Failed to load chart data:', error);
       setChartData([]);
     } finally {
       if (showSpinner) setInitialChartLoading(false);
@@ -124,8 +137,17 @@ export default function TBnbPage() {
       },
     },
     scales: {
-      x: { ticks: { color: '#fff' }, grid: { display: false } },
-      y: { ticks: { color: '#fff', callback: v => `€${parseFloat(v).toFixed(2)}` }, grid: { display: false } },
+      x: {
+        ticks: { color: '#fff' },
+        grid: { display: false },
+      },
+      y: {
+        ticks: {
+          color: '#fff',
+          callback: (v) => `€${parseFloat(v).toFixed(2)}`,
+        },
+        grid: { display: false },
+      },
     },
   };
 
