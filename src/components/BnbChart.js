@@ -13,6 +13,7 @@ export default function BnbChart() {
   const [loading, setLoading] = useState(true);
   const [silentLoading, setSilentLoading] = useState(false);
   const [chartKey, setChartKey] = useState(0);
+
   const mountedRef = useRef(true);
   const controllerRef = useRef(null);
 
@@ -53,14 +54,14 @@ export default function BnbChart() {
         formatted.push({ time: todayLabel, value: formatted[formatted.length - 1].value });
       }
 
-      if (mountedRef.current) {
+      if (mountedRef.current && formatted.length > 0) {
         setChartData(formatted);
-        setChartKey(prev => prev + 1);
+        setChartKey(prev => prev + 1); // Key force-reload Line komponentui
       }
     } catch (err) {
       if (err.name !== 'AbortError') {
         console.error('❌ BnbChart fetch error:', err.message);
-        if (mountedRef.current) setChartData([]);
+        // NEIŠVALOM chartData jei klaida! Lieka esami duomenys.
       }
     } finally {
       clearTimeout(timeout);
@@ -73,11 +74,12 @@ export default function BnbChart() {
 
   useEffect(() => {
     mountedRef.current = true;
-    fetchChartData(true);
+
+    fetchChartData(true); // Pirma karta su spinneriu
 
     const interval = setInterval(() => {
-      fetchChartData(false);
-    }, 30000);
+      fetchChartData(false); // Tylus fono atnaujinimas
+    }, 300000); // kas 5 minutes
 
     return () => {
       mountedRef.current = false;
@@ -91,15 +93,15 @@ export default function BnbChart() {
   const chartOptions = {
     responsive: true,
     maintainAspectRatio: false,
-    aspectRatio: 2, // Premium aspect ratio
+    aspectRatio: 2,
     animation: {
-      duration: 1000,
-      easing: 'easeOutQuart',
+      duration: 1200,
+      easing: 'easeOutBounce', // Premium bounce efektas
     },
     layout: {
       padding: {
-        top: 12,
-        bottom: 12,
+        top: 16,
+        bottom: 16,
         left: 8,
         right: 8,
       },
@@ -109,11 +111,11 @@ export default function BnbChart() {
         mode: 'index',
         intersect: false,
         backgroundColor: 'rgba(15,15,15,0.95)',
-        titleColor: '#fff',
-        bodyColor: '#eee',
+        titleColor: '#ffffff',
+        bodyColor: '#eeeeee',
         borderColor: '#555',
         borderWidth: 1,
-        padding: 10,
+        padding: 12,
         cornerRadius: 8,
         displayColors: false,
         callbacks: {
@@ -148,7 +150,7 @@ export default function BnbChart() {
       backgroundColor: (context) => {
         const ctx = context.chart.ctx;
         const gradient = ctx.createLinearGradient(0, 0, 0, 300);
-        gradient.addColorStop(0, 'rgba(255, 255, 255, 0.2)');
+        gradient.addColorStop(0, 'rgba(255, 255, 255, 0.25)');
         gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
         return gradient;
       },
@@ -159,17 +161,17 @@ export default function BnbChart() {
     }],
   };
 
-  if (loading) {
+  if (loading && chartData.length === 0) {
     return <MiniLoadingSpinner />;
-  }
-
-  if (chartData.length === 0) {
-    return <div className={styles.noData}>No chart data available.</div>;
   }
 
   return (
     <div className={styles.chartContainer}>
-      {silentLoading && <div className={styles.silentLoader}>Updating...</div>}
+      {silentLoading && (
+        <div className={styles.chartOverlay}>
+          <div className={styles.updatingText}>Updating chart...</div>
+        </div>
+      )}
       <Line key={chartKey} options={chartOptions} data={chartDataset} />
     </div>
   );
