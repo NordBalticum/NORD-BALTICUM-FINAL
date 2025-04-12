@@ -6,6 +6,7 @@ import { Chart as ChartJS, LineElement, CategoryScale, LinearScale, PointElement
 import MiniLoadingSpinner from '@/components/MiniLoadingSpinner';
 import styles from '@/styles/tbnb.module.css';
 
+// Registruojam Chart komponentus
 ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Filler, Decimation);
 
 export default function BnbChart({ onChartReady }) {
@@ -13,6 +14,7 @@ export default function BnbChart({ onChartReady }) {
   const [loading, setLoading] = useState(true);
   const [chartRendered, setChartRendered] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [hasSignaledReady, setHasSignaledReady] = useState(false); // Saugiklis nuo infinite loop
   const chartRef = useRef(null);
 
   const mountedRef = useRef(true);
@@ -95,7 +97,7 @@ export default function BnbChart({ onChartReady }) {
 
     const interval = setInterval(() => {
       fetchChartData(false);
-    }, 3600000);
+    }, 3600000); // Silent update kas 1h
 
     return () => {
       mountedRef.current = false;
@@ -105,10 +107,11 @@ export default function BnbChart({ onChartReady }) {
   }, [isMobile]);
 
   useEffect(() => {
-    if (!loading && chartData.length > 0 && chartRendered && typeof onChartReady === 'function') {
+    if (!loading && chartData.length > 0 && chartRendered && !hasSignaledReady && typeof onChartReady === 'function') {
       onChartReady();
+      setHasSignaledReady(true); // Tik vieną kartą leidžiam
     }
-  }, [loading, chartData, chartRendered, onChartReady]);
+  }, [loading, chartData, chartRendered, hasSignaledReady, onChartReady]);
 
   const chartOptions = {
     responsive: true,
