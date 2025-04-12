@@ -9,7 +9,7 @@ import styles from '@/styles/tbnb.module.css';
 // Registruojam Chart.js komponentus
 ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Filler, Decimation);
 
-// Debounce
+// Debounce funkcija
 function debounce(func, wait) {
   let timeout;
   return (...args) => {
@@ -123,10 +123,12 @@ export default function BnbChart({ onChartReady }) {
     };
   }, [fetchChartData]);
 
-  // Pranešam parent komponentui kai grafikas pasiruošęs
+  // Pranešam parentui kad grafikas paruoštas (SU UŽDELSIMU, kad būtų pilnai nupaišytas DOM)
   useEffect(() => {
     if (!loading && chartData.length > 0 && typeof onChartReady === 'function') {
-      onChartReady();
+      setTimeout(() => {
+        onChartReady();
+      }, 0); // <--- BŪTINA dėl pilno React nupaišymo
     }
   }, [loading, chartData, onChartReady]);
 
@@ -163,7 +165,6 @@ export default function BnbChart({ onChartReady }) {
     };
   }, []);
 
-  // Jei kraunasi arba duomenų nėra – rodom spinner
   if (loading || chartData.length === 0) {
     return (
       <div className={styles.chartContainer}>
