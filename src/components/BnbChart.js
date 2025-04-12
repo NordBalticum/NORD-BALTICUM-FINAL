@@ -12,7 +12,6 @@ ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement, Tooltip,
 export default function BnbChart({ onChartReady }) {
   const [chartData, setChartData] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [silentLoading, setSilentLoading] = useState(false);
   const [chartRendered, setChartRendered] = useState(false);
   const chartRef = useRef(null);
 
@@ -32,8 +31,6 @@ export default function BnbChart({ onChartReady }) {
 
     if (showSpinner) {
       setLoading(true);
-    } else {
-      setSilentLoading(true);
     }
 
     const timeout = setTimeout(() => controller.abort(), 6000);
@@ -48,14 +45,22 @@ export default function BnbChart({ onChartReady }) {
         const day = date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
         const hour = date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
         return {
-          fullLabel: `${day} ${hour}`,   // Tooltipui
-          shortLabel: `${day}`,          // X ašyje tik data
+          fullLabel: `${day} ${hour}`,  // Tooltip (visa data + laikas)
+          shortLabel: `${day}`,          // X ašyje tik diena
           value: parseFloat(price).toFixed(2),
         };
       });
 
-      if (mountedRef.current && formatted.length > 0) {
-        setChartData(formatted);
+      let filtered = formatted;
+
+      // Jeigu Mobile – sumažinam taškų kiekį iki 7
+      if (isMobile) {
+        const step = Math.ceil(formatted.length / 7);
+        filtered = formatted.filter((_, index) => index % step === 0);
+      }
+
+      if (mountedRef.current && filtered.length > 0) {
+        setChartData(filtered);
       }
     } catch (err) {
       console.error('❌ BnbChart fetch error:', err.message);
@@ -63,7 +68,6 @@ export default function BnbChart({ onChartReady }) {
       clearTimeout(timeout);
       if (mountedRef.current) {
         setLoading(false);
-        setSilentLoading(false);
       }
     }
   }, [isMobile]);
@@ -102,7 +106,14 @@ export default function BnbChart({ onChartReady }) {
         setChartRendered(true);
       }
     },
-    layout: { padding: 0 },
+    layout: {
+      padding: {
+        left: 15,
+        right: 15,
+        top: 0,
+        bottom: 0,
+      }
+    },
     plugins: {
       tooltip: {
         mode: 'index',
@@ -135,11 +146,12 @@ export default function BnbChart({ onChartReady }) {
         ticks: {
           color: '#bbb',
           font: { size: isMobile ? 10 : 12 },
-          padding: 6,
+          padding: 10,
           maxRotation: 45,
           minRotation: 0,
+          maxTicksLimit: isMobile ? 7 : 14, // Tik 7 ant mobile, 14 ant desktop
           callback: function(value, index) {
-            return chartData[index]?.shortLabel || ''; // X ašyje tik data
+            return chartData[index]?.shortLabel || '';
           }
         },
         grid: { display: false },
