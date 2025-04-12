@@ -6,6 +6,17 @@ import { Chart as ChartJS, LineElement, CategoryScale, LinearScale, PointElement
 import MiniLoadingSpinner from '@/components/MiniLoadingSpinner';
 import styles from '@/styles/tbnb.module.css';
 
+// Debounce funkcija (premium)
+function debounce(func, wait) {
+  let timeout;
+  return (...args) => {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => {
+      func.apply(null, args);
+    }, wait);
+  };
+}
+
 ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Filler);
 
 export default function BnbChart() {
@@ -28,7 +39,7 @@ export default function BnbChart() {
     }
 
     const controller = new AbortController();
-    controllerRef = controller;
+    controllerRef.current = controller;
 
     if (showSpinner) {
       setLoading(true);
@@ -92,6 +103,22 @@ export default function BnbChart() {
       }
     };
   }, [fetchChartData]);
+
+  // --- ČIA RESIZE FIX SU DEBOUNCE ---
+  useEffect(() => {
+    const handleResize = debounce(() => {
+      if (chartRef.current) {
+        chartRef.current.resize();
+      }
+    }, 300);
+
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
+  // ----------------------------------
 
   const chartOptions = {
     responsive: true,
