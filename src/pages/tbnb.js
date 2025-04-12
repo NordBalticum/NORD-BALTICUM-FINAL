@@ -17,50 +17,34 @@ export default function TBnbPage() {
   const { user, wallet } = useAuth();
   const { balances, refetch: refreshBalance, initialLoading: balancesInitialLoading } = useBalance();
   const { prices, refetch: refreshPrices, loading: pricesLoading } = usePrices();
-  
+
   const [chartData, setChartData] = useState([]);
   const [initialChartLoading, setInitialChartLoading] = useState(true);
   const [chartKey, setChartKey] = useState(0);
   const [lastChartUpdate, setLastChartUpdate] = useState(0);
-  const [pricesReady, setPricesReady] = useState(false);
 
   const router = useRouter();
 
-  // 1. Pagrindinis užkrovimas
   useEffect(() => {
     if (user && wallet?.address) {
       fetchAllData();
     }
   }, [user, wallet]);
 
-  // 2. Fono atnaujinimas
   useEffect(() => {
     const interval = setInterval(() => {
       silentRefresh();
     }, 30000);
     return () => clearInterval(interval);
-  }, [pricesReady]);
+  }, []);
 
   const fetchAllData = async () => {
     try {
       await Promise.all([
         refreshBalance(),
-        refreshPrices()
+        refreshPrices(),
       ]);
-
-      // Tikrinam ar kainos paruoštos
-      if (prices?.tbnb?.eur && prices?.tbnb?.usd) {
-        setPricesReady(true);
-        await fetchChartData(true);
-      } else {
-        const checker = setInterval(async () => {
-          if (prices?.tbnb?.eur && prices?.tbnb?.usd) {
-            clearInterval(checker);
-            setPricesReady(true);
-            await fetchChartData(true);
-          }
-        }, 500);
-      }
+      await fetchChartData(true);
     } catch (error) {
       console.error('❌ Initial load failed:', error);
       setInitialChartLoading(false);
@@ -71,11 +55,9 @@ export default function TBnbPage() {
     try {
       await Promise.all([
         refreshBalance(),
-        refreshPrices()
+        refreshPrices(),
       ]);
-      if (pricesReady) {
-        fetchChartData(false);
-      }
+      fetchChartData(false);
     } catch (error) {
       console.warn('⚠️ Silent refresh failed:', error);
     }
@@ -84,21 +66,20 @@ export default function TBnbPage() {
   const fetchChartData = async (showSpinner = false) => {
     const now = Date.now();
     if (now - lastChartUpdate < 60000 && !showSpinner) return;
-
     if (showSpinner) setInitialChartLoading(true);
 
     try {
-      if (!prices?.tbnb?.eur || !prices?.tbnb?.usd) {
-        console.warn('⚠️ Prices still not ready, skipping chart fetch.');
-        return;
-      }
-
-      const response = await fetch(`/api/coingecko?coin=binancecoin&range=30d`);
+      // ✅ Tiesiogiai iš Coingecko EUR istorinės kainos
+      const response = await fetch(`https://api.coingecko.com/api/v3/coins/binancecoin/market_chart?vs_currency=eur&days=30`);
       const data = await response.json();
 
-      const formattedPrices = (data?.prices || []).map(p => ({
+      if (!data?.prices) {
+        throw new Error('No price data returned from Coingecko');
+      }
+
+      const formattedPrices = data.prices.map(p => ({
         time: new Date(p[0]).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }),
-        value: ((p[1] * prices.tbnb.eur) / prices.tbnb.usd).toFixed(2)
+        value: parseFloat(p[1]).toFixed(2),
       }));
 
       if (formattedPrices.length > 0) {
@@ -113,7 +94,7 @@ export default function TBnbPage() {
       setLastChartUpdate(now);
       setChartKey(prev => prev + 1);
     } catch (error) {
-      console.error('❌ Failed fetching chart data:', error);
+      console.error('❌ Chart fetch failed:', error);
       setChartData([]);
     } finally {
       if (showSpinner) setInitialChartLoading(false);
@@ -148,8 +129,17 @@ export default function TBnbPage() {
       },
     },
     scales: {
-      x: { ticks: { color: '#fff' }, grid: { display: false } },
-      y: { ticks: { color: '#fff', callback: v => `€${parseFloat(v).toFixed(2)}` }, grid: { display: false } },
+      x: {
+        ticks: { color: '#fff' },
+        grid: { display: false },
+      },
+      y: {
+        ticks: {
+          color: '#fff',
+          callback: (v) => `€${parseFloat(v).toFixed(2)}`,
+        },
+        grid: { display: false },
+      },
     },
   };
 
