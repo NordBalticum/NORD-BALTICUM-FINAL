@@ -9,17 +9,6 @@ import styles from '@/styles/tbnb.module.css';
 // Registruojam Chart komponentus
 ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Filler, Decimation);
 
-// Debounce funkcija
-function debounce(func, wait) {
-  let timeout;
-  return (...args) => {
-    clearTimeout(timeout);
-    timeout = setTimeout(() => {
-      func.apply(null, args);
-    }, wait);
-  };
-}
-
 export default function BnbChart({ onChartReady }) {
   const [chartData, setChartData] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -59,7 +48,8 @@ export default function BnbChart({ onChartReady }) {
         const day = date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
         const hour = date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
         return {
-          time: `${day} ${hour}`,
+          fullLabel: `${day} ${hour}`,   // Tooltipui
+          shortLabel: `${day}`,          // X ašyje tik data
           value: parseFloat(price).toFixed(2),
         };
       });
@@ -109,14 +99,14 @@ export default function BnbChart({ onChartReady }) {
       duration: 1000,
       easing: 'easeOutBounce',
       onComplete: () => {
-        setChartRendered(true); // Signalizuojam kai grafikas nupaišytas
+        setChartRendered(true);
       }
     },
     layout: { padding: 0 },
     plugins: {
-      tooltip: { 
-        mode: 'index', 
-        intersect: false, 
+      tooltip: {
+        mode: 'index',
+        intersect: false,
         backgroundColor: 'rgba(15,15,15,0.92)',
         titleColor: '#ffffff',
         bodyColor: '#dddddd',
@@ -126,6 +116,10 @@ export default function BnbChart({ onChartReady }) {
         cornerRadius: 8,
         displayColors: false,
         callbacks: {
+          title: (tooltipItems) => {
+            const index = tooltipItems[0].dataIndex;
+            return chartData[index]?.fullLabel || '';
+          },
           label: (context) => `€ ${parseFloat(context.raw).toFixed(2)}`,
         },
       },
@@ -144,6 +138,9 @@ export default function BnbChart({ onChartReady }) {
           padding: 6,
           maxRotation: 45,
           minRotation: 0,
+          callback: function(value, index) {
+            return chartData[index]?.shortLabel || ''; // X ašyje tik data
+          }
         },
         grid: { display: false },
       },
@@ -164,9 +161,9 @@ export default function BnbChart({ onChartReady }) {
   };
 
   const chartDataset = {
-    labels: chartData.map(p => p.time),
+    labels: chartData.map(p => p.shortLabel),
     datasets: [{
-      data: chartData.map(p => p.value),
+      data: chartData.map(p => parseFloat(p.value)),
       fill: true,
       backgroundColor: (ctx) => {
         const gradient = ctx.chart.ctx.createLinearGradient(0, 0, 0, 300);
