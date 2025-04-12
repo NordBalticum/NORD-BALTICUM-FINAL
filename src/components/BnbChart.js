@@ -6,7 +6,7 @@ import { Chart as ChartJS, LineElement, CategoryScale, LinearScale, PointElement
 import MiniLoadingSpinner from '@/components/MiniLoadingSpinner';
 import styles from '@/styles/tbnb.module.css';
 
-// Registruojam ChartJS komponentus
+// Registruojam Chart.js komponentus
 ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Filler, Decimation);
 
 // Debounce funkcija
@@ -20,7 +20,7 @@ function debounce(func, wait) {
   };
 }
 
-export default function BnbChart({ onLoad }) {
+export default function BnbChart({ onChartReady }) {
   const [chartData, setChartData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [silentLoading, setSilentLoading] = useState(false);
@@ -117,7 +117,7 @@ export default function BnbChart({ onLoad }) {
 
     const interval = setInterval(() => {
       fetchChartData(false);
-    }, 300000); // kas 5 min
+    }, 300000); // Kas 5 minutes
 
     return () => {
       mountedRef.current = false;
@@ -128,14 +128,14 @@ export default function BnbChart({ onLoad }) {
     };
   }, [fetchChartData]);
 
-  // Kai užsikrauna grafikas – triggerinam onLoad parentui
+  // Kai grafikas paruoštas – paskelbiame parent komponentui
   useEffect(() => {
-    if (!loading && chartData.length > 0) {
-      onLoad?.();
+    if (!loading && chartData.length > 0 && typeof onChartReady === 'function') {
+      onChartReady();
     }
-  }, [loading, chartData, onLoad]);
+  }, [loading, chartData, onChartReady]);
 
-  // Pilnas stabilus resize + reanimate
+  // Pilnas Resize + Reanimate stabilumas
   useEffect(() => {
     const handleResize = debounce(() => {
       requestAnimationFrame(() => {
