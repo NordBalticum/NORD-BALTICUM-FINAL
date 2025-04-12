@@ -18,20 +18,19 @@ export default function TBnbPage() {
   const { balances, refetch: refreshBalance, initialLoading: balancesInitialLoading } = useBalance();
   const { prices, refetch: refreshPrices, loading: pricesLoading } = usePrices();
   const [chartData, setChartData] = useState([]);
-  const [initialPageLoading, setInitialPageLoading] = useState(true);
   const [chartLoading, setChartLoading] = useState(true);
   const [chartKey, setChartKey] = useState(0);
   const [lastChartUpdate, setLastChartUpdate] = useState(0);
   const router = useRouter();
 
-  // Pagrindinis pirmas užkrovimas
+  // Pagrindinis užkrovimas
   useEffect(() => {
     if (user && wallet?.address) {
-      fetchEverything();
+      fetchAllData();
     }
   }, [user, wallet]);
 
-  // Fono atnaujinimas kas 30s
+  // Fono refresh
   useEffect(() => {
     const interval = setInterval(() => {
       silentRefresh();
@@ -39,22 +38,16 @@ export default function TBnbPage() {
     return () => clearInterval(interval);
   }, []);
 
-  const fetchEverything = async () => {
+  const fetchAllData = async () => {
     try {
       await Promise.all([
         refreshBalance(),
         refreshPrices()
       ]);
-
-      if (prices?.tbnb?.eur && prices?.tbnb?.usd) {
-        await fetchChartData(true);
-      } else {
-        console.warn('⚠️ Prices not ready, skipping chart loading.');
-      }
+      await fetchChartData(true);
     } catch (error) {
-      console.error('❌ Initial fetch failed:', error);
-    } finally {
-      setInitialPageLoading(false);
+      console.error('❌ Initial load failed:', error);
+      setChartLoading(false);
     }
   };
 
@@ -77,31 +70,31 @@ export default function TBnbPage() {
 
     try {
       if (!prices?.tbnb?.eur || !prices?.tbnb?.usd) {
-        console.warn('⚠️ Prices missing, skipping chart fetch.');
+        console.warn('⚠️ Prices not ready, skipping chart fetch.');
         return;
       }
 
       const response = await fetch(`/api/coingecko?coin=binancecoin&range=30d`);
       const data = await response.json();
-
-      const parsed = (data?.prices || []).map(p => ({
+      const rawPrices = (data?.prices || []).map(p => ({
         time: new Date(p[0]).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }),
-        value: ((p[1] * prices.tbnb.eur) / prices.tbnb.usd).toFixed(2)
+        value: ((p[1] * prices.tbnb.eur) / prices.tbnb.usd).toFixed(2),
       }));
 
-      if (parsed.length > 0) {
-        const todayLabel = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
-        const lastPoint = parsed[parsed.length - 1];
+      if (rawPrices.length > 0) {
+        const lastPoint = rawPrices[rawPrices.length - 1];
+        const today = new Date();
+        const todayLabel = today.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
         if (lastPoint.time !== todayLabel) {
-          parsed.push({ time: todayLabel, value: lastPoint.value });
+          rawPrices.push({ time: todayLabel, value: lastPoint.value });
         }
       }
 
-      setChartData(parsed);
+      setChartData(rawPrices);
       setLastChartUpdate(now);
       setChartKey(prev => prev + 1);
     } catch (error) {
-      console.error('❌ Chart fetch failed:', error);
+      console.error('❌ Chart fetch error:', error);
       setChartData([]);
     } finally {
       if (showSpinner) setChartLoading(false);
@@ -117,29 +110,19 @@ export default function TBnbPage() {
   const chartOptions = {
     responsive: true,
     maintainAspectRatio: false,
-    animation: {
-      duration: 800,
-      easing: 'easeOutQuart',
-    },
     plugins: {
       tooltip: {
         mode: 'index',
         intersect: false,
-        backgroundColor: '#222',
-        titleColor: '#fff',
-        bodyColor: '#fff',
+        callbacks: {
+          label: (context) => `€ ${parseFloat(context.raw).toFixed(2)}`,
+        },
       },
     },
     scales: {
-      x: {
-        ticks: { color: '#bbb' },
-        grid: { display: false }
-      },
-      y: {
-        ticks: { color: '#bbb', callback: v => `€${parseFloat(v).toFixed(2)}` },
-        grid: { display: false }
-      }
-    }
+      x: { ticks: { color: '#fff' }, grid: { display: false } },
+      y: { ticks: { color: '#fff', callback: (v) => `€${parseFloat(v).toFixed(2)}` }, grid: { display: false } },
+    },
   };
 
   const chartDataset = {
@@ -150,20 +133,19 @@ export default function TBnbPage() {
       backgroundColor: (context) => {
         const ctx = context.chart.ctx;
         const gradient = ctx.createLinearGradient(0, 0, 0, 400);
-        gradient.addColorStop(0, 'rgba(0, 212, 255, 0.25)');
-        gradient.addColorStop(1, 'rgba(0, 212, 255, 0)');
+        gradient.addColorStop(0, 'rgba(255, 255, 255, 0.2)');
+        gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
         return gradient;
       },
-      borderColor: '#00d4ff',
-      borderWidth: 2,
+      borderColor: '#ffffff',
       pointRadius: 0,
       tension: 0.4,
-    }]
+    }],
   };
 
   return (
-    <main className={styles.pageContainer} style={{ width: '100vw', height: '100vh', overflowY: 'auto', background: '#0b0f19' }}>
-      <div className={styles.pageContent} style={{ minHeight: '100vh', width: '100%', opacity: initialPageLoading ? 0 : 1, transition: 'opacity 0.6s ease-in-out' }}>
+    <main className={styles.pageContainer} style={{ width: '100vw', height: '100vh', overflowY: 'auto' }}>
+      <div className={styles.pageContent} style={{ minHeight: '100vh', width: '100%' }}>
 
         {/* Header */}
         <div className={styles.header}>
@@ -194,7 +176,7 @@ export default function TBnbPage() {
             ) : chartData.length > 0 ? (
               <Line key={chartKey} options={chartOptions} data={chartDataset} />
             ) : (
-              <div style={{ color: '#888', textAlign: 'center', padding: '2rem' }}>
+              <div style={{ color: '#ccc', textAlign: 'center', padding: '2rem' }}>
                 No chart data available.
               </div>
             )}
