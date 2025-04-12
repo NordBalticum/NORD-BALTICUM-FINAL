@@ -1,37 +1,24 @@
 'use client';
 
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Line } from 'react-chartjs-2';
 import { Chart as ChartJS, LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Filler, Decimation } from 'chart.js';
 import MiniLoadingSpinner from '@/components/MiniLoadingSpinner';
 import styles from '@/styles/tbnb.module.css';
 
-// Registruojam Chart komponentus
 ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Filler, Decimation);
-
-// Debounce funkcija
-function debounce(func, wait) {
-  let timeout;
-  return (...args) => {
-    clearTimeout(timeout);
-    timeout = setTimeout(() => {
-      func.apply(null, args);
-    }, wait);
-  };
-}
 
 export default function BnbChart({ onChartReady }) {
   const [chartData, setChartData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [silentLoading, setSilentLoading] = useState(false);
   const [chartRendered, setChartRendered] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const chartRef = useRef(null);
 
   const mountedRef = useRef(true);
   const controllerRef = useRef(null);
-  const [isMobile, setIsMobile] = useState(false);
 
-  // Tikras Mobile atpažinimas
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const checkMobile = () => {
@@ -43,79 +30,79 @@ export default function BnbChart({ onChartReady }) {
     }
   }, []);
 
-  const fetchChartData = useCallback(async (showSpinner = true) => {
-    if (!mountedRef.current) return;
-
-    if (controllerRef.current) {
-      controllerRef.current.abort();
-    }
-
-    const controller = new AbortController();
-    controllerRef.current = controller;
-
-    if (showSpinner) {
-      setLoading(true);
-    } else {
-      setSilentLoading(true);
-    }
-
-    const timeout = setTimeout(() => controller.abort(), 6000);
-
-    try {
-      const res = await fetch('https://api.coingecko.com/api/v3/coins/binancecoin/market_chart?vs_currency=eur&days=7', { signal: controller.signal });
-      const data = await res.json();
-      if (!data?.prices) throw new Error('No price data');
-
-      const formatted = data.prices.map(([timestamp, price]) => {
-        const date = new Date(timestamp);
-        const day = date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
-        const hour = date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
-        return {
-          fullLabel: `${day} ${hour}`,   // Tooltip
-          shortLabel: `${day}`,          // X ašyje tik data
-          value: parseFloat(price).toFixed(2),
-          rawDate: date.toDateString(),
-          rawHour: date.getHours(),
-        };
-      });
-
-      // Išfiltruojam duomenis
-      const unique = [];
-      const map = new Map();
-      for (const item of formatted) {
-        const key = `${item.rawDate}-${item.rawHour}`;
-        if (!map.has(key)) {
-          map.set(key, true);
-          unique.push(item);
-        }
-      }
-
-      let filtered = unique;
-      if (isMobile) {
-        filtered = unique.filter(item => item.rawHour === 0); // Mobile: tik 00:00 val.
-      }
-
-      if (mountedRef.current && filtered.length > 0) {
-        setChartData(filtered);
-      }
-    } catch (err) {
-      console.error('❌ BnbChart fetch error:', err.message);
-    } finally {
-      clearTimeout(timeout);
-      if (mountedRef.current) {
-        setLoading(false);
-        setSilentLoading(false);
-      }
-    }
-  }, [isMobile]);
-
   useEffect(() => {
     mountedRef.current = true;
-    fetchChartData(true);
+
+    const fetchChartData = async (showSpinner = true) => {
+      if (!mountedRef.current) return;
+
+      if (controllerRef.current) {
+        controllerRef.current.abort();
+      }
+
+      const controller = new AbortController();
+      controllerRef.current = controller;
+
+      if (showSpinner) {
+        setLoading(true);
+      } else {
+        setSilentLoading(true);
+      }
+
+      const timeout = setTimeout(() => controller.abort(), 6000);
+
+      try {
+        const res = await fetch('https://api.coingecko.com/api/v3/coins/binancecoin/market_chart?vs_currency=eur&days=7', { signal: controller.signal });
+        const data = await res.json();
+        if (!data?.prices) throw new Error('No price data');
+
+        const formatted = data.prices.map(([timestamp, price]) => {
+          const date = new Date(timestamp);
+          const day = date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+          const hour = date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+          return {
+            fullLabel: `${day} ${hour}`, 
+            shortLabel: `${day}`,          
+            value: parseFloat(price).toFixed(2),
+            rawDate: date.toDateString(),
+            rawHour: date.getHours(),
+          };
+        });
+
+        const unique = [];
+        const map = new Map();
+        for (const item of formatted) {
+          const key = `${item.rawDate}-${item.rawHour}`;
+          if (!map.has(key)) {
+            map.set(key, true);
+            unique.push(item);
+          }
+        }
+
+        let filtered = unique;
+        if (isMobile) {
+          filtered = unique.filter(item => item.rawHour === 0); 
+        }
+
+        if (mountedRef.current && filtered.length > 0) {
+          setChartData(filtered);
+        }
+      } catch (err) {
+        console.error('❌ BnbChart fetch error:', err.message);
+      } finally {
+        clearTimeout(timeout);
+        if (mountedRef.current) {
+          setLoading(false);
+          setSilentLoading(false);
+        }
+      }
+    };
+
+    fetchChartData(true); // Pirmas kartas
 
     const interval = setInterval(() => {
-      fetchChartData(false); // Silent background refresh
-    }, 3600000);
+      fetchChartData(false); // Silent auto refresh
+    }, 3600000); // kas 1h
 
     return () => {
       mountedRef.current = false;
@@ -124,7 +111,7 @@ export default function BnbChart({ onChartReady }) {
         controllerRef.current.abort();
       }
     };
-  }, [fetchChartData]);
+  }, [isMobile]); // **Svarbu tik nuo isMobile, ne fetchChartData!**
 
   useEffect(() => {
     if (!loading && chartData.length > 0 && chartRendered && typeof onChartReady === 'function') {
