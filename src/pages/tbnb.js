@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useBalance } from '@/hooks/useBalance';
 import { usePrices } from '@/hooks/usePrices';
-import { getTransactions } from '@/utils/networkApi';
+import { fetchNetworkTransactions } from '@/utils/networkApi'; // PATAISYTA ČIA
 import { Line } from 'react-chartjs-2';
 import { Chart as ChartJS, LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Filler } from 'chart.js';
 import Image from 'next/image';
@@ -103,8 +103,8 @@ export default function TBnbPage() {
 
   const fetchTransactions = async () => {
     try {
-      const txs = await getTransactions('tbnb', user.email);
-      const sortedTxs = (txs || []).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+      const txs = await fetchNetworkTransactions('tbnb', wallet.address); // PATAISYTA ČIA
+      const sortedTxs = (txs || []).sort((a, b) => new Date(b.timeStamp * 1000) - new Date(a.timeStamp * 1000));
       setTransactions(sortedTxs.slice(0, 3));
     } catch (error) {
       console.error('❌ Failed to load transactions', error);
@@ -212,7 +212,7 @@ export default function TBnbPage() {
   return (
     <main style={{ width: '100vw', height: '100vh', overflowY: 'auto' }} className={styles.pageContainer}>
       <div className={styles.pageContent} style={{ minHeight: '100vh', width: '100%' }}>
-        
+
         {/* Header */}
         <div className={styles.header}>
           <Image src="/icons/bnb.svg" alt="BNB Logo" width={48} height={48} className={styles.networkLogo} priority />
@@ -234,21 +234,21 @@ export default function TBnbPage() {
           </div>
         </div>
 
-        {/* Chart + Buttons */}
+        {/* Chart */}
         <div className={styles.chartWrapper}>
           <div className={styles.chartBorder}>
             {initialChartLoading ? (
               <MiniLoadingSpinner />
             ) : (
-              <>
-                <Line key={chartKey} options={chartOptions} data={chartDataset} />
-                <div className={styles.actionButtons}>
-                  <button onClick={handleSend} className={styles.actionButton}>Send</button>
-                  <button onClick={handleReceive} className={styles.actionButton}>Receive</button>
-                </div>
-              </>
+              <Line key={chartKey} options={chartOptions} data={chartDataset} />
             )}
           </div>
+        </div>
+
+        {/* Send/Receive */}
+        <div className={styles.actionButtons}>
+          <button onClick={handleSend} className={styles.actionButton}>Send</button>
+          <button onClick={handleReceive} className={styles.actionButton}>Receive</button>
         </div>
 
         {/* Transactions */}
@@ -269,18 +269,18 @@ export default function TBnbPage() {
                     className={styles.transactionItem}
                   >
                     <div className={styles.transactionLeft}>
-                      <div className={styles.transactionIcon} style={{ backgroundColor: tx.type === 'send' ? '#EF4444' : '#22C55E' }}>
-                        {tx.type === 'send' ? '↑' : '↓'}
+                      <div className={styles.transactionIcon} style={{ backgroundColor: tx.from.toLowerCase() === wallet.address.toLowerCase() ? '#EF4444' : '#22C55E' }}>
+                        {tx.from.toLowerCase() === wallet.address.toLowerCase() ? '↑' : '↓'}
                       </div>
                       <div>
                         <div className={styles.transactionAddress}>
-                          {tx.address?.slice(0, 6)}...{tx.address?.slice(-4)}
+                          {tx.to?.slice(0, 6)}...{tx.to?.slice(-4)}
                         </div>
-                        <div className={styles.transactionTime}>{moment(tx.timestamp).fromNow()}</div>
+                        <div className={styles.transactionTime}>{moment(tx.timeStamp * 1000).fromNow()}</div>
                       </div>
                     </div>
                     <div className={styles.transactionAmount}>
-                      {tx.type === 'send' ? '-' : '+'}{parseFloat(tx.amount).toFixed(4)} BNB
+                      {(tx.from.toLowerCase() === wallet.address.toLowerCase() ? '-' : '+')}{(parseFloat(tx.value) / 1e18).toFixed(4)} BNB
                     </div>
                   </motion.div>
                 ))}
@@ -294,4 +294,4 @@ export default function TBnbPage() {
       </div>
     </main>
   );
-}
+          }
