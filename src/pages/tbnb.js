@@ -41,7 +41,6 @@ export default function TBnbPage() {
     }
   }, [isLoadingBalances]);
 
-  // Jei nėra user ar wallet, rodom spinner
   if (!user || !wallet) {
     return (
       <main className={styles.pageContainer}>
@@ -88,6 +87,7 @@ export default function TBnbPage() {
         {/* CHART */}
         <div className={styles.chartWrapper}>
           <div className={styles.chartBorder}>
+            {/* Jeigu chartas dar neparuoštas – rodom spinner */}
             {!chartReady && (
               <div className={styles.chartLoading}>
                 <MiniLoadingSpinner />
@@ -104,7 +104,7 @@ export default function TBnbPage() {
             >
               <BnbChartDynamic
                 onChartReady={() => {
-                  console.log('✅ Chart Ready');
+                  console.log('✅ Chart is now fully ready!');
                   setChartReady(true);
                 }}
               />
