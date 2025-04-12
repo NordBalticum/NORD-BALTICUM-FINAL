@@ -9,7 +9,6 @@ import { Chart as ChartJS, LineElement, CategoryScale, LinearScale, PointElement
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import MiniLoadingSpinner from '@/components/MiniLoadingSpinner';
-import { motion, AnimatePresence } from 'framer-motion';
 import styles from '@/styles/networkpages.module.css';
 
 ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Filler);
@@ -19,19 +18,20 @@ export default function TBnbPage() {
   const { balances, refetch: refreshBalance, initialLoading: balancesInitialLoading } = useBalance();
   const { prices, refetch: refreshPrices, loading: pricesLoading } = usePrices();
   const [chartData, setChartData] = useState([]);
+  const [initialPageLoading, setInitialPageLoading] = useState(true);
   const [chartLoading, setChartLoading] = useState(true);
   const [chartKey, setChartKey] = useState(0);
   const [lastChartUpdate, setLastChartUpdate] = useState(0);
   const router = useRouter();
 
-  const isFullyLoading = balancesInitialLoading || pricesLoading || chartLoading;
-
+  // Pagrindinis pirmas užkrovimas
   useEffect(() => {
     if (user && wallet?.address) {
-      fetchAllData();
+      fetchEverything();
     }
   }, [user, wallet]);
 
+  // Fono atnaujinimas kas 30s
   useEffect(() => {
     const interval = setInterval(() => {
       silentRefresh();
@@ -39,16 +39,22 @@ export default function TBnbPage() {
     return () => clearInterval(interval);
   }, []);
 
-  const fetchAllData = async () => {
+  const fetchEverything = async () => {
     try {
       await Promise.all([
         refreshBalance(),
         refreshPrices()
       ]);
-      await fetchChartData(true);
+
+      if (prices?.tbnb?.eur && prices?.tbnb?.usd) {
+        await fetchChartData(true);
+      } else {
+        console.warn('⚠️ Prices not ready, skipping chart loading.');
+      }
     } catch (error) {
-      console.error('❌ Initial load failed:', error);
-      setChartLoading(false);
+      console.error('❌ Initial fetch failed:', error);
+    } finally {
+      setInitialPageLoading(false);
     }
   };
 
@@ -71,31 +77,31 @@ export default function TBnbPage() {
 
     try {
       if (!prices?.tbnb?.eur || !prices?.tbnb?.usd) {
-        console.warn('⚠️ Prices not ready yet.');
+        console.warn('⚠️ Prices missing, skipping chart fetch.');
         return;
       }
 
-      const res = await fetch(`/api/coingecko?coin=binancecoin&range=30d`);
-      const data = await res.json();
+      const response = await fetch(`/api/coingecko?coin=binancecoin&range=30d`);
+      const data = await response.json();
 
-      const mapped = (data?.prices || []).map(([timestamp, price]) => ({
-        time: new Date(timestamp).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }),
-        value: ((price * prices.tbnb.eur) / prices.tbnb.usd).toFixed(2),
+      const parsed = (data?.prices || []).map(p => ({
+        time: new Date(p[0]).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }),
+        value: ((p[1] * prices.tbnb.eur) / prices.tbnb.usd).toFixed(2)
       }));
 
-      if (mapped.length > 0) {
-        const lastPoint = mapped[mapped.length - 1];
+      if (parsed.length > 0) {
         const todayLabel = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+        const lastPoint = parsed[parsed.length - 1];
         if (lastPoint.time !== todayLabel) {
-          mapped.push({ time: todayLabel, value: lastPoint.value });
+          parsed.push({ time: todayLabel, value: lastPoint.value });
         }
       }
 
-      setChartData(mapped);
+      setChartData(parsed);
       setLastChartUpdate(now);
       setChartKey(prev => prev + 1);
     } catch (error) {
-      console.error('❌ Chart fetch error:', error);
+      console.error('❌ Chart fetch failed:', error);
       setChartData([]);
     } finally {
       if (showSpinner) setChartLoading(false);
@@ -111,19 +117,29 @@ export default function TBnbPage() {
   const chartOptions = {
     responsive: true,
     maintainAspectRatio: false,
+    animation: {
+      duration: 800,
+      easing: 'easeOutQuart',
+    },
     plugins: {
       tooltip: {
         mode: 'index',
         intersect: false,
-        callbacks: {
-          label: (context) => `€ ${parseFloat(context.raw).toFixed(2)}`,
-        },
+        backgroundColor: '#222',
+        titleColor: '#fff',
+        bodyColor: '#fff',
       },
     },
     scales: {
-      x: { ticks: { color: '#fff' }, grid: { display: false } },
-      y: { ticks: { color: '#fff', callback: (v) => `€${parseFloat(v).toFixed(2)}` }, grid: { display: false } },
-    },
+      x: {
+        ticks: { color: '#bbb' },
+        grid: { display: false }
+      },
+      y: {
+        ticks: { color: '#bbb', callback: v => `€${parseFloat(v).toFixed(2)}` },
+        grid: { display: false }
+      }
+    }
   };
 
   const chartDataset = {
@@ -134,22 +150,23 @@ export default function TBnbPage() {
       backgroundColor: (context) => {
         const ctx = context.chart.ctx;
         const gradient = ctx.createLinearGradient(0, 0, 0, 400);
-        gradient.addColorStop(0, 'rgba(255, 255, 255, 0.2)');
-        gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+        gradient.addColorStop(0, 'rgba(0, 212, 255, 0.25)');
+        gradient.addColorStop(1, 'rgba(0, 212, 255, 0)');
         return gradient;
       },
-      borderColor: '#ffffff',
+      borderColor: '#00d4ff',
+      borderWidth: 2,
       pointRadius: 0,
       tension: 0.4,
-    }],
+    }]
   };
 
   return (
-    <main className={styles.pageContainer} style={{ width: '100vw', height: '100vh', overflowY: 'auto', background: 'radial-gradient(circle at center, #10131A 0%, #0a0d13 100%)' }}>
-      <div className={styles.pageContent} style={{ minHeight: '100vh', width: '100%' }}>
+    <main className={styles.pageContainer} style={{ width: '100vw', height: '100vh', overflowY: 'auto', background: '#0b0f19' }}>
+      <div className={styles.pageContent} style={{ minHeight: '100vh', width: '100%', opacity: initialPageLoading ? 0 : 1, transition: 'opacity 0.6s ease-in-out' }}>
 
         {/* Header */}
-        <motion.div className={styles.header} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1 }}>
+        <div className={styles.header}>
           <Image src="/icons/bnb.svg" alt="BNB Logo" width={48} height={48} className={styles.networkLogo} priority />
           <h1 className={styles.networkNameSmall}>Binance Smart Chain (Testnet)</h1>
 
@@ -157,41 +174,41 @@ export default function TBnbPage() {
             {balancesInitialLoading || pricesLoading ? (
               <MiniLoadingSpinner />
             ) : (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1 }}>
+              <>
                 <p className={styles.balanceText}>
                   {balances?.tbnb?.balance?.toFixed(4)} BNB
                 </p>
                 <p className={styles.balanceFiat}>
                   {((balances?.tbnb?.balance || 0) * (prices?.tbnb?.eur || 0)).toFixed(2)} € | {((balances?.tbnb?.balance || 0) * (prices?.tbnb?.usd || 0)).toFixed(2)} $
                 </p>
-              </motion.div>
+              </>
             )}
           </div>
-        </motion.div>
+        </div>
 
         {/* Chart */}
-        <motion.div className={styles.chartWrapper} style={{ width: '92%', margin: '0 auto' }} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1.2 }}>
+        <div className={styles.chartWrapper} style={{ width: '92%', margin: '0 auto' }}>
           <div className={styles.chartBorder}>
             {chartLoading ? (
               <MiniLoadingSpinner />
             ) : chartData.length > 0 ? (
               <Line key={chartKey} options={chartOptions} data={chartDataset} />
             ) : (
-              <div style={{ color: '#ccc', textAlign: 'center', padding: '2rem' }}>
+              <div style={{ color: '#888', textAlign: 'center', padding: '2rem' }}>
                 No chart data available.
               </div>
             )}
           </div>
-        </motion.div>
+        </div>
 
         {/* Action Buttons */}
-        <motion.div className={styles.actionButtons} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1.5 }}>
+        <div className={styles.actionButtons}>
           <button onClick={handleSend} className={styles.actionButton}>Send</button>
           <button onClick={handleReceive} className={styles.actionButton}>Receive</button>
           <button onClick={handleHistory} className={styles.actionButton}>History</button>
-        </motion.div>
+        </div>
 
       </div>
     </main>
   );
-}
+          }
