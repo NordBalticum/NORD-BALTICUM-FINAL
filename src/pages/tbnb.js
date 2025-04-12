@@ -23,7 +23,7 @@ export default function TBnbPage() {
   const router = useRouter();
 
   const [initialLoaded, setInitialLoaded] = useState(false);
-  const [chartLoaded, setChartLoaded] = useState(false);
+  const [chartReady, setChartReady] = useState(false);
 
   const isLoadingBalances = balancesLoading || pricesLoading;
 
@@ -57,7 +57,7 @@ export default function TBnbPage() {
             width={60} 
             height={60} 
             className={styles.networkLogo} 
-            priority 
+            priority
           />
           <h1 className={styles.networkNameSmall}>
             Binance Smart Chain (Testnet)
@@ -83,21 +83,21 @@ export default function TBnbPage() {
         {/* Chart */}
         <div className={styles.chartWrapper}>
           <div className={styles.chartBorder}>
-            {!chartLoaded && (
+            {!chartReady && (
               <div className={styles.chartLoading}>
                 <MiniLoadingSpinner />
               </div>
             )}
             <div
               style={{
-                opacity: chartLoaded ? 1 : 0,
-                transform: chartLoaded ? 'scale(1)' : 'scale(0.8)',
+                opacity: chartReady ? 1 : 0,
+                transform: chartReady ? 'scale(1)' : 'scale(0.8)',
                 transition: 'opacity 0.8s ease, transform 0.8s ease',
                 width: '100%',
                 height: '100%',
               }}
             >
-              <BnbChartDynamic onLoad={() => setChartLoaded(true)} />
+              <BnbChartDynamic onChartReady={() => setChartReady(true)} />
             </div>
           </div>
         </div>
