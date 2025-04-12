@@ -2,7 +2,7 @@
 .pageContainer {
   width: 100vw;
   height: 100vh;
-  background: #0a0a0a;
+  background: #0b122d; /* NAUJAS projekto fonas */
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -70,8 +70,8 @@
   border-radius: 20px;
   box-shadow: 0 0 30px rgba(255, 255, 255, 0.06);
   padding: clamp(18px, 3vh, 28px) clamp(24px, 5vw, 36px);
-  margin-top: clamp(12px, 3vh, 24px);
-  margin-bottom: clamp(10px, 2vh, 20px);
+  margin-top: clamp(10px, 2vh, 18px); /* sumažintas */
+  margin-bottom: clamp(8px, 2vh, 14px); /* sumažintas */
   text-align: center;
   transition: all 0.4s ease;
 }
@@ -101,7 +101,7 @@
   justify-content: center;
   align-items: center;
   padding: clamp(16px, 4vw, 32px);
-  margin-top: clamp(16px, 4vh, 28px);
+  margin-top: clamp(10px, 2vh, 18px); /* sumažintas */
   box-sizing: border-box;
 }
 
@@ -143,7 +143,7 @@
   border-radius: 24px;
   box-shadow: inset 0 0 40px rgba(255, 255, 255, 0.05);
   overflow: hidden;
-  contain: strict; /* <--- Šitas */
+  contain: strict;
 }
 
 /* === OVERLAY === */
@@ -195,8 +195,8 @@
 .actionButtons {
   display: flex;
   justify-content: center;
-  gap: clamp(20px, 5vw, 40px);
-  margin: clamp(24px, 6vh, 48px) 0;
+  gap: clamp(16px, 4vw, 32px); /* sumažintas */
+  margin: clamp(16px, 4vh, 32px) 0; /* sumažintas */
   flex-wrap: wrap;
 }
 
