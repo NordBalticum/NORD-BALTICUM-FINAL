@@ -15,9 +15,18 @@ export default function BnbChart() {
   const [chartKey, setChartKey] = useState(0);
   const [selectedDays, setSelectedDays] = useState(7);
   const mountedRef = useRef(true);
+  const controllerRef = useRef(null);
 
   const fetchChartData = useCallback(async (days = 7, showSpinner = true) => {
     if (!mountedRef.current) return;
+
+    // Cancel previous request if still pending
+    if (controllerRef.current) {
+      controllerRef.current.abort();
+    }
+
+    const controller = new AbortController();
+    controllerRef.current = controller;
 
     if (showSpinner) {
       setLoading(true);
@@ -25,7 +34,6 @@ export default function BnbChart() {
       setSilentLoading(true);
     }
 
-    const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 6000);
 
     try {
@@ -52,8 +60,10 @@ export default function BnbChart() {
         setChartKey(prev => prev + 1);
       }
     } catch (err) {
-      console.error('❌ BnbChart fetch error:', err.message);
-      if (mountedRef.current) setChartData([]);
+      if (err.name !== 'AbortError') {
+        console.error('❌ BnbChart fetch error:', err.message);
+        if (mountedRef.current) setChartData([]);
+      }
     } finally {
       clearTimeout(timeout);
       if (mountedRef.current) {
@@ -74,42 +84,46 @@ export default function BnbChart() {
     return () => {
       mountedRef.current = false;
       clearInterval(interval);
+      if (controllerRef.current) {
+        controllerRef.current.abort();
+      }
     };
   }, [fetchChartData, selectedDays]);
 
   const chartOptions = {
     responsive: true,
     maintainAspectRatio: false,
-    aspectRatio: 2, // <<< PREMIUM aspect ratio
+    aspectRatio: 2, // PREMIUM aspect ratio
     animation: {
-      duration: 800,
-      easing: 'easeOutCubic',
+      duration: 1000,
+      easing: 'easeOutQuart',
     },
     layout: {
       padding: {
-        top: 10,
-        bottom: 10,
-        left: 0,
-        right: 0,
+        top: 12,
+        bottom: 12,
+        left: 8,
+        right: 8,
       },
     },
     plugins: {
       tooltip: {
         mode: 'index',
         intersect: false,
-        backgroundColor: 'rgba(15,15,15,0.9)',
+        backgroundColor: 'rgba(15,15,15,0.95)',
         titleColor: '#fff',
         bodyColor: '#eee',
         borderColor: '#555',
         borderWidth: 1,
         padding: 10,
         cornerRadius: 8,
+        displayColors: false,
         callbacks: {
           label: (context) => `€ ${parseFloat(context.raw).toFixed(2)}`,
         },
       },
       legend: {
-        display: false, // <<< paslepiam legendą
+        display: false,
       },
     },
     scales: {
@@ -136,14 +150,14 @@ export default function BnbChart() {
       backgroundColor: (context) => {
         const ctx = context.chart.ctx;
         const gradient = ctx.createLinearGradient(0, 0, 0, 300);
-        gradient.addColorStop(0, 'rgba(255, 255, 255, 0.25)');
+        gradient.addColorStop(0, 'rgba(255, 255, 255, 0.2)');
         gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
         return gradient;
       },
       borderColor: '#ffffff',
-      pointRadius: 2,
+      pointRadius: 3,
       borderWidth: 2,
-      tension: 0.4,
+      tension: 0.35,
     }],
   };
 
