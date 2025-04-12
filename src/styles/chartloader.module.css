@@ -1,9 +1,30 @@
+.chartWrapper {
+  width: 92%;
+  margin: 0 auto;
+  max-width: 1200px;
+  animation: fadein 1s ease-out;
+}
+
+.chartBorder {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.02);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(12px);
+  padding: 1rem;
+  transition: all 0.5s ease;
+}
+
+.chartBorder:hover {
+  box-shadow: 0 6px 30px rgba(0, 255, 255, 0.3);
+  border-color: rgba(0, 255, 255, 0.3);
+}
+
 .noData {
   color: #ccc;
   text-align: center;
   padding: 2rem;
   font-size: 1rem;
-  animation: fadein 1s ease-out;
 }
 
 .silentLoader {
@@ -12,4 +33,38 @@
   font-size: 0.9rem;
   margin-bottom: 0.5rem;
   animation: fadein 0.5s ease-out;
+}
+
+@media (max-width: 1024px) {
+  .chartWrapper {
+    width: 95%;
+  }
+}
+
+@media (max-width: 768px) {
+  .chartWrapper {
+    width: 98%;
+  }
+  .chartBorder {
+    border-radius: 16px;
+    padding: 0.8rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .chartWrapper {
+    width: 100%;
+    padding: 0 8px;
+  }
+  .chartBorder {
+    border-radius: 14px;
+    padding: 0.5rem;
+    box-shadow: 0 3px 10px rgba(0, 255, 255, 0.25);
+  }
+}
+
+/* FadeIn */
+@keyframes fadein {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
 }
