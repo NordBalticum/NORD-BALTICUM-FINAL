@@ -102,16 +102,18 @@ export default function TBnbPage() {
   };
 
   const fetchTransactions = async () => {
+    if (!wallet?.address) return;
     try {
+      setTransactionsLoading(true);
       const txs = await fetchNetworkTransactions('tbnb', wallet.address);
-      const userTxs = (txs || []).filter(tx =>
-        tx.from?.toLowerCase() === wallet.address?.toLowerCase() ||
-        tx.to?.toLowerCase() === wallet.address?.toLowerCase()
+      const filtered = (txs || []).filter(tx =>
+        tx.from?.toLowerCase() === wallet.address.toLowerCase() ||
+        tx.to?.toLowerCase() === wallet.address.toLowerCase()
       );
-      const sortedTxs = userTxs.sort((a, b) => b.timeStamp - a.timeStamp);
-      setTransactions(sortedTxs.slice(0, 3));
+      const sorted = filtered.sort((a, b) => b.timeStamp - a.timeStamp);
+      setTransactions(sorted.slice(0, 3));
     } catch (error) {
-      console.error('❌ Failed to load transactions', error);
+      console.error('❌ Error fetching transactions:', error);
       setTransactions([]);
     } finally {
       setTransactionsLoading(false);
@@ -134,15 +136,14 @@ export default function TBnbPage() {
 
       const response = await fetch(`/api/coingecko?coin=binancecoin&range=30d`);
       const data = await response.json();
-      let rawPrices = data?.prices?.map(p => ({
+      const rawPrices = data?.prices?.map(p => ({
         time: new Date(p[0]).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }),
-        value: ((p[1] * (prices?.tbnb?.eur || 0)) / (prices?.tbnb?.usd || 1)).toFixed(2),
+        value: ((p[1] * prices?.tbnb?.eur) / prices?.tbnb?.usd).toFixed(2),
       })) || [];
 
       if (rawPrices.length > 0) {
         const lastPoint = rawPrices[rawPrices.length - 1];
-        const today = new Date();
-        const todayLabel = today.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+        const todayLabel = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
         if (lastPoint.time !== todayLabel) {
           rawPrices.push({ time: todayLabel, value: lastPoint.value });
         }
@@ -216,7 +217,7 @@ export default function TBnbPage() {
   return (
     <main style={{ width: '100vw', height: '100vh', overflowY: 'auto' }} className={styles.pageContainer}>
       <div className={styles.pageContent} style={{ minHeight: '100vh', width: '100%' }}>
-
+        
         {/* Header */}
         <div className={styles.header}>
           <Image src="/icons/bnb.svg" alt="BNB Logo" width={48} height={48} className={styles.networkLogo} priority />
@@ -268,7 +269,7 @@ export default function TBnbPage() {
                   const amount = (parseFloat(tx.value) / 1e18).toFixed(4);
                   return (
                     <motion.div
-                      key={index}
+                      key={tx.hash || index}
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -10 }}
@@ -281,7 +282,7 @@ export default function TBnbPage() {
                         </div>
                         <div>
                           <div className={styles.transactionAddress}>
-                            {isSent ? tx.to?.slice(0, 6) : tx.from?.slice(0, 6)}...{isSent ? tx.to?.slice(-4) : tx.from?.slice(-4)}
+                            {isSent ? tx.to.slice(0, 6) : tx.from.slice(0, 6)}...{isSent ? tx.to.slice(-4) : tx.from.slice(-4)}
                           </div>
                           <div className={styles.transactionTime}>{moment(tx.timeStamp * 1000).fromNow()}</div>
                         </div>
@@ -294,7 +295,9 @@ export default function TBnbPage() {
                 })}
               </AnimatePresence>
             ) : (
-              <div className={styles.spinner}>No transactions found.</div>
+              <div className={styles.noTransactionsFound}>
+                No transactions found.
+              </div>
             )}
           </div>
         </div>
