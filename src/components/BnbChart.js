@@ -9,7 +9,7 @@ import styles from '@/styles/tbnb.module.css';
 // Registruojam Chart.js komponentus
 ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Filler, Decimation);
 
-// Debounce funkcija
+// Debounce
 function debounce(func, wait) {
   let timeout;
   return (...args) => {
@@ -29,7 +29,6 @@ export default function BnbChart({ onChartReady }) {
 
   const mountedRef = useRef(true);
   const controllerRef = useRef(null);
-
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
 
   const fetchChartData = useCallback(async (showSpinner = true) => {
@@ -51,12 +50,8 @@ export default function BnbChart({ onChartReady }) {
     const timeout = setTimeout(() => controller.abort(), 6000);
 
     try {
-      const res = await fetch(
-        `https://api.coingecko.com/api/v3/coins/binancecoin/market_chart?vs_currency=eur&days=7`,
-        { signal: controller.signal }
-      );
+      const res = await fetch('https://api.coingecko.com/api/v3/coins/binancecoin/market_chart?vs_currency=eur&days=7', { signal: controller.signal });
       const data = await res.json();
-
       if (!data?.prices) throw new Error('No price data');
 
       const formatted = data.prices.map(([timestamp, price]) => {
@@ -117,7 +112,7 @@ export default function BnbChart({ onChartReady }) {
 
     const interval = setInterval(() => {
       fetchChartData(false);
-    }, 300000); // Kas 5 minutes
+    }, 3600000); // Kas 1 valandą (3600 sekundžių)
 
     return () => {
       mountedRef.current = false;
@@ -128,18 +123,18 @@ export default function BnbChart({ onChartReady }) {
     };
   }, [fetchChartData]);
 
-  // Kai grafikas paruoštas – paskelbiame parent komponentui
+  // Pranešam parent komponentui kai grafikas pasiruošęs
   useEffect(() => {
     if (!loading && chartData.length > 0 && typeof onChartReady === 'function') {
       onChartReady();
     }
   }, [loading, chartData, onChartReady]);
 
-  // Pilnas Resize + Reanimate stabilumas
+  // Pilnas stabilus resize + reanimate
   useEffect(() => {
     const handleResize = debounce(() => {
       requestAnimationFrame(() => {
-        if (chartRef.current && chartRef.current.resize) {
+        if (chartRef.current?.resize) {
           try {
             chartRef.current.resize();
             chartRef.current.update('active');
@@ -168,8 +163,13 @@ export default function BnbChart({ onChartReady }) {
     };
   }, []);
 
-  if (loading && chartData.length === 0) {
-    return <MiniLoadingSpinner />;
+  // Jei kraunasi arba duomenų nėra – rodom spinner
+  if (loading || chartData.length === 0) {
+    return (
+      <div className={styles.chartContainer}>
+        <MiniLoadingSpinner />
+      </div>
+    );
   }
 
   const chartOptions = {
