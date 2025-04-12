@@ -142,7 +142,6 @@
   box-shadow: inset 0 0 40px rgba(255, 255, 255, 0.05);
   transition: all 0.5s ease;
   overflow: hidden;
-  animation: fadeInPage 1.2s ease-out;
 }
 
 /* === OVERLAY === */
