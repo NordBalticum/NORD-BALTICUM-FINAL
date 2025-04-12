@@ -1,0 +1,299 @@
+/* === PAGE WRAPPER === */
+.pageContainer {
+  width: 100vw;
+  height: 100vh;
+  background: #0a0a0a;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow-x: hidden;
+  overflow-y: auto;
+  scroll-behavior: smooth;
+}
+
+.pageContent {
+  width: 100%;
+  max-width: 1400px;
+  transform: scale(0.9);
+  transform-origin: top center;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: clamp(20px, 5vh, 60px) clamp(16px, 4vw, 32px);
+  box-sizing: border-box;
+  transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+  animation: fadeInPage 1.5s ease-out;
+}
+
+@keyframes fadeInPage {
+  0% { opacity: 0; transform: scale(0.95); }
+  100% { opacity: 1; transform: scale(0.9); }
+}
+
+/* === HEADER === */
+.header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: clamp(16px, 4vh, 32px);
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.networkLogo {
+  width: clamp(48px, 9vw, 64px);
+  height: clamp(48px, 9vw, 64px);
+  transition: transform 0.3s ease;
+}
+
+.networkLogo:hover {
+  transform: scale(1.1);
+}
+
+.networkNameSmall {
+  font-size: clamp(1.2rem, 2.5vw, 1.8rem);
+  font-weight: 750;
+  opacity: 0.92;
+  color: white;
+  transition: all 0.3s ease;
+}
+
+/* === BALANCE === */
+.balanceBox {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(16px);
+  border-radius: 20px;
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.04);
+  padding: clamp(18px, 3vh, 28px) clamp(24px, 5vw, 36px);
+  margin-top: 12px;
+  text-align: center;
+  transition: all 0.4s ease, box-shadow 0.4s ease;
+}
+
+.balanceBox:hover {
+  box-shadow: 0 0 30px rgba(255, 255, 255, 0.08);
+}
+
+.balanceText {
+  font-size: clamp(1.8rem, 4vw, 2.6rem);
+  font-weight: 800;
+  color: white;
+}
+
+.balanceFiat {
+  margin-top: 6px;
+  font-size: clamp(1.1rem, 2.5vw, 1.5rem);
+  opacity: 0.8;
+  color: #d1d5db;
+}
+
+/* === CHART === */
+.chartWrapper {
+  width: 100%;
+  max-width: 950px;
+  display: flex;
+  justify-content: center;
+  padding: clamp(14px, 4vw, 30px);
+  margin-top: clamp(20px, 5vh, 40px);
+}
+
+.chartBorder {
+  width: 100%;
+  min-height: clamp(300px, 50vh, 400px);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(12px);
+  border-radius: 26px;
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.06);
+  padding: 24px;
+  animation: fadeInChart 1s ease-out;
+  transition: all 0.4s ease;
+  overflow: hidden;
+}
+
+.chartBorder:hover {
+  box-shadow: 0 0 40px rgba(0, 140, 255, 0.2);
+}
+
+@keyframes fadeInChart {
+  0% { opacity: 0; transform: translateY(10px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+/* === INSIDE CHART - DAYS SELECTOR === */
+.chartContainer {
+  width: 100%;
+  height: 100%;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+.daysSelector {
+  display: flex;
+  gap: 0.6rem;
+  margin-bottom: 1rem;
+  justify-content: center;
+  align-items: center;
+}
+
+.dayButton {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #ccc;
+  padding: 0.4rem 0.8rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.dayButton:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+}
+
+.active {
+  background: #ffffff;
+  color: #0a0a0a;
+  border-color: #ffffff;
+  font-weight: 600;
+}
+
+.noData {
+  color: #aaa;
+  font-size: 1rem;
+  text-align: center;
+  padding: 2rem;
+}
+
+/* === SILENT LOADER === */
+.silentLoader {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  font-size: 0.8rem;
+  background: rgba(255, 255, 255, 0.12);
+  padding: 0.35rem 0.8rem;
+  border-radius: 10px;
+  color: #eee;
+  backdrop-filter: blur(5px);
+  animation: fadeout 2.5s forwards;
+  opacity: 1;
+}
+
+/* Fadeout animation */
+@keyframes fadeout {
+  0% { opacity: 1; }
+  70% { opacity: 0.8; }
+  100% { opacity: 0; visibility: hidden; }
+}
+
+/* === ACTION BUTTONS === */
+.actionButtons {
+  display: flex;
+  justify-content: center;
+  gap: clamp(20px, 5vw, 40px);
+  margin: clamp(24px, 6vh, 48px) 0;
+  flex-wrap: wrap;
+}
+
+.actionButton {
+  padding: clamp(12px, 2.5vw, 18px) clamp(26px, 6vw, 48px);
+  background: black;
+  color: white;
+  border: 1px solid white;
+  border-radius: 9999px;
+  font-size: clamp(1rem, 2vw, 1.3rem);
+  cursor: pointer;
+  transition: all 0.3s ease, box-shadow 0.3s ease;
+}
+
+.actionButton:hover {
+  background: white;
+  color: black;
+  transform: scale(1.05);
+  box-shadow: 0 0 10px white;
+}
+
+/* === SPINNER === */
+.spinner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+.loadingCircle {
+  animation: spin 1s linear infinite;
+  border: 3px solid white;
+  border-top: 3px solid transparent;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* === RESPONSIVE ULTIMATE === */
+@media (max-width: 768px) {
+  .pageContent {
+    transform: scale(0.92);
+    padding: 20px 16px;
+  }
+  .chartWrapper {
+    padding: 12px;
+    margin-top: 16px;
+  }
+  .chartBorder {
+    min-height: clamp(240px, 45vh, 360px);
+    padding: 20px;
+  }
+  .actionButtons {
+    flex-direction: row;
+    gap: 16px;
+  }
+  .actionButton {
+    flex: 1 1 auto;
+    min-width: 42%;
+    text-align: center;
+  }
+}
+
+@media (max-width: 1098px) {
+  .pageContent {
+    transform: scale(0.9);
+    padding: 24px 20px;
+  }
+}
+
+@media (max-width: 1600px) {
+  .pageContent {
+    transform: scale(0.88);
+    padding: 28px 24px;
+  }
+}
+
+@media (max-width: 1920px) {
+  .pageContent {
+    transform: scale(0.85);
+    padding: 30px 28px;
+  }
+}
+
+@media (min-width: 2560px) {
+  .pageContent {
+    transform: scale(0.8);
+    padding: 32px 32px;
+  }
+}
