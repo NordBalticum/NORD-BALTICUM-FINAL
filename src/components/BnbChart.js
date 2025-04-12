@@ -11,7 +11,6 @@ ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement, Tooltip,
 export default function BnbChart({ onChartReady }) {
   const [chartData, setChartData] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [silentLoading, setSilentLoading] = useState(false);
   const [chartRendered, setChartRendered] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const chartRef = useRef(null);
@@ -43,11 +42,7 @@ export default function BnbChart({ onChartReady }) {
       const controller = new AbortController();
       controllerRef.current = controller;
 
-      if (showSpinner) {
-        setLoading(true);
-      } else {
-        setSilentLoading(true);
-      }
+      if (showSpinner) setLoading(true);
 
       const timeout = setTimeout(() => controller.abort(), 6000);
 
@@ -61,14 +56,15 @@ export default function BnbChart({ onChartReady }) {
           const day = date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
           const hour = date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
           return {
-            fullLabel: `${day} ${hour}`, 
-            shortLabel: `${day}`,          
+            fullLabel: `${day} ${hour}`,
+            shortLabel: `${day}`,
             value: parseFloat(price).toFixed(2),
             rawDate: date.toDateString(),
             rawHour: date.getHours(),
           };
         });
 
+        // Unikalūs taškai per valandą
         const unique = [];
         const map = new Map();
         for (const item of formatted) {
@@ -81,7 +77,7 @@ export default function BnbChart({ onChartReady }) {
 
         let filtered = unique;
         if (isMobile) {
-          filtered = unique.filter(item => item.rawHour === 0); 
+          filtered = unique.filter(item => item.rawHour === 0); // Mobile tik 00:00
         }
 
         if (mountedRef.current && filtered.length > 0) {
@@ -91,27 +87,22 @@ export default function BnbChart({ onChartReady }) {
         console.error('❌ BnbChart fetch error:', err.message);
       } finally {
         clearTimeout(timeout);
-        if (mountedRef.current) {
-          setLoading(false);
-          setSilentLoading(false);
-        }
+        if (mountedRef.current) setLoading(false);
       }
     };
 
-    fetchChartData(true); // Pirmas kartas
+    fetchChartData(true);
 
     const interval = setInterval(() => {
-      fetchChartData(false); // Silent auto refresh
-    }, 3600000); // kas 1h
+      fetchChartData(false);
+    }, 3600000);
 
     return () => {
       mountedRef.current = false;
       clearInterval(interval);
-      if (controllerRef.current) {
-        controllerRef.current.abort();
-      }
+      if (controllerRef.current) controllerRef.current.abort();
     };
-  }, [isMobile]); // **Svarbu tik nuo isMobile, ne fetchChartData!**
+  }, [isMobile]);
 
   useEffect(() => {
     if (!loading && chartData.length > 0 && chartRendered && typeof onChartReady === 'function') {
@@ -187,7 +178,7 @@ export default function BnbChart({ onChartReady }) {
   const chartDataset = {
     labels: chartData.map(p => p.shortLabel),
     datasets: [{
-      data: chartData.map(p => p.value),
+      data: chartData.map(p => parseFloat(p.value)),
       fill: true,
       backgroundColor: (ctx) => {
         const gradient = ctx.chart.ctx.createLinearGradient(0, 0, 0, 300);
