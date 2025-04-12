@@ -85,7 +85,7 @@
   color: #d1d5db;
 }
 
-/* === CHART === */
+/* === CHART WRAPPER + BORDER === */
 .chartWrapper {
   width: 100%;
   max-width: 950px;
@@ -111,76 +111,6 @@
 
 .chartBorder:hover {
   box-shadow: 0 0 40px rgba(0, 140, 255, 0.2);
-}
-
-.chartContainer {
-  width: 100%;
-  height: 100%;
-  padding: 1rem;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  position: relative;
-}
-
-/* === DAYS SELECTOR === */
-.daysSelector {
-  display: flex;
-  gap: 0.6rem;
-  margin-bottom: 1rem;
-  justify-content: center;
-}
-
-.dayButton {
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  color: #ccc;
-  padding: 0.4rem 0.8rem;
-  border-radius: 8px;
-  font-size: 0.9rem;
-  font-weight: 500;
-  transition: all 0.3s ease;
-  cursor: pointer;
-}
-
-.dayButton:hover {
-  background: rgba(255, 255, 255, 0.15);
-  color: white;
-}
-
-.active {
-  background: white;
-  color: black;
-  border-color: white;
-  font-weight: 600;
-}
-
-/* === NO DATA === */
-.noData {
-  color: #aaa;
-  font-size: 1rem;
-  text-align: center;
-  padding: 2rem;
-}
-
-/* === SILENT LOADER === */
-.silentLoader {
-  position: absolute;
-  top: 12px;
-  right: 14px;
-  font-size: 0.8rem;
-  background: rgba(255, 255, 255, 0.12);
-  padding: 0.35rem 0.8rem;
-  border-radius: 10px;
-  color: #eee;
-  backdrop-filter: blur(5px);
-  animation: fadeout 2.5s forwards;
-}
-
-@keyframes fadeout {
-  0% { opacity: 1; }
-  70% { opacity: 0.8; }
-  100% { opacity: 0; visibility: hidden; }
 }
 
 /* === ACTION BUTTONS === */
