@@ -9,6 +9,7 @@ import { Chart as ChartJS, LineElement, CategoryScale, LinearScale, PointElement
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import MiniLoadingSpinner from '@/components/MiniLoadingSpinner';
+import { motion, AnimatePresence } from 'framer-motion';
 import styles from '@/styles/networkpages.module.css';
 
 ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Filler);
@@ -23,14 +24,14 @@ export default function TBnbPage() {
   const [lastChartUpdate, setLastChartUpdate] = useState(0);
   const router = useRouter();
 
-  // Pagrindinis užkrovimas
+  const isFullyLoading = balancesInitialLoading || pricesLoading || chartLoading;
+
   useEffect(() => {
     if (user && wallet?.address) {
       fetchAllData();
     }
   }, [user, wallet]);
 
-  // Fono refresh
   useEffect(() => {
     const interval = setInterval(() => {
       silentRefresh();
@@ -70,27 +71,27 @@ export default function TBnbPage() {
 
     try {
       if (!prices?.tbnb?.eur || !prices?.tbnb?.usd) {
-        console.warn('⚠️ Prices not ready, skipping chart fetch.');
+        console.warn('⚠️ Prices not ready yet.');
         return;
       }
 
-      const response = await fetch(`/api/coingecko?coin=binancecoin&range=30d`);
-      const data = await response.json();
-      const rawPrices = (data?.prices || []).map(p => ({
-        time: new Date(p[0]).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }),
-        value: ((p[1] * prices.tbnb.eur) / prices.tbnb.usd).toFixed(2),
+      const res = await fetch(`/api/coingecko?coin=binancecoin&range=30d`);
+      const data = await res.json();
+
+      const mapped = (data?.prices || []).map(([timestamp, price]) => ({
+        time: new Date(timestamp).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }),
+        value: ((price * prices.tbnb.eur) / prices.tbnb.usd).toFixed(2),
       }));
 
-      if (rawPrices.length > 0) {
-        const lastPoint = rawPrices[rawPrices.length - 1];
-        const today = new Date();
-        const todayLabel = today.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+      if (mapped.length > 0) {
+        const lastPoint = mapped[mapped.length - 1];
+        const todayLabel = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
         if (lastPoint.time !== todayLabel) {
-          rawPrices.push({ time: todayLabel, value: lastPoint.value });
+          mapped.push({ time: todayLabel, value: lastPoint.value });
         }
       }
 
-      setChartData(rawPrices);
+      setChartData(mapped);
       setLastChartUpdate(now);
       setChartKey(prev => prev + 1);
     } catch (error) {
@@ -144,11 +145,11 @@ export default function TBnbPage() {
   };
 
   return (
-    <main className={styles.pageContainer} style={{ width: '100vw', height: '100vh', overflowY: 'auto' }}>
+    <main className={styles.pageContainer} style={{ width: '100vw', height: '100vh', overflowY: 'auto', background: 'radial-gradient(circle at center, #10131A 0%, #0a0d13 100%)' }}>
       <div className={styles.pageContent} style={{ minHeight: '100vh', width: '100%' }}>
 
         {/* Header */}
-        <div className={styles.header}>
+        <motion.div className={styles.header} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1 }}>
           <Image src="/icons/bnb.svg" alt="BNB Logo" width={48} height={48} className={styles.networkLogo} priority />
           <h1 className={styles.networkNameSmall}>Binance Smart Chain (Testnet)</h1>
 
@@ -156,20 +157,20 @@ export default function TBnbPage() {
             {balancesInitialLoading || pricesLoading ? (
               <MiniLoadingSpinner />
             ) : (
-              <>
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1 }}>
                 <p className={styles.balanceText}>
                   {balances?.tbnb?.balance?.toFixed(4)} BNB
                 </p>
                 <p className={styles.balanceFiat}>
                   {((balances?.tbnb?.balance || 0) * (prices?.tbnb?.eur || 0)).toFixed(2)} € | {((balances?.tbnb?.balance || 0) * (prices?.tbnb?.usd || 0)).toFixed(2)} $
                 </p>
-              </>
+              </motion.div>
             )}
           </div>
-        </div>
+        </motion.div>
 
         {/* Chart */}
-        <div className={styles.chartWrapper} style={{ width: '92%', margin: '0 auto' }}>
+        <motion.div className={styles.chartWrapper} style={{ width: '92%', margin: '0 auto' }} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1.2 }}>
           <div className={styles.chartBorder}>
             {chartLoading ? (
               <MiniLoadingSpinner />
@@ -181,16 +182,16 @@ export default function TBnbPage() {
               </div>
             )}
           </div>
-        </div>
+        </motion.div>
 
         {/* Action Buttons */}
-        <div className={styles.actionButtons}>
+        <motion.div className={styles.actionButtons} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1.5 }}>
           <button onClick={handleSend} className={styles.actionButton}>Send</button>
           <button onClick={handleReceive} className={styles.actionButton}>Receive</button>
           <button onClick={handleHistory} className={styles.actionButton}>History</button>
-        </div>
+        </motion.div>
 
       </div>
     </main>
   );
-          }
+}
