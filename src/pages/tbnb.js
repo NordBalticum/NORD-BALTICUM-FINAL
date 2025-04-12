@@ -10,8 +10,8 @@ import dynamic from 'next/dynamic';
 import MiniLoadingSpinner from '@/components/MiniLoadingSpinner';
 import styles from '@/styles/tbnb.module.css';
 
-// Dinaminis importas su fallback spinneriu
-const BnbChartDynamic = dynamic(() => import('@/components/BnbChart').then(mod => mod.default), {
+// Dinaminis importas BE .then()
+const BnbChartDynamic = dynamic(() => import('@/components/BnbChart'), {
   ssr: false,
   loading: () => (
     <div className={styles.chartLoading}>
