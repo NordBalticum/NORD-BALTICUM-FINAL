@@ -27,7 +27,7 @@ export default function BnbChart({ onChartReady }) {
     }
 
     const controller = new AbortController();
-    controllerRef.current = controller;
+    controllerRef = controller;
 
     if (showSpinner) {
       setLoading(true);
@@ -45,15 +45,14 @@ export default function BnbChart({ onChartReady }) {
         const day = date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
         const hour = date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
         return {
-          fullLabel: `${day} ${hour}`,  // Tooltip (visa data + laikas)
-          shortLabel: `${day}`,          // X ašyje tik diena
+          fullLabel: `${day} ${hour}`,
+          shortLabel: `${day}`,
           value: parseFloat(price).toFixed(2),
         };
       });
 
       let filtered = formatted;
 
-      // Jeigu Mobile – sumažinam taškų kiekį iki 7
       if (isMobile) {
         const step = Math.ceil(formatted.length / 7);
         filtered = formatted.filter((_, index) => index % step === 0);
@@ -63,7 +62,9 @@ export default function BnbChart({ onChartReady }) {
         setChartData(filtered);
       }
     } catch (err) {
-      console.error('❌ BnbChart fetch error:', err.message);
+      if (err.name !== 'AbortError') {
+        console.error('❌ BnbChart fetch error:', err.message);
+      }
     } finally {
       clearTimeout(timeout);
       if (mountedRef.current) {
@@ -80,16 +81,26 @@ export default function BnbChart({ onChartReady }) {
       fetchChartData(false);
     }, 3600000);
 
+    // **Tab / Window / Phone protection**
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        mountedRef.current = false;
+        if (controllerRef.current) controllerRef.current.abort();
+      } else if (document.visibilityState === 'visible') {
+        mountedRef.current = true;
+        fetchChartData(false);
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
     return () => {
       mountedRef.current = false;
       clearInterval(interval);
-      if (controllerRef.current) {
-        controllerRef.current.abort();
-      }
+      if (controllerRef.current) controllerRef.current.abort();
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [fetchChartData]);
 
-  // Kai loading baigėsi ir duomenys yra – signalizuojam parentui
   useEffect(() => {
     if (!loading && chartData.length > 0 && chartRendered && typeof onChartReady === 'function') {
       onChartReady();
@@ -149,7 +160,7 @@ export default function BnbChart({ onChartReady }) {
           padding: 10,
           maxRotation: 45,
           minRotation: 0,
-          maxTicksLimit: isMobile ? 7 : 14, // Tik 7 ant mobile, 14 ant desktop
+          maxTicksLimit: isMobile ? 7 : 14,
           callback: function(value, index) {
             return chartData[index]?.shortLabel || '';
           }
