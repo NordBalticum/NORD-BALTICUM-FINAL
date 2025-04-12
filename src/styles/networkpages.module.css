@@ -2,7 +2,7 @@
 .pageContainer {
   width: 100vw;
   height: 100vh;
-  background: #0a0a0a; /* Premium black */
+  background: #0a0a0a;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -22,7 +22,13 @@
   align-items: center;
   padding: clamp(20px, 5vh, 60px) clamp(16px, 4vw, 32px);
   box-sizing: border-box;
-  transition: all 0.4s ease;
+  transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+  animation: fadeInPage 1.5s ease-out;
+}
+
+@keyframes fadeInPage {
+  0% { opacity: 0; transform: scale(0.95); }
+  100% { opacity: 1; transform: scale(0.9); }
 }
 
 /* === HEADER === */
@@ -33,6 +39,7 @@
   gap: 12px;
   margin-bottom: clamp(16px, 4vh, 32px);
   text-align: center;
+  transition: all 0.3s ease;
 }
 
 .networkLogo {
@@ -47,8 +54,8 @@
 
 .networkNameSmall {
   font-size: clamp(1.2rem, 2.5vw, 1.8rem);
-  font-weight: 700;
-  opacity: 0.9;
+  font-weight: 750;
+  opacity: 0.92;
   color: white;
   transition: all 0.3s ease;
 }
@@ -59,11 +66,15 @@
   border: 1px solid rgba(255, 255, 255, 0.12);
   backdrop-filter: blur(16px);
   border-radius: 20px;
-  box-shadow: 0 0 40px rgba(255, 255, 255, 0.06);
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.04);
   padding: clamp(18px, 3vh, 28px) clamp(24px, 5vw, 36px);
   margin-top: 12px;
   text-align: center;
-  transition: all 0.4s ease;
+  transition: all 0.4s ease, box-shadow 0.4s ease;
+}
+
+.balanceBox:hover {
+  box-shadow: 0 0 30px rgba(255, 255, 255, 0.08);
 }
 
 .balanceText {
@@ -75,7 +86,7 @@
 .balanceFiat {
   margin-top: 6px;
   font-size: clamp(1.1rem, 2.5vw, 1.5rem);
-  opacity: 0.75;
+  opacity: 0.8;
   color: #d1d5db;
 }
 
@@ -96,12 +107,22 @@
   border: 1px solid rgba(255, 255, 255, 0.12);
   backdrop-filter: blur(12px);
   border-radius: 26px;
-  box-shadow: 0 0 50px rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.06);
   padding: 24px;
+  animation: fadeInChart 1s ease-out;
   transition: all 0.4s ease;
 }
 
-/* === RANGE SELECTOR (Inside Chart) === */
+.chartBorder:hover {
+  box-shadow: 0 0 40px rgba(0, 140, 255, 0.2);
+}
+
+@keyframes fadeInChart {
+  0% { opacity: 0; transform: translateY(10px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+/* === RANGE SELECTOR === */
 .rangeSelector {
   display: flex;
   justify-content: center;
@@ -149,13 +170,14 @@
   border-radius: 9999px;
   font-size: clamp(1rem, 2vw, 1.3rem);
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.3s ease, box-shadow 0.3s ease;
 }
 
 .actionButton:hover {
   background: white;
   color: black;
   transform: scale(1.05);
+  box-shadow: 0 0 10px white;
 }
 
 /* === SPINNER === */
@@ -182,15 +204,10 @@
 }
 
 /* === RESPONSIVE ULTIMATE === */
-
-/* Mobile (phones) */
 @media (max-width: 768px) {
   .pageContent {
     transform: scale(0.92);
     padding: 20px 16px;
-  }
-  .balanceBox {
-    padding: 18px 20px;
   }
   .chartWrapper {
     padding: 12px;
@@ -211,7 +228,6 @@
   }
 }
 
-/* Tablet */
 @media (max-width: 1098px) {
   .pageContent {
     transform: scale(0.9);
@@ -219,7 +235,6 @@
   }
 }
 
-/* Small Desktop */
 @media (max-width: 1600px) {
   .pageContent {
     transform: scale(0.88);
@@ -227,7 +242,6 @@
   }
 }
 
-/* Full HD */
 @media (max-width: 1920px) {
   .pageContent {
     transform: scale(0.85);
@@ -235,7 +249,6 @@
   }
 }
 
-/* 4K Screens */
 @media (min-width: 2560px) {
   .pageContent {
     transform: scale(0.8);
