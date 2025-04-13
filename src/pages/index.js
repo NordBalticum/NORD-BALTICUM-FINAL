@@ -28,12 +28,12 @@ export default function Home() {
 
   // ✅ Redirect į dashboard tik jei authLoading baigtas
   useEffect(() => {
-    if (!isClient || authLoading) return;
+  if (!isClient || authLoading || walletLoading) return;
 
-    if (user) {
-      router.replace("/dashboard");
-    }
-  }, [isClient, authLoading, user, router]);
+  if (user && wallet?.wallet) {
+    router.replace("/dashboard");
+  }
+}, [isClient, authLoading, walletLoading, user, wallet, router]);
 
   const handleSignIn = async (e) => {
     e.preventDefault();
