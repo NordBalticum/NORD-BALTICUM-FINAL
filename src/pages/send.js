@@ -1,17 +1,15 @@
 "use client";
 
 // 1️⃣ IMPORTAI
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 import { useAuth } from "@/contexts/AuthContext";
 import { useNetwork } from "@/contexts/NetworkContext";
 import { useSend } from "@/contexts/SendContext";
-import { useBalances } from "@/contexts/BalanceContext";
+import { useBalance } from "@/contexts/BalanceContext";
 
-import { usePageReady } from "@/hooks/usePageReady";
-import { useSwipeReady } from "@/hooks/useSwipeReady";
-import { useDebounce } from "@/hooks/useDebounce";
+import { useAppFullyReady } from "@/hooks/useAppFullyReady"; // ✅ Naujas hookas
 
 import SwipeSelector from "@/components/SwipeSelector";
 import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
@@ -47,16 +45,15 @@ const buttonColors = {
   avax: "#e84142",
 };
 
-// 3️⃣ PAGRINDINIS KOMPONENTAS
+// 3️⃣ SEND PAGE
 export default function SendPage() {
-  const { user, authLoading, walletLoading } = useAuth();
+  const router = useRouter();
+  const { user } = useAuth();
   const { activeNetwork, setActiveNetwork } = useNetwork();
   const { sendTransaction, sending, gasFee, adminFee, totalFee, feeLoading, feeError } = useSend();
-  const { balances, getUsdBalance, getEurBalance } = useBalances();
+  const { balances, getUsdBalance, getEurBalance } = useBalance();
 
-  const isReady = usePageReady();
-  const swipeReady = useSwipeReady();
-  const router = useRouter();
+  const { ready } = useAppFullyReady(); // ✅ Ultimate readiness hook
 
   const [receiver, setReceiver] = useState("");
   const [amount, setAmount] = useState("");
@@ -69,9 +66,8 @@ export default function SendPage() {
 
   const shortName = useMemo(() => networkShortNames[activeNetwork] || activeNetwork.toUpperCase(), [activeNetwork]);
   const parsedAmount = useMemo(() => Number(amount) || 0, [amount]);
-  const debouncedAmount = useDebounce(parsedAmount, 400);
-
   const netBalance = useMemo(() => balances?.[activeNetwork] || 0, [balances, activeNetwork]);
+
   const balanceEur = getEurBalance(activeNetwork);
   const balanceUsd = getUsdBalance(activeNetwork);
 
@@ -106,7 +102,6 @@ export default function SendPage() {
   const confirmSend = async () => {
     setShowConfirm(false);
     setError(null);
-
     try {
       if (typeof window !== "undefined" && user?.email) {
         const hash = await sendTransaction({
@@ -115,7 +110,6 @@ export default function SendPage() {
           network: activeNetwork,
           userEmail: user.email,
         });
-
         setTransactionHash(hash);
         setReceiver("");
         setAmount("");
@@ -130,12 +124,12 @@ export default function SendPage() {
   const handleRetry = () => setError(null);
 
   useEffect(() => {
-    if (!user && isReady) {
+    if (!user && ready) {
       router.replace("/");
     }
-  }, [user, isReady, router]);
+  }, [user, ready, router]);
 
-  if (!isReady || !swipeReady || authLoading || walletLoading) {
+  if (!ready) {
     return (
       <div className={styles.loader}>
         <MiniLoadingSpinner />
@@ -229,6 +223,7 @@ export default function SendPage() {
           </button>
         </div>
 
+        {/* Confirm Modal */}
         {showConfirm && (
           <div className={styles.overlay}>
             <div className={styles.confirmModal}>
@@ -259,17 +254,17 @@ export default function SendPage() {
           </div>
         )}
 
+        {/* Success Modal */}
         {showSuccess && transactionHash && (
           <SuccessModal
             message="✅ Transaction Successful!"
-            onClose={() => {
-              setShowSuccess(false);
-            }}
+            onClose={() => setShowSuccess(false)}
             transactionHash={transactionHash}
             network={activeNetwork}
           />
         )}
 
+        {/* Error Modal */}
         {error && (
           <ErrorModal
             error={error}
