@@ -11,7 +11,7 @@ import background from "@/styles/background.module.css";
 
 export default function Home() {
   const router = useRouter();
-  const { user, wallet, authLoading, walletLoading, signInWithMagicLink, signInWithGoogle } = useAuth(); // ✅ PILNAS IMPORTAS
+  const { user, authLoading, signInWithMagicLink, signInWithGoogle } = useAuth();
 
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState("idle");
