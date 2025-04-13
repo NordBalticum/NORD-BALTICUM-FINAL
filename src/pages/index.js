@@ -11,29 +11,32 @@ import background from "@/styles/background.module.css";
 
 export default function Home() {
   const router = useRouter();
-  const { user, authLoading, signInWithMagicLink, signInWithGoogle } = useAuth();
+  const { user, authLoading, signInWithMagicLink, signInWithGoogle } = useAuth(); // ✅ TIK USER IR AUTHLOADING
 
   const [email, setEmail] = useState("");
-  const [status, setStatus] = useState("idle");
+  const [status, setStatus] = useState("idle"); // idle | loading | success | error
   const [message, setMessage] = useState("");
   const [isClient, setIsClient] = useState(false);
   const [showModal, setShowModal] = useState(false);
 
+  // ✅ Tikrina ar client
   useEffect(() => {
     if (typeof window !== "undefined") {
       setIsClient(true);
     }
   }, []);
 
+  // ✅ Tikrina ar jau prisijungęs ir redirectina
   useEffect(() => {
     if (!isClient) return;
-    if (authLoading || walletLoading) return;
+    if (authLoading) return;
 
-    if (user && wallet && wallet.wallet) {
+    if (user) {
       router.replace("/dashboard");
     }
-  }, [isClient, authLoading, walletLoading, user, wallet, router]);
+  }, [isClient, authLoading, user, router]);
 
+  // ✅ Magic Link Sign In
   const handleSignIn = async (e) => {
     e.preventDefault();
     setMessage("");
@@ -57,6 +60,7 @@ export default function Home() {
     }
   };
 
+  // ✅ Google Sign In
   const handleGoogleSignIn = async () => {
     try {
       setStatus("loading");
@@ -127,6 +131,7 @@ export default function Home() {
           {status === "loading" ? "CONNECTING..." : "LOGIN WITH GOOGLE"}
         </button>
 
+        {/* ✅ Success/Error Message */}
         <AnimatePresence>
           {message && (
             <motion.p
@@ -147,6 +152,7 @@ export default function Home() {
         </AnimatePresence>
       </form>
 
+      {/* ✅ Success Modal */}
       <AnimatePresence>
         {showModal && (
           <motion.div
