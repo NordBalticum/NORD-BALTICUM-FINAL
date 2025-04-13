@@ -2,14 +2,16 @@
 
 import { useEffect, useState, useCallback } from "react";
 
+// ✅ Token mapping
 const TOKEN_IDS = {
   ethereum: "ethereum",
   bsc: "binancecoin",
   polygon: "matic-network",
   avalanche: "avalanche-2",
-  tbnb: "binancecoin",
+  tbnb: "binancecoin", // TBNB naudoja BNB kainą
 };
 
+// ✅ Fallback kainos
 const FALLBACK_PRICES = {
   ethereum: { eur: 2900, usd: 3100 },
   bsc: { eur: 450, usd: 480 },
@@ -18,22 +20,22 @@ const FALLBACK_PRICES = {
   tbnb: { eur: 450, usd: 480 },
 };
 
+// ✅ Maininis Hookas
 export function usePrices() {
   const [prices, setPrices] = useState(FALLBACK_PRICES);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   const fetchPrices = useCallback(async () => {
-    if (typeof window === "undefined") return;
-
     try {
       setLoading(true);
+
       const ids = Object.values(TOKEN_IDS).join(",");
       const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=eur,usd`, {
         cache: "no-store",
       });
 
-      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+      if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
 
       const data = await res.json();
       const updatedPrices = {};
@@ -49,7 +51,7 @@ export function usePrices() {
       setError(null);
     } catch (err) {
       console.error("❌ Price fetch error:", err.message);
-      setPrices(FALLBACK_PRICES);
+      setPrices(FALLBACK_PRICES); // Jeigu klaida – fallback
       setError(err.message || "Unknown error");
     } finally {
       setLoading(false);
@@ -57,8 +59,10 @@ export function usePrices() {
   }, []);
 
   useEffect(() => {
-    fetchPrices();
-    const interval = setInterval(fetchPrices, 30000);
+    fetchPrices(); // Pirmas užkrovimas
+
+    const interval = setInterval(fetchPrices, 60000); // ✅ Kas 60 sekundžių
+
     return () => clearInterval(interval);
   }, [fetchPrices]);
 
