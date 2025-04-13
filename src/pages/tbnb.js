@@ -36,19 +36,20 @@ export default function TBnbPage() {
     }
   }, [isLoadingBalances]);
 
+  // **Svarbiausia: Retry tik jeigu MOUNTED**
   useEffect(() => {
-    if (!chartReady && retryCount < 2) {
+    if (chartMounted && !chartReady && retryCount < 2) {
       const timeout = setTimeout(() => {
         console.warn(`⏳ Chart not ready. Retrying attempt ${retryCount + 1}...`);
         setRetryCount((prev) => prev + 1);
       }, 10000); // 10 sekundžių timeout
 
       return () => clearTimeout(timeout);
-    } else if (!chartReady && retryCount >= 2) {
+    } else if (chartMounted && !chartReady && retryCount >= 2) {
       console.error('❌ Chart failed to load after retries.');
       setErrorChart(true);
     }
-  }, [chartReady, retryCount]);
+  }, [chartMounted, chartReady, retryCount]);
 
   const handleSend = () => router.push('/send');
   const handleReceive = () => router.push('/receive');
@@ -131,6 +132,7 @@ export default function TBnbPage() {
                 onMount={() => {
                   console.log('✅ Chart MOUNTED.');
                   setChartMounted(true);
+                  setRetryCount(0); // **Svarbiausia: Reset retry kai tik mounted**
                 }}
                 onChartReady={() => {
                   console.log('✅ Chart FULLY READY.');
