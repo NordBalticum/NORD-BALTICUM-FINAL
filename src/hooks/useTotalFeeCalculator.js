@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { ethers } from "ethers";
 import { getGasPrice } from "@/utils/getGasPrice";
+import { RPC } from "@/contexts/AuthContext"; // <-- IMPORTUOJAM TAVO RPC
 
 export function useTotalFeeCalculator(network, amount, gasOption = "average") {
   const [gasFee, setGasFee] = useState(0);
@@ -22,15 +23,7 @@ export function useTotalFeeCalculator(network, amount, gasOption = "average") {
       setLoading(true);
       setError(null);
 
-      const RPC_URLS = {
-        ethereum: "https://rpc.ankr.com/eth",
-        bsc: "https://bsc-dataseed.bnbchain.org",
-        tbnb: "https://data-seed-prebsc-1-s1.binance.org:8545",
-        polygon: "https://polygon-rpc.com",
-        avalanche: "https://api.avax.network/ext/bc/C/rpc",
-      };
-
-      const rpcUrl = RPC_URLS[network];
+      const rpcUrl = RPC[network];
       if (!rpcUrl) throw new Error(`Unsupported network: ${network}`);
 
       const provider = new ethers.JsonRpcProvider(rpcUrl);
@@ -65,6 +58,6 @@ export function useTotalFeeCalculator(network, amount, gasOption = "average") {
     totalFee,
     loading,
     error,
-    refetchFees: calculateFees, // <--- BŪTINAI ŠITAIP!!!
+    refetchFees: calculateFees,
   };
 }
