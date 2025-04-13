@@ -1,6 +1,5 @@
 "use client";
 
-// ✅ Importai
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
@@ -47,54 +46,33 @@ export default function Dashboard() {
   const { user, wallet, authLoading, walletLoading } = useAuth();
   const [isClient, setIsClient] = useState(false);
 
-  // ✅ Detect client-side
+  const { balances, loading: balancesLoading, initialLoading: balancesInitialLoading } = useBalance();
+  const { prices, loading: pricesLoading } = usePrices();
+
+  // ✅ Detect client side
   useEffect(() => {
     if (typeof window !== "undefined") {
       setIsClient(true);
     }
   }, []);
 
-  // ✅ Redirect jei user nėra
+  // ✅ Redirect jei neprisijungęs
   useEffect(() => {
     if (isClient && !authLoading && !walletLoading && !user) {
       router.replace("/");
     }
   }, [isClient, authLoading, walletLoading, user, router]);
 
-  // ✅ Loaderis iki user + wallet paruošti
+  // ✅ Apsauga prieš hook'us
   if (!isClient || authLoading || walletLoading || !user || !wallet) {
     return (
-      <div style={{
-        height: "100vh",
-        width: "100vw",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        background: "transparent",
-      }}>
+      <div className={styles.fullscreenCenter}>
         <MiniLoadingSpinner />
       </div>
     );
   }
 
-  // ✅ Saugiai krovimas useBalance ir usePrices
-  let balances = {};
-  let prices = {};
-  let initialLoading = true;
-  let pricesLoading = true;
-
-  try {
-    const balanceHook = useBalance();
-    const pricesHook = usePrices();
-    balances = balanceHook.balances || {};
-    prices = pricesHook.prices || {};
-    initialLoading = balanceHook.initialLoading;
-    pricesLoading = pricesHook.loading;
-  } catch (error) {
-    console.error("Dashboard hooks error:", error.message);
-  }
-
-  // ✅ Tokenų sąrašas
+  // ✅ Saugus tokenų sąrašas
   const tokens = useMemo(() => {
     if (!wallet?.wallet?.address || !balances || Object.keys(balances).length === 0) {
       return [];
@@ -109,25 +87,14 @@ export default function Dashboard() {
         {/* ✅ Live kainos lentelė */}
         <LivePriceTable />
 
-        {/* ✅ Assetų sąrašas */}
+        {/* ✅ Asset List */}
         <div className={styles.assetList}>
-          {(initialLoading || pricesLoading) ? (
-            <div style={{
-              padding: "60px",
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-            }}>
+          {balancesInitialLoading || pricesLoading ? (
+            <div className={styles.spinnerWrapper}>
               <MiniLoadingSpinner />
             </div>
           ) : tokens.length === 0 ? (
-            <div style={{
-              padding: "40px",
-              textAlign: "center",
-              fontFamily: "var(--font-crypto)",
-              fontSize: "18px",
-              color: "white",
-            }}>
+            <div className={styles.noAssets}>
               No assets found.
             </div>
           ) : (
