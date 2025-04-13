@@ -1,6 +1,6 @@
 "use client";
 
-// 1️⃣ Importai
+// 1. Importai
 import { createContext, useContext, useEffect, useState, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { ethers } from "ethers";
@@ -9,7 +9,7 @@ import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { startSessionWatcher } from "@/utils/sessionWatcher";
 
-// 2️⃣ RPC URL'ai
+// 2. RPC URL'ai
 const RPC = {
   eth: "https://rpc.ankr.com/eth",
   bnb: "https://bsc-dataseed.binance.org/",
@@ -18,10 +18,10 @@ const RPC = {
   avax: "https://api.avax.network/ext/bc/C/rpc",
 };
 
-// 3️⃣ ENV Kintamieji
+// 3. ENV Kintamieji
 const ENCRYPTION_SECRET = process.env.NEXT_PUBLIC_ENCRYPTION_SECRET;
 
-// 4️⃣ Encryption Helperiai
+// 4. Encryption Helperiai
 const encode = (str) => new TextEncoder().encode(str);
 const decode = (buf) => new TextDecoder().decode(buf);
 
@@ -48,32 +48,44 @@ const getKey = async () => {
 };
 
 export const encrypt = async (text) => {
-  const iv = window.crypto.getRandomValues(new Uint8Array(12));
-  const key = await getKey();
-  const encrypted = await window.crypto.subtle.encrypt(
-    { name: "AES-GCM", iv },
-    key,
-    encode(text)
-  );
-  return btoa(JSON.stringify({ iv: Array.from(iv), data: Array.from(new Uint8Array(encrypted)) }));
+  try {
+    const iv = window.crypto.getRandomValues(new Uint8Array(12));
+    const key = await getKey();
+    const encrypted = await window.crypto.subtle.encrypt(
+      { name: "AES-GCM", iv },
+      key,
+      encode(text)
+    );
+    return btoa(JSON.stringify({ iv: Array.from(iv), data: Array.from(new Uint8Array(encrypted)) }));
+  } catch (error) {
+    console.error("Encryption error:", error.message);
+    toast.error("❌ Secure encryption failed. Please refresh.");
+    throw error;
+  }
 };
 
 export const decrypt = async (ciphertext) => {
-  const { iv, data } = JSON.parse(atob(ciphertext));
-  const key = await getKey();
-  const decrypted = await window.crypto.subtle.decrypt(
-    { name: "AES-GCM", iv: new Uint8Array(iv) },
-    key,
-    new Uint8Array(data)
-  );
-  return decode(decrypted);
+  try {
+    const { iv, data } = JSON.parse(atob(ciphertext));
+    const key = await getKey();
+    const decrypted = await window.crypto.subtle.decrypt(
+      { name: "AES-GCM", iv: new Uint8Array(iv) },
+      key,
+      new Uint8Array(data)
+    );
+    return decode(decrypted);
+  } catch (error) {
+    console.error("Decryption error:", error.message);
+    toast.error("❌ Secure decryption failed. Please re-login.");
+    throw error;
+  }
 };
 
-// 5️⃣ Context Setup
+// 5. Context Setup
 export const AuthContext = createContext();
 export const useAuth = () => useContext(AuthContext);
 
-// 6️⃣ Provider
+// 6. Provider
 export const AuthProvider = ({ children }) => {
   const router = useRouter();
   const pathname = usePathname();
@@ -90,8 +102,9 @@ export const AuthProvider = ({ children }) => {
   const inactivityTimer = useRef(null);
   const balanceInterval = useRef(null);
   const sessionWatcher = useRef(null);
+  const lastSessionRefresh = useRef(Date.now());
 
-  // 7️⃣ Load Session ir Stebėti Pakeitimus
+  // 7. Load Session ir stebėti pakeitimus
   useEffect(() => {
     if (!isClient) return;
 
@@ -105,6 +118,7 @@ export const AuthProvider = ({ children }) => {
         setAuthLoading(false);
       }
     };
+
     loadSession();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -118,13 +132,13 @@ export const AuthProvider = ({ children }) => {
     return () => subscription?.unsubscribe();
   }, []);
 
-  // 8️⃣ Auto Load Wallet
+  // 8. Auto Load Wallet
   useEffect(() => {
     if (!isClient || authLoading || !user?.email) return;
     loadOrCreateWallet(user.email);
   }, [authLoading, user]);
 
-  // 9️⃣ Auto Redirect į Dashboard
+  // 9. Auto Redirect į Dashboard
   useEffect(() => {
     if (!isClient) return;
     if (!authLoading && user && pathname === "/") {
@@ -132,12 +146,13 @@ export const AuthProvider = ({ children }) => {
     }
   }, [authLoading, user, pathname]);
 
-  // 🔟 Inactivity Timeout (Auto Logout po 10min)
+  // 10. Inactivity Timeout (Auto Logout)
   useEffect(() => {
     if (!isClient) return;
     const resetTimer = () => {
       clearTimeout(inactivityTimer.current);
       inactivityTimer.current = setTimeout(() => {
+        toast.error("You have been automatically logged out for your security.");
         signOut(true);
       }, 10 * 60 * 1000);
     };
@@ -153,7 +168,7 @@ export const AuthProvider = ({ children }) => {
     };
   }, []);
 
-  // 1️⃣1️⃣ Real-Time Session Watcher
+  // 11. Real-Time Session Watcher
   useEffect(() => {
     if (!isClient) return;
     if (user) {
@@ -168,6 +183,7 @@ export const AuthProvider = ({ children }) => {
         sessionWatcher.current.start();
       } catch (error) {
         console.error("Session watcher error:", error.message);
+        toast.error("⚠️ Session monitoring failed. Please re-login.");
       }
     } else {
       sessionWatcher.current?.stop();
@@ -179,7 +195,17 @@ export const AuthProvider = ({ children }) => {
     };
   }, [user]);
 
-  // ✅ Wallet Functions
+  const safeRefreshSession = async () => {
+    if (Date.now() - lastSessionRefresh.current < 60000) return;
+    lastSessionRefresh.current = Date.now();
+    try {
+      await supabase.auth.refreshSession();
+    } catch (error) {
+      console.error("Session refresh failed:", error.message);
+    }
+  };
+
+  // Wallet Functions
   const loadOrCreateWallet = async (email) => {
     try {
       setWalletLoading(true);
@@ -215,7 +241,7 @@ export const AuthProvider = ({ children }) => {
       toast.success("✅ Wallet created successfully!");
     } catch (error) {
       console.error("Create wallet error:", error.message);
-      toast.error("❌ Failed to create wallet. Try again.");
+      toast.error("❌ Wallet creation failed. Please refresh and try again.");
     }
   };
 
@@ -230,7 +256,7 @@ export const AuthProvider = ({ children }) => {
     loadBalances(signers);
 
     if (balanceInterval.current) clearInterval(balanceInterval.current);
-    balanceInterval.current = setInterval(() => loadBalances(signers), 180000); // kas 3 min
+    balanceInterval.current = setInterval(() => loadBalances(signers), 180000);
   };
 
   const loadBalances = async (signers) => {
@@ -255,7 +281,7 @@ export const AuthProvider = ({ children }) => {
 
   const fetchRates = async () => {
     try {
-      const ids = ["ethereum", "binancecoin", "polygon", "avalanche-2"].join(",");
+      const ids = "ethereum,binancecoin,polygon,avalanche-2";
       const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=eur,usd`);
       return await res.json();
     } catch (error) {
@@ -274,23 +300,39 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // ✅ Auth Functions
+  // Auth Functions
   const signInWithMagicLink = async (email) => {
-    const origin = isClient ? window.location.origin : "https://nordbalticum.com";
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: { shouldCreateUser: true, emailRedirectTo: `${origin}/dashboard` },
-    });
-    if (error) throw error;
+    try {
+      const origin = isClient ? window.location.origin : "https://nordbalticum.com";
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: { shouldCreateUser: true, emailRedirectTo: `${origin}/dashboard` },
+      });
+      if (error) {
+        console.error(error.message);
+        toast.error("❌ Magic Link login failed. Try again.");
+        throw error;
+      }
+    } catch (error) {
+      console.error("Magic Link error:", error.message);
+    }
   };
 
   const signInWithGoogle = async () => {
-    const origin = isClient ? window.location.origin : "https://nordbalticum.com";
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo: `${origin}/dashboard` },
-    });
-    if (error) throw error;
+    try {
+      const origin = isClient ? window.location.origin : "https://nordbalticum.com";
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: { redirectTo: `${origin}/dashboard` },
+      });
+      if (error) {
+        console.error(error.message);
+        toast.error("❌ Google login failed. Try again.");
+        throw error;
+      }
+    } catch (error) {
+      console.error("Google login error:", error.message);
+    }
   };
 
   const signOut = async (showToast = false) => {
@@ -326,7 +368,6 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // ✅ Return Context
   return (
     <AuthContext.Provider
       value={{
