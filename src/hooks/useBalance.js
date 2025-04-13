@@ -4,7 +4,6 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { ethers } from "ethers";
 import { useAuth } from "@/contexts/AuthContext";
 
-// ✅ Network mapping
 const NETWORKS = {
   ethereum: { rpc: "https://rpc.ankr.com/eth", symbol: "ETH" },
   bsc: { rpc: "https://bsc-dataseed.bnbchain.org", symbol: "BNB" },
@@ -13,7 +12,6 @@ const NETWORKS = {
   tbnb: { rpc: "https://data-seed-prebsc-1-s1.binance.org:8545", symbol: "TBNB" },
 };
 
-// ✅ Fetch balances with retries
 async function getBalances(address, retries = 3) {
   if (!address) throw new Error("❌ Wallet address is required!");
 
@@ -48,7 +46,6 @@ async function getBalances(address, retries = 3) {
   return balances;
 }
 
-// ✅ Main Hook
 export function useBalance() {
   const { wallet } = useAuth();
   const [balances, setBalances] = useState({});
@@ -74,11 +71,11 @@ export function useBalance() {
   useEffect(() => {
     if (typeof window === "undefined" || !wallet?.wallet?.address) return;
 
-    fetchBalances(); // ✅ First load
+    fetchBalances();
+    intervalRef.current = setInterval(fetchBalances, 30000);
 
-    intervalRef.current = setInterval(fetchBalances, 30000); // ✅ Refresh every 30s
     return () => {
-      clearInterval(intervalRef.current); // ✅ Cleanup
+      clearInterval(intervalRef.current);
     };
   }, [fetchBalances]);
 
