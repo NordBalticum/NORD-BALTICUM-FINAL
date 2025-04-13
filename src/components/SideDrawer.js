@@ -1,47 +1,40 @@
 "use client";
 
+// 1️⃣ IMPORTAI
 import { useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { useAuth } from "@/contexts/AuthContext";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { FaTimes, FaBars } from "react-icons/fa";
+
+import { useAuth } from "@/contexts/AuthContext";
+import { useUserReady } from "@/hooks/useUserReady"; // ✅ NAUJAS HOOK
+
 import styles from "@/components/sidedrawer.module.css";
 
+// 2️⃣ PAGRINDINIS KOMPONENTAS
 export default function SideDrawer() {
   const router = useRouter();
   const pathname = usePathname();
-  const { user, wallet, authLoading, walletLoading, signOut } = useAuth();
-  const [open, setOpen] = useState(false);
-  const [isClient, setIsClient] = useState(false);
+  const { user, signOut } = useAuth();
+  const { ready } = useUserReady(); // ✅ Tikrinam readiness iš user pusės
 
-  // ✅ Detect Client
+  const [open, setOpen] = useState(false);
+
   useEffect(() => {
     if (typeof window !== "undefined") {
-      setIsClient(true);
+      document.body.style.overflow = open ? "hidden" : "auto";
+      return () => {
+        document.body.style.overflow = "auto";
+      };
     }
-  }, []);
-
-  // ✅ Tikrinam kada rodyti SideDrawer
-  const ready = isClient && !authLoading && !walletLoading && user && wallet?.wallet?.address;
-
-  // ✅ STOP jei nesame pasiruošę
-  if (!ready) {
-    return null;
-  }
-
-  useEffect(() => {
-    document.body.style.overflow = open ? "hidden" : "auto";
-    return () => {
-      document.body.style.overflow = "auto";
-    };
   }, [open]);
 
   const toggleDrawer = () => setOpen((prev) => !prev);
 
   const handleLogout = async () => {
     try {
-      await signOut(true); // ✅ Saugus logout
+      await signOut(true); // ✅ Saugi logout funkcija
       setOpen(false);
       router.replace("/");
     } catch (error) {
@@ -57,6 +50,11 @@ export default function SideDrawer() {
     { label: "Settings", path: "/settings" },
   ];
 
+  // ✅ Jei user nėra pasiruošęs, nerodyti drawerio
+  if (!ready) {
+    return null;
+  }
+
   return (
     <>
       {/* ✅ Hamburger Button */}
@@ -71,10 +69,10 @@ export default function SideDrawer() {
         <FaBars size={22} />
       </motion.button>
 
+      {/* ✅ Drawer and Backdrop */}
       <AnimatePresence mode="wait">
         {open && (
           <>
-            {/* ✅ Backdrop */}
             <motion.div
               className={styles.backdrop}
               initial={{ opacity: 0 }}
@@ -83,8 +81,6 @@ export default function SideDrawer() {
               transition={{ duration: 0.4, ease: "easeInOut" }}
               onClick={toggleDrawer}
             />
-
-            {/* ✅ Drawer */}
             <motion.aside
               className={`${styles.drawer} ${open ? styles.open : ""}`}
               initial={{ x: "-100%" }}
