@@ -1,16 +1,16 @@
 "use client";
 
-// ✅ Importai
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 
 import { useAuth } from "@/contexts/AuthContext";
+import { useBalance } from "@/hooks/useBalance";
+import { usePrices } from "@/hooks/usePrices";
 import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
 import styles from "@/styles/dashboard.module.css";
 
-// ✅ Dinaminis LivePriceTable importas
 const LivePriceTable = dynamic(() => import("@/components/LivePriceTable"), { ssr: false });
 
 // ✅ Ikonos
@@ -22,7 +22,7 @@ const iconUrls = {
   avalanche: "/icons/avax.svg",
 };
 
-// ✅ Tokenų pavadinimai
+// ✅ Pavadinimai
 const names = {
   ethereum: "Ethereum",
   bsc: "BNB Smart Chain",
@@ -31,7 +31,7 @@ const names = {
   avalanche: "Avalanche",
 };
 
-// ✅ Maršrutų pavadinimai
+// ✅ Route mappings
 const routeNames = {
   ethereum: "eth",
   bsc: "bnb",
@@ -45,7 +45,7 @@ export default function Dashboard() {
   const { user, wallet, authLoading, walletLoading } = useAuth();
   const [isClient, setIsClient] = useState(false);
 
-  // ✅ Patikrinam ar esam kliento pusėje
+  // ✅ Detect Client Side
   useEffect(() => {
     if (typeof window !== "undefined") {
       setIsClient(true);
@@ -59,7 +59,7 @@ export default function Dashboard() {
     }
   }, [isClient, authLoading, walletLoading, user, router]);
 
-  // ✅ Pagrindinis loaderis (tikrinam user + wallet pilnai)
+  // ✅ SAUGIKLIS prieš hook'us
   if (!isClient || authLoading || walletLoading || !user || !wallet) {
     return (
       <div style={{
@@ -75,10 +75,7 @@ export default function Dashboard() {
     );
   }
 
-  // ✅ Tik dabar saugu importuoti ir naudoti hookus!
-  const { useBalance } = require("@/hooks/useBalance");
-  const { usePrices } = require("@/hooks/usePrices");
-
+  // ✅ Tik dabar saugu kviesti hook'us
   const { balances, loading: balanceLoading, initialLoading } = useBalance();
   const { prices, loading: pricesLoading } = usePrices();
 
@@ -94,7 +91,7 @@ export default function Dashboard() {
     <main className={styles.container}>
       <div className={styles.dashboardWrapper}>
 
-        {/* ✅ Live kainų lentelė */}
+        {/* ✅ Live kainos lentelė */}
         <LivePriceTable />
 
         {/* ✅ Turtų sąrašas */}
