@@ -12,6 +12,7 @@ import { usePrices } from "@/hooks/usePrices";
 import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
 import styles from "@/styles/dashboard.module.css";
 
+// ✅ Dinaminis importas
 const LivePriceTable = dynamic(() => import("@/components/LivePriceTable"), { ssr: false });
 
 // ✅ Ikonos
@@ -23,7 +24,7 @@ const iconUrls = {
   avalanche: "/icons/avax.svg",
 };
 
-// ✅ Pavadinimai
+// ✅ Vardai
 const names = {
   ethereum: "Ethereum",
   bsc: "BNB Smart Chain",
@@ -46,7 +47,7 @@ export default function Dashboard() {
   const { user, wallet, authLoading, walletLoading } = useAuth();
   const [isClient, setIsClient] = useState(false);
 
-  // ✅ Detect client
+  // ✅ Detect Client Side
   useEffect(() => {
     if (typeof window !== "undefined") {
       setIsClient(true);
@@ -60,7 +61,7 @@ export default function Dashboard() {
     }
   }, [isClient, authLoading, walletLoading, user, router]);
 
-  // ✅ Full Loading tikrinimas
+  // ✅ SAUGIKLIS prieš hook'us
   if (!isClient || authLoading || walletLoading || !user || !wallet) {
     return (
       <div style={{
@@ -76,7 +77,7 @@ export default function Dashboard() {
     );
   }
 
-  // ✅ Tik dabar saugu kviesti hook'us
+  // ✅ Tik dabar saugu naudoti useBalance ir usePrices
   const { balances, loading: balanceLoading, initialLoading } = useBalance();
   const { prices, loading: pricesLoading } = usePrices();
 
@@ -92,10 +93,10 @@ export default function Dashboard() {
     <main className={styles.container}>
       <div className={styles.dashboardWrapper}>
 
-        {/* ✅ Live kainų lentelė */}
+        {/* ✅ Live kainos lentelė */}
         <LivePriceTable />
 
-        {/* ✅ Asset List */}
+        {/* ✅ Assetų sąrašas */}
         <div className={styles.assetList}>
           {initialLoading || pricesLoading ? (
             <div style={{
@@ -119,7 +120,7 @@ export default function Dashboard() {
           ) : (
             tokens.map((network) => {
               const balanceData = balances?.[network];
-              const priceData = prices?.[network === "tbnb" ? "bsc" : network]; // TBNB = BNB price
+              const priceData = prices?.[network === "tbnb" ? "bsc" : network];
 
               if (!balanceData || !priceData) return null;
 
