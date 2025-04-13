@@ -1,42 +1,39 @@
 "use client";
 
-// 1️⃣ IMPORTAI
 import { useState, useEffect } from "react";
-import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
-import { FaTimes, FaBars } from "react-icons/fa";
 import { useAuth } from "@/contexts/AuthContext";
+import { motion, AnimatePresence } from "framer-motion";
+import Link from "next/link";
+import { FaTimes, FaBars } from "react-icons/fa";
 import styles from "@/components/sidedrawer.module.css";
 
 export default function SideDrawer() {
-  const router = useRouter();
-  const pathname = usePathname();
-  const { user, wallet, signOut, authLoading, walletLoading } = useAuth();
-  const [open, setOpen] = useState(false);
   const [isClient, setIsClient] = useState(false);
 
-  // 2️⃣ DETECT CLIENT
   useEffect(() => {
     setIsClient(typeof window !== "undefined");
   }, []);
 
-  // 3️⃣ LOCK SCROLL KAI DRAWER ATIDARYTAS
+  if (!isClient) return null; // ✅ STOP jei nesame naršyklėje
+
+  const { user, wallet, signOut, authLoading, walletLoading } = useAuth();
+  const router = useRouter();
+  const pathname = usePathname();
+  const [open, setOpen] = useState(false);
+
   useEffect(() => {
-    if (!isClient) return;
     document.body.style.overflow = open ? "hidden" : "auto";
     return () => {
       document.body.style.overflow = "auto";
     };
-  }, [open, isClient]);
+  }, [open]);
 
-  // 4️⃣ TOGGLE DRAWER
   const toggleDrawer = () => setOpen((prev) => !prev);
 
-  // 5️⃣ LOGOUT
   const handleLogout = async () => {
     try {
-      await signOut(true); // ✅ Siunčiam true kad parodytų logout toast
+      await signOut(true);
       setOpen(false);
       document.body.style.overflow = "auto";
       router.replace("/");
@@ -45,7 +42,6 @@ export default function SideDrawer() {
     }
   };
 
-  // 6️⃣ NAVIGACIJOS NUORODOS
   const navItems = [
     { label: "Dashboard", path: "/dashboard" },
     { label: "Send", path: "/send" },
@@ -54,15 +50,13 @@ export default function SideDrawer() {
     { label: "Settings", path: "/settings" },
   ];
 
-  // 7️⃣ JEI USER AR WALLET NĖRA → NERODYTI
-  if (!isClient || authLoading || walletLoading || !user || !wallet?.wallet?.address) {
+  if (authLoading || walletLoading || !user || !wallet?.wallet?.address) {
     return null;
   }
 
-  // 8️⃣ UI
   return (
     <>
-      {/* ✅ Hamburger Button */}
+      {/* ✅ Hamburger */}
       <motion.button
         className={styles.hamburger}
         onClick={toggleDrawer}
@@ -74,11 +68,10 @@ export default function SideDrawer() {
         <FaBars size={22} />
       </motion.button>
 
-      {/* ✅ AnimatePresence su mode="wait" */}
+      {/* ✅ Animate Presence */}
       <AnimatePresence mode="wait">
         {open && (
           <>
-            {/* ✅ Backdrop */}
             <motion.div
               className={styles.backdrop}
               initial={{ opacity: 0 }}
@@ -87,8 +80,6 @@ export default function SideDrawer() {
               transition={{ duration: 0.4, ease: "easeInOut" }}
               onClick={toggleDrawer}
             />
-
-            {/* ✅ Drawer */}
             <motion.aside
               className={`${styles.drawer} ${open ? styles.open : ""}`}
               initial={{ x: "-100%" }}
@@ -96,7 +87,6 @@ export default function SideDrawer() {
               exit={{ x: "-100%" }}
               transition={{ type: "spring", stiffness: 260, damping: 30 }}
             >
-              {/* ✅ Header */}
               <div className={styles.drawerHeader}>
                 <motion.button
                   className={styles.closeIcon}
@@ -109,7 +99,6 @@ export default function SideDrawer() {
                 </motion.button>
               </div>
 
-              {/* ✅ User Info */}
               <motion.div
                 className={styles.userBox}
                 initial={{ opacity: 0, y: -10 }}
@@ -133,7 +122,6 @@ export default function SideDrawer() {
                 </motion.p>
               </motion.div>
 
-              {/* ✅ Navigation */}
               <nav className={styles.nav}>
                 {navItems.map((item, index) => (
                   <motion.div
@@ -154,7 +142,6 @@ export default function SideDrawer() {
                 ))}
               </nav>
 
-              {/* ✅ Logout Button */}
               <motion.button
                 className={styles.logout}
                 onClick={handleLogout}
