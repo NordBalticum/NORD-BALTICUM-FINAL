@@ -11,19 +11,21 @@ import background from "@/styles/background.module.css";
 
 export default function Home() {
   const router = useRouter();
-  const { user, signInWithMagicLink, signInWithGoogle } = useAuth(); // ✅ Tik user
+  const { user, authLoading, signInWithMagicLink, signInWithGoogle } = useAuth(); // ✅ Importuojam ir authLoading
 
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState("idle");
   const [message, setMessage] = useState("");
   const [showModal, setShowModal] = useState(false);
 
-  // ✅ Jei user jau prisijungęs – redirect
+  // ✅ Redirect kai user prisijungęs (tik kai authLoading baigtas)
   useEffect(() => {
+    if (authLoading) return; // ✅ Labai svarbu: nelyst į redirect kol auth kraunasi
+
     if (user) {
       router.replace("/dashboard");
     }
-  }, [user, router]);
+  }, [authLoading, user, router]);
 
   const handleSignIn = async (e) => {
     e.preventDefault();
@@ -59,6 +61,16 @@ export default function Home() {
     }
   };
 
+  // ✅ Loader kol auth kraunasi
+  if (authLoading) {
+    return (
+      <div className={styles.fullscreenCenter}>
+        <div className={styles.spinner}></div> {/* Gali būti tik spinner */}
+      </div>
+    );
+  }
+
+  // ✅ Tik tada rodom formą
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.97 }}
@@ -78,7 +90,7 @@ export default function Home() {
         />
       </div>
 
-      {/* ✅ Prisijungimo forma */}
+      {/* ✅ Login forma */}
       <form onSubmit={handleSignIn} className={styles.loginBox}>
         <h1 className={styles.heading}>Welcome to NordBalticum</h1>
         <p className={styles.subheading}>Secure Web3 Banking</p>
@@ -116,7 +128,7 @@ export default function Home() {
           {status === "loading" ? "CONNECTING..." : "LOGIN WITH GOOGLE"}
         </button>
 
-        {/* ✅ Success/Error message */}
+        {/* ✅ Animate success/error message */}
         <AnimatePresence>
           {message && (
             <motion.p
