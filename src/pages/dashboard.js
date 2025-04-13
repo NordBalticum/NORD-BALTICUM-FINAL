@@ -18,7 +18,7 @@ const LivePriceTable = dynamic(() => import("@/components/LivePriceTable"), { ss
 // 3️⃣ Ikonos ir Vardai
 const iconUrls = {
   ethereum: "/icons/eth.svg",
-  bsc: "/icons/bnb.svg",
+  bnb: "/icons/bnb.svg",
   tbnb: "/icons/bnb.svg",
   polygon: "/icons/matic.svg",
   avalanche: "/icons/avax.svg",
@@ -40,27 +40,30 @@ const routeNames = {
   avalanche: "avax",
 };
 
+// 4️⃣ Main Dashboard
 export default function Dashboard() {
   const router = useRouter();
   const { user, wallet, authLoading, walletLoading } = useAuth();
   const [isClient, setIsClient] = useState(false);
 
-  // ✅ Saugi window tikrinimo logika
+  // ✅ Tikrinam ar esam kliente
   useEffect(() => {
-    if (typeof window !== "undefined") setIsClient(true);
+    if (typeof window !== "undefined") {
+      setIsClient(true);
+    }
   }, []);
 
-  // ✅ Redirect jei neprisijungęs
+  // ✅ Redirect į home jei neprisijungęs
   useEffect(() => {
     if (isClient && !authLoading && !walletLoading && !user) {
       router.replace("/");
     }
   }, [isClient, authLoading, walletLoading, user, router]);
 
-  // ✅ Pilnai pasiruošęs statusas
+  // ✅ Viskas pasiruošę (tikrina user + wallet)
   const ready = isClient && !authLoading && !walletLoading && user && wallet?.wallet;
 
-  // ✅ Naudojam hook'us tik kai ready
+  // ✅ Naudojam hook'us tik jei ready
   const { balances, loading: balancesLoading, initialLoading: balancesInitialLoading } = ready
     ? useBalance()
     : { balances: {}, loading: true, initialLoading: true };
@@ -69,7 +72,7 @@ export default function Dashboard() {
     ? usePrices()
     : { prices: {}, loading: true };
 
-  // ✅ Loader jei dar nepasiruošęs
+  // ✅ Loader kai nėra pasiruošimo
   if (!ready) {
     return (
       <div className={styles.fullscreenCenter}>
@@ -78,7 +81,7 @@ export default function Dashboard() {
     );
   }
 
-  // ✅ Tokenų sąrašas
+  // ✅ Token sąrašas
   const tokens = useMemo(() => {
     if (!wallet?.wallet?.address || !balances || Object.keys(balances).length === 0) {
       return [];
@@ -86,6 +89,7 @@ export default function Dashboard() {
     return Object.keys(balances);
   }, [wallet, balances]);
 
+  // ✅ Dashboard UI
   return (
     <main className={styles.container}>
       <div className={styles.dashboardWrapper}>
