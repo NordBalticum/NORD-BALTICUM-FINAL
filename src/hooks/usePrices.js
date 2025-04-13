@@ -2,16 +2,14 @@
 
 import { useEffect, useState, useCallback } from "react";
 
-// ✅ Token mapping su CoinGecko ID
 const TOKEN_IDS = {
   ethereum: "ethereum",
   bsc: "binancecoin",
   polygon: "matic-network",
   avalanche: "avalanche-2",
-  tbnb: "binancecoin", // TBNB = BNB
+  tbnb: "binancecoin",
 };
 
-// ✅ Atsarginės kainos
 const FALLBACK_PRICES = {
   ethereum: { eur: 2900, usd: 3100 },
   bsc: { eur: 450, usd: 480 },
@@ -20,7 +18,6 @@ const FALLBACK_PRICES = {
   tbnb: { eur: 450, usd: 480 },
 };
 
-// ✅ Ultimate Price Hook
 export function usePrices() {
   const [prices, setPrices] = useState(FALLBACK_PRICES);
   const [loading, setLoading] = useState(true);
@@ -29,9 +26,8 @@ export function usePrices() {
   const fetchPrices = useCallback(async () => {
     if (typeof window === "undefined") return;
 
+    setLoading(true);
     try {
-      setLoading(true);
-
       const ids = Object.values(TOKEN_IDS).join(",");
       const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=eur,usd`, {
         cache: "no-store",
@@ -64,8 +60,8 @@ export function usePrices() {
     if (typeof window === "undefined") return;
 
     fetchPrices();
-
     const interval = setInterval(fetchPrices, 30000);
+
     return () => clearInterval(interval);
   }, [fetchPrices]);
 
