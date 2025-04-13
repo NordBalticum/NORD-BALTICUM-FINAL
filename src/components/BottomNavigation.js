@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { useAuth } from "@/contexts/AuthContext"; // ✅ Reikia čia auth
+import { useAuth } from "@/contexts/AuthContext";
 import { FaWallet, FaArrowUp, FaArrowDown, FaClock, FaUserCircle } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
 import styles from "@/components/bottomnav.module.css";
@@ -19,11 +19,12 @@ const navItems = [
 export default function BottomNavigation() {
   const pathname = usePathname();
   const { user, wallet, authLoading, walletLoading } = useAuth();
+  const [isClient, setIsClient] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
-  // ✅ Check ar esam mobile
   useEffect(() => {
     if (typeof window !== "undefined") {
+      setIsClient(true);
       const checkMobile = () => setIsMobile(window.innerWidth <= 768);
       checkMobile();
       window.addEventListener("resize", checkMobile);
@@ -31,11 +32,11 @@ export default function BottomNavigation() {
     }
   }, []);
 
-  // ✅ BENDRAS TIKRINIMAS
-  const ready = !authLoading && !walletLoading && user && wallet?.wallet?.address;
+  const onLoginPage = pathname === "/" || pathname === "" || pathname === null;
+  const ready = isClient && !authLoading && !walletLoading && user && wallet?.wallet?.address;
 
-  // ✅ Jei esam / (index) arba ne mobile arba ne pasiruošę
-  if (!pathname || pathname === "/" || !isMobile || !ready) {
+  // ✅ Jei esame login puslapyje arba ne mobile arba ne pasiruošę → nerodyti
+  if (onLoginPage || !isMobile || !ready) {
     return null;
   }
 
