@@ -1,14 +1,12 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { useBalance } from '@/hooks/useBalance';
-import { usePrices } from '@/hooks/usePrices';
-import { useRouter } from 'next/navigation';
-import dynamic from 'next/dynamic';
-import Image from 'next/image';
-import MiniLoadingSpinner from '@/components/MiniLoadingSpinner';
-import styles from '@/styles/tbnb.module.css';
+import { useState, useEffect } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
+import Image from "next/image";
+import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
+import styles from "@/styles/tbnb.module.css";
 
 // Premium dinaminis importas
 const BnbChartDynamic = dynamic(() => import('@/components/BnbChart').then(mod => mod.default), {
@@ -17,9 +15,7 @@ const BnbChartDynamic = dynamic(() => import('@/components/BnbChart').then(mod =
 });
 
 export default function TBnbPage() {
-  const { user, wallet } = useAuth();
-  const { balances, initialLoading: balancesLoading } = useBalance();
-  const { prices, loading: pricesLoading } = usePrices();
+  const { user, wallet, balances, rates, authLoading, walletLoading } = useAuth();
   const router = useRouter();
 
   const [balancesReady, setBalancesReady] = useState(false);
@@ -28,26 +24,26 @@ export default function TBnbPage() {
   const [retryCount, setRetryCount] = useState(0);
   const [errorChart, setErrorChart] = useState(false);
 
-  const isLoadingBalances = balancesLoading || pricesLoading;
+  const isLoadingBalances = authLoading || walletLoading;
 
   // ✅ Po minimize, lock, sleep - reloadinam puslapį
   useEffect(() => {
     const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
+      if (document.visibilityState === "visible") {
         window.location.reload();
       }
     };
-    document.addEventListener('visibilitychange', handleVisibilityChange);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
     return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, []);
 
   useEffect(() => {
-    if (!isLoadingBalances) {
+    if (!isLoadingBalances && balances?.tbnb) {
       setBalancesReady(true);
     }
-  }, [isLoadingBalances]);
+  }, [isLoadingBalances, balances]);
 
   useEffect(() => {
     if (chartMounted && !chartReady && retryCount < 2) {
@@ -58,14 +54,14 @@ export default function TBnbPage() {
 
       return () => clearTimeout(timeout);
     } else if (chartMounted && !chartReady && retryCount >= 2) {
-      console.error('❌ Chart failed to load after retries.');
+      console.error("❌ Chart failed to load after retries.");
       setErrorChart(true);
     }
   }, [chartMounted, chartReady, retryCount]);
 
-  const handleSend = () => router.push('/send');
-  const handleReceive = () => router.push('/receive');
-  const handleHistory = () => router.push('/history');
+  const handleSend = () => router.push("/send");
+  const handleReceive = () => router.push("/receive");
+  const handleHistory = () => router.push("/transactions");
 
   if (!user || !wallet) {
     return (
@@ -87,6 +83,13 @@ export default function TBnbPage() {
       </main>
     );
   }
+
+  const tbnbBalance = balances?.tbnb ?? { balance: 0 };
+  const price = rates?.bsc ?? { eur: 0, usd: 0 };
+
+  const balance = parseFloat(tbnbBalance.balance || 0);
+  const eurValue = (balance * (price.eur ?? 0)).toFixed(2);
+  const usdValue = (balance * (price.usd ?? 0)).toFixed(2);
 
   return (
     <main key={retryCount} className={styles.pageContainer}>
@@ -111,10 +114,10 @@ export default function TBnbPage() {
             {balancesReady ? (
               <>
                 <p className={styles.balanceText}>
-                  {(balances?.tbnb?.balance ?? 0).toFixed(4)} BNB
+                  {balance.toFixed(4)} BNB
                 </p>
                 <p className={styles.balanceFiat}>
-                  {((balances?.tbnb?.balance ?? 0) * (prices?.tbnb?.eur ?? 0)).toFixed(2)} € | {((balances?.tbnb?.balance ?? 0) * (prices?.tbnb?.usd ?? 0)).toFixed(2)} $
+                  {eurValue} € | {usdValue} $
                 </p>
               </>
             ) : (
@@ -134,20 +137,20 @@ export default function TBnbPage() {
             <div
               style={{
                 opacity: chartMounted && chartReady ? 1 : 0,
-                transform: chartMounted && chartReady ? 'scale(1)' : 'scale(0.8)',
-                transition: 'opacity 0.8s ease, transform 0.8s ease',
-                width: '100%',
-                height: '100%',
+                transform: chartMounted && chartReady ? "scale(1)" : "scale(0.8)",
+                transition: "opacity 0.8s ease, transform 0.8s ease",
+                width: "100%",
+                height: "100%",
               }}
             >
               <BnbChartDynamic
                 onMount={() => {
-                  console.log('✅ Chart MOUNTED.');
+                  console.log("✅ Chart MOUNTED.");
                   setChartMounted(true);
                   setRetryCount(0);
                 }}
                 onChartReady={() => {
-                  console.log('✅ Chart FULLY READY.');
+                  console.log("✅ Chart FULLY READY.");
                   setChartReady(true);
                 }}
               />
