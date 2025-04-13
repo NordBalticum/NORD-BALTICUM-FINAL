@@ -9,18 +9,26 @@ import { FaTimes, FaBars } from "react-icons/fa";
 import styles from "@/components/sidedrawer.module.css";
 
 export default function SideDrawer() {
-  const [isClient, setIsClient] = useState(false);
-
-  useEffect(() => {
-    setIsClient(typeof window !== "undefined");
-  }, []);
-
-  if (!isClient) return null; // ✅ STOP jei nesame naršyklėje
-
-  const { user, wallet, signOut, authLoading, walletLoading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+  const { user, wallet, authLoading, walletLoading, signOut } = useAuth();
   const [open, setOpen] = useState(false);
+  const [isClient, setIsClient] = useState(false);
+
+  // ✅ Detect Client
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setIsClient(true);
+    }
+  }, []);
+
+  // ✅ Tikrinam kada rodyti SideDrawer
+  const ready = isClient && !authLoading && !walletLoading && user && wallet?.wallet?.address;
+
+  // ✅ STOP jei nesame pasiruošę
+  if (!ready) {
+    return null;
+  }
 
   useEffect(() => {
     document.body.style.overflow = open ? "hidden" : "auto";
@@ -33,9 +41,8 @@ export default function SideDrawer() {
 
   const handleLogout = async () => {
     try {
-      await signOut(true);
+      await signOut(true); // ✅ Saugus logout
       setOpen(false);
-      document.body.style.overflow = "auto";
       router.replace("/");
     } catch (error) {
       console.error("Logout failed:", error.message || error);
@@ -50,13 +57,9 @@ export default function SideDrawer() {
     { label: "Settings", path: "/settings" },
   ];
 
-  if (authLoading || walletLoading || !user || !wallet?.wallet?.address) {
-    return null;
-  }
-
   return (
     <>
-      {/* ✅ Hamburger */}
+      {/* ✅ Hamburger Button */}
       <motion.button
         className={styles.hamburger}
         onClick={toggleDrawer}
@@ -68,10 +71,10 @@ export default function SideDrawer() {
         <FaBars size={22} />
       </motion.button>
 
-      {/* ✅ Animate Presence */}
       <AnimatePresence mode="wait">
         {open && (
           <>
+            {/* ✅ Backdrop */}
             <motion.div
               className={styles.backdrop}
               initial={{ opacity: 0 }}
@@ -80,6 +83,8 @@ export default function SideDrawer() {
               transition={{ duration: 0.4, ease: "easeInOut" }}
               onClick={toggleDrawer}
             />
+
+            {/* ✅ Drawer */}
             <motion.aside
               className={`${styles.drawer} ${open ? styles.open : ""}`}
               initial={{ x: "-100%" }}
@@ -87,6 +92,7 @@ export default function SideDrawer() {
               exit={{ x: "-100%" }}
               transition={{ type: "spring", stiffness: 260, damping: 30 }}
             >
+              {/* ✅ Close Button */}
               <div className={styles.drawerHeader}>
                 <motion.button
                   className={styles.closeIcon}
@@ -99,6 +105,7 @@ export default function SideDrawer() {
                 </motion.button>
               </div>
 
+              {/* ✅ User Info */}
               <motion.div
                 className={styles.userBox}
                 initial={{ opacity: 0, y: -10 }}
@@ -122,6 +129,7 @@ export default function SideDrawer() {
                 </motion.p>
               </motion.div>
 
+              {/* ✅ Navigation */}
               <nav className={styles.nav}>
                 {navItems.map((item, index) => (
                   <motion.div
@@ -142,6 +150,7 @@ export default function SideDrawer() {
                 ))}
               </nav>
 
+              {/* ✅ Logout Button */}
               <motion.button
                 className={styles.logout}
                 onClick={handleLogout}
