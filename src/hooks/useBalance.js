@@ -69,11 +69,10 @@ export function useBalance() {
   }, [wallet?.wallet?.address]);
 
   useEffect(() => {
-    if (typeof window === "undefined" || !wallet?.wallet?.address) return;
+    if (!wallet?.wallet?.address) return;
 
     fetchBalances();
     intervalRef.current = setInterval(fetchBalances, 30000);
-
     return () => {
       clearInterval(intervalRef.current);
     };
