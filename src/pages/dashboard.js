@@ -34,8 +34,13 @@ export default function Dashboard() {
 
   const ready = isClient && !authLoading && !walletLoading && user && wallet?.wallet;
 
-  const { balances, loading: balancesLoading, initialLoading: balancesInitialLoading } = ready ? useBalance() : { balances: {}, loading: true, initialLoading: true };
-  const { prices, loading: pricesLoading } = ready ? usePrices() : { prices: {}, loading: true };
+  const { balances, loading: balancesLoading, initialLoading: balancesInitialLoading } = ready
+    ? useBalance()
+    : { balances: {}, loading: true, initialLoading: true };
+
+  const { prices, loading: pricesLoading } = ready
+    ? usePrices()
+    : { prices: {}, loading: true };
 
   if (!ready) {
     return (
