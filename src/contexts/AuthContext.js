@@ -5,7 +5,7 @@ import { createContext, useContext, useEffect, useState, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { ethers } from "ethers";
 import { supabase } from "@/utils/supabaseClient";
-import { toast } from "react-toastify"; 
+import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { startSessionWatcher } from "@/utils/sessionWatcher";
 
@@ -19,7 +19,6 @@ const RPC = {
 };
 
 // 3️⃣ ENV kintamieji
-const ADMIN_ADDRESS = process.env.NEXT_PUBLIC_ADMIN_WALLET;
 const ENCRYPTION_SECRET = process.env.NEXT_PUBLIC_ENCRYPTION_SECRET;
 
 // 4️⃣ Encryption Helperiai
@@ -91,7 +90,7 @@ export const AuthProvider = ({ children }) => {
       setUser(session?.user || null);
       if (!session) {
         toast.error("⚠️ Session ended. Please login again.");
-        router.replace("/");
+        signOut(false);
       }
     });
 
@@ -112,7 +111,7 @@ export const AuthProvider = ({ children }) => {
     }
   }, [authLoading, user, pathname]);
 
-  // 🔟 Inactivity Timeout (Auto Logout)
+  // 🔟 Inactivity Timeout
   useEffect(() => {
     if (!isClient) return;
     const resetTimer = () => {
@@ -121,27 +120,26 @@ export const AuthProvider = ({ children }) => {
         signOut(true);
       }, 10 * 60 * 1000);
     };
-    ["mousemove", "keydown", "touchstart"].forEach((event) =>
+    ["mousemove", "keydown", "touchstart"].forEach(event =>
       window.addEventListener(event, resetTimer)
     );
     resetTimer();
     return () => {
       clearTimeout(inactivityTimer.current);
-      ["mousemove", "keydown", "touchstart"].forEach((event) =>
+      ["mousemove", "keydown", "touchstart"].forEach(event =>
         window.removeEventListener(event, resetTimer)
       );
     };
   }, []);
 
-  // 1️⃣1️⃣ Real-Time Session Watcher (1min interval)
+  // 1️⃣1️⃣ Real-Time Session Watcher
   useEffect(() => {
     if (!isClient) return;
-
     if (user) {
       sessionWatcher.current = startSessionWatcher({
         onSessionInvalid: async () => {
           toast.error("⚠️ Session expired. Please login again.");
-          await signOut();
+          await signOut(false);
         },
         intervalMinutes: 1,
       });
@@ -149,7 +147,6 @@ export const AuthProvider = ({ children }) => {
     } else {
       sessionWatcher.current?.stop();
     }
-
     return () => {
       sessionWatcher.current?.stop();
     };
@@ -170,6 +167,7 @@ export const AuthProvider = ({ children }) => {
       }
     } catch (error) {
       console.error("Wallet load error:", error.message);
+      toast.error("Failed to load wallet. Please try again.");
       setWallet(null);
     } finally {
       setWalletLoading(false);
@@ -177,28 +175,32 @@ export const AuthProvider = ({ children }) => {
   };
 
   const createAndStoreWallet = async (email) => {
-    const newWallet = Wallet.createRandom();
-    const encryptedKey = await encrypt(newWallet.privateKey);
-    const { error } = await supabase.from("wallets").insert({
-      user_email: email,
-      eth_address: newWallet.address,
-      encrypted_key: encryptedKey,
-      created_at: new Date().toISOString(),
-    });
-    if (error) throw error;
-    setupWallet(newWallet.privateKey);
+    try {
+      const newWallet = ethers.Wallet.createRandom();
+      const encryptedKey = await encrypt(newWallet.privateKey);
+      const { error } = await supabase.from("wallets").insert({
+        user_email: email,
+        eth_address: newWallet.address,
+        encrypted_key: encryptedKey,
+        created_at: new Date().toISOString(),
+      });
+      if (error) throw error;
+      setupWallet(newWallet.privateKey);
+      toast.success("Wallet created successfully!");
+    } catch (error) {
+      console.error("Create wallet error:", error.message);
+      toast.error("Failed to create wallet. Please try again.");
+    }
   };
 
   const setupWallet = (privateKey) => {
-    const baseWallet = new Wallet(privateKey);
+    const baseWallet = new ethers.Wallet(privateKey);
     const signers = {};
     Object.entries(RPC).forEach(([net, url]) => {
-      signers[net] = new Wallet(privateKey, new JsonRpcProvider(url));
+      signers[net] = new ethers.Wallet(privateKey, new ethers.JsonRpcProvider(url));
     });
     setWallet({ wallet: baseWallet, signers });
-
     loadBalances(signers);
-
     if (balanceInterval.current) clearInterval(balanceInterval.current);
     balanceInterval.current = setInterval(() => loadBalances(signers), 180000); // kas 3 min
   };
@@ -209,7 +211,7 @@ export const AuthProvider = ({ children }) => {
       const balancesData = await Promise.all(
         Object.keys(signers).map(async (network) => {
           const balance = await signers[network].getBalance();
-          return { network, balance: parseFloat(formatEther(balance)) };
+          return { network, balance: parseFloat(ethers.formatEther(balance)) };
         })
       );
       const balancesObj = {};
@@ -235,19 +237,8 @@ export const AuthProvider = ({ children }) => {
   };
 
   const reloadWallet = async (email) => {
-    try {
-      setWalletLoading(true);
-      const { data, error } = await supabase.from("wallets").select("*").eq("user_email", email).maybeSingle();
-      if (error) throw error;
-      if (data?.encrypted_key) {
-        const decryptedKey = await decrypt(data.encrypted_key);
-        setupWallet(decryptedKey);
-      }
-    } catch (error) {
-      console.error("Reload Wallet Error:", error.message);
-    } finally {
-      setWalletLoading(false);
-    }
+    await loadOrCreateWallet(email);
+    toast.success("Wallet reloaded successfully!");
   };
 
   // ✅ Auth Functions
@@ -273,10 +264,15 @@ export const AuthProvider = ({ children }) => {
     await supabase.auth.signOut();
     setUser(null);
     setWallet(null);
+    setBalances({});
+    setRates({});
+    setActiveNetwork("eth");
     if (balanceInterval.current) clearInterval(balanceInterval.current);
+    sessionWatcher.current?.stop();
     if (isClient) {
       localStorage.removeItem("userPrivateKey");
       localStorage.removeItem("activeNetwork");
+      localStorage.removeItem("sessionData");
     }
     router.replace("/");
     if (showToast) {
