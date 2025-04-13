@@ -20,7 +20,7 @@ export function useBalance() {
   const intervalRef = useRef(null);
 
   const fetchBalances = useCallback(async () => {
-    if (!wallet?.wallet?.address) return;  // ✅ SAUGIKLIS
+    if (!wallet?.wallet?.address) return;
 
     setLoading(true);
     const freshBalances = {};
@@ -47,7 +47,7 @@ export function useBalance() {
   }, [wallet?.wallet?.address]);
 
   useEffect(() => {
-    if (!wallet?.wallet?.address) return;  // ✅ SAUGIKLIS
+    if (!wallet?.wallet?.address) return;
 
     fetchBalances();
 
