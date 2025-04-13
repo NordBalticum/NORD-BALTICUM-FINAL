@@ -14,7 +14,7 @@ export default function Home() {
   const { user, wallet, authLoading, walletLoading, signInWithMagicLink, signInWithGoogle } = useAuth();
 
   const [email, setEmail] = useState("");
-  const [status, setStatus] = useState("idle"); // idle | loading | success | error
+  const [status, setStatus] = useState("idle");
   const [message, setMessage] = useState("");
   const [isClient, setIsClient] = useState(false);
   const [showModal, setShowModal] = useState(false);
