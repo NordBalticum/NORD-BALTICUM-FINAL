@@ -50,12 +50,12 @@ export function useBalance() {
     if (!wallet?.wallet?.address) return;
 
     fetchBalances();
-
     intervalRef.current = setInterval(fetchBalances, 30000);
+
     return () => {
-      clearInterval(intervalRef.current);
+      if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [fetchBalances, wallet?.wallet?.address]);
+  }, [wallet?.wallet?.address, fetchBalances]);
 
   return {
     balances,
