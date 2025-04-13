@@ -79,6 +79,29 @@ input:focus, textarea:focus, select:focus {
   box-shadow: 0 0 16px rgba(255, 255, 255, 0.3);
 }
 
+/* ✅️ Toast Glassmorphism Premium */
+.Toastify__toast {
+  background: rgba(255, 255, 255, 0.08) !important;
+  backdrop-filter: blur(12px) saturate(180%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.18) !important;
+  box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37) !important;
+  border-radius: 16px !important;
+  color: #ffffff !important;
+  font-weight: 500;
+  font-size: 16px;
+  letter-spacing: 0.4px;
+}
+
+.Toastify__toast-body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.Toastify__close-button {
+  color: #ffffff !important;
+}
+
 /* ✅ LOGO EFFECT */
 .logoImage {
   filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.2));
