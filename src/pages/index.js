@@ -19,22 +19,24 @@ export default function Home() {
   const [isClient, setIsClient] = useState(false);
   const [showModal, setShowModal] = useState(false);
 
+  // ✅ Tikrinam ar esam browseryje
   useEffect(() => {
     if (typeof window !== "undefined") {
       setIsClient(true);
     }
   }, []);
 
+  // ✅ Jei user prisijungęs - redirectinam į dashboard
   useEffect(() => {
     if (!isClient) return;
-
-    if (authLoading) return; // ✅ Tik laukiam kol auth loading baigsis
+    if (authLoading) return;
 
     if (user) {
       router.replace("/dashboard");
     }
   }, [isClient, authLoading, user, router]);
 
+  // ✅ Magic Link login
   const handleSignIn = async (e) => {
     e.preventDefault();
     setMessage("");
@@ -58,6 +60,7 @@ export default function Home() {
     }
   };
 
+  // ✅ Google OAuth login
   const handleGoogleSignIn = async () => {
     try {
       setStatus("loading");
@@ -69,14 +72,6 @@ export default function Home() {
     }
   };
 
-  if (authLoading || !isClient) {
-    return (
-      <div className={styles.fullscreenCenter}>
-        <div className={styles.spinner}></div> {/* ✅ Loader kol kraunasi */}
-      </div>
-    );
-  }
-
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.97 }}
@@ -84,6 +79,7 @@ export default function Home() {
       transition={{ duration: 0.8, ease: "easeOut" }}
       className={`${styles.container} ${background.fullscreen}`}
     >
+      {/* ✅ Logo */}
       <div className={styles.logoContainer}>
         <Image
           src="/icons/logo.svg"
@@ -95,6 +91,7 @@ export default function Home() {
         />
       </div>
 
+      {/* ✅ Login forma */}
       <form onSubmit={handleSignIn} className={styles.loginBox}>
         <h1 className={styles.heading}>Welcome to NordBalticum</h1>
         <p className={styles.subheading}>Secure Web3 Banking</p>
@@ -113,11 +110,7 @@ export default function Home() {
           disabled={status === "loading"}
           className={styles.buttonPrimary}
         >
-          {status === "loading" ? (
-            <div className={styles.spinner}></div>
-          ) : (
-            "SEND MAGIC LINK"
-          )}
+          {status === "loading" ? "SENDING..." : "SEND MAGIC LINK"}
         </button>
 
         <button
