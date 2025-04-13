@@ -1,5 +1,6 @@
 "use client";
 
+// ✅ Importai
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
@@ -11,6 +12,7 @@ import { usePrices } from "@/hooks/usePrices";
 import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
 import styles from "@/styles/dashboard.module.css";
 
+// ✅ Dinaminis importas
 const LivePriceTable = dynamic(() => import("@/components/LivePriceTable"), { ssr: false });
 
 // ✅ Ikonos
@@ -22,7 +24,7 @@ const iconUrls = {
   avalanche: "/icons/avax.svg",
 };
 
-// ✅ Pavadinimai
+// ✅ Vardai
 const names = {
   ethereum: "Ethereum",
   bsc: "BNB Smart Chain",
@@ -43,23 +45,24 @@ const routeNames = {
 export default function Dashboard() {
   const router = useRouter();
   const { user, wallet, authLoading, walletLoading } = useAuth();
+
   const [isClient, setIsClient] = useState(false);
 
-  // ✅ Detect Client Side
+  // ✅ Detect Client
   useEffect(() => {
     if (typeof window !== "undefined") {
       setIsClient(true);
     }
   }, []);
 
-  // ✅ Redirect jei neprisijungęs
+  // ✅ Saugiklis: redirect jei neprisijungęs
   useEffect(() => {
     if (isClient && !authLoading && !walletLoading && !user) {
       router.replace("/");
     }
   }, [isClient, authLoading, walletLoading, user, router]);
 
-  // ✅ SAUGIKLIS prieš hook'us
+  // ✅ Loaderis iki user + wallet bus pilnai paruošti
   if (!isClient || authLoading || walletLoading || !user || !wallet) {
     return (
       <div style={{
@@ -75,8 +78,8 @@ export default function Dashboard() {
     );
   }
 
-  // ✅ Tik dabar saugu kviesti hook'us
-  const { balances, loading: balanceLoading, initialLoading } = useBalance();
+  // ✅ Tik dabar saugu naudoti useBalance ir usePrices
+  const { balances, loading: balancesLoading, initialLoading } = useBalance();
   const { prices, loading: pricesLoading } = usePrices();
 
   // ✅ Tokenų sąrašas
@@ -94,7 +97,7 @@ export default function Dashboard() {
         {/* ✅ Live kainos lentelė */}
         <LivePriceTable />
 
-        {/* ✅ Turtų sąrašas */}
+        {/* ✅ Asset List */}
         <div className={styles.assetList}>
           {initialLoading || pricesLoading ? (
             <div style={{
@@ -118,7 +121,7 @@ export default function Dashboard() {
           ) : (
             tokens.map((network) => {
               const balanceData = balances?.[network];
-              const priceData = prices?.[network === "tbnb" ? "bsc" : network];
+              const priceData = prices?.[network === "tbnb" ? "bsc" : network]; // TBNB = BNB
 
               if (!balanceData || !priceData) return null;
 
