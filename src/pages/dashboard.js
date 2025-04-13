@@ -7,13 +7,15 @@ import dynamic from "next/dynamic";
 import Image from "next/image";
 
 import { useAuth } from "@/contexts/AuthContext";
+import { useBalance } from "@/hooks/useBalance";
+import { usePrices } from "@/hooks/usePrices";
 import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
 import styles from "@/styles/dashboard.module.css";
 
-// ✅ Dinaminis LivePriceTable importas
+// 2️⃣ Dinaminis LivePriceTable
 const LivePriceTable = dynamic(() => import("@/components/LivePriceTable"), { ssr: false });
 
-// ✅ Ikonos mapping
+// 3️⃣ Ikonos ir Pavadinimai
 const iconUrls = {
   ethereum: "/icons/eth.svg",
   bsc: "/icons/bnb.svg",
@@ -22,7 +24,6 @@ const iconUrls = {
   avalanche: "/icons/avax.svg",
 };
 
-// ✅ Pavadinimai
 const names = {
   ethereum: "Ethereum",
   bsc: "BNB Smart Chain",
@@ -31,7 +32,6 @@ const names = {
   avalanche: "Avalanche",
 };
 
-// ✅ Route mapping
 const routeNames = {
   ethereum: "eth",
   bsc: "bnb",
@@ -43,25 +43,27 @@ const routeNames = {
 export default function Dashboard() {
   const router = useRouter();
   const { user, wallet, authLoading, walletLoading } = useAuth();
-
+  
   const [isClient, setIsClient] = useState(false);
 
-  // ✅ Detect klientą
+  // 4️⃣ Detect klientą
   useEffect(() => {
     if (typeof window !== "undefined") {
       setIsClient(true);
     }
   }, []);
 
-  // ✅ Redirect jei user null
+  // 5️⃣ Redirect jei neprisijungęs
   useEffect(() => {
     if (isClient && !authLoading && !walletLoading && !user) {
       router.replace("/");
     }
   }, [isClient, authLoading, walletLoading, user, router]);
 
-  // ✅ Apsauga nuo SSR errorų
-  if (!isClient || authLoading || walletLoading || !user || !wallet) {
+  // 6️⃣ Loader jei dar neturim user ar wallet
+  const fullyLoaded = isClient && !authLoading && !walletLoading && user && wallet;
+
+  if (!fullyLoaded) {
     return (
       <div style={{
         height: "100vh",
@@ -76,11 +78,11 @@ export default function Dashboard() {
     );
   }
 
-  // ✅ Čia tik dabar saugiai įtraukiam balansus ir kainas
+  // 7️⃣ Tik dabar saugiai kviečiam hook'us
   const { balances, loading: balanceLoading, initialLoading } = useBalance();
   const { prices, loading: pricesLoading } = usePrices();
 
-  // ✅ Tokenų sąrašas
+  // 8️⃣ Tokenų sąrašas
   const tokens = useMemo(() => {
     if (!wallet?.wallet?.address || !balances || Object.keys(balances).length === 0) {
       return [];
@@ -92,7 +94,7 @@ export default function Dashboard() {
     <main className={styles.container}>
       <div className={styles.dashboardWrapper}>
 
-        {/* ✅ Live Price Table */}
+        {/* ✅ Live kainų lentelė */}
         <LivePriceTable />
 
         {/* ✅ Asset List */}
