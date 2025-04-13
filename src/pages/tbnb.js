@@ -30,19 +30,31 @@ export default function TBnbPage() {
 
   const isLoadingBalances = balancesLoading || pricesLoading;
 
+  // ✅ Po minimize, lock, sleep - reloadinam puslapį
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        window.location.reload();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, []);
+
   useEffect(() => {
     if (!isLoadingBalances) {
       setBalancesReady(true);
     }
   }, [isLoadingBalances]);
 
-  // **Svarbiausia: Retry tik jeigu MOUNTED**
   useEffect(() => {
     if (chartMounted && !chartReady && retryCount < 2) {
       const timeout = setTimeout(() => {
         console.warn(`⏳ Chart not ready. Retrying attempt ${retryCount + 1}...`);
         setRetryCount((prev) => prev + 1);
-      }, 10000); // 10 sekundžių timeout
+      }, 10000);
 
       return () => clearTimeout(timeout);
     } else if (chartMounted && !chartReady && retryCount >= 2) {
@@ -132,7 +144,7 @@ export default function TBnbPage() {
                 onMount={() => {
                   console.log('✅ Chart MOUNTED.');
                   setChartMounted(true);
-                  setRetryCount(0); // **Svarbiausia: Reset retry kai tik mounted**
+                  setRetryCount(0);
                 }}
                 onChartReady={() => {
                   console.log('✅ Chart FULLY READY.');
