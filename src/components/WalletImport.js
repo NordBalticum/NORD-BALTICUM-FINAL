@@ -21,23 +21,27 @@ export default function WalletImport() {
     }
 
     if (!/^0x[a-fA-F0-9]{64}$/.test(privateKey.trim())) {
-      toast.error("❌ Invalid private key format. Must start with 0x and have 66 chars.");
+      toast.error("❌ Invalid private key format. Must start with 0x and have 66 characters.");
+      return;
+    }
+
+    if (!user?.email) {
+      toast.error("❌ User session missing. Please login again.");
       return;
     }
 
     try {
       setLoading(true);
 
-      const importedWallet = new Wallet(privateKey.trim()); // ✅ Tikrinam ar galioja
-      const encrypted = await encrypt(privateKey.trim());   // ✅ Šifruojam
+      const importedWallet = new Wallet(privateKey.trim());
+      const encrypted = await encrypt(privateKey.trim());
 
-      // ✅ Update Supabase
       const { error } = await supabase
         .from("wallets")
         .update({
           encrypted_key: encrypted,
           eth_address: importedWallet.address,
-          updated_at: new Date().toISOString(), // ✅ Updated_at geriau trackinimui
+          updated_at: new Date().toISOString(),
         })
         .eq("user_email", user.email);
 
@@ -51,7 +55,12 @@ export default function WalletImport() {
 
       toast.success("✅ Wallet imported successfully!");
 
-      setTimeout(() => {
+      setTimeout(async () => {
+        try {
+          await supabase.auth.refreshSession(); // ✅ Šviežinam sesiją
+        } catch (err) {
+          console.warn("Session refresh error:", err.message);
+        }
         window.location.reload();
       }, 1800);
 
@@ -69,14 +78,12 @@ export default function WalletImport() {
     <div style={{ marginTop: "32px", width: "100%", maxWidth: "460px" }}>
       <h4 style={{ textAlign: "center", marginBottom: "12px" }}>Import Wallet (Private Key)</h4>
 
-      {/* ✅ Loading state */}
       {loading ? (
         <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "180px" }}>
           <MiniLoadingSpinner />
         </div>
       ) : (
         <>
-          {/* ✅ Input */}
           <input
             type="password"
             placeholder="Enter your private key"
@@ -94,7 +101,6 @@ export default function WalletImport() {
             }}
           />
 
-          {/* ✅ Button */}
           <button
             onClick={handleImport}
             disabled={loading}
@@ -109,9 +115,12 @@ export default function WalletImport() {
               cursor: "pointer",
               fontFamily: "var(--font-crypto)",
               transition: "all 0.3s ease",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
             }}
           >
-            {loading ? "Importing..." : "Import Wallet"}
+            {loading ? <MiniLoadingSpinner /> : "Import Wallet"}
           </button>
         </>
       )}
