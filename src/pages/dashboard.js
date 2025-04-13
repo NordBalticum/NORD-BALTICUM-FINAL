@@ -45,24 +45,23 @@ const routeNames = {
 export default function Dashboard() {
   const router = useRouter();
   const { user, wallet, authLoading, walletLoading } = useAuth();
-
   const [isClient, setIsClient] = useState(false);
 
-  // ✅ Detect Client
+  // ✅ Detect client-side
   useEffect(() => {
     if (typeof window !== "undefined") {
       setIsClient(true);
     }
   }, []);
 
-  // ✅ Saugiklis: redirect jei neprisijungęs
+  // ✅ Redirect jei user nėra
   useEffect(() => {
     if (isClient && !authLoading && !walletLoading && !user) {
       router.replace("/");
     }
   }, [isClient, authLoading, walletLoading, user, router]);
 
-  // ✅ Loaderis iki user + wallet bus pilnai paruošti
+  // ✅ Loaderis iki user + wallet paruošti
   if (!isClient || authLoading || walletLoading || !user || !wallet) {
     return (
       <div style={{
@@ -78,9 +77,22 @@ export default function Dashboard() {
     );
   }
 
-  // ✅ Tik dabar saugu naudoti useBalance ir usePrices
-  const { balances, loading: balancesLoading, initialLoading } = useBalance();
-  const { prices, loading: pricesLoading } = usePrices();
+  // ✅ Saugiai krovimas useBalance ir usePrices
+  let balances = {};
+  let prices = {};
+  let initialLoading = true;
+  let pricesLoading = true;
+
+  try {
+    const balanceHook = useBalance();
+    const pricesHook = usePrices();
+    balances = balanceHook.balances || {};
+    prices = pricesHook.prices || {};
+    initialLoading = balanceHook.initialLoading;
+    pricesLoading = pricesHook.loading;
+  } catch (error) {
+    console.error("Dashboard hooks error:", error.message);
+  }
 
   // ✅ Tokenų sąrašas
   const tokens = useMemo(() => {
@@ -97,9 +109,9 @@ export default function Dashboard() {
         {/* ✅ Live kainos lentelė */}
         <LivePriceTable />
 
-        {/* ✅ Asset List */}
+        {/* ✅ Assetų sąrašas */}
         <div className={styles.assetList}>
-          {initialLoading || pricesLoading ? (
+          {(initialLoading || pricesLoading) ? (
             <div style={{
               padding: "60px",
               display: "flex",
@@ -121,7 +133,7 @@ export default function Dashboard() {
           ) : (
             tokens.map((network) => {
               const balanceData = balances?.[network];
-              const priceData = prices?.[network === "tbnb" ? "bsc" : network]; // TBNB = BNB
+              const priceData = prices?.[network === "tbnb" ? "bsc" : network];
 
               if (!balanceData || !priceData) return null;
 
