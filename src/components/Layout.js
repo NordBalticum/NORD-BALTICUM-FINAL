@@ -10,14 +10,20 @@ import styles from "@/components/layout.module.css"; // ✅ Layout CSS
 
 export default function Layout({ children }) {
   const pathname = usePathname();
-  const { user, wallet } = useAuth();
-
   const [isClient, setIsClient] = useState(false);
+  const [mounted, setMounted] = useState(false); // <--- PRIDEDAM saugumui
+  
+  const { user, wallet } = useAuth();
 
   // 2️⃣ Detect Client Side
   useEffect(() => {
     setIsClient(true);
+    setMounted(true);
   }, []);
+
+  if (!mounted) {
+    return null; // <--- PRIDEDAM griežtą apsaugą nuo SSR klaidų
+  }
 
   // 3️⃣ Kur slėpti visą UI
   const hideUI = pathname === "/" || pathname === "" || pathname === null;
