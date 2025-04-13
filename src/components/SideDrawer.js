@@ -12,7 +12,7 @@ import styles from "@/components/sidedrawer.module.css";
 export default function SideDrawer() {
   const router = useRouter();
   const pathname = usePathname();
-  const { user, wallet, signOut } = useAuth();
+  const { user, wallet, signOut, authLoading, walletLoading } = useAuth();
   const [open, setOpen] = useState(false);
   const [isClient, setIsClient] = useState(false);
 
@@ -36,12 +36,12 @@ export default function SideDrawer() {
   // 5️⃣ LOGOUT
   const handleLogout = async () => {
     try {
-      await signOut();
+      await signOut(true); // ✅ Siunčiam true kad parodytų logout toast
       setOpen(false);
-      document.body.style.overflow = "auto"; // ✅ Išvalom scroll lock po logout
+      document.body.style.overflow = "auto";
       router.replace("/");
     } catch (error) {
-      console.error("Logout failed:", error.message);
+      console.error("Logout failed:", error.message || error);
     }
   };
 
@@ -55,7 +55,9 @@ export default function SideDrawer() {
   ];
 
   // 7️⃣ JEI USER AR WALLET NĖRA → NERODYTI
-  if (!isClient || !user || !wallet?.wallet?.address) return null;
+  if (!isClient || authLoading || walletLoading || !user || !wallet?.wallet?.address) {
+    return null;
+  }
 
   // 8️⃣ UI
   return (
@@ -127,7 +129,7 @@ export default function SideDrawer() {
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.3, duration: 0.5 }}
                 >
-                  {user.email}
+                  {user?.email || "User"}
                 </motion.p>
               </motion.div>
 
