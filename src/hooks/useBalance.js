@@ -4,7 +4,6 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { ethers } from "ethers";
 
-// ✅ Network mapping
 const NETWORKS = {
   ethereum: { rpc: "https://rpc.ankr.com/eth", symbol: "ETH" },
   bsc: { rpc: "https://bsc-dataseed.bnbchain.org", symbol: "BNB" },
@@ -21,7 +20,7 @@ export function useBalance() {
   const intervalRef = useRef(null);
 
   const fetchBalances = useCallback(async () => {
-    if (!wallet?.wallet?.address) return;
+    if (!wallet?.wallet?.address) return;  // ✅ SAUGIKLIS
 
     setLoading(true);
     const freshBalances = {};
@@ -48,11 +47,11 @@ export function useBalance() {
   }, [wallet?.wallet?.address]);
 
   useEffect(() => {
-    if (!wallet?.wallet?.address) return;
+    if (!wallet?.wallet?.address) return;  // ✅ SAUGIKLIS
 
-    fetchBalances(); // ✅ Pirmas užkrovimas
+    fetchBalances();
 
-    intervalRef.current = setInterval(fetchBalances, 30000); // ✅ Update kas 30s
+    intervalRef.current = setInterval(fetchBalances, 30000);
     return () => {
       clearInterval(intervalRef.current);
     };
