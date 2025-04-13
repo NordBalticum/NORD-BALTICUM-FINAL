@@ -6,24 +6,27 @@ import { Wallet } from "ethers";
 import { supabase } from "@/utils/supabaseClient";
 import { useAuth, encrypt } from "@/contexts/AuthContext";
 import MiniLoadingSpinner from "@/components/MiniLoadingSpinner"; // ✅ Spinner
+import { toast } from "react-toastify"; // ✅ Pridedam Toast
 
 export default function WalletImport() {
   const { user, reloadWallet } = useAuth();
   const [privateKey, setPrivateKey] = useState("");
-  const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
 
   // 2️⃣ Importavimo funkcija
   const handleImport = async () => {
     if (!privateKey.trim()) {
-      setStatus("❌ Please enter your private key.");
+      toast.error("❌ Please enter your private key.");
+      return;
+    }
+
+    if (!privateKey.trim().startsWith("0x") || privateKey.trim().length !== 66) {
+      toast.error("❌ Invalid private key format.");
       return;
     }
 
     try {
       setLoading(true);
-      setStatus("");
 
       const importedWallet = new Wallet(privateKey.trim()); // ✅ Patikrinam ar valid key
       const encrypted = await encrypt(privateKey.trim());   // ✅ Saugiai šifruojam
@@ -34,31 +37,30 @@ export default function WalletImport() {
         .update({
           encrypted_key: encrypted,
           eth_address: importedWallet.address,
+          updated_at: new Date().toISOString(), // ✅ Gera praktika (jei yra updated_at laukelis)
         })
         .eq("user_email", user.email);
 
       if (error) {
         console.error("Supabase update error:", error.message);
-        setStatus("❌ Failed to update wallet.");
+        toast.error("❌ Failed to update wallet.");
         return;
       }
 
-      // ✅ Reloadinam naują wallet
-      await reloadWallet(user.email);
+      await reloadWallet(user.email); // ✅ Reloadinam naują wallet
 
-      setPrivateKey("");
-      setSuccess(true);
+      toast.success("✅ Wallet imported successfully! Reloading...");
 
-      // ✅ 1.8s delay prieš reload
       setTimeout(() => {
         window.location.reload();
       }, 1800);
 
     } catch (err) {
       console.error("Import Wallet Error:", err.message);
-      setStatus("❌ Invalid private key.");
+      toast.error("❌ Invalid private key.");
     } finally {
       setLoading(false);
+      setPrivateKey("");
     }
   };
 
@@ -71,20 +73,6 @@ export default function WalletImport() {
       {loading ? (
         <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "180px" }}>
           <MiniLoadingSpinner />
-        </div>
-      ) : success ? (
-        // ✅ Success Modal
-        <div style={{
-          textAlign: "center",
-          padding: "24px",
-          background: "rgba(255, 255, 255, 0.08)",
-          borderRadius: "16px",
-          border: "1px solid rgba(255,255,255,0.2)",
-          fontFamily: "var(--font-crypto)",
-          color: "white",
-          fontSize: "16px"
-        }}>
-          ✅ Wallet imported successfully! Reloading...
         </div>
       ) : (
         <>
@@ -125,18 +113,6 @@ export default function WalletImport() {
             Import Wallet
           </button>
         </>
-      )}
-
-      {/* ✅ Status message */}
-      {status && !loading && !success && (
-        <p style={{
-          marginTop: "10px",
-          textAlign: "center",
-          fontFamily: "var(--font-crypto)",
-          color: "white",
-        }}>
-          {status}
-        </p>
       )}
     </div>
   );
