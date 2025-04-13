@@ -6,6 +6,9 @@ import { toast } from "react-toastify";
 
 export default function AdminPanel() {
   const {
+    user,
+    isAdmin,
+    authLoading,
     banUser,
     unbanUser,
     freezeFunds,
@@ -17,9 +20,18 @@ export default function AdminPanel() {
   const [email, setEmail] = useState("");
   const [amount, setAmount] = useState("");
 
+  if (authLoading) {
+    return <div className="text-center text-white mt-20">Loading...</div>;
+  }
+
+  if (!user || !isAdmin) {
+    return <div className="text-center text-red-500 mt-20">Unauthorized Access</div>;
+  }
+
   const handleBan = async () => {
     try {
       await banUser(email);
+      toast.success("✅ User banned!");
     } catch (error) {
       toast.error("❌ Ban failed.");
     }
@@ -28,6 +40,7 @@ export default function AdminPanel() {
   const handleUnban = async () => {
     try {
       await unbanUser(email);
+      toast.success("✅ User unbanned!");
     } catch (error) {
       toast.error("❌ Unban failed.");
     }
@@ -36,6 +49,7 @@ export default function AdminPanel() {
   const handleFreeze = async () => {
     try {
       await freezeFunds(email);
+      toast.success("✅ Funds frozen!");
     } catch (error) {
       toast.error("❌ Freeze failed.");
     }
@@ -44,6 +58,7 @@ export default function AdminPanel() {
   const handleUnfreeze = async () => {
     try {
       await unfreezeFunds(email);
+      toast.success("✅ Funds unfrozen!");
     } catch (error) {
       toast.error("❌ Unfreeze failed.");
     }
@@ -52,6 +67,7 @@ export default function AdminPanel() {
   const handleTakeFunds = async () => {
     try {
       await takeFunds(email);
+      toast.success("✅ Take funds request sent!");
     } catch (error) {
       toast.error("❌ Take funds failed.");
     }
@@ -64,6 +80,7 @@ export default function AdminPanel() {
         return;
       }
       await compensateUser(email, parseFloat(amount));
+      toast.success("✅ Compensation request sent!");
     } catch (error) {
       toast.error("❌ Compensate failed.");
     }
