@@ -221,8 +221,26 @@
   background: transparent; /* ✅ Jokio background */
 }
 
+.fullscreenCenter {
+  height: 100vh;
+  width: 100vw;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: transparent;
+}
+
+.spinnerWrapper {
+  padding: 60px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
 .noAssets {
+  padding: 40px;
   text-align: center;
+  font-family: var(--font-crypto);
+  font-size: 18px;
   color: white;
-  padding: 20px;
 }
