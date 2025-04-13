@@ -1,5 +1,6 @@
 "use client";
 
+// 1️⃣ Importai
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
@@ -17,18 +18,23 @@ export default function Home() {
   const [status, setStatus] = useState("idle"); // idle | loading | success | error
   const [message, setMessage] = useState("");
   const [isClient, setIsClient] = useState(false);
-  const [showModal, setShowModal] = useState(false); // ✅ Modal būklė
+  const [showModal, setShowModal] = useState(false);
 
+  // ✅ Saugi window patikra
   useEffect(() => {
-    if (typeof window !== "undefined") setIsClient(true);
+    if (typeof window !== "undefined") {
+      setIsClient(true);
+    }
   }, []);
 
+  // ✅ Redirect į dashboard jei user jau prisijungęs
   useEffect(() => {
     if (isClient && user) {
       router.replace("/dashboard");
     }
-  }, [user, isClient, router]);
+  }, [isClient, user, router]);
 
+  // ✅ Magic Link sign in
   const handleSignIn = async (e) => {
     e.preventDefault();
     setMessage("");
@@ -43,8 +49,8 @@ export default function Home() {
       setStatus("loading");
       await signInWithMagicLink(email);
       setStatus("success");
-      setShowModal(true); // ✅ Rodyti modal
-      setTimeout(() => setShowModal(false), 3500); // Modal dingsta automatiškai
+      setShowModal(true);
+      setTimeout(() => setShowModal(false), 3500);
     } catch (err) {
       console.error("❌ Magic Link Error:", err);
       setStatus("error");
@@ -52,6 +58,7 @@ export default function Home() {
     }
   };
 
+  // ✅ Google OAuth sign in
   const handleGoogleSignIn = async () => {
     try {
       setStatus("loading");
@@ -63,6 +70,7 @@ export default function Home() {
     }
   };
 
+  // ✅ UI
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.97 }}
@@ -100,7 +108,7 @@ export default function Home() {
           className={styles.buttonPrimary}
         >
           {status === "loading" ? (
-            <div className={styles.spinner}></div> // ✅ Spinner vietoje teksto
+            <div className={styles.spinner}></div>
           ) : (
             "SEND MAGIC LINK"
           )}
