@@ -60,8 +60,8 @@ export function useBalance() {
 
   return {
     balances,
-    loading,           // ✅ foninis kraunimasis
-    initialLoading,    // ✅ pirmas užsikrovimas
-    refetch: fetchBalances, // ✅ rankinis refetch
+    loading,
+    initialLoading,
+    refetch: fetchBalances,
   };
 }
