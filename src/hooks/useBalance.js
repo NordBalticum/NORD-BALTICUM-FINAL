@@ -20,7 +20,7 @@ export function useBalance() {
   const intervalRef = useRef(null);
 
   const fetchBalances = useCallback(async () => {
-    if (!wallet?.wallet?.address) return;
+    if (!wallet?.eth_address) return; // <<< TEISINGAS LAUKAS!
 
     setLoading(true);
     const freshBalances = {};
@@ -28,7 +28,7 @@ export function useBalance() {
     try {
       for (const [network, config] of Object.entries(NETWORKS)) {
         const provider = new ethers.JsonRpcProvider(config.rpc);
-        const balance = await provider.getBalance(wallet.wallet.address);
+        const balance = await provider.getBalance(wallet.eth_address); // <<< NAUDOJAM wallet.eth_address
         const formatted = ethers.formatEther(balance);
 
         freshBalances[network] = {
@@ -44,18 +44,18 @@ export function useBalance() {
       setLoading(false);
       setInitialLoading(false);
     }
-  }, [wallet?.wallet?.address]);
+  }, [wallet?.eth_address]); // <<< NE wallet.wallet.address
 
   useEffect(() => {
-    if (!wallet?.wallet?.address) return;
+    if (!wallet?.eth_address) return; // <<< Tikrinam eth_address
 
     fetchBalances();
-    intervalRef.current = setInterval(fetchBalances, 30000);
 
+    intervalRef.current = setInterval(fetchBalances, 30000);
     return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
+      clearInterval(intervalRef.current);
     };
-  }, [wallet?.wallet?.address, fetchBalances]);
+  }, [fetchBalances, wallet?.eth_address]);
 
   return {
     balances,
