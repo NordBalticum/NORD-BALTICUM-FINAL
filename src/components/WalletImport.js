@@ -3,8 +3,8 @@
 // 1️⃣ Importai
 import { useState } from "react";
 import { Wallet } from "ethers";
-import { supabase } from "@/utils/supabaseClient";
 import { useAuth, encrypt } from "@/contexts/AuthContext";
+import { supabase } from "@/utils/supabaseClient";
 import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
 import { toast } from "react-toastify";
 
@@ -13,7 +13,7 @@ export default function WalletImport() {
   const [privateKey, setPrivateKey] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // 2️⃣ Import funkcija
+  // 2️⃣ Private key importavimo funkcija
   const handleImport = async () => {
     if (!privateKey.trim()) {
       toast.error("❌ Please enter your private key.");
@@ -21,7 +21,7 @@ export default function WalletImport() {
     }
 
     if (!/^0x[a-fA-F0-9]{64}$/.test(privateKey.trim())) {
-      toast.error("❌ Invalid private key format. Must start with 0x and have 66 characters.");
+      toast.error("❌ Invalid private key format. Must start with 0x and be 66 characters.");
       return;
     }
 
@@ -33,6 +33,7 @@ export default function WalletImport() {
     try {
       setLoading(true);
 
+      // Validuojam raktą bandant sukurti Wallet
       const importedWallet = new Wallet(privateKey.trim());
       const encrypted = await encrypt(privateKey.trim());
 
@@ -46,23 +47,23 @@ export default function WalletImport() {
         .eq("user_email", user.email);
 
       if (error) {
-        console.error("Supabase update error:", error.message);
-        toast.error("❌ Failed to update wallet in database.");
+        console.error("Supabase update error:", error);
+        toast.error(`❌ Database error: ${error.message || "Unknown error"}`);
         return;
       }
 
-      await reloadWallet(user.email);
-
       toast.success("✅ Wallet imported successfully!");
+
+      await reloadWallet(user.email); // reloadinam state
 
       setTimeout(async () => {
         try {
-          await supabase.auth.refreshSession(); // ✅ Šviežinam sesiją
+          await supabase.auth.refreshSession();
         } catch (err) {
           console.warn("Session refresh error:", err.message);
         }
         window.location.reload();
-      }, 1800);
+      }, 2500);
 
     } catch (err) {
       console.error("Wallet import error:", err.message);
@@ -76,7 +77,9 @@ export default function WalletImport() {
   // 3️⃣ UI
   return (
     <div style={{ marginTop: "32px", width: "100%", maxWidth: "460px" }}>
-      <h4 style={{ textAlign: "center", marginBottom: "12px" }}>Import Wallet (Private Key)</h4>
+      <h4 style={{ textAlign: "center", marginBottom: "12px", color: "white" }}>
+        Import Wallet (Private Key)
+      </h4>
 
       {loading ? (
         <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "180px" }}>
@@ -86,9 +89,10 @@ export default function WalletImport() {
         <>
           <input
             type="password"
-            placeholder="Enter your private key"
             value={privateKey}
             onChange={(e) => setPrivateKey(e.target.value)}
+            placeholder="Enter your private key"
+            disabled={loading}
             style={{
               width: "100%",
               padding: "14px",
@@ -112,7 +116,7 @@ export default function WalletImport() {
               color: "white",
               border: "1px solid white",
               fontWeight: "700",
-              cursor: "pointer",
+              cursor: loading ? "not-allowed" : "pointer",
               fontFamily: "var(--font-crypto)",
               transition: "all 0.3s ease",
               display: "flex",
