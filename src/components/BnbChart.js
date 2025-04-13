@@ -6,7 +6,6 @@ import { Chart as ChartJS, LineElement, CategoryScale, LinearScale, PointElement
 import MiniLoadingSpinner from '@/components/MiniLoadingSpinner';
 import styles from '@/styles/tbnb.module.css';
 
-// Registruojam Chart komponentus
 ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Filler, Decimation);
 
 export default function BnbChart({ onChartReady, onMount }) {
@@ -15,19 +14,18 @@ export default function BnbChart({ onChartReady, onMount }) {
   const [chartRendered, setChartRendered] = useState(false);
   const chartRef = useRef(null);
 
-  const mountedRef = useRef(false); // Startuoja kaip false
+  const mountedRef = useRef(false);
   const controllerRef = useRef(null);
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
 
-  // Triggerinam onMount kai tik komponentas pilnai įsikrauna
   useEffect(() => {
     if (typeof onMount === 'function') {
-      onMount(); // ✅ Signalizuojam parentui (tbnb.js)
+      onMount(); // ✅ Signalizuojam parentui
     }
   }, [onMount]);
 
   const fetchChartData = useCallback(async (showSpinner = true) => {
-    if (!mountedRef.current) return;
+    if (!mountedRef.current || document.visibilityState !== 'visible') return; // <-- svarbu!
 
     if (controllerRef.current) {
       controllerRef.current.abort();
@@ -81,17 +79,22 @@ export default function BnbChart({ onChartReady, onMount }) {
 
   useEffect(() => {
     mountedRef.current = true;
-    fetchChartData(true);
+
+    if (document.visibilityState === 'visible') {
+      fetchChartData(true);
+    }
 
     const interval = setInterval(() => {
-      fetchChartData(false);
-    }, 3600000); // Kas 1 valandą
+      if (mountedRef.current && document.visibilityState === 'visible') {
+        fetchChartData(false);
+      }
+    }, 3600000);
 
     const handleVisibilityChange = () => {
-      if (document.visibilityState === 'hidden') {
-        if (controllerRef.current) controllerRef.current.abort();
-      } else if (document.visibilityState === 'visible') {
+      if (document.visibilityState === 'visible') {
         if (mountedRef.current) fetchChartData(false);
+      } else if (document.visibilityState === 'hidden') {
+        if (controllerRef.current) controllerRef.current.abort();
       }
     };
     document.addEventListener('visibilitychange', handleVisibilityChange);
