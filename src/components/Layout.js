@@ -3,35 +3,45 @@
 // 1️⃣ Importai
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
-import { useAuth } from "@/contexts/AuthContext"; // ✅ Ultimate Auth Context
-import SideDrawer from "@/components/SideDrawer"; // ✅ Sidebar Navigation
-import BottomNavigation from "@/components/BottomNavigation"; // ✅ Mobile Navigation
-import styles from "@/components/layout.module.css"; // ✅ Layout CSS
+import { useAuth } from "@/contexts/AuthContext";
+import SideDrawer from "@/components/SideDrawer";
+import BottomNavigation from "@/components/BottomNavigation";
+import MiniLoadingSpinner from "@/components/MiniLoadingSpinner"; // ✅ Mažas spinneris
+import styles from "@/components/layout.module.css";
 
 export default function Layout({ children }) {
   const pathname = usePathname();
-  const [isClient, setIsClient] = useState(false);
-  const [mounted, setMounted] = useState(false); // <--- PRIDEDAM saugumui
-  
-  const { user, wallet } = useAuth();
+  const { user, wallet, authLoading, walletLoading } = useAuth();
 
-  // 2️⃣ Detect Client Side
+  const [mounted, setMounted] = useState(false);
+  const [isClient, setIsClient] = useState(false);
+
+  // 2️⃣ Detect Client Side ir Mount
   useEffect(() => {
     setIsClient(true);
     setMounted(true);
   }, []);
 
   if (!mounted) {
-    return null; // <--- PRIDEDAM griežtą apsaugą nuo SSR klaidų
+    return null; // ✅ STOP jei dar montuojasi
   }
 
-  // 3️⃣ Kur slėpti visą UI
+  // 3️⃣ Kol Auth kraunasi arba Wallet kraunasi → Loading
+  if (authLoading || walletLoading) {
+    return (
+      <div className={styles.layoutWrapper} style={{ width: "100vw", height: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <MiniLoadingSpinner />
+      </div>
+    );
+  }
+
+  // 4️⃣ Kur slėpti pilną UI (login / index puslapyje)
   const hideUI = pathname === "/" || pathname === "" || pathname === null;
 
-  // 4️⃣ Kada rodyti UI
+  // 5️⃣ Kada rodyti UI
   const showUI = isClient && user && wallet?.wallet && !hideUI;
 
-  // 5️⃣ Struktūra
+  // 6️⃣ Struktūra
   return (
     <div className={styles.layoutWrapper}>
       {showUI && <SideDrawer />}
