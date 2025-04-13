@@ -2,11 +2,10 @@
 
 import { useState, useMemo, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
+
 import { useAuth } from "@/contexts/AuthContext";
-import { useBalance } from "@/hooks/useBalance";
 import { usePageReady } from "@/hooks/usePageReady";
 import { useSwipeReady } from "@/hooks/useSwipeReady";
-import { usePrices } from "@/hooks/usePrices";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useTotalFeeCalculator } from "@/hooks/useTotalFeeCalculator";
 
@@ -58,9 +57,7 @@ const minAmounts = {
 };
 
 export default function SendPage() {
-  const { user } = useAuth();
-  const { balances, initialLoading } = useBalance();
-  const { prices } = usePrices();
+  const { user, balances, rates, authLoading, walletLoading } = useAuth();
   const isReady = usePageReady();
   const swipeReady = useSwipeReady();
   const router = useRouter();
@@ -85,14 +82,14 @@ export default function SendPage() {
   const netBalance = useMemo(() => balances?.[network]?.balance ? parseFloat(balances[network].balance) : 0, [balances, network]);
 
   const usdValue = useMemo(() => {
-    const price = prices?.[network]?.usd || 0;
+    const price = rates?.[network === "tbnb" ? "bsc" : network]?.usd || 0;
     return (netBalance * price).toFixed(2);
-  }, [netBalance, prices, network]);
+  }, [netBalance, rates, network]);
 
   const eurValue = useMemo(() => {
-    const price = prices?.[network]?.eur || 0;
+    const price = rates?.[network === "tbnb" ? "bsc" : network]?.eur || 0;
     return (netBalance * price).toFixed(2);
-  }, [netBalance, prices, network]);
+  }, [netBalance, rates, network]);
 
   const isValidAddress = (address) => /^0x[a-fA-F0-9]{40}$/.test(address.trim());
 
@@ -151,14 +148,13 @@ export default function SendPage() {
 
   const handleRetry = () => setError(null);
 
-  // ✅ Pilna sesijos tikrinimo logika
   useEffect(() => {
     if (!user && isReady) {
       router.replace("/");
     }
   }, [user, isReady, router]);
 
-  if (!isReady || !swipeReady || initialLoading) {
+  if (!isReady || !swipeReady || authLoading || walletLoading) {
     return (
       <div style={{
         width: "100vw",
@@ -294,7 +290,6 @@ export default function SendPage() {
             message="✅ Transaction Successful!"
             onClose={() => {
               setShowSuccess(false);
-              // NE redirectinam automatiškai
             }}
             transactionHash={transactionHash}
             network={network}
@@ -302,12 +297,12 @@ export default function SendPage() {
         )}
 
         {error && (
-  <ErrorModal
-    error={error}
-    onClose={handleRetry} // <- senasis onRetry tiesiog pavadintas kitaip
-  />
-)}
+          <ErrorModal
+            error={error}
+            onClose={handleRetry}
+          />
+        )}
       </div>
     </main>
   );
-}
+              }
