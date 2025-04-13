@@ -1,6 +1,5 @@
 "use client";
 
-// 1️⃣ Importai
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
@@ -12,7 +11,7 @@ import background from "@/styles/background.module.css";
 
 export default function Home() {
   const router = useRouter();
-  const { user, authLoading, signInWithMagicLink, signInWithGoogle } = useAuth(); // ✅ pridėtas authLoading!
+  const { user, authLoading, signInWithMagicLink, signInWithGoogle } = useAuth();
 
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState("idle"); // idle | loading | success | error
@@ -27,16 +26,15 @@ export default function Home() {
     }
   }, []);
 
-  // ✅ Redirect į dashboard kai user yra prisijungęs IR authLoading baigtas
+  // ✅ Redirect į dashboard tik jei authLoading baigtas
   useEffect(() => {
-    if (!isClient || authLoading) return; // ✅ Apsauga: kol kraunasi, nieko nedarom
+    if (!isClient || authLoading) return;
 
     if (user) {
       router.replace("/dashboard");
     }
   }, [isClient, authLoading, user, router]);
 
-  // ✅ Magic Link sign in
   const handleSignIn = async (e) => {
     e.preventDefault();
     setMessage("");
@@ -60,7 +58,6 @@ export default function Home() {
     }
   };
 
-  // ✅ Google OAuth sign in
   const handleGoogleSignIn = async () => {
     try {
       setStatus("loading");
@@ -72,7 +69,6 @@ export default function Home() {
     }
   };
 
-  // ✅ UI
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.97 }}
