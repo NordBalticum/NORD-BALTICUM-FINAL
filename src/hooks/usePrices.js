@@ -1,17 +1,15 @@
 "use client";
 
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback } from "react";
 
-// ✅ Token mapping su CoinGecko ID
 const TOKEN_IDS = {
   ethereum: "ethereum",
   bsc: "binancecoin",
   polygon: "matic-network",
   avalanche: "avalanche-2",
-  tbnb: "binancecoin", // TBNB = BNB kaina
+  tbnb: "binancecoin",
 };
 
-// ✅ Atsarginės kainos (fallback jei API neveiktų)
 const FALLBACK_PRICES = {
   ethereum: { eur: 2900, usd: 3100 },
   bsc: { eur: 450, usd: 480 },
@@ -20,21 +18,27 @@ const FALLBACK_PRICES = {
   tbnb: { eur: 450, usd: 480 },
 };
 
-// ✅ ULTIMATE Price Hook
 export function usePrices() {
   const [prices, setPrices] = useState(FALLBACK_PRICES);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const intervalRef = useRef(null);
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setIsClient(true);
+    }
+  }, []);
 
   const fetchPrices = useCallback(async () => {
+    if (!isClient) return;
+
     try {
-      if (document.visibilityState !== "visible") return; // ✅ Tik jei tab aktyvus
       setLoading(true);
 
       const ids = Object.values(TOKEN_IDS).join(",");
       const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=eur,usd`, {
-        cache: "no-store", // ✅ Visada šviežia data
+        cache: "no-store",
       });
 
       if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
@@ -58,27 +62,16 @@ export function usePrices() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [isClient]);
 
   useEffect(() => {
-    fetchPrices(); // ✅ Pirmas pakrovimas
+    if (!isClient) return;
 
-    intervalRef.current = setInterval(() => {
-      fetchPrices();
-    }, 30000); // ✅ Kas 30s
+    fetchPrices();
 
-    const visibilityHandler = () => {
-      if (document.visibilityState === "visible") {
-        fetchPrices(); // ✅ Kai grįžtam į tab
-      }
-    };
-    document.addEventListener("visibilitychange", visibilityHandler);
-
-    return () => {
-      clearInterval(intervalRef.current);
-      document.removeEventListener("visibilitychange", visibilityHandler);
-    };
-  }, [fetchPrices]);
+    const interval = setInterval(fetchPrices, 30000);
+    return () => clearInterval(interval);
+  }, [fetchPrices, isClient]);
 
   return {
     prices,
