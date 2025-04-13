@@ -2,16 +2,16 @@
 
 import { useEffect, useState, useCallback, useRef } from "react";
 
-// ✅ CoinGecko Token IDs
+// ✅ Token mapping su CoinGecko ID
 const TOKEN_IDS = {
   ethereum: "ethereum",
   bsc: "binancecoin",
   polygon: "matic-network",
   avalanche: "avalanche-2",
-  tbnb: "binancecoin", // TBNB = BNB kaina
+  tbnb: "binancecoin", // ✅ tbnb = bsc kaina
 };
 
-// ✅ Atsarginės kainos (fallback)
+// ✅ Atsarginės kainos fallback
 const FALLBACK_PRICES = {
   ethereum: { eur: 2900, usd: 3100 },
   bsc: { eur: 450, usd: 480 },
@@ -20,42 +20,45 @@ const FALLBACK_PRICES = {
   tbnb: { eur: 450, usd: 480 },
 };
 
-// ✅ Ultimate Price Hook
 export function usePrices() {
-  const [prices, setPrices] = useState(FALLBACK_PRICES); // ✅ Startuoja su fallback
+  const [prices, setPrices] = useState(FALLBACK_PRICES);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const mountedRef = useRef(false);
 
   const fetchPrices = useCallback(async () => {
-    if (!mountedRef.current) return; // ✅ Protection jei unmounted
+    if (typeof window === "undefined") return;
 
     try {
       setLoading(true);
-      const ids = Object.values(TOKEN_IDS).join(",");
 
+      const ids = Object.values(TOKEN_IDS).join(",");
       const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=eur,usd`, {
-        cache: "no-store", // ✅ Visada šviežia
+        cache: "no-store",
       });
 
-      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+      if (!res.ok) throw new Error(`HTTP Error: ${res.status}`);
 
       const data = await res.json();
-      const updatedPrices = {};
+      const newPrices = {};
 
       for (const [symbol, id] of Object.entries(TOKEN_IDS)) {
-        updatedPrices[symbol] = {
+        newPrices[symbol] = {
           eur: data[id]?.eur ?? FALLBACK_PRICES[symbol].eur,
           usd: data[id]?.usd ?? FALLBACK_PRICES[symbol].usd,
         };
       }
 
-      setPrices(updatedPrices);
-      setError(null);
+      if (mountedRef.current) {
+        setPrices(newPrices);
+        setError(null);
+      }
     } catch (err) {
-      console.error("❌ Price fetch error:", err.message || err);
-      setPrices(FALLBACK_PRICES); // ✅ Jei error – fallback
-      setError(err.message || "Unknown error");
+      console.error("❌ Price fetch error:", err.message);
+      if (mountedRef.current) {
+        setPrices(FALLBACK_PRICES);
+        setError(err.message || "Unknown error");
+      }
     } finally {
       if (mountedRef.current) {
         setLoading(false);
@@ -65,12 +68,12 @@ export function usePrices() {
 
   useEffect(() => {
     mountedRef.current = true;
-    fetchPrices(); // ✅ Load first time
+    fetchPrices(); // ✅ Iškart užkraunam
 
-    const interval = setInterval(fetchPrices, 30000); // ✅ Kas 30 sekundžių
+    const interval = setInterval(fetchPrices, 30000); // ✅ kas 30s automatinis refresh
     return () => {
       mountedRef.current = false;
-      clearInterval(interval); // ✅ Clean interval
+      clearInterval(interval);
     };
   }, [fetchPrices]);
 
@@ -78,6 +81,6 @@ export function usePrices() {
     prices,
     loading,
     error,
-    refetch: fetchPrices, // ✅ Galima rankiniu būdu pasikrauti dar kartą
+    refetch: fetchPrices,
   };
 }
