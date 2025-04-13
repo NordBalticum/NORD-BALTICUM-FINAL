@@ -1,8 +1,9 @@
 "use client";
 
+// 1️⃣ Importai
 import { useEffect, useState, useCallback, useRef } from "react";
 
-// ✅ Token mapping su CoinGecko ID
+// 2️⃣ Token mapping su CoinGecko ID
 const TOKEN_IDS = {
   ethereum: "ethereum",
   bsc: "binancecoin",
@@ -11,7 +12,7 @@ const TOKEN_IDS = {
   tbnb: "binancecoin", // ✅ tbnb = bsc kaina
 };
 
-// ✅ Atsarginės kainos fallback
+// 3️⃣ Atsarginės fallback kainos (jei CoinGecko neveiktų)
 const FALLBACK_PRICES = {
   ethereum: { eur: 2900, usd: 3100 },
   bsc: { eur: 450, usd: 480 },
@@ -20,6 +21,7 @@ const FALLBACK_PRICES = {
   tbnb: { eur: 450, usd: 480 },
 };
 
+// 4️⃣ usePrices Hook
 export function usePrices() {
   const [prices, setPrices] = useState(FALLBACK_PRICES);
   const [loading, setLoading] = useState(true);
@@ -33,9 +35,10 @@ export function usePrices() {
       setLoading(true);
 
       const ids = Object.values(TOKEN_IDS).join(",");
-      const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=eur,usd`, {
-        cache: "no-store",
-      });
+      const res = await fetch(
+        `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=eur,usd`,
+        { cache: "no-store" }
+      );
 
       if (!res.ok) throw new Error(`HTTP Error: ${res.status}`);
 
@@ -54,7 +57,7 @@ export function usePrices() {
         setError(null);
       }
     } catch (err) {
-      console.error("❌ Price fetch error:", err.message);
+      console.error("❌ Price fetch error:", err.message || err);
       if (mountedRef.current) {
         setPrices(FALLBACK_PRICES);
         setError(err.message || "Unknown error");
@@ -68,9 +71,12 @@ export function usePrices() {
 
   useEffect(() => {
     mountedRef.current = true;
-    fetchPrices(); // ✅ Iškart užkraunam
+    fetchPrices(); // ✅ Užkraunam iškart
 
-    const interval = setInterval(fetchPrices, 30000); // ✅ kas 30s automatinis refresh
+    const interval = setInterval(() => {
+      fetchPrices();
+    }, 30000); // ✅ Kas 30 sekundžių
+
     return () => {
       mountedRef.current = false;
       clearInterval(interval);
