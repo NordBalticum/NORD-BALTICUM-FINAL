@@ -12,7 +12,7 @@ import "react-toastify/dist/ReactToastify.css";
 import { startSessionWatcher } from "@/utils/sessionWatcher";
 
 // 2. RPC URL'AI
-const RPC = {
+export const RPC = {
   eth: "https://rpc.ankr.com/eth",
   bnb: "https://bsc-dataseed.binance.org/",
   tbnb: "https://data-seed-prebsc-1-s1.binance.org:8545/",
