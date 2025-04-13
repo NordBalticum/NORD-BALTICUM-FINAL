@@ -1,19 +1,14 @@
 "use client";
 
-// 1️⃣ Importai
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import Image from "next/image";
-
-import { useAuth } from "@/contexts/AuthContext";
 import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
 import styles from "@/styles/dashboard.module.css";
 
-// 2️⃣ Dinaminis Importas
 const LivePriceTable = dynamic(() => import("@/components/LivePriceTable"), { ssr: false });
 
-// 3️⃣ Ikonos ir Vardai
 const iconUrls = {
   eth: "/icons/eth.svg",
   bnb: "/icons/bnb.svg",
@@ -31,26 +26,34 @@ const names = {
 };
 
 export default function Dashboard() {
-  const router = useRouter();
-  const { user, wallet, balances, rates, authLoading, walletLoading } = useAuth();
   const [isClient, setIsClient] = useState(false);
 
-  // ✅ Saugi window tikrinimo logika
+  // ✅ Pirma žiūrim ar jau klientas
   useEffect(() => {
-    if (typeof window !== "undefined") setIsClient(true);
+    setIsClient(true);
   }, []);
 
-  // ✅ Redirect jei neprisijungęs
+  // ✅ STOP jei dar nesame kliente
+  if (!isClient) {
+    return (
+      <div className={styles.fullscreenCenter}>
+        <MiniLoadingSpinner />
+      </div>
+    );
+  }
+
+  // ✅ Tik dabar saugiai importuojam useAuth
+  const { user, wallet, balances, rates, authLoading, walletLoading } = require("@/contexts/AuthContext").useAuth();
+  const router = useRouter();
+
   useEffect(() => {
-    if (isClient && !authLoading && !walletLoading && !user) {
+    if (!authLoading && !walletLoading && !user) {
       router.replace("/");
     }
-  }, [isClient, authLoading, walletLoading, user, router]);
+  }, [authLoading, walletLoading, user, router]);
 
-  // ✅ Pilnai pasiruošęs statusas
-  const ready = isClient && !authLoading && !walletLoading && user && wallet?.wallet;
+  const ready = !authLoading && !walletLoading && user && wallet?.wallet;
 
-  // ✅ Tokenų sąrašas
   const tokens = useMemo(() => {
     if (!wallet?.wallet?.address || !balances || Object.keys(balances).length === 0) {
       return [];
@@ -58,7 +61,6 @@ export default function Dashboard() {
     return Object.keys(balances);
   }, [wallet, balances]);
 
-  // ✅ Loader jei dar nepasiruošęs
   if (!ready) {
     return (
       <div className={styles.fullscreenCenter}>
@@ -70,11 +72,7 @@ export default function Dashboard() {
   return (
     <main className={styles.container}>
       <div className={styles.dashboardWrapper}>
-
-        {/* ✅ Live Kainų Lentelė */}
         <LivePriceTable />
-
-        {/* ✅ Asset List */}
         <div className={styles.assetList}>
           {tokens.length === 0 ? (
             <div className={styles.noAssets}>
@@ -96,10 +94,6 @@ export default function Dashboard() {
               const balance = parseFloat(balanceValue);
               const eur = parseFloat(rateValue?.eur ?? 0);
               const usd = parseFloat(rateValue?.usd ?? 0);
-
-              const balanceFormatted = balance.toFixed(6);
-              const eurValue = (balance * eur).toFixed(2);
-              const usdValue = (balance * usd).toFixed(2);
 
               return (
                 <div
@@ -127,10 +121,10 @@ export default function Dashboard() {
 
                   <div className={styles.assetRight}>
                     <div className={styles.assetAmount}>
-                      {balanceFormatted} {network.toUpperCase()}
+                      {balance.toFixed(6)} {network.toUpperCase()}
                     </div>
                     <div className={styles.assetEur}>
-                      ≈ €{eurValue} | ≈ ${usdValue}
+                      ≈ €{(balance * eur).toFixed(2)} | ≈ ${(balance * usd).toFixed(2)}
                     </div>
                   </div>
                 </div>
@@ -138,7 +132,6 @@ export default function Dashboard() {
             })
           )}
         </div>
-
       </div>
     </main>
   );
