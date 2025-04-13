@@ -57,7 +57,6 @@ export default function Dashboard() {
     }
   }, [isClient, authLoading, walletLoading, user, router]);
 
-  // ✅ TIKRAS APSAUGOTAS Tikrinimas
   if (!isClient || authLoading || walletLoading || !user || !wallet?.wallet) {
     return (
       <div className={styles.fullscreenCenter}>
@@ -92,12 +91,20 @@ export default function Dashboard() {
               const balanceData = balances?.[network];
               const priceData = prices?.[network === "tbnb" ? "bsc" : network];
 
-              if (!balanceData || !priceData) return null;
+              // ✅ Ultimate Bulletproof filtravimas
+              if (!balanceData || !priceData || balanceData.balance == null) {
+                return null;
+              }
+
+              const balance = parseFloat(balanceData.balance ?? 0);
+              const eur = parseFloat(priceData.eur ?? 0);
+              const usd = parseFloat(priceData.usd ?? 0);
+
+              const balanceFormatted = balance.toFixed(6);
+              const eurValue = (balance * eur).toFixed(2);
+              const usdValue = (balance * usd).toFixed(2);
 
               const symbol = routeNames[network] || network;
-              const balanceFormatted = parseFloat(balanceData.balance || 0).toFixed(6);
-              const eurValue = (parseFloat(balanceData.balance || 0) * (priceData.eur || 0)).toFixed(2);
-              const usdValue = (parseFloat(balanceData.balance || 0) * (priceData.usd || 0)).toFixed(2);
 
               return (
                 <div
