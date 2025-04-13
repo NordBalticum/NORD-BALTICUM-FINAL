@@ -8,7 +8,7 @@ import { useState, useEffect } from "react";
  * - Užtikrina, kad SwipeSelector būtų 100% paruoštas su AuthContext
  */
 export function useSwipeReady() {
-  const { activeNetwork, setActiveNetwork } = useAuth();
+  const { user, activeNetwork, setActiveNetwork, authLoading, walletLoading } = useAuth();
 
   const [isClient, setIsClient] = useState(false);
   const [hasInitialized, setHasInitialized] = useState(false);
@@ -21,12 +21,19 @@ export function useSwipeReady() {
     }
   }, []);
 
-  // ✅ Kai tik AuthContext pasiruošęs
+  // ✅ Kai AuthContext paruoštas ir user prisijungęs
   useEffect(() => {
-    if (isClient && activeNetwork && typeof setActiveNetwork === "function") {
+    if (
+      isClient &&
+      !authLoading &&
+      !walletLoading &&
+      user &&
+      activeNetwork &&
+      typeof setActiveNetwork === "function"
+    ) {
       setHasInitialized(true);
     }
-  }, [isClient, activeNetwork, setActiveNetwork]);
+  }, [isClient, authLoading, walletLoading, user, activeNetwork, setActiveNetwork]);
 
   // ✅ Mažas saugus delay užtikrintam užsikrovimui
   useEffect(() => {
@@ -40,6 +47,7 @@ export function useSwipeReady() {
 
   const isSwipeReady =
     isClient &&
+    !!user &&
     !!activeNetwork &&
     typeof setActiveNetwork === "function" &&
     hasInitialized &&
