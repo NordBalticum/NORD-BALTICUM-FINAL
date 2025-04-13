@@ -5,8 +5,6 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import styles from "./livepricetable.module.css";
 
-const axios = typeof window !== "undefined" ? require("axios") : null; // ✅ FIX čia
-
 const tokens = [
   { id: "binancecoin", symbol: "BNB", logo: "/icons/bnb.svg", route: "/bnb" },
   { id: "ethereum", symbol: "ETH", logo: "/icons/eth.svg", route: "/eth" },
@@ -28,9 +26,10 @@ export default function LivePriceTable() {
   const intervalRef = useRef(null);
 
   const fetchPrices = async () => {
-    if (!mountedRef.current || !axios) return; // ✅ FIX čia
+    if (!mountedRef.current) return;
 
     try {
+      const { default: axios } = await import("axios"); // ✅ Axios importas tik client-side
       const ids = tokens.map((t) => t.id).join(",");
       const res = await axios.get("https://api.coingecko.com/api/v3/simple/price", {
         params: { ids, vs_currencies: currencies.join(",") },
@@ -39,7 +38,7 @@ export default function LivePriceTable() {
 
       if (mountedRef.current && res.data) {
         const newPrices = res.data;
-        const priceChange = Object.keys(newPrices).find(id => 
+        const priceChange = Object.keys(newPrices).find(id =>
           prices[id]?.[currency] !== newPrices[id][currency]
         );
         if (priceChange) {
@@ -53,7 +52,7 @@ export default function LivePriceTable() {
         setLoading(false);
       }
     } catch (err) {
-      console.warn("CoinGecko fetch failed:", err.message);
+      console.warn("❌ CoinGecko fetch failed:", err.message);
     }
   };
 
@@ -65,14 +64,16 @@ export default function LivePriceTable() {
         const parsed = JSON.parse(cached);
         if (typeof parsed === "object") setPrices(parsed);
       } catch (err) {
-        console.error("Failed to parse cached prices:", err);
+        console.error("❌ Failed to parse cached prices:", err);
       }
     }
     setLoading(false);
   };
 
   useEffect(() => {
-    if (typeof window !== "undefined") setIsClient(true);
+    if (typeof window !== "undefined") {
+      setIsClient(true);
+    }
   }, []);
 
   useEffect(() => {
