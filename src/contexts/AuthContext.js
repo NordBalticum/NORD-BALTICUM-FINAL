@@ -5,8 +5,9 @@ import { createContext, useContext, useEffect, useState, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { Wallet, JsonRpcProvider, formatEther } from "ethers";
 import { supabase } from "@/utils/supabaseClient";
-import { toast } from "react-toastify"; // <-- Pridedam Toast
-import "react-toastify/dist/ReactToastify.css"; // <-- Toast CSS
+import { toast } from "react-toastify"; // <--- Pridėjom Toast
+import "react-toastify/dist/ReactToastify.css"; // <--- Toast CSS
+import { startSessionWatcher } from "@/utils/sessionWatcher"; // <--- Pridėjom Session Watcher
 
 // 2️⃣ RPC URL'ai
 const RPC = {
@@ -81,6 +82,7 @@ export const AuthProvider = ({ children }) => {
 
   const inactivityTimer = useRef(null);
   const balanceInterval = useRef(null);
+  const sessionWatcher = useRef(null); // <--- Pridėjom Session Watcher ref
 
   // 7️⃣ Load Session
   useEffect(() => {
@@ -125,7 +127,7 @@ export const AuthProvider = ({ children }) => {
     const resetTimer = () => {
       clearTimeout(inactivityTimer.current);
       inactivityTimer.current = setTimeout(() => {
-        signOut(true); // <-- iškviečiam su true kad rodyti Toast
+        signOut(true);
       }, 10 * 60 * 1000);
     };
 
@@ -140,7 +142,28 @@ export const AuthProvider = ({ children }) => {
     };
   }, []);
 
-  // ✅ Saugus Wallet load arba Create
+  // 1️⃣1️⃣ Session Watcher (Premium)
+  useEffect(() => {
+    if (!isClient) return;
+
+    if (user) {
+      sessionWatcher.current = startSessionWatcher({
+        onSessionInvalid: async () => {
+          toast.error("Session expired. Please log in again.");
+          await signOut();
+        },
+      });
+      sessionWatcher.current.start();
+    } else {
+      sessionWatcher.current?.stop();
+    }
+
+    return () => {
+      sessionWatcher.current?.stop();
+    };
+  }, [user]);
+
+  // ✅ Wallet load arba Create
   const loadOrCreateWallet = async (email) => {
     try {
       setWalletLoading(true);
@@ -172,6 +195,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // ✅ Wallet Create
   const createAndStoreWallet = async (email) => {
     const newWallet = Wallet.createRandom();
     const encryptedKey = await encrypt(newWallet.privateKey);
@@ -274,7 +298,6 @@ export const AuthProvider = ({ children }) => {
     if (error) throw error;
   };
 
-  // ✅ Premium signOut
   const signOut = async (showToast = false) => {
     await supabase.auth.signOut();
     setUser(null);
