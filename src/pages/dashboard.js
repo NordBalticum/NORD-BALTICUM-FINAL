@@ -11,10 +11,8 @@ import { usePrices } from "@/hooks/usePrices";
 import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
 import styles from "@/styles/dashboard.module.css";
 
-// ✅ Dinaminis importas
 const LivePriceTable = dynamic(() => import("@/components/LivePriceTable"), { ssr: false });
 
-// ✅ Ikonos
 const iconUrls = {
   ethereum: "/icons/eth.svg",
   bsc: "/icons/bnb.svg",
@@ -23,7 +21,6 @@ const iconUrls = {
   avalanche: "/icons/avax.svg",
 };
 
-// ✅ Vardai
 const names = {
   ethereum: "Ethereum",
   bsc: "BNB Smart Chain",
@@ -32,7 +29,6 @@ const names = {
   avalanche: "Avalanche",
 };
 
-// ✅ Route mappings
 const routeNames = {
   ethereum: "eth",
   bsc: "bnb",
@@ -49,22 +45,20 @@ export default function Dashboard() {
   const { balances, loading: balancesLoading, initialLoading: balancesInitialLoading } = useBalance();
   const { prices, loading: pricesLoading } = usePrices();
 
-  // ✅ Detect client side
   useEffect(() => {
     if (typeof window !== "undefined") {
       setIsClient(true);
     }
   }, []);
 
-  // ✅ Redirect jei neprisijungęs
   useEffect(() => {
     if (isClient && !authLoading && !walletLoading && !user) {
       router.replace("/");
     }
   }, [isClient, authLoading, walletLoading, user, router]);
 
-  // ✅ Apsauga prieš hook'us
-  if (!isClient || authLoading || walletLoading || !user || !wallet) {
+  // ✅ TIKRAS APSAUGOTAS Tikrinimas
+  if (!isClient || authLoading || walletLoading || !user || !wallet?.wallet) {
     return (
       <div className={styles.fullscreenCenter}>
         <MiniLoadingSpinner />
@@ -72,7 +66,6 @@ export default function Dashboard() {
     );
   }
 
-  // ✅ Saugus tokenų sąrašas
   const tokens = useMemo(() => {
     if (!wallet?.wallet?.address || !balances || Object.keys(balances).length === 0) {
       return [];
@@ -83,11 +76,8 @@ export default function Dashboard() {
   return (
     <main className={styles.container}>
       <div className={styles.dashboardWrapper}>
-
-        {/* ✅ Live kainos lentelė */}
         <LivePriceTable />
 
-        {/* ✅ Asset List */}
         <div className={styles.assetList}>
           {balancesInitialLoading || pricesLoading ? (
             <div className={styles.spinnerWrapper}>
