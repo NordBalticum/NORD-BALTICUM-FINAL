@@ -3,7 +3,7 @@
 // 1️⃣ Importai
 import { createContext, useContext, useEffect, useState, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { Wallet, JsonRpcProvider, formatEther } from "ethers";
+import { ethers } from "ethers";
 import { supabase } from "@/utils/supabaseClient";
 import { toast } from "react-toastify"; 
 import "react-toastify/dist/ReactToastify.css";
