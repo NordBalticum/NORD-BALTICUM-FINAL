@@ -11,32 +11,20 @@ import background from "@/styles/background.module.css";
 
 export default function Home() {
   const router = useRouter();
-  const { user, authLoading, signInWithMagicLink, signInWithGoogle } = useAuth();
+  const { user, signInWithMagicLink, signInWithGoogle } = useAuth(); // ✅ Tik user
 
   const [email, setEmail] = useState("");
-  const [status, setStatus] = useState("idle"); // idle | loading | success | error
+  const [status, setStatus] = useState("idle");
   const [message, setMessage] = useState("");
-  const [isClient, setIsClient] = useState(false);
   const [showModal, setShowModal] = useState(false);
 
-  // ✅ Tikrinam ar esam browseryje
+  // ✅ Jei user jau prisijungęs – redirect
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      setIsClient(true);
-    }
-  }, []);
-
-  // ✅ Jei user prisijungęs - redirectinam į dashboard
-  useEffect(() => {
-    if (!isClient) return;
-    if (authLoading) return;
-
     if (user) {
       router.replace("/dashboard");
     }
-  }, [isClient, authLoading, user, router]);
+  }, [user, router]);
 
-  // ✅ Magic Link login
   const handleSignIn = async (e) => {
     e.preventDefault();
     setMessage("");
@@ -60,7 +48,6 @@ export default function Home() {
     }
   };
 
-  // ✅ Google OAuth login
   const handleGoogleSignIn = async () => {
     try {
       setStatus("loading");
@@ -91,7 +78,7 @@ export default function Home() {
         />
       </div>
 
-      {/* ✅ Login forma */}
+      {/* ✅ Prisijungimo forma */}
       <form onSubmit={handleSignIn} className={styles.loginBox}>
         <h1 className={styles.heading}>Welcome to NordBalticum</h1>
         <p className={styles.subheading}>Secure Web3 Banking</p>
@@ -129,7 +116,7 @@ export default function Home() {
           {status === "loading" ? "CONNECTING..." : "LOGIN WITH GOOGLE"}
         </button>
 
-        {/* ✅ Animate success/error message */}
+        {/* ✅ Success/Error message */}
         <AnimatePresence>
           {message && (
             <motion.p
