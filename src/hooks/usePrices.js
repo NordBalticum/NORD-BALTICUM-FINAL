@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 
 // ✅ Token mapping su CoinGecko ID
 const TOKEN_IDS = {
@@ -22,13 +22,15 @@ const FALLBACK_PRICES = {
 
 // ✅ ULTIMATE Price Hook
 export function usePrices() {
-  const [prices, setPrices] = useState(FALLBACK_PRICES); // ✅ Startuoja iškart su fallback kainom
+  const [prices, setPrices] = useState(FALLBACK_PRICES);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null); // ✅ Extra kontrolė error'ams
+  const [error, setError] = useState(null);
+  const intervalRef = useRef(null);
 
   const fetchPrices = useCallback(async () => {
     try {
-      setLoading(true); // ✅ Nustatom kad krauna
+      if (document.visibilityState !== "visible") return; // ✅ Tik jei tab aktyvus
+      setLoading(true);
 
       const ids = Object.values(TOKEN_IDS).join(",");
       const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=eur,usd`, {
@@ -48,27 +50,40 @@ export function usePrices() {
       }
 
       setPrices(updatedPrices);
-      setError(null); // ✅ Nėra klaidų
+      setError(null);
     } catch (err) {
       console.error("❌ Price fetch error:", err.message);
-      setPrices(FALLBACK_PRICES); // ✅ Jei klaida, automatiškai grįžtam į fallback
+      setPrices(FALLBACK_PRICES);
       setError(err.message || "Unknown error");
     } finally {
-      setLoading(false); // ✅ Baigė krautis
+      setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    fetchPrices(); // ✅ Iškart pirmą kartą užkraunam
+    fetchPrices(); // ✅ Pirmas pakrovimas
 
-    const interval = setInterval(fetchPrices, 30000); // ✅ Atrodo švariau: 30s refresh (nereikia kas 15s)
-    return () => clearInterval(interval); // ✅ Švarinam intervalą kai unmount
+    intervalRef.current = setInterval(() => {
+      fetchPrices();
+    }, 30000); // ✅ Kas 30s
+
+    const visibilityHandler = () => {
+      if (document.visibilityState === "visible") {
+        fetchPrices(); // ✅ Kai grįžtam į tab
+      }
+    };
+    document.addEventListener("visibilitychange", visibilityHandler);
+
+    return () => {
+      clearInterval(intervalRef.current);
+      document.removeEventListener("visibilitychange", visibilityHandler);
+    };
   }, [fetchPrices]);
 
   return {
     prices,
     loading,
     error,
-    refetch: fetchPrices, // ✅ Galima rankiniu būdu dar kartą pakrauti jei reikia
+    refetch: fetchPrices,
   };
 }
