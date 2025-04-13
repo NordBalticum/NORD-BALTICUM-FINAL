@@ -10,7 +10,7 @@ import Image from 'next/image';
 import MiniLoadingSpinner from '@/components/MiniLoadingSpinner';
 import styles from '@/styles/tbnb.module.css';
 
-// Premium dinaminis importas su spinner fallback
+// Premium dinaminis importas
 const BnbChartDynamic = dynamic(() => import('@/components/BnbChart').then(mod => mod.default), {
   ssr: false,
   loading: () => <MiniLoadingSpinner />,
@@ -23,11 +23,10 @@ export default function TBnbPage() {
   const router = useRouter();
 
   const [balancesReady, setBalancesReady] = useState(false);
+  const [chartReady, setChartReady] = useState(false);
   const [chartMounted, setChartMounted] = useState(false);
-  const [chartFullyReady, setChartFullyReady] = useState(false);
-  const [retryTrigger, setRetryTrigger] = useState(false);
-  const [failedAttempts, setFailedAttempts] = useState(0);
-  const [chartFailed, setChartFailed] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
+  const [errorChart, setErrorChart] = useState(false);
 
   const isLoadingBalances = balancesLoading || pricesLoading;
 
@@ -38,21 +37,18 @@ export default function TBnbPage() {
   }, [isLoadingBalances]);
 
   useEffect(() => {
-    if (!chartFullyReady && !chartFailed) {
+    if (!chartReady && retryCount < 2) {
       const timeout = setTimeout(() => {
-        console.warn('⏳ Chart still not ready after 10s, retrying...');
-        if (failedAttempts >= 1) {
-          console.error('❌ Chart failed to load after retries.');
-          setChartFailed(true); // Parodom klaidą po 2 kartų
-        } else {
-          setFailedAttempts(prev => prev + 1);
-          setRetryTrigger(prev => !prev); // Perkraunam komponentą
-        }
-      }, 10000); // 10 sekundžių laukimo
+        console.warn(`⏳ Chart not ready. Retrying attempt ${retryCount + 1}...`);
+        setRetryCount((prev) => prev + 1);
+      }, 10000); // 10 sekundžių timeout
 
       return () => clearTimeout(timeout);
+    } else if (!chartReady && retryCount >= 2) {
+      console.error('❌ Chart failed to load after retries.');
+      setErrorChart(true);
     }
-  }, [chartFullyReady, retryTrigger, failedAttempts, chartFailed]);
+  }, [chartReady, retryCount]);
 
   const handleSend = () => router.push('/send');
   const handleReceive = () => router.push('/receive');
@@ -66,8 +62,21 @@ export default function TBnbPage() {
     );
   }
 
+  if (errorChart) {
+    return (
+      <main className={styles.pageContainer}>
+        <div className={styles.pageContent}>
+          <div className={styles.errorBox}>
+            <h2>Chart failed to load.</h2>
+            <p>Please refresh the page or try again later.</p>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
   return (
-    <main key={retryTrigger} className={styles.pageContainer}>
+    <main key={retryCount} className={styles.pageContainer}>
       <div className={styles.pageContent}>
 
         {/* HEADER */}
@@ -104,39 +113,30 @@ export default function TBnbPage() {
         {/* CHART */}
         <div className={styles.chartWrapper}>
           <div className={styles.chartBorder}>
-            {/* Loading arba Error */}
-            {(!chartMounted || !chartFullyReady || chartFailed) && (
+            {!chartMounted || !chartReady ? (
               <div className={styles.chartLoading}>
-                {chartFailed ? (
-                  <div className={styles.errorMessage}>
-                    Failed to load chart. Please try again later.
-                  </div>
-                ) : (
-                  <MiniLoadingSpinner />
-                )}
+                <MiniLoadingSpinner />
               </div>
-            )}
+            ) : null}
             <div
               style={{
-                opacity: chartMounted && chartFullyReady && !chartFailed ? 1 : 0,
-                transform: chartMounted && chartFullyReady && !chartFailed ? 'scale(1)' : 'scale(0.8)',
+                opacity: chartMounted && chartReady ? 1 : 0,
+                transform: chartMounted && chartReady ? 'scale(1)' : 'scale(0.8)',
                 transition: 'opacity 0.8s ease, transform 0.8s ease',
                 width: '100%',
                 height: '100%',
               }}
             >
-              {!chartFailed && (
-                <BnbChartDynamic
-                  onMount={() => {
-                    console.log('✅ Chart MOUNTED.');
-                    setChartMounted(true);
-                  }}
-                  onChartReady={() => {
-                    console.log('✅ Chart FULLY READY.');
-                    setChartFullyReady(true);
-                  }}
-                />
-              )}
+              <BnbChartDynamic
+                onMount={() => {
+                  console.log('✅ Chart MOUNTED.');
+                  setChartMounted(true);
+                }}
+                onChartReady={() => {
+                  console.log('✅ Chart FULLY READY.');
+                  setChartReady(true);
+                }}
+              />
             </div>
           </div>
         </div>
