@@ -1,35 +1,48 @@
+// src/utils/sessionWatcher.js
 "use client";
 
-import { useEffect, useState } from "react";
-import { usePathname } from "next/navigation";
-import { useAuth } from "@/contexts/AuthContext"; // <- BŪTINA ĮRAŠYTI
-import SideDrawer from "@/components/SideDrawer";
-import BottomNavigation from "@/components/BottomNavigation";
-import styles from "@/components/layout.module.css";
+export function startSessionWatcher({ onSessionInvalid, intervalMinutes = 1 }) {
+  let intervalId = null;
 
-export default function Layout({ children }) {
-  const pathname = usePathname();
-  const { user, wallet } = useAuth(); // <- BŪTINA čia
-  const [mounted, setMounted] = useState(false);
+  const start = () => {
+    if (intervalId) return; // jei jau veikia, nedubliuoti
+    intervalId = setInterval(async () => {
+      try {
+        const response = await fetch("/api/check-session", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          cache: "no-store",
+        });
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+        if (!response.ok) {
+          throw new Error("Invalid session response");
+        }
 
-  if (!mounted) return null; // Saugumas prieš viską
+        const data = await response.json();
 
-  const hideUI = pathname === "/" || pathname === "" || pathname === null;
+        if (!data.valid) {
+          console.warn("Session invalid detected.");
+          if (typeof onSessionInvalid === "function") {
+            onSessionInvalid();
+          }
+        }
+      } catch (error) {
+        console.error("Session watcher error:", error.message || error);
+        if (typeof onSessionInvalid === "function") {
+          onSessionInvalid();
+        }
+      }
+    }, intervalMinutes * 60 * 1000); // pvz. kas 1 minutę
+  };
 
-  const showUI = user && wallet?.wallet && !hideUI;
+  const stop = () => {
+    if (intervalId) {
+      clearInterval(intervalId);
+      intervalId = null;
+    }
+  };
 
-  return (
-    <div className={styles.layoutWrapper}>
-      {/* ⛔️ NEJUNGIAM viso puslapio nuo useAuth!!! */}
-      {showUI && <SideDrawer />}
-      <main className={styles.mainContent}>
-        {children}
-      </main>
-      {showUI && <BottomNavigation />}
-    </div>
-  );
+  return { start, stop };
 }
