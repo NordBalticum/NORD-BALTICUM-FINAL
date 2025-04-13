@@ -6,17 +6,25 @@ import { Chart as ChartJS, LineElement, CategoryScale, LinearScale, PointElement
 import MiniLoadingSpinner from '@/components/MiniLoadingSpinner';
 import styles from '@/styles/tbnb.module.css';
 
+// Registruojam Chart komponentus
 ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Filler, Decimation);
 
-export default function BnbChart({ onChartReady }) {
+export default function BnbChart({ onChartReady, onMount }) {
   const [chartData, setChartData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [chartRendered, setChartRendered] = useState(false);
   const chartRef = useRef(null);
 
-  const mountedRef = useRef(false); // **Start false**
+  const mountedRef = useRef(false); // Startuoja kaip false
   const controllerRef = useRef(null);
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+
+  // Triggerinam onMount kai tik komponentas pilnai įsikrauna
+  useEffect(() => {
+    if (typeof onMount === 'function') {
+      onMount(); // ✅ Signalizuojam parentui (tbnb.js)
+    }
+  }, [onMount]);
 
   const fetchChartData = useCallback(async (showSpinner = true) => {
     if (!mountedRef.current) return;
@@ -72,12 +80,12 @@ export default function BnbChart({ onChartReady }) {
   }, [isMobile]);
 
   useEffect(() => {
-    mountedRef.current = true; // **Tik tada true**
+    mountedRef.current = true;
     fetchChartData(true);
 
     const interval = setInterval(() => {
       fetchChartData(false);
-    }, 3600000);
+    }, 3600000); // Kas 1 valandą
 
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'hidden') {
@@ -89,7 +97,7 @@ export default function BnbChart({ onChartReady }) {
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
-      mountedRef.current = false; // **On unmount iškart false**
+      mountedRef.current = false;
       clearInterval(interval);
       if (controllerRef.current) controllerRef.current.abort();
       document.removeEventListener('visibilitychange', handleVisibilityChange);
