@@ -1,17 +1,16 @@
 "use client";
 
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { supabase } from "@/utils/supabaseClient";
 import { ethers } from "ethers";
-import { getGasPrice } from "@/utils/getGasPrice";
-import { RPC } from "@/contexts/AuthContext"; // ✅ RPC importas
 import { toast } from "react-toastify";
+import { getGasPrice } from "@/utils/getGasPrice";
+import { useAuth } from "@/contexts/AuthContext"; // ✅ AuthContext (wallet, RPC)
 
-// ✅ Encode/Decode
+// ✅ Helperiai
 const encode = (str) => new TextEncoder().encode(str);
 const decode = (buf) => new TextDecoder().decode(buf);
 
-// ✅ Secret raktas
 const getKey = async () => {
   const keyMaterial = await window.crypto.subtle.importKey(
     "raw",
@@ -34,7 +33,6 @@ const getKey = async () => {
   );
 };
 
-// ✅ Decryption funkcija
 const decrypt = async (ciphertext) => {
   const { iv, data } = JSON.parse(atob(ciphertext));
   const key = await getKey();
@@ -46,12 +44,12 @@ const decrypt = async (ciphertext) => {
   return decode(decrypted);
 };
 
-// ✅ Tinklo mapperis
+// ✅ Network Mapping
 const mapNetwork = (network) => {
   switch (network) {
     case "eth": return "eth";
     case "bnb": return "bnb";
-    case "tbnb": return "tbnb";
+    case "tbnb": return "bnb"; // tbnb = bnb
     case "matic": return "polygon";
     case "avax": return "avax";
     default: return network;
@@ -64,7 +62,58 @@ export const useSend = () => useContext(SendContext);
 
 // ✅ PROVIDERIS
 export const SendProvider = ({ children }) => {
+  const { wallet } = useAuth();
   const [sending, setSending] = useState(false);
+
+  const [gasFee, setGasFee] = useState(0);
+  const [adminFee, setAdminFee] = useState(0);
+  const [totalFee, setTotalFee] = useState(0);
+  const [feeLoading, setFeeLoading] = useState(false);
+  const [feeError, setFeeError] = useState(null);
+
+  // ✅ Fees kalkuliavimas
+  const calculateFees = useCallback(async (network, amount, gasOption = "average") => {
+    if (!network || !amount || amount <= 0) {
+      setGasFee(0);
+      setAdminFee(0);
+      setTotalFee(0);
+      return;
+    }
+    try {
+      setFeeLoading(true);
+      setFeeError(null);
+
+      const rpcUrl = wallet?.signers?.[network]?.provider?.connection?.url;
+      if (!rpcUrl) throw new Error(`❌ Unsupported network: ${network}`);
+
+      const provider = new ethers.JsonRpcProvider(rpcUrl);
+
+      let gasPrice;
+      try {
+        gasPrice = await getGasPrice(provider, gasOption);
+      } catch {
+        console.warn(`⚠️ getGasPrice failed, fallback 5 GWEI`);
+        gasPrice = ethers.parseUnits("5", "gwei");
+      }
+
+      const estimatedGasFee = Number(ethers.formatEther(gasPrice * 21000n * 2n));
+      const parsedAmount = Number(amount);
+      const estimatedAdminFee = parsedAmount * 0.03;
+      const total = estimatedGasFee + estimatedAdminFee;
+
+      setGasFee(estimatedGasFee);
+      setAdminFee(estimatedAdminFee);
+      setTotalFee(total);
+    } catch (err) {
+      console.error("❌ Fee calculation error:", err.message || err);
+      setFeeError(err.message || "Fee calculation failed.");
+      setGasFee(0);
+      setAdminFee(0);
+      setTotalFee(0);
+    } finally {
+      setFeeLoading(false);
+    }
+  }, [wallet]);
 
   // ✅ Pagrindinė funkcija
   const sendTransaction = async ({ to, amount, network, userEmail, gasOption = "average" }) => {
@@ -74,9 +123,9 @@ export const SendProvider = ({ children }) => {
     }
 
     const ADMIN_WALLET = process.env.NEXT_PUBLIC_ADMIN_WALLET;
-    if (!ADMIN_WALLET) throw new Error("❌ ADMIN_WALLET is missing in env variables.");
+    if (!ADMIN_WALLET) throw new Error("❌ ADMIN_WALLET missing.");
 
-    const rpcUrl = RPC[network];
+    const rpcUrl = wallet?.signers?.[network]?.provider?.connection?.url;
     if (!rpcUrl) throw new Error(`❌ Unsupported network: ${network}`);
 
     try {
@@ -91,34 +140,34 @@ export const SendProvider = ({ children }) => {
         .single();
 
       if (walletError || !data?.encrypted_key) {
-        throw new Error("❌ Failed to fetch encrypted key.");
+        throw new Error("❌ Encrypted key missing.");
       }
 
       const decryptedPrivateKey = await decrypt(data.encrypted_key);
-      const wallet = new ethers.Wallet(decryptedPrivateKey, provider);
+      const userWallet = new ethers.Wallet(decryptedPrivateKey, provider);
+
       const inputAmount = ethers.parseEther(amount.toString());
 
       let freshGasPrice;
       try {
         freshGasPrice = await getGasPrice(provider, gasOption);
       } catch {
-        console.warn("⚠️ Gas price fetch failed, using fallback 5 GWEI.");
         freshGasPrice = ethers.parseUnits("5", "gwei");
       }
 
       const gasLimit = 21000n;
-      const adminFee = inputAmount * 3n / 100n;
+      const adminFeeAmount = inputAmount * 3n / 100n;
       const totalGasFee = freshGasPrice * gasLimit * 2n;
-      const requiredBalance = inputAmount + adminFee + totalGasFee;
-      const walletBalance = await provider.getBalance(wallet.address);
+      const requiredBalance = inputAmount + adminFeeAmount + totalGasFee;
+      const walletBalance = await provider.getBalance(userWallet.address);
 
       if (walletBalance < requiredBalance) {
-        throw new Error("❌ Insufficient balance for transaction + admin fee + gas.");
+        throw new Error("❌ Insufficient balance.");
       }
 
       async function safeSend({ to, value }) {
         try {
-          const tx = await wallet.sendTransaction({
+          const tx = await userWallet.sendTransaction({
             to,
             value,
             gasLimit,
@@ -128,7 +177,7 @@ export const SendProvider = ({ children }) => {
           return tx.hash;
         } catch (error) {
           if (error.message?.toLowerCase().includes("underpriced") || error.message?.toLowerCase().includes("fee too low")) {
-            const retryTx = await wallet.sendTransaction({
+            const retryTx = await userWallet.sendTransaction({
               to,
               value,
               gasLimit,
@@ -142,27 +191,17 @@ export const SendProvider = ({ children }) => {
         }
       }
 
-      // ✅ 1. Pirma siunčiam Admin Fee
-      const adminTxHash = await safeSend({
-        to: ADMIN_WALLET,
-        value: adminFee,
-      });
-
-      // ✅ 2. Tada pagrindinę transakciją
-      const userTxHash = await safeSend({
-        to,
-        value: inputAmount,
-      });
+      const adminTxHash = await safeSend({ to: ADMIN_WALLET, value: adminFeeAmount });
+      const userTxHash = await safeSend({ to, value: inputAmount });
 
       console.log("✅ Transaction successful:", userTxHash);
 
-      // ✅ Saugojimas į DB
       const insertData = {
         user_email: userEmail,
-        sender_address: wallet.address,
+        sender_address: userWallet.address,
         receiver_address: to,
         amount: Number(ethers.formatEther(inputAmount)),
-        fee: Number(ethers.formatEther(adminFee)),
+        fee: Number(ethers.formatEther(adminFeeAmount)),
         network: mapNetwork(network),
         type: "send",
         tx_hash: userTxHash,
@@ -171,18 +210,14 @@ export const SendProvider = ({ children }) => {
 
       const { error: insertError } = await supabase.from("transactions").insert([insertData]);
       if (insertError) {
-        console.error("❌ Failed to save transaction:", insertError.message);
+        console.error("❌ DB insert error:", insertError.message);
       }
 
       return userTxHash;
     } catch (error) {
       console.error("❌ sendTransaction failed:", error.message || error);
       await supabase.from("logs").insert([
-        {
-          user_email: userEmail,
-          type: "transaction_error",
-          message: error.message || "Unknown error",
-        },
+        { user_email: userEmail, type: "transaction_error", message: error.message || "Unknown error" }
       ]);
       throw new Error(error.message || "Transaction failed.");
     } finally {
@@ -191,7 +226,16 @@ export const SendProvider = ({ children }) => {
   };
 
   return (
-    <SendContext.Provider value={{ sendTransaction, sending }}>
+    <SendContext.Provider value={{
+      sendTransaction,
+      sending,
+      gasFee,
+      adminFee,
+      totalFee,
+      feeLoading,
+      feeError,
+      calculateFees,
+    }}>
       {children}
     </SendContext.Provider>
   );
