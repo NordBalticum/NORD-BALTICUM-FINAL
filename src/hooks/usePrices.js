@@ -26,8 +26,8 @@ export function usePrices() {
   const fetchPrices = useCallback(async () => {
     if (typeof window === "undefined") return;
 
-    setLoading(true);
     try {
+      setLoading(true);
       const ids = Object.values(TOKEN_IDS).join(",");
       const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=eur,usd`, {
         cache: "no-store",
@@ -57,11 +57,8 @@ export function usePrices() {
   }, []);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
-
     fetchPrices();
     const interval = setInterval(fetchPrices, 30000);
-
     return () => clearInterval(interval);
   }, [fetchPrices]);
 
