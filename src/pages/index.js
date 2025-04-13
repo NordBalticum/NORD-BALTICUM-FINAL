@@ -11,7 +11,7 @@ import background from "@/styles/background.module.css";
 
 export default function Home() {
   const router = useRouter();
-  const { user, authLoading, signInWithMagicLink, signInWithGoogle } = useAuth();
+  const { user, wallet, authLoading, walletLoading, signInWithMagicLink, signInWithGoogle } = useAuth();
 
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState("idle"); // idle | loading | success | error
@@ -19,21 +19,20 @@ export default function Home() {
   const [isClient, setIsClient] = useState(false);
   const [showModal, setShowModal] = useState(false);
 
-  // ✅ Saugi window patikra
   useEffect(() => {
     if (typeof window !== "undefined") {
       setIsClient(true);
     }
   }, []);
 
-  // ✅ Redirect į dashboard tik jei authLoading baigtas
   useEffect(() => {
-  if (!isClient || authLoading || walletLoading) return;
+    if (!isClient) return;
+    if (authLoading || walletLoading) return;
 
-  if (user && wallet?.wallet) {
-    router.replace("/dashboard");
-  }
-}, [isClient, authLoading, walletLoading, user, wallet, router]);
+    if (user && wallet && wallet.wallet) {
+      router.replace("/dashboard");
+    }
+  }, [isClient, authLoading, walletLoading, user, wallet, router]);
 
   const handleSignIn = async (e) => {
     e.preventDefault();
@@ -128,7 +127,6 @@ export default function Home() {
           {status === "loading" ? "CONNECTING..." : "LOGIN WITH GOOGLE"}
         </button>
 
-        {/* ✅ Animate success/error message */}
         <AnimatePresence>
           {message && (
             <motion.p
@@ -149,7 +147,6 @@ export default function Home() {
         </AnimatePresence>
       </form>
 
-      {/* ✅ Success Modal */}
       <AnimatePresence>
         {showModal && (
           <motion.div
