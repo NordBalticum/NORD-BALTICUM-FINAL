@@ -1,5 +1,6 @@
 "use client";
 
+// 1️⃣ Importai
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
@@ -11,8 +12,10 @@ import { usePrices } from "@/hooks/usePrices";
 import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
 import styles from "@/styles/dashboard.module.css";
 
+// 2️⃣ Dinaminis Importas
 const LivePriceTable = dynamic(() => import("@/components/LivePriceTable"), { ssr: false });
 
+// 3️⃣ Ikonos ir Vardai
 const iconUrls = {
   ethereum: "/icons/eth.svg",
   bsc: "/icons/bnb.svg",
@@ -42,21 +45,22 @@ export default function Dashboard() {
   const { user, wallet, authLoading, walletLoading } = useAuth();
   const [isClient, setIsClient] = useState(false);
 
-  // ✅ Tik klientas
+  // ✅ Saugi window tikrinimo logika
   useEffect(() => {
     if (typeof window !== "undefined") setIsClient(true);
   }, []);
 
-  // ✅ Redirect į Home jei neprisijungęs
+  // ✅ Redirect jei neprisijungęs
   useEffect(() => {
     if (isClient && !authLoading && !walletLoading && !user) {
       router.replace("/");
     }
   }, [isClient, authLoading, walletLoading, user, router]);
 
+  // ✅ Pilnai pasiruošęs statusas
   const ready = isClient && !authLoading && !walletLoading && user && wallet?.wallet;
 
-  // ✅ Tik jei pasiruošęs - leidžiam hook'us
+  // ✅ Naudojam hook'us tik kai ready
   const { balances, loading: balancesLoading, initialLoading: balancesInitialLoading } = ready
     ? useBalance()
     : { balances: {}, loading: true, initialLoading: true };
@@ -65,7 +69,7 @@ export default function Dashboard() {
     ? usePrices()
     : { prices: {}, loading: true };
 
-  // ✅ Loader kol nėra user + wallet
+  // ✅ Loader jei dar nepasiruošęs
   if (!ready) {
     return (
       <div className={styles.fullscreenCenter}>
@@ -85,7 +89,7 @@ export default function Dashboard() {
   return (
     <main className={styles.container}>
       <div className={styles.dashboardWrapper}>
-        
+
         {/* ✅ Live Kainų Lentelė */}
         <LivePriceTable />
 
