@@ -146,7 +146,7 @@ export const AuthProvider = ({ children }) => {
     }
   }, [authLoading, user, pathname]);
 
-  // 10. Inactivity Timeout (Auto Logout)
+  // 10. Inactivity Timeout (Auto Logout) su touchmove
   useEffect(() => {
     if (!isClient) return;
     const resetTimer = () => {
@@ -156,26 +156,26 @@ export const AuthProvider = ({ children }) => {
         signOut(true);
       }, 10 * 60 * 1000);
     };
-    ["mousemove", "keydown", "touchstart"].forEach((event) =>
+    ["mousemove", "keydown", "touchstart", "touchmove"].forEach((event) =>
       window.addEventListener(event, resetTimer)
     );
     resetTimer();
     return () => {
       clearTimeout(inactivityTimer.current);
-      ["mousemove", "keydown", "touchstart"].forEach((event) =>
+      ["mousemove", "keydown", "touchstart", "touchmove"].forEach((event) =>
         window.removeEventListener(event, resetTimer)
       );
     };
   }, []);
 
-  // 11. Real-Time Session Watcher
+  // 11. Real-Time Session Watcher su stipresne error žinute
   useEffect(() => {
     if (!isClient) return;
     if (user) {
       try {
         sessionWatcher.current = startSessionWatcher({
           onSessionInvalid: async () => {
-            toast.error("⚠️ Session expired. Redirecting...");
+            toast.error("❌ Critical session error. Please re-login manually.");
             setTimeout(() => signOut(false), 3000);
           },
           intervalMinutes: 1,
@@ -183,7 +183,7 @@ export const AuthProvider = ({ children }) => {
         sessionWatcher.current.start();
       } catch (error) {
         console.error("Session watcher error:", error.message);
-        toast.error("⚠️ Session monitoring failed. Please re-login.");
+        toast.error("❌ Critical session monitoring failure. Please re-login.");
       }
     } else {
       sessionWatcher.current?.stop();
@@ -194,6 +194,15 @@ export const AuthProvider = ({ children }) => {
       sessionWatcher.current = null;
     };
   }, [user]);
+
+  // 12. SafeRefreshSession kas 5 minutes
+  useEffect(() => {
+    if (!isClient) return;
+    const interval = setInterval(() => {
+      safeRefreshSession();
+    }, 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   const safeRefreshSession = async () => {
     if (Date.now() - lastSessionRefresh.current < 60000) return;
@@ -283,10 +292,11 @@ export const AuthProvider = ({ children }) => {
     try {
       const ids = "ethereum,binancecoin,polygon,avalanche-2";
       const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=eur,usd`);
+      if (!res.ok) throw new Error("Failed to fetch rates.");
       return await res.json();
     } catch (error) {
       console.error("Rates fetch error:", error.message);
-      return {};
+      return { fallback: true };
     }
   };
 
