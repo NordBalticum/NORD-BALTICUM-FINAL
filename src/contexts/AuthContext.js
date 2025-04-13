@@ -18,7 +18,7 @@ const RPC = {
   avax: "https://api.avax.network/ext/bc/C/rpc",
 };
 
-// 3️⃣ ENV kintamieji
+// 3️⃣ ENV Kintamieji
 const ENCRYPTION_SECRET = process.env.NEXT_PUBLIC_ENCRYPTION_SECRET;
 
 // 4️⃣ Encryption Helperiai
@@ -27,25 +27,45 @@ const decode = (buf) => new TextDecoder().decode(buf);
 
 const getKey = async () => {
   const keyMaterial = await window.crypto.subtle.importKey(
-    "raw", encode(ENCRYPTION_SECRET), { name: "PBKDF2" }, false, ["deriveKey"]
+    "raw",
+    encode(ENCRYPTION_SECRET),
+    { name: "PBKDF2" },
+    false,
+    ["deriveKey"]
   );
   return window.crypto.subtle.deriveKey(
-    { name: "PBKDF2", salt: encode("nordbalticum-salt"), iterations: 100000, hash: "SHA-256" },
-    keyMaterial, { name: "AES-GCM", length: 256 }, false, ["encrypt", "decrypt"]
+    {
+      name: "PBKDF2",
+      salt: encode("nordbalticum-salt"),
+      iterations: 100000,
+      hash: "SHA-256",
+    },
+    keyMaterial,
+    { name: "AES-GCM", length: 256 },
+    false,
+    ["encrypt", "decrypt"]
   );
 };
 
 export const encrypt = async (text) => {
   const iv = window.crypto.getRandomValues(new Uint8Array(12));
   const key = await getKey();
-  const encrypted = await window.crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, encode(text));
+  const encrypted = await window.crypto.subtle.encrypt(
+    { name: "AES-GCM", iv },
+    key,
+    encode(text)
+  );
   return btoa(JSON.stringify({ iv: Array.from(iv), data: Array.from(new Uint8Array(encrypted)) }));
 };
 
 export const decrypt = async (ciphertext) => {
   const { iv, data } = JSON.parse(atob(ciphertext));
   const key = await getKey();
-  const decrypted = await window.crypto.subtle.decrypt({ name: "AES-GCM", iv: new Uint8Array(iv) }, key, new Uint8Array(data));
+  const decrypted = await window.crypto.subtle.decrypt(
+    { name: "AES-GCM", iv: new Uint8Array(iv) },
+    key,
+    new Uint8Array(data)
+  );
   return decode(decrypted);
 };
 
@@ -71,9 +91,10 @@ export const AuthProvider = ({ children }) => {
   const balanceInterval = useRef(null);
   const sessionWatcher = useRef(null);
 
-  // 7️⃣ Load Session
+  // 7️⃣ Load Session ir Stebėti Pakeitimus
   useEffect(() => {
     if (!isClient) return;
+
     const loadSession = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
@@ -89,8 +110,8 @@ export const AuthProvider = ({ children }) => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user || null);
       if (!session) {
-        toast.error("⚠️ Session ended. Please login again.");
-        signOut(false);
+        toast.error("⚠️ Session ended. Redirecting...");
+        setTimeout(() => signOut(false), 3000);
       }
     });
 
@@ -111,7 +132,7 @@ export const AuthProvider = ({ children }) => {
     }
   }, [authLoading, user, pathname]);
 
-  // 🔟 Inactivity Timeout
+  // 🔟 Inactivity Timeout (Auto Logout po 10min)
   useEffect(() => {
     if (!isClient) return;
     const resetTimer = () => {
@@ -120,13 +141,13 @@ export const AuthProvider = ({ children }) => {
         signOut(true);
       }, 10 * 60 * 1000);
     };
-    ["mousemove", "keydown", "touchstart"].forEach(event =>
+    ["mousemove", "keydown", "touchstart"].forEach((event) =>
       window.addEventListener(event, resetTimer)
     );
     resetTimer();
     return () => {
       clearTimeout(inactivityTimer.current);
-      ["mousemove", "keydown", "touchstart"].forEach(event =>
+      ["mousemove", "keydown", "touchstart"].forEach((event) =>
         window.removeEventListener(event, resetTimer)
       );
     };
@@ -136,19 +157,25 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     if (!isClient) return;
     if (user) {
-      sessionWatcher.current = startSessionWatcher({
-        onSessionInvalid: async () => {
-          toast.error("⚠️ Session expired. Please login again.");
-          await signOut(false);
-        },
-        intervalMinutes: 1,
-      });
-      sessionWatcher.current.start();
+      try {
+        sessionWatcher.current = startSessionWatcher({
+          onSessionInvalid: async () => {
+            toast.error("⚠️ Session expired. Redirecting...");
+            setTimeout(() => signOut(false), 3000);
+          },
+          intervalMinutes: 1,
+        });
+        sessionWatcher.current.start();
+      } catch (error) {
+        console.error("Session watcher error:", error.message);
+      }
     } else {
       sessionWatcher.current?.stop();
+      sessionWatcher.current = null;
     }
     return () => {
       sessionWatcher.current?.stop();
+      sessionWatcher.current = null;
     };
   }, [user]);
 
@@ -158,7 +185,6 @@ export const AuthProvider = ({ children }) => {
       setWalletLoading(true);
       const { data, error } = await supabase.from("wallets").select("*").eq("user_email", email).maybeSingle();
       if (error) throw error;
-
       if (data && data.encrypted_key) {
         const decryptedKey = await decrypt(data.encrypted_key);
         setupWallet(decryptedKey);
@@ -167,7 +193,7 @@ export const AuthProvider = ({ children }) => {
       }
     } catch (error) {
       console.error("Wallet load error:", error.message);
-      toast.error("Failed to load wallet. Please try again.");
+      toast.error("❌ Failed to load wallet. Try again.");
       setWallet(null);
     } finally {
       setWalletLoading(false);
@@ -186,10 +212,10 @@ export const AuthProvider = ({ children }) => {
       });
       if (error) throw error;
       setupWallet(newWallet.privateKey);
-      toast.success("Wallet created successfully!");
+      toast.success("✅ Wallet created successfully!");
     } catch (error) {
       console.error("Create wallet error:", error.message);
-      toast.error("Failed to create wallet. Please try again.");
+      toast.error("❌ Failed to create wallet. Try again.");
     }
   };
 
@@ -200,7 +226,9 @@ export const AuthProvider = ({ children }) => {
       signers[net] = new ethers.Wallet(privateKey, new ethers.JsonRpcProvider(url));
     });
     setWallet({ wallet: baseWallet, signers });
+
     loadBalances(signers);
+
     if (balanceInterval.current) clearInterval(balanceInterval.current);
     balanceInterval.current = setInterval(() => loadBalances(signers), 180000); // kas 3 min
   };
@@ -237,8 +265,13 @@ export const AuthProvider = ({ children }) => {
   };
 
   const reloadWallet = async (email) => {
-    await loadOrCreateWallet(email);
-    toast.success("Wallet reloaded successfully!");
+    try {
+      await loadOrCreateWallet(email);
+      toast.success("✅ Wallet reloaded successfully!");
+    } catch (error) {
+      console.error("Reload wallet error:", error.message);
+      toast.error("❌ Failed to reload wallet.");
+    }
   };
 
   // ✅ Auth Functions
@@ -268,11 +301,17 @@ export const AuthProvider = ({ children }) => {
     setRates({});
     setActiveNetwork("eth");
     if (balanceInterval.current) clearInterval(balanceInterval.current);
+    balanceInterval.current = null;
     sessionWatcher.current?.stop();
+    sessionWatcher.current = null;
     if (isClient) {
-      localStorage.removeItem("userPrivateKey");
-      localStorage.removeItem("activeNetwork");
-      localStorage.removeItem("sessionData");
+      ["userPrivateKey", "activeNetwork", "sessionData"].forEach((key) => {
+        try {
+          localStorage.removeItem(key);
+        } catch (error) {
+          console.warn(`Failed to remove ${key}`);
+        }
+      });
     }
     router.replace("/");
     if (showToast) {
