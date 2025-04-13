@@ -48,7 +48,7 @@ export default function Dashboard() {
 
   const [isClient, setIsClient] = useState(false);
 
-  // ✅ Client detection
+  // ✅ Detect client
   useEffect(() => {
     if (typeof window !== "undefined") {
       setIsClient(true);
@@ -62,19 +62,8 @@ export default function Dashboard() {
     }
   }, [isClient, authLoading, walletLoading, user, router]);
 
-  // ✅ Tokenų sąrašas
-  const tokens = useMemo(() => {
-    if (!wallet?.wallet?.address || !balances || Object.keys(balances).length === 0) {
-      return [];
-    }
-    return Object.keys(balances);
-  }, [wallet, balances]);
-
-  // ✅ Loader logika
-  const isWaitingWallet = !wallet?.wallet?.address;
-  const isGlobalLoading = typeof window === "undefined" || !isClient || authLoading || walletLoading;
-
-  if (isGlobalLoading) {
+  // ✅ Full Loading tikrinimas
+  if (!isClient || authLoading || walletLoading || !user || !wallet) {
     return (
       <div style={{
         height: "100vh",
@@ -89,7 +78,14 @@ export default function Dashboard() {
     );
   }
 
-  // ✅ Kai viskas OK
+  // ✅ Tokenų sąrašas
+  const tokens = useMemo(() => {
+    if (!wallet?.wallet?.address || !balances || Object.keys(balances).length === 0) {
+      return [];
+    }
+    return Object.keys(balances);
+  }, [wallet, balances]);
+
   return (
     <main className={styles.container}>
       <div className={styles.dashboardWrapper}>
@@ -100,7 +96,6 @@ export default function Dashboard() {
         {/* ✅ Asset List */}
         <div className={styles.assetList}>
           {initialLoading || pricesLoading ? (
-            // ✅ Tik asset lentelės loading spinner
             <div style={{
               padding: "60px",
               display: "flex",
