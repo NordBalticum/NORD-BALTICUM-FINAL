@@ -11,7 +11,7 @@ import background from "@/styles/background.module.css";
 
 export default function Home() {
   const router = useRouter();
-  const { user, authLoading, signInWithMagicLink, signInWithGoogle } = useAuth(); // ✅ TIK USER IR AUTHLOADING
+  const { user, authLoading, signInWithMagicLink, signInWithGoogle } = useAuth();
 
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState("idle"); // idle | loading | success | error
@@ -19,24 +19,22 @@ export default function Home() {
   const [isClient, setIsClient] = useState(false);
   const [showModal, setShowModal] = useState(false);
 
-  // ✅ Tikrina ar client
   useEffect(() => {
     if (typeof window !== "undefined") {
       setIsClient(true);
     }
   }, []);
 
-  // ✅ Tikrina ar jau prisijungęs ir redirectina
   useEffect(() => {
     if (!isClient) return;
-    if (authLoading) return;
+
+    if (authLoading) return; // ✅ Tik laukiam kol auth loading baigsis
 
     if (user) {
       router.replace("/dashboard");
     }
   }, [isClient, authLoading, user, router]);
 
-  // ✅ Magic Link Sign In
   const handleSignIn = async (e) => {
     e.preventDefault();
     setMessage("");
@@ -60,7 +58,6 @@ export default function Home() {
     }
   };
 
-  // ✅ Google Sign In
   const handleGoogleSignIn = async () => {
     try {
       setStatus("loading");
@@ -71,6 +68,14 @@ export default function Home() {
       setMessage("❌ Google login failed. Try again.");
     }
   };
+
+  if (authLoading || !isClient) {
+    return (
+      <div className={styles.fullscreenCenter}>
+        <div className={styles.spinner}></div> {/* ✅ Loader kol kraunasi */}
+      </div>
+    );
+  }
 
   return (
     <motion.div
@@ -131,7 +136,7 @@ export default function Home() {
           {status === "loading" ? "CONNECTING..." : "LOGIN WITH GOOGLE"}
         </button>
 
-        {/* ✅ Success/Error Message */}
+        {/* ✅ Animate success/error message */}
         <AnimatePresence>
           {message && (
             <motion.p
