@@ -36,6 +36,7 @@ async function getBalances(address, retries = 3) {
       } catch (error) {
         attempt++;
         if (attempt > retries) {
+          console.error(`❌ Failed to fetch ${network} balance after retries:`, error.message);
           balances[network] = {
             symbol: config.symbol,
             balance: 0, // fallback to 0 if failed after retries
@@ -50,14 +51,14 @@ async function getBalances(address, retries = 3) {
 
 // ✅ Main Hook to use balance and price data
 export function useBalance() {
-  const { wallet } = useAuth();
+  const { wallet, user } = useAuth();
   const [balances, setBalances] = useState({});
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
   const intervalRef = useRef(null);
 
   const fetchBalances = useCallback(async () => {
-    if (!wallet?.wallet?.address) return;
+    if (!wallet?.wallet?.address || !user) return; // ✅ User + Wallet double check
 
     setLoading(true);
     try {
@@ -69,23 +70,28 @@ export function useBalance() {
       setLoading(false);
       setInitialLoading(false);
     }
-  }, [wallet?.wallet?.address]);
+  }, [wallet?.wallet?.address, user]);
 
   useEffect(() => {
-    if (!wallet?.wallet?.address) return;
+    if (!wallet?.wallet?.address || !user) return;
 
     fetchBalances(); // ✅ First load
 
-    intervalRef.current = setInterval(fetchBalances, 30000); // ✅ Refresh every 30s
+    intervalRef.current = setInterval(() => {
+      if (document.visibilityState === "visible") { // ✅ Tik jei tab aktyvus
+        fetchBalances();
+      }
+    }, 30000); // ✅ Refresh kas 30s
+
     return () => {
       clearInterval(intervalRef.current); // ✅ Clear interval on cleanup
     };
-  }, [fetchBalances]);
+  }, [fetchBalances, user]);
 
   return {
     balances,
     loading,           // Background loading
     initialLoading,    // First load loading
-    refetch: fetchBalances,  // Manually trigger a refresh
+    refetch: fetchBalances, // Manual refresh
   };
 }
