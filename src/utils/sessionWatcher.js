@@ -3,7 +3,7 @@
 import { supabase } from "@/utils/supabaseClient";
 
 // 1️⃣ Start Session Watcher
-export const startSessionWatcher = ({ onSessionInvalid, intervalMinutes = 2 }) => {
+export const startSessionWatcher = ({ onSessionInvalid, intervalMinutes = 1 }) => {
   let intervalId = null;
 
   // 2️⃣ Tikrinam sesiją
