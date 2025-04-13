@@ -22,6 +22,9 @@ export default function Dashboard() {
   const { user, wallet, authLoading, walletLoading } = useAuth();
   const [isClient, setIsClient] = useState(false);
 
+  const { balances, loading: balancesLoading, initialLoading: balancesInitialLoading } = useBalance();
+  const { prices, loading: pricesLoading } = usePrices();
+
   useEffect(() => {
     if (typeof window !== "undefined") setIsClient(true);
   }, []);
@@ -33,14 +36,6 @@ export default function Dashboard() {
   }, [isClient, authLoading, walletLoading, user, router]);
 
   const ready = isClient && !authLoading && !walletLoading && user && wallet?.wallet;
-
-  const { balances, loading: balancesLoading, initialLoading: balancesInitialLoading } = ready
-    ? useBalance()
-    : { balances: {}, loading: true, initialLoading: true };
-
-  const { prices, loading: pricesLoading } = ready
-    ? usePrices()
-    : { prices: {}, loading: true };
 
   if (!ready) {
     return (
