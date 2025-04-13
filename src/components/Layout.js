@@ -1,6 +1,7 @@
 "use client";
 
 // 1️⃣ Importai
+import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext"; // ✅ Ultimate Auth Context
 import SideDrawer from "@/components/SideDrawer"; // ✅ Sidebar Navigation
@@ -11,13 +12,20 @@ export default function Layout({ children }) {
   const pathname = usePathname();
   const { user, wallet } = useAuth();
 
-  // 2️⃣ Kur slėpti visą UI
-  const hideUI = pathname === "/" || !pathname;
+  const [isClient, setIsClient] = useState(false);
 
-  // 3️⃣ Kada rodyti UI
-  const showUI = typeof window !== "undefined" && user && wallet?.wallet && !hideUI;
+  // 2️⃣ Detect Client Side
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
-  // 4️⃣ UI struktūra
+  // 3️⃣ Kur slėpti visą UI
+  const hideUI = pathname === "/" || pathname === "" || pathname === null;
+
+  // 4️⃣ Kada rodyti UI
+  const showUI = isClient && user && wallet?.wallet && !hideUI;
+
+  // 5️⃣ Struktūra
   return (
     <div className={styles.layoutWrapper}>
       {showUI && <SideDrawer />}
