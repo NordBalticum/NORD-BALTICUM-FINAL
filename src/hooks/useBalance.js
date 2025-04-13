@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef } from "react";
-import { JsonRpcProvider, formatEther } from "ethers"; // ✅ Teisingas importas
 import { useAuth } from "@/contexts/AuthContext";
+import { ethers } from "ethers";
 
 // ✅ Network mapping
 const NETWORKS = {
@@ -13,42 +13,6 @@ const NETWORKS = {
   tbnb: { rpc: "https://data-seed-prebsc-1-s1.binance.org:8545", symbol: "TBNB" },
 };
 
-// ✅ Fetch balances with retries
-async function getBalances(address, retries = 3) {
-  if (!address) throw new Error("❌ Wallet address is required!");
-
-  const balances = {};
-
-  for (const [network, config] of Object.entries(NETWORKS)) {
-    let attempt = 0;
-    let success = false;
-
-    while (attempt <= retries && !success) {
-      try {
-        const provider = new JsonRpcProvider(config.rpc); // ✅ Teisingas provideris
-        const balance = await provider.getBalance(address);
-        const formatted = formatEther(balance); // ✅ Teisingas formatavimas
-        balances[network] = {
-          symbol: config.symbol,
-          balance: parseFloat(formatted),
-        };
-        success = true;
-      } catch (error) {
-        attempt++;
-        if (attempt > retries) {
-          balances[network] = {
-            symbol: config.symbol,
-            balance: 0, // fallback į 0 jei nepavyksta
-          };
-        }
-      }
-    }
-  }
-
-  return balances;
-}
-
-// ✅ Main Hook
 export function useBalance() {
   const { wallet } = useAuth();
   const [balances, setBalances] = useState({});
@@ -60,8 +24,20 @@ export function useBalance() {
     if (!wallet?.wallet?.address) return;
 
     setLoading(true);
+    const freshBalances = {};
+
     try {
-      const freshBalances = await getBalances(wallet.wallet.address);
+      for (const [network, config] of Object.entries(NETWORKS)) {
+        const provider = new ethers.JsonRpcProvider(config.rpc);
+        const balance = await provider.getBalance(wallet.wallet.address);
+        const formatted = ethers.formatEther(balance);
+
+        freshBalances[network] = {
+          symbol: config.symbol,
+          balance: parseFloat(formatted),
+        };
+      }
+
       setBalances(freshBalances);
     } catch (error) {
       console.error("❌ Error fetching balances:", error.message || error);
@@ -74,18 +50,18 @@ export function useBalance() {
   useEffect(() => {
     if (!wallet?.wallet?.address) return;
 
-    fetchBalances(); // ✅ First load
+    fetchBalances(); // ✅ Pirmas užkrovimas
 
-    intervalRef.current = setInterval(fetchBalances, 30000); // ✅ Refresh every 30s
+    intervalRef.current = setInterval(fetchBalances, 30000); // ✅ Update kas 30s
     return () => {
-      clearInterval(intervalRef.current); // ✅ Cleanup
+      clearInterval(intervalRef.current);
     };
-  }, [fetchBalances]);
+  }, [fetchBalances, wallet?.wallet?.address]);
 
   return {
     balances,
-    loading,           // ✅ Background loading
-    initialLoading,    // ✅ Initial spinner
-    refetch: fetchBalances,  // ✅ Manual refresh
+    loading,           // ✅ foninis kraunimasis
+    initialLoading,    // ✅ pirmas užsikrovimas
+    refetch: fetchBalances, // ✅ rankinis refetch
   };
 }
