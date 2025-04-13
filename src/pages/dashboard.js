@@ -7,12 +7,10 @@ import dynamic from "next/dynamic";
 import Image from "next/image";
 
 import { useAuth } from "@/contexts/AuthContext";
-import { useBalance } from "@/hooks/useBalance";
-import { usePrices } from "@/hooks/usePrices";
 import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
 import styles from "@/styles/dashboard.module.css";
 
-// ✅ Dinaminis importas
+// ✅ Dinaminis importas (tik klientui)
 const LivePriceTable = dynamic(() => import("@/components/LivePriceTable"), { ssr: false });
 
 // ✅ Ikonos
@@ -24,7 +22,7 @@ const iconUrls = {
   avalanche: "/icons/avax.svg",
 };
 
-// ✅ Vardai
+// ✅ Pavadinimai
 const names = {
   ethereum: "Ethereum",
   bsc: "BNB Smart Chain",
@@ -47,7 +45,7 @@ export default function Dashboard() {
   const { user, wallet, authLoading, walletLoading } = useAuth();
   const [isClient, setIsClient] = useState(false);
 
-  // ✅ Detect Client Side
+  // ✅ Detect client-side
   useEffect(() => {
     if (typeof window !== "undefined") {
       setIsClient(true);
@@ -77,7 +75,10 @@ export default function Dashboard() {
     );
   }
 
-  // ✅ Tik dabar saugu naudoti useBalance ir usePrices
+  // ✅ Tik dabar saugu dinaminiam hook'ų kvietimui
+  const { useBalance } = require("@/hooks/useBalance");
+  const { usePrices } = require("@/hooks/usePrices");
+
   const { balances, loading: balanceLoading, initialLoading } = useBalance();
   const { prices, loading: pricesLoading } = usePrices();
 
@@ -120,7 +121,7 @@ export default function Dashboard() {
           ) : (
             tokens.map((network) => {
               const balanceData = balances?.[network];
-              const priceData = prices?.[network === "tbnb" ? "bsc" : network];
+              const priceData = prices?.[network === "tbnb" ? "bsc" : network]; // tbnb rodo bnb kainą
 
               if (!balanceData || !priceData) return null;
 
