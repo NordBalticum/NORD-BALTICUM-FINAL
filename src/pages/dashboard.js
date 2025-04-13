@@ -7,8 +7,6 @@ import dynamic from "next/dynamic";
 import Image from "next/image";
 
 import { useAuth } from "@/contexts/AuthContext";
-import { useBalance } from "@/hooks/useBalance";
-import { usePrices } from "@/hooks/usePrices";
 import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
 import styles from "@/styles/dashboard.module.css";
 
@@ -17,62 +15,50 @@ const LivePriceTable = dynamic(() => import("@/components/LivePriceTable"), { ss
 
 // 3️⃣ Ikonos ir Vardai
 const iconUrls = {
-  ethereum: "/icons/eth.svg",
+  eth: "/icons/eth.svg",
   bnb: "/icons/bnb.svg",
   tbnb: "/icons/bnb.svg",
-  polygon: "/icons/matic.svg",
-  avalanche: "/icons/avax.svg",
+  matic: "/icons/matic.svg",
+  avax: "/icons/avax.svg",
 };
 
 const names = {
-  ethereum: "Ethereum",
-  bsc: "BNB Smart Chain",
+  eth: "Ethereum",
+  bnb: "BNB Smart Chain",
   tbnb: "BNB Testnet",
-  polygon: "Polygon",
-  avalanche: "Avalanche",
+  matic: "Polygon",
+  avax: "Avalanche",
 };
 
-const routeNames = {
-  ethereum: "eth",
-  bsc: "bnb",
-  tbnb: "tbnb",
-  polygon: "matic",
-  avalanche: "avax",
-};
-
-// 4️⃣ Main Dashboard
 export default function Dashboard() {
   const router = useRouter();
-  const { user, wallet, authLoading, walletLoading } = useAuth();
+  const { user, wallet, balances, rates, authLoading, walletLoading } = useAuth();
   const [isClient, setIsClient] = useState(false);
 
-  // ✅ Tikrinam ar esam kliente
+  // ✅ Saugi window tikrinimo logika
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      setIsClient(true);
-    }
+    if (typeof window !== "undefined") setIsClient(true);
   }, []);
 
-  // ✅ Redirect į home jei neprisijungęs
+  // ✅ Redirect jei neprisijungęs
   useEffect(() => {
     if (isClient && !authLoading && !walletLoading && !user) {
       router.replace("/");
     }
   }, [isClient, authLoading, walletLoading, user, router]);
 
-  // ✅ Viskas pasiruošę (tikrina user + wallet)
+  // ✅ Pilnai pasiruošęs statusas
   const ready = isClient && !authLoading && !walletLoading && user && wallet?.wallet;
 
-  // ✅ Naudojam hook'us tik jei ready
-  const { balances, loading: balancesLoading, initialLoading: balancesInitialLoading } = ready
-    ? useBalance()
-    : { balances: {}, loading: true, initialLoading: true };
+  // ✅ Tokenų sąrašas
+  const tokens = useMemo(() => {
+    if (!wallet?.wallet?.address || !balances || Object.keys(balances).length === 0) {
+      return [];
+    }
+    return Object.keys(balances);
+  }, [wallet, balances]);
 
-  const { prices, loading: pricesLoading } = ready
-    ? usePrices()
-    : { prices: {}, loading: true };
-
-  // ✅ Loader kai nėra pasiruošimo
+  // ✅ Loader jei dar nepasiruošęs
   if (!ready) {
     return (
       <div className={styles.fullscreenCenter}>
@@ -81,15 +67,6 @@ export default function Dashboard() {
     );
   }
 
-  // ✅ Token sąrašas
-  const tokens = useMemo(() => {
-    if (!wallet?.wallet?.address || !balances || Object.keys(balances).length === 0) {
-      return [];
-    }
-    return Object.keys(balances);
-  }, [wallet, balances]);
-
-  // ✅ Dashboard UI
   return (
     <main className={styles.container}>
       <div className={styles.dashboardWrapper}>
@@ -99,20 +76,16 @@ export default function Dashboard() {
 
         {/* ✅ Asset List */}
         <div className={styles.assetList}>
-          {balancesInitialLoading || pricesLoading ? (
-            <div className={styles.spinnerWrapper}>
-              <MiniLoadingSpinner />
-            </div>
-          ) : tokens.length === 0 ? (
+          {tokens.length === 0 ? (
             <div className={styles.noAssets}>
               No assets found.
             </div>
           ) : (
             tokens.map((network) => {
-              const balanceData = balances?.[network];
-              const priceData = prices?.[network === "tbnb" ? "bsc" : network];
+              const balanceValue = balances?.[network];
+              const rateValue = rates?.[network === "tbnb" ? "bsc" : network];
 
-              if (!balanceData || !priceData || balanceData.balance == null) {
+              if (!balanceValue || !rateValue) {
                 return (
                   <div key={network} className={styles.assetItem}>
                     <MiniLoadingSpinner />
@@ -120,28 +93,26 @@ export default function Dashboard() {
                 );
               }
 
-              const balance = parseFloat(balanceData.balance ?? 0);
-              const eur = parseFloat(priceData.eur ?? 0);
-              const usd = parseFloat(priceData.usd ?? 0);
+              const balance = parseFloat(balanceValue);
+              const eur = parseFloat(rateValue?.eur ?? 0);
+              const usd = parseFloat(rateValue?.usd ?? 0);
 
               const balanceFormatted = balance.toFixed(6);
               const eurValue = (balance * eur).toFixed(2);
               const usdValue = (balance * usd).toFixed(2);
 
-              const symbol = routeNames[network] || network;
-
               return (
                 <div
                   key={network}
                   className={styles.assetItem}
-                  onClick={() => router.push(`/${symbol}`)}
+                  onClick={() => router.push(`/${network}`)}
                   role="button"
                   tabIndex={0}
                 >
                   <div className={styles.assetLeft}>
                     <Image
                       src={iconUrls[network] || "/icons/default-icon.png"}
-                      alt={`${symbol} logo`}
+                      alt={`${network.toUpperCase()} logo`}
                       width={40}
                       height={40}
                       className={styles.assetLogo}
@@ -149,14 +120,14 @@ export default function Dashboard() {
                       unoptimized
                     />
                     <div className={styles.assetInfo}>
-                      <div className={styles.assetSymbol}>{symbol.toUpperCase()}</div>
+                      <div className={styles.assetSymbol}>{network.toUpperCase()}</div>
                       <div className={styles.assetName}>{names[network]}</div>
                     </div>
                   </div>
 
                   <div className={styles.assetRight}>
                     <div className={styles.assetAmount}>
-                      {balanceFormatted} {symbol.toUpperCase()}
+                      {balanceFormatted} {network.toUpperCase()}
                     </div>
                     <div className={styles.assetEur}>
                       ≈ €{eurValue} | ≈ ${usdValue}
