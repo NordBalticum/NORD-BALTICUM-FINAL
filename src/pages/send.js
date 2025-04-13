@@ -1,9 +1,13 @@
 "use client";
 
-import { useState, useMemo, useCallback, useEffect } from "react";
+// ✅ IMPORTAI
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 
 import { useAuth } from "@/contexts/AuthContext";
+import { useNetwork } from "@/contexts/NetworkContext";
+import { useSend } from "@/contexts/SendContext";
+
 import { usePageReady } from "@/hooks/usePageReady";
 import { useSwipeReady } from "@/hooks/useSwipeReady";
 import { useDebounce } from "@/hooks/useDebounce";
@@ -15,21 +19,10 @@ import SuccessModal from "@/components/modals/SuccessModal";
 import ErrorModal from "@/components/modals/ErrorModal";
 import SuccessToast from "@/components/SuccessToast";
 
-import { sendTransaction } from "@/utils/sendTransaction";
-
 import styles from "@/styles/send.module.css";
 import background from "@/styles/background.module.css";
 
-// ✅ Tinklai
-const networkOptions = [
-  { key: "eth", label: "Ethereum" },
-  { key: "bnb", label: "BNB" },
-  { key: "tbnb", label: "Testnet BNB" },
-  { key: "matic", label: "Polygon" },
-  { key: "avax", label: "Avalanche" },
-];
-
-// ✅ Trumpi pavadinimai
+// ✅ TINKLŲ KONFIGURACIJA
 const networkShortNames = {
   eth: "ETH",
   bnb: "BNB",
@@ -38,16 +31,6 @@ const networkShortNames = {
   avax: "AVAX",
 };
 
-// ✅ Mygtukų spalvos
-const buttonColors = {
-  eth: "#0072ff",
-  bnb: "#f0b90b",
-  tbnb: "#f0b90b",
-  matic: "#8247e5",
-  avax: "#e84142",
-};
-
-// ✅ Minimalios sumos
 const minAmounts = {
   eth: 0.001,
   bnb: 0.0005,
@@ -56,16 +39,26 @@ const minAmounts = {
   avax: 0.01,
 };
 
+const buttonColors = {
+  eth: "#0072ff",
+  bnb: "#f0b90b",
+  tbnb: "#f0b90b",
+  matic: "#8247e5",
+  avax: "#e84142",
+};
+
+// ✅ SEND PAGE
 export default function SendPage() {
-  const { user, balances, rates, authLoading, walletLoading } = useAuth();
+  const { user, authLoading, walletLoading } = useAuth();
+  const { activeNetwork, setActiveNetwork } = useNetwork();
+  const { sendTransaction, sending } = useSend();
+
   const isReady = usePageReady();
   const swipeReady = useSwipeReady();
   const router = useRouter();
 
-  const [network, setNetwork] = useState("bsc");
   const [receiver, setReceiver] = useState("");
   const [amount, setAmount] = useState("");
-  const [sending, setSending] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [showToast, setShowToast] = useState(false);
@@ -73,47 +66,32 @@ export default function SendPage() {
   const [error, setError] = useState(null);
   const [transactionHash, setTransactionHash] = useState(null);
 
-  const shortName = useMemo(() => networkShortNames[network] || network.toUpperCase(), [network]);
+  const shortName = useMemo(() => networkShortNames[activeNetwork] || activeNetwork.toUpperCase(), [activeNetwork]);
   const parsedAmount = useMemo(() => Number(amount) || 0, [amount]);
   const debouncedAmount = useDebounce(parsedAmount, 400);
 
-  const { gasFee, adminFee, totalFee, loading: feeLoading, error: feeError } = useTotalFeeCalculator(network, debouncedAmount);
+  const { gasFee, adminFee, totalFee, loading: feeLoading, error: feeError } = useTotalFeeCalculator(activeNetwork, debouncedAmount);
 
-  const netBalance = useMemo(() => balances?.[network]?.balance ? parseFloat(balances[network].balance) : 0, [balances, network]);
-
-  const usdValue = useMemo(() => {
-    const price = rates?.[network === "tbnb" ? "bsc" : network]?.usd || 0;
-    return (netBalance * price).toFixed(2);
-  }, [netBalance, rates, network]);
-
-  const eurValue = useMemo(() => {
-    const price = rates?.[network === "tbnb" ? "bsc" : network]?.eur || 0;
-    return (netBalance * price).toFixed(2);
-  }, [netBalance, rates, network]);
-
+  // ✅ Validate address
   const isValidAddress = (address) => /^0x[a-fA-F0-9]{40}$/.test(address.trim());
 
-  const handleNetworkChange = useCallback((selectedNetwork) => {
+  const handleNetworkChange = (selectedNetwork) => {
     if (!selectedNetwork) return;
-    setNetwork(selectedNetwork);
+    setActiveNetwork(selectedNetwork);
     setAmount("");
     setReceiver("");
     setToastMessage(`Switched to ${networkShortNames[selectedNetwork] || selectedNetwork.toUpperCase()}`);
     setShowToast(true);
     setTimeout(() => setShowToast(false), 1500);
-  }, []);
+  };
 
   const handleSend = () => {
     if (!isValidAddress(receiver)) {
       alert("❌ Invalid wallet address.");
       return;
     }
-    if (parsedAmount < minAmounts[network]) {
-      alert(`❌ Minimum to send is ${minAmounts[network]} ${shortName}`);
-      return;
-    }
-    if (parsedAmount + totalFee > netBalance) {
-      alert(`❌ Insufficient balance. Required: ${(parsedAmount + totalFee).toFixed(6)} ${shortName}`);
+    if (parsedAmount < minAmounts[activeNetwork]) {
+      alert(`❌ Minimum to send is ${minAmounts[activeNetwork]} ${shortName}`);
       return;
     }
     setShowConfirm(true);
@@ -121,7 +99,6 @@ export default function SendPage() {
 
   const confirmSend = async () => {
     setShowConfirm(false);
-    setSending(true);
     setError(null);
 
     try {
@@ -129,7 +106,7 @@ export default function SendPage() {
         const hash = await sendTransaction({
           to: receiver.trim().toLowerCase(),
           amount: parsedAmount,
-          network,
+          network: activeNetwork,
           userEmail: user.email,
         });
 
@@ -141,8 +118,6 @@ export default function SendPage() {
     } catch (err) {
       console.error("❌ Transaction error:", err?.message || err);
       setError(err?.message || "Transaction failed.");
-    } finally {
-      setSending(false);
     }
   };
 
@@ -170,8 +145,8 @@ export default function SendPage() {
   }
 
   const sendButtonStyle = {
-    backgroundColor: buttonColors[network] || "#ffffff",
-    color: network === "bsc" || network === "tbnb" ? "#000000" : "#ffffff",
+    backgroundColor: buttonColors[activeNetwork] || "#ffffff",
+    color: activeNetwork === "bnb" || activeNetwork === "tbnb" ? "#000000" : "#ffffff",
     border: "2px solid white",
     width: "100%",
     padding: "12px",
@@ -189,18 +164,9 @@ export default function SendPage() {
   return (
     <main className={`${styles.main} ${background.gradient}`}>
       <div className={styles.wrapper}>
-        <SuccessToast show={showToast} message={toastMessage} networkKey={network} />
+        <SuccessToast show={showToast} message={toastMessage} networkKey={activeNetwork} />
 
-        <SwipeSelector options={networkOptions} selected={network} onSelect={handleNetworkChange} />
-
-        <div className={styles.balanceTable}>
-          <p className={styles.whiteText}>
-            Your Balance: <span className={styles.balanceAmount}>{netBalance.toFixed(6)} {shortName}</span>
-          </p>
-          <p className={styles.whiteText}>
-            ≈ €{eurValue} | ${usdValue}
-          </p>
-        </div>
+        <SwipeSelector selected={activeNetwork} onSelect={handleNetworkChange} />
 
         <div className={styles.walletActions}>
           <input
@@ -236,7 +202,7 @@ export default function SendPage() {
                   Estimated Total Fees: {(gasFee + adminFee).toFixed(6)} {shortName}
                 </p>
                 <p className={styles.minimumText}>
-                  Minimum to send: {minAmounts[network]} {shortName}
+                  Minimum to send: {minAmounts[activeNetwork]} {shortName}
                 </p>
               </>
             )}
@@ -264,7 +230,7 @@ export default function SendPage() {
                 <p><strong>Receiver:</strong> {receiver}</p>
                 <p><strong>Amount:</strong> {parsedAmount.toFixed(6)} {shortName}</p>
                 <p><strong>Total Fees:</strong> {(gasFee + adminFee).toFixed(6)} {shortName}</p>
-                <p><strong>Remaining Balance:</strong> {(netBalance - parsedAmount - (gasFee + adminFee)).toFixed(6)} {shortName}</p>
+                <p><strong>Remaining Balance:</strong> {/* galima rodyti kai balansai bus su useBalances */}</p>
               </div>
               <div className={styles.modalActions}>
                 <button
@@ -288,11 +254,9 @@ export default function SendPage() {
         {showSuccess && transactionHash && (
           <SuccessModal
             message="✅ Transaction Successful!"
-            onClose={() => {
-              setShowSuccess(false);
-            }}
+            onClose={() => setShowSuccess(false)}
             transactionHash={transactionHash}
-            network={network}
+            network={activeNetwork}
           />
         )}
 
@@ -305,4 +269,4 @@ export default function SendPage() {
       </div>
     </main>
   );
-              }
+        }
