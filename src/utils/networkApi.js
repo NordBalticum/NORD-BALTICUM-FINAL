@@ -1,6 +1,8 @@
 "use client";
 
 export const fetchNetworkTransactions = async (network, address) => {
+  if (!address) return []; // ✅ Saugumo patikrinimas
+
   const API_KEYS = {
     bnb: process.env.NEXT_PUBLIC_BSCSCAN_API_KEY,
     tbnb: process.env.NEXT_PUBLIC_TBSCSCAN_API_KEY,
