@@ -7,8 +7,8 @@ import dynamic from "next/dynamic";
 import Image from "next/image";
 
 import { useAuth } from "@/contexts/AuthContext";
-import { useBalances } from "@/contexts/BalanceContext";
-import { useAppFullyReady } from "@/hooks/useAppFullyReady"; // ✅ TEISINGAS HOOKAS!
+import { useBalances } from "@/contexts/BalanceContext"; // ✅ Teisingas hookas
+import { useAppFullyReady } from "@/hooks/useAppFullyReady"; // ✅ NAUJAS pilnas readiness tikrinimas
 
 import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
 import styles from "@/styles/dashboard.module.css";
@@ -16,7 +16,7 @@ import styles from "@/styles/dashboard.module.css";
 // 2️⃣ Dinaminis Importas (SSR false)
 const LivePriceTable = dynamic(() => import("@/components/LivePriceTable"), { ssr: false });
 
-// 3️⃣ Ikonos ir Vardai
+// 3️⃣ Ikonos ir Tinklų Vardai
 const iconUrls = {
   eth: "/icons/eth.svg",
   bnb: "/icons/bnb.svg",
@@ -36,10 +36,11 @@ const names = {
 // 4️⃣ PAGRINDINIS KOMPONENTAS
 export default function Dashboard() {
   const router = useRouter();
-  const { balances, prices } = useBalances(); // ✅ Tik balances ir prices čia
-  const ready = useAppFullyReady(); // ✅ Pilnas readiness!
+  const { user } = useAuth(); // ✅ Tik user paimame
+  const { balances, prices, loading: balancesLoading } = useBalances(); // ✅ Balansai iš BalanceContext
+  const { ready } = useAppFullyReady(); // ✅ Teisingas app readiness tikrinimas
 
-  // ✅ Tokenų sąrašas
+  // ✅ Tokenų sąrašas (pagal turimus balansus)
   const tokens = useMemo(() => {
     if (!balances || Object.keys(balances).length === 0) {
       return [];
@@ -47,8 +48,8 @@ export default function Dashboard() {
     return Object.keys(balances);
   }, [balances]);
 
-  // ✅ Loader jei dar nepasiruošęs
-  if (!ready) {
+  // ✅ Loader jei nepasiruošęs
+  if (!ready || balancesLoading) {
     return (
       <div className={styles.fullscreenCenter}>
         <MiniLoadingSpinner />
@@ -56,6 +57,7 @@ export default function Dashboard() {
     );
   }
 
+  // ✅ PAGRINDINIS RENDERIS
   return (
     <main className={styles.container}>
       <div className={styles.dashboardWrapper}>
@@ -72,7 +74,7 @@ export default function Dashboard() {
           ) : (
             tokens.map((network) => {
               const balanceValue = balances?.[network];
-              const priceData = prices?.[network === "tbnb" ? "bnb" : network];
+              const priceData = prices?.[network === "tbnb" ? "bnb" : network]; // tbnb = bnb kainos
 
               if (!balanceValue || !priceData) {
                 return (
