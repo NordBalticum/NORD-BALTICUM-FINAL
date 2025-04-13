@@ -1,9 +1,8 @@
 "use client";
 
-// 1️⃣ Importai
 import { useState, useEffect, useRef } from "react";
 import { Wallet } from "ethers";
-import { supabase } from "@/utils/supabaseClient";
+import { useRouter } from "next/navigation";
 import { useAuth, encrypt } from "@/contexts/AuthContext";
 import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
 import { toast } from "react-toastify";
@@ -12,10 +11,10 @@ export default function WalletImport() {
   const { user, reloadWallet } = useAuth();
   const [privateKey, setPrivateKey] = useState("");
   const [loading, setLoading] = useState(false);
-  const [errorCount, setErrorCount] = useState(0);
   const isMounted = useRef(true);
+  const router = useRouter();
 
-  // 2️⃣ Focus on input on mount
+  // Focus on input on mount
   const inputRef = useRef(null);
   useEffect(() => {
     inputRef.current?.focus();
@@ -24,7 +23,6 @@ export default function WalletImport() {
     };
   }, []);
 
-  // 3️⃣ Safe Private Key įvedimas
   const handleInputChange = (e) => {
     const value = e.target.value.trim();
     if (value.length <= 66) {
@@ -32,26 +30,22 @@ export default function WalletImport() {
     }
   };
 
-  // 4️⃣ Pagrindinė Import funkcija
   const handleImport = async (e) => {
     e.preventDefault();
 
     if (!privateKey) {
-      toast.dismiss();
       toast.error("❌ Please enter your private key.");
       inputRef.current?.focus();
       return;
     }
 
     if (!/^0x[a-fA-F0-9]{64}$/.test(privateKey)) {
-      toast.dismiss();
       toast.error("❌ Invalid private key format. Must start with 0x and be 66 characters.");
       inputRef.current?.focus();
       return;
     }
 
     if (!user?.email) {
-      toast.dismiss();
       toast.error("❌ User session missing. Please login again.");
       return;
     }
@@ -76,32 +70,24 @@ export default function WalletImport() {
         .eq("user_email", user.email);
 
       if (error) {
-        console.error("Supabase update error:", error);
-        toast.dismiss();
+        console.error("Supabase update error:", error.message || error);
         toast.error(`❌ Database error: ${error.message || "Unknown error"}`);
         return;
       }
 
-      toast.dismiss();
       toast.success("✅ Wallet imported successfully!");
 
-      await Promise.all([
-        reloadWallet(user.email),
-        supabase.auth.refreshSession(),
-      ]);
+      await reloadWallet(user.email);
 
       setTimeout(() => {
         if (isMounted.current) {
-          console.clear();
-          window.location.reload();
+          router.replace("/dashboard");
         }
       }, 2500);
 
     } catch (err) {
-      console.error("Wallet import error:", err);
-      toast.dismiss();
+      console.error("Wallet import error:", err.message || err);
       toast.error("❌ Invalid private key. Please check and try again.");
-      setErrorCount((prev) => prev + 1);
       inputRef.current?.focus();
     } finally {
       if (isMounted.current) {
@@ -111,7 +97,6 @@ export default function WalletImport() {
     }
   };
 
-  // 5️⃣ UI
   return (
     <div style={{ marginTop: "32px", width: "100%", maxWidth: "460px" }}>
       <h4 style={{ textAlign: "center", marginBottom: "12px", color: "white" }}>
