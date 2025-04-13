@@ -1,14 +1,14 @@
 "use client";
 
-// 1️⃣ Importai
+// 1️⃣ IMPORTAI
 import { useMemo } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 
 import { useAuth } from "@/contexts/AuthContext";
-import { useBalance } from "@/contexts/BalanceContext";
-import { useUserReady } from "@/hooks/useUserReady"; // ✅ Naujas hookas!
+import { useBalances } from "@/contexts/BalanceContext";
+import { useAppFullyReady } from "@/hooks/useAppFullyReady"; // ✅ TEISINGAS HOOKAS!
 
 import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
 import styles from "@/styles/dashboard.module.css";
@@ -33,11 +33,11 @@ const names = {
   avax: "Avalanche",
 };
 
+// 4️⃣ PAGRINDINIS KOMPONENTAS
 export default function Dashboard() {
   const router = useRouter();
-  const { user } = useAuth(); // ✅ Tik user imame iš AuthContext
-  const { balances, prices, loading: balancesLoading } = useBalance(); // ✅ Balansai iš BalanceContext
-  const { ready } = useUserReady(); // ✅ Tikrinam readiness!
+  const { balances, prices } = useBalances(); // ✅ Tik balances ir prices čia
+  const ready = useAppFullyReady(); // ✅ Pilnas readiness!
 
   // ✅ Tokenų sąrašas
   const tokens = useMemo(() => {
@@ -48,7 +48,7 @@ export default function Dashboard() {
   }, [balances]);
 
   // ✅ Loader jei dar nepasiruošęs
-  if (!ready || balancesLoading) {
+  if (!ready) {
     return (
       <div className={styles.fullscreenCenter}>
         <MiniLoadingSpinner />
