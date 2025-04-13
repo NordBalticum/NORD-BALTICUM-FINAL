@@ -1,37 +1,35 @@
 "use client";
 
-// 1️⃣ Importai
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
-import { useAuth } from "@/contexts/AuthContext"; // ✅ Ultimate Auth Context
-import SideDrawer from "@/components/SideDrawer"; // ✅ Sidebar Navigation
-import BottomNavigation from "@/components/BottomNavigation"; // ✅ Mobile Navigation
-import styles from "@/components/layout.module.css"; // ✅ Layout CSS
+import SideDrawer from "@/components/SideDrawer";
+import BottomNavigation from "@/components/BottomNavigation";
+import styles from "@/components/layout.module.css";
 
 export default function Layout({ children }) {
   const pathname = usePathname();
   const [isClient, setIsClient] = useState(false);
-  const [mounted, setMounted] = useState(false); // <--- PRIDEDAM saugumui
-  
-  const { user, wallet } = useAuth();
+  const [mounted, setMounted] = useState(false);
 
-  // 2️⃣ Detect Client Side
+  // 1️⃣ Detect Client Side
   useEffect(() => {
     setIsClient(true);
     setMounted(true);
   }, []);
 
   if (!mounted) {
-    return null; // <--- PRIDEDAM griežtą apsaugą nuo SSR klaidų
+    return null; // 🛡️ Sustabdyti viską iki mount
   }
 
-  // 3️⃣ Kur slėpti visą UI
+  const { user, wallet } = useAuth(); // 🛡️ Tik po mounted!
+
+  // 2️⃣ Kur slėpti visą UI
   const hideUI = pathname === "/" || pathname === "" || pathname === null;
 
-  // 4️⃣ Kada rodyti UI
+  // 3️⃣ Kada rodyti UI
   const showUI = isClient && user && wallet?.wallet && !hideUI;
 
-  // 5️⃣ Struktūra
+  // 4️⃣ Struktūra
   return (
     <div className={styles.layoutWrapper}>
       {showUI && <SideDrawer />}
