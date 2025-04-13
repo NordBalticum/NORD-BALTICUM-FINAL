@@ -1,13 +1,17 @@
 "use client";
 
+// 1️⃣ IMPORTAI
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { useAuth } from "@/contexts/AuthContext";
 import { FaWallet, FaArrowUp, FaArrowDown, FaClock, FaUserCircle } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
+
+import { useUserReady } from "@/hooks/useUserReady"; // ✅ Naujas hookas
+
 import styles from "@/components/bottomnav.module.css";
 
+// 2️⃣ NAVIGACIJOS ELEMENTAI
 const navItems = [
   { path: "/dashboard", icon: <FaWallet />, label: "Wallet" },
   { path: "/send", icon: <FaArrowUp />, label: "Send" },
@@ -16,15 +20,15 @@ const navItems = [
   { path: "/settings", icon: <FaUserCircle />, label: "Settings" },
 ];
 
+// 3️⃣ PAGRINDINIS KOMPONENTAS
 export default function BottomNavigation() {
   const pathname = usePathname();
-  const { user, wallet, authLoading, walletLoading } = useAuth();
-  const [isClient, setIsClient] = useState(false);
+  const { ready } = useUserReady(); // ✅ Tikrinam tik readiness
   const [isMobile, setIsMobile] = useState(false);
 
+  // ✅ Mobile detekcija
   useEffect(() => {
     if (typeof window !== "undefined") {
-      setIsClient(true);
       const checkMobile = () => setIsMobile(window.innerWidth <= 768);
       checkMobile();
       window.addEventListener("resize", checkMobile);
@@ -33,9 +37,8 @@ export default function BottomNavigation() {
   }, []);
 
   const onLoginPage = pathname === "/" || pathname === "" || pathname === null;
-  const ready = isClient && !authLoading && !walletLoading && user && wallet?.wallet?.address;
 
-  // ✅ Jei esame login puslapyje arba ne mobile arba ne pasiruošę → nerodyti
+  // ✅ Jei login puslapyje arba ne mobile arba user nėra ready → nerodyti
   if (onLoginPage || !isMobile || !ready) {
     return null;
   }
