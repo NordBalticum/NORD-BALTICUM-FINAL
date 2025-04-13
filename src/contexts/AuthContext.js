@@ -5,6 +5,8 @@ import { createContext, useContext, useEffect, useState, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { Wallet, JsonRpcProvider, formatEther } from "ethers";
 import { supabase } from "@/utils/supabaseClient";
+import { toast } from "react-toastify"; // <-- Pridedam Toast
+import "react-toastify/dist/ReactToastify.css"; // <-- Toast CSS
 
 // 2️⃣ RPC URL'ai
 const RPC = {
@@ -116,22 +118,25 @@ export const AuthProvider = ({ children }) => {
     }
   }, [authLoading, user, pathname]);
 
-  // 🔟 Inactivity timeout
+  // 🔟 Inactivity Timeout (Auto Logout)
   useEffect(() => {
     if (!isClient) return;
+
     const resetTimer = () => {
       clearTimeout(inactivityTimer.current);
       inactivityTimer.current = setTimeout(() => {
-        signOut();
-      }, 10 * 60 * 1000); // 10 min timeout
+        signOut(true); // <-- iškviečiam su true kad rodyti Toast
+      }, 10 * 60 * 1000);
     };
-    window.addEventListener("mousemove", resetTimer);
-    window.addEventListener("keydown", resetTimer);
+
+    const activityEvents = ["mousemove", "keydown", "touchstart"];
+    activityEvents.forEach((event) => window.addEventListener(event, resetTimer));
+
     resetTimer();
+
     return () => {
       clearTimeout(inactivityTimer.current);
-      window.removeEventListener("mousemove", resetTimer);
-      window.removeEventListener("keydown", resetTimer);
+      activityEvents.forEach((event) => window.removeEventListener(event, resetTimer));
     };
   }, []);
 
@@ -149,16 +154,13 @@ export const AuthProvider = ({ children }) => {
       if (error) throw error;
 
       if (data && Object.keys(data).length > 0 && data.encrypted_key) {
-        // ✅ WALLET YRA — Dekryptinam
         const decryptedKey = await decrypt(data.encrypted_key);
         setupWallet(decryptedKey);
       } else if (data && Object.keys(data).length > 0 && !data.encrypted_key) {
-        // ✅ Blogas įrašas — ištrinam
         console.warn("Found invalid wallet record. Deleting...");
         await supabase.from("wallets").delete().eq("user_email", email);
         await createAndStoreWallet(email);
       } else {
-        // ✅ Visiškai naujas useris — sukuriam
         await createAndStoreWallet(email);
       }
 
@@ -170,7 +172,6 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // ✅ Wallet Create helper
   const createAndStoreWallet = async (email) => {
     const newWallet = Wallet.createRandom();
     const encryptedKey = await encrypt(newWallet.privateKey);
@@ -187,7 +188,6 @@ export const AuthProvider = ({ children }) => {
     setupWallet(newWallet.privateKey);
   };
 
-  // ✅ Setup Wallet su signers
   const setupWallet = (privateKey) => {
     const baseWallet = new Wallet(privateKey);
     const signers = {};
@@ -199,10 +199,9 @@ export const AuthProvider = ({ children }) => {
     loadBalances(signers);
 
     if (balanceInterval.current) clearInterval(balanceInterval.current);
-    balanceInterval.current = setInterval(() => loadBalances(signers), 180000); // kas 3 min
+    balanceInterval.current = setInterval(() => loadBalances(signers), 180000);
   };
 
-  // ✅ Load Balances
   const loadBalances = async (signers) => {
     try {
       const rateData = await fetchRates();
@@ -223,7 +222,6 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // ✅ Fetch Live Rates
   const fetchRates = async () => {
     try {
       const ids = ["ethereum", "binancecoin", "polygon", "avalanche-2"].join(",");
@@ -235,7 +233,6 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // ✅ Reload Wallet (Importavus)
   const reloadWallet = async (email) => {
     try {
       setWalletLoading(true);
@@ -259,7 +256,6 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // ✅ Auth Functions
   const signInWithMagicLink = async (email) => {
     const origin = isClient ? window.location.origin : "https://nordbalticum.com";
     const { error } = await supabase.auth.signInWithOtp({
@@ -278,7 +274,8 @@ export const AuthProvider = ({ children }) => {
     if (error) throw error;
   };
 
-  const signOut = async () => {
+  // ✅ Premium signOut
+  const signOut = async (showToast = false) => {
     await supabase.auth.signOut();
     setUser(null);
     setWallet(null);
@@ -288,9 +285,18 @@ export const AuthProvider = ({ children }) => {
       localStorage.removeItem("activeNetwork");
     }
     router.replace("/");
+    if (showToast) {
+      toast.info("You have been logged out due to inactivity.", {
+        position: "top-center",
+        autoClose: 4000,
+        hideProgressBar: true,
+        closeOnClick: true,
+        pauseOnHover: false,
+        draggable: false,
+      });
+    }
   };
 
-  // ✅ Return Context
   return (
     <AuthContext.Provider
       value={{
