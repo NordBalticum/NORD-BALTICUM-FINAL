@@ -5,10 +5,10 @@ export function startSessionWatcher({ onSessionInvalid, intervalMinutes = 1 }) {
   let intervalId = null;
 
   const start = () => {
-    if (intervalId) return; // jei jau veikia, nedubliuoti
+    if (intervalId) return; // ✅ jei jau veikia, nieko nedaryti
     intervalId = setInterval(async () => {
       try {
-        const response = await fetch("/api/check-session", {
+        const res = await fetch("/api/check-session", {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
@@ -16,14 +16,14 @@ export function startSessionWatcher({ onSessionInvalid, intervalMinutes = 1 }) {
           cache: "no-store",
         });
 
-        if (!response.ok) {
-          throw new Error("Invalid session response");
+        if (!res.ok) {
+          throw new Error("Session check failed");
         }
 
-        const data = await response.json();
+        const data = await res.json();
 
-        if (!data.valid) {
-          console.warn("Session invalid detected.");
+        if (!data?.valid) {
+          console.warn("❌ Session invalid detected.");
           if (typeof onSessionInvalid === "function") {
             onSessionInvalid();
           }
@@ -34,7 +34,7 @@ export function startSessionWatcher({ onSessionInvalid, intervalMinutes = 1 }) {
           onSessionInvalid();
         }
       }
-    }, intervalMinutes * 60 * 1000); // pvz. kas 1 minutę
+    }, intervalMinutes * 60 * 1000); // ✅ pvz. kas 1 minutę
   };
 
   const stop = () => {
