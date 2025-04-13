@@ -10,7 +10,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
 import styles from "@/styles/dashboard.module.css";
 
-// ✅ Dinaminis importas (tik klientui)
+// ✅ Dinaminis LivePriceTable importas
 const LivePriceTable = dynamic(() => import("@/components/LivePriceTable"), { ssr: false });
 
 // ✅ Ikonos
@@ -22,7 +22,7 @@ const iconUrls = {
   avalanche: "/icons/avax.svg",
 };
 
-// ✅ Pavadinimai
+// ✅ Tokenų pavadinimai
 const names = {
   ethereum: "Ethereum",
   bsc: "BNB Smart Chain",
@@ -31,7 +31,7 @@ const names = {
   avalanche: "Avalanche",
 };
 
-// ✅ Route mappings
+// ✅ Maršrutų pavadinimai
 const routeNames = {
   ethereum: "eth",
   bsc: "bnb",
@@ -45,7 +45,7 @@ export default function Dashboard() {
   const { user, wallet, authLoading, walletLoading } = useAuth();
   const [isClient, setIsClient] = useState(false);
 
-  // ✅ Detect client-side
+  // ✅ Patikrinam ar esam kliento pusėje
   useEffect(() => {
     if (typeof window !== "undefined") {
       setIsClient(true);
@@ -59,7 +59,7 @@ export default function Dashboard() {
     }
   }, [isClient, authLoading, walletLoading, user, router]);
 
-  // ✅ SAUGIKLIS prieš hook'us
+  // ✅ Pagrindinis loaderis (tikrinam user + wallet pilnai)
   if (!isClient || authLoading || walletLoading || !user || !wallet) {
     return (
       <div style={{
@@ -75,7 +75,7 @@ export default function Dashboard() {
     );
   }
 
-  // ✅ Tik dabar saugu dinaminiam hook'ų kvietimui
+  // ✅ Tik dabar saugu importuoti ir naudoti hookus!
   const { useBalance } = require("@/hooks/useBalance");
   const { usePrices } = require("@/hooks/usePrices");
 
@@ -94,10 +94,10 @@ export default function Dashboard() {
     <main className={styles.container}>
       <div className={styles.dashboardWrapper}>
 
-        {/* ✅ Live kainos lentelė */}
+        {/* ✅ Live kainų lentelė */}
         <LivePriceTable />
 
-        {/* ✅ Assetų sąrašas */}
+        {/* ✅ Turtų sąrašas */}
         <div className={styles.assetList}>
           {initialLoading || pricesLoading ? (
             <div style={{
@@ -121,7 +121,7 @@ export default function Dashboard() {
           ) : (
             tokens.map((network) => {
               const balanceData = balances?.[network];
-              const priceData = prices?.[network === "tbnb" ? "bsc" : network]; // tbnb rodo bnb kainą
+              const priceData = prices?.[network === "tbnb" ? "bsc" : network];
 
               if (!balanceData || !priceData) return null;
 
