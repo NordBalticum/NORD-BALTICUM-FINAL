@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { usePathname } from "next/navigation";
+import Link from "next/link";
+import { useAuth } from "@/contexts/AuthContext"; // ✅ Reikia čia auth
 import { FaWallet, FaArrowUp, FaArrowDown, FaClock, FaUserCircle } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
-import styles from "@/components/bottomnav.module.css"; // ✅ Premium CSS
+import styles from "@/components/bottomnav.module.css";
 
 const navItems = [
   { path: "/dashboard", icon: <FaWallet />, label: "Wallet" },
@@ -17,9 +18,10 @@ const navItems = [
 
 export default function BottomNavigation() {
   const pathname = usePathname();
+  const { user, wallet, authLoading, walletLoading } = useAuth();
   const [isMobile, setIsMobile] = useState(false);
 
-  // ✅ Check ar yra mobile device
+  // ✅ Check ar esam mobile
   useEffect(() => {
     if (typeof window !== "undefined") {
       const checkMobile = () => setIsMobile(window.innerWidth <= 768);
@@ -29,12 +31,13 @@ export default function BottomNavigation() {
     }
   }, []);
 
-  // ✅ Nerodyti jei nėra user puslapio (pagrindiniame /)
-  if (!pathname || pathname === "/") {
+  // ✅ BENDRAS TIKRINIMAS
+  const ready = !authLoading && !walletLoading && user && wallet?.wallet?.address;
+
+  // ✅ Jei esam / (index) arba ne mobile arba ne pasiruošę
+  if (!pathname || pathname === "/" || !isMobile || !ready) {
     return null;
   }
-
-  if (!isMobile) return null;
 
   return (
     <AnimatePresence mode="wait">
