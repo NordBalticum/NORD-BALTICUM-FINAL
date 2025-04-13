@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 
 export default function SwitchNetworkComponent() {
-  const { activeNetwork, setActiveNetwork, loading } = useAuth();
+  const { activeNetwork, setActiveNetwork, authLoading, walletLoading } = useAuth();
   const [switching, setSwitching] = useState(false);
 
   const networks = [
@@ -26,11 +26,12 @@ export default function SwitchNetworkComponent() {
     } finally {
       setTimeout(() => {
         setSwitching(false);
-      }, 500); // Trumpas timeout efektui
+      }, 500);
     }
   };
 
-  if (loading) {
+  // ❌ Vietoj `loading`, tikrinam authLoading ir walletLoading
+  if (authLoading || walletLoading) {
     return (
       <div style={styles.loading}>
         Loading networks...
