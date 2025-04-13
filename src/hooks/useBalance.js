@@ -1,10 +1,11 @@
 "use client";
 
+// 1️⃣ Importai
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { ethers } from "ethers";
 
-// ✅ Network RPC ir simboliai
+// 2️⃣ Network RPC ir simboliai
 const NETWORKS = {
   ethereum: { rpc: "https://rpc.ankr.com/eth", symbol: "ETH" },
   bsc: { rpc: "https://bsc-dataseed.bnbchain.org", symbol: "BNB" },
@@ -13,8 +14,9 @@ const NETWORKS = {
   tbnb: { rpc: "https://data-seed-prebsc-1-s1.binance.org:8545", symbol: "TBNB" },
 };
 
+// 3️⃣ useBalance Hook
 export function useBalance() {
-  const { wallet } = useAuth();
+  const { wallet, authLoading, walletLoading } = useAuth();
   const [balances, setBalances] = useState({});
   const [loading, setLoading] = useState(true);
   const [initialLoading, setInitialLoading] = useState(true);
@@ -41,7 +43,7 @@ export function useBalance() {
       setBalances(freshBalances);
     } catch (error) {
       console.error("❌ Error fetching balances:", error.message || error);
-      setBalances({}); // ⬅️ jei error, išvalom kad necrash'intų UI
+      setBalances({}); // ⬅️ jei error, nulaužiam į tuščią
     } finally {
       setLoading(false);
       setInitialLoading(false);
@@ -49,23 +51,21 @@ export function useBalance() {
   }, [wallet?.wallet?.address]);
 
   useEffect(() => {
-    if (!wallet?.wallet?.address) return;
+    if (!wallet?.wallet?.address || authLoading || walletLoading) return;
 
-    // ✅ Iš karto užkraunam su mažyte pauze UX smooth efektui
     const timeout = setTimeout(() => {
       fetchBalances();
     }, 300);
 
-    // ✅ Po to kartojam kas 30s
     intervalRef.current = setInterval(() => {
       fetchBalances();
-    }, 30000);
+    }, 30000); // ✅ Kas 30s atnaujinti balansą
 
     return () => {
       clearTimeout(timeout);
       clearInterval(intervalRef.current);
     };
-  }, [fetchBalances, wallet?.wallet?.address]);
+  }, [fetchBalances, wallet?.wallet?.address, authLoading, walletLoading]);
 
   return {
     balances,
