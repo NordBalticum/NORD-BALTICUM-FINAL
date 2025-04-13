@@ -12,7 +12,7 @@ import background from "@/styles/background.module.css";
 
 export default function Home() {
   const router = useRouter();
-  const { user, signInWithMagicLink, signInWithGoogle } = useAuth();
+  const { user, authLoading, signInWithMagicLink, signInWithGoogle } = useAuth(); // ✅ pridėtas authLoading!
 
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState("idle"); // idle | loading | success | error
@@ -27,12 +27,14 @@ export default function Home() {
     }
   }, []);
 
-  // ✅ Redirect į dashboard jei user jau prisijungęs
+  // ✅ Redirect į dashboard kai user yra prisijungęs IR authLoading baigtas
   useEffect(() => {
-    if (isClient && user) {
+    if (!isClient || authLoading) return; // ✅ Apsauga: kol kraunasi, nieko nedarom
+
+    if (user) {
       router.replace("/dashboard");
     }
-  }, [isClient, user, router]);
+  }, [isClient, authLoading, user, router]);
 
   // ✅ Magic Link sign in
   const handleSignIn = async (e) => {
