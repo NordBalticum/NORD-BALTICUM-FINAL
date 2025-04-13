@@ -15,7 +15,7 @@ import SuccessModal from "@/components/modals/SuccessModal";
 import ErrorModal from "@/components/modals/ErrorModal";
 import SuccessToast from "@/components/SuccessToast";
 
-import { sendTransaction } from "@/utils/sendCryptoFunction";
+import { sendTransaction } from "@/utils/sendTransaction";
 
 import styles from "@/styles/send.module.css";
 import background from "@/styles/background.module.css";
