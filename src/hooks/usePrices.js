@@ -1,17 +1,17 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 
-// ✅ Token mapping
+// ✅ CoinGecko Token IDs
 const TOKEN_IDS = {
   ethereum: "ethereum",
   bsc: "binancecoin",
   polygon: "matic-network",
   avalanche: "avalanche-2",
-  tbnb: "binancecoin", // TBNB naudoja BNB kainą
+  tbnb: "binancecoin", // TBNB = BNB kaina
 };
 
-// ✅ Fallback kainos
+// ✅ Atsarginės kainos (fallback)
 const FALLBACK_PRICES = {
   ethereum: { eur: 2900, usd: 3100 },
   bsc: { eur: 450, usd: 480 },
@@ -20,22 +20,25 @@ const FALLBACK_PRICES = {
   tbnb: { eur: 450, usd: 480 },
 };
 
-// ✅ Maininis Hookas
+// ✅ Ultimate Price Hook
 export function usePrices() {
-  const [prices, setPrices] = useState(FALLBACK_PRICES);
+  const [prices, setPrices] = useState(FALLBACK_PRICES); // ✅ Startuoja su fallback
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const mountedRef = useRef(false);
 
   const fetchPrices = useCallback(async () => {
+    if (!mountedRef.current) return; // ✅ Protection jei unmounted
+
     try {
       setLoading(true);
-
       const ids = Object.values(TOKEN_IDS).join(",");
+
       const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=eur,usd`, {
-        cache: "no-store",
+        cache: "no-store", // ✅ Visada šviežia
       });
 
-      if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
+      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
 
       const data = await res.json();
       const updatedPrices = {};
@@ -50,26 +53,31 @@ export function usePrices() {
       setPrices(updatedPrices);
       setError(null);
     } catch (err) {
-      console.error("❌ Price fetch error:", err.message);
-      setPrices(FALLBACK_PRICES); // Jeigu klaida – fallback
+      console.error("❌ Price fetch error:", err.message || err);
+      setPrices(FALLBACK_PRICES); // ✅ Jei error – fallback
       setError(err.message || "Unknown error");
     } finally {
-      setLoading(false);
+      if (mountedRef.current) {
+        setLoading(false);
+      }
     }
   }, []);
 
   useEffect(() => {
-    fetchPrices(); // Pirmas užkrovimas
+    mountedRef.current = true;
+    fetchPrices(); // ✅ Load first time
 
-    const interval = setInterval(fetchPrices, 60000); // ✅ Kas 60 sekundžių
-
-    return () => clearInterval(interval);
+    const interval = setInterval(fetchPrices, 30000); // ✅ Kas 30 sekundžių
+    return () => {
+      mountedRef.current = false;
+      clearInterval(interval); // ✅ Clean interval
+    };
   }, [fetchPrices]);
 
   return {
     prices,
     loading,
     error,
-    refetch: fetchPrices,
+    refetch: fetchPrices, // ✅ Galima rankiniu būdu pasikrauti dar kartą
   };
 }
