@@ -13,6 +13,7 @@ const NETWORKS = {
   tbnb: { rpc: "https://data-seed-prebsc-1-s1.binance.org:8545", symbol: "TBNB" },
 };
 
+// ✅ Fetch balances with retries
 async function getBalances(address, retries = 3) {
   if (!address) throw new Error("❌ Wallet address is required!");
 
@@ -37,7 +38,7 @@ async function getBalances(address, retries = 3) {
         if (attempt > retries) {
           balances[network] = {
             symbol: config.symbol,
-            balance: 0, 
+            balance: 0,
           };
         }
       }
@@ -47,23 +48,16 @@ async function getBalances(address, retries = 3) {
   return balances;
 }
 
-// ✅ Corrected Hook
+// ✅ Main Hook
 export function useBalance() {
   const { wallet } = useAuth();
   const [balances, setBalances] = useState({});
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
   const intervalRef = useRef(null);
-  const [isClient, setIsClient] = useState(false);
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      setIsClient(true);
-    }
-  }, []);
 
   const fetchBalances = useCallback(async () => {
-    if (!wallet?.wallet?.address || !isClient) return;
+    if (typeof window === "undefined" || !wallet?.wallet?.address) return;
 
     setLoading(true);
     try {
@@ -75,18 +69,18 @@ export function useBalance() {
       setLoading(false);
       setInitialLoading(false);
     }
-  }, [wallet?.wallet?.address, isClient]);
+  }, [wallet?.wallet?.address]);
 
   useEffect(() => {
-    if (!wallet?.wallet?.address || !isClient) return;
+    if (typeof window === "undefined" || !wallet?.wallet?.address) return;
 
-    fetchBalances();
+    fetchBalances(); // ✅ First load
 
-    intervalRef.current = setInterval(fetchBalances, 30000);
+    intervalRef.current = setInterval(fetchBalances, 30000); // ✅ Refresh every 30s
     return () => {
-      clearInterval(intervalRef.current);
+      clearInterval(intervalRef.current); // ✅ Cleanup
     };
-  }, [fetchBalances, wallet?.wallet?.address, isClient]);
+  }, [fetchBalances]);
 
   return {
     balances,
