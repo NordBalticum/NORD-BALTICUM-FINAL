@@ -1,6 +1,5 @@
 "use client";
 
-// ✅ Importai
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
@@ -23,7 +22,7 @@ const iconUrls = {
   avalanche: "/icons/avax.svg",
 };
 
-// ✅ Vardai
+// ✅ Pavadinimai
 const names = {
   ethereum: "Ethereum",
   bsc: "BNB Smart Chain",
@@ -32,7 +31,7 @@ const names = {
   avalanche: "Avalanche",
 };
 
-// ✅ Maršrutų pavadinimai
+// ✅ Route mappings
 const routeNames = {
   ethereum: "eth",
   bsc: "bnb",
@@ -53,15 +52,17 @@ export default function Dashboard() {
     }
   }, []);
 
-  // ✅ Saugiklis: redirect jei neprisijungęs
+  // ✅ Redirect jei neprisijungęs
   useEffect(() => {
     if (isClient && !authLoading && !walletLoading && !user) {
       router.replace("/");
     }
   }, [isClient, authLoading, walletLoading, user, router]);
 
-  // ✅ Pagrindinis loaderis (tikrinam user + wallet pilnai)
-  if (!isClient || authLoading || walletLoading || !user || !wallet) {
+  // ✅ DABAR DĖMESIO: jeigu NE client arba krauna arba user/wallet nėra → Loaderis
+  const isLoading = !isClient || authLoading || walletLoading || !user || !wallet;
+
+  if (isLoading) {
     return (
       <div style={{
         height: "100vh",
@@ -76,11 +77,10 @@ export default function Dashboard() {
     );
   }
 
-  // ✅ Tik dabar saugu kviesti hook'us
+  // ✅ DABAR TIK ČIA – kai jau 100% saugu
   const { balances, loading: balanceLoading, initialLoading } = useBalance();
   const { prices, loading: pricesLoading } = usePrices();
 
-  // ✅ Tokenų sąrašas
   const tokens = useMemo(() => {
     if (!wallet?.wallet?.address || !balances || Object.keys(balances).length === 0) {
       return [];
@@ -92,10 +92,8 @@ export default function Dashboard() {
     <main className={styles.container}>
       <div className={styles.dashboardWrapper}>
 
-        {/* ✅ Live kainos lentelė */}
         <LivePriceTable />
 
-        {/* ✅ Turtų sąrašas */}
         <div className={styles.assetList}>
           {initialLoading || pricesLoading ? (
             <div style={{
@@ -119,7 +117,7 @@ export default function Dashboard() {
           ) : (
             tokens.map((network) => {
               const balanceData = balances?.[network];
-              const priceData = prices?.[network === "tbnb" ? "bsc" : network]; // TBNB = BNB kaina
+              const priceData = prices?.[network === "tbnb" ? "bsc" : network];
 
               if (!balanceData || !priceData) return null;
 
