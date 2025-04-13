@@ -108,11 +108,11 @@ export default function BnbChart({ onChartReady, onMount }) {
   }, [fetchChartData]);
 
   useEffect(() => {
-    if (!loading && chartData.length > 0 && chartRendered && typeof onChartReady === 'function') {
-      onChartReady();
-    }
-  }, [loading, chartData, chartRendered, onChartReady]);
-
+  if (!loading && chartData.length > 0 && typeof onChartReady === 'function') {
+    onChartReady();
+  }
+}, [loading, chartData, onChartReady]);
+  
   const chartOptions = {
     responsive: true,
     maintainAspectRatio: false,
