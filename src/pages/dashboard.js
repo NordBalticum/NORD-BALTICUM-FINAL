@@ -13,42 +13,17 @@ import styles from "@/styles/dashboard.module.css";
 
 const LivePriceTable = dynamic(() => import("@/components/LivePriceTable"), { ssr: false });
 
-const iconUrls = {
-  ethereum: "/icons/eth.svg",
-  bsc: "/icons/bnb.svg",
-  tbnb: "/icons/bnb.svg",
-  polygon: "/icons/matic.svg",
-  avalanche: "/icons/avax.svg",
-};
-
-const names = {
-  ethereum: "Ethereum",
-  bsc: "BNB Smart Chain",
-  tbnb: "BNB Testnet",
-  polygon: "Polygon",
-  avalanche: "Avalanche",
-};
-
-const routeNames = {
-  ethereum: "eth",
-  bsc: "bnb",
-  tbnb: "tbnb",
-  polygon: "matic",
-  avalanche: "avax",
-};
+const iconUrls = { ethereum: "/icons/eth.svg", bsc: "/icons/bnb.svg", tbnb: "/icons/bnb.svg", polygon: "/icons/matic.svg", avalanche: "/icons/avax.svg" };
+const names = { ethereum: "Ethereum", bsc: "BNB Smart Chain", tbnb: "BNB Testnet", polygon: "Polygon", avalanche: "Avalanche" };
+const routeNames = { ethereum: "eth", bsc: "bnb", tbnb: "tbnb", polygon: "matic", avalanche: "avax" };
 
 export default function Dashboard() {
   const router = useRouter();
   const { user, wallet, authLoading, walletLoading } = useAuth();
   const [isClient, setIsClient] = useState(false);
 
-  const { balances, loading: balancesLoading, initialLoading: balancesInitialLoading } = useBalance();
-  const { prices, loading: pricesLoading } = usePrices();
-
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      setIsClient(true);
-    }
+    if (typeof window !== "undefined") setIsClient(true);
   }, []);
 
   useEffect(() => {
@@ -57,7 +32,12 @@ export default function Dashboard() {
     }
   }, [isClient, authLoading, walletLoading, user, router]);
 
-  if (!isClient || authLoading || walletLoading || !user || !wallet?.wallet) {
+  const ready = isClient && !authLoading && !walletLoading && user && wallet?.wallet;
+
+  const { balances, loading: balancesLoading, initialLoading: balancesInitialLoading } = ready ? useBalance() : { balances: {}, loading: true, initialLoading: true };
+  const { prices, loading: pricesLoading } = ready ? usePrices() : { prices: {}, loading: true };
+
+  if (!ready) {
     return (
       <div className={styles.fullscreenCenter}>
         <MiniLoadingSpinner />
@@ -76,7 +56,6 @@ export default function Dashboard() {
     <main className={styles.container}>
       <div className={styles.dashboardWrapper}>
         <LivePriceTable />
-
         <div className={styles.assetList}>
           {balancesInitialLoading || pricesLoading ? (
             <div className={styles.spinnerWrapper}>
@@ -91,10 +70,7 @@ export default function Dashboard() {
               const balanceData = balances?.[network];
               const priceData = prices?.[network === "tbnb" ? "bsc" : network];
 
-              // ✅ Ultimate Bulletproof filtravimas
-              if (!balanceData || !priceData || balanceData.balance == null) {
-                return null;
-              }
+              if (!balanceData || !priceData || balanceData.balance == null) return null;
 
               const balance = parseFloat(balanceData.balance ?? 0);
               const eur = parseFloat(priceData.eur ?? 0);
@@ -143,7 +119,6 @@ export default function Dashboard() {
             })
           )}
         </div>
-
       </div>
     </main>
   );
