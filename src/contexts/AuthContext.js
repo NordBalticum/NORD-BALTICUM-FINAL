@@ -101,6 +101,8 @@ export const AuthProvider = ({ children }) => {
   const [userProfile, setUserProfile] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [wallet, setWallet] = useState(null);
+  const [balances, setBalances] = useState({});
+  const [rates, setRates] = useState({});
   const [activeNetwork, setActiveNetwork] = useState("eth");
   const [authLoading, setAuthLoading] = useState(true);
   const [walletLoading, setWalletLoading] = useState(true);
