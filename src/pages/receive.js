@@ -13,7 +13,7 @@ import background from "@/styles/background.module.css";
 
 export default function Receive() {
   const router = useRouter();
-  const { user, wallet, loading } = useAuth();
+  const { user, wallet, authLoading, walletLoading } = useAuth();
 
   const [isClient, setIsClient] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -49,10 +49,10 @@ export default function Receive() {
   }, []);
 
   useEffect(() => {
-    if (isClient && !loading && !user) {
+    if (isClient && !authLoading && !walletLoading && !user) {
       router.replace("/");
     }
-  }, [user, loading, isClient, router]);
+  }, [user, authLoading, walletLoading, isClient, router]);
 
   const handleCopy = async (address) => {
     if (!address) return;
@@ -144,7 +144,7 @@ export default function Receive() {
     }
   };
 
-  if (!isClient || loading) {
+  if (!isClient || authLoading || walletLoading) {
     return (
       <div className={styles.loadingScreen}>
         <motion.div animate={{ scale: [0.9, 1.1, 0.9] }} transition={{ repeat: Infinity, duration: 1.5 }}>
