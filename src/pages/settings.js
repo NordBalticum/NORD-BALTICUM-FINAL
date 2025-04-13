@@ -3,9 +3,9 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import toast, { Toaster } from "react-hot-toast";
+import { toast, Toaster } from "react-hot-toast";
 
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth, encrypt } from "@/contexts/AuthContext";
 import { supabase } from "@/utils/supabaseClient";
 
 import WalletImport from "@/components/WalletImport";
@@ -14,19 +14,20 @@ import background from "@/styles/background.module.css";
 
 export default function SettingsPage() {
   const router = useRouter();
-  const { user, wallet, signOut } = useAuth();
+  const { user, wallet, signOut, reloadWallet } = useAuth();
 
   const [emailInput, setEmailInput] = useState("");
   const [walletAddress, setWalletAddress] = useState("");
   const [copied, setCopied] = useState(false);
-  const [loadingEmail, setLoadingEmail] = useState(false);
-  const [loadingDeleteWallet, setLoadingDeleteWallet] = useState(false);
-  const [loadingDeleteAccount, setLoadingDeleteAccount] = useState(false);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [modalAction, setModalAction] = useState(() => () => {});
   const [modalTitle, setModalTitle] = useState("");
   const [modalDescription, setModalDescription] = useState("");
+
+  const [loadingEmail, setLoadingEmail] = useState(false);
+  const [loadingDeleteWallet, setLoadingDeleteWallet] = useState(false);
+  const [loadingDeleteAccount, setLoadingDeleteAccount] = useState(false);
 
   useEffect(() => {
     if (wallet?.wallet?.address) {
@@ -34,35 +35,13 @@ export default function SettingsPage() {
     }
   }, [wallet]);
 
-  const isValidEmail = (email) => {
-    return /\S+@\S+\.\S+/.test(email);
-  };
-
-  const handleChangeEmail = async () => {
-    const email = emailInput.trim();
-    if (!email) {
-      toast.error("❌ Please enter a new email address.");
-      return;
-    }
-    try {
-      setLoadingEmail(true);
-      const { error } = await supabase.auth.updateUser({ email });
-      if (error) throw error;
-      toast.success("✅ Magic Link sent successfully.");
-      setEmailInput("");
-    } catch (error) {
-      console.error("Email update error:", error.message);
-      toast.error(`❌ ${error.message}`);
-    } finally {
-      setLoadingEmail(false);
-    }
-  };
+  const isValidEmail = (email) => /\S+@\S+\.\S+/.test(email);
 
   const handleCopyWallet = async () => {
     if (!walletAddress) return;
     try {
       await navigator.clipboard.writeText(walletAddress);
-      toast.success("✅ Wallet address copied!", { duration: 2000 });
+      toast.success("✅ Wallet address copied!");
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
@@ -71,17 +50,41 @@ export default function SettingsPage() {
     }
   };
 
+  const handleChangeEmail = async () => {
+    if (!isValidEmail(emailInput)) {
+      toast.error("❌ Please enter a valid email.");
+      return;
+    }
+
+    try {
+      setLoadingEmail(true);
+      const { error } = await supabase.auth.updateUser({ email: emailInput.trim() });
+      if (error) throw error;
+
+      toast.success("✅ Confirmation email sent! Check your inbox.");
+      setEmailInput("");
+    } catch (error) {
+      console.error("Email change error:", error.message);
+      toast.error(`❌ ${error.message}`);
+    } finally {
+      setLoadingEmail(false);
+    }
+  };
+
   const handleDeleteWallet = async () => {
     try {
       setLoadingDeleteWallet(true);
       const newWallet = wallet.wallet.createRandom();
       const encrypted = await encrypt(newWallet.privateKey);
+
       await supabase.from("wallets")
         .update({
           encrypted_key: encrypted,
-          eth_address: newWallet.address
+          eth_address: newWallet.address,
         })
         .eq("user_email", user.email);
+
+      await reloadWallet(user.email);
 
       toast.success("✅ Wallet reset successfully. Reloading...");
       setTimeout(() => window.location.reload(), 2000);
@@ -94,20 +97,19 @@ export default function SettingsPage() {
     }
   };
 
-  const handleDeleteAccount = async () => {
-    try {
-      setLoadingDeleteAccount(true);
-      const { error } = await supabase.auth.admin.deleteUser(user.id);
-      if (error) throw error;
-      toast.success("✅ Account deletion request sent.");
-      router.replace("/");
-    } catch (error) {
-      console.error("Delete account error:", error.message);
-      toast.error("❌ Failed to send account deletion request.");
-    } finally {
-      setLoadingDeleteAccount(false);
-      closeModal();
+  const handleDeleteAccountRequest = () => {
+    if (!user) {
+      toast.error("❌ No user logged in.");
+      return;
     }
+
+    window.open(
+      `mailto:support@nordbalticum.com?subject=Delete%20Account%20Request&body=I%20would%20like%20to%20delete%20my%20account.%20Email:%20${user.email}`,
+      "_blank"
+    );
+
+    toast.success("✅ Request initiated. Complete the email to delete your account.");
+    closeModal();
   };
 
   const openModal = (title, description, action) => {
@@ -126,45 +128,28 @@ export default function SettingsPage() {
   }
 
   return (
-    <main
-      style={{ width: "100vw", height: "100vh", overflowY: "auto" }}
-      className={`${styles.container} ${background.gradient}`}
-    >
+    <main className={`${styles.container} ${background.gradient}`} style={{ width: "100vw", height: "100vh", overflowY: "auto" }}>
       <Toaster position="top-center" reverseOrder={false} />
 
       <div className={styles.settingsContainer}>
         <div className={styles.settingsWrapper}>
 
-          {/* === SECTION 1: WALLET INFO === */}
+          {/* === WALLET INFO === */}
           <div className={styles.settingsBox}>
-            <Image
-              src="/icons/logo.svg"
-              alt="NordBalticum Logo"
-              width={220}
-              height={80}
-              priority
-              className={styles.logo}
-            />
-
+            <Image src="/icons/logo.svg" alt="NordBalticum Logo" width={220} height={80} priority className={styles.logo} />
             <div className={styles.walletBox} onClick={handleCopyWallet}>
-              <p className={styles.walletLabel} style={{ textAlign: "center" }}>
-                Your Wallet:
-              </p>
-              <p className={styles.walletAddress} style={{ fontSize: "clamp(11px, 1.4vw, 13px)" }}>
-                {walletAddress}
-              </p>
-              {copied && (
-                <p className={styles.copyStatus}>✅ Copied!</p>
-              )}
+              <p className={styles.walletLabel}>Your Wallet:</p>
+              <p className={styles.walletAddress}>{walletAddress}</p>
+              {copied && <p className={styles.copyStatus}>✅ Copied!</p>}
             </div>
           </div>
 
-          {/* === SECTION 2: IMPORT WALLET === */}
+          {/* === IMPORT WALLET === */}
           <div className={styles.settingsBox}>
             <WalletImport />
           </div>
 
-          {/* === SECTION 3: CHANGE EMAIL === */}
+          {/* === CHANGE EMAIL === */}
           <div className={styles.settingsBox}>
             <h2 className={styles.changeEmailTitle}>Change Email</h2>
             <div style={{ position: "relative", width: "100%" }}>
@@ -174,28 +159,9 @@ export default function SettingsPage() {
                 value={emailInput}
                 onChange={(e) => setEmailInput(e.target.value)}
                 className={styles.input}
-                style={{
-                  padding: "14px 20px",
-                  fontSize: "15px",
-                  width: "100%",
-                  borderRadius: "12px",
-                  paddingRight: "48px",
-                }}
               />
               {isValidEmail(emailInput) && (
-                <span
-                  style={{
-                    position: "absolute",
-                    right: "16px",
-                    top: "50%",
-                    transform: "translateY(-50%)",
-                    fontSize: "18px",
-                    color: "#00FF00",
-                    opacity: 0.8,
-                  }}
-                >
-                  ✅
-                </span>
+                <span className={styles.validEmailMark}>✅</span>
               )}
             </div>
             <button
@@ -203,36 +169,36 @@ export default function SettingsPage() {
               onClick={handleChangeEmail}
               disabled={!emailInput.trim() || loadingEmail}
             >
-              {loadingEmail ? "Sending..." : "Send Magic Link"}
+              {loadingEmail ? "Sending..." : "Send Confirmation Email"}
             </button>
           </div>
 
-          {/* === SECTION 4: DANGER ZONE === */}
+          {/* === DANGER ZONE === */}
           <div className={styles.dangerBox}>
             <h3 className={styles.dangerTitle}>Danger Zone</h3>
 
             <button
               className={styles.dangerButton}
               onClick={() => openModal(
-                "Delete My Wallet",
-                "Are you sure you want to delete your wallet? This action will reset your private key.",
+                "Reset Wallet",
+                "Are you sure you want to reset your wallet? This will generate a new private key.",
                 handleDeleteWallet
               )}
               disabled={loadingDeleteWallet}
             >
-              {loadingDeleteWallet ? "Deleting Wallet..." : "Delete My Wallet"}
+              {loadingDeleteWallet ? "Resetting Wallet..." : "Reset Wallet"}
             </button>
 
             <button
               className={styles.dangerButton}
               onClick={() => openModal(
-                "Delete My Account",
-                "Are you sure you want to permanently delete your account?",
-                handleDeleteAccount
+                "Request Account Deletion",
+                "Are you sure you want to delete your account? This will open your email client to send a deletion request.",
+                handleDeleteAccountRequest
               )}
               disabled={loadingDeleteAccount}
             >
-              {loadingDeleteAccount ? "Deleting Account..." : "Delete My Account"}
+              {loadingDeleteAccount ? "Requesting..." : "Request Account Deletion"}
             </button>
           </div>
 
@@ -256,7 +222,7 @@ export default function SettingsPage() {
   );
 }
 
-// ✅ CONFIRM MODAL COMPONENT
+// ✅ Confirm Modal
 function ConfirmModal({ isOpen, title, description, onConfirm, onCancel }) {
   if (!isOpen) return null;
 
@@ -266,12 +232,8 @@ function ConfirmModal({ isOpen, title, description, onConfirm, onCancel }) {
         <h3>{title}</h3>
         <p>{description}</p>
         <div className={styles.modalButtons}>
-          <button onClick={onCancel} className={styles.modalCancel}>
-            Cancel
-          </button>
-          <button onClick={onConfirm} className={styles.modalConfirm}>
-            Confirm
-          </button>
+          <button onClick={onCancel} className={styles.modalCancel}>Cancel</button>
+          <button onClick={onConfirm} className={styles.modalConfirm}>Confirm</button>
         </div>
       </div>
     </div>
