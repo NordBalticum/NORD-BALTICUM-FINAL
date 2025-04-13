@@ -1,19 +1,19 @@
 "use client";
 
+// 1️⃣ Importai
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 
 import { useAuth } from "@/contexts/AuthContext";
-import { useBalance } from "@/hooks/useBalance";
-import { usePrices } from "@/hooks/usePrices";
 import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
 import styles from "@/styles/dashboard.module.css";
 
+// ✅ Dinaminis LivePriceTable importas
 const LivePriceTable = dynamic(() => import("@/components/LivePriceTable"), { ssr: false });
 
-// ✅ Ikonos
+// ✅ Ikonos mapping
 const iconUrls = {
   ethereum: "/icons/eth.svg",
   bsc: "/icons/bnb.svg",
@@ -31,7 +31,7 @@ const names = {
   avalanche: "Avalanche",
 };
 
-// ✅ Route mappings
+// ✅ Route mapping
 const routeNames = {
   ethereum: "eth",
   bsc: "bnb",
@@ -43,26 +43,24 @@ const routeNames = {
 export default function Dashboard() {
   const router = useRouter();
   const { user, wallet, authLoading, walletLoading } = useAuth();
-  const { balances, loading: balanceLoading, initialLoading } = useBalance();
-  const { prices, loading: pricesLoading } = usePrices();
 
   const [isClient, setIsClient] = useState(false);
 
-  // ✅ Detect client
+  // ✅ Detect klientą
   useEffect(() => {
     if (typeof window !== "undefined") {
       setIsClient(true);
     }
   }, []);
 
-  // ✅ Redirect jei neprisijungęs
+  // ✅ Redirect jei user null
   useEffect(() => {
     if (isClient && !authLoading && !walletLoading && !user) {
       router.replace("/");
     }
   }, [isClient, authLoading, walletLoading, user, router]);
 
-  // ✅ Full Loading tikrinimas
+  // ✅ Apsauga nuo SSR errorų
   if (!isClient || authLoading || walletLoading || !user || !wallet) {
     return (
       <div style={{
@@ -77,6 +75,10 @@ export default function Dashboard() {
       </div>
     );
   }
+
+  // ✅ Čia tik dabar saugiai įtraukiam balansus ir kainas
+  const { balances, loading: balanceLoading, initialLoading } = useBalance();
+  const { prices, loading: pricesLoading } = usePrices();
 
   // ✅ Tokenų sąrašas
   const tokens = useMemo(() => {
