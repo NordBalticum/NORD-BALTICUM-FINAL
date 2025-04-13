@@ -1,17 +1,17 @@
 "use client";
 
-// ✅ IMPORTAI
+// 1️⃣ IMPORTAI
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 
 import { useAuth } from "@/contexts/AuthContext";
 import { useNetwork } from "@/contexts/NetworkContext";
 import { useSend } from "@/contexts/SendContext";
+import { useBalances } from "@/contexts/BalanceContext";
 
 import { usePageReady } from "@/hooks/usePageReady";
 import { useSwipeReady } from "@/hooks/useSwipeReady";
 import { useDebounce } from "@/hooks/useDebounce";
-import { useTotalFeeCalculator } from "@/hooks/useTotalFeeCalculator";
 
 import SwipeSelector from "@/components/SwipeSelector";
 import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
@@ -22,7 +22,7 @@ import SuccessToast from "@/components/SuccessToast";
 import styles from "@/styles/send.module.css";
 import background from "@/styles/background.module.css";
 
-// ✅ TINKLŲ KONFIGURACIJA
+// 2️⃣ NETWORK KONFIGŪRACIJA
 const networkShortNames = {
   eth: "ETH",
   bnb: "BNB",
@@ -47,11 +47,12 @@ const buttonColors = {
   avax: "#e84142",
 };
 
-// ✅ SEND PAGE
+// 3️⃣ PAGRINDINIS KOMPONENTAS
 export default function SendPage() {
   const { user, authLoading, walletLoading } = useAuth();
   const { activeNetwork, setActiveNetwork } = useNetwork();
-  const { sendTransaction, sending } = useSend();
+  const { sendTransaction, sending, gasFee, adminFee, totalFee, feeLoading, feeError } = useSend();
+  const { balances, getUsdBalance, getEurBalance } = useBalances();
 
   const isReady = usePageReady();
   const swipeReady = useSwipeReady();
@@ -70,9 +71,10 @@ export default function SendPage() {
   const parsedAmount = useMemo(() => Number(amount) || 0, [amount]);
   const debouncedAmount = useDebounce(parsedAmount, 400);
 
-  const { gasFee, adminFee, totalFee, loading: feeLoading, error: feeError } = useTotalFeeCalculator(activeNetwork, debouncedAmount);
+  const netBalance = useMemo(() => balances?.[activeNetwork] || 0, [balances, activeNetwork]);
+  const balanceEur = getEurBalance(activeNetwork);
+  const balanceUsd = getUsdBalance(activeNetwork);
 
-  // ✅ Validate address
   const isValidAddress = (address) => /^0x[a-fA-F0-9]{40}$/.test(address.trim());
 
   const handleNetworkChange = (selectedNetwork) => {
@@ -92,6 +94,10 @@ export default function SendPage() {
     }
     if (parsedAmount < minAmounts[activeNetwork]) {
       alert(`❌ Minimum to send is ${minAmounts[activeNetwork]} ${shortName}`);
+      return;
+    }
+    if (parsedAmount + totalFee > netBalance) {
+      alert(`❌ Insufficient balance. Required: ${(parsedAmount + totalFee).toFixed(6)} ${shortName}`);
       return;
     }
     setShowConfirm(true);
@@ -131,14 +137,7 @@ export default function SendPage() {
 
   if (!isReady || !swipeReady || authLoading || walletLoading) {
     return (
-      <div style={{
-        width: "100vw",
-        height: "100vh",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        background: "transparent",
-      }}>
+      <div className={styles.loader}>
         <MiniLoadingSpinner />
       </div>
     );
@@ -167,6 +166,15 @@ export default function SendPage() {
         <SuccessToast show={showToast} message={toastMessage} networkKey={activeNetwork} />
 
         <SwipeSelector selected={activeNetwork} onSelect={handleNetworkChange} />
+
+        <div className={styles.balanceTable}>
+          <p className={styles.whiteText}>
+            Your Balance: <span className={styles.balanceAmount}>{netBalance.toFixed(6)} {shortName}</span>
+          </p>
+          <p className={styles.whiteText}>
+            ≈ €{balanceEur} | ≈ ${balanceUsd}
+          </p>
+        </div>
 
         <div className={styles.walletActions}>
           <input
@@ -230,7 +238,7 @@ export default function SendPage() {
                 <p><strong>Receiver:</strong> {receiver}</p>
                 <p><strong>Amount:</strong> {parsedAmount.toFixed(6)} {shortName}</p>
                 <p><strong>Total Fees:</strong> {(gasFee + adminFee).toFixed(6)} {shortName}</p>
-                <p><strong>Remaining Balance:</strong> {/* galima rodyti kai balansai bus su useBalances */}</p>
+                <p><strong>Remaining Balance:</strong> {(netBalance - parsedAmount - (gasFee + adminFee)).toFixed(6)} {shortName}</p>
               </div>
               <div className={styles.modalActions}>
                 <button
@@ -254,7 +262,9 @@ export default function SendPage() {
         {showSuccess && transactionHash && (
           <SuccessModal
             message="✅ Transaction Successful!"
-            onClose={() => setShowSuccess(false)}
+            onClose={() => {
+              setShowSuccess(false);
+            }}
             transactionHash={transactionHash}
             network={activeNetwork}
           />
