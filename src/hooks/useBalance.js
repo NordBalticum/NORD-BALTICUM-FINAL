@@ -13,7 +13,6 @@ const NETWORKS = {
   tbnb: { rpc: "https://data-seed-prebsc-1-s1.binance.org:8545", symbol: "TBNB" },
 };
 
-// ✅ Fetch balances with retries
 async function getBalances(address, retries = 3) {
   if (!address) throw new Error("❌ Wallet address is required!");
 
@@ -36,10 +35,9 @@ async function getBalances(address, retries = 3) {
       } catch (error) {
         attempt++;
         if (attempt > retries) {
-          console.error(`❌ Failed to fetch ${network} balance after retries:`, error.message);
           balances[network] = {
             symbol: config.symbol,
-            balance: 0, // fallback to 0 if failed after retries
+            balance: 0, 
           };
         }
       }
@@ -49,16 +47,23 @@ async function getBalances(address, retries = 3) {
   return balances;
 }
 
-// ✅ Main Hook to use balance and price data
+// ✅ Corrected Hook
 export function useBalance() {
-  const { wallet, user } = useAuth();
+  const { wallet } = useAuth();
   const [balances, setBalances] = useState({});
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
   const intervalRef = useRef(null);
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setIsClient(true);
+    }
+  }, []);
 
   const fetchBalances = useCallback(async () => {
-    if (!wallet?.wallet?.address || !user) return; // ✅ User + Wallet double check
+    if (!wallet?.wallet?.address || !isClient) return;
 
     setLoading(true);
     try {
@@ -70,28 +75,23 @@ export function useBalance() {
       setLoading(false);
       setInitialLoading(false);
     }
-  }, [wallet?.wallet?.address, user]);
+  }, [wallet?.wallet?.address, isClient]);
 
   useEffect(() => {
-    if (!wallet?.wallet?.address || !user) return;
+    if (!wallet?.wallet?.address || !isClient) return;
 
-    fetchBalances(); // ✅ First load
+    fetchBalances();
 
-    intervalRef.current = setInterval(() => {
-      if (document.visibilityState === "visible") { // ✅ Tik jei tab aktyvus
-        fetchBalances();
-      }
-    }, 30000); // ✅ Refresh kas 30s
-
+    intervalRef.current = setInterval(fetchBalances, 30000);
     return () => {
-      clearInterval(intervalRef.current); // ✅ Clear interval on cleanup
+      clearInterval(intervalRef.current);
     };
-  }, [fetchBalances, user]);
+  }, [fetchBalances, wallet?.wallet?.address, isClient]);
 
   return {
     balances,
-    loading,           // Background loading
-    initialLoading,    // First load loading
-    refetch: fetchBalances, // Manual refresh
+    loading,
+    initialLoading,
+    refetch: fetchBalances,
   };
 }
