@@ -3,40 +3,20 @@
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
-import { useAuth } from "@/contexts/AuthContext";
 import { useSwipeReady } from "@/hooks/useSwipeReady";
+import { useNetwork } from "@/contexts/NetworkContext"; // ✅ Naujas importas vietoj useAuth
 import styles from "@/components/swipeselector.module.css";
 
 const supportedNetworks = [
-  {
-    name: "Ethereum",
-    symbol: "eth",
-    logo: "/icons/eth.svg",
-  },
-  {
-    name: "BNB Chain",
-    symbol: "bnb",
-    logo: "/icons/bnb.svg",
-  },
-  {
-    name: "BNB Testnet",
-    symbol: "tbnb",
-    logo: "/icons/bnb.svg", // ✅ tas pats kaip BNB Mainnet
-  },
-  {
-    name: "Polygon",
-    symbol: "matic",
-    logo: "/icons/matic.svg",
-  },
-  {
-    name: "Avalanche",
-    symbol: "avax",
-    logo: "/icons/avax.svg",
-  },
+  { name: "Ethereum", symbol: "eth", logo: "/icons/eth.svg" },
+  { name: "BNB Chain", symbol: "bnb", logo: "/icons/bnb.svg" },
+  { name: "BNB Testnet", symbol: "tbnb", logo: "/icons/bnb.svg" },
+  { name: "Polygon", symbol: "matic", logo: "/icons/matic.svg" },
+  { name: "Avalanche", symbol: "avax", logo: "/icons/avax.svg" },
 ];
 
 export default function SwipeSelector({ onSelect }) {
-  const { activeNetwork, setActiveNetwork } = useAuth();
+  const { activeNetwork, setActiveNetwork } = useNetwork(); // ✅ Imame iš NetworkContext
   const containerRef = useRef(null);
   const [selectedIndex, setSelectedIndex] = useState(1);
   const [isMobile, setIsMobile] = useState(false);
