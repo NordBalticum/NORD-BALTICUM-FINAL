@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { ethers } from "ethers";
 import { useAuth } from "@/contexts/AuthContext";
 
+// ✅ Network RPCs
 const NETWORKS = {
   ethereum: { rpc: "https://rpc.ankr.com/eth", symbol: "ETH" },
   bsc: { rpc: "https://bsc-dataseed.bnbchain.org", symbol: "BNB" },
@@ -12,8 +13,9 @@ const NETWORKS = {
   tbnb: { rpc: "https://data-seed-prebsc-1-s1.binance.org:8545", symbol: "TBNB" },
 };
 
-async function getBalances(address, retries = 3) {
-  if (!address) throw new Error("❌ Wallet address is required!");
+// ✅ Gauti balansus su retry
+async function getBalances(address, retries = 2) {
+  if (!address) throw new Error("❌ Wallet address is missing!");
 
   const balances = {};
 
@@ -46,6 +48,7 @@ async function getBalances(address, retries = 3) {
   return balances;
 }
 
+// ✅ Maininis Hookas
 export function useBalance() {
   const { wallet } = useAuth();
   const [balances, setBalances] = useState({});
@@ -54,14 +57,14 @@ export function useBalance() {
   const intervalRef = useRef(null);
 
   const fetchBalances = useCallback(async () => {
-    if (typeof window === "undefined" || !wallet?.wallet?.address) return;
+    if (!wallet?.wallet?.address) return;
 
     setLoading(true);
     try {
       const freshBalances = await getBalances(wallet.wallet.address);
       setBalances(freshBalances);
     } catch (error) {
-      console.error("❌ Error fetching balances:", error.message || error);
+      console.error("❌ Failed to fetch balances:", error.message || error);
     } finally {
       setLoading(false);
       setInitialLoading(false);
@@ -71,11 +74,11 @@ export function useBalance() {
   useEffect(() => {
     if (!wallet?.wallet?.address) return;
 
-    fetchBalances();
-    intervalRef.current = setInterval(fetchBalances, 30000);
-    return () => {
-      clearInterval(intervalRef.current);
-    };
+    fetchBalances(); // Pirmas užkrovimas
+
+    intervalRef.current = setInterval(fetchBalances, 60000); // ✅ Kas 60 sekundžių
+
+    return () => clearInterval(intervalRef.current);
   }, [fetchBalances]);
 
   return {
