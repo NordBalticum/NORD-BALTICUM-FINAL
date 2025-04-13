@@ -3,34 +3,15 @@
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import axios from "axios";
 import styles from "./livepricetable.module.css";
 
+const axios = typeof window !== "undefined" ? require("axios") : null; // ✅ FIX čia
+
 const tokens = [
-  {
-    id: "binancecoin",
-    symbol: "BNB",
-    logo: "/icons/bnb.svg",
-    route: "/bnb",
-  },
-  {
-    id: "ethereum",
-    symbol: "ETH",
-    logo: "/icons/eth.svg",
-    route: "/eth",
-  },
-  {
-    id: "matic-network",
-    symbol: "MATIC",
-    logo: "/icons/matic.svg",
-    route: "/matic",
-  },
-  {
-    id: "avalanche-2",
-    symbol: "AVAX",
-    logo: "/icons/avax.svg",
-    route: "/avax",
-  },
+  { id: "binancecoin", symbol: "BNB", logo: "/icons/bnb.svg", route: "/bnb" },
+  { id: "ethereum", symbol: "ETH", logo: "/icons/eth.svg", route: "/eth" },
+  { id: "matic-network", symbol: "MATIC", logo: "/icons/matic.svg", route: "/matic" },
+  { id: "avalanche-2", symbol: "AVAX", logo: "/icons/avax.svg", route: "/avax" },
 ];
 
 const currencies = ["eur", "usd"];
@@ -47,7 +28,7 @@ export default function LivePriceTable() {
   const intervalRef = useRef(null);
 
   const fetchPrices = async () => {
-    if (!mountedRef.current) return;
+    if (!mountedRef.current || !axios) return; // ✅ FIX čia
 
     try {
       const ids = tokens.map((t) => t.id).join(",");
@@ -63,7 +44,7 @@ export default function LivePriceTable() {
         );
         if (priceChange) {
           setUpdatedToken(priceChange);
-          setTimeout(() => setUpdatedToken(null), 1000); // Žalias flash 1s
+          setTimeout(() => setUpdatedToken(null), 1000);
         }
         setPrices(newPrices);
         if (typeof window !== "undefined") {
@@ -119,7 +100,7 @@ export default function LivePriceTable() {
 
   const handleCardClick = (route) => {
     if (navigator.vibrate) {
-      navigator.vibrate(10); // ✅ Vibracija!
+      navigator.vibrate(10);
     }
     router.push(route);
   };
