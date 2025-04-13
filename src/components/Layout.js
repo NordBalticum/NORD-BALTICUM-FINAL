@@ -1,17 +1,44 @@
 "use client";
 
-import SideDrawer from "@/components/SideDrawer";
-import BottomNavigation from "@/components/BottomNavigation";
-import styles from "@/components/layout.module.css";
+// 1️⃣ Importai
+import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
+import { useAuth } from "@/contexts/AuthContext"; // ✅ Ultimate Auth Context
+import SideDrawer from "@/components/SideDrawer"; // ✅ Sidebar Navigation
+import BottomNavigation from "@/components/BottomNavigation"; // ✅ Mobile Navigation
+import styles from "@/components/layout.module.css"; // ✅ Layout CSS
 
 export default function Layout({ children }) {
+  const pathname = usePathname();
+  const [isClient, setIsClient] = useState(false);
+  const [mounted, setMounted] = useState(false); // <--- PRIDEDAM saugumui
+  
+  const { user, wallet } = useAuth();
+
+  // 2️⃣ Detect Client Side
+  useEffect(() => {
+    setIsClient(true);
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return null; // <--- PRIDEDAM griežtą apsaugą nuo SSR klaidų
+  }
+
+  // 3️⃣ Kur slėpti visą UI
+  const hideUI = pathname === "/" || pathname === "" || pathname === null;
+
+  // 4️⃣ Kada rodyti UI
+  const showUI = isClient && user && wallet?.wallet && !hideUI;
+
+  // 5️⃣ Struktūra
   return (
     <div className={styles.layoutWrapper}>
-      <SideDrawer />
+      {showUI && <SideDrawer />}
       <main className={styles.mainContent}>
         {children}
       </main>
-      <BottomNavigation />
+      {showUI && <BottomNavigation />}
     </div>
   );
 }
