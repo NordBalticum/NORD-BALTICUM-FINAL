@@ -21,24 +21,6 @@ Tikslas: 100% saugumas. 0% klaidų. 24/7 uptime.
 ✅ Viskas online – be bash terminalų, be local serverių!
 
 
----
-
-📁 Projekto Struktūra
-
-📦 NORD-BALTICUM-FINAL
-├── src/
-│   ├── app/                 # Puslapiai (login, dashboard, send, receive, settings, transactions)
-│   ├── components/          # Komponentai (LivePriceTable, MiniLoadingSpinner, WalletImport, ConfirmModal)
-│   ├── contexts/            # Context Provideriai (AuthContext, BalanceContext, SendContext, NetworkContext)
-│   ├── hooks/               # Hook'ai (useSystemReady, useMinimalReady, useDebounce)
-│   ├── styles/              # CSS failai (global.css, theme.css, background.module.css, dashboard.module.css)
-│   ├── utils/               # Helper funkcijos (supabaseClient, getGasPrice, encryption helpers)
-│   └── assets/              # Paveikslėliai, ikonos, logotipai
-├── public/                  # Vieši failai (favicon, icons)
-├── .env.local               # Local aplinkos kintamieji
-├── package.json             # Projekto priklausomybės
-└── README.md                # Šitas failas
-
 
 ---
 
