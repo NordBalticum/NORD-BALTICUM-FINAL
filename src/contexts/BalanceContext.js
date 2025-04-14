@@ -3,6 +3,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { ethers } from "ethers";
+import debounce from "lodash.debounce";
 
 const BalanceContext = createContext();
 export const useBalance = () => useContext(BalanceContext);
@@ -42,17 +43,17 @@ export const BalanceProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   const intervalRef = useRef(null);
-  const debounceTimeout = useRef(null);
 
   // ✅ Balanso ir kainų užkrovimas
   const fetchBalancesAndPrices = useCallback(async () => {
-    if (!wallet?.wallet?.address) return; // ⛔ Jei nėra address – nieko nedarom
+    if (!wallet?.wallet?.address) return;
 
     try {
+      setLoading(true);
+
       const address = wallet.wallet.address;
       const newBalances = {};
 
-      // ✅ Užkraunam balansus per RPC
       await Promise.all(Object.entries(RPC).map(async ([network, rpcUrl]) => {
         try {
           const provider = new ethers.JsonRpcProvider(rpcUrl);
@@ -66,7 +67,6 @@ export const BalanceProvider = ({ children }) => {
 
       setBalances(newBalances);
 
-      // ✅ Užkraunam CoinGecko kainas
       const ids = Array.from(new Set(Object.values(TOKEN_IDS))).join(",");
       const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=eur,usd`, {
         cache: "no-store",
@@ -97,7 +97,6 @@ export const BalanceProvider = ({ children }) => {
     if (authLoading || walletLoading) return;
     if (!wallet?.wallet?.address) return;
 
-    setLoading(true);
     fetchBalancesAndPrices();
 
     if (intervalRef.current) clearInterval(intervalRef.current);
@@ -106,27 +105,28 @@ export const BalanceProvider = ({ children }) => {
     return () => clearInterval(intervalRef.current);
   }, [authLoading, walletLoading, wallet, fetchBalancesAndPrices]);
 
-  // ✅ Visibility Change su DEBOUNCE
+  // ✅ Visibility Change + Online Recovery su DEBOUNCE
   useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === "visible") {
-        if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
-        debounceTimeout.current = setTimeout(() => {
-          console.log("✅ App is visible again, refetching balances...");
-          fetchBalancesAndPrices();
-        }, 500); // 500ms debounce
-      }
-    };
+    if (typeof window === "undefined") return;
 
-    if (typeof window !== "undefined") {
-      document.addEventListener("visibilitychange", handleVisibilityChange);
-    }
+    const handleVisibilityChange = debounce(async () => {
+      if (document.visibilityState === "visible") {
+        console.log("✅ Tab visible – refreshing balances...");
+        await fetchBalancesAndPrices();
+      }
+    }, 500);
+
+    const handleOnline = debounce(async () => {
+      console.log("✅ Network online – refreshing balances...");
+      await fetchBalancesAndPrices();
+    }, 500);
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("online", handleOnline);
 
     return () => {
-      if (typeof window !== "undefined") {
-        document.removeEventListener("visibilitychange", handleVisibilityChange);
-      }
-      if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("online", handleOnline);
     };
   }, [fetchBalancesAndPrices]);
 
