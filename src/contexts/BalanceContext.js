@@ -25,7 +25,7 @@ export const TOKEN_IDS = {
   avax: "avalanche-2",
 };
 
-// ✅ Fallback kainos
+// ✅ Atsarginės kainos
 const FALLBACK_PRICES = {
   eth: { eur: 2900, usd: 3100 },
   bnb: { eur: 450, usd: 480 },
@@ -45,40 +45,27 @@ export const BalanceProvider = ({ children }) => {
 
   // ✅ Balanso ir kainų užkrovimas
   const fetchBalancesAndPrices = useCallback(async () => {
-    if (!wallet) return;
+    if (!wallet?.wallet?.address) return; // ⛔ Jei neturim address – nieko nedarom
 
     try {
+      const address = wallet.wallet.address;
       const newBalances = {};
 
-      // ✅ Jeigu turim signer'ius (full Web3 wallet)
-      if (wallet.signers) {
-        await Promise.all(Object.entries(wallet.signers).map(async ([network, signer]) => {
-          try {
-            const balance = await signer.getBalance();
-            newBalances[network] = parseFloat(ethers.formatEther(balance));
-          } catch (error) {
-            console.error(`❌ Balance error for ${network}:`, error.message);
-            newBalances[network] = 0;
-          }
-        }));
-      } else if (wallet.wallet?.address) {
-        // ✅ Jeigu turim tik adresą (be signer'io)
-        const address = wallet.wallet.address;
-        await Promise.all(Object.entries(RPC).map(async ([network, rpcUrl]) => {
-          try {
-            const provider = new ethers.JsonRpcProvider(rpcUrl);
-            const balance = await provider.getBalance(address);
-            newBalances[network] = parseFloat(ethers.formatEther(balance));
-          } catch (error) {
-            console.error(`❌ Balance fetch error [${network}]:`, error.message);
-            newBalances[network] = 0;
-          }
-        }));
-      }
+      // ✅ Balansai per RPC
+      await Promise.all(Object.entries(RPC).map(async ([network, rpcUrl]) => {
+        try {
+          const provider = new ethers.JsonRpcProvider(rpcUrl);
+          const balance = await provider.getBalance(address);
+          newBalances[network] = parseFloat(ethers.formatEther(balance));
+        } catch (error) {
+          console.error(`❌ Balance fetch error [${network}]:`, error.message);
+          newBalances[network] = 0;
+        }
+      }));
 
       setBalances(newBalances);
 
-      // ✅ Užkraunam CoinGecko kainas
+      // ✅ CoinGecko kainos
       const ids = Array.from(new Set(Object.values(TOKEN_IDS))).join(",");
       const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=eur,usd`, {
         cache: "no-store",
@@ -107,13 +94,13 @@ export const BalanceProvider = ({ children }) => {
 
   useEffect(() => {
     if (authLoading || walletLoading) return;
-    if (!wallet) return;
+    if (!wallet?.wallet?.address) return;
 
     setLoading(true);
     fetchBalancesAndPrices();
 
     if (intervalRef.current) clearInterval(intervalRef.current);
-    intervalRef.current = setInterval(fetchBalancesAndPrices, 30000); // ✅ Kas 30s auto refresh
+    intervalRef.current = setInterval(fetchBalancesAndPrices, 30000); // ✅ Update kas 30 sek.
 
     return () => clearInterval(intervalRef.current);
   }, [authLoading, walletLoading, wallet, fetchBalancesAndPrices]);
