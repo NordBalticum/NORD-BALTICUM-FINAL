@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import Image from "next/image";
@@ -11,12 +11,13 @@ import { useBalance } from "@/contexts/BalanceContext";
 import { useSystemReady } from "@/hooks/useSystemReady";
 
 import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
+import { toast } from "react-toastify"; // ✅ Pridedam Toast!
 import styles from "@/styles/dashboard.module.css";
 
-// ✅ Dinaminis LivePriceTable importas
+// ✅ Dinaminis LivePriceTable importas (SSR OFF)
 const LivePriceTable = dynamic(() => import("@/components/LivePriceTable"), { ssr: false });
 
-// ✅ Ikonos
+// ✅ Tinklų ikonos
 const iconUrls = {
   eth: "/icons/eth.svg",
   bnb: "/icons/bnb.svg",
@@ -36,17 +37,51 @@ const names = {
 
 export default function Dashboard() {
   const router = useRouter();
-  const { balances, prices } = useBalance();
-  const { ready } = useSystemReady();
+  const { balances, prices, refetch } = useBalance(); // ✅ Gaunam refetch
+  const { ready, loading } = useSystemReady();
 
-  // ✅ Tikrinam kokius tokenus turim
+  const [initialLoad, setInitialLoad] = useState(true);
+
+  // ✅ Turimų tokenų sąrašas
   const tokens = useMemo(() => {
     if (!balances || Object.keys(balances).length === 0) return [];
     return Object.keys(balances);
   }, [balances]);
 
-  // ✅ Loaderis jei sistema NEparuošta
-  if (!ready) {
+  // ✅ Kai puslapis grįžta iš minimize - atsinaujinam balansus su toast
+  useEffect(() => {
+    const handleVisibilityChange = async () => {
+      if (document.visibilityState === "visible" && !initialLoad) {
+        try {
+          await refetch();
+          toast.success("✅ Balances updated.", { position: "top-center", autoClose: 2500 });
+        } catch (error) {
+          console.error("Failed to refresh balances:", error.message);
+        }
+      }
+    };
+
+    if (typeof window !== "undefined") {
+      document.addEventListener("visibilitychange", handleVisibilityChange);
+    }
+
+    return () => {
+      if (typeof window !== "undefined") {
+        document.removeEventListener("visibilitychange", handleVisibilityChange);
+      }
+    };
+  }, [refetch, initialLoad]);
+
+  // ✅ Kad išjungtų pirmą užkrovimą kaip 'refresha'
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      setInitialLoad(false);
+    }, 3000); // ✅ 3 sekundžių delay po pirmo load
+    return () => clearTimeout(timeout);
+  }, []);
+
+  // ✅ Loaderis jeigu sistema NEparuošta
+  if (!ready || loading) {
     return (
       <div className={styles.fullscreenCenter}>
         <MiniLoadingSpinner size={32} />
@@ -54,7 +89,7 @@ export default function Dashboard() {
     );
   }
 
-  // ✅ Pagrindinis puslapis
+  // ✅ Pagrindinis turinys
   return (
     <main className={styles.container}>
       <div className={styles.dashboardWrapper}>
@@ -62,7 +97,7 @@ export default function Dashboard() {
         {/* ✅ Live Price Table */}
         <LivePriceTable />
 
-        {/* ✅ Assetų sąrašas */}
+        {/* ✅ Turimi Asset'ai */}
         <div className={styles.assetList}>
           {tokens.length === 0 ? (
             <div className={styles.noAssets}>No assets found.</div>
