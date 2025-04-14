@@ -21,7 +21,7 @@ import SuccessToast from "@/components/SuccessToast";
 import styles from "@/styles/send.module.css";
 import background from "@/styles/background.module.css";
 
-// 2️⃣ NETWORKS KONFIG
+// 2️⃣ NETWORK KONFIG
 const networkShortNames = {
   eth: "ETH",
   bnb: "BNB",
@@ -51,9 +51,11 @@ export default function SendPage() {
   const router = useRouter();
   const { user } = useAuth();
   const { activeNetwork, switchNetwork } = useNetwork();
-  const { sendTransaction, sending, gasFee, adminFee, totalFee, feeLoading, feeError } = useSend();
-  const { balances, getUsdBalance, getEurBalance } = useBalance();
   const { ready, loading } = useSystemReady();
+
+  // ✅ Hook'ai tik jeigu window yra
+  const { sendTransaction, sending, gasFee, adminFee, totalFee, feeLoading, feeError } = typeof window !== "undefined" ? useSend() : {};
+  const { balances, getUsdBalance, getEurBalance } = typeof window !== "undefined" ? useBalance() : {};
 
   const [receiver, setReceiver] = useState("");
   const [amount, setAmount] = useState("");
@@ -67,8 +69,8 @@ export default function SendPage() {
   const shortName = useMemo(() => networkShortNames[activeNetwork] || activeNetwork.toUpperCase(), [activeNetwork]);
   const parsedAmount = useMemo(() => Number(amount) || 0, [amount]);
   const netBalance = useMemo(() => balances?.[activeNetwork] || 0, [balances, activeNetwork]);
-  const balanceEur = getEurBalance(activeNetwork);
-  const balanceUsd = getUsdBalance(activeNetwork);
+  const balanceEur = getEurBalance?.(activeNetwork) || "0.00";
+  const balanceUsd = getUsdBalance?.(activeNetwork) || "0.00";
 
   const isValidAddress = (address) => /^0x[a-fA-F0-9]{40}$/.test(address.trim());
 
@@ -114,7 +116,7 @@ export default function SendPage() {
         setReceiver("");
         setAmount("");
         setShowSuccess(true);
-        if (typeof window !== "undefined" && "vibrate" in navigator) navigator.vibrate(80);
+        if ("vibrate" in navigator) navigator.vibrate(80);
       }
     } catch (err) {
       console.error("❌ Transaction error:", err?.message || err);
@@ -160,6 +162,7 @@ export default function SendPage() {
       <div className={styles.wrapper}>
         <SuccessToast show={showToast} message={toastMessage} networkKey={activeNetwork} />
 
+        {/* ✅ Tinklo pasirinkimas */}
         <SwipeSelector selected={activeNetwork} onSelect={handleNetworkChange} />
 
         {/* ✅ Balansas */}
@@ -213,6 +216,7 @@ export default function SendPage() {
             )}
           </div>
 
+          {/* ✅ Mygtukas */}
           <button
             onClick={handleSend}
             disabled={!receiver || sending || feeLoading}
