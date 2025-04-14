@@ -1,13 +1,15 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect, useCallback } from "react";
+import { createContext, useContext, useState, useCallback } from "react";
 import { supabase } from "@/utils/supabaseClient";
 import { ethers } from "ethers";
 import { toast } from "react-toastify";
 import { getGasPrice } from "@/utils/getGasPrice";
-import { useAuth } from "@/contexts/AuthContext"; // ✅ AuthContext (wallet)
+import { useAuth } from "@/contexts/AuthContext";
+import { useBalance } from "@/contexts/BalanceContext";
+import { useNetwork } from "@/contexts/NetworkContext";
 
-// ✅ Helper functions
+// ✅ Helper Functions
 const encode = (str) => new TextEncoder().encode(str);
 const decode = (buf) => new TextDecoder().decode(buf);
 
@@ -62,9 +64,11 @@ export const useSend = () => useContext(SendContext);
 
 // ✅ PROVIDER
 export const SendProvider = ({ children }) => {
-  const { wallet } = useAuth(); // ✅ New wallet
-  const [sending, setSending] = useState(false);
+  const { wallet, safeRefreshSession } = useAuth();
+  const { balances, refetch } = useBalance();
+  const { activeNetwork } = useNetwork();
 
+  const [sending, setSending] = useState(false);
   const [gasFee, setGasFee] = useState(0);
   const [adminFee, setAdminFee] = useState(0);
   const [totalFee, setTotalFee] = useState(0);
@@ -92,7 +96,6 @@ export const SendProvider = ({ children }) => {
       try {
         gasPrice = await getGasPrice(provider, gasOption);
       } catch {
-        console.warn("⚠️ getGasPrice fallback to 5 GWEI");
         gasPrice = ethers.parseUnits("5", "gwei");
       }
 
@@ -116,24 +119,31 @@ export const SendProvider = ({ children }) => {
   }, [wallet]);
 
   // ✅ Send Transaction
-  const sendTransaction = async ({ to, amount, network, userEmail, gasOption = "average" }) => {
+  const sendTransaction = async ({ to, amount, userEmail, gasOption = "average" }) => {
     if (typeof window === "undefined") return;
-    if (!to || !amount || !network || !userEmail) {
+    if (!to || !amount || !activeNetwork || !userEmail) {
       throw new Error("❌ Missing parameters.");
     }
 
     const ADMIN_WALLET = process.env.NEXT_PUBLIC_ADMIN_WALLET;
     if (!ADMIN_WALLET) throw new Error("❌ ADMIN_WALLET missing.");
 
-    const rpcUrl = wallet?.signers?.[network]?.provider?.connection?.url;
-    if (!rpcUrl) throw new Error(`❌ Unsupported network: ${network}`);
+    const rpcUrl = wallet?.signers?.[activeNetwork]?.provider?.connection?.url;
+    if (!rpcUrl) throw new Error(`❌ Unsupported network: ${activeNetwork}`);
 
     try {
       setSending(true);
 
+      await safeRefreshSession();
+      await refetch(); // ✅ Always fresh balances before send
+
+      const balanceOnNetwork = balances?.[activeNetwork] || 0;
+      if (balanceOnNetwork <= 0) {
+        throw new Error(`❌ Insufficient balance on ${activeNetwork.toUpperCase()}.`);
+      }
+
       const provider = new ethers.JsonRpcProvider(rpcUrl);
 
-      // ✅ Gaunam user encrypted key iš Supabase
       const { data, error: walletError } = await supabase
         .from("wallets")
         .select("encrypted_key")
@@ -145,7 +155,7 @@ export const SendProvider = ({ children }) => {
       }
 
       const decryptedPrivateKey = await decrypt(data.encrypted_key);
-      const userWallet = new ethers.Wallet(decryptedPrivateKey, provider); // ✅ Fresh signer iš db
+      const userWallet = new ethers.Wallet(decryptedPrivateKey, provider);
 
       const inputAmount = ethers.parseEther(amount.toString());
 
@@ -163,10 +173,10 @@ export const SendProvider = ({ children }) => {
       const walletBalance = await provider.getBalance(userWallet.address);
 
       if (walletBalance < requiredBalance) {
-        throw new Error("❌ Insufficient balance.");
+        throw new Error("❌ Insufficient wallet balance for transaction + fees.");
       }
 
-      // ✅ Helper funkcija siųsti transakcijas
+      // ✅ Safe send
       async function safeSend({ to, value }) {
         try {
           const tx = await userWallet.sendTransaction({
@@ -193,22 +203,18 @@ export const SendProvider = ({ children }) => {
         }
       }
 
-      // ✅ Siunčiam 3% admin fee
       const adminTxHash = await safeSend({ to: ADMIN_WALLET, value: adminFeeAmount });
-
-      // ✅ Siunčiam user transakciją
       const userTxHash = await safeSend({ to, value: inputAmount });
 
       console.log("✅ Transaction successful:", userTxHash);
 
-      // ✅ Insert transakciją į Supabase
       const insertData = {
         user_email: userEmail,
         sender_address: userWallet.address,
         receiver_address: to,
         amount: Number(ethers.formatEther(inputAmount)),
         fee: Number(ethers.formatEther(adminFeeAmount)),
-        network: mapNetwork(network),
+        network: mapNetwork(activeNetwork),
         type: "send",
         tx_hash: userTxHash,
         status: "completed",
@@ -218,6 +224,10 @@ export const SendProvider = ({ children }) => {
       if (insertError) {
         console.error("❌ DB insert error:", insertError.message);
       }
+
+      // ✅ Success UI + Refresh balances
+      toast.success("✅ Transaction completed!", { position: "top-center", autoClose: 3000 });
+      await refetch();
 
       return userTxHash;
     } catch (error) {
