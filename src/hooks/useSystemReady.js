@@ -12,14 +12,25 @@ export function useSystemReady() {
 
   const isClient = typeof window !== "undefined";
 
-  // ✅ Minimalus readiness: vartotojas, wallet ir aktyvus tinklas
-  const minimalReady = isClient && user?.email && wallet?.wallet && activeNetwork;
+  // ✅ Minimalus readiness: vartotojas, wallet adresas ir aktyvus tinklas
+  const minimalReady =
+    isClient &&
+    !!user?.email &&
+    !!wallet?.wallet?.address &&
+    !!activeNetwork;
 
   // ✅ Balansų readiness: kai turim bent vieną balansą ir jie neužkraudinėja
-  const hasBalances = balances && Object.keys(balances).length > 0 && !balancesLoading;
+  const hasBalances =
+    balances &&
+    Object.keys(balances).length > 0 &&
+    !balancesLoading;
 
-  // ✅ Viskas READY tik jei visos sąlygos įvykdytos
-  const ready = minimalReady && !authLoading && !walletLoading && hasBalances;
+  // ✅ READY logika: viskas kartu
+  const ready =
+    minimalReady &&
+    !authLoading &&
+    !walletLoading &&
+    hasBalances;
 
   // ✅ Loading statusas
   const loading = !ready;
