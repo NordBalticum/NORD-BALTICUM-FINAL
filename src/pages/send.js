@@ -3,10 +3,10 @@
 // 1️⃣ IMPORTAI
 import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
 
 import { useAuth } from "@/contexts/AuthContext";
 import { useNetwork } from "@/contexts/NetworkContext";
-import { useSend } from "@/contexts/SendContext";
 import { useBalance } from "@/contexts/BalanceContext";
 import { useSystemReady } from "@/hooks/useSystemReady";
 
@@ -19,7 +19,10 @@ import SuccessToast from "@/components/SuccessToast";
 import styles from "@/styles/send.module.css";
 import background from "@/styles/background.module.css";
 
-// 2️⃣ NETWORK KONFIG
+// 2️⃣ DYNAMIC IMPORT (tik client-side)
+const useSend = dynamic(() => import("@/contexts/SendContext").then((mod) => mod.useSend), { ssr: false });
+
+// 3️⃣ NETWORK CONFIG
 const networkShortNames = {
   eth: "ETH",
   bnb: "BNB",
@@ -44,14 +47,14 @@ const buttonColors = {
   avax: "#e84142",
 };
 
-// 3️⃣ PAGRINDINIS KOMPONENTAS
+// 4️⃣ SEND PAGE
 export default function SendPage() {
   const router = useRouter();
   const { user, wallet } = useAuth();
   const { activeNetwork, switchNetwork } = useNetwork();
-  const { sendTransaction, sending, gasFee, adminFee, totalFee, feeLoading, feeError } = useSend();
   const { balances, getUsdBalance, getEurBalance } = useBalance();
   const { ready, loading } = useSystemReady();
+  const { sendTransaction, sending, gasFee, adminFee, totalFee, feeLoading, feeError } = useSend();
 
   const [receiver, setReceiver] = useState("");
   const [amount, setAmount] = useState("");
@@ -70,7 +73,6 @@ export default function SendPage() {
 
   const isValidAddress = (address) => /^0x[a-fA-F0-9]{40}$/.test(address.trim());
 
-  // ✅ Network change
   const handleNetworkChange = (selectedNetwork) => {
     if (!selectedNetwork) return;
     switchNetwork(selectedNetwork);
@@ -82,7 +84,6 @@ export default function SendPage() {
     setTimeout(() => setShowToast(false), 1500);
   };
 
-  // ✅ Validate and Send
   const handleSend = () => {
     if (!isValidAddress(receiver)) {
       alert("❌ Invalid wallet address.");
@@ -103,7 +104,6 @@ export default function SendPage() {
     setShowConfirm(true);
   };
 
-  // ✅ Confirm Send
   const confirmSend = async () => {
     setShowConfirm(false);
     setError(null);
@@ -164,8 +164,6 @@ export default function SendPage() {
     <main className={`${styles.main} ${background.gradient}`}>
       <div className={styles.wrapper}>
         <SuccessToast show={showToast} message={toastMessage} networkKey={activeNetwork} />
-
-        {/* ✅ Tinklo pasirinkimas */}
         <SwipeSelector selected={activeNetwork} onSelect={handleNetworkChange} />
 
         {/* ✅ Balansas */}
@@ -178,7 +176,7 @@ export default function SendPage() {
           </p>
         </div>
 
-        {/* ✅ Form */}
+        {/* ✅ Formos */}
         <div className={styles.walletActions}>
           <input
             type="text"
@@ -219,7 +217,7 @@ export default function SendPage() {
             )}
           </div>
 
-          {/* ✅ Send button */}
+          {/* ✅ Siuntimo Mygtukas */}
           <button
             onClick={handleSend}
             disabled={!receiver || sending || feeLoading}
@@ -274,7 +272,7 @@ export default function SendPage() {
           />
         )}
 
-        {/* ✅ Error Modal */}
+        {/* ✅ Klaidos Modal */}
         {error && (
           <ErrorModal
             error={error}
