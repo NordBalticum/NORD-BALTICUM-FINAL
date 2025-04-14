@@ -5,17 +5,18 @@ import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 
-import { useAuth } from "@/contexts/AuthContext"; // ✅ Pridėtas Auth
-import { useBalance } from "@/contexts/BalanceContext"; // ✅ Balansai ir kainos
-import { useSystemReady } from "@/hooks/useSystemReady"; // ✅ Sistema ready
+import { useAuth } from "@/contexts/AuthContext";
+import { useNetwork } from "@/contexts/NetworkContext"; // ✅ Pridedam NetworkContext
+import { useBalance } from "@/contexts/BalanceContext";
+import { useSystemReady } from "@/hooks/useSystemReady";
 
 import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
 import styles from "@/styles/dashboard.module.css";
 
-// ✅ Dinaminis importas (SSR OFF)
+// ✅ Dinaminis LivePriceTable importas (SSR OFF)
 const LivePriceTable = dynamic(() => import("@/components/LivePriceTable"), { ssr: false });
 
-// ✅ Tinklų ikonos ir pavadinimai
+// ✅ Ikonos ir tinklų pavadinimai
 const iconUrls = {
   eth: "/icons/eth.svg",
   bnb: "/icons/bnb.svg",
@@ -32,21 +33,22 @@ const names = {
   avax: "Avalanche",
 };
 
-// ✅ DASHBOARD puslapis
+// ✅ DASHBOARD komponentas
 export default function Dashboard() {
   const router = useRouter();
-  const { user, wallet } = useAuth(); // ✅ Naudojam vartotojo ir wallet informaciją
-  const { balances, prices, loading } = useBalance(); // ✅ Balansai ir kainos
-  const { ready } = useSystemReady(); // ✅ Sistemos readiness
+  const { user, wallet } = useAuth();
+  const { activeNetwork } = useNetwork(); // ✅ Gaunam aktyvų tinklą
+  const { balances, prices, loading } = useBalance();
+  const { ready } = useSystemReady();
 
-  // ✅ Tokenų sąrašas (pagal turimus balansus)
+  // ✅ Tikrinam kokius tokenus turim pagal balansus
   const tokens = useMemo(() => {
     if (!balances || Object.keys(balances).length === 0) return [];
     return Object.keys(balances);
   }, [balances]);
 
-  // ✅ Loaderis jei kraunasi
-  if (loading || !ready || !user || !wallet) {
+  // ✅ Loaderis kol kraunasi visa sistema
+  if (loading || !ready || !user || !wallet || !activeNetwork) {
     return (
       <div className={styles.fullscreenCenter}>
         <MiniLoadingSpinner size={32} />
@@ -54,7 +56,7 @@ export default function Dashboard() {
     );
   }
 
-  // ✅ Pagrindinis renderis
+  // ✅ Pagrindinis turinys
   return (
     <main className={styles.container}>
       <div className={styles.dashboardWrapper}>
@@ -62,7 +64,7 @@ export default function Dashboard() {
         {/* ✅ Live kainų lentelė */}
         <LivePriceTable />
 
-        {/* ✅ Assetų sąrašas */}
+        {/* ✅ Vartotojo Asset'ų sąrašas */}
         <div className={styles.assetList}>
           {tokens.length === 0 ? (
             <div className={styles.noAssets}>No assets found.</div>
