@@ -5,8 +5,9 @@ import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 
-import { useBalance } from "@/contexts/BalanceContext";
-import { useSystemReady } from "@/hooks/useSystemReady";
+import { useAuth } from "@/contexts/AuthContext"; // ✅ Pridėtas Auth
+import { useBalance } from "@/contexts/BalanceContext"; // ✅ Balansai ir kainos
+import { useSystemReady } from "@/hooks/useSystemReady"; // ✅ Sistema ready
 
 import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
 import styles from "@/styles/dashboard.module.css";
@@ -14,7 +15,7 @@ import styles from "@/styles/dashboard.module.css";
 // ✅ Dinaminis importas (SSR OFF)
 const LivePriceTable = dynamic(() => import("@/components/LivePriceTable"), { ssr: false });
 
-// ✅ Tinklų Ikonos
+// ✅ Tinklų ikonos ir pavadinimai
 const iconUrls = {
   eth: "/icons/eth.svg",
   bnb: "/icons/bnb.svg",
@@ -23,7 +24,6 @@ const iconUrls = {
   avax: "/icons/avax.svg",
 };
 
-// ✅ Tinklų Pavadinimai
 const names = {
   eth: "Ethereum",
   bnb: "BNB Smart Chain",
@@ -32,20 +32,21 @@ const names = {
   avax: "Avalanche",
 };
 
-// ✅ PAGRINDINIS DASHBOARD
+// ✅ DASHBOARD puslapis
 export default function Dashboard() {
   const router = useRouter();
-  const { balances, prices, loading } = useBalance();
-  const { ready } = useSystemReady();
+  const { user, wallet } = useAuth(); // ✅ Naudojam vartotojo ir wallet informaciją
+  const { balances, prices, loading } = useBalance(); // ✅ Balansai ir kainos
+  const { ready } = useSystemReady(); // ✅ Sistemos readiness
 
-  // ✅ Tokenų sąrašas
+  // ✅ Tokenų sąrašas (pagal turimus balansus)
   const tokens = useMemo(() => {
     if (!balances || Object.keys(balances).length === 0) return [];
     return Object.keys(balances);
   }, [balances]);
 
-  // ✅ Loader jei neparuošta sistema
-  if (loading || !ready) {
+  // ✅ Loaderis jei kraunasi
+  if (loading || !ready || !user || !wallet) {
     return (
       <div className={styles.fullscreenCenter}>
         <MiniLoadingSpinner size={32} />
@@ -53,22 +54,22 @@ export default function Dashboard() {
     );
   }
 
-  // ✅ Pagrindinis turinys
+  // ✅ Pagrindinis renderis
   return (
     <main className={styles.container}>
       <div className={styles.dashboardWrapper}>
-        
-        {/* ✅ Live kainos */}
+
+        {/* ✅ Live kainų lentelė */}
         <LivePriceTable />
 
-        {/* ✅ Balansų lentelė */}
+        {/* ✅ Assetų sąrašas */}
         <div className={styles.assetList}>
           {tokens.length === 0 ? (
             <div className={styles.noAssets}>No assets found.</div>
           ) : (
             tokens.map((network) => {
               const balanceValue = balances?.[network];
-              const priceData = prices?.[network === "tbnb" ? "bnb" : network];
+              const priceData = prices?.[network];
 
               if (balanceValue == null || priceData == null) {
                 return (
