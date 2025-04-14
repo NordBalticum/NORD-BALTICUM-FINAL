@@ -8,7 +8,7 @@ import { useBalance } from "@/contexts/BalanceContext";
 export function useSystemReady() {
   const { user, wallet, authLoading, walletLoading } = useAuth();
   const { activeNetwork } = useNetwork();
-  const { balances, loading: balancesLoading } = useBalance();
+  const { balances } = useBalance(); // ✅ balancesLoading NEBENAUDOJAM
 
   const isClient = typeof window !== "undefined";
 
@@ -19,11 +19,10 @@ export function useSystemReady() {
     !!wallet?.wallet?.address &&
     !!activeNetwork;
 
-  // ✅ Balansų readiness: kai turim bent vieną balansą ir jie neužkraudinėja
+  // ✅ Balansų readiness: kai turim bent vieną balansą
   const hasBalances =
     balances &&
-    Object.keys(balances).length > 0 &&
-    !balancesLoading;
+    Object.keys(balances).length > 0;
 
   // ✅ READY logika: viskas kartu
   const ready =
