@@ -7,7 +7,7 @@ import Link from "next/link";
 import { FaWallet, FaArrowUp, FaArrowDown, FaClock, FaUserCircle } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
 
-import { useUserReady } from "@/hooks/useUserReady"; // ✅ Naujas hookas
+import { useMinimalReady } from "@/hooks/useMinimalReady"; // ✅ NAUJAS hookas – minimalus readiness
 
 import styles from "@/components/bottomnav.module.css";
 
@@ -23,7 +23,7 @@ const navItems = [
 // 3️⃣ PAGRINDINIS KOMPONENTAS
 export default function BottomNavigation() {
   const pathname = usePathname();
-  const { ready } = useUserReady(); // ✅ Tikrinam tik readiness
+  const { ready } = useMinimalReady(); // ✅ Minimalus readiness tikrinimas
   const [isMobile, setIsMobile] = useState(false);
 
   // ✅ Mobile detekcija
