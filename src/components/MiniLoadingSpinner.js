@@ -13,13 +13,13 @@ export default function MiniLoadingSpinner() {
   }, []);
 
   if (!isClient) {
-    return null; // ✅ Jei dar serveris – nieko nerodome
+    return null;
   }
 
   return (
     <motion.div
       animate={{ rotate: 360 }}
-      transition={{ repeat: Infinity, duration: 0.8, ease: "linear" }}
+      transition={{ repeat: Infinity, duration: 1.2, ease: "easeInOut" }} // ✅ Smoother rotation
       style={styles.spinner}
     />
   );
@@ -27,12 +27,13 @@ export default function MiniLoadingSpinner() {
 
 const styles = {
   spinner: {
-    width: "20px",
-    height: "20px",
-    border: "3px solid rgba(255, 255, 255, 0.2)",
-    borderTop: "3px solid #ffffff",
+    width: "32px",                       // ✅ Didesnis, elegantiškesnis
+    height: "32px",
+    border: "4px solid rgba(255, 255, 255, 0.15)", // ✅ Premium švelnus apvadas
+    borderTop: "4px solid #ffffff",       // ✅ Balta viršūnė
     borderRadius: "50%",
-    boxShadow: "0 0 6px rgba(255, 255, 255, 0.5)",
+    boxShadow: "0 0 12px rgba(255, 255, 255, 0.4)", // ✅ Glow efektas aplink
     marginLeft: "8px",
+    background: "transparent",
   },
 };
