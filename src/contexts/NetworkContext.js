@@ -12,27 +12,48 @@ export const useNetwork = () => useContext(NetworkContext);
 
 export function NetworkProvider({ children }) {
   const [activeNetwork, setActiveNetwork] = useState("bnb"); // ✅ Default: BNB
-  const [initialized, setInitialized] = useState(false); // ✅ Užtikrina, kad pirma loadintų iš LocalStorage
+  const [initialized, setInitialized] = useState(false); // ✅ Užtikrinam pirmą kartą užkrovimą saugiai
 
-  // ✅ Užkrauna pasirinkimą iš LocalStorage
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("activeNetwork");
-      if (saved && SUPPORTED_NETWORKS.includes(saved)) {
-        setActiveNetwork(saved);
+  // ✅ Saugi LocalStorage read funkcija
+  const safeGetLocalStorage = (key) => {
+    try {
+      if (typeof window !== "undefined") {
+        return localStorage.getItem(key);
       }
-      setInitialized(true);
+    } catch (error) {
+      console.error("❌ LocalStorage get error:", error.message);
+      return null;
     }
+  };
+
+  // ✅ Saugi LocalStorage write funkcija
+  const safeSetLocalStorage = (key, value) => {
+    try {
+      if (typeof window !== "undefined") {
+        localStorage.setItem(key, value);
+      }
+    } catch (error) {
+      console.error("❌ LocalStorage set error:", error.message);
+    }
+  };
+
+  // ✅ Užkraunam pasirinktą tinklą iš LocalStorage
+  useEffect(() => {
+    const saved = safeGetLocalStorage("activeNetwork");
+    if (saved && SUPPORTED_NETWORKS.includes(saved)) {
+      setActiveNetwork(saved);
+    }
+    setInitialized(true);
   }, []);
 
-  // ✅ Išsaugo į LocalStorage kai pasikeičia
+  // ✅ Išsaugom kai aktyvus tinklas pasikeičia (tik po pirmo užkrovimo)
   useEffect(() => {
-    if (initialized && typeof window !== "undefined") {
-      localStorage.setItem("activeNetwork", activeNetwork);
+    if (initialized) {
+      safeSetLocalStorage("activeNetwork", activeNetwork);
     }
   }, [activeNetwork, initialized]);
 
-  // ✅ Premium set funkcija su saugumu
+  // ✅ Saugi switchNetwork funkcija
   const switchNetwork = useCallback((network) => {
     if (!SUPPORTED_NETWORKS.includes(network)) {
       console.warn(`❌ Attempted to switch to unsupported network: ${network}`);
