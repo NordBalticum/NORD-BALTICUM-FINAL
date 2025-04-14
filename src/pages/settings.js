@@ -6,15 +6,18 @@ import Image from "next/image";
 import { toast, Toaster } from "react-hot-toast";
 
 import { useAuth, encrypt } from "@/contexts/AuthContext";
+import { useMinimalReady } from "@/hooks/useMinimalReady"; // ✅ PRIDĖTA
 import { supabase } from "@/utils/supabaseClient";
 
 import WalletImport from "@/components/WalletImport";
+import MiniLoadingSpinner from "@/components/MiniLoadingSpinner"; // ✅ Loaderis
 import styles from "@/styles/settings.module.css";
 import background from "@/styles/background.module.css";
 
 export default function SettingsPage() {
   const router = useRouter();
   const { user, wallet, signOut, reloadWallet } = useAuth();
+  const { ready, loading } = useMinimalReady(); // ✅ PRIDĖTA useMinimalReady
 
   const [emailInput, setEmailInput] = useState("");
   const [walletAddress, setWalletAddress] = useState("");
@@ -55,7 +58,6 @@ export default function SettingsPage() {
       toast.error("❌ Please enter a valid email.");
       return;
     }
-
     try {
       setLoadingEmail(true);
       const { error } = await supabase.auth.updateUser({ email: emailInput.trim() });
@@ -102,12 +104,10 @@ export default function SettingsPage() {
       toast.error("❌ No user logged in.");
       return;
     }
-
     window.open(
       `mailto:support@nordbalticum.com?subject=Delete%20Account%20Request&body=I%20would%20like%20to%20delete%20my%20account.%20Email:%20${user.email}`,
       "_blank"
     );
-
     toast.success("✅ Request initiated. Complete the email to delete your account.");
     closeModal();
   };
@@ -123,8 +123,13 @@ export default function SettingsPage() {
     setModalOpen(false);
   };
 
-  if (!user || !wallet) {
-    return <div className={styles.loading}>Loading profile...</div>;
+  // ✅ Loaderis jeigu sistema nepasiruošus
+  if (loading || !ready) {
+    return (
+      <div className={styles.fullscreenCenter}>
+        <MiniLoadingSpinner size={32} />
+      </div>
+    );
   }
 
   return (
@@ -146,7 +151,8 @@ export default function SettingsPage() {
 
           {/* === IMPORT WALLET === */}
           <div className={styles.settingsBox}>
-            <WalletImport />
+            {/* ✅ WalletImport be autofokuso, kad neaktyvuotų klaviatūros */}
+            <WalletImport autoFocus={false} />
           </div>
 
           {/* === CHANGE EMAIL === */}
@@ -159,6 +165,10 @@ export default function SettingsPage() {
                 value={emailInput}
                 onChange={(e) => setEmailInput(e.target.value)}
                 className={styles.input}
+                autoComplete="off" // ✅ Pridedam, kad mobile nesusifokusuotų automatiškai
+                autoCorrect="off"
+                spellCheck="false"
+                enterKeyHint="done"
               />
               {isValidEmail(emailInput) && (
                 <span className={styles.validEmailMark}>✅</span>
