@@ -32,7 +32,7 @@ Sveikas, CEO!
 ### 2. 🛠️ Kodo pakeitimai
 
 - Padaryk pakeitimus naujame **branch**.
-- **Lokalus npm run dev = nebereikalingas.**  
+- **Lokalus `npm run dev` = nebereikalingas.**  
   Viską matysi tiesiai Vercel Preview!
 
 ---
@@ -54,11 +54,11 @@ Sveikas, CEO!
 
 ✅ Testuok kaip tikras naudotojas:
 
-- Prisijungimas
-- Balanso užkrovimas
-- Kripto siuntimas
-- Tinklo perjungimas
-- Minimizuok tabą ➔ Grįžk ➔ Testuok sesiją
+- Prisijungimą
+- Balanso užkrovimą
+- Kripto siuntimą
+- Tinklo perjungimą
+- Minimalizuok tabą ➔ Grįžk ➔ Testuok sesijos atstatymą
 
 **✅ Viską testuojam per Vercel Preview – ne lokaliai!**
 
@@ -92,7 +92,7 @@ Jei keiti duomenų bazės struktūrą:
 - Sukurk SQL migration script.
 - Paleisk **tik** per Supabase SQL Editor.
 
-⚡ **NIEKADA** nerašyk SQL rankomis per live DB!
+⚡ **NIEKADA** nekeisk duomenų bazės tiesiogiai!
 
 ---
 
@@ -108,10 +108,21 @@ Jei keiti duomenų bazės struktūrą:
 
 ## 💎 Geležinės Taisyklės
 
-- **Auto Session Refresh** ➔ 5 min intervalas – viskas gyva.
-- **Debounce + Visibility/Online Events** ➔ jei tabas užsidaro ar internetas krenta, automatinis atstatymas.
+- **Auto Session Refresh** ➔ 5 min intervalas – sesijos niekada nenutrūks.
+- **Debounce + Visibility/Online Events** ➔ jei tabas užsidaro ar tinklas dingsta, automatinis stabilizavimas.
 - **BalanceCheck + Network Validation** ➔ Web3 saugumas kaip MetaMask.
-- **SafeSend + Fee Protection** ➔ siuntimas bulletproof.
+- **SafeSend + Fee Protection** ➔ transakcijos 100% bulletproof.
+
+---
+
+## 🛡️ Savaitinis saugumo ritualas
+
+**Kas savaitę:**
+
+- 📥 Atsisiųsk **Supabase Database Backup** (`.sql` failą) ➔ saugok lokaliai arba Google Drive.
+- 📥 Atsisiųsk **Vercel Project Export** ➔ kaip atsarginę projekto kopiją.
+
+✅ Tai tavo ultimate apsauga nuo bet kokių force majeure atvejų.
 
 ---
 
@@ -129,7 +140,7 @@ Jei keiti duomenų bazės struktūrą:
 
 - ❌ **NE testuok su `npm run dev`.**
 - ✅ **VISADA testuok per Vercel Preview!**
-- ✅ **Tik po testavimo – Merge į main.**
+- ✅ **Tik po pilno testavimo – Merge į `main`.**
 
 ---
 
