@@ -11,13 +11,11 @@ import { useBalance } from "@/contexts/BalanceContext";
 import { useSystemReady } from "@/hooks/useSystemReady";
 
 import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
-import { toast } from "react-toastify"; // ✅ Pridedam Toast!
+import { toast } from "react-toastify";
 import styles from "@/styles/dashboard.module.css";
 
-// ✅ Dinaminis LivePriceTable importas (SSR OFF)
 const LivePriceTable = dynamic(() => import("@/components/LivePriceTable"), { ssr: false });
 
-// ✅ Tinklų ikonos
 const iconUrls = {
   eth: "/icons/eth.svg",
   bnb: "/icons/bnb.svg",
@@ -26,7 +24,6 @@ const iconUrls = {
   avax: "/icons/avax.svg",
 };
 
-// ✅ Tinklų pavadinimai
 const names = {
   eth: "Ethereum",
   bnb: "BNB Smart Chain",
@@ -37,26 +34,35 @@ const names = {
 
 export default function Dashboard() {
   const router = useRouter();
-  const { balances, prices, refetch } = useBalance(); // ✅ Gaunam refetch
+  const { balances, prices, refetch } = useBalance();
   const { ready, loading } = useSystemReady();
 
-  const [initialLoad, setInitialLoad] = useState(true);
+  const [initialLoadDone, setInitialLoadDone] = useState(false);
 
-  // ✅ Turimų tokenų sąrašas
   const tokens = useMemo(() => {
     if (!balances || Object.keys(balances).length === 0) return [];
     return Object.keys(balances);
   }, [balances]);
 
-  // ✅ Kai puslapis grįžta iš minimize - atsinaujinam balansus su toast
+  // ✅ Tik PRADINIS 1 kartinis timeout, kai dashboard atsiranda
+  useEffect(() => {
+    if (ready && !initialLoadDone) {
+      const timer = setTimeout(() => {
+        setInitialLoadDone(true);
+      }, 2000); // mažas delay kad išvengtų first refetch
+      return () => clearTimeout(timer);
+    }
+  }, [ready, initialLoadDone]);
+
+  // ✅ Visibility change – refetchinam tik jei jau pirmą kartą pasikrovė normaliai
   useEffect(() => {
     const handleVisibilityChange = async () => {
-      if (document.visibilityState === "visible" && !initialLoad) {
+      if (document.visibilityState === "visible" && initialLoadDone) {
         try {
           await refetch();
-          toast.success("✅ Balances updated.", { position: "top-center", autoClose: 2500 });
+          toast.success("✅ Balances refreshed.", { position: "top-center", autoClose: 2500 });
         } catch (error) {
-          console.error("Failed to refresh balances:", error.message);
+          console.error("Refetch error:", error.message);
         }
       }
     };
@@ -64,24 +70,15 @@ export default function Dashboard() {
     if (typeof window !== "undefined") {
       document.addEventListener("visibilitychange", handleVisibilityChange);
     }
-
     return () => {
       if (typeof window !== "undefined") {
         document.removeEventListener("visibilitychange", handleVisibilityChange);
       }
     };
-  }, [refetch, initialLoad]);
+  }, [initialLoadDone, refetch]);
 
-  // ✅ Kad išjungtų pirmą užkrovimą kaip 'refresha'
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      setInitialLoad(false);
-    }, 3000); // ✅ 3 sekundžių delay po pirmo load
-    return () => clearTimeout(timeout);
-  }, []);
-
-  // ✅ Loaderis jeigu sistema NEparuošta
-  if (!ready || loading) {
+  // ✅ Jei sistema NEparuošta
+  if (loading || !ready) {
     return (
       <div className={styles.fullscreenCenter}>
         <MiniLoadingSpinner size={32} />
@@ -89,15 +86,11 @@ export default function Dashboard() {
     );
   }
 
-  // ✅ Pagrindinis turinys
+  // ✅ Tikras Dashboard turinys
   return (
     <main className={styles.container}>
       <div className={styles.dashboardWrapper}>
-
-        {/* ✅ Live Price Table */}
         <LivePriceTable />
-
-        {/* ✅ Turimi Asset'ai */}
         <div className={styles.assetList}>
           {tokens.length === 0 ? (
             <div className={styles.noAssets}>No assets found.</div>
@@ -105,7 +98,6 @@ export default function Dashboard() {
             tokens.map((network) => {
               const balanceValue = balances?.[network];
               const priceData = prices?.[network];
-
               if (balanceValue == null || priceData == null) {
                 return (
                   <div key={network} className={styles.assetItem}>
@@ -159,7 +151,6 @@ export default function Dashboard() {
             })
           )}
         </div>
-
       </div>
     </main>
   );
