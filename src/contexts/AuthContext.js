@@ -1,15 +1,14 @@
 "use client";
 
-// 1️⃣ IMPORTAI
 import { createContext, useContext, useEffect, useState, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { ethers } from "ethers";
 import { supabase } from "@/utils/supabaseClient";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { startSessionWatcher } from "@/utils/sessionWatcher"; // ✅ (jei neveikia, pasakyk, atnaujinsim)
+import { startSessionWatcher } from "@/utils/sessionWatcher";
 
-// 2️⃣ RPC TINKLAI
+// ✅ RPC adresai
 export const RPC = {
   eth: "https://rpc.ankr.com/eth",
   bnb: "https://bsc-dataseed.binance.org/",
@@ -18,10 +17,9 @@ export const RPC = {
   avax: "https://api.avax.network/ext/bc/C/rpc",
 };
 
-// 3️⃣ ENV VARIABLES
+// ✅ Encryption setup
 const ENCRYPTION_SECRET = process.env.NEXT_PUBLIC_ENCRYPTION_SECRET;
 
-// 4️⃣ ENCRYPT/DECRYPT UTILS
 const encode = (str) => new TextEncoder().encode(str);
 const decode = (buf) => new TextDecoder().decode(buf);
 
@@ -69,11 +67,10 @@ export const decrypt = async (ciphertext) => {
   return decode(decrypted);
 };
 
-// 5️⃣ CONTEXT SETUP
+// ✅ Context
 export const AuthContext = createContext();
 export const useAuth = () => useContext(AuthContext);
 
-// 6️⃣ AUTH PROVIDER
 export const AuthProvider = ({ children }) => {
   const router = useRouter();
   const pathname = usePathname();
@@ -88,10 +85,9 @@ export const AuthProvider = ({ children }) => {
   const inactivityTimer = useRef(null);
   const lastSessionRefresh = useRef(Date.now());
 
-  // 7️⃣ SESSION INIT (getSession)
+  // ✅ Session INIT
   useEffect(() => {
     if (!isClient) return;
-
     const loadSession = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
@@ -102,9 +98,7 @@ export const AuthProvider = ({ children }) => {
         setAuthLoading(false);
       }
     };
-
     loadSession();
-
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user || null);
       if (!session) {
@@ -112,82 +106,15 @@ export const AuthProvider = ({ children }) => {
         setTimeout(() => signOut(false), 3000);
       }
     });
-
     return () => subscription?.unsubscribe();
   }, []);
 
-  // 8️⃣ WALLET INIT jei yra user
+  // ✅ Wallet INIT
   useEffect(() => {
     if (!isClient || authLoading || !user?.email) return;
     loadOrCreateWallet(user.email);
   }, [authLoading, user]);
 
-  // 9️⃣ SESSION WATCHER START
-  useEffect(() => {
-    if (!isClient) return;
-    if (user) {
-      try {
-        sessionWatcher.current = startSessionWatcher({
-          onSessionInvalid: async () => {
-            toast.error("❌ Session expired. Re-login.");
-            setTimeout(() => signOut(false), 3000);
-          },
-          intervalMinutes: 1,
-        });
-        sessionWatcher.current?.start?.();
-      } catch (error) {
-        console.error("SessionWatcher error:", error.message);
-      }
-    } else {
-      sessionWatcher.current?.stop?.();
-    }
-    return () => {
-      sessionWatcher.current?.stop?.();
-    };
-  }, [user]);
-
-  // 🔟 AUTO SESSION REFRESH kas 5 minutes
-  useEffect(() => {
-    if (!isClient) return;
-    const interval = setInterval(() => {
-      safeRefreshSession();
-    }, 5 * 60 * 1000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const safeRefreshSession = async () => {
-    if (Date.now() - lastSessionRefresh.current < 60000) return;
-    lastSessionRefresh.current = Date.now();
-    try {
-      await supabase.auth.refreshSession();
-    } catch (error) {
-      console.error("Session refresh failed:", error.message);
-    }
-  };
-
-  // 1️⃣1️⃣ AUTO LOGOUT po 10min
-  useEffect(() => {
-    if (!isClient) return;
-    const resetTimer = () => {
-      clearTimeout(inactivityTimer.current);
-      inactivityTimer.current = setTimeout(() => {
-        toast.error("⏳ Inactivity logout.");
-        signOut(true);
-      }, 10 * 60 * 1000);
-    };
-    ["mousemove", "keydown", "touchstart", "touchmove"].forEach((event) =>
-      window.addEventListener(event, resetTimer)
-    );
-    resetTimer();
-    return () => {
-      clearTimeout(inactivityTimer.current);
-      ["mousemove", "keydown", "touchstart", "touchmove"].forEach((event) =>
-        window.removeEventListener(event, resetTimer)
-      );
-    };
-  }, []);
-
-  // 1️⃣2️⃣ LOAD or CREATE WALLET
   const loadOrCreateWallet = async (email) => {
     try {
       setWalletLoading(true);
@@ -213,25 +140,20 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // 1️⃣3️⃣ CREATE WALLET + SAVE
   const createAndStoreWallet = async (email) => {
     const newWallet = ethers.Wallet.createRandom();
     const encryptedKey = await encrypt(newWallet.privateKey);
-
     const { error } = await supabase.from("wallets").insert({
       user_email: email,
       eth_address: newWallet.address,
       encrypted_key: encryptedKey,
       created_at: new Date().toISOString(),
     });
-
     if (error) throw error;
-
     setupWallet(newWallet.privateKey);
     toast.success("✅ Wallet created!");
   };
 
-  // 1️⃣4️⃣ SETUP WALLET (MetaMask lygio)
   const setupWallet = (privateKey) => {
     const baseWallet = new ethers.Wallet(privateKey);
     const signers = {};
@@ -245,7 +167,48 @@ export const AuthProvider = ({ children }) => {
     setWallet({ wallet: baseWallet, signers });
   };
 
-  // 1️⃣5️⃣ SIGN IN MAGIC LINK
+  // ✅ Session Refresh kas 5 minutes
+  const safeRefreshSession = async () => {
+    if (Date.now() - lastSessionRefresh.current < 60000) return;
+    lastSessionRefresh.current = Date.now();
+    try {
+      await supabase.auth.refreshSession();
+    } catch (error) {
+      console.error("Session refresh failed:", error.message);
+    }
+  };
+
+  useEffect(() => {
+    if (!isClient) return;
+    const interval = setInterval(() => {
+      safeRefreshSession();
+    }, 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // ✅ Session Watcher (Auto Logout po 10 min)
+  useEffect(() => {
+    if (!isClient) return;
+    const resetTimer = () => {
+      clearTimeout(inactivityTimer.current);
+      inactivityTimer.current = setTimeout(() => {
+        toast.error("⏳ Inactivity logout.");
+        signOut(true);
+      }, 10 * 60 * 1000);
+    };
+    ["mousemove", "keydown", "touchstart", "touchmove"].forEach((event) =>
+      window.addEventListener(event, resetTimer)
+    );
+    resetTimer();
+    return () => {
+      clearTimeout(inactivityTimer.current);
+      ["mousemove", "keydown", "touchstart", "touchmove"].forEach((event) =>
+        window.removeEventListener(event, resetTimer)
+      );
+    };
+  }, []);
+
+  // ✅ SignIn Magic Link
   const signInWithMagicLink = async (email) => {
     const origin = isClient ? window.location.origin : "https://nordbalticum.com";
     const { error } = await supabase.auth.signInWithOtp({
@@ -259,7 +222,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // 1️⃣6️⃣ SIGN IN GOOGLE
+  // ✅ SignIn Google
   const signInWithGoogle = async () => {
     const origin = isClient ? window.location.origin : "https://nordbalticum.com";
     const { error } = await supabase.auth.signInWithOAuth({
@@ -273,7 +236,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // 1️⃣7️⃣ SIGN OUT
+  // ✅ Sign Out
   const signOut = async (showToast = false) => {
     await supabase.auth.signOut();
     setUser(null);
@@ -290,19 +253,16 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // 1️⃣8️⃣ FINAL CONTEXT
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        wallet,
-        authLoading,
-        walletLoading,
-        signInWithMagicLink,
-        signInWithGoogle,
-        signOut,
-      }}
-    >
+    <AuthContext.Provider value={{
+      user,
+      wallet,
+      authLoading,
+      walletLoading,
+      signInWithMagicLink,
+      signInWithGoogle,
+      signOut,
+    }}>
       {children}
     </AuthContext.Provider>
   );
