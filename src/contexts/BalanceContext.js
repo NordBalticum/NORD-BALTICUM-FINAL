@@ -42,16 +42,17 @@ export const BalanceProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   const intervalRef = useRef(null);
+  const debounceTimeout = useRef(null);
 
   // ✅ Balanso ir kainų užkrovimas
   const fetchBalancesAndPrices = useCallback(async () => {
-    if (!wallet?.wallet?.address) return; // ⛔ Jei neturim address – nieko nedarom
+    if (!wallet?.wallet?.address) return; // ⛔ Jei nėra address – nieko nedarom
 
     try {
       const address = wallet.wallet.address;
       const newBalances = {};
 
-      // ✅ Balansai per RPC
+      // ✅ Užkraunam balansus per RPC
       await Promise.all(Object.entries(RPC).map(async ([network, rpcUrl]) => {
         try {
           const provider = new ethers.JsonRpcProvider(rpcUrl);
@@ -65,7 +66,7 @@ export const BalanceProvider = ({ children }) => {
 
       setBalances(newBalances);
 
-      // ✅ CoinGecko kainos
+      // ✅ Užkraunam CoinGecko kainas
       const ids = Array.from(new Set(Object.values(TOKEN_IDS))).join(",");
       const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=eur,usd`, {
         cache: "no-store",
@@ -92,7 +93,6 @@ export const BalanceProvider = ({ children }) => {
     }
   }, [wallet]);
 
-  // ✅ Pagrindinis efektas
   useEffect(() => {
     if (authLoading || walletLoading) return;
     if (!wallet?.wallet?.address) return;
@@ -106,12 +106,15 @@ export const BalanceProvider = ({ children }) => {
     return () => clearInterval(intervalRef.current);
   }, [authLoading, walletLoading, wallet, fetchBalancesAndPrices]);
 
-  // ✅ Refetch kai app grįžta iš minimize
+  // ✅ Visibility Change su DEBOUNCE
   useEffect(() => {
-    const handleVisibilityChange = async () => {
+    const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") {
-        console.log("App is visible again, refetching balances...");
-        await fetchBalancesAndPrices();
+        if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
+        debounceTimeout.current = setTimeout(() => {
+          console.log("✅ App is visible again, refetching balances...");
+          fetchBalancesAndPrices();
+        }, 500); // 500ms debounce
       }
     };
 
@@ -123,10 +126,10 @@ export const BalanceProvider = ({ children }) => {
       if (typeof window !== "undefined") {
         document.removeEventListener("visibilitychange", handleVisibilityChange);
       }
+      if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
     };
   }, [fetchBalancesAndPrices]);
 
-  // ✅ Final return
   return (
     <BalanceContext.Provider value={{
       balances,
