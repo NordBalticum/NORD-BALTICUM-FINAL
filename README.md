@@ -1,125 +1,136 @@
-# 🚀 NordBalticum Project Update Guide (2025)
+# 🚀 NordBalticum Web3 Bank – Official Update Guide (2025)
 
 Sveikas, CEO!  
-Čia tavo **oficialus atnaujinimo vadovas**, kad projektas veiktų kaip **geležinis bankas**.  
-**Tikslas:** 100% saugumas. 0% klaidų. 24/7 stabilumas.
+Čia tavo **geležinė atmintinė**, kaip profesionaliai atnaujinti **NordBalticum** projektą.  
+**Mūsų taisyklė:** 100% saugumas. 0% klaidų. 24/7 uptime.
 
 ---
 
-## 🛠️ Įrankiai
+## 🛠️ Įrankiai, kuriuos naudojam
 
-- **GitHub Pro** → kodo versijų valdymas
-- **Vercel Pro** → hostingas ir deploy
-- **Supabase Pro** → duomenų bazė ir autentifikacija
-- **Ethers.js** → blockchain/Web3 operacijos
+- **GitHub Pro** → kodo valdymas
+- **Vercel Pro** → hostingas + automatinis deploy
+- **Supabase Pro** → Web3 duomenų bazė + autentifikacija
+- **Ethers.js** → decentralizuotos blockchain operacijos
+
+✅ Viskas online – be terminalų, be bash, be vietinio kompiuterio.
 
 ---
 
 ## 📋 Tobulas Atnaujinimo Procesas
 
-### 1. 🔥 Sukurk naują Branch
+### 1. 🌱 Sukurk naują Branch
 
-**NIEKADA** nedirbk tiesiai ant `main`!
+**NIEKADA** nerašyk tiesiai į `main`!
 
-```bash
-git checkout -b update/feature-name
-```
-
----
-
-### 2. 🛠️ Padaryk pakeitimus
-
-- Daryk kodų pakeitimus naujame **branch**.
-- **NE testuok lokaliai** (`npm run dev` tinka tik pažiūrėti vizualiai).
+- GitHub ➔ Branch ➔ `Create new branch from main`
+- Pavadinimas pvz.:  
+  `update/fix-login` arba `feature/new-dashboard`
 
 ---
 
-### 3. ✅ Pateik PR (Pull Request)
+### 2. 🛠️ Kodo pakeitimai
 
-- Kai baigei – padaryk **Pull Request** į `main`.
-- **NE Merge** PR iškart!
-
----
-
-### 4. 🚀 Testuok Vercel Preview
-
-**LABAI SVARBU**:  
-Visada tikrink per **Vercel Preview** URL!
-
-- GitHub sukurs **preview versiją** automatiškai.
-- Eik į preview linką (pvz. https://update-branch-name.vercel.app).
-- Pilnai testuok:
-  - Prisijungimą
-  - Balansus
-  - Siuntimą
-  - Sesijos stabilumą (minimalizuok tabą, atgal įeik)
-
-**✅ Testuojame kaip tikras naudotojas, ne kaip programuotojas!**
+- Padaryk pakeitimus naujame **branch**.
+- **Lokalus npm run dev = nebereikalingas.**  
+  Viską matysi tiesiai Vercel Preview!
 
 ---
 
-### 5. 🛡️ Supabase DB Backup
+### 3. ✅ Sukurk Pull Request (PR)
 
-Prieš deploy:
+- Atidaryk PR GitHub'e iš savo branch ➔ į `main`.
+- **NE Merge iškart!**
 
-- Eik į **Supabase** ➔ **Database** ➔ **Backups** ➔ **Manual Backup** ➔ **Download SQL**.
+---
 
-**Privaloma!**
+### 4. 🚀 Testuok per Vercel Preview
+
+**Svarbiausia žingsnis!**
+
+- Kai sukursi PR, GitHub ir Vercel sukurs **Preview Deploy**.
+- Eik į:  
+  **https://your-branch-name.vercel.app**
+
+✅ Testuok kaip tikras naudotojas:
+
+- Prisijungimas
+- Balanso užkrovimas
+- Kripto siuntimas
+- Tinklo perjungimas
+- Minimizuok tabą ➔ Grįžk ➔ Testuok sesiją
+
+**✅ Viską testuojam per Vercel Preview – ne lokaliai!**
+
+---
+
+### 5. 🛡️ Supabase Duomenų Bazės Backup
+
+Prieš merge:
+
+- Supabase ➔ Database ➔ Backups ➔ **Manual Backup** ➔ Download SQL.
+
+**Backup privalomas prieš bet kokį atnaujinimą!**
 
 ---
 
 ### 6. 🔄 Merge PR į `main`
 
-Kai Vercel Preview veikia:
+Kai Preview pilnai veikia:
 
-- Spaudi **Merge Pull Request** į `main`.
-- **Vercel automatiškai atnaujins live svetainę**.
+- GitHub ➔ **Merge Pull Request** į `main`.
 
-✅ Jokio rankinio deploy.
+✅ Vercel automatiškai atnaujins live versiją.  
+✅ Jokio deploy spaudinėjimo. Viskas autokontrolėje.
 
 ---
 
 ### 7. 🧹 Supabase Migracijos (jei reikia)
 
-Jei darai DB pakeitimus:
+Jei keiti duomenų bazės struktūrą:
 
-- Sukurk **migration SQL script**.
-- Paleisk **tik per Supabase SQL editor**.
+- Sukurk SQL migration script.
+- Paleisk **tik** per Supabase SQL Editor.
 
-⚠️ **NIEKADA** nekeisk tiesiogiai duomenų "gyvai"!
-
----
-
-## ⚡ BONUS: Skubus Hotfix
-
-- Skubus pataisymas = darai `hotfix/` branch.
-- Toks pat procesas: PR ➔ Preview ➔ Test ➔ Merge.
+⚡ **NIEKADA** nerašyk SQL rankomis per live DB!
 
 ---
 
-## 💎 Auksinės Taisyklės
+## ⚡ Greitas Hotfix (jei skubi)
 
-- **Auto session refresh** → kas 5 min automatinis atnaujinimas.
-- **Debounce + Visibility/Online Events** → jei tabas užsidaro ar tinklas dingsta, viskas stabilu.
-- **Balance + Network Validation** → Web3 saugumas kaip MetaMask.
-- **SafeSend + FeeCheck** → transakcijos 100% bulletproof.
+- Jei reikia pataisyti mažą klaidą:
+  - Sukuri `hotfix/fix-balance-page`.
+  - Padarai PR ➔ Preview ➔ Test ➔ Merge.
 
----
-
-# 🏦 Finalinė Žinutė
-
-> **NordBalticum = Geležinis Crypto Bankas.**
-
-**Būk kaip CEO. Veik kaip bankas. Uptime 24/7.**
-
-🚀 **NordBalticum – The Future is Ours.**
+✅ Sistema lieka saugi 100%.
 
 ---
 
-# 🛡️ 100% Priminta
+## 💎 Geležinės Taisyklės
 
-- ❌ **NE testuok lokaliai.**  
+- **Auto Session Refresh** ➔ 5 min intervalas – viskas gyva.
+- **Debounce + Visibility/Online Events** ➔ jei tabas užsidaro ar internetas krenta, automatinis atstatymas.
+- **BalanceCheck + Network Validation** ➔ Web3 saugumas kaip MetaMask.
+- **SafeSend + Fee Protection** ➔ siuntimas bulletproof.
+
+---
+
+# 🏦 Pabaiga
+
+> **NordBalticum = Web3 Bankas.  
+> Ne projektas. Ne startuolis. Bankas.**
+
+✅ Visos operacijos kaip MetaMask + TrustWallet.  
+✅ Saugumas kaip Coinbase.
+
+---
+
+# 🛡️ 100% PRIMINTA:
+
+- ❌ **NE testuok su `npm run dev`.**
 - ✅ **VISADA testuok per Vercel Preview!**
-- ✅ **Tik tada merge.**
+- ✅ **Tik po testavimo – Merge į main.**
 
 ---
+
+# 🚀 NordBalticum – The Future is Ours.
