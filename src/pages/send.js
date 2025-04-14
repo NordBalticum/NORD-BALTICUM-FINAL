@@ -3,10 +3,10 @@
 // 1️⃣ IMPORTAI
 import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import dynamic from "next/dynamic";
 
 import { useAuth } from "@/contexts/AuthContext";
 import { useNetwork } from "@/contexts/NetworkContext";
+import { useSend } from "@/contexts/SendContext";
 import { useBalance } from "@/contexts/BalanceContext";
 import { useSystemReady } from "@/hooks/useSystemReady";
 
@@ -19,10 +19,7 @@ import SuccessToast from "@/components/SuccessToast";
 import styles from "@/styles/send.module.css";
 import background from "@/styles/background.module.css";
 
-// 2️⃣ DYNAMIC IMPORT (tik client-side)
-const useSend = dynamic(() => import("@/contexts/SendContext").then((mod) => mod.useSend), { ssr: false });
-
-// 3️⃣ NETWORK CONFIG
+// 2️⃣ NETWORKS KONFIG
 const networkShortNames = {
   eth: "ETH",
   bnb: "BNB",
@@ -47,14 +44,14 @@ const buttonColors = {
   avax: "#e84142",
 };
 
-// 4️⃣ SEND PAGE
+// 3️⃣ SEND PAGE
 export default function SendPage() {
   const router = useRouter();
-  const { user, wallet } = useAuth();
+  const { user } = useAuth();
   const { activeNetwork, switchNetwork } = useNetwork();
+  const { sendTransaction, sending, gasFee, adminFee, totalFee, feeLoading, feeError } = useSend();
   const { balances, getUsdBalance, getEurBalance } = useBalance();
   const { ready, loading } = useSystemReady();
-  const { sendTransaction, sending, gasFee, adminFee, totalFee, feeLoading, feeError } = useSend();
 
   const [receiver, setReceiver] = useState("");
   const [amount, setAmount] = useState("");
@@ -87,10 +84,6 @@ export default function SendPage() {
   const handleSend = () => {
     if (!isValidAddress(receiver)) {
       alert("❌ Invalid wallet address.");
-      return;
-    }
-    if (!wallet?.wallet?.address) {
-      alert("❌ Wallet not ready.");
       return;
     }
     if (parsedAmount <= 0 || parsedAmount < minAmounts[activeNetwork]) {
@@ -164,6 +157,7 @@ export default function SendPage() {
     <main className={`${styles.main} ${background.gradient}`}>
       <div className={styles.wrapper}>
         <SuccessToast show={showToast} message={toastMessage} networkKey={activeNetwork} />
+
         <SwipeSelector selected={activeNetwork} onSelect={handleNetworkChange} />
 
         {/* ✅ Balansas */}
@@ -176,7 +170,7 @@ export default function SendPage() {
           </p>
         </div>
 
-        {/* ✅ Formos */}
+        {/* ✅ Forma */}
         <div className={styles.walletActions}>
           <input
             type="text"
@@ -217,7 +211,6 @@ export default function SendPage() {
             )}
           </div>
 
-          {/* ✅ Siuntimo Mygtukas */}
           <button
             onClick={handleSend}
             disabled={!receiver || sending || feeLoading}
@@ -272,7 +265,7 @@ export default function SendPage() {
           />
         )}
 
-        {/* ✅ Klaidos Modal */}
+        {/* ✅ Error Modal */}
         {error && (
           <ErrorModal
             error={error}
