@@ -2,19 +2,19 @@
 
 import { useAuth } from "@/contexts/AuthContext";
 
+// ✅ Minimal readiness hook
 export function useMinimalReady() {
   const { user, wallet, authLoading, walletLoading } = useAuth();
 
   const isClient = typeof window !== "undefined";
 
-  const minimalReady = user?.email && wallet?.wallet;
+  // ✅ Tikrinam ar yra vartotojas ir wallet adresas
+  const hasUserAndWallet = Boolean(user?.email && wallet?.wallet);
 
-  const ready =
-    isClient &&
-    minimalReady &&
-    !authLoading &&
-    !walletLoading;
+  // ✅ Sistema READY tik jei:
+  const ready = isClient && hasUserAndWallet && !authLoading && !walletLoading;
 
+  // ✅ Jei ne ready - vadinasi loading
   const loading = !ready;
 
   return { ready, loading };
