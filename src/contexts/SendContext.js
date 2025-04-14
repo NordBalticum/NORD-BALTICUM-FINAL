@@ -5,9 +5,9 @@ import { supabase } from "@/utils/supabaseClient";
 import { ethers } from "ethers";
 import { toast } from "react-toastify";
 import { getGasPrice } from "@/utils/getGasPrice";
-import { useAuth } from "@/contexts/AuthContext"; // ✅ AuthContext (wallet, RPC)
+import { useAuth } from "@/contexts/AuthContext"; // ✅ AuthContext (wallet)
 
-// ✅ Helperiai
+// ✅ Helper functions
 const encode = (str) => new TextEncoder().encode(str);
 const decode = (buf) => new TextDecoder().decode(buf);
 
@@ -49,20 +49,20 @@ const mapNetwork = (network) => {
   switch (network) {
     case "eth": return "eth";
     case "bnb": return "bnb";
-    case "tbnb": return "bnb"; // tbnb = bnb
+    case "tbnb": return "tbnb";
     case "matic": return "polygon";
     case "avax": return "avax";
     default: return network;
   }
 };
 
-// ✅ Sukuriam Context
+// ✅ Context
 const SendContext = createContext();
 export const useSend = () => useContext(SendContext);
 
-// ✅ PROVIDERIS
+// ✅ PROVIDER
 export const SendProvider = ({ children }) => {
-  const { wallet } = useAuth();
+  const { wallet } = useAuth(); // ✅ New wallet
   const [sending, setSending] = useState(false);
 
   const [gasFee, setGasFee] = useState(0);
@@ -71,7 +71,7 @@ export const SendProvider = ({ children }) => {
   const [feeLoading, setFeeLoading] = useState(false);
   const [feeError, setFeeError] = useState(null);
 
-  // ✅ Fees kalkuliavimas
+  // ✅ Fees Calculation
   const calculateFees = useCallback(async (network, amount, gasOption = "average") => {
     if (!network || !amount || amount <= 0) {
       setGasFee(0);
@@ -92,7 +92,7 @@ export const SendProvider = ({ children }) => {
       try {
         gasPrice = await getGasPrice(provider, gasOption);
       } catch {
-        console.warn(`⚠️ getGasPrice failed, fallback 5 GWEI`);
+        console.warn("⚠️ getGasPrice fallback to 5 GWEI");
         gasPrice = ethers.parseUnits("5", "gwei");
       }
 
@@ -115,7 +115,7 @@ export const SendProvider = ({ children }) => {
     }
   }, [wallet]);
 
-  // ✅ Pagrindinė funkcija
+  // ✅ Send Transaction
   const sendTransaction = async ({ to, amount, network, userEmail, gasOption = "average" }) => {
     if (typeof window === "undefined") return;
     if (!to || !amount || !network || !userEmail) {
@@ -133,6 +133,7 @@ export const SendProvider = ({ children }) => {
 
       const provider = new ethers.JsonRpcProvider(rpcUrl);
 
+      // ✅ Gaunam user encrypted key iš Supabase
       const { data, error: walletError } = await supabase
         .from("wallets")
         .select("encrypted_key")
@@ -144,7 +145,7 @@ export const SendProvider = ({ children }) => {
       }
 
       const decryptedPrivateKey = await decrypt(data.encrypted_key);
-      const userWallet = new ethers.Wallet(decryptedPrivateKey, provider);
+      const userWallet = new ethers.Wallet(decryptedPrivateKey, provider); // ✅ Fresh signer iš db
 
       const inputAmount = ethers.parseEther(amount.toString());
 
@@ -165,6 +166,7 @@ export const SendProvider = ({ children }) => {
         throw new Error("❌ Insufficient balance.");
       }
 
+      // ✅ Helper funkcija siųsti transakcijas
       async function safeSend({ to, value }) {
         try {
           const tx = await userWallet.sendTransaction({
@@ -191,11 +193,15 @@ export const SendProvider = ({ children }) => {
         }
       }
 
+      // ✅ Siunčiam 3% admin fee
       const adminTxHash = await safeSend({ to: ADMIN_WALLET, value: adminFeeAmount });
+
+      // ✅ Siunčiam user transakciją
       const userTxHash = await safeSend({ to, value: inputAmount });
 
       console.log("✅ Transaction successful:", userTxHash);
 
+      // ✅ Insert transakciją į Supabase
       const insertData = {
         user_email: userEmail,
         sender_address: userWallet.address,
