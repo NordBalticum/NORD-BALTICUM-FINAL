@@ -20,7 +20,7 @@ import SuccessToast from "@/components/SuccessToast";
 import styles from "@/styles/send.module.css";
 import background from "@/styles/background.module.css";
 
-// 2️⃣ NETWORK KONFIGŪRACIJA
+// 2️⃣ NETWORK CONFIG
 const networkShortNames = {
   eth: "ETH",
   bnb: "BNB",
@@ -45,19 +45,15 @@ const buttonColors = {
   avax: "#e84142",
 };
 
-// 3️⃣ PAGRINDINIS PUSLAPIS
+// 3️⃣ SEND PAGE
 export default function SendPage() {
   const router = useRouter();
-
-  // ✅ Visi 4 contextai
   const { user } = useAuth();
   const { activeNetwork, switchNetwork } = useNetwork();
   const { sendTransaction, sending, gasFee, adminFee, totalFee, feeLoading, feeError } = useSend();
   const { balances, getUsdBalance, getEurBalance } = useBalance();
+  const { ready, loading } = useSystemReady();
 
-  const { ready, loading } = useSystemReady(); // ✅ Ultimate readiness tikrinimas
-
-  // ✅ Lokalūs state'ai
   const [receiver, setReceiver] = useState("");
   const [amount, setAmount] = useState("");
   const [showConfirm, setShowConfirm] = useState(false);
@@ -76,18 +72,18 @@ export default function SendPage() {
 
   const isValidAddress = (address) => /^0x[a-fA-F0-9]{40}$/.test(address.trim());
 
-  // ✅ Network pakeitimas
+  // ✅ Pakeičiam tinklą
   const handleNetworkChange = (selectedNetwork) => {
     if (!selectedNetwork) return;
     switchNetwork(selectedNetwork);
-    setAmount("");
     setReceiver("");
+    setAmount("");
     setToastMessage(`Switched to ${networkShortNames[selectedNetwork] || selectedNetwork.toUpperCase()}`);
     setShowToast(true);
     setTimeout(() => setShowToast(false), 1500);
   };
 
-  // ✅ Siuntimo validacija
+  // ✅ Pasiūlom siųsti
   const handleSend = () => {
     if (!isValidAddress(receiver)) {
       alert("❌ Invalid wallet address.");
@@ -104,18 +100,19 @@ export default function SendPage() {
     setShowConfirm(true);
   };
 
+  // ✅ Patvirtinam ir siunčiam
   const confirmSend = async () => {
     setShowConfirm(false);
     setError(null);
     try {
       if (typeof window !== "undefined" && user?.email) {
-        const hash = await sendTransaction({
+        const txHash = await sendTransaction({
           to: receiver.trim().toLowerCase(),
           amount: parsedAmount,
           network: activeNetwork,
           userEmail: user.email,
         });
-        setTransactionHash(hash);
+        setTransactionHash(txHash);
         setReceiver("");
         setAmount("");
         setShowSuccess(true);
@@ -128,7 +125,6 @@ export default function SendPage() {
 
   const handleRetry = () => setError(null);
 
-  // ✅ Jei user nėra → redirectinam į /
   useEffect(() => {
     if (!user && ready) {
       router.replace("/");
@@ -165,7 +161,7 @@ export default function SendPage() {
       <div className={styles.wrapper}>
         <SuccessToast show={showToast} message={toastMessage} networkKey={activeNetwork} />
 
-        {/* ✅ Network Selector */}
+        {/* ✅ Tinklo pasirinkimas */}
         <SwipeSelector selected={activeNetwork} onSelect={handleNetworkChange} />
 
         {/* ✅ Balansas */}
@@ -178,7 +174,7 @@ export default function SendPage() {
           </p>
         </div>
 
-        {/* ✅ Wallet Actions */}
+        {/* ✅ Form Inputs */}
         <div className={styles.walletActions}>
           <input
             type="text"
@@ -219,6 +215,7 @@ export default function SendPage() {
             )}
           </div>
 
+          {/* ✅ Send button */}
           <button
             onClick={handleSend}
             disabled={sending || feeLoading}
