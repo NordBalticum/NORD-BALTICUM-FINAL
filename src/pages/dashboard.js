@@ -16,7 +16,7 @@ import styles from "@/styles/dashboard.module.css";
 // ✅ Dinaminis LivePriceTable importas
 const LivePriceTable = dynamic(() => import("@/components/LivePriceTable"), { ssr: false });
 
-// ✅ Tinklų ikonos
+// ✅ Ikonos
 const iconUrls = {
   eth: "/icons/eth.svg",
   bnb: "/icons/bnb.svg",
@@ -34,22 +34,19 @@ const names = {
   avax: "Avalanche",
 };
 
-// ✅ DASHBOARD komponentas
 export default function Dashboard() {
   const router = useRouter();
-  const { user, wallet } = useAuth();
-  const { activeNetwork } = useNetwork();
-  const { balances, prices, loading } = useBalance();
+  const { balances, prices } = useBalance();
   const { ready } = useSystemReady();
 
-  // ✅ Turimų tokenų sąrašas
+  // ✅ Tikrinam kokius tokenus turim
   const tokens = useMemo(() => {
     if (!balances || Object.keys(balances).length === 0) return [];
     return Object.keys(balances);
   }, [balances]);
 
-  // ✅ Loaderis jei sistema neparuošta
-  if (loading || !ready || !user || !wallet || !activeNetwork) {
+  // ✅ Loaderis jei sistema NEparuošta
+  if (!ready) {
     return (
       <div className={styles.fullscreenCenter}>
         <MiniLoadingSpinner size={32} />
@@ -57,15 +54,15 @@ export default function Dashboard() {
     );
   }
 
-  // ✅ Pagrindinis turinys
+  // ✅ Pagrindinis puslapis
   return (
     <main className={styles.container}>
       <div className={styles.dashboardWrapper}>
 
-        {/* ✅ Live kainų lentelė */}
+        {/* ✅ Live Price Table */}
         <LivePriceTable />
 
-        {/* ✅ Turimi asset'ai */}
+        {/* ✅ Assetų sąrašas */}
         <div className={styles.assetList}>
           {tokens.length === 0 ? (
             <div className={styles.noAssets}>No assets found.</div>
