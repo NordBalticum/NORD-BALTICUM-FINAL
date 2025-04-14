@@ -1,0 +1,21 @@
+/* src/components/miniloadingspinner.module.css */
+
+.fullscreenOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 9999;
+  background: rgba(15, 23, 42, 0.5); /* ✅ Soft semi-dark background */
+  backdrop-filter: blur(14px);        /* ✅ Subtilus blur */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.spinnerWrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
