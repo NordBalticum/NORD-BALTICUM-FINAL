@@ -8,7 +8,7 @@ import Image from "next/image";
 
 import { useAuth } from "@/contexts/AuthContext";
 import { useBalance } from "@/contexts/BalanceContext";
-import { useSystemReady } from "@/hooks/useSystemReady"; // ✅ NAUJAS tikras readiness hook
+import { useSystemReady } from "@/hooks/useSystemReady"; // ✅ NAUJAS readiness hook
 
 import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
 import styles from "@/styles/dashboard.module.css";
@@ -33,11 +33,11 @@ const names = {
   avax: "Avalanche",
 };
 
-// 4️⃣ DASHBOARD PUSLAPIS
+// 4️⃣ DASHBOARD KOMPONENTAS
 export default function Dashboard() {
   const router = useRouter();
   const { balances, prices } = useBalance(); // ✅ Iš BalanceContext
-  const { ready, loading } = useSystemReady(); // ✅ Tikras readiness tikrinimas
+  const { ready, loading } = useSystemReady(); // ✅ Tikras readiness + balansų patikrinimas
 
   // ✅ Tokenų sąrašas pagal turimus balansus
   const tokens = useMemo(() => {
@@ -47,7 +47,7 @@ export default function Dashboard() {
     return Object.keys(balances);
   }, [balances]);
 
-  // ✅ Loader jeigu dar nepasiruošęs
+  // ✅ Loaderis jei sistema neparuošta
   if (loading) {
     return (
       <div className={styles.fullscreenCenter}>
@@ -56,15 +56,15 @@ export default function Dashboard() {
     );
   }
 
-  // ✅ Pagrindinis renderis
+  // ✅ PAGRINDINIS RENDERIS
   return (
     <main className={styles.container}>
       <div className={styles.dashboardWrapper}>
-
-        {/* ✅ Live kainų lentelė */}
+        
+        {/* ✅ Live Kainų Lentelė */}
         <LivePriceTable />
 
-        {/* ✅ Balanso lentelė */}
+        {/* ✅ Assetų (balansų) Lentelė */}
         <div className={styles.assetList}>
           {tokens.length === 0 ? (
             <div className={styles.noAssets}>
@@ -73,12 +73,12 @@ export default function Dashboard() {
           ) : (
             tokens.map((network) => {
               const balanceValue = balances?.[network];
-              const priceData = prices?.[network === "tbnb" ? "bnb" : network]; // ✅ tbnb = bnb price
+              const priceData = prices?.[network === "tbnb" ? "bnb" : network]; // tbnb = bnb price
 
               if (!balanceValue || !priceData) {
                 return (
                   <div key={network} className={styles.assetItem}>
-                    <MiniLoadingSpinner />
+                    <MiniLoadingSpinner size={16} />
                   </div>
                 );
               }
