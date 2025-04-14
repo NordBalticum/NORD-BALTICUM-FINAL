@@ -2,18 +2,18 @@
 
 Sveikas, CEO!  
 Čia tavo **geležinė atmintinė**, kaip profesionaliai atnaujinti **NordBalticum** projektą.  
-**Mūsų taisyklė:** 100% saugumas. 0% klaidų. 24/7 uptime.
+**Taisyklė:** 100% saugumas. 0% klaidų. 24/7 uptime.
 
 ---
 
 ## 🛠️ Įrankiai, kuriuos naudojam
 
-- **GitHub Pro** → kodo valdymas
-- **Vercel Pro** → hostingas + automatinis deploy
-- **Supabase Pro** → Web3 duomenų bazė + autentifikacija
-- **Ethers.js** → decentralizuotos blockchain operacijos
+- 🛡️ **GitHub Pro** → Kodo valdymas
+- 🚀 **Vercel Pro** → Hostingas + automatinis deploy
+- 🛢️ **Supabase Pro** → Web3 duomenų bazė + autentifikacija
+- ⛓️ **Ethers.js** → Decentralizuotos blockchain operacijos
 
-✅ Viskas online – be terminalų, be bash, be vietinio kompiuterio.
+✅ Viskas online – be terminalų, be bash, be vietinio kompiuterio!
 
 ---
 
@@ -23,125 +23,146 @@ Sveikas, CEO!
 
 **NIEKADA** nerašyk tiesiai į `main`!
 
-- GitHub ➔ Branch ➔ `Create new branch from main`
-- Pavadinimas pvz.:  
-  `update/fix-login` arba `feature/new-dashboard`
+- ➡️ GitHub ➔ Create branch from main
+- ➡️ Pvz. `feature/new-dashboard` arba `hotfix/fix-balance-page`
 
 ---
 
-### 2. 🛠️ Kodo pakeitimai
+### 2. 🛠️ Padaryk pakeitimus
 
-- Padaryk pakeitimus naujame **branch**.
-- **Lokalus `npm run dev` = nebereikalingas.**  
-  Viską matysi tiesiai Vercel Preview!
+- Dirbk tik naujame **branch**.
+- 🚫 **NE testuok lokaliai (`npm run dev`)**.
+- ✅ **Viską testuosi per Vercel Preview!**
 
 ---
 
 ### 3. ✅ Sukurk Pull Request (PR)
 
-- Atidaryk PR GitHub'e iš savo branch ➔ į `main`.
-- **NE Merge iškart!**
+- GitHub ➔ New Pull Request ➔ `your-branch` ➔ į `main`.
+- ⚠️ **NE Merge iškart!**  
+  Pirmiausia ➔ Testavimas per Preview.
 
 ---
 
 ### 4. 🚀 Testuok per Vercel Preview
 
-**Svarbiausia žingsnis!**
+**Svarbiausia žingsnis:**
 
-- Kai sukursi PR, GitHub ir Vercel sukurs **Preview Deploy**.
+- Kai sukursi PR ➔ bus sukurtas automatinis **Vercel Preview**.
 - Eik į:  
-  **https://your-branch-name.vercel.app**
+  🌐 `https://your-branch-name.vercel.app`
 
-✅ Testuok kaip tikras naudotojas:
+✅ Testuok kaip tikras vartotojas:
 
-- Prisijungimą
-- Balanso užkrovimą
-- Kripto siuntimą
-- Tinklo perjungimą
-- Minimalizuok tabą ➔ Grįžk ➔ Testuok sesijos atstatymą
+- 🔒 Prisijungimą
+- 💰 Balanso užkrovimą
+- 🔁 Kripto siuntimą
+- 🔗 Tinklo keitimą
+- 💤 Minimalizuok tabą ➔ Grįžk ➔ Testuok sesijos atstatymą
 
-**✅ Viską testuojam per Vercel Preview – ne lokaliai!**
+✅ **Visada testuojam tik per Vercel Preview – ne lokaliai!**
 
 ---
 
 ### 5. 🛡️ Supabase Duomenų Bazės Backup
 
-Prieš merge:
+Prieš Merge:
 
-- Supabase ➔ Database ➔ Backups ➔ **Manual Backup** ➔ Download SQL.
+- 🛢️ Supabase ➔ Database ➔ Backups ➔ **Manual Backup** ➔ **Download SQL**.
 
-**Backup privalomas prieš bet kokį atnaujinimą!**
+✅ Tai tavo garantuotas saugumas.
 
 ---
 
-### 6. 🔄 Merge PR į `main`
+### 6. 🔄 Merge į `main`
 
-Kai Preview pilnai veikia:
+Kai Vercel Preview pilnai veikia:
 
-- GitHub ➔ **Merge Pull Request** į `main`.
+- GitHub ➔ **Merge Pull Request** ➔ į `main`.
 
-✅ Vercel automatiškai atnaujins live versiją.  
-✅ Jokio deploy spaudinėjimo. Viskas autokontrolėje.
+✅ Vercel automatiškai deploy'ins į live.  
+✅ Jokio rankinio deploy.
 
 ---
 
 ### 7. 🧹 Supabase Migracijos (jei reikia)
 
-Jei keiti duomenų bazės struktūrą:
+Jei keiti DB struktūrą:
 
-- Sukurk SQL migration script.
-- Paleisk **tik** per Supabase SQL Editor.
+- ✍️ Sukurk SQL migracijos failą (`.sql`).
+- 🛢️ Paleisk **tik** per Supabase SQL Editor.
 
-⚡ **NIEKADA** nekeisk duomenų bazės tiesiogiai!
+⚡ **NIEKADA** nekeisk duomenų rankomis dashboard'e!
 
 ---
 
-## ⚡ Greitas Hotfix (jei skubi)
+## 🌎 Google OAuth Setup
 
-- Jei reikia pataisyti mažą klaidą:
-  - Sukuri `hotfix/fix-balance-page`.
-  - Padarai PR ➔ Preview ➔ Test ➔ Merge.
+- 2x Google projektai:
+  - 🏦 **NordBalticum Production**
+  - 🧪 **NordBalticum Development**
 
-✅ Sistema lieka saugi 100%.
+- Skirtingi:
+  - 🔑 Client ID
+  - 🔐 Client Secret
+  - 🌍 Redirect URL
+
+✅ 100% atskirta aplinka (Develop ≠ Production).
+
+---
+
+## 📅 Weekly Maintenance Plan
+
+**Kas savaitę:**
+
+- 🛢️ Atsisiųsti **Supabase Database Backup** ➔ `.sql` failą.
+- 📦 Atsisiųsti **Vercel Project Export** (project zip).
+- 📁 Atsisiųsti **GitHub Source Code** (zip iš GitHub).
+
+✅ 100% saugumo kopijos.
+
+---
+
+## 🛡️ 2x DB Sistema
+
+| Branch | Duomenų Bazė | Aplinka |
+|:------|:-------------|:--------|
+| `develop` | NordBalticum-Dev | Vercel Preview |
+| `main` | NordBalticum | Vercel Production |
+
+✅ Skirtingi projekto ID, API raktai, vartotojų bazės.
 
 ---
 
 ## 💎 Geležinės Taisyklės
 
-- **Auto Session Refresh** ➔ 5 min intervalas – sesijos niekada nenutrūks.
-- **Debounce + Visibility/Online Events** ➔ jei tabas užsidaro ar tinklas dingsta, automatinis stabilizavimas.
-- **BalanceCheck + Network Validation** ➔ Web3 saugumas kaip MetaMask.
-- **SafeSend + Fee Protection** ➔ transakcijos 100% bulletproof.
-
----
-
-## 🛡️ Savaitinis saugumo ritualas
-
-**Kas savaitę:**
-
-- 📥 Atsisiųsk **Supabase Database Backup** (`.sql` failą) ➔ saugok lokaliai arba Google Drive.
-- 📥 Atsisiųsk **Vercel Project Export** ➔ kaip atsarginę projekto kopiją.
-
-✅ Tai tavo ultimate apsauga nuo bet kokių force majeure atvejų.
+- 🔄 **Auto Session Refresh** ➔ kas 5 minutes automatinis atnaujinimas.
+- 👀 **Debounce + Visibility + Online Events** ➔ saugi sesijos kontrolė.
+- 💰 **BalanceCheck + Network Validation** ➔ Web3 saugumas kaip MetaMask.
+- 🚀 **SafeSend + Fee Protection** ➔ 100% bulletproof transakcijos.
 
 ---
 
 # 🏦 Pabaiga
 
-> **NordBalticum = Web3 Bankas.  
-> Ne projektas. Ne startuolis. Bankas.**
+> **NordBalticum = Decentralizuotas Web3 Bankas.  
+> Ne projektas. Ne startuolis.  
+> Bankas.**
 
-✅ Visos operacijos kaip MetaMask + TrustWallet.  
-✅ Saugumas kaip Coinbase.
+✅ Sistema kaip MetaMask + TrustWallet.  
+✅ Saugumas kaip Coinbase.  
+✅ Paruošta 1M+ vartotojų.
 
 ---
 
-# 🛡️ 100% PRIMINTA:
+# 🛡️ Priminta 100%
 
 - ❌ **NE testuok su `npm run dev`.**
 - ✅ **VISADA testuok per Vercel Preview!**
-- ✅ **Tik po pilno testavimo – Merge į `main`.**
+- ✅ **Tik po pilno testavimo ➔ Merge į `main`.**
 
 ---
 
 # 🚀 NordBalticum – The Future is Ours.
+
+💎🚀👑
