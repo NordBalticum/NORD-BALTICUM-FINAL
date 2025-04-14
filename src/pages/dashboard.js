@@ -14,10 +14,9 @@ import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
 import { toast } from "react-toastify";
 import styles from "@/styles/dashboard.module.css";
 
-// ✅ Dinaminis LivePriceTable importas (SSR OFF)
 const LivePriceTable = dynamic(() => import("@/components/LivePriceTable"), { ssr: false });
 
-// ✅ Tinklų ikonos
+// ✅ Ikonos
 const iconUrls = {
   eth: "/icons/eth.svg",
   bnb: "/icons/bnb.svg",
@@ -42,23 +41,23 @@ export default function Dashboard() {
 
   const [initialLoadDone, setInitialLoadDone] = useState(false);
 
-  // ✅ Tokenų sąrašas pagal balansus
+  // ✅ Tokenų sąrašas
   const tokens = useMemo(() => {
     if (!balances || Object.keys(balances).length === 0) return [];
     return Object.keys(balances);
   }, [balances]);
 
-  // ✅ Tik PRADINIS timeout, kad nerodytų "refresho" ant pirmo įkėlimo
+  // ✅ Pirmas užkrovimas (nedaryt refetch kol initial)
   useEffect(() => {
     if (ready && !initialLoadDone) {
-      const timer = setTimeout(() => {
+      const timeout = setTimeout(() => {
         setInitialLoadDone(true);
-      }, 2500); // ✅ 2.5s laukiam po tikro ready
-      return () => clearTimeout(timer);
+      }, 2000); // 2s uždelstas pirmas refetch leidimas
+      return () => clearTimeout(timeout);
     }
   }, [ready, initialLoadDone]);
 
-  // ✅ Visibility change – refetch tik jei jau esam pilnai pasikrovę
+  // ✅ Visibility Change - tik kai jau buvo initial load
   useEffect(() => {
     const handleVisibilityChange = async () => {
       if (document.visibilityState === "visible" && initialLoadDone) {
@@ -81,7 +80,7 @@ export default function Dashboard() {
     };
   }, [initialLoadDone, refetch]);
 
-  // ✅ Loaderis jei sistema NEparuošta
+  // ✅ Loaderis jeigu sistema NE ready
   if (!ready || loading) {
     return (
       <div className={styles.fullscreenCenter}>
@@ -90,11 +89,12 @@ export default function Dashboard() {
     );
   }
 
-  // ✅ Pagrindinis Dashboard turinys
+  // ✅ Dashboard turinys
   return (
     <main className={styles.container}>
       <div className={styles.dashboardWrapper}>
         <LivePriceTable />
+
         <div className={styles.assetList}>
           {tokens.length === 0 ? (
             <div className={styles.noAssets}>No assets found.</div>
@@ -156,6 +156,7 @@ export default function Dashboard() {
             })
           )}
         </div>
+
       </div>
     </main>
   );
