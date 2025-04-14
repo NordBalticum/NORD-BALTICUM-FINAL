@@ -6,9 +6,8 @@ import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 
-import { useAuth } from "@/contexts/AuthContext";
 import { useBalance } from "@/contexts/BalanceContext";
-import { useSystemReady } from "@/hooks/useSystemReady"; // ✅ NAUJAS readiness hook
+import { useSystemReady } from "@/hooks/useSystemReady"; // ✅ Tikras readiness + balansų checkas
 
 import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
 import styles from "@/styles/dashboard.module.css";
@@ -16,7 +15,7 @@ import styles from "@/styles/dashboard.module.css";
 // 2️⃣ Dinaminis Importas (SSR false)
 const LivePriceTable = dynamic(() => import("@/components/LivePriceTable"), { ssr: false });
 
-// 3️⃣ Ikonos ir Tinklų Pavadinimai
+// 3️⃣ Tinklų Ikonos ir Pavadinimai
 const iconUrls = {
   eth: "/icons/eth.svg",
   bnb: "/icons/bnb.svg",
@@ -33,11 +32,11 @@ const names = {
   avax: "Avalanche",
 };
 
-// 4️⃣ DASHBOARD KOMPONENTAS
+// 4️⃣ DASHBOARD PUSLAPIS
 export default function Dashboard() {
   const router = useRouter();
-  const { balances, prices } = useBalance(); // ✅ Iš BalanceContext
-  const { ready, loading } = useSystemReady(); // ✅ Tikras readiness + balansų patikrinimas
+  const { balances, prices } = useBalance(); // ✅ Balansai + kainos
+  const { ready, loading } = useSystemReady(); // ✅ Sistema paruošta
 
   // ✅ Tokenų sąrašas pagal turimus balansus
   const tokens = useMemo(() => {
@@ -47,33 +46,31 @@ export default function Dashboard() {
     return Object.keys(balances);
   }, [balances]);
 
-  // ✅ Loaderis jei sistema neparuošta
+  // ✅ Loader jei dar sistema kraunasi
   if (loading) {
     return (
       <div className={styles.fullscreenCenter}>
-        <MiniLoadingSpinner />
+        <MiniLoadingSpinner size={32} />
       </div>
     );
   }
 
-  // ✅ PAGRINDINIS RENDERIS
+  // ✅ Pagrindinis turinys
   return (
     <main className={styles.container}>
       <div className={styles.dashboardWrapper}>
-        
+
         {/* ✅ Live Kainų Lentelė */}
         <LivePriceTable />
 
-        {/* ✅ Assetų (balansų) Lentelė */}
+        {/* ✅ Turimų Asset'ų lentelė */}
         <div className={styles.assetList}>
           {tokens.length === 0 ? (
-            <div className={styles.noAssets}>
-              No assets found.
-            </div>
+            <div className={styles.noAssets}>No assets found.</div>
           ) : (
             tokens.map((network) => {
               const balanceValue = balances?.[network];
-              const priceData = prices?.[network === "tbnb" ? "bnb" : network]; // tbnb = bnb price
+              const priceData = prices?.[network === "tbnb" ? "bnb" : network]; // ✅ tbnb = bnb
 
               if (!balanceValue || !priceData) {
                 return (
