@@ -8,7 +8,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useNetwork } from "@/contexts/NetworkContext";
 import { useSend } from "@/contexts/SendContext";
 import { useBalance } from "@/contexts/BalanceContext";
-
 import { useSystemReady } from "@/hooks/useSystemReady";
 
 import SwipeSelector from "@/components/SwipeSelector";
@@ -20,7 +19,7 @@ import SuccessToast from "@/components/SuccessToast";
 import styles from "@/styles/send.module.css";
 import background from "@/styles/background.module.css";
 
-// 2️⃣ NETWORK CONFIG
+// 2️⃣ NETWORK KONFIG
 const networkShortNames = {
   eth: "ETH",
   bnb: "BNB",
@@ -45,10 +44,10 @@ const buttonColors = {
   avax: "#e84142",
 };
 
-// 3️⃣ SEND PAGE
+// 3️⃣ PAGRINDINIS KOMPONENTAS
 export default function SendPage() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, wallet } = useAuth();
   const { activeNetwork, switchNetwork } = useNetwork();
   const { sendTransaction, sending, gasFee, adminFee, totalFee, feeLoading, feeError } = useSend();
   const { balances, getUsdBalance, getEurBalance } = useBalance();
@@ -66,13 +65,12 @@ export default function SendPage() {
   const shortName = useMemo(() => networkShortNames[activeNetwork] || activeNetwork.toUpperCase(), [activeNetwork]);
   const parsedAmount = useMemo(() => Number(amount) || 0, [amount]);
   const netBalance = useMemo(() => balances?.[activeNetwork] || 0, [balances, activeNetwork]);
-
   const balanceEur = getEurBalance(activeNetwork);
   const balanceUsd = getUsdBalance(activeNetwork);
 
   const isValidAddress = (address) => /^0x[a-fA-F0-9]{40}$/.test(address.trim());
 
-  // ✅ Pakeičiam tinklą
+  // ✅ Network change
   const handleNetworkChange = (selectedNetwork) => {
     if (!selectedNetwork) return;
     switchNetwork(selectedNetwork);
@@ -80,16 +78,21 @@ export default function SendPage() {
     setAmount("");
     setToastMessage(`Switched to ${networkShortNames[selectedNetwork] || selectedNetwork.toUpperCase()}`);
     setShowToast(true);
+    if (typeof window !== "undefined" && "vibrate" in navigator) navigator.vibrate(30);
     setTimeout(() => setShowToast(false), 1500);
   };
 
-  // ✅ Pasiūlom siųsti
+  // ✅ Validate and Send
   const handleSend = () => {
     if (!isValidAddress(receiver)) {
       alert("❌ Invalid wallet address.");
       return;
     }
-    if (parsedAmount < minAmounts[activeNetwork]) {
+    if (!wallet?.wallet?.address) {
+      alert("❌ Wallet not ready.");
+      return;
+    }
+    if (parsedAmount <= 0 || parsedAmount < minAmounts[activeNetwork]) {
       alert(`❌ Minimum to send is ${minAmounts[activeNetwork]} ${shortName}`);
       return;
     }
@@ -100,7 +103,7 @@ export default function SendPage() {
     setShowConfirm(true);
   };
 
-  // ✅ Patvirtinam ir siunčiam
+  // ✅ Confirm Send
   const confirmSend = async () => {
     setShowConfirm(false);
     setError(null);
@@ -116,6 +119,7 @@ export default function SendPage() {
         setReceiver("");
         setAmount("");
         setShowSuccess(true);
+        if (typeof window !== "undefined" && "vibrate" in navigator) navigator.vibrate(80);
       }
     } catch (err) {
       console.error("❌ Transaction error:", err?.message || err);
@@ -174,7 +178,7 @@ export default function SendPage() {
           </p>
         </div>
 
-        {/* ✅ Form Inputs */}
+        {/* ✅ Form */}
         <div className={styles.walletActions}>
           <input
             type="text"
@@ -218,7 +222,7 @@ export default function SendPage() {
           {/* ✅ Send button */}
           <button
             onClick={handleSend}
-            disabled={sending || feeLoading}
+            disabled={!receiver || sending || feeLoading}
             style={sendButtonStyle}
           >
             {sending ? (
