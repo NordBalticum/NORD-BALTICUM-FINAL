@@ -4,34 +4,27 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useNetwork } from "@/contexts/NetworkContext";
 import { useBalance } from "@/contexts/BalanceContext";
 
-// ✅ Sistema Ready Hook
 export function useSystemReady() {
   const { user, wallet, authLoading, walletLoading } = useAuth();
   const { activeNetwork } = useNetwork();
-  const { balances } = useBalance(); // ✅ balancesLoading NEBENAUDOJAM
+  const { balances, loading: balancesLoading } = useBalance(); // ✅ Paimam loading iš BalanceContext
 
   const isClient = typeof window !== "undefined";
 
-  // ✅ Minimalus readiness: vartotojas, wallet adresas ir aktyvus tinklas
+  // ✅ Minimalus readiness: user, wallet address, active network
   const minimalReady =
     isClient &&
     !!user?.email &&
     !!wallet?.wallet?.address &&
     !!activeNetwork;
 
-  // ✅ Balansų readiness: kai turim bent vieną balansą
-  const hasBalances =
-    balances &&
-    Object.keys(balances).length > 0;
+  // ✅ Ar balansai atėjo (čia svarbu: tikrini ar loading baigtas!)
+  const hasBalances = balances && Object.keys(balances).length >= 0 && !balancesLoading;
 
-  // ✅ READY logika: viskas kartu
-  const ready =
-    minimalReady &&
-    !authLoading &&
-    !walletLoading &&
-    hasBalances;
+  // ✅ Viskas READY kai minimalūs reikalavimai + balansai pakrauti
+  const ready = minimalReady && !authLoading && !walletLoading && hasBalances;
 
-  // ✅ Loading statusas
+  // ✅ Loaderis jei kažko trūksta
   const loading = !ready;
 
   return { ready, loading };
