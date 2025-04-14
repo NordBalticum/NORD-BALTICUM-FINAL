@@ -1,23 +1,32 @@
 "use client";
 
 // 1️⃣ IMPORTAI
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { FaTimes, FaBars } from "react-icons/fa";
 
 import { useAuth } from "@/contexts/AuthContext";
-import { useUserReady } from "@/hooks/useUserReady"; // ✅ NAUJAS HOOK
+import { useMinimalReady } from "@/hooks/useMinimalReady"; // ✅ NAUJAS hookas, švelnus tikrinimas
 
 import styles from "@/components/sidedrawer.module.css";
 
-// 2️⃣ PAGRINDINIS KOMPONENTAS
+// 2️⃣ NAVIGACIJOS ELEMENTAI
+const navItems = [
+  { label: "Dashboard", path: "/dashboard" },
+  { label: "Send", path: "/send" },
+  { label: "Receive", path: "/receive" },
+  { label: "History", path: "/history" },
+  { label: "Settings", path: "/settings" },
+];
+
+// 3️⃣ PAGRINDINIS KOMPONENTAS
 export default function SideDrawer() {
   const router = useRouter();
   const pathname = usePathname();
   const { user, signOut } = useAuth();
-  const { ready } = useUserReady(); // ✅ Tikrinam readiness iš user pusės
+  const { ready } = useMinimalReady(); // ✅ Švelnus readiness tikrinimas
 
   const [open, setOpen] = useState(false);
 
@@ -42,15 +51,7 @@ export default function SideDrawer() {
     }
   };
 
-  const navItems = [
-    { label: "Dashboard", path: "/dashboard" },
-    { label: "Send", path: "/send" },
-    { label: "Receive", path: "/receive" },
-    { label: "History", path: "/history" },
-    { label: "Settings", path: "/settings" },
-  ];
-
-  // ✅ Jei user nėra pasiruošęs, nerodyti drawerio
+  // ✅ Jei user nėra pasiruošęs → nerodom drawerio
   if (!ready) {
     return null;
   }
@@ -69,10 +70,11 @@ export default function SideDrawer() {
         <FaBars size={22} />
       </motion.button>
 
-      {/* ✅ Drawer and Backdrop */}
+      {/* ✅ Drawer + Backdrop */}
       <AnimatePresence mode="wait">
         {open && (
           <>
+            {/* ✅ Fonas */}
             <motion.div
               className={styles.backdrop}
               initial={{ opacity: 0 }}
@@ -81,6 +83,8 @@ export default function SideDrawer() {
               transition={{ duration: 0.4, ease: "easeInOut" }}
               onClick={toggleDrawer}
             />
+
+            {/* ✅ Drawer */}
             <motion.aside
               className={`${styles.drawer} ${open ? styles.open : ""}`}
               initial={{ x: "-100%" }}
@@ -88,7 +92,7 @@ export default function SideDrawer() {
               exit={{ x: "-100%" }}
               transition={{ type: "spring", stiffness: 260, damping: 30 }}
             >
-              {/* ✅ Close Button */}
+              {/* ✅ Header */}
               <div className={styles.drawerHeader}>
                 <motion.button
                   className={styles.closeIcon}
@@ -101,7 +105,7 @@ export default function SideDrawer() {
                 </motion.button>
               </div>
 
-              {/* ✅ User Info */}
+              {/* ✅ Vartotojo Info */}
               <motion.div
                 className={styles.userBox}
                 initial={{ opacity: 0, y: -10 }}
@@ -125,7 +129,7 @@ export default function SideDrawer() {
                 </motion.p>
               </motion.div>
 
-              {/* ✅ Navigation */}
+              {/* ✅ Navigacija */}
               <nav className={styles.nav}>
                 {navItems.map((item, index) => (
                   <motion.div
