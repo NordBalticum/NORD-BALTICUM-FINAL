@@ -7,8 +7,8 @@ import dynamic from "next/dynamic";
 import Image from "next/image";
 
 import { useAuth } from "@/contexts/AuthContext";
-import { useBalance } from "@/contexts/BalanceContext"; // ✅ TEISINGAS hookas
-import { useAppFullyReady } from "@/hooks/useAppFullyReady"; // ✅ Pilnas readiness
+import { useBalance } from "@/contexts/BalanceContext";
+import { useSystemReady } from "@/hooks/useSystemReady"; // ✅ NAUJAS tikras readiness hook
 
 import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
 import styles from "@/styles/dashboard.module.css";
@@ -36,9 +36,8 @@ const names = {
 // 4️⃣ DASHBOARD PUSLAPIS
 export default function Dashboard() {
   const router = useRouter();
-  const { user } = useAuth(); // ✅ Tik user
-  const { balances, prices, loading: balancesLoading } = useBalance(); // ✅ Balances iš BalanceContext
-  const { ready } = useAppFullyReady(); // ✅ Tikras readiness hookas
+  const { balances, prices } = useBalance(); // ✅ Iš BalanceContext
+  const { ready, loading } = useSystemReady(); // ✅ Tikras readiness tikrinimas
 
   // ✅ Tokenų sąrašas pagal turimus balansus
   const tokens = useMemo(() => {
@@ -49,7 +48,7 @@ export default function Dashboard() {
   }, [balances]);
 
   // ✅ Loader jeigu dar nepasiruošęs
-  if (!ready || balancesLoading) {
+  if (loading) {
     return (
       <div className={styles.fullscreenCenter}>
         <MiniLoadingSpinner />
