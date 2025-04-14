@@ -7,7 +7,7 @@ import Link from "next/link";
 import { FaWallet, FaArrowUp, FaArrowDown, FaClock, FaUserCircle } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
 
-import { useMinimalReady } from "@/hooks/useMinimalReady"; // ✅ NAUJAS hookas – minimalus readiness
+import { useMinimalReady } from "@/hooks/useMinimalReady"; // ✅ Naujas hookas readiness
 
 import styles from "@/components/bottomnav.module.css";
 
@@ -23,7 +23,8 @@ const navItems = [
 // 3️⃣ PAGRINDINIS KOMPONENTAS
 export default function BottomNavigation() {
   const pathname = usePathname();
-  const { ready } = useMinimalReady(); // ✅ Minimalus readiness tikrinimas
+  const { ready, loading } = useMinimalReady(); // ✅ readiness hook
+
   const [isMobile, setIsMobile] = useState(false);
 
   // ✅ Mobile detekcija
@@ -38,8 +39,8 @@ export default function BottomNavigation() {
 
   const onLoginPage = pathname === "/" || pathname === "" || pathname === null;
 
-  // ✅ Jei login puslapyje arba ne mobile arba user nėra ready → nerodyti
-  if (onLoginPage || !isMobile || !ready) {
+  // ✅ Jei login puslapyje arba ne mobile arba kraunasi arba nepasiruošęs → nerodom
+  if (onLoginPage || !isMobile || loading || !ready) {
     return null;
   }
 
