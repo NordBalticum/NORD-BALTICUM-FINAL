@@ -167,7 +167,7 @@ export const AuthProvider = ({ children }) => {
     setWallet({ wallet: baseWallet, signers });
   };
 
-  // ✅ Session Refresh kas 5 minutes
+  // ✅ Safe Refresh
   const safeRefreshSession = async () => {
     if (Date.now() - lastSessionRefresh.current < 60000) return;
     lastSessionRefresh.current = Date.now();
@@ -178,6 +178,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // ✅ Auto refresh kas 5 minutes
   useEffect(() => {
     if (!isClient) return;
     const interval = setInterval(() => {
@@ -186,7 +187,22 @@ export const AuthProvider = ({ children }) => {
     return () => clearInterval(interval);
   }, []);
 
-  // ✅ Session Watcher (Auto Logout po 10 min)
+  // ✅ Refresh kai app grįžta iš minimize
+  useEffect(() => {
+    if (!isClient) return;
+    const handleVisibilityChange = async () => {
+      if (document.visibilityState === "visible") {
+        console.log("App is visible again, refreshing session...");
+        await safeRefreshSession();
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, []);
+
+  // ✅ Inactivity Logout po 10min
   useEffect(() => {
     if (!isClient) return;
     const resetTimer = () => {
@@ -236,7 +252,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // ✅ Sign Out
+  // ✅ SignOut
   const signOut = async (showToast = false) => {
     await supabase.auth.signOut();
     setUser(null);
@@ -253,6 +269,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // ✅ FINAL RETURN
   return (
     <AuthContext.Provider value={{
       user,
