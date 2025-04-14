@@ -6,9 +6,8 @@ import dynamic from "next/dynamic";
 import Image from "next/image";
 
 import { useAuth } from "@/contexts/AuthContext";
-import { useNetwork } from "@/contexts/NetworkContext";
 import { useBalance } from "@/contexts/BalanceContext";
-import { useSystemReady } from "@/hooks/useSystemReady";
+import { useMinimalReady } from "@/hooks/useMinimalReady";
 
 import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
 import { toast } from "react-toastify";
@@ -37,7 +36,7 @@ const names = {
 export default function Dashboard() {
   const router = useRouter();
   const { balances, prices, refetch } = useBalance();
-  const { ready, loading } = useSystemReady();
+  const { ready, loading } = useMinimalReady(); // ✅ Naudojam minimalų tikrinimą
 
   const [initialLoadDone, setInitialLoadDone] = useState(false);
 
@@ -47,17 +46,17 @@ export default function Dashboard() {
     return Object.keys(balances);
   }, [balances]);
 
-  // ✅ Pirmas užkrovimas (nedaryt refetch kol initial)
+  // ✅ Pirmas užkrovimas
   useEffect(() => {
     if (ready && !initialLoadDone) {
       const timeout = setTimeout(() => {
         setInitialLoadDone(true);
-      }, 2000); // 2s uždelstas pirmas refetch leidimas
+      }, 2000); // 2s uždelsta pradžia
       return () => clearTimeout(timeout);
     }
   }, [ready, initialLoadDone]);
 
-  // ✅ Visibility Change - tik kai jau buvo initial load
+  // ✅ Visibility Change - kai jau buvo pirmas užkrovimas
   useEffect(() => {
     const handleVisibilityChange = async () => {
       if (document.visibilityState === "visible" && initialLoadDone) {
@@ -80,8 +79,8 @@ export default function Dashboard() {
     };
   }, [initialLoadDone, refetch]);
 
-  // ✅ Loaderis jeigu sistema NE ready
-  if (!ready || loading) {
+  // ✅ Loaderis jei NE ready
+  if (loading || !ready) {
     return (
       <div className={styles.fullscreenCenter}>
         <MiniLoadingSpinner size={32} />
@@ -156,7 +155,6 @@ export default function Dashboard() {
             })
           )}
         </div>
-
       </div>
     </main>
   );
