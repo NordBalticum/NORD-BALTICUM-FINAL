@@ -11,15 +11,21 @@ export function useSystemReady() {
 
   const isClient = typeof window !== "undefined";
 
+  // ✅ Tikrinam ar email + wallet + tinklas yra
   const minimalReady = user?.email && wallet?.wallet && activeNetwork;
 
+  // ✅ FULL READY taisyklės
   const ready =
     isClient &&
     minimalReady &&
     !authLoading &&
     !walletLoading;
 
-  const loading = !ready;
+  // ✅ Balanso lygis: jei turim bent 1 balansą
+  const hasBalances = balances && Object.keys(balances).length > 0;
+
+  // ✅ Loading taisyklės (tik tada jei realiai reikia)
+  const loading = !ready || !hasBalances;
 
   return { ready, loading };
 }
