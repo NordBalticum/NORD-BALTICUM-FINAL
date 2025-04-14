@@ -9,7 +9,7 @@ import { useNetwork } from "@/contexts/NetworkContext";
 import { useSend } from "@/contexts/SendContext";
 import { useBalance } from "@/contexts/BalanceContext";
 
-import { useAppFullyReady } from "@/hooks/useAppFullyReady"; // ✅ Naujas hookas
+import { useSystemReady } from "@/hooks/useSystemReady";
 
 import SwipeSelector from "@/components/SwipeSelector";
 import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
@@ -45,16 +45,19 @@ const buttonColors = {
   avax: "#e84142",
 };
 
-// 3️⃣ SEND PAGE
+// 3️⃣ PAGRINDINIS PUSLAPIS
 export default function SendPage() {
   const router = useRouter();
+
+  // ✅ Visi 4 contextai
   const { user } = useAuth();
-  const { activeNetwork, setActiveNetwork } = useNetwork();
+  const { activeNetwork, switchNetwork } = useNetwork();
   const { sendTransaction, sending, gasFee, adminFee, totalFee, feeLoading, feeError } = useSend();
   const { balances, getUsdBalance, getEurBalance } = useBalance();
 
-  const { ready } = useAppFullyReady(); // ✅ Ultimate readiness hook
+  const { ready, loading } = useSystemReady(); // ✅ Ultimate readiness tikrinimas
 
+  // ✅ Lokalūs state'ai
   const [receiver, setReceiver] = useState("");
   const [amount, setAmount] = useState("");
   const [showConfirm, setShowConfirm] = useState(false);
@@ -73,9 +76,10 @@ export default function SendPage() {
 
   const isValidAddress = (address) => /^0x[a-fA-F0-9]{40}$/.test(address.trim());
 
+  // ✅ Network pakeitimas
   const handleNetworkChange = (selectedNetwork) => {
     if (!selectedNetwork) return;
-    setActiveNetwork(selectedNetwork);
+    switchNetwork(selectedNetwork);
     setAmount("");
     setReceiver("");
     setToastMessage(`Switched to ${networkShortNames[selectedNetwork] || selectedNetwork.toUpperCase()}`);
@@ -83,6 +87,7 @@ export default function SendPage() {
     setTimeout(() => setShowToast(false), 1500);
   };
 
+  // ✅ Siuntimo validacija
   const handleSend = () => {
     if (!isValidAddress(receiver)) {
       alert("❌ Invalid wallet address.");
@@ -123,13 +128,14 @@ export default function SendPage() {
 
   const handleRetry = () => setError(null);
 
+  // ✅ Jei user nėra → redirectinam į /
   useEffect(() => {
     if (!user && ready) {
       router.replace("/");
     }
   }, [user, ready, router]);
 
-  if (!ready) {
+  if (loading) {
     return (
       <div className={styles.loader}>
         <MiniLoadingSpinner />
@@ -159,8 +165,10 @@ export default function SendPage() {
       <div className={styles.wrapper}>
         <SuccessToast show={showToast} message={toastMessage} networkKey={activeNetwork} />
 
+        {/* ✅ Network Selector */}
         <SwipeSelector selected={activeNetwork} onSelect={handleNetworkChange} />
 
+        {/* ✅ Balansas */}
         <div className={styles.balanceTable}>
           <p className={styles.whiteText}>
             Your Balance: <span className={styles.balanceAmount}>{netBalance.toFixed(6)} {shortName}</span>
@@ -170,6 +178,7 @@ export default function SendPage() {
           </p>
         </div>
 
+        {/* ✅ Wallet Actions */}
         <div className={styles.walletActions}>
           <input
             type="text"
@@ -223,7 +232,7 @@ export default function SendPage() {
           </button>
         </div>
 
-        {/* Confirm Modal */}
+        {/* ✅ Confirm Modal */}
         {showConfirm && (
           <div className={styles.overlay}>
             <div className={styles.confirmModal}>
@@ -254,7 +263,7 @@ export default function SendPage() {
           </div>
         )}
 
-        {/* Success Modal */}
+        {/* ✅ Success Modal */}
         {showSuccess && transactionHash && (
           <SuccessModal
             message="✅ Transaction Successful!"
@@ -264,7 +273,7 @@ export default function SendPage() {
           />
         )}
 
-        {/* Error Modal */}
+        {/* ✅ Error Modal */}
         {error && (
           <ErrorModal
             error={error}
