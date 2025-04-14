@@ -4,34 +4,38 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useNetwork } from "@/contexts/NetworkContext";
 import { useBalance } from "@/contexts/BalanceContext";
 
+// ✅ Sistema Ready Hook
 export function useSystemReady() {
   const { user, wallet, authLoading, walletLoading } = useAuth();
   const { activeNetwork } = useNetwork();
   const { balances, loading: balancesLoading } = useBalance();
 
   const isClient = typeof window !== "undefined";
+  const isClientReady = typeof document !== "undefined" && document.readyState === "complete";
 
-  // ✅ Minimalus readiness: user, wallet address, active network
+  // ✅ Minimalus readiness: user, wallet, active network, ir auth nėra loading
   const minimalReady =
     isClient &&
+    isClientReady &&
     !!user?.email &&
     !!wallet?.wallet?.address &&
-    !!activeNetwork;
-
-  // ✅ Balansų readiness: turi būti bent 1 balansas ir loading turi būti pasibaigęs
-  const hasBalances =
-    balances &&
-    Object.keys(balances).length > 0 && // >>> TIKRINAM > 0
-    !balancesLoading;
-
-  // ✅ Viskas READY kai minimalūs reikalavimai + balansai pakrauti
-  const ready =
-    minimalReady &&
+    !!activeNetwork &&
     !authLoading &&
-    !walletLoading &&
-    hasBalances;
+    !walletLoading;
 
-  // ✅ Loaderis jei kažko trūksta
+  // ✅ Jei minimalūs reikalavimai neįvykdyti – iškart returninam
+  if (!minimalReady) {
+    return { ready: false, loading: true };
+  }
+
+  // ✅ Balansų readiness: balansai turi būti pakrauti ir loading turi būti pasibaigęs
+  const hasBalancesReady =
+    !balancesLoading &&
+    balances &&
+    Object.keys(balances).length >= 0; // ✅ Leisti ir 0 balansų situaciją
+
+  // ✅ READY kai viskas pilnai paruošta
+  const ready = minimalReady && hasBalancesReady;
   const loading = !ready;
 
   return { ready, loading };
