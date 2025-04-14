@@ -2,7 +2,6 @@
 
 import { useAuth } from "@/contexts/AuthContext";
 import { useEffect, useState, useMemo } from "react";
-import debounce from "lodash.debounce";
 
 // ✅ Minimal readiness hook
 export function useMinimalReady() {
@@ -42,9 +41,9 @@ export function useMinimalReady() {
   // ✅ Loading būklė
   const loading = !minimalReady;
 
-  // ✅ Visibility + Online Events (užtikrinam stabilumą)
+  // ✅ Visibility + Online Events (be debounce, tiesiogiai)
   const handlers = useMemo(() => {
-    const handleVisibilityChange = debounce(async () => {
+    const handleVisibilityChange = async () => {
       if (document.visibilityState === "visible" && safeRefreshSession) {
         console.log("✅ Tab became visible – refreshing session...");
         try {
@@ -53,9 +52,9 @@ export function useMinimalReady() {
           console.error("❌ Visibility session refresh error:", error.message);
         }
       }
-    }, 500);
+    };
 
-    const handleOnline = debounce(async () => {
+    const handleOnline = async () => {
       if (safeRefreshSession) {
         console.log("✅ Network online – refreshing session...");
         try {
@@ -64,7 +63,7 @@ export function useMinimalReady() {
           console.error("❌ Online session refresh error:", error.message);
         }
       }
-    }, 500);
+    };
 
     return { handleVisibilityChange, handleOnline };
   }, [safeRefreshSession]);
