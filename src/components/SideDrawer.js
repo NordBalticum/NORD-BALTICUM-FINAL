@@ -8,7 +8,7 @@ import Link from "next/link";
 import { FaTimes, FaBars } from "react-icons/fa";
 
 import { useAuth } from "@/contexts/AuthContext";
-import { useMinimalReady } from "@/hooks/useMinimalReady"; // ✅ NAUJAS hookas, švelnus tikrinimas
+import { useMinimalReady } from "@/hooks/useMinimalReady";
 
 import styles from "@/components/sidedrawer.module.css";
 
@@ -25,11 +25,13 @@ const navItems = [
 export default function SideDrawer() {
   const router = useRouter();
   const pathname = usePathname();
-  const { user, signOut } = useAuth();
-  const { ready } = useMinimalReady(); // ✅ Švelnus readiness tikrinimas
+
+  const { signOut, user } = useAuth();
+  const { ready, loading } = useMinimalReady(); // ✅ naudojam naują hook
 
   const [open, setOpen] = useState(false);
 
+  // ✅ Disable scroll kai drawer atidarytas
   useEffect(() => {
     if (typeof window !== "undefined") {
       document.body.style.overflow = open ? "hidden" : "auto";
@@ -43,7 +45,7 @@ export default function SideDrawer() {
 
   const handleLogout = async () => {
     try {
-      await signOut(true); // ✅ Saugi logout funkcija
+      await signOut(true);
       setOpen(false);
       router.replace("/");
     } catch (error) {
@@ -51,8 +53,8 @@ export default function SideDrawer() {
     }
   };
 
-  // ✅ Jei user nėra pasiruošęs → nerodom drawerio
-  if (!ready) {
+  // ✅ Jei sistema dar kraunasi arba nepasiruošusi → nieko nerodom
+  if (loading || !ready) {
     return null;
   }
 
