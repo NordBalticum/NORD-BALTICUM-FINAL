@@ -17,7 +17,6 @@ const LOCAL_CACHE_KEY = "livePriceCache";
 
 export default function LivePriceTable() {
   const router = useRouter();
-  const [isClient, setIsClient] = useState(false);
   const [prices, setPrices] = useState({});
   const [currency, setCurrency] = useState("eur");
   const [loading, setLoading] = useState(true);
@@ -29,7 +28,7 @@ export default function LivePriceTable() {
     if (!mountedRef.current) return;
 
     try {
-      const { default: axios } = await import("axios"); // ✅ Axios importas tik client-side
+      const { default: axios } = await import("axios"); // ✅ Axios tik client-side
       const ids = tokens.map((t) => t.id).join(",");
       const res = await axios.get("https://api.coingecko.com/api/v3/simple/price", {
         params: { ids, vs_currencies: currencies.join(",") },
@@ -57,8 +56,7 @@ export default function LivePriceTable() {
   };
 
   const loadFromCache = () => {
-    if (typeof window === "undefined") return;
-    const cached = localStorage.getItem(LOCAL_CACHE_KEY);
+    const cached = typeof window !== "undefined" ? localStorage.getItem(LOCAL_CACHE_KEY) : null;
     if (cached) {
       try {
         const parsed = JSON.parse(cached);
@@ -71,13 +69,8 @@ export default function LivePriceTable() {
   };
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      setIsClient(true);
-    }
-  }, []);
+    if (typeof window === "undefined") return;
 
-  useEffect(() => {
-    if (!isClient) return;
     mountedRef.current = true;
     loadFromCache();
     fetchPrices();
@@ -97,7 +90,7 @@ export default function LivePriceTable() {
       document.removeEventListener("visibilitychange", handleVisibility);
       window.removeEventListener("online", fetchPrices);
     };
-  }, [isClient]);
+  }, []);
 
   const handleCardClick = (route) => {
     if (navigator.vibrate) {
@@ -106,7 +99,7 @@ export default function LivePriceTable() {
     router.push(route);
   };
 
-  if (!isClient) {
+  if (typeof window === "undefined") {
     return (
       <div className={styles.loading}>
         <div className={styles.spinner}></div> Loading prices...
