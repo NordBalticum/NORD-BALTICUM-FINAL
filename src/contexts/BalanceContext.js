@@ -8,7 +8,7 @@ const BalanceContext = createContext();
 export const useBalance = () => useContext(BalanceContext);
 
 // ✅ RPC tinklai
-const RPC = {
+export const RPC = {
   eth: "https://rpc.ankr.com/eth",
   bnb: "https://bsc-dataseed.binance.org/",
   tbnb: "https://data-seed-prebsc-1-s1.binance.org:8545/",
@@ -17,7 +17,7 @@ const RPC = {
 };
 
 // ✅ CoinGecko ID mapping
-const TOKEN_IDS = {
+export const TOKEN_IDS = {
   eth: "ethereum",
   bnb: "binancecoin",
   tbnb: "binancecoin",
@@ -25,7 +25,7 @@ const TOKEN_IDS = {
   avax: "avalanche-2",
 };
 
-// ✅ Atsarginės kainos jei CoinGecko nepavyksta
+// ✅ Fallback kainos
 const FALLBACK_PRICES = {
   eth: { eur: 2900, usd: 3100 },
   bnb: { eur: 450, usd: 480 },
@@ -36,20 +36,22 @@ const FALLBACK_PRICES = {
 
 export const BalanceProvider = ({ children }) => {
   const { wallet, authLoading, walletLoading } = useAuth();
+
   const [balances, setBalances] = useState({});
   const [prices, setPrices] = useState(FALLBACK_PRICES);
   const [loading, setLoading] = useState(true);
+
   const intervalRef = useRef(null);
 
-  // ✅ Fiksuotas balanso ir kainų užkrovimas
+  // ✅ Balanso ir kainų užkrovimas
   const fetchBalancesAndPrices = useCallback(async () => {
     if (!wallet) return;
 
     try {
       const newBalances = {};
 
+      // ✅ Jeigu turim signer'ius (full Web3 wallet)
       if (wallet.signers) {
-        // ✅ JEI turim signers (pilnas Web3)
         await Promise.all(Object.entries(wallet.signers).map(async ([network, signer]) => {
           try {
             const balance = await signer.getBalance();
@@ -60,9 +62,8 @@ export const BalanceProvider = ({ children }) => {
           }
         }));
       } else if (wallet.wallet?.address) {
-        // ✅ JEI turim tik wallet address (address based fetch)
+        // ✅ Jeigu turim tik adresą (be signer'io)
         const address = wallet.wallet.address;
-
         await Promise.all(Object.entries(RPC).map(async ([network, rpcUrl]) => {
           try {
             const provider = new ethers.JsonRpcProvider(rpcUrl);
@@ -77,25 +78,25 @@ export const BalanceProvider = ({ children }) => {
 
       setBalances(newBalances);
 
-      // ✅ CoinGecko Prices
+      // ✅ Užkraunam CoinGecko kainas
       const ids = Array.from(new Set(Object.values(TOKEN_IDS))).join(",");
       const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=eur,usd`, {
         cache: "no-store",
       });
 
-      if (!res.ok) throw new Error("Failed to fetch prices from CoinGecko.");
+      if (!res.ok) throw new Error("Failed to fetch prices from CoinGecko");
 
       const data = await res.json();
-      const priceMap = {};
+      const newPrices = {};
 
       for (const [symbol, id] of Object.entries(TOKEN_IDS)) {
-        priceMap[symbol] = {
+        newPrices[symbol] = {
           eur: data[id]?.eur ?? FALLBACK_PRICES[symbol].eur,
           usd: data[id]?.usd ?? FALLBACK_PRICES[symbol].usd,
         };
       }
 
-      setPrices(priceMap);
+      setPrices(newPrices);
     } catch (error) {
       console.error("❌ fetchBalancesAndPrices error:", error.message);
       setPrices(FALLBACK_PRICES);
@@ -105,14 +106,14 @@ export const BalanceProvider = ({ children }) => {
   }, [wallet]);
 
   useEffect(() => {
-    if (authLoading || walletLoading) return; // ⛔️ Palaukiam auth ir wallet
+    if (authLoading || walletLoading) return;
     if (!wallet) return;
 
     setLoading(true);
     fetchBalancesAndPrices();
 
     if (intervalRef.current) clearInterval(intervalRef.current);
-    intervalRef.current = setInterval(fetchBalancesAndPrices, 30000);
+    intervalRef.current = setInterval(fetchBalancesAndPrices, 30000); // ✅ Kas 30s auto refresh
 
     return () => clearInterval(intervalRef.current);
   }, [authLoading, walletLoading, wallet, fetchBalancesAndPrices]);
