@@ -1,13 +1,13 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, useCallback, useRef } from "react";
-import { ethers } from "ethers";
+import { createContext, useContext, useState, useEffect, useCallback, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { ethers } from "ethers";
 
 const BalanceContext = createContext();
 export const useBalance = () => useContext(BalanceContext);
 
-// ✅ Kiekvieno tinklo RPC
+// ✅ RPC tinklai
 const RPC = {
   eth: "https://rpc.ankr.com/eth",
   bnb: "https://bsc-dataseed.binance.org/",
@@ -16,7 +16,7 @@ const RPC = {
   avax: "https://api.avax.network/ext/bc/C/rpc",
 };
 
-// ✅ Token mapping
+// ✅ CoinGecko ID mapping
 const TOKEN_IDS = {
   eth: "ethereum",
   bnb: "binancecoin",
@@ -25,6 +25,7 @@ const TOKEN_IDS = {
   avax: "avalanche-2",
 };
 
+// ✅ Atsarginės kainos jei CoinGecko nepavyksta
 const FALLBACK_PRICES = {
   eth: { eur: 2900, usd: 3100 },
   bnb: { eur: 450, usd: 480 },
@@ -40,32 +41,49 @@ export const BalanceProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const intervalRef = useRef(null);
 
+  // ✅ Fiksuotas balanso ir kainų užkrovimas
   const fetchBalancesAndPrices = useCallback(async () => {
-    if (!wallet?.wallet?.address) return;
+    if (!wallet) return;
 
     try {
-      const address = wallet.wallet.address;
       const newBalances = {};
 
-      // ✅ Einam per kiekvieną tinklą
-      await Promise.all(Object.entries(RPC).map(async ([network, rpcUrl]) => {
-        const provider = new ethers.JsonRpcProvider(rpcUrl);
-        const balance = await provider.getBalance(address);
-        newBalances[network] = {
-          balance: parseFloat(ethers.formatEther(balance)),
-          symbol: network.toUpperCase(),
-        };
-      }));
+      if (wallet.signers) {
+        // ✅ JEI turim signers (pilnas Web3)
+        await Promise.all(Object.entries(wallet.signers).map(async ([network, signer]) => {
+          try {
+            const balance = await signer.getBalance();
+            newBalances[network] = parseFloat(ethers.formatEther(balance));
+          } catch (error) {
+            console.error(`❌ Balance error for ${network}:`, error.message);
+            newBalances[network] = 0;
+          }
+        }));
+      } else if (wallet.wallet?.address) {
+        // ✅ JEI turim tik wallet address (address based fetch)
+        const address = wallet.wallet.address;
+
+        await Promise.all(Object.entries(RPC).map(async ([network, rpcUrl]) => {
+          try {
+            const provider = new ethers.JsonRpcProvider(rpcUrl);
+            const balance = await provider.getBalance(address);
+            newBalances[network] = parseFloat(ethers.formatEther(balance));
+          } catch (error) {
+            console.error(`❌ Balance fetch error [${network}]:`, error.message);
+            newBalances[network] = 0;
+          }
+        }));
+      }
 
       setBalances(newBalances);
 
-      // ✅ Fetch CoinGecko prices
+      // ✅ CoinGecko Prices
       const ids = Array.from(new Set(Object.values(TOKEN_IDS))).join(",");
       const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=eur,usd`, {
         cache: "no-store",
       });
 
-      if (!res.ok) throw new Error("Failed to fetch prices");
+      if (!res.ok) throw new Error("Failed to fetch prices from CoinGecko.");
 
       const data = await res.json();
       const priceMap = {};
@@ -78,17 +96,19 @@ export const BalanceProvider = ({ children }) => {
       }
 
       setPrices(priceMap);
-    } catch (err) {
-      console.error("❌ BalanceContext fetch error:", err.message || err);
+    } catch (error) {
+      console.error("❌ fetchBalancesAndPrices error:", error.message);
+      setPrices(FALLBACK_PRICES);
     } finally {
       setLoading(false);
     }
   }, [wallet]);
 
   useEffect(() => {
-    if (authLoading || walletLoading) return; // ✅ Palaukiam auth
-    if (!wallet?.wallet?.address) return;
+    if (authLoading || walletLoading) return; // ⛔️ Palaukiam auth ir wallet
+    if (!wallet) return;
 
+    setLoading(true);
     fetchBalancesAndPrices();
 
     if (intervalRef.current) clearInterval(intervalRef.current);
