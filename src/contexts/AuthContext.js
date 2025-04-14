@@ -5,7 +5,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { ethers } from "ethers";
 import { supabase } from "@/utils/supabaseClient";
 import { toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import debounce from "lodash.debounce";
 import { startSessionWatcher } from "@/utils/sessionWatcher";
 
 // ✅ RPC adresai
@@ -73,7 +73,6 @@ export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider = ({ children }) => {
   const router = useRouter();
-  const pathname = usePathname();
   const isClient = typeof window !== "undefined";
 
   const [user, setUser] = useState(null);
@@ -99,6 +98,7 @@ export const AuthProvider = ({ children }) => {
       }
     };
     loadSession();
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user || null);
       if (!session) {
@@ -172,37 +172,49 @@ export const AuthProvider = ({ children }) => {
     if (Date.now() - lastSessionRefresh.current < 60000) return;
     lastSessionRefresh.current = Date.now();
     try {
-      await supabase.auth.refreshSession();
+      const { data: { session } } = await supabase.auth.refreshSession();
+      setUser(session?.user || null);
     } catch (error) {
       console.error("Session refresh failed:", error.message);
     }
   };
 
-  // ✅ Auto refresh kas 5 minutes
+  // ✅ Auto Refresh kas 5 min
   useEffect(() => {
     if (!isClient) return;
     const interval = setInterval(() => {
+      console.log("⏳ Auto refreshing session...");
       safeRefreshSession();
     }, 5 * 60 * 1000);
     return () => clearInterval(interval);
-  }, []);
+  }, [safeRefreshSession, isClient]);
 
-  // ✅ Refresh kai app grįžta iš minimize
+  // ✅ Visibility Change + Online Recovery
   useEffect(() => {
     if (!isClient) return;
-    const handleVisibilityChange = async () => {
+
+    const handleVisibilityChange = debounce(async () => {
       if (document.visibilityState === "visible") {
-        console.log("App is visible again, refreshing session...");
+        console.log("✅ Tab visible – refreshing session...");
         await safeRefreshSession();
       }
-    };
+    }, 500);
+
+    const handleOnline = debounce(async () => {
+      console.log("✅ Network online – refreshing session...");
+      await safeRefreshSession();
+    }, 500);
+
     document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("online", handleOnline);
+
     return () => {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("online", handleOnline);
     };
-  }, []);
+  }, [safeRefreshSession, isClient]);
 
-  // ✅ Inactivity Logout po 10min
+  // ✅ Inactivity Logout
   useEffect(() => {
     if (!isClient) return;
     const resetTimer = () => {
@@ -259,9 +271,9 @@ export const AuthProvider = ({ children }) => {
     setWallet(null);
     sessionWatcher.current?.stop?.();
     if (isClient) {
-      ["userPrivateKey", "activeNetwork", "sessionData"].forEach((key) => {
-        localStorage.removeItem(key);
-      });
+      ["userPrivateKey", "activeNetwork", "sessionData"].forEach((key) =>
+        localStorage.removeItem(key)
+      );
     }
     router.replace("/");
     if (showToast) {
@@ -269,13 +281,13 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // ✅ FINAL RETURN
   return (
     <AuthContext.Provider value={{
       user,
       wallet,
       authLoading,
       walletLoading,
+      safeRefreshSession,
       signInWithMagicLink,
       signInWithGoogle,
       signOut,
