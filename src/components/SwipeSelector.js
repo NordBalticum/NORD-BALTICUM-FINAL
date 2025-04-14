@@ -3,10 +3,11 @@
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
-import { useSwipeReady } from "@/hooks/useSwipeReady";
-import { useNetwork } from "@/contexts/NetworkContext"; // ✅ Naujas importas vietoj useAuth
+import { useNetwork } from "@/contexts/NetworkContext";
+import { useSystemReady } from "@/hooks/useSystemReady"; // ✅ Tikras readiness
 import styles from "@/components/swipeselector.module.css";
 
+// ✅ Palaikomi tinklai
 const supportedNetworks = [
   { name: "Ethereum", symbol: "eth", logo: "/icons/eth.svg" },
   { name: "BNB Chain", symbol: "bnb", logo: "/icons/bnb.svg" },
@@ -16,12 +17,13 @@ const supportedNetworks = [
 ];
 
 export default function SwipeSelector({ onSelect }) {
-  const { activeNetwork, setActiveNetwork } = useNetwork(); // ✅ Imame iš NetworkContext
+  const { activeNetwork, switchNetwork } = useNetwork(); // ✅ Tik NetworkContext
+  const { ready } = useSystemReady(); // ✅ Pilnas readiness hook
+
   const containerRef = useRef(null);
   const [selectedIndex, setSelectedIndex] = useState(1);
   const [isMobile, setIsMobile] = useState(false);
   const hasInitialized = useRef(false);
-  const isSwipeReady = useSwipeReady();
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth <= 1024);
@@ -31,23 +33,23 @@ export default function SwipeSelector({ onSelect }) {
   }, []);
 
   useEffect(() => {
-    if (!isSwipeReady || hasInitialized.current) return;
+    if (!ready || hasInitialized.current) return;
     if (supportedNetworks[selectedIndex]) {
       const selectedSymbol = supportedNetworks[selectedIndex].symbol;
-      setActiveNetwork(selectedSymbol);
+      switchNetwork(selectedSymbol);
       onSelect?.(selectedSymbol);
       hasInitialized.current = true;
     }
     if (isMobile) scrollToCenter(selectedIndex);
-  }, [isSwipeReady, isMobile, selectedIndex, setActiveNetwork, onSelect]);
+  }, [ready, isMobile, selectedIndex, switchNetwork, onSelect]);
 
   useEffect(() => {
-    if (!isSwipeReady) return;
+    if (!ready) return;
     const idx = supportedNetworks.findIndex((net) => net.symbol === activeNetwork);
     if (idx >= 0 && idx !== selectedIndex) {
       setSelectedIndex(idx);
     }
-  }, [activeNetwork, isSwipeReady]);
+  }, [activeNetwork, ready]);
 
   const scrollToCenter = (index) => {
     const container = containerRef.current;
@@ -61,7 +63,7 @@ export default function SwipeSelector({ onSelect }) {
   const handleSelect = (index) => {
     setSelectedIndex(index);
     const selectedSymbol = supportedNetworks[index].symbol;
-    setActiveNetwork(selectedSymbol);
+    switchNetwork(selectedSymbol);
     onSelect?.(selectedSymbol);
 
     if (typeof window !== "undefined" && "vibrate" in navigator) {
@@ -79,8 +81,12 @@ export default function SwipeSelector({ onSelect }) {
     if (selectedIndex < supportedNetworks.length - 1) handleSelect(selectedIndex + 1);
   };
 
-  if (!isSwipeReady) {
-    return <div className={styles.loading}>Loading networks...</div>;
+  if (!ready) {
+    return (
+      <div className={styles.loading}>
+        <p>Loading networks...</p>
+      </div>
+    );
   }
 
   return (
