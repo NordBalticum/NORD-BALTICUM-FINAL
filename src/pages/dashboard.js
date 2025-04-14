@@ -6,13 +6,15 @@ import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 
-import { useBalance } from "@/contexts/BalanceContext";
-import { useSystemReady } from "@/hooks/useSystemReady"; // ✅ Tikras readiness + balansų checkas
+import { useAuth } from "@/contexts/AuthContext"; // ✅ User ir Wallet
+import { useNetwork } from "@/contexts/NetworkContext"; // ✅ Tinklas
+import { useBalance } from "@/contexts/BalanceContext"; // ✅ Balansai ir kainos
+import { useSystemReady } from "@/hooks/useSystemReady"; // ✅ Pilnas readiness
 
 import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
 import styles from "@/styles/dashboard.module.css";
 
-// 2️⃣ Dinaminis Importas (SSR false)
+// 2️⃣ Dinaminis Importas
 const LivePriceTable = dynamic(() => import("@/components/LivePriceTable"), { ssr: false });
 
 // 3️⃣ Tinklų Ikonos ir Pavadinimai
@@ -32,11 +34,13 @@ const names = {
   avax: "Avalanche",
 };
 
-// 4️⃣ DASHBOARD PUSLAPIS
+// 4️⃣ DASHBOARD KOMPONENTAS
 export default function Dashboard() {
   const router = useRouter();
+  const { user, wallet } = useAuth(); // ✅ Vartotojo duomenys
+  const { activeNetwork } = useNetwork(); // ✅ Aktyvus tinklas
   const { balances, prices } = useBalance(); // ✅ Balansai + kainos
-  const { ready, loading } = useSystemReady(); // ✅ Sistema paruošta
+  const { ready, loading } = useSystemReady(); // ✅ Viso readiness tikrinimas
 
   // ✅ Tokenų sąrašas pagal turimus balansus
   const tokens = useMemo(() => {
@@ -46,7 +50,7 @@ export default function Dashboard() {
     return Object.keys(balances);
   }, [balances]);
 
-  // ✅ Loader jei dar sistema kraunasi
+  // ✅ Loaderis jei sistema neparuošta
   if (loading) {
     return (
       <div className={styles.fullscreenCenter}>
@@ -55,7 +59,7 @@ export default function Dashboard() {
     );
   }
 
-  // ✅ Pagrindinis turinys
+  // ✅ RENDERIS
   return (
     <main className={styles.container}>
       <div className={styles.dashboardWrapper}>
@@ -63,7 +67,7 @@ export default function Dashboard() {
         {/* ✅ Live Kainų Lentelė */}
         <LivePriceTable />
 
-        {/* ✅ Turimų Asset'ų lentelė */}
+        {/* ✅ Balansų Lentelė */}
         <div className={styles.assetList}>
           {tokens.length === 0 ? (
             <div className={styles.noAssets}>No assets found.</div>
