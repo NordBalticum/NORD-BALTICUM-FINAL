@@ -7,21 +7,20 @@ import { useBalance } from "@/contexts/BalanceContext";
 export function useSystemReady() {
   const { user, wallet, authLoading, walletLoading } = useAuth();
   const { activeNetwork } = useNetwork();
-  const { balances } = useBalance();
+  const { balances, loading: balancesLoading } = useBalance(); // ✅ Imame balances + loading statusą
 
   const isClient = typeof window !== "undefined";
 
-  const minimalReady = user?.email && wallet?.wallet && activeNetwork;
+  // ✅ Minimalus readiness: user email + wallet + pasirinktas tinklas
+  const minimalReady = isClient && user?.email && wallet?.wallet && activeNetwork;
 
+  // ✅ Balansų readiness: kai bent 1 balansas egzistuoja
   const hasBalances = balances && Object.keys(balances).length > 0;
 
-  const ready =
-    isClient &&
-    minimalReady &&
-    !authLoading &&
-    !walletLoading &&
-    hasBalances; // ✅ Privalom turėti bent 1 balansą
+  // ✅ Sistema READY jei:
+  const ready = minimalReady && !authLoading && !walletLoading && hasBalances && !balancesLoading;
 
+  // ✅ Sistema kraunasi jei bet kuris iš šitų nėra pilnai pasiruošęs
   const loading = !ready;
 
   return { ready, loading };
