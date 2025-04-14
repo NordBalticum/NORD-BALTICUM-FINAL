@@ -6,17 +6,17 @@ import dynamic from "next/dynamic";
 import Image from "next/image";
 
 import { useAuth } from "@/contexts/AuthContext";
-import { useNetwork } from "@/contexts/NetworkContext"; // ✅ Pridedam NetworkContext
+import { useNetwork } from "@/contexts/NetworkContext";
 import { useBalance } from "@/contexts/BalanceContext";
 import { useSystemReady } from "@/hooks/useSystemReady";
 
 import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
 import styles from "@/styles/dashboard.module.css";
 
-// ✅ Dinaminis LivePriceTable importas (SSR OFF)
+// ✅ Dinaminis LivePriceTable importas
 const LivePriceTable = dynamic(() => import("@/components/LivePriceTable"), { ssr: false });
 
-// ✅ Ikonos ir tinklų pavadinimai
+// ✅ Tinklų ikonos
 const iconUrls = {
   eth: "/icons/eth.svg",
   bnb: "/icons/bnb.svg",
@@ -25,6 +25,7 @@ const iconUrls = {
   avax: "/icons/avax.svg",
 };
 
+// ✅ Tinklų pavadinimai
 const names = {
   eth: "Ethereum",
   bnb: "BNB Smart Chain",
@@ -37,17 +38,17 @@ const names = {
 export default function Dashboard() {
   const router = useRouter();
   const { user, wallet } = useAuth();
-  const { activeNetwork } = useNetwork(); // ✅ Gaunam aktyvų tinklą
+  const { activeNetwork } = useNetwork();
   const { balances, prices, loading } = useBalance();
   const { ready } = useSystemReady();
 
-  // ✅ Tikrinam kokius tokenus turim pagal balansus
+  // ✅ Turimų tokenų sąrašas
   const tokens = useMemo(() => {
     if (!balances || Object.keys(balances).length === 0) return [];
     return Object.keys(balances);
   }, [balances]);
 
-  // ✅ Loaderis kol kraunasi visa sistema
+  // ✅ Loaderis jei sistema neparuošta
   if (loading || !ready || !user || !wallet || !activeNetwork) {
     return (
       <div className={styles.fullscreenCenter}>
@@ -64,7 +65,7 @@ export default function Dashboard() {
         {/* ✅ Live kainų lentelė */}
         <LivePriceTable />
 
-        {/* ✅ Vartotojo Asset'ų sąrašas */}
+        {/* ✅ Turimi asset'ai */}
         <div className={styles.assetList}>
           {tokens.length === 0 ? (
             <div className={styles.noAssets}>No assets found.</div>
