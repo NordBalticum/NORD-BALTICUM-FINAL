@@ -14,8 +14,10 @@ import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
 import { toast } from "react-toastify";
 import styles from "@/styles/dashboard.module.css";
 
+// ✅ Dinaminis LivePriceTable importas (SSR OFF)
 const LivePriceTable = dynamic(() => import("@/components/LivePriceTable"), { ssr: false });
 
+// ✅ Tinklų ikonos
 const iconUrls = {
   eth: "/icons/eth.svg",
   bnb: "/icons/bnb.svg",
@@ -24,6 +26,7 @@ const iconUrls = {
   avax: "/icons/avax.svg",
 };
 
+// ✅ Tinklų pavadinimai
 const names = {
   eth: "Ethereum",
   bnb: "BNB Smart Chain",
@@ -39,22 +42,23 @@ export default function Dashboard() {
 
   const [initialLoadDone, setInitialLoadDone] = useState(false);
 
+  // ✅ Tokenų sąrašas pagal balansus
   const tokens = useMemo(() => {
     if (!balances || Object.keys(balances).length === 0) return [];
     return Object.keys(balances);
   }, [balances]);
 
-  // ✅ Tik PRADINIS 1 kartinis timeout, kai dashboard atsiranda
+  // ✅ Tik PRADINIS timeout, kad nerodytų "refresho" ant pirmo įkėlimo
   useEffect(() => {
     if (ready && !initialLoadDone) {
       const timer = setTimeout(() => {
         setInitialLoadDone(true);
-      }, 2000); // mažas delay kad išvengtų first refetch
+      }, 2500); // ✅ 2.5s laukiam po tikro ready
       return () => clearTimeout(timer);
     }
   }, [ready, initialLoadDone]);
 
-  // ✅ Visibility change – refetchinam tik jei jau pirmą kartą pasikrovė normaliai
+  // ✅ Visibility change – refetch tik jei jau esam pilnai pasikrovę
   useEffect(() => {
     const handleVisibilityChange = async () => {
       if (document.visibilityState === "visible" && initialLoadDone) {
@@ -77,8 +81,8 @@ export default function Dashboard() {
     };
   }, [initialLoadDone, refetch]);
 
-  // ✅ Jei sistema NEparuošta
-  if (loading || !ready) {
+  // ✅ Loaderis jei sistema NEparuošta
+  if (!ready || loading) {
     return (
       <div className={styles.fullscreenCenter}>
         <MiniLoadingSpinner size={32} />
@@ -86,7 +90,7 @@ export default function Dashboard() {
     );
   }
 
-  // ✅ Tikras Dashboard turinys
+  // ✅ Pagrindinis Dashboard turinys
   return (
     <main className={styles.container}>
       <div className={styles.dashboardWrapper}>
@@ -98,6 +102,7 @@ export default function Dashboard() {
             tokens.map((network) => {
               const balanceValue = balances?.[network];
               const priceData = prices?.[network];
+
               if (balanceValue == null || priceData == null) {
                 return (
                   <div key={network} className={styles.assetItem}>
