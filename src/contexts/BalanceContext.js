@@ -92,6 +92,7 @@ export const BalanceProvider = ({ children }) => {
     }
   }, [wallet]);
 
+  // ✅ Pagrindinis efektas
   useEffect(() => {
     if (authLoading || walletLoading) return;
     if (!wallet?.wallet?.address) return;
@@ -105,6 +106,27 @@ export const BalanceProvider = ({ children }) => {
     return () => clearInterval(intervalRef.current);
   }, [authLoading, walletLoading, wallet, fetchBalancesAndPrices]);
 
+  // ✅ Refetch kai app grįžta iš minimize
+  useEffect(() => {
+    const handleVisibilityChange = async () => {
+      if (document.visibilityState === "visible") {
+        console.log("App is visible again, refetching balances...");
+        await fetchBalancesAndPrices();
+      }
+    };
+
+    if (typeof window !== "undefined") {
+      document.addEventListener("visibilitychange", handleVisibilityChange);
+    }
+
+    return () => {
+      if (typeof window !== "undefined") {
+        document.removeEventListener("visibilitychange", handleVisibilityChange);
+      }
+    };
+  }, [fetchBalancesAndPrices]);
+
+  // ✅ Final return
   return (
     <BalanceContext.Provider value={{
       balances,
