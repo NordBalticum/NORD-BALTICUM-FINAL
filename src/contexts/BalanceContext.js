@@ -8,12 +8,12 @@ import { useAuth } from "@/contexts/AuthContext";
 const TOKEN_IDS = {
   eth: "ethereum",
   bnb: "binancecoin",
-  tbnb: "binancecoin", // tbnb = bnb price
+  tbnb: "binancecoin", 
   matic: "polygon",
   avax: "avalanche-2",
 };
 
-// ✅ Fallback kainos (jei CoinGecko nulūžtų)
+// ✅ Fallback kainos
 const FALLBACK_PRICES = {
   eth: { eur: 2900, usd: 3100 },
   bnb: { eur: 450, usd: 480 },
@@ -22,13 +22,12 @@ const FALLBACK_PRICES = {
   avax: { eur: 30, usd: 32 },
 };
 
-// ✅ Context sukūrimas
+// ✅ Context
 const BalanceContext = createContext();
 export const useBalance = () => useContext(BalanceContext);
 
-// ✅ Provideris
 export const BalanceProvider = ({ children }) => {
-  const { wallet } = useAuth();
+  const { wallet, authLoading } = useAuth(); // ✅ Imame ir authLoading!
 
   const [balances, setBalances] = useState({});
   const [prices, setPrices] = useState(FALLBACK_PRICES);
@@ -38,7 +37,6 @@ export const BalanceProvider = ({ children }) => {
 
   const intervalRef = useRef(null);
 
-  // ✅ Fetch funkcija
   const fetchBalancesAndPrices = useCallback(async () => {
     if (!wallet?.signers) return;
 
@@ -46,7 +44,6 @@ export const BalanceProvider = ({ children }) => {
       setSilentLoading(true);
       setError(null);
 
-      // ✅ Fetch Balances
       const balancesData = await Promise.all(
         Object.entries(wallet.signers).map(async ([network, signer]) => {
           try {
@@ -65,9 +62,9 @@ export const BalanceProvider = ({ children }) => {
       });
       setBalances(newBalances);
 
-      // ✅ Fetch Prices
-      const uniqueIds = Array.from(new Set(Object.values(TOKEN_IDS))).join(",");
-      const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${uniqueIds}&vs_currencies=eur,usd`, {
+      // ✅ Fetch kainos
+      const ids = Array.from(new Set(Object.values(TOKEN_IDS))).join(",");
+      const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=eur,usd`, {
         cache: "no-store",
       });
 
@@ -87,40 +84,40 @@ export const BalanceProvider = ({ children }) => {
     } catch (err) {
       console.error("❌ Balance/Price fetch error:", err?.message || err);
       setError(err?.message || "Failed to load balances/prices.");
-      setPrices(FALLBACK_PRICES); // fallback
+      setPrices(FALLBACK_PRICES);
     } finally {
       setSilentLoading(false);
       setFirstLoading(false);
     }
   }, [wallet]);
 
-  // ✅ Automatizuotas Refresh
+  // ✅ Pataisytas useEffect
   useEffect(() => {
+    if (authLoading) return; // ⛔️ Jei auth kraunasi – nebandyti fetchint!
+
     if (wallet?.signers) {
-      fetchBalancesAndPrices(); // ✅ Pirmas pakrovimas
+      fetchBalancesAndPrices(); // ✅ Pirmas kartas
 
       if (intervalRef.current) clearInterval(intervalRef.current);
 
       intervalRef.current = setInterval(fetchBalancesAndPrices, 30000); // ✅ Silent refresh kas 30s
       return () => clearInterval(intervalRef.current);
     }
-  }, [wallet, fetchBalancesAndPrices]);
+  }, [wallet, authLoading, fetchBalancesAndPrices]);
 
-  // ✅ Gauti balansą USD
+  // ✅ Skaičiavimai
   const getUsdBalance = (network) => {
     const balance = balances?.[network] || 0;
     const price = prices?.[network]?.usd || 0;
     return (balance * price).toFixed(2);
   };
 
-  // ✅ Gauti balansą EUR
   const getEurBalance = (network) => {
     const balance = balances?.[network] || 0;
     const price = prices?.[network]?.eur || 0;
     return (balance * price).toFixed(2);
   };
 
-  // ✅ Sumuoti visą portfelį
   const getPortfolioValue = () => {
     let totalEur = 0;
     let totalUsd = 0;
@@ -141,19 +138,17 @@ export const BalanceProvider = ({ children }) => {
   };
 
   return (
-    <BalanceContext.Provider
-      value={{
-        balances,
-        prices,
-        loading: firstLoading,
-        silentLoading,
-        error,
-        refetch: fetchBalancesAndPrices,
-        getUsdBalance,
-        getEurBalance,
-        getPortfolioValue,
-      }}
-    >
+    <BalanceContext.Provider value={{
+      balances,
+      prices,
+      loading: firstLoading,
+      silentLoading,
+      error,
+      refetch: fetchBalancesAndPrices,
+      getUsdBalance,
+      getEurBalance,
+      getPortfolioValue,
+    }}>
       {children}
     </BalanceContext.Provider>
   );
