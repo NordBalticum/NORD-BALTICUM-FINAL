@@ -1,19 +1,30 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect, useRef, useCallback } from "react";
+import { createContext, useContext, useEffect, useState, useCallback, useRef } from "react";
 import { ethers } from "ethers";
 import { useAuth } from "@/contexts/AuthContext";
 
-// ✅ CoinGecko token mapping
+const BalanceContext = createContext();
+export const useBalance = () => useContext(BalanceContext);
+
+// ✅ Kiekvieno tinklo RPC
+const RPC = {
+  eth: "https://rpc.ankr.com/eth",
+  bnb: "https://bsc-dataseed.binance.org/",
+  tbnb: "https://data-seed-prebsc-1-s1.binance.org:8545/",
+  matic: "https://polygon-rpc.com",
+  avax: "https://api.avax.network/ext/bc/C/rpc",
+};
+
+// ✅ Token mapping
 const TOKEN_IDS = {
   eth: "ethereum",
   bnb: "binancecoin",
-  tbnb: "binancecoin", 
+  tbnb: "binancecoin",
   matic: "polygon",
   avax: "avalanche-2",
 };
 
-// ✅ Fallback kainos
 const FALLBACK_PRICES = {
   eth: { eur: 2900, usd: 3100 },
   bnb: { eur: 450, usd: 480 },
@@ -22,53 +33,39 @@ const FALLBACK_PRICES = {
   avax: { eur: 30, usd: 32 },
 };
 
-// ✅ Context
-const BalanceContext = createContext();
-export const useBalance = () => useContext(BalanceContext);
-
 export const BalanceProvider = ({ children }) => {
-  const { wallet, authLoading } = useAuth(); // ✅ Imame ir authLoading!
-
+  const { wallet, authLoading, walletLoading } = useAuth();
   const [balances, setBalances] = useState({});
   const [prices, setPrices] = useState(FALLBACK_PRICES);
-  const [firstLoading, setFirstLoading] = useState(true);
-  const [silentLoading, setSilentLoading] = useState(false);
-  const [error, setError] = useState(null);
-
+  const [loading, setLoading] = useState(true);
   const intervalRef = useRef(null);
 
   const fetchBalancesAndPrices = useCallback(async () => {
-    if (!wallet?.signers) return;
+    if (!wallet?.wallet?.address) return;
 
     try {
-      setSilentLoading(true);
-      setError(null);
-
-      const balancesData = await Promise.all(
-        Object.entries(wallet.signers).map(async ([network, signer]) => {
-          try {
-            const balance = await signer.getBalance();
-            return { network, balance: parseFloat(ethers.formatEther(balance)) };
-          } catch (err) {
-            console.error(`❌ Balance fetch error [${network}]:`, err?.message || err);
-            return { network, balance: 0 };
-          }
-        })
-      );
-
+      const address = wallet.wallet.address;
       const newBalances = {};
-      balancesData.forEach(({ network, balance }) => {
-        newBalances[network] = balance;
-      });
+
+      // ✅ Einam per kiekvieną tinklą
+      await Promise.all(Object.entries(RPC).map(async ([network, rpcUrl]) => {
+        const provider = new ethers.JsonRpcProvider(rpcUrl);
+        const balance = await provider.getBalance(address);
+        newBalances[network] = {
+          balance: parseFloat(ethers.formatEther(balance)),
+          symbol: network.toUpperCase(),
+        };
+      }));
+
       setBalances(newBalances);
 
-      // ✅ Fetch kainos
+      // ✅ Fetch CoinGecko prices
       const ids = Array.from(new Set(Object.values(TOKEN_IDS))).join(",");
       const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=eur,usd`, {
         cache: "no-store",
       });
 
-      if (!res.ok) throw new Error("Failed to fetch prices from CoinGecko.");
+      if (!res.ok) throw new Error("Failed to fetch prices");
 
       const data = await res.json();
       const priceMap = {};
@@ -82,72 +79,30 @@ export const BalanceProvider = ({ children }) => {
 
       setPrices(priceMap);
     } catch (err) {
-      console.error("❌ Balance/Price fetch error:", err?.message || err);
-      setError(err?.message || "Failed to load balances/prices.");
-      setPrices(FALLBACK_PRICES);
+      console.error("❌ BalanceContext fetch error:", err.message || err);
     } finally {
-      setSilentLoading(false);
-      setFirstLoading(false);
+      setLoading(false);
     }
   }, [wallet]);
 
-  // ✅ Pataisytas useEffect
   useEffect(() => {
-    if (authLoading) return; // ⛔️ Jei auth kraunasi – nebandyti fetchint!
+    if (authLoading || walletLoading) return; // ✅ Palaukiam auth
+    if (!wallet?.wallet?.address) return;
 
-    if (wallet?.signers) {
-      fetchBalancesAndPrices(); // ✅ Pirmas kartas
+    fetchBalancesAndPrices();
 
-      if (intervalRef.current) clearInterval(intervalRef.current);
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    intervalRef.current = setInterval(fetchBalancesAndPrices, 30000);
 
-      intervalRef.current = setInterval(fetchBalancesAndPrices, 30000); // ✅ Silent refresh kas 30s
-      return () => clearInterval(intervalRef.current);
-    }
-  }, [wallet, authLoading, fetchBalancesAndPrices]);
-
-  // ✅ Skaičiavimai
-  const getUsdBalance = (network) => {
-    const balance = balances?.[network] || 0;
-    const price = prices?.[network]?.usd || 0;
-    return (balance * price).toFixed(2);
-  };
-
-  const getEurBalance = (network) => {
-    const balance = balances?.[network] || 0;
-    const price = prices?.[network]?.eur || 0;
-    return (balance * price).toFixed(2);
-  };
-
-  const getPortfolioValue = () => {
-    let totalEur = 0;
-    let totalUsd = 0;
-
-    Object.keys(balances).forEach((network) => {
-      const balance = balances[network] || 0;
-      const eurPrice = prices?.[network]?.eur || 0;
-      const usdPrice = prices?.[network]?.usd || 0;
-
-      totalEur += balance * eurPrice;
-      totalUsd += balance * usdPrice;
-    });
-
-    return {
-      eur: totalEur.toFixed(2),
-      usd: totalUsd.toFixed(2),
-    };
-  };
+    return () => clearInterval(intervalRef.current);
+  }, [authLoading, walletLoading, wallet, fetchBalancesAndPrices]);
 
   return (
     <BalanceContext.Provider value={{
       balances,
       prices,
-      loading: firstLoading,
-      silentLoading,
-      error,
+      loading,
       refetch: fetchBalancesAndPrices,
-      getUsdBalance,
-      getEurBalance,
-      getPortfolioValue,
     }}>
       {children}
     </BalanceContext.Provider>
