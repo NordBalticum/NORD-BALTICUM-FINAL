@@ -85,41 +85,42 @@ export const AuthProvider = ({ children }) => {
   const inactivityTimer = useRef(null);
   const lastSessionRefresh = useRef(Date.now());
 
+  // ✅ INIT: load session once
   useEffect(() => {
     if (!isClient) return;
-    const loadSession = async () => {
+
+    const init = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (session) {
           setSession(session);
           setUser(session.user);
-        } else {
-          setSession(null);
-          setUser(null);
-          setWallet(null);
         }
       } catch (err) {
-        console.error("Session load failed:", err.message);
-        setSession(null);
-        setUser(null);
-        setWallet(null);
+        console.error("Initial session load error:", err.message);
       } finally {
         setAuthLoading(false);
       }
     };
-    loadSession();
+
+    init();
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session) {
         setSession(session);
         setUser(session.user);
       } else {
-        toast.error("⚠️ Session ended. Redirecting...");
-        signOut(false);
+        console.warn("Session ended – null received. Cleaning up.");
+        setSession(null);
+        setUser(null);
+        setWallet(null);
       }
     });
+
     return () => subscription?.unsubscribe();
   }, []);
 
+  // ✅ Wallet loader
   useEffect(() => {
     if (!isClient || authLoading || !user?.email) return;
     loadOrCreateWallet(user.email);
@@ -170,12 +171,7 @@ export const AuthProvider = ({ children }) => {
     }
     try {
       setWalletLoading(true);
-      const existing = await supabase.from("wallets").select("eth_address").eq("user_email", email).single();
       const newAddress = new ethers.Wallet(privateKey).address;
-      if (existing.data?.eth_address === newAddress) {
-        toast.info("⚠️ Same wallet already imported.");
-        return setupWallet(privateKey);
-      }
       const encryptedKey = await encrypt(privateKey);
       const { error } = await supabase.from("wallets").upsert({
         user_email: email,
@@ -205,7 +201,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const safeRefreshSession = async () => {
-    if (Date.now() - lastSessionRefresh.current < 60000) return null;
+    if (Date.now() - lastSessionRefresh.current < 60000) return;
     lastSessionRefresh.current = Date.now();
     try {
       const { data: { session } } = await supabase.auth.refreshSession();
@@ -217,13 +213,11 @@ export const AuthProvider = ({ children }) => {
         setUser(null);
         setWallet(null);
       }
-      return session ?? null;
     } catch (err) {
       console.error("Session refresh failed:", err.message);
       setSession(null);
       setUser(null);
       setWallet(null);
-      return null;
     }
   };
 
@@ -231,21 +225,21 @@ export const AuthProvider = ({ children }) => {
     if (!isClient) return;
     const interval = setInterval(() => safeRefreshSession(), 300000);
     return () => clearInterval(interval);
-  }, [safeRefreshSession, isClient]);
+  }, [isClient]);
 
   useEffect(() => {
     if (!isClient) return;
-    const handleVisible = debounce(() => safeRefreshSession(), 500);
-    const handleOnline = debounce(() => safeRefreshSession(), 500);
-    document.addEventListener("visibilitychange", handleVisible);
-    window.addEventListener("online", handleOnline);
+    const onVisible = debounce(() => safeRefreshSession(), 500);
+    const onOnline = debounce(() => safeRefreshSession(), 500);
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("online", onOnline);
     return () => {
-      document.removeEventListener("visibilitychange", handleVisible);
-      window.removeEventListener("online", handleOnline);
-      handleVisible.cancel?.();
-      handleOnline.cancel?.();
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("online", onOnline);
+      onVisible.cancel?.();
+      onOnline.cancel?.();
     };
-  }, [safeRefreshSession, isClient]);
+  }, [isClient]);
 
   useEffect(() => {
     if (!isClient) return;
@@ -331,7 +325,7 @@ export const AuthProvider = ({ children }) => {
         isValidPrivateKey,
       }}
     >
-      {children}
+      {!authLoading && children}
     </AuthContext.Provider>
   );
 };
