@@ -1,117 +1,107 @@
 "use client";
 
 import { useAuth } from "@/contexts/AuthContext";
-import { useEffect, useState, useMemo, useRef } from "react";
-import { toast } from "react-toastify";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { startSessionWatcher } from "@/utils/sessionWatcher";
+import { toast } from "react-toastify";
+import debounce from "lodash.debounce";
 
-// ✅ Minimal readiness hook
 export function useMinimalReady() {
   const { user, wallet, authLoading, walletLoading, safeRefreshSession, signOut } = useAuth();
 
-  const [isClientReady, setIsClientReady] = useState(false);
+  const [isDomReady, setIsDomReady] = useState(false);
   const sessionWatcher = useRef(null);
+  const refreshInterval = useRef(null);
+  const lastRefreshTime = useRef(Date.now());
+
   const isClient = typeof window !== "undefined";
 
-  // ✅ Kai DOM pilnai pasikrovęs
+  // ✅ Kai DOM pilnai užsikrovęs
   useEffect(() => {
     if (!isClient) return;
 
-    const handleLoad = () => setIsClientReady(true);
+    const markDomReady = () => setIsDomReady(true);
 
     if (document.readyState === "complete") {
-      setIsClientReady(true);
+      markDomReady();
     } else {
-      window.addEventListener("load", handleLoad);
-      return () => window.removeEventListener("load", handleLoad);
+      window.addEventListener("load", markDomReady);
+      return () => window.removeEventListener("load", markDomReady);
     }
   }, [isClient]);
 
-  // ✅ Ar turim user + wallet
-  const hasUserAndWallet = Boolean(user?.email && wallet?.wallet?.address);
-
   // ✅ Minimal readiness
-  const minimalReady =
-    isClient &&
-    isClientReady &&
-    hasUserAndWallet &&
-    !authLoading &&
-    !walletLoading;
+  const minimalReady = useMemo(
+    () =>
+      isClient &&
+      isDomReady &&
+      !!user?.email &&
+      !!wallet?.wallet?.address &&
+      !authLoading &&
+      !walletLoading,
+    [isClient, isDomReady, user, wallet, authLoading, walletLoading]
+  );
 
-  // ✅ Loading būklė
   const loading = !minimalReady;
 
-  // ✅ Visibility + Online Events (be debounce, tiesiogiai)
-  const handlers = useMemo(() => {
-    const handleVisibilityChange = async () => {
-      if (document.visibilityState === "visible" && safeRefreshSession) {
-        console.log("✅ Tab became visible – refreshing session...");
-        try {
-          await safeRefreshSession();
-        } catch (error) {
-          console.error("❌ Visibility session refresh error:", error.message);
-        }
-      }
-    };
-
-    const handleOnline = async () => {
-      if (safeRefreshSession) {
-        console.log("✅ Network online – refreshing session...");
-        try {
-          await safeRefreshSession();
-        } catch (error) {
-          console.error("❌ Online session refresh error:", error.message);
-        }
-      }
-    };
-
-    return { handleVisibilityChange, handleOnline };
-  }, [safeRefreshSession]);
-
-  // ✅ Pagrindinė event'ų kontrolė
+  // ✅ Debounced refresh handlers
   useEffect(() => {
-    if (!isClient) return;
+    if (!isClient || !minimalReady) return;
 
-    document.addEventListener("visibilitychange", handlers.handleVisibilityChange);
-    window.addEventListener("online", handlers.handleOnline);
+    const refresh = async (trigger) => {
+      const start = performance.now();
+      try {
+        await safeRefreshSession?.();
+        lastRefreshTime.current = Date.now();
+        console.log(`✅ Session refreshed [${trigger}] (${Math.round(performance.now() - start)}ms)`);
+      } catch (error) {
+        console.error(`❌ Refresh error [${trigger}]:`, error.message);
+      }
+    };
+
+    const handleVisible = debounce(() => refresh("tab-visible"), 300);
+    const handleOnline = debounce(() => refresh("network-online"), 300);
+
+    document.addEventListener("visibilitychange", handleVisible);
+    window.addEventListener("online", handleOnline);
 
     return () => {
-      document.removeEventListener("visibilitychange", handlers.handleVisibilityChange);
-      window.removeEventListener("online", handlers.handleOnline);
+      document.removeEventListener("visibilitychange", handleVisible);
+      window.removeEventListener("online", handleOnline);
     };
-  }, [handlers, isClient]);
+  }, [minimalReady, safeRefreshSession]);
 
-  // ✅ Auto safeRefresh kas 5 minutes net minimal ready būsenoje
+  // ✅ Auto refresh kas 5 min (check every 30s)
   useEffect(() => {
-    if (!isClient || !safeRefreshSession) return;
+    if (!isClient || !minimalReady) return;
 
-    const interval = setInterval(() => {
-      console.log("⏳ Auto refreshing session (Minimal Ready)...");
-      safeRefreshSession();
-    }, 5 * 60 * 1000); // 5 minutes
+    refreshInterval.current = setInterval(() => {
+      if (Date.now() - lastRefreshTime.current >= 5 * 60 * 1000) {
+        console.log("⏳ Auto session refresh (Minimal Ready)");
+        safeRefreshSession?.();
+        lastRefreshTime.current = Date.now();
+      }
+    }, 30000);
 
-    return () => clearInterval(interval);
-  }, [safeRefreshSession, isClient]);
+    return () => clearInterval(refreshInterval.current);
+  }, [minimalReady, safeRefreshSession]);
 
-  // ✅ Start SessionWatcher su network kritimo aptikimu
+  // ✅ NEW SessionWatcher
   useEffect(() => {
-    if (!isClient) return;
+    if (!isClient || !minimalReady) return;
 
     sessionWatcher.current = startSessionWatcher({
       onSessionInvalid: () => {
-        toast.error("⚠️ Session invalid or network down – logging out.");
-        signOut(true);
+        toast.error("⚠️ Session expired or lost. Logging out.");
+        signOut?.(true);
       },
-      intervalMs: 60000, // kas 1 min
-      networkFailLimit: 3, // jei 3x iš eilės error – logout
+      intervalMinutes: 1,
     });
 
     sessionWatcher.current.start();
 
-    return () => {
-      sessionWatcher.current?.stop?.();
-    };
-  }, [isClient]);
+    return () => sessionWatcher.current?.stop?.();
+  }, [minimalReady, signOut]);
 
   return { ready: minimalReady, loading };
 }
