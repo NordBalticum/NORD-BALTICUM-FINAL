@@ -2,7 +2,16 @@
 
 import { useEffect, useState, useRef, useCallback } from "react";
 import { Line } from "react-chartjs-2";
-import { Chart as ChartJS, LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Filler, Decimation } from "chart.js";
+import {
+  Chart as ChartJS,
+  LineElement,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  Tooltip,
+  Filler,
+  Decimation,
+} from "chart.js";
 
 import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
 import { useMinimalReady } from "@/hooks/useMinimalReady";
