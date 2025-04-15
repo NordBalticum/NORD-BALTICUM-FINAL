@@ -1,6 +1,8 @@
 // src/utils/sessionWatcher.js
 // === ULTIMATE SESSION WATCHER v2025 FINAL MOBILE-TOUCH READY EDITION ===
 
+"use client";
+
 export function startSessionWatcher({
   onSessionInvalid,
   user,
