@@ -48,9 +48,15 @@ export default function SendTest() {
     if (selectedNetwork && amount) {
       calculateFees(selectedNetwork, amount);
     }
-  }, [selectedNetwork, amount]);
+  }, [selectedNetwork, amount, calculateFees]);
 
-  if (loading || !ready || !wallet?.wallet?.address) return null;
+  if (
+    typeof window === "undefined" ||
+    loading ||
+    !ready ||
+    !wallet?.wallet?.address
+  )
+    return null;
 
   const handleSend = () => {
     if (!ethers.isAddress(to)) return alert("Invalid address.");
@@ -79,9 +85,10 @@ export default function SendTest() {
   };
 
   const currentBalance = parseFloat(balances[selectedNetwork]?.balance || 0);
-  const networkInfo = NETWORK_OPTIONS.find(n => n.value === selectedNetwork);
+  const networkInfo = NETWORK_OPTIONS.find(
+    (n) => n.value === selectedNetwork
+  );
   const networkLabel = networkInfo?.label || selectedNetwork.toUpperCase();
-  const networkIcon = networkInfo?.icon;
 
   const explorerLink = (hash) => {
     const explorers = {
@@ -102,7 +109,9 @@ export default function SendTest() {
         {NETWORK_OPTIONS.map((net) => (
           <button
             key={net.value}
-            className={`${styles.networkOption} ${selectedNetwork === net.value ? styles.active : ""}`}
+            className={`${styles.networkOption} ${
+              selectedNetwork === net.value ? styles.active : ""
+            }`}
             onClick={() => {
               setSelectedNetwork(net.value);
               setTimeout(() => amountRef.current?.focus(), 300);
@@ -122,6 +131,7 @@ export default function SendTest() {
           onChange={(e) => setTo(e.target.value)}
           className={styles.input}
         />
+
         <input
           ref={amountRef}
           type="number"
@@ -141,7 +151,9 @@ export default function SendTest() {
           ) : (
             <>
               <span>Fees:</span>
-              <span>{totalFee.toFixed(6)} {networkLabel}</span>
+              <span>
+                {totalFee.toFixed(6)} {networkLabel}
+              </span>
             </>
           )}
         </div>
@@ -158,17 +170,39 @@ export default function SendTest() {
       {/* Confirm Modal */}
       <AnimatePresence>
         {confirmOpen && (
-          <motion.div className={styles.modalOverlay} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+          <motion.div
+            className={styles.modalOverlay}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
             <motion.div className={styles.modal}>
               <h2>Confirm Transaction</h2>
-              <p><strong>To:</strong> {to}</p>
-              <p><strong>Amount:</strong> {amount} {networkLabel}</p>
-              <p><strong>Gas Fee:</strong> {gasFee.toFixed(6)} {networkLabel}</p>
-              <p><strong>Admin Fee:</strong> {adminFee.toFixed(6)} {networkLabel}</p>
-              <p><strong>Total:</strong> {totalFee.toFixed(6)} {networkLabel}</p>
+              <p>
+                <strong>To:</strong> {to}
+              </p>
+              <p>
+                <strong>Amount:</strong> {amount} {networkLabel}
+              </p>
+              <p>
+                <strong>Gas Fee:</strong> {gasFee.toFixed(6)} {networkLabel}
+              </p>
+              <p>
+                <strong>Admin Fee:</strong> {adminFee.toFixed(6)} {networkLabel}
+              </p>
+              <p>
+                <strong>Total:</strong> {totalFee.toFixed(6)} {networkLabel}
+              </p>
               <div className={styles.modalActions}>
-                <button onClick={confirmSend} className={styles.confirmBtn}>Confirm</button>
-                <button onClick={() => setConfirmOpen(false)} className={styles.cancelBtn}>Cancel</button>
+                <button onClick={confirmSend} className={styles.confirmBtn}>
+                  Confirm
+                </button>
+                <button
+                  onClick={() => setConfirmOpen(false)}
+                  className={styles.cancelBtn}
+                >
+                  Cancel
+                </button>
               </div>
             </motion.div>
           </motion.div>
@@ -178,14 +212,29 @@ export default function SendTest() {
       {/* Success Modal */}
       <AnimatePresence>
         {successData && (
-          <motion.div className={styles.modalOverlay} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+          <motion.div
+            className={styles.modalOverlay}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
             <motion.div className={styles.modal}>
               <h2>Transaction Successful</h2>
               <p>TxHash:</p>
-              <a href={explorerLink(successData)} target="_blank" rel="noopener noreferrer" className={styles.txLink}>
+              <a
+                href={explorerLink(successData)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={styles.txLink}
+              >
                 {successData.slice(0, 10)}...{successData.slice(-6)}
               </a>
-              <button onClick={() => setSuccessData(null)} className={styles.confirmBtn}>Close</button>
+              <button
+                onClick={() => setSuccessData(null)}
+                className={styles.confirmBtn}
+              >
+                Close
+              </button>
             </motion.div>
           </motion.div>
         )}
@@ -194,11 +243,21 @@ export default function SendTest() {
       {/* Error Modal */}
       <AnimatePresence>
         {errorData && (
-          <motion.div className={styles.modalOverlay} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+          <motion.div
+            className={styles.modalOverlay}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
             <motion.div className={styles.modal}>
               <h2>Error</h2>
               <p>{errorData}</p>
-              <button onClick={() => setErrorData(null)} className={styles.cancelBtn}>Close</button>
+              <button
+                onClick={() => setErrorData(null)}
+                className={styles.cancelBtn}
+              >
+                Close
+              </button>
             </motion.div>
           </motion.div>
         )}
