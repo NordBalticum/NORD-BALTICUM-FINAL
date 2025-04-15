@@ -7,7 +7,6 @@ import { supabase } from "@/utils/supabaseClient";
 import { toast } from "react-toastify";
 import debounce from "lodash.debounce";
 
-// ✅ RPC adresai
 export const RPC = {
   eth: "https://rpc.ankr.com/eth",
   bnb: "https://bsc-dataseed.binance.org/",
@@ -16,7 +15,6 @@ export const RPC = {
   avax: "https://api.avax.network/ext/bc/C/rpc",
 };
 
-// ✅ Encryption
 const ENCRYPTION_SECRET = process.env.NEXT_PUBLIC_ENCRYPTION_SECRET;
 
 const encode = (str) => new TextEncoder().encode(str);
@@ -24,7 +22,11 @@ const decode = (buf) => new TextDecoder().decode(buf);
 
 const getKey = async () => {
   const keyMaterial = await window.crypto.subtle.importKey(
-    "raw", encode(ENCRYPTION_SECRET), { name: "PBKDF2" }, false, ["deriveKey"]
+    "raw",
+    encode(ENCRYPTION_SECRET),
+    { name: "PBKDF2" },
+    false,
+    ["deriveKey"]
   );
   return window.crypto.subtle.deriveKey(
     {
@@ -62,7 +64,9 @@ export const decrypt = async (ciphertext) => {
   return decode(decrypted);
 };
 
-// ✅ Context
+// ------------------------------
+// AUTH CONTEXT
+// ------------------------------
 export const AuthContext = createContext();
 export const useAuth = () => useContext(AuthContext);
 
@@ -79,20 +83,20 @@ export const AuthProvider = ({ children }) => {
   const inactivityTimer = useRef(null);
   const lastSessionRefresh = useRef(Date.now());
 
-  // ✅ Init Session
+  // ✅ Load Session
   useEffect(() => {
     if (!isClient) return;
 
     const loadSession = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
-        if (!session) {
+        if (session) {
+          setSession(session);
+          setUser(session.user);
+        } else {
           setUser(null);
           setWallet(null);
           setSession(null);
-        } else {
-          setSession(session);
-          setUser(session.user);
         }
       } catch (err) {
         console.error("Session load failed:", err.message);
@@ -107,19 +111,19 @@ export const AuthProvider = ({ children }) => {
     loadSession();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!session) {
-        toast.error("⚠️ Session ended. Redirecting...");
-        signOut(false);
-      } else {
+      if (session) {
         setSession(session);
         setUser(session.user);
+      } else {
+        toast.error("⚠️ Session ended. Redirecting...");
+        signOut(false);
       }
     });
 
     return () => subscription?.unsubscribe();
   }, []);
 
-  // ✅ Load or create wallet
+  // ✅ Wallet Loader
   useEffect(() => {
     if (!isClient || authLoading || !user?.email) return;
     loadOrCreateWallet(user.email);
@@ -141,10 +145,10 @@ export const AuthProvider = ({ children }) => {
       } else {
         await createAndStoreWallet(email);
       }
-    } catch (error) {
-      console.error("Wallet load failed:", error.message);
+    } catch (err) {
+      console.error("Wallet load failed:", err.message);
       toast.error("❌ Wallet load failed.");
-      setWallet(null);
+      try { setWallet(null); } catch {}
     } finally {
       setWalletLoading(false);
     }
@@ -174,39 +178,38 @@ export const AuthProvider = ({ children }) => {
     setWallet({ wallet: baseWallet, signers });
   };
 
-  // ✅ Safe session refresh
+  // ✅ Safe Refresh
   const safeRefreshSession = async () => {
-    if (Date.now() - lastSessionRefresh.current < 60000) return;
+    if (Date.now() - lastSessionRefresh.current < 60000) return null;
     lastSessionRefresh.current = Date.now();
     try {
       const { data: { session } } = await supabase.auth.refreshSession();
-      if (!session) {
-        setUser(null);
-        setWallet(null);
-        setSession(null);
-      } else {
+      if (session) {
         setSession(session);
         setUser(session.user);
+      } else {
+        setSession(null);
+        setUser(null);
+        try { setWallet(null); } catch {}
       }
-      return session;
+      return session ?? null;
     } catch (err) {
       console.error("Session refresh failed:", err.message);
-      setUser(null);
-      setWallet(null);
       setSession(null);
+      setUser(null);
+      try { setWallet(null); } catch {}
+      return null;
     }
   };
 
-  // ✅ Auto Refresh
+  // ✅ Auto Refresh (5 min)
   useEffect(() => {
     if (!isClient) return;
-    const interval = setInterval(() => {
-      safeRefreshSession();
-    }, 5 * 60 * 1000);
+    const interval = setInterval(() => safeRefreshSession(), 300000);
     return () => clearInterval(interval);
   }, [safeRefreshSession, isClient]);
 
-  // ✅ Visibility / Online Recovery
+  // ✅ Tab / Network Recovery
   useEffect(() => {
     if (!isClient) return;
     const handleVisible = debounce(() => safeRefreshSession(), 500);
@@ -218,10 +221,12 @@ export const AuthProvider = ({ children }) => {
     return () => {
       document.removeEventListener("visibilitychange", handleVisible);
       window.removeEventListener("online", handleOnline);
+      handleVisible.cancel?.();
+      handleOnline.cancel?.();
     };
   }, [safeRefreshSession, isClient]);
 
-  // ✅ Inactivity logout
+  // ✅ Inactivity
   useEffect(() => {
     if (!isClient) return;
     const resetTimer = () => {
@@ -243,12 +248,15 @@ export const AuthProvider = ({ children }) => {
     };
   }, []);
 
-  // ✅ Sign in (magic)
+  // ✅ Signin
   const signInWithMagicLink = async (email) => {
     const origin = isClient ? window.location.origin : "https://nordbalticum.com";
     const { error } = await supabase.auth.signInWithOtp({
       email,
-      options: { shouldCreateUser: true, emailRedirectTo: `${origin}/dashboard` },
+      options: {
+        shouldCreateUser: true,
+        emailRedirectTo: `${origin}/dashboard`,
+      },
     });
     if (error) {
       toast.error("❌ Magic link error.");
@@ -256,7 +264,6 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // ✅ Sign in (Google)
   const signInWithGoogle = async () => {
     const origin = isClient ? window.location.origin : "https://nordbalticum.com";
     const { error } = await supabase.auth.signInWithOAuth({
@@ -269,17 +276,17 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // ✅ Sign out
-  const signOut = async (showToast = false) => {
+  // ✅ SignOut
+  const signOut = async (showToast = false, redirectPath = "/") => {
     try {
       await supabase.auth.signOut();
     } catch (err) {
       console.error("Sign out error:", err.message);
     }
 
-    setUser(null);
-    setWallet(null);
-    setSession(null);
+    try { setUser(null); } catch {}
+    try { setWallet(null); } catch {}
+    try { setSession(null); } catch {}
 
     if (isClient) {
       ["userPrivateKey", "activeNetwork", "sessionData"].forEach((key) =>
@@ -287,7 +294,7 @@ export const AuthProvider = ({ children }) => {
       );
     }
 
-    router.replace("/");
+    router.replace(redirectPath);
 
     if (showToast) {
       toast.info("👋 Logged out.", { position: "top-center", autoClose: 4000 });
