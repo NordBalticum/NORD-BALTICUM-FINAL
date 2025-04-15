@@ -142,6 +142,21 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes exitDrawer {
+  0% {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(-80px) scale(0.92);
+  }
+}
+
+.drawerExit {
+  animation: exitDrawer 0.5s ease-in forwards;
+}
+
 /* ✅ EMAIL */
 .email {
   font-size: 0.66rem;
