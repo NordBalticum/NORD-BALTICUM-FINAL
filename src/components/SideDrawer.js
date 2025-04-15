@@ -27,7 +27,7 @@ export default function SideDrawer() {
   const pathname = usePathname();
 
   const { signOut, user } = useAuth();
-  const { ready, loading } = useMinimalReady(); // ✅ naudojam naują hook
+  const { ready, loading } = useMinimalReady();
 
   const [open, setOpen] = useState(false);
 
@@ -54,9 +54,7 @@ export default function SideDrawer() {
   };
 
   // ✅ Jei sistema dar kraunasi arba nepasiruošusi → nieko nerodom
-  if (loading || !ready) {
-    return null;
-  }
+  if (loading || !ready) return null;
 
   return (
     <>
@@ -88,12 +86,12 @@ export default function SideDrawer() {
 
             {/* ✅ Drawer */}
             <motion.aside
-  className={`${styles.drawer}`}
-  initial={{ opacity: 0, x: -80, scale: 0.92 }}
-  animate={{ opacity: 1, x: 0, scale: 1 }}
-  exit={{ opacity: 0, x: -80, scale: 0.92 }}
-  transition={{ duration: 0.5, ease: [0.68, -0.55, 0.27, 1.55] }}
->
+              className={styles.drawer}
+              initial={{ opacity: 0, x: -80, scale: 0.92 }}
+              animate={{ opacity: 1, x: 0, scale: 1 }}
+              exit={{ opacity: 0, x: -80, scale: 0.92 }}
+              transition={{ duration: 0.5, ease: [0.68, -0.55, 0.27, 1.55] }}
+            >
               {/* ✅ Header */}
               <div className={styles.drawerHeader}>
                 <motion.button
@@ -138,11 +136,17 @@ export default function SideDrawer() {
                     key={item.label}
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.4 + index * 0.1, duration: 0.4 }}
+                    transition={{
+                      delay: 0.4 + index * 0.1,
+                      duration: 0.4,
+                      ease: "easeOut",
+                    }}
                   >
                     <Link
                       href={item.path}
-                      className={`${styles.link} ${pathname === item.path ? styles.active : ""}`}
+                      className={`${styles.link} ${
+                        pathname === item.path ? styles.active : ""
+                      }`}
                       onClick={() => setOpen(false)}
                       aria-current={pathname === item.path ? "page" : undefined}
                     >
