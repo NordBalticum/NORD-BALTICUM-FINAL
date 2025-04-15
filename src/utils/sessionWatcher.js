@@ -1,5 +1,3 @@
-"use client";
-
 export function startSessionWatcher({
   onSessionInvalid,
   user,
@@ -19,7 +17,16 @@ export function startSessionWatcher({
     console[type](`[SessionWatcher] ${msg}`);
   };
 
+  const isReady = () => {
+    return !!user?.email && !!wallet?.wallet?.address;
+  };
+
   const checkSession = async (trigger = "interval") => {
+    if (!isReady()) {
+      logEvent(`Skipped check [${trigger}] – session not ready.`, "warn");
+      return;
+    }
+
     try {
       const res = await fetch("/api/check-session", {
         method: "GET",
@@ -33,19 +40,19 @@ export function startSessionWatcher({
       } else {
         const { valid } = await res.json();
 
-        if (!valid || !user || !wallet?.wallet?.address) {
-          logEvent("Invalid session detected.", "warn");
+        if (!valid) {
+          logEvent("Invalid session from API. Triggering logout.", "warn");
           onSessionInvalid?.();
         } else {
           failCount = 0;
           refreshSession?.();
           refetchBalances?.();
-          logEvent(`Session OK [${trigger}]`);
+          logEvent(`✅ Session OK [${trigger}]`);
         }
       }
 
       if (failCount >= networkFailLimit) {
-        logEvent("Network failed too many times – triggering logout.", "error");
+        logEvent("❌ Too many failed checks – logout triggered.", "error");
         onSessionInvalid?.();
       }
     } catch (err) {
@@ -60,27 +67,27 @@ export function startSessionWatcher({
   const visibilityHandler = () => {
     const current = document.visibilityState;
     if (current === "visible" && lastVisibility !== "visible") {
-      logEvent("Tab became visible – immediate session check.");
+      logEvent("Tab became visible – checking session...");
       checkSession("visibility");
     }
     lastVisibility = current;
   };
 
   const onlineHandler = () => {
-    logEvent("Network reconnected – immediate session check.");
+    logEvent("Network online – checking session...");
     checkSession("network-online");
   };
 
   const wakeHandler = () => {
-    logEvent("Device woke up – immediate session check.");
+    logEvent("Device wake-up – checking session...");
     checkSession("wake-up");
   };
 
   const addEvents = () => {
     document.addEventListener("visibilitychange", visibilityHandler);
     window.addEventListener("online", onlineHandler);
-    document.addEventListener("resume", wakeHandler); // Android wake
-    document.addEventListener("pageshow", wakeHandler); // iOS wake
+    document.addEventListener("resume", wakeHandler);
+    document.addEventListener("pageshow", wakeHandler);
   };
 
   const removeEvents = () => {
@@ -94,14 +101,14 @@ export function startSessionWatcher({
     if (intervalId) return;
     addEvents();
     intervalId = setInterval(() => checkSession("interval"), intervalMs);
-    logEvent("SessionWatcher started.");
+    logEvent("✅ SessionWatcher started.");
   };
 
   const stop = () => {
     clearInterval(intervalId);
     intervalId = null;
     removeEvents();
-    logEvent("SessionWatcher stopped.");
+    logEvent("🛑 SessionWatcher stopped.");
   };
 
   return { start, stop };
