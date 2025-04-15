@@ -11,11 +11,13 @@ import { startSessionWatcher } from "@/utils/sessionWatcher";
 export function useSystemReady() {
   const { user, wallet, authLoading, walletLoading, safeRefreshSession, signOut } = useAuth();
   const { activeNetwork } = useNetwork();
-  const { balances, loading: balancesLoading, refetch } = useBalance();
+  const { balances, loading: balancesLoading, refetch, prices } = useBalance();
 
   const [isDomReady, setIsDomReady] = useState(false);
   const [latencyMs, setLatencyMs] = useState(0);
   const [sessionScore, setSessionScore] = useState(100);
+  const [fallbackBalances, setFallbackBalances] = useState(null);
+  const [fallbackPrices, setFallbackPrices] = useState(null);
 
   const sessionWatcher = useRef(null);
   const refreshInterval = useRef(null);
@@ -23,7 +25,7 @@ export function useSystemReady() {
 
   const isClient = typeof window !== "undefined";
 
-  // ✅ Detect mobile / PWA / WebView environment
+  // ✅ Detect mobile
   const isMobile = useMemo(() => {
     if (!isClient) return false;
     const ua = navigator.userAgent || navigator.vendor || "";
@@ -33,16 +35,13 @@ export function useSystemReady() {
   // ✅ DOM ready
   useEffect(() => {
     if (!isClient) return;
-
     const markReady = () => setIsDomReady(true);
-
     if (document.readyState === "complete") {
       markReady();
     } else {
       const raf = requestAnimationFrame(markReady);
       const timeout = setTimeout(markReady, 1000);
       window.addEventListener("load", markReady);
-
       return () => {
         cancelAnimationFrame(raf);
         clearTimeout(timeout);
@@ -51,7 +50,36 @@ export function useSystemReady() {
     }
   }, [isClient]);
 
-  // ✅ Core readiness
+  // ✅ Load fallback balances + prices
+  useEffect(() => {
+    if (!isClient) return;
+    try {
+      if (!balances) {
+        const stored = localStorage.getItem("cachedBalances");
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (parsed && typeof parsed === "object") {
+            setFallbackBalances(parsed);
+            console.log("🪄 Fallback balances from localStorage");
+          }
+        }
+      }
+      if (!prices) {
+        const storedPrices = localStorage.getItem("cachedPrices");
+        if (storedPrices) {
+          const parsed = JSON.parse(storedPrices);
+          if (parsed && typeof parsed === "object") {
+            setFallbackPrices(parsed);
+            console.log("💱 Fallback prices from localStorage");
+          }
+        }
+      }
+    } catch (err) {
+      console.warn("❌ LocalStorage fallback error:", err?.message || err);
+    }
+  }, [balances, prices, isClient]);
+
+  // ✅ Core minimal readiness
   const minimalReady = useMemo(() =>
     isClient &&
     isDomReady &&
@@ -63,19 +91,25 @@ export function useSystemReady() {
     [isClient, isDomReady, user, wallet, activeNetwork, authLoading, walletLoading]
   );
 
-  // ✅ Extended: balances
-  const hasBalancesReady = useMemo(() =>
-    !balancesLoading && balances && Object.keys(balances || {}).length >= 0,
-    [balances, balancesLoading]
-  );
+  // ✅ Extended readiness
+  const hasBalancesReady = useMemo(() => {
+    const hasLive = balances && Object.keys(balances).length > 0;
+    const hasFallback = fallbackBalances && Object.keys(fallbackBalances).length > 0;
+    return hasLive || hasFallback;
+  }, [balances, fallbackBalances]);
 
-  const ready = minimalReady && hasBalancesReady;
+  const hasPricesReady = useMemo(() => {
+    const hasLive = prices && Object.keys(prices).length > 0;
+    const hasFallback = fallbackPrices && Object.keys(fallbackPrices).length > 0;
+    return hasLive || hasFallback;
+  }, [prices, fallbackPrices]);
+
+  const ready = minimalReady && hasBalancesReady && hasPricesReady;
   const loading = !ready;
 
-  // ✅ Session scoring (diagnostics)
+  // ✅ Session diagnostics
   useEffect(() => {
     if (!isClient || !minimalReady) return;
-
     const score =
       100 -
       (authLoading ? 20 : 0) -
@@ -85,7 +119,7 @@ export function useSystemReady() {
     setSessionScore(Math.max(0, score));
   }, [minimalReady, authLoading, walletLoading, user, wallet]);
 
-  // ✅ Smart refresh on visibility/focus/network events
+  // ✅ Refresh triggers
   useEffect(() => {
     if (!isClient || !minimalReady) return;
 
@@ -110,13 +144,10 @@ export function useSystemReady() {
     window.addEventListener("focus", onFocus);
     window.addEventListener("online", onOnline);
 
-    // ✅ Extra mobile resume fix (for Android/iOS sleep)
     if (isMobile) {
       const resumeTimeout = () => setTimeout(() => refresh("mobile-resume"), 800);
       window.addEventListener("pageshow", resumeTimeout);
       document.addEventListener("resume", resumeTimeout);
-      console.log("📱 Mobile device detected:", navigator.userAgent);
-
       return () => {
         window.removeEventListener("pageshow", resumeTimeout);
         document.removeEventListener("resume", resumeTimeout);
@@ -136,7 +167,6 @@ export function useSystemReady() {
   // ✅ Auto refresh every 5 minutes
   useEffect(() => {
     if (!isClient || !minimalReady) return;
-
     refreshInterval.current = setInterval(() => {
       if (Date.now() - lastRefreshTime.current >= 5 * 60 * 1000) {
         console.log("⏳ Auto refresh (5min)");
@@ -145,7 +175,6 @@ export function useSystemReady() {
         lastRefreshTime.current = Date.now();
       }
     }, 30000);
-
     return () => clearInterval(refreshInterval.current);
   }, [minimalReady, safeRefreshSession, refetch]);
 
@@ -157,10 +186,9 @@ export function useSystemReady() {
     return () => window.removeEventListener("offline", notifyOffline);
   }, []);
 
-  // ✅ Session Watcher
+  // ✅ Session watcher
   useEffect(() => {
     if (!isClient || !minimalReady) return;
-
     sessionWatcher.current = startSessionWatcher({
       onSessionInvalid: () => {
         toast.error("⚠️ Session invalid or expired. Logging out.");
@@ -178,9 +206,7 @@ export function useSystemReady() {
       intervalMs: 60000,
       networkFailLimit: 3,
     });
-
     sessionWatcher.current.start();
-
     return () => sessionWatcher.current?.stop?.();
   }, [minimalReady, user, wallet, safeRefreshSession, refetch, signOut]);
 
@@ -189,5 +215,7 @@ export function useSystemReady() {
     loading,
     latencyMs,
     sessionScore,
+    fallbackBalances,
+    fallbackPrices,
   };
 }
