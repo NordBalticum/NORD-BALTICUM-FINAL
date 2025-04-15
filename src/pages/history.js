@@ -1,11 +1,10 @@
 // src/app/history.js
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
-import { Tooltip } from "react-tooltip";
 
 import { useAuth } from "@/contexts/AuthContext";
 import { useMinimalReady } from "@/hooks/useMinimalReady";
@@ -38,6 +37,8 @@ export default function HistoryPage() {
   const [expanded, setExpanded] = useState(null);
   const [filter, setFilter] = useState("all");
 
+  const dropdownRef = useRef();
+
   const selectedNetwork = NETWORK_OPTIONS.find((net) => net.value === network);
 
   const fetchTransactions = async () => {
@@ -63,8 +64,18 @@ export default function HistoryPage() {
   }, [ready, wallet, network]);
 
   useEffect(() => {
-    setVisibleCount(5); // ✅ RESET count on filter or network change
+    setVisibleCount(5);
   }, [filter, network]);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const getExplorerLink = (net, txHash) => {
     switch (net) {
@@ -143,7 +154,7 @@ export default function HistoryPage() {
           ))}
         </div>
 
-        <div className={styles.networkSelector}>
+        <div className={styles.networkSelector} ref={dropdownRef}>
           <button
             className={styles.dropdownButton}
             onClick={() => setDropdownOpen(!dropdownOpen)}
@@ -180,6 +191,8 @@ export default function HistoryPage() {
             <AnimatePresence>
               {filteredTxs.slice(0, visibleCount).map((tx) => {
                 const isExpanded = expanded === tx.hash;
+                const direction = tx.from.toLowerCase() === wallet.wallet.address.toLowerCase() ? "SENT" : "RECEIVED";
+
                 return (
                   <motion.div
                     key={tx.hash}
@@ -198,6 +211,7 @@ export default function HistoryPage() {
                           target="_blank"
                           rel="noopener noreferrer"
                           className={styles.txHash}
+                          style={{ textDecoration: "underline" }}
                         >
                           {tx.hash.substring(0, 10)}...{tx.hash.slice(-6)}
                         </a>
@@ -210,6 +224,7 @@ export default function HistoryPage() {
                       <p><strong>To:</strong> {tx.to}</p>
                       <p><strong>Value:</strong> {(parseFloat(tx.value) / 1e18).toFixed(6)} {network.toUpperCase()}</p>
                       <p><strong>Time:</strong> {new Date(tx.timeStamp * 1000).toLocaleString()}</p>
+                      <p><strong>Type:</strong> {direction}</p>
                     </div>
 
                     {isExpanded && (
