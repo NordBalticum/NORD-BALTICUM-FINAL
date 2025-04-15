@@ -17,8 +17,21 @@ export function useSystemReady() {
   const [sessionScore, setSessionScore] = useState(100);
 
   const isClient = typeof window !== "undefined";
-  const isDomReady = typeof document !== "undefined" && document.readyState === "complete";
+  const [isDomReady, setIsDomReady] = useState(false);
 
+useEffect(() => {
+  if (!isClient) return;
+
+  const markReady = () => setIsDomReady(true);
+
+  if (document.readyState === "complete") {
+    markReady();
+  } else {
+    window.addEventListener("load", markReady);
+    return () => window.removeEventListener("load", markReady);
+  }
+}, [isClient]);
+  
   const intervalRef = useRef(null);
   const sessionWatcher = useRef(null);
   const lastRefreshTime = useRef(Date.now());
