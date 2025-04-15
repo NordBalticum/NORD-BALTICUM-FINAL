@@ -8,7 +8,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import debounce from "lodash.debounce";
 import { toast } from "react-toastify";
 
-// ✅ SYSTEM READY – full protection
+// ✅ SYSTEM READY – FINAL VERSION
 export function useSystemReady() {
   const { user, wallet, authLoading, walletLoading, safeRefreshSession, signOut } = useAuth();
   const { activeNetwork } = useNetwork();
@@ -17,15 +17,13 @@ export function useSystemReady() {
   const [latencyMs, setLatencyMs] = useState(0);
   const [sessionScore, setSessionScore] = useState(100);
 
-  const sessionWatcher = useRef(null);
   const intervalRef = useRef(null);
-  const isMountedRef = useRef(false);
+  const sessionWatcher = useRef(null);
   const lastRefreshTime = useRef(Date.now());
 
   const isClient = typeof window !== "undefined";
   const isDomReady = typeof document !== "undefined" && document.readyState === "complete";
 
-  // ✅ Minimal readiness
   const minimalReady = useMemo(
     () =>
       isClient &&
@@ -38,7 +36,6 @@ export function useSystemReady() {
     [user, wallet, activeNetwork, authLoading, walletLoading, isClient, isDomReady]
   );
 
-  // ✅ Balances readiness
   const hasBalancesReady = useMemo(
     () => !balancesLoading && balances && Object.keys(balances || {}).length >= 0,
     [balances, balancesLoading]
@@ -47,7 +44,7 @@ export function useSystemReady() {
   const ready = minimalReady && hasBalancesReady;
   const loading = !ready;
 
-  // ✅ Internal diagnostics
+  // ✅ Internal session diagnostics (100% score based system state)
   useEffect(() => {
     if (!isClient || !minimalReady) return;
 
@@ -61,43 +58,34 @@ export function useSystemReady() {
     setSessionScore(Math.max(0, score));
   }, [minimalReady, authLoading, walletLoading, user, wallet]);
 
-  // ✅ Debounced handlers
-  const handlers = useMemo(() => {
-    const handleRefresh = async (trigger = "unknown") => {
-      if (!minimalReady || !safeRefreshSession || !refetch) return;
+  // ✅ Visibility & network auto-refresh (debounced)
+  useEffect(() => {
+    if (!isClient || !minimalReady) return;
 
+    const refresh = async (trigger) => {
       const start = performance.now();
-      console.log(`⏳ Refresh started [${trigger}]...`);
-
       try {
-        await safeRefreshSession();
-        await refetch();
+        await safeRefreshSession?.();
+        await refetch?.();
         setLatencyMs(Math.round(performance.now() - start));
         lastRefreshTime.current = Date.now();
-        console.log(`✅ Refresh complete [${trigger}] (${latencyMs}ms)`);
+        console.log(`✅ Refresh complete [${trigger}]`);
       } catch (error) {
-        console.error(`❌ ${trigger} refresh error:`, error.message);
+        console.error(`❌ Refresh failed [${trigger}]:`, error.message);
       }
     };
 
-    return {
-      onVisible: debounce(() => handleRefresh("tab-visible"), 500),
-      onOnline: debounce(() => handleRefresh("network-online"), 500),
-    };
-  }, [minimalReady, safeRefreshSession, refetch]);
+    const handleVisible = debounce(() => refresh("tab-visible"), 300);
+    const handleOnline = debounce(() => refresh("network-online"), 300);
 
-  // ✅ Visibility & network handlers
-  useEffect(() => {
-    if (!isClient) return;
-
-    document.addEventListener("visibilitychange", handlers.onVisible);
-    window.addEventListener("online", handlers.onOnline);
+    document.addEventListener("visibilitychange", handleVisible);
+    window.addEventListener("online", handleOnline);
 
     return () => {
-      document.removeEventListener("visibilitychange", handlers.onVisible);
-      window.removeEventListener("online", handlers.onOnline);
+      document.removeEventListener("visibilitychange", handleVisible);
+      window.removeEventListener("online", handleOnline);
     };
-  }, [handlers, isClient]);
+  }, [minimalReady, safeRefreshSession, refetch]);
 
   // ✅ Auto refresh kas 5 min
   useEffect(() => {
@@ -105,26 +93,25 @@ export function useSystemReady() {
 
     intervalRef.current = setInterval(() => {
       if (Date.now() - lastRefreshTime.current >= 5 * 60 * 1000) {
-        console.log("⏳ Auto refresh (5min)");
+        console.log("⏳ Auto refresh triggered");
         safeRefreshSession?.();
         refetch?.();
       }
     }, 30000); // tikrinam kas 30s
 
     return () => clearInterval(intervalRef.current);
-  }, [minimalReady, safeRefreshSession, refetch, isClient]);
+  }, [minimalReady, safeRefreshSession, refetch]);
 
-  // ✅ SessionWatcher + network fallback
+  // ✅ NEW SessionWatcher – kaip paprašyta
   useEffect(() => {
     if (!isClient || !minimalReady) return;
 
     sessionWatcher.current = startSessionWatcher({
       onSessionInvalid: () => {
-        toast.error("⚠️ Session invalid or network down. Logging out.");
+        toast.error("⚠️ Session invalid or expired. Logging out.");
         signOut?.(true);
       },
-      intervalMs: 60000,
-      networkFailLimit: 3,
+      intervalMinutes: 1,
     });
 
     sessionWatcher.current.start();
@@ -133,12 +120,6 @@ export function useSystemReady() {
       sessionWatcher.current?.stop?.();
     };
   }, [isClient, minimalReady, signOut]);
-
-  // ✅ Final debug
-  useEffect(() => {
-    if (!isClient || !ready) return;
-    console.log("[useSystemReady] ✅ System is fully READY");
-  }, [ready]);
 
   return {
     ready,
