@@ -1,3 +1,4 @@
+// src/components/SideDrawer.js
 "use client";
 
 // 1️⃣ IMPORTAI
@@ -8,8 +9,7 @@ import Link from "next/link";
 import { FaTimes, FaBars } from "react-icons/fa";
 
 import { useAuth } from "@/contexts/AuthContext";
-import { useMinimalReady } from "@/hooks/useMinimalReady";
-
+import { useComponentReady } from "@/hooks/useComponentReady";
 import styles from "@/components/sidedrawer.module.css";
 
 // 2️⃣ NAVIGACIJOS ELEMENTAI
@@ -25,9 +25,10 @@ const navItems = [
 export default function SideDrawer() {
   const router = useRouter();
   const pathname = usePathname();
-
   const { signOut, user } = useAuth();
-  const { ready, loading } = useMinimalReady();
+
+  // ✅ Hookas su session watcher ir latency
+  const { componentReady, loading } = useComponentReady("SideDrawer");
 
   const [open, setOpen] = useState(false);
 
@@ -53,8 +54,8 @@ export default function SideDrawer() {
     }
   };
 
-  // ✅ Jei sistema dar kraunasi arba nepasiruošusi → nieko nerodom
-  if (loading || !ready) return null;
+  // ⛔ Jei dar nepasiruošęs – nieko nerodom
+  if (loading || !componentReady) return null;
 
   return (
     <>
