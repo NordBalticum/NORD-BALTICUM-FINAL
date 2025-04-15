@@ -23,7 +23,7 @@ const NETWORK_OPTIONS = [
   { label: "Avalanche Mainnet", value: "avax", icon: "/icons/avax.svg" },
 ];
 
-const METHOD_FILTERS = ["all", "transfer", "swap", "stake"];
+const METHOD_FILTERS = ["all", "sent", "received"];
 
 export default function HistoryPage() {
   const router = useRouter();
@@ -101,9 +101,11 @@ export default function HistoryPage() {
   const filteredTxs =
     filter === "all"
       ? transactions
-      : transactions.filter((tx) =>
-          tx.functionName?.toLowerCase().includes(filter)
-        );
+      : filter === "sent"
+      ? transactions.filter((tx) => tx.from.toLowerCase() === wallet.wallet.address.toLowerCase())
+      : filter === "received"
+      ? transactions.filter((tx) => tx.to.toLowerCase() === wallet.wallet.address.toLowerCase())
+      : transactions;
 
   if (loading || !ready) {
     return (
