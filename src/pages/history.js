@@ -62,6 +62,10 @@ export default function HistoryPage() {
     }
   }, [ready, wallet, network]);
 
+  useEffect(() => {
+    setVisibleCount(5); // ✅ RESET count on filter or network change
+  }, [filter, network]);
+
   const getExplorerLink = (net, txHash) => {
     switch (net) {
       case "bnb":
@@ -103,9 +107,7 @@ export default function HistoryPage() {
       ? transactions
       : filter === "sent"
       ? transactions.filter((tx) => tx.from.toLowerCase() === wallet.wallet.address.toLowerCase())
-      : filter === "received"
-      ? transactions.filter((tx) => tx.to.toLowerCase() === wallet.wallet.address.toLowerCase())
-      : transactions;
+      : transactions.filter((tx) => tx.to.toLowerCase() === wallet.wallet.address.toLowerCase());
 
   if (loading || !ready) {
     return (
@@ -125,10 +127,7 @@ export default function HistoryPage() {
   }
 
   return (
-    <main
-      className={`${styles.container} ${background.gradient}`}
-      style={{ width: "100vw", height: "100vh", overflowY: "auto" }}
-    >
+    <main className={`${styles.container} ${background.gradient}`} style={{ width: "100vw", height: "100vh", overflowY: "auto" }}>
       <div className={styles.wrapper}>
         <h1 className={styles.title}>Transaction History</h1>
 
