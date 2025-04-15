@@ -190,16 +190,16 @@ export default function HistoryPage() {
                   >
                     <div className={styles.txHeader}>
                       <div className={styles.txIconHash}>
-                        <Image src="/icons/tx-icon.svg" alt="tx" width={20} height={20} />
-                        <a
-                          href={getExplorerLink(network, tx.hash)}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className={styles.txHash}
-                        >
-                          {tx.hash.substring(0, 10)}...{tx.hash.slice(-6)}
-                        </a>
-                      </div>
+  <Image src={selectedNetwork.icon} alt="" width={20} height={20} />
+  <a
+    href={getExplorerLink(network, tx.hash)}
+    target="_blank"
+    rel="noopener noreferrer"
+    className={styles.txHash}
+  >
+    {tx.hash.substring(0, 10)}...{tx.hash.slice(-6)}
+  </a>
+</div>
                       <div className={styles.txStatus}>{renderStatusBadge(tx)}</div>
                     </div>
 
