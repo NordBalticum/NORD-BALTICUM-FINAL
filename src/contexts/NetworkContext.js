@@ -1,66 +1,59 @@
-// src/contexts/NetworkContext.js
 "use client";
 
 import { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { useBalance } from "@/contexts/BalanceContext";
 
-// ✅ Supported Networks
 export const SUPPORTED_NETWORKS = ["eth", "bnb", "tbnb", "matic", "avax"];
 
 const NetworkContext = createContext();
 export const useNetwork = () => useContext(NetworkContext);
 
-// ✅ LocalStorage Keys
 const STORAGE_KEY = "activeNetwork";
 
 export function NetworkProvider({ children }) {
-  const { refetch } = useBalance(); // ✅ Auto-refresh po switch
-  const [activeNetwork, setActiveNetwork] = useState("bnb"); // ✅ Default: BNB
-  const [initialized, setInitialized] = useState(false);     // ✅ Tik pirmajam įkėlimui
+  const { refetch } = useBalance();
 
-  // ✅ Saugus LocalStorage reader
-  const safeGetLocalStorage = (key) => {
-    try {
-      if (typeof window !== "undefined") {
-        return localStorage.getItem(key);
-      }
-    } catch (err) {
-      console.error("❌ LocalStorage read error:", err.message);
-      return null;
-    }
-  };
+  const [activeNetwork, setActiveNetwork] = useState("bnb");
+  const [initialized, setInitialized] = useState(false);
+  const [isClient, setIsClient] = useState(false); // SSR apsauga
 
-  // ✅ Saugus LocalStorage writer
-  const safeSetLocalStorage = (key, value) => {
-    try {
-      if (typeof window !== "undefined") {
-        localStorage.setItem(key, value);
-      }
-    } catch (err) {
-      console.error("❌ LocalStorage write error:", err.message);
-    }
-  };
-
-  // ✅ Inicializuojam aktyvų tinklą
+  // ✅ Set flag on client
   useEffect(() => {
-    const saved = safeGetLocalStorage(STORAGE_KEY);
-    if (saved && SUPPORTED_NETWORKS.includes(saved)) {
-      setActiveNetwork(saved);
-      console.info(`✅ Loaded activeNetwork from localStorage: ${saved}`);
-    } else {
-      console.info(`ℹ️ No valid saved network, using default: bnb`);
-    }
-    setInitialized(true);
+    setIsClient(true);
   }, []);
 
-  // ✅ Saugojam aktyvų tinklą po pirmo inicijavimo
+  // ✅ Inicializuojam aktyvų tinklą tik kliento pusėje
   useEffect(() => {
-    if (!initialized) return;
-    safeSetLocalStorage(STORAGE_KEY, activeNetwork);
-    console.info(`✅ Saved activeNetwork: ${activeNetwork}`);
-  }, [activeNetwork, initialized]);
+    if (!isClient) return;
 
-  // ✅ Saugi tinklo keitimo funkcija + auto refetch()
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved && SUPPORTED_NETWORKS.includes(saved)) {
+        setActiveNetwork(saved);
+        console.info(`✅ Loaded activeNetwork from localStorage: ${saved}`);
+      } else {
+        console.info(`ℹ️ No valid saved network, using default: bnb`);
+      }
+    } catch (err) {
+      console.warn("❌ NetworkContext localStorage read error:", err.message);
+    }
+
+    setInitialized(true);
+  }, [isClient]);
+
+  // ✅ Saugojam aktyvų tinklą
+  useEffect(() => {
+    if (!initialized || !isClient) return;
+
+    try {
+      localStorage.setItem(STORAGE_KEY, activeNetwork);
+      console.info(`✅ Saved activeNetwork: ${activeNetwork}`);
+    } catch (err) {
+      console.warn("❌ NetworkContext localStorage write error:", err.message);
+    }
+  }, [activeNetwork, initialized, isClient]);
+
+  // ✅ Switch network
   const switchNetwork = useCallback((network) => {
     if (!SUPPORTED_NETWORKS.includes(network)) {
       console.warn(`❌ Unsupported network switch attempt: ${network}`);
@@ -70,7 +63,6 @@ export function NetworkProvider({ children }) {
     setActiveNetwork((prev) => {
       if (prev !== network) {
         console.info(`🔀 Switching network: ${prev} → ${network}`);
-        // ✅ Trigger balance refresh iškart po pakeitimo
         setTimeout(() => {
           try {
             refetch?.();
