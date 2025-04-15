@@ -1,3 +1,4 @@
+// src/hooks/useMinimalReady.js
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -25,24 +26,28 @@ export function useMinimalReady() {
   const sessionWatcher = useRef(null);
   const refreshInterval = useRef(null);
   const lastRefreshTime = useRef(Date.now());
+  const failureCount = useRef(0);
 
-  // ✅ Mobile / WebView detection
   const isMobile = useMemo(() => {
     if (!isClient) return false;
-    const ua = navigator.userAgent || navigator.vendor || "";
-    return /android|iphone|ipad|ipod|opera mini|iemobile|mobile/i.test(ua);
+    const ua = navigator.userAgent.toLowerCase();
+    return (
+      /android|iphone|ipad|ipod|opera mini|iemobile|mobile|samsung|sm-|nexus|pixel/.test(ua) &&
+      !/tablet|ipad|macintosh/.test(ua)
+    );
   }, [isClient]);
 
-  // ✅ DOM Ready
   useEffect(() => {
     if (!isClient) return;
     const markReady = () => setIsDomReady(true);
+
     if (document.readyState === "complete") {
       markReady();
     } else {
       const raf = requestAnimationFrame(markReady);
       const timeout = setTimeout(markReady, 1000);
       window.addEventListener("load", markReady);
+
       return () => {
         cancelAnimationFrame(raf);
         clearTimeout(timeout);
@@ -51,32 +56,32 @@ export function useMinimalReady() {
     }
   }, [isClient]);
 
-  // ✅ Readiness
-  const minimalReady = useMemo(() =>
-    isClient &&
-    isDomReady &&
-    !!user?.email &&
-    !!wallet?.wallet?.address &&
-    !authLoading &&
-    !walletLoading,
+  const minimalReady = useMemo(
+    () =>
+      isClient &&
+      isDomReady &&
+      !!user?.email &&
+      !!wallet?.wallet?.address &&
+      !authLoading &&
+      !walletLoading,
     [isClient, isDomReady, user, wallet, authLoading, walletLoading]
   );
 
   const loading = !minimalReady;
 
-  // ✅ Session diagnostics score
   useEffect(() => {
     if (!isClient || !minimalReady) return;
+
     const score =
       100 -
       (authLoading ? 20 : 0) -
       (walletLoading ? 20 : 0) -
       (!user ? 30 : 0) -
       (!wallet?.wallet?.address ? 30 : 0);
+
     setSessionScore(Math.max(0, score));
   }, [minimalReady, authLoading, walletLoading, user, wallet]);
 
-  // ✅ Soft refresh on visibility/focus/network resume
   useEffect(() => {
     if (!isClient || !minimalReady) return;
 
@@ -86,9 +91,17 @@ export function useMinimalReady() {
         await safeRefreshSession?.();
         lastRefreshTime.current = Date.now();
         setLatencyMs(Math.round(performance.now() - start));
+        failureCount.current = 0;
         console.log(`✅ MinimalRefresh [${trigger}] (${latencyMs}ms)`);
       } catch (err) {
-        console.error(`❌ MinimalRefresh failed [${trigger}]:`, err?.message || err);
+        failureCount.current += 1;
+        console.error(`❌ MinimalRefresh failed [${trigger}] (${failureCount.current}/3):`, err?.message || err);
+        if (failureCount.current >= 3) {
+          toast.error("⚠️ Session expired. Logging out...");
+          if (typeof signOut === "function") {
+            signOut(true);
+          }
+        }
       }
     };
 
@@ -101,13 +114,13 @@ export function useMinimalReady() {
     window.addEventListener("online", onOnline);
 
     if (isMobile) {
-      const resumeTimeout = () => setTimeout(() => refresh("mobile-resume"), 800);
-      document.addEventListener("resume", resumeTimeout);
-      window.addEventListener("pageshow", resumeTimeout);
-      console.log("📱 Mobile device detected:", navigator.userAgent);
+      const onWake = () => setTimeout(() => refresh("mobile-resume"), 800);
+      document.addEventListener("resume", onWake);
+      window.addEventListener("pageshow", onWake);
+
       return () => {
-        document.removeEventListener("resume", resumeTimeout);
-        window.removeEventListener("pageshow", resumeTimeout);
+        document.removeEventListener("resume", onWake);
+        window.removeEventListener("pageshow", onWake);
         document.removeEventListener("visibilitychange", onVisible);
         window.removeEventListener("focus", onFocus);
         window.removeEventListener("online", onOnline);
@@ -119,9 +132,8 @@ export function useMinimalReady() {
       window.removeEventListener("focus", onFocus);
       window.removeEventListener("online", onOnline);
     };
-  }, [minimalReady, safeRefreshSession, isMobile]);
+  }, [minimalReady, safeRefreshSession, isMobile, signOut]);
 
-  // ✅ Auto refresh kas 5 min
   useEffect(() => {
     if (!isClient || !minimalReady) return;
 
@@ -136,25 +148,27 @@ export function useMinimalReady() {
     return () => clearInterval(refreshInterval.current);
   }, [minimalReady, safeRefreshSession]);
 
-  // ✅ Offline warning
   useEffect(() => {
     if (!isClient) return;
+
     const notifyOffline = () => toast.warning("⚠️ You are offline. Using cached session.");
     window.addEventListener("offline", notifyOffline);
     return () => window.removeEventListener("offline", notifyOffline);
   }, []);
 
-  // ✅ Session Watcher
   useEffect(() => {
     if (!isClient || !minimalReady) return;
 
     sessionWatcher.current = startSessionWatcher({
       onSessionInvalid: () => {
-        toast.error("⚠️ Session expired. Logging out...");
-        if (typeof signOut === "function") {
-          signOut(true);
-        } else {
-          console.warn("⚠️ signOut handler is missing.");
+        failureCount.current += 1;
+        console.warn("⚠️ Session may be invalid. Failure count:", failureCount.current);
+
+        if (failureCount.current >= 3) {
+          toast.error("⚠️ Session invalid. Logging out...");
+          if (typeof signOut === "function") {
+            signOut(true);
+          }
         }
       },
       user,
@@ -175,5 +189,6 @@ export function useMinimalReady() {
     loading,
     latencyMs,
     sessionScore,
+    isMobile,
   };
 }
