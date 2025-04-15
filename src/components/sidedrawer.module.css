@@ -1,4 +1,4 @@
-/* === SIDEDRAWER MODULE – NordBalticum Ultra Premium 2025 FINAL FINAL === */
+/* === SIDEDRAWER MODULE – NordBalticum Ultra Premium 2025 FINAL === */
 
 /* ✅ HAMBURGER BUTTON */
 .hamburger {
@@ -34,12 +34,16 @@
   background: radial-gradient(circle at center, rgba(10, 18, 42, 0.85) 0%, rgba(5, 10, 22, 0.92) 100%);
   backdrop-filter: blur(20px) brightness(0.9) saturate(140%);
   z-index: 9998;
-  animation: fadeInBackdrop 0.5s ease both;
 }
 
-@keyframes fadeInBackdrop {
-  from { opacity: 0; }
-  to { opacity: 1; }
+/* Optional fallback animation for CSS-only exit */
+@keyframes fadeOutBackdrop {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+.backdropExit {
+  animation: fadeOutBackdrop 0.45s ease forwards;
 }
 
 /* ✅ DRAWER */
@@ -57,14 +61,17 @@
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-  animation: bounceDrawer 0.7s cubic-bezier(0.68, -0.55, 0.27, 1.55) both;
   z-index: 9999;
 }
 
-@keyframes bounceDrawer {
-  0% { opacity: 0; transform: translateX(-80px) scale(0.92); }
-  60% { opacity: 1; transform: translateX(10px) scale(1.04); }
-  100% { transform: translateX(0) scale(1); }
+/* Fallback exit animation (CSS only) */
+@keyframes exitDrawer {
+  0% { opacity: 1; transform: translateX(0) scale(1); }
+  100% { opacity: 0; transform: translateX(-80px) scale(0.92); }
+}
+
+.drawerExit {
+  animation: exitDrawer 0.5s ease-in forwards;
 }
 
 /* ✅ DRAWER HEADER */
@@ -140,21 +147,6 @@
 @keyframes fadeInDown {
   from { opacity: 0; transform: translateY(-20px); }
   to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes exitDrawer {
-  0% {
-    opacity: 1;
-    transform: translateX(0) scale(1);
-  }
-  100% {
-    opacity: 0;
-    transform: translateX(-80px) scale(0.92);
-  }
-}
-
-.drawerExit {
-  animation: exitDrawer 0.5s ease-in forwards;
 }
 
 /* ✅ EMAIL */
