@@ -35,32 +35,21 @@ const names = {
 
 export default function Dashboard() {
   const router = useRouter();
-
   const { wallet } = useAuth();
   const { balances, prices } = useBalance();
-  const { latencyMs, sessionScore } = useSystemReady();
-
-  const [localBalances, setLocalBalances] = useState({});
-  const [localPrices, setLocalPrices] = useState({});
-
-  const tokens = useMemo(() => {
-    return balances ? Object.keys(balances) : Object.keys(localBalances);
-  }, [balances, localBalances]);
-
+  const { fallbackBalances, fallbackPrices, latencyMs, sessionScore } = useSystemReady();
   const walletReady = !!wallet?.wallet?.address;
 
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const storedBalances = localStorage.getItem("cachedBalances");
-    const storedPrices = localStorage.getItem("cachedPrices");
-    if (storedBalances) setLocalBalances(JSON.parse(storedBalances));
-    if (storedPrices) setLocalPrices(JSON.parse(storedPrices));
-  }, []);
+  // ✅ Prioritetas: live > fallback > empty
+  const allBalances = balances && Object.keys(balances).length > 0
+    ? balances
+    : fallbackBalances || {};
 
-  useEffect(() => {
-    if (balances) localStorage.setItem("cachedBalances", JSON.stringify(balances));
-    if (prices) localStorage.setItem("cachedPrices", JSON.stringify(prices));
-  }, [balances, prices]);
+  const allPrices = prices && Object.keys(prices).length > 0
+    ? prices
+    : fallbackPrices || {};
+
+  const tokens = useMemo(() => Object.keys(allBalances), [allBalances]);
 
   return (
     <main className={styles.container}>
@@ -89,8 +78,8 @@ export default function Dashboard() {
                 </motion.div>
               ) : (
                 tokens.map((network, index) => {
-                  const balance = balances?.[network] ?? localBalances?.[network];
-                  const price = prices?.[network] ?? localPrices?.[network];
+                  const balance = allBalances[network];
+                  const price = allPrices[network];
                   const valueEur = price && balance ? (balance * price.eur).toFixed(2) : "–";
                   const valueUsd = price && balance ? (balance * price.usd).toFixed(2) : "–";
 
