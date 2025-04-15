@@ -13,6 +13,7 @@ import { useBalance } from "@/contexts/BalanceContext";
 import { useNetwork, SUPPORTED_NETWORKS } from "@/contexts/NetworkContext";
 
 import styles from "@/styles/dashboard.module.css";
+import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
 
 const LivePriceTable = dynamic(() => import("@/components/LivePriceTable"), {
   ssr: false,
@@ -44,7 +45,6 @@ export default function Dashboard() {
     latencyMs,
     sessionScore,
     loading: systemLoading,
-    // ✅ Paimam isMobile iš useSystemReady
     isMobile,
   } = useSystemReady();
 
@@ -68,25 +68,25 @@ export default function Dashboard() {
         <LivePriceTable />
 
         {!walletReady || systemLoading ? (
-          <div className={styles.fullscreenCenter}>
-            <div className={styles.shimmerCard} />
-            <p className={styles.loadingText}>Loading wallet...</p>
+          <motion.div
+            className={styles.fullscreenCenter}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.4, ease: "easeOut" }}
+          >
+            <MiniLoadingSpinner />
             <p className={styles.loadingSub}>
-              Session Score: {sessionScore}% | Latency: {latencyMs}ms
-              <br />
               {isMobile ? "Mobile Mode" : "Desktop Mode"}
             </p>
-          </div>
+          </motion.div>
         ) : (
           <div className={styles.assetList}>
             <AnimatePresence>
               {tokens.map((network, index) => {
                 const balance = allBalances[network] || 0;
                 const price = allPrices[network];
-                const valueEur =
-                  price ? (balance * price.eur).toFixed(2) : "–";
-                const valueUsd =
-                  price ? (balance * price.usd).toFixed(2) : "–";
+                const valueEur = price ? (balance * price.eur).toFixed(2) : "–";
+                const valueUsd = price ? (balance * price.usd).toFixed(2) : "–";
 
                 return (
                   <motion.div
@@ -126,9 +126,11 @@ export default function Dashboard() {
                         {`${balance.toFixed(6)} ${network.toUpperCase()}`}
                       </div>
                       <div className={styles.assetEur}>
-                        {valueEur !== "–"
-                          ? `≈ €${valueEur} | ≈ $${valueUsd}`
-                          : <div className={styles.shimmerTextSmall} />}
+                        {valueEur !== "–" ? (
+                          <>≈ €{valueEur} | ≈ ${valueUsd}</>
+                        ) : (
+                          <div className={styles.shimmerTextSmall} />
+                        )}
                       </div>
                     </div>
                   </motion.div>
