@@ -14,7 +14,6 @@ import {
 } from "chart.js";
 
 import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
-import { startSessionWatcher } from "@/utils/sessionWatcher";
 import styles from "@/styles/tbnb.module.css";
 
 ChartJS.register(
@@ -34,7 +33,6 @@ export default function BnbChart({ onChartReady, onMount }) {
   const chartRef = useRef(null);
   const mountedRef = useRef(false);
   const controllerRef = useRef(null);
-  const sessionWatcher = useRef(null);
   const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
 
   // ✅ Trigger parent on mount
@@ -94,7 +92,7 @@ export default function BnbChart({ onChartReady, onMount }) {
     }
   }, [isMobile]);
 
-  // ✅ Init, visibility + sessionWatcher
+  // ✅ Init + visibility events
   useEffect(() => {
     mountedRef.current = true;
 
@@ -116,33 +114,22 @@ export default function BnbChart({ onChartReady, onMount }) {
 
     document.addEventListener("visibilitychange", handleVisibilityChange);
 
-    // ✅ SessionWatcher
-    sessionWatcher.current = startSessionWatcher({
-      onSessionInvalid: () => {
-        console.warn("⚠️ Session invalid or network issue during chart render.");
-      },
-      intervalMs: 60000,
-      networkFailLimit: 3,
-    });
-    sessionWatcher.current.start();
-
     return () => {
       mountedRef.current = false;
       clearInterval(interval);
       controllerRef.current?.abort();
       document.removeEventListener("visibilitychange", handleVisibilityChange);
-      sessionWatcher.current?.stop?.();
     };
   }, [fetchChartData]);
 
-  // ✅ Notify parent that chart is ready
+  // ✅ Notify parent when ready
   useEffect(() => {
     if (!loading && chartData.length > 0 && typeof onChartReady === "function") {
       setTimeout(() => onChartReady(), 1000); // ⏳ 1s smooth transition
     }
   }, [loading, chartData, onChartReady]);
 
-  // ✅ Chart options
+  // ✅ Chart config
   const chartOptions = {
     responsive: true,
     maintainAspectRatio: false,
