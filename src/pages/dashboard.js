@@ -44,6 +44,8 @@ export default function Dashboard() {
     latencyMs,
     sessionScore,
     loading: systemLoading,
+    // ✅ Paimam isMobile iš useSystemReady
+    isMobile,
   } = useSystemReady();
 
   const walletReady = !!wallet?.wallet?.address;
@@ -71,6 +73,8 @@ export default function Dashboard() {
             <p className={styles.loadingText}>Loading wallet...</p>
             <p className={styles.loadingSub}>
               Session Score: {sessionScore}% | Latency: {latencyMs}ms
+              <br />
+              {isMobile ? "Mobile Mode" : "Desktop Mode"}
             </p>
           </div>
         ) : (
