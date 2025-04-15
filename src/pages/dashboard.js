@@ -1,6 +1,7 @@
+// src/app/dashboard.js
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import Image from "next/image";
@@ -35,20 +36,30 @@ const names = {
 
 export default function Dashboard() {
   const router = useRouter();
+
   const { wallet } = useAuth();
   const { balances, prices } = useBalance();
-  const { fallbackBalances, fallbackPrices, latencyMs, sessionScore } = useSystemReady();
+  const {
+    fallbackBalances,
+    fallbackPrices,
+    latencyMs,
+    sessionScore,
+    loading: systemLoading,
+  } = useSystemReady();
+  const { activeNetwork } = useNetwork();
+
   const walletReady = !!wallet?.wallet?.address;
 
-  // ✅ Prioritetas: live > fallback > empty
-  const allBalances = Object.keys(balances || {}).length > 0
-  ? balances
-  : fallbackBalances || {};
+  const allBalances =
+    Object.keys(balances || {}).length > 0
+      ? balances
+      : fallbackBalances || {};
 
-const allPrices = Object.keys(prices || {}).length > 0
-  ? prices
-  : fallbackPrices || {};
-  
+  const allPrices =
+    Object.keys(prices || {}).length > 0
+      ? prices
+      : fallbackPrices || {};
+
   const tokens = useMemo(() => Object.keys(allBalances), [allBalances]);
 
   return (
@@ -56,7 +67,7 @@ const allPrices = Object.keys(prices || {}).length > 0
       <div className={styles.dashboardWrapper}>
         <LivePriceTable />
 
-        {!walletReady ? (
+        {!walletReady || systemLoading ? (
           <div className={styles.fullscreenCenter}>
             <div className={styles.shimmerCard} />
             <p className={styles.loadingText}>Loading wallet...</p>
@@ -80,8 +91,10 @@ const allPrices = Object.keys(prices || {}).length > 0
                 tokens.map((network, index) => {
                   const balance = allBalances[network];
                   const price = allPrices[network];
-                  const valueEur = price && balance ? (balance * price.eur).toFixed(2) : "–";
-                  const valueUsd = price && balance ? (balance * price.usd).toFixed(2) : "–";
+                  const valueEur =
+                    price && balance ? (balance * price.eur).toFixed(2) : "–";
+                  const valueUsd =
+                    price && balance ? (balance * price.usd).toFixed(2) : "–";
 
                   return (
                     <motion.div
