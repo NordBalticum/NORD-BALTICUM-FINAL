@@ -1,32 +1,35 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import Image from "next/image";
+
+import { useSystemReady } from "@/hooks/useSystemReady";
+import { useAuth } from "@/contexts/AuthContext";
+import { useBalance } from "@/contexts/BalanceContext";
+import { useNetwork } from "@/contexts/NetworkContext";
+import { useSend } from "@/contexts/SendContext";
+
 import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
 import styles from "@/styles/tbnb.module.css";
 
-// Premium dinaminis importas
-const BnbChartDynamic = dynamic(() => import('@/components/BnbChart').then(mod => mod.default), {
+const BnbChartDynamic = dynamic(() => import("@/components/BnbChart"), {
   ssr: false,
   loading: () => <MiniLoadingSpinner />,
 });
 
 export default function TBnbPage() {
-  const { user, wallet, balances, rates, authLoading, walletLoading } = useAuth();
   const router = useRouter();
+  const { wallet } = useAuth();
+  const { balances, prices } = useBalance();
+  const { ready, loading } = useSystemReady();
 
-  const [balancesReady, setBalancesReady] = useState(false);
   const [chartReady, setChartReady] = useState(false);
   const [chartMounted, setChartMounted] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
   const [errorChart, setErrorChart] = useState(false);
 
-  const isLoadingBalances = authLoading || walletLoading;
-
-  // ✅ Po minimize, lock, sleep - reloadinam puslapį
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") {
@@ -40,18 +43,11 @@ export default function TBnbPage() {
   }, []);
 
   useEffect(() => {
-    if (!isLoadingBalances && balances?.tbnb) {
-      setBalancesReady(true);
-    }
-  }, [isLoadingBalances, balances]);
-
-  useEffect(() => {
     if (chartMounted && !chartReady && retryCount < 2) {
       const timeout = setTimeout(() => {
         console.warn(`⏳ Chart not ready. Retrying attempt ${retryCount + 1}...`);
         setRetryCount((prev) => prev + 1);
       }, 10000);
-
       return () => clearTimeout(timeout);
     } else if (chartMounted && !chartReady && retryCount >= 2) {
       console.error("❌ Chart failed to load after retries.");
@@ -63,13 +59,26 @@ export default function TBnbPage() {
   const handleReceive = () => router.push("/receive");
   const handleHistory = () => router.push("/transactions");
 
-  if (!user || !wallet) {
+  if (loading || !ready) {
     return (
       <main className={styles.pageContainer}>
         <MiniLoadingSpinner />
       </main>
     );
   }
+
+  if (!wallet?.wallet?.address) {
+    router.replace("/");
+    return (
+      <main className={styles.pageContainer}>
+        <MiniLoadingSpinner />
+      </main>
+    );
+  }
+
+  const balance = parseFloat(balances?.tbnb ?? 0);
+  const eurValue = (balance * (prices?.tbnb?.eur ?? 0)).toFixed(2);
+  const usdValue = (balance * (prices?.tbnb?.usd ?? 0)).toFixed(2);
 
   if (errorChart) {
     return (
@@ -84,17 +93,9 @@ export default function TBnbPage() {
     );
   }
 
-  const tbnbBalance = balances?.tbnb ?? { balance: 0 };
-  const price = rates?.bsc ?? { eur: 0, usd: 0 };
-
-  const balance = parseFloat(tbnbBalance.balance || 0);
-  const eurValue = (balance * (price.eur ?? 0)).toFixed(2);
-  const usdValue = (balance * (price.usd ?? 0)).toFixed(2);
-
   return (
     <main key={retryCount} className={styles.pageContainer}>
       <div className={styles.pageContent}>
-
         {/* HEADER */}
         <div className={styles.header}>
           <Image
@@ -105,24 +106,10 @@ export default function TBnbPage() {
             className={styles.networkLogo}
             priority
           />
-          <h1 className={styles.networkNameSmall}>
-            Binance Smart Chain (Testnet)
-          </h1>
-
-          {/* BALANCE */}
+          <h1 className={styles.networkNameSmall}>Binance Smart Chain (Testnet)</h1>
           <div className={styles.balanceBox}>
-            {balancesReady ? (
-              <>
-                <p className={styles.balanceText}>
-                  {balance.toFixed(4)} BNB
-                </p>
-                <p className={styles.balanceFiat}>
-                  {eurValue} € | {usdValue} $
-                </p>
-              </>
-            ) : (
-              <MiniLoadingSpinner />
-            )}
+            <p className={styles.balanceText}>{balance.toFixed(4)} BNB</p>
+            <p className={styles.balanceFiat}>{eurValue} € | {usdValue} $</p>
           </div>
         </div>
 
@@ -145,14 +132,10 @@ export default function TBnbPage() {
             >
               <BnbChartDynamic
                 onMount={() => {
-                  console.log("✅ Chart MOUNTED.");
                   setChartMounted(true);
                   setRetryCount(0);
                 }}
-                onChartReady={() => {
-                  console.log("✅ Chart FULLY READY.");
-                  setChartReady(true);
-                }}
+                onChartReady={() => setChartReady(true)}
               />
             </div>
           </div>
@@ -160,17 +143,10 @@ export default function TBnbPage() {
 
         {/* ACTION BUTTONS */}
         <div className={styles.actionButtons}>
-          <button onClick={handleSend} className={styles.actionButton}>
-            Send
-          </button>
-          <button onClick={handleReceive} className={styles.actionButton}>
-            Receive
-          </button>
-          <button onClick={handleHistory} className={styles.actionButton}>
-            History
-          </button>
+          <button onClick={handleSend} className={styles.actionButton}>Send</button>
+          <button onClick={handleReceive} className={styles.actionButton}>Receive</button>
+          <button onClick={handleHistory} className={styles.actionButton}>History</button>
         </div>
-
       </div>
     </main>
   );
