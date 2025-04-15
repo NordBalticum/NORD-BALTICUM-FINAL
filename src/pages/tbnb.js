@@ -34,7 +34,7 @@ export default function TBnbPage() {
   const [errorChart, setErrorChart] = useState(false);
   const [showSendModal, setShowSendModal] = useState(false);
 
-  // ✅ Reload if tab becomes visible again (extra safety)
+  // ✅ Extra safety reload on visibility
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") {
@@ -47,7 +47,7 @@ export default function TBnbPage() {
     };
   }, []);
 
-  // ✅ Retry chart mount if not ready
+  // ✅ Retry chart if mount failed
   useEffect(() => {
     if (chartMounted && !chartReady && retryCount < 2) {
       const timeout = setTimeout(() => {
@@ -61,21 +61,15 @@ export default function TBnbPage() {
     }
   }, [chartMounted, chartReady, retryCount]);
 
-  const handleReceive = () => router.push("/receive");
-  const handleHistory = () => router.push("/transactions");
+  // ✅ Redirect if wallet missing
+  useEffect(() => {
+    if (ready && !wallet?.wallet?.address) {
+      router.replace("/");
+    }
+  }, [ready, wallet, router]);
 
-  // ✅ Show loading while system not ready
+  // ✅ Show loading spinner
   if (loading || !ready) {
-    return (
-      <main className={styles.pageContainer}>
-        <MiniLoadingSpinner />
-      </main>
-    );
-  }
-
-  // ✅ If wallet missing, redirect
-  if (!wallet?.wallet?.address) {
-    router.replace("/");
     return (
       <main className={styles.pageContainer}>
         <MiniLoadingSpinner />
@@ -88,7 +82,7 @@ export default function TBnbPage() {
   const eurValue = (balance * (prices?.tbnb?.eur ?? 0)).toFixed(2);
   const usdValue = (balance * (prices?.tbnb?.usd ?? 0)).toFixed(2);
 
-  // ✅ Show error state if chart failed
+  // ✅ Chart error state
   if (errorChart) {
     return (
       <main className={styles.pageContainer}>
@@ -105,7 +99,7 @@ export default function TBnbPage() {
   return (
     <main key={retryCount} className={styles.pageContainer}>
       <div className={styles.pageContent}>
-        {/* ✅ HEADER */}
+        {/* ✅ Header */}
         <div className={styles.header}>
           <Image
             src="/icons/bnb.svg"
@@ -124,7 +118,7 @@ export default function TBnbPage() {
           </div>
         </div>
 
-        {/* ✅ CHART */}
+        {/* ✅ Chart */}
         <div className={styles.chartWrapper}>
           <div className={styles.chartBorder}>
             {!chartMounted || !chartReady ? (
@@ -152,20 +146,20 @@ export default function TBnbPage() {
           </div>
         </div>
 
-        {/* ✅ ACTIONS */}
+        {/* ✅ Actions */}
         <div className={styles.actionButtons}>
           <button onClick={() => setShowSendModal(true)} className={styles.actionButton}>
             Send
           </button>
-          <button onClick={handleReceive} className={styles.actionButton}>
+          <button onClick={() => router.push("/receive")} className={styles.actionButton}>
             Receive
           </button>
-          <button onClick={handleHistory} className={styles.actionButton}>
+          <button onClick={() => router.push("/transactions")} className={styles.actionButton}>
             History
           </button>
         </div>
 
-        {/* ✅ SEND MODAL */}
+        {/* ✅ Send modal */}
         {showSendModal && <SendModal onClose={() => setShowSendModal(false)} />}
       </div>
     </main>
