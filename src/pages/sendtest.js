@@ -11,7 +11,7 @@ import { useBalances } from "@/contexts/BalanceContext";
 import { useSend } from "@/contexts/SendContext";
 import { useSystemReady } from "@/hooks/useSystemReady";
 
-import { getGasPrices } from "@/utils/getGasPrices";
+import { getGasPrice } from "@/utils/getGasPrice"; // Pakeista čia
 import styles from "@/styles/sendtest.module.css";
 
 // Tinklas + ikonos
@@ -45,7 +45,9 @@ export default function SendTest() {
   // 1. Užkraunam gas price
   useEffect(() => {
     if (!selectedNetwork) return;
-    getGasPrices(selectedNetwork).then((price) => setGasPrice(price)).catch(() => setGasPrice(null));
+    getGasPrice(selectedNetwork)
+      .then((price) => setGasPrice(price))
+      .catch(() => setGasPrice(null));
   }, [selectedNetwork]);
 
   // 2. Skaičiuojam fees
