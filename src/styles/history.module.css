@@ -310,6 +310,14 @@
   transform: scale(1.02);
 }
 
+.noTxMessage {
+  text-align: center;
+  font-size: 1.1rem;
+  color: #ccc;
+  padding: 40px 0;
+  font-weight: 500;
+}
+
 /* ✅ MOBILE OPTIMIZATION */
 @media (max-width: 768px) {
   .title {
