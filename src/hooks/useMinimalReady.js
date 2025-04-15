@@ -16,35 +16,33 @@ export function useMinimalReady() {
 
   const isClient = typeof window !== "undefined";
 
-  // ✅ Kai DOM pilnai užsikrovęs
+  // ✅ DOM + langas ready
   useEffect(() => {
     if (!isClient) return;
 
-    const markDomReady = () => setIsDomReady(true);
-
+    const markReady = () => setIsDomReady(true);
     if (document.readyState === "complete") {
-      markDomReady();
+      markReady();
     } else {
-      window.addEventListener("load", markDomReady);
-      return () => window.removeEventListener("load", markDomReady);
+      window.addEventListener("load", markReady);
+      return () => window.removeEventListener("load", markReady);
     }
   }, [isClient]);
 
-  // ✅ Minimal readiness
-  const minimalReady = useMemo(
-    () =>
-      isClient &&
-      isDomReady &&
-      !!user?.email &&
-      !!wallet?.wallet?.address &&
-      !authLoading &&
-      !walletLoading,
+  // ✅ Minimal readiness – be balansų
+  const minimalReady = useMemo(() =>
+    isClient &&
+    isDomReady &&
+    !!user?.email &&
+    !!wallet?.wallet?.address &&
+    !authLoading &&
+    !walletLoading,
     [isClient, isDomReady, user, wallet, authLoading, walletLoading]
   );
 
   const loading = !minimalReady;
 
-  // ✅ Debounced refresh handlers
+  // ✅ Debounced session refresh on tab-visible or online
   useEffect(() => {
     if (!isClient || !minimalReady) return;
 
@@ -53,31 +51,31 @@ export function useMinimalReady() {
       try {
         await safeRefreshSession?.();
         lastRefreshTime.current = Date.now();
-        console.log(`✅ Session refreshed [${trigger}] (${Math.round(performance.now() - start)}ms)`);
-      } catch (error) {
-        console.error(`❌ Refresh error [${trigger}]:`, error.message);
+        console.log(`✅ MinimalRefresh [${trigger}] (${Math.round(performance.now() - start)}ms)`);
+      } catch (err) {
+        console.error(`❌ MinimalRefresh failed [${trigger}]:`, err.message);
       }
     };
 
-    const handleVisible = debounce(() => refresh("tab-visible"), 300);
-    const handleOnline = debounce(() => refresh("network-online"), 300);
+    const onVisible = debounce(() => refresh("tab-visible"), 300);
+    const onOnline = debounce(() => refresh("network-online"), 300);
 
-    document.addEventListener("visibilitychange", handleVisible);
-    window.addEventListener("online", handleOnline);
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("online", onOnline);
 
     return () => {
-      document.removeEventListener("visibilitychange", handleVisible);
-      window.removeEventListener("online", handleOnline);
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("online", onOnline);
     };
   }, [minimalReady, safeRefreshSession]);
 
-  // ✅ Auto refresh kas 5 min (check every 30s)
+  // ✅ Auto session refresh kas 5min (tikrinama kas 30s)
   useEffect(() => {
     if (!isClient || !minimalReady) return;
 
     refreshInterval.current = setInterval(() => {
       if (Date.now() - lastRefreshTime.current >= 5 * 60 * 1000) {
-        console.log("⏳ Auto session refresh (Minimal Ready)");
+        console.log("⏳ Auto MinimalRefresh (5min)");
         safeRefreshSession?.();
         lastRefreshTime.current = Date.now();
       }
@@ -86,22 +84,28 @@ export function useMinimalReady() {
     return () => clearInterval(refreshInterval.current);
   }, [minimalReady, safeRefreshSession]);
 
-  // ✅ NEW SessionWatcher
+  // ✅ Final SessionWatcher start
   useEffect(() => {
     if (!isClient || !minimalReady) return;
 
     sessionWatcher.current = startSessionWatcher({
       onSessionInvalid: () => {
-        toast.error("⚠️ Session expired or lost. Logging out.");
+        toast.error("⚠️ Session lost. Logging out.");
         signOut?.(true);
       },
-      intervalMinutes: 1,
+      user,
+      wallet,
+      refreshSession: safeRefreshSession,
+      refetchBalances: null, // nėra balansų šiame hooke
+      log: true,
+      intervalMs: 60000,
+      networkFailLimit: 3,
     });
 
     sessionWatcher.current.start();
 
     return () => sessionWatcher.current?.stop?.();
-  }, [minimalReady, signOut]);
+  }, [minimalReady, user, wallet, safeRefreshSession, signOut]);
 
   return { ready: minimalReady, loading };
 }
