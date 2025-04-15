@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import Image from "next/image";
+import { toast } from "react-toastify";
 
 import { useSystemReady } from "@/hooks/useSystemReady";
 import { useAuth } from "@/contexts/AuthContext";
@@ -12,6 +13,8 @@ import { useNetwork } from "@/contexts/NetworkContext";
 import { useSend } from "@/contexts/SendContext";
 
 import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
+import SendModal from "@/components/SendModal";
+
 import styles from "@/styles/tbnb.module.css";
 
 const BnbChartDynamic = dynamic(() => import("@/components/BnbChart"), {
@@ -24,11 +27,13 @@ export default function TBnbPage() {
   const { wallet } = useAuth();
   const { balances, prices } = useBalance();
   const { ready, loading } = useSystemReady();
+  const { activeNetwork } = useNetwork();
 
   const [chartReady, setChartReady] = useState(false);
   const [chartMounted, setChartMounted] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
   const [errorChart, setErrorChart] = useState(false);
+  const [showSendModal, setShowSendModal] = useState(false);
 
   useEffect(() => {
     const handleVisibilityChange = () => {
@@ -55,7 +60,6 @@ export default function TBnbPage() {
     }
   }, [chartMounted, chartReady, retryCount]);
 
-  const handleSend = () => router.push("/send");
   const handleReceive = () => router.push("/receive");
   const handleHistory = () => router.push("/transactions");
 
@@ -109,7 +113,9 @@ export default function TBnbPage() {
           <h1 className={styles.networkNameSmall}>Binance Smart Chain (Testnet)</h1>
           <div className={styles.balanceBox}>
             <p className={styles.balanceText}>{balance.toFixed(4)} BNB</p>
-            <p className={styles.balanceFiat}>{eurValue} € | {usdValue} $</p>
+            <p className={styles.balanceFiat}>
+              {eurValue} € | {usdValue} $
+            </p>
           </div>
         </div>
 
@@ -143,10 +149,22 @@ export default function TBnbPage() {
 
         {/* ACTION BUTTONS */}
         <div className={styles.actionButtons}>
-          <button onClick={handleSend} className={styles.actionButton}>Send</button>
-          <button onClick={handleReceive} className={styles.actionButton}>Receive</button>
-          <button onClick={handleHistory} className={styles.actionButton}>History</button>
+          <button
+            onClick={() => setShowSendModal(true)}
+            className={styles.actionButton}
+          >
+            Send
+          </button>
+          <button onClick={handleReceive} className={styles.actionButton}>
+            Receive
+          </button>
+          <button onClick={handleHistory} className={styles.actionButton}>
+            History
+          </button>
         </div>
+
+        {/* SEND MODAL */}
+        {showSendModal && <SendModal onClose={() => setShowSendModal(false)} />}
       </div>
     </main>
   );
