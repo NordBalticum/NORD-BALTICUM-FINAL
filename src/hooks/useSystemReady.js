@@ -15,27 +15,25 @@ export function useSystemReady() {
 
   const [latencyMs, setLatencyMs] = useState(0);
   const [sessionScore, setSessionScore] = useState(100);
-
   const isClient = typeof window !== "undefined";
   const [isDomReady, setIsDomReady] = useState(false);
-
-useEffect(() => {
-  if (!isClient) return;
-
-  const markReady = () => setIsDomReady(true);
-
-  if (document.readyState === "complete") {
-    markReady();
-  } else {
-    window.addEventListener("load", markReady);
-    return () => window.removeEventListener("load", markReady);
-  }
-}, [isClient]);
-  
   const intervalRef = useRef(null);
   const sessionWatcher = useRef(null);
   const lastRefreshTime = useRef(Date.now());
 
+  // ✅ DOM Ready
+  useEffect(() => {
+    if (!isClient) return;
+    const markReady = () => setIsDomReady(true);
+    if (document.readyState === "complete") {
+      markReady();
+    } else {
+      window.addEventListener("load", markReady);
+      return () => window.removeEventListener("load", markReady);
+    }
+  }, [isClient]);
+
+  // ✅ Minimal readiness (Core App Ready)
   const minimalReady = useMemo(() =>
     isClient &&
     isDomReady &&
@@ -47,6 +45,7 @@ useEffect(() => {
     [user, wallet, activeNetwork, authLoading, walletLoading, isClient, isDomReady]
   );
 
+  // ✅ Extended: Balances loaded
   const hasBalancesReady = useMemo(() =>
     !balancesLoading &&
     balances &&
@@ -57,7 +56,7 @@ useEffect(() => {
   const ready = minimalReady && hasBalancesReady;
   const loading = !ready;
 
-  // Session Score
+  // ✅ Score
   useEffect(() => {
     if (!isClient || !minimalReady) return;
     const score =
@@ -69,7 +68,7 @@ useEffect(() => {
     setSessionScore(Math.max(0, score));
   }, [minimalReady, authLoading, walletLoading, user, wallet]);
 
-  // Debounced refresh on visibility & network online
+  // ✅ Refresh on visibility / online
   useEffect(() => {
     if (!isClient || !minimalReady) return;
 
@@ -86,8 +85,8 @@ useEffect(() => {
       }
     };
 
-    const onVisible = debounce(() => refresh("tab-visible"), 300);
-    const onOnline = debounce(() => refresh("network-online"), 300);
+    const onVisible = debounce(() => refresh("tab-visible"), 400);
+    const onOnline = debounce(() => refresh("network-online"), 400);
 
     document.addEventListener("visibilitychange", onVisible);
     window.addEventListener("online", onOnline);
@@ -95,10 +94,12 @@ useEffect(() => {
     return () => {
       document.removeEventListener("visibilitychange", onVisible);
       window.removeEventListener("online", onOnline);
+      onVisible.cancel?.();
+      onOnline.cancel?.();
     };
   }, [minimalReady, safeRefreshSession, refetch]);
 
-  // Auto refresh kas 5min (tikrinama kas 30s)
+  // ✅ Auto refresh every 5min
   useEffect(() => {
     if (!isClient || !minimalReady) return;
 
@@ -113,7 +114,7 @@ useEffect(() => {
     return () => clearInterval(intervalRef.current);
   }, [minimalReady, safeRefreshSession, refetch]);
 
-  // SessionWatcher: API + network + wake + visibility
+  // ✅ SessionWatcher
   useEffect(() => {
     if (!isClient || !minimalReady) return;
 
