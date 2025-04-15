@@ -39,30 +39,26 @@ export default function HistoryPage() {
   const [filter, setFilter] = useState("all");
 
   const dropdownRef = useRef();
-  const silentReload = useRef(false);
 
   const selectedNetwork = NETWORK_OPTIONS.find((net) => net.value === network);
 
-  const fetchTransactions = useCallback(
-    async (isSilent = false) => {
-      if (!wallet?.wallet?.address) return;
-      try {
-        if (!isSilent) setTxLoading(true);
-        const txs = await fetchNetworkTransactions(network, wallet.wallet.address);
-        setTransactions(txs);
-      } catch (err) {
-        console.error("❌ Error fetching transactions:", err);
-        setTransactions([]);
-      } finally {
-        if (!isSilent) setTxLoading(false);
-      }
-    },
-    [network, wallet]
-  );
+  const fetchTransactions = useCallback(async (isSilent = false) => {
+    if (!wallet?.wallet?.address) return;
+    try {
+      if (!isSilent) setTxLoading(true);
+      const txs = await fetchNetworkTransactions(network, wallet.wallet.address);
+      setTransactions(txs);
+    } catch (err) {
+      console.error("❌ Error fetching transactions:", err);
+      setTransactions([]);
+    } finally {
+      if (!isSilent) setTxLoading(false);
+    }
+  }, [network, wallet]);
 
   useEffect(() => {
     if (ready && wallet?.wallet?.address) {
-      fetchTransactions();
+      fetchTransactions(true);
       const silent = debounce(() => fetchTransactions(true), 60000);
       const interval = setInterval(silent, 60000);
       return () => clearInterval(interval);
@@ -85,18 +81,12 @@ export default function HistoryPage() {
 
   const getExplorerLink = (net, txHash) => {
     switch (net) {
-      case "bnb":
-        return `https://bscscan.com/tx/${txHash}`;
-      case "tbnb":
-        return `https://testnet.bscscan.com/tx/${txHash}`;
-      case "eth":
-        return `https://etherscan.io/tx/${txHash}`;
-      case "polygon":
-        return `https://polygonscan.com/tx/${txHash}`;
-      case "avax":
-        return `https://snowtrace.io/tx/${txHash}`;
-      default:
-        return "#";
+      case "bnb": return `https://bscscan.com/tx/${txHash}`;
+      case "tbnb": return `https://testnet.bscscan.com/tx/${txHash}`;
+      case "eth": return `https://etherscan.io/tx/${txHash}`;
+      case "polygon": return `https://polygonscan.com/tx/${txHash}`;
+      case "avax": return `https://snowtrace.io/tx/${txHash}`;
+      default: return "#";
     }
   };
 
@@ -126,21 +116,10 @@ export default function HistoryPage() {
       ? transactions.filter((tx) => tx.from.toLowerCase() === wallet.wallet.address.toLowerCase())
       : transactions.filter((tx) => tx.to.toLowerCase() === wallet.wallet.address.toLowerCase());
 
-  if (loading || !ready) {
-    return (
-      <div className={styles.loading}>
-        <MiniLoadingSpinner /> Loading session...
-      </div>
-    );
-  }
-
+  if (loading || !ready) return null;
   if (!wallet?.wallet?.address) {
     router.replace("/");
-    return (
-      <div className={styles.loading}>
-        <MiniLoadingSpinner /> Redirecting...
-      </div>
-    );
+    return null;
   }
 
   return (
@@ -189,13 +168,11 @@ export default function HistoryPage() {
         </div>
 
         <div className={styles.txList}>
-          {txLoading ? (
-            <div className={styles.loadingBox}>
-              <MiniLoadingSpinner /> Loading transactions...
-            </div>
-          ) : (
-            <AnimatePresence>
-              {filteredTxs.slice(0, visibleCount).map((tx) => {
+          <AnimatePresence>
+            {filteredTxs.length === 0 ? (
+              <div className={styles.noTxMessage}>No Transactions Made Yet</div>
+            ) : (
+              filteredTxs.slice(0, visibleCount).map((tx) => {
                 const isExpanded = expanded === tx.hash;
                 const direction = tx.from.toLowerCase() === wallet.wallet.address.toLowerCase() ? "SENT" : "RECEIVED";
 
@@ -243,9 +220,9 @@ export default function HistoryPage() {
                     )}
                   </motion.div>
                 );
-              })}
-            </AnimatePresence>
-          )}
+              })
+            )}
+          </AnimatePresence>
 
           {filteredTxs.length > visibleCount && (
             <button
