@@ -12,13 +12,13 @@ import { useBalances } from "@/contexts/BalanceContext";
 import { useSend } from "@/contexts/SendContext";
 import { useSystemReady } from "@/hooks/useSystemReady";
 
-import { getGasPrices } from "@/utils/getGasPrices";
+import { getGasPrices } from "@/utils/getGasPrice";
 import styles from "@/styles/sendtest.module.css"; // CSS kursim atskirai
 
-import bnbIcon from "@/public/icons/bnb.svg";
-import ethIcon from "@/public/icons/eth.svg";
-import maticIcon from "@/public/icons/matic.svg";
-import avaxIcon from "@/public/icons/avax.svg";
+import bnbIcon from "/icons/bnb.svg";
+import ethIcon from "/icons/eth.svg";
+import maticIcon from "/icons/matic.svg";
+import avaxIcon from "/icons/avax.svg";
 
 const NETWORKS = [
   { label: "BNB", value: "bnb", icon: bnbIcon },
