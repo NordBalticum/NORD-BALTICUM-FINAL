@@ -1,15 +1,39 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/utils/supabaseClient";
 
-export async function isAdmin(email) {
-  const { data, error } = await supabase
-    .from("admins")
-    .select("id")
-    .eq("email", email)
-    .single();
+export function useIsAdmin() {
+  const { user } = useAuth();
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  if (error && error.code !== "PGRST116") {
-    console.warn("Admin check error:", error.message);
-  }
+  useEffect(() => {
+    const checkAdmin = async () => {
+      setLoading(true);
+      if (!user?.email) {
+        setIsAdmin(false);
+        setLoading(false);
+        return;
+      }
 
-  return !!data;
+      const { data, error } = await supabase
+        .from("admins")
+        .select("id")
+        .eq("email", user.email)
+        .single();
+
+      if (error && error.code !== "PGRST116") {
+        console.warn("Admin check error:", error.message);
+      }
+
+      setIsAdmin(!!data);
+      setLoading(false);
+    };
+
+    checkAdmin();
+  }, [user?.email]);
+
+  return { isAdmin, loading };
 }
