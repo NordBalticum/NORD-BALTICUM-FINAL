@@ -71,7 +71,7 @@ export default function SideDrawer() {
       </motion.button>
 
       {/* ✅ Drawer + Backdrop */}
-      <AnimatePresence mode="wait">
+      <AnimatePresence mode="wait" initial={false}>
         {open && (
           <>
             {/* ✅ Fonas */}
@@ -80,7 +80,7 @@ export default function SideDrawer() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.4, ease: "easeInOut" }}
+              transition={{ duration: 0.45, ease: "easeInOut" }}
               onClick={toggleDrawer}
             />
 
@@ -89,8 +89,8 @@ export default function SideDrawer() {
               className={styles.drawer}
               initial={{ opacity: 0, x: -80, scale: 0.92 }}
               animate={{ opacity: 1, x: 0, scale: 1 }}
-              exit={{ opacity: 0, x: -80, scale: 0.92 }}
-              transition={{ duration: 0.5, ease: [0.68, -0.55, 0.27, 1.55] }}
+              exit={{ opacity: 0, x: -40, scale: 0.96 }}
+              transition={{ duration: 0.45, ease: [0.65, 0, 0.35, 1] }}
             >
               {/* ✅ Header */}
               <div className={styles.drawerHeader}>
