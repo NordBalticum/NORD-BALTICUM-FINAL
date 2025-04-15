@@ -41,14 +41,14 @@ export default function Dashboard() {
   const walletReady = !!wallet?.wallet?.address;
 
   // ✅ Prioritetas: live > fallback > empty
-  const allBalances = balances && Object.keys(balances).length > 0
-    ? balances
-    : fallbackBalances || {};
+  const allBalances = Object.keys(balances || {}).length > 0
+  ? balances
+  : fallbackBalances || {};
 
-  const allPrices = prices && Object.keys(prices).length > 0
-    ? prices
-    : fallbackPrices || {};
-
+const allPrices = Object.keys(prices || {}).length > 0
+  ? prices
+  : fallbackPrices || {};
+  
   const tokens = useMemo(() => Object.keys(allBalances), [allBalances]);
 
   return (
