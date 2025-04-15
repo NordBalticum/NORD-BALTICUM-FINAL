@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
+import { Tooltip } from "react-tooltip";
 
 import { useAuth } from "@/contexts/AuthContext";
 import { useMinimalReady } from "@/hooks/useMinimalReady";
@@ -22,6 +23,8 @@ const NETWORK_OPTIONS = [
   { label: "Avalanche Mainnet", value: "avax", icon: "/icons/avax.svg" },
 ];
 
+const METHOD_FILTERS = ["all", "transfer", "swap", "stake"];
+
 export default function HistoryPage() {
   const router = useRouter();
   const { wallet } = useAuth();
@@ -32,6 +35,8 @@ export default function HistoryPage() {
   const [txLoading, setTxLoading] = useState(false);
   const [visibleCount, setVisibleCount] = useState(5);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [expanded, setExpanded] = useState(null);
+  const [filter, setFilter] = useState("all");
 
   const selectedNetwork = NETWORK_OPTIONS.find((net) => net.value === network);
 
@@ -59,24 +64,58 @@ export default function HistoryPage() {
 
   const getExplorerLink = (net, txHash) => {
     switch (net) {
-      case "bnb": return `https://bscscan.com/tx/${txHash}`;
-      case "tbnb": return `https://testnet.bscscan.com/tx/${txHash}`;
-      case "eth": return `https://etherscan.io/tx/${txHash}`;
-      case "polygon": return `https://polygonscan.com/tx/${txHash}`;
-      case "avax": return `https://snowtrace.io/tx/${txHash}`;
-      default: return "#";
+      case "bnb":
+        return `https://bscscan.com/tx/${txHash}`;
+      case "tbnb":
+        return `https://testnet.bscscan.com/tx/${txHash}`;
+      case "eth":
+        return `https://etherscan.io/tx/${txHash}`;
+      case "polygon":
+        return `https://polygonscan.com/tx/${txHash}`;
+      case "avax":
+        return `https://snowtrace.io/tx/${txHash}`;
+      default:
+        return "#";
     }
   };
 
   const renderStatusBadge = (tx) => {
+    const animationClass =
+      tx.txreceipt_status === "1"
+        ? styles.pulseSuccess
+        : tx.txreceipt_status === "0"
+        ? styles.pulseError
+        : styles.pulsePending;
+
     if (tx.isError === "0" || tx.txreceipt_status === "1") {
-      return <span className={styles.statusSuccess}>✔️ Success</span>;
+      return (
+        <span className={`${styles.statusSuccess} ${animationClass}`}>
+          ✔️ Success
+        </span>
+      );
     }
+
     if (tx.txreceipt_status === "0") {
-      return <span className={styles.statusFailed}>❌ Failed</span>;
+      return (
+        <span className={`${styles.statusFailed} ${animationClass}`}>
+          ❌ Failed
+        </span>
+      );
     }
-    return <span className={styles.statusPending}>⏳ Pending</span>;
+
+    return (
+      <span className={`${styles.statusPending} ${animationClass}`}>
+        ⏳ Pending
+      </span>
+    );
   };
+
+  const filteredTxs =
+    filter === "all"
+      ? transactions
+      : transactions.filter((tx) =>
+          tx.functionName?.toLowerCase().includes(filter)
+        );
 
   if (loading || !ready) {
     return (
@@ -102,6 +141,21 @@ export default function HistoryPage() {
     >
       <div className={styles.header}>
         <h1 className={styles.title}>Transaction History</h1>
+
+        <div className={styles.filters}>
+          {METHOD_FILTERS.map((item) => (
+            <button
+              key={item}
+              className={
+                filter === item ? styles.activeFilter : styles.filterButton
+              }
+              onClick={() => setFilter(item)}
+            >
+              {item.toUpperCase()}
+            </button>
+          ))}
+        </div>
+
         <div className={styles.networkSelector}>
           <button
             className={styles.dropdownButton}
@@ -110,6 +164,7 @@ export default function HistoryPage() {
             <Image src={selectedNetwork.icon} alt="" width={20} height={20} />
             <span>{selectedNetwork.label}</span>
           </button>
+
           {dropdownOpen && (
             <div className={styles.dropdownList}>
               {NETWORK_OPTIONS.map((net) => (
@@ -137,56 +192,86 @@ export default function HistoryPage() {
           </div>
         ) : (
           <AnimatePresence>
-            {transactions.slice(0, visibleCount).map((tx) => (
-              <motion.div
-                key={tx.hash}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.2 }}
-                className={styles.txItem}
-              >
-                <div className={styles.txHeader}>
-                  <div className={styles.txIconHash}>
-                    <Image
-                      src="/icons/tx-icon.svg"
-                      alt="tx"
-                      width={20}
-                      height={20}
-                    />
-                    <a
-                      href={getExplorerLink(network, tx.hash)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className={styles.txHash}
-                    >
-                      {tx.hash.substring(0, 10)}...{tx.hash.slice(-6)}
-                    </a>
+            {filteredTxs.slice(0, visibleCount).map((tx) => {
+              const isExpanded = expanded === tx.hash;
+
+              return (
+                <motion.div
+                  key={tx.hash}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.2 }}
+                  className={styles.txItem}
+                  onClick={() =>
+                    setExpanded(isExpanded ? null : tx.hash)
+                  }
+                >
+                  <div className={styles.txHeader}>
+                    <div className={styles.txIconHash}>
+                      <Image
+                        src="/icons/tx-icon.svg"
+                        alt="tx"
+                        width={20}
+                        height={20}
+                      />
+                      <a
+                        href={getExplorerLink(network, tx.hash)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={styles.txHash}
+                      >
+                        {tx.hash.substring(0, 10)}...{tx.hash.slice(-6)}
+                      </a>
+                    </div>
+                    <div className={styles.txStatus}>
+                      {renderStatusBadge(tx)}
+                    </div>
                   </div>
-                  <div className={styles.txStatus}>
-                    {renderStatusBadge(tx)}
+
+                  <div className={styles.txDetails}>
+                    <p>
+                      <strong>From:</strong> {tx.from}
+                    </p>
+                    <p>
+                      <strong>To:</strong> {tx.to}
+                    </p>
+                    <p>
+                      <strong>Value:</strong>{" "}
+                      {(parseFloat(tx.value) / 1e18).toFixed(6)}{" "}
+                      {network.toUpperCase()}
+                    </p>
+                    <p>
+                      <strong>Time:</strong>{" "}
+                      {new Date(tx.timeStamp * 1000).toLocaleString()}
+                    </p>
                   </div>
-                </div>
-                <div className={styles.txDetails}>
-                  <p><strong>From:</strong> {tx.from}</p>
-                  <p><strong>To:</strong> {tx.to}</p>
-                  <p>
-                    <strong>Value:</strong>{" "}
-                    {(parseFloat(tx.value) / 1e18).toFixed(6)}{" "}
-                    {network.toUpperCase()}
-                  </p>
-                  <p>
-                    <strong>Time:</strong>{" "}
-                    {new Date(tx.timeStamp * 1000).toLocaleString()}
-                  </p>
-                </div>
-              </motion.div>
-            ))}
+
+                  {isExpanded && (
+                    <div className={styles.txMeta}>
+                      <p>
+                        <strong>Nonce:</strong> {tx.nonce}
+                      </p>
+                      <p>
+                        <strong>Gas:</strong> {tx.gas}
+                      </p>
+                      <p>
+                        <strong>Gas Price:</strong> {tx.gasPrice}
+                      </p>
+                      <p>
+                        <strong>Function:</strong>{" "}
+                        {tx.functionName || "N/A"}
+                      </p>
+                    </div>
+                  )}
+                </motion.div>
+              );
+            })}
           </AnimatePresence>
         )}
       </div>
 
-      {transactions.length > visibleCount && (
+      {filteredTxs.length > visibleCount && (
         <button
           className={styles.loadMoreBtn}
           onClick={() => setVisibleCount(visibleCount + 5)}
