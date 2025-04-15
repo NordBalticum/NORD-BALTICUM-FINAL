@@ -1,16 +1,16 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import Image from "next/image";
+import { motion, AnimatePresence } from "framer-motion";
 
 import { useSystemReady } from "@/hooks/useSystemReady";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBalance } from "@/contexts/BalanceContext";
 import { useNetwork } from "@/contexts/NetworkContext";
 
-import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
 import styles from "@/styles/dashboard.module.css";
 
 const LivePriceTable = dynamic(() => import("@/components/LivePriceTable"), {
@@ -37,15 +37,30 @@ export default function Dashboard() {
   const router = useRouter();
 
   const { wallet } = useAuth();
-  const { activeNetwork } = useNetwork();
-  const { balances, prices, loading: balanceLoading } = useBalance();
+  const { balances, prices } = useBalance();
   const { latencyMs, sessionScore } = useSystemReady();
 
+  const [localBalances, setLocalBalances] = useState({});
+  const [localPrices, setLocalPrices] = useState({});
+
   const tokens = useMemo(() => {
-    return balances ? Object.keys(balances) : [];
-  }, [balances]);
+    return balances ? Object.keys(balances) : Object.keys(localBalances);
+  }, [balances, localBalances]);
 
   const walletReady = !!wallet?.wallet?.address;
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const storedBalances = localStorage.getItem("cachedBalances");
+    const storedPrices = localStorage.getItem("cachedPrices");
+    if (storedBalances) setLocalBalances(JSON.parse(storedBalances));
+    if (storedPrices) setLocalPrices(JSON.parse(storedPrices));
+  }, []);
+
+  useEffect(() => {
+    if (balances) localStorage.setItem("cachedBalances", JSON.stringify(balances));
+    if (prices) localStorage.setItem("cachedPrices", JSON.stringify(prices));
+  }, [balances, prices]);
 
   return (
     <main className={styles.container}>
@@ -54,7 +69,7 @@ export default function Dashboard() {
 
         {!walletReady ? (
           <div className={styles.fullscreenCenter}>
-            <MiniLoadingSpinner size={28} />
+            <div className={styles.shimmerCard} />
             <p className={styles.loadingText}>Loading wallet...</p>
             <p className={styles.loadingSub}>
               Session Score: {sessionScore}% | Latency: {latencyMs}ms
@@ -62,59 +77,77 @@ export default function Dashboard() {
           </div>
         ) : (
           <div className={styles.assetList}>
-            {tokens.length === 0 ? (
-              <div className={styles.noAssets}>No assets found.</div>
-            ) : (
-              tokens.map((network) => {
-                const balance = balances?.[network];
-                const price = prices?.[network];
-                const valueEur = price && balance ? (balance * price.eur).toFixed(2) : "–";
-                const valueUsd = price && balance ? (balance * price.usd).toFixed(2) : "–";
+            <AnimatePresence>
+              {tokens.length === 0 ? (
+                <motion.div
+                  className={styles.noAssets}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                >
+                  No assets found.
+                </motion.div>
+              ) : (
+                tokens.map((network, index) => {
+                  const balance = balances?.[network] ?? localBalances?.[network];
+                  const price = prices?.[network] ?? localPrices?.[network];
+                  const valueEur = price && balance ? (balance * price.eur).toFixed(2) : "–";
+                  const valueUsd = price && balance ? (balance * price.usd).toFixed(2) : "–";
 
-                return (
-                  <div
-                    key={network}
-                    className={styles.assetItem}
-                    onClick={() => router.push(`/${network}`)}
-                    role="button"
-                    tabIndex={0}
-                  >
-                    <div className={styles.assetLeft}>
-                      <Image
-                        src={iconUrls[network] || "/icons/default-icon.png"}
-                        alt={`${network.toUpperCase()} logo`}
-                        width={40}
-                        height={40}
-                        className={styles.assetLogo}
-                        priority
-                        unoptimized
-                      />
-                      <div className={styles.assetInfo}>
-                        <div className={styles.assetSymbol}>
-                          {network.toUpperCase()}
-                        </div>
-                        <div className={styles.assetName}>
-                          {names[network] || "Unknown"}
+                  return (
+                    <motion.div
+                      key={network}
+                      className={styles.assetItem}
+                      onClick={() => router.push(`/${network}`)}
+                      role="button"
+                      tabIndex={0}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      transition={{ duration: 0.3, delay: index * 0.05 }}
+                      whileHover={{ scale: 1.015 }}
+                    >
+                      <div className={styles.assetLeft}>
+                        <Image
+                          src={iconUrls[network] || "/icons/default-icon.png"}
+                          alt={`${network.toUpperCase()} logo`}
+                          width={40}
+                          height={40}
+                          className={styles.assetLogo}
+                          priority
+                          unoptimized
+                        />
+                        <div className={styles.assetInfo}>
+                          <div className={styles.assetSymbol}>
+                            {network.toUpperCase()}
+                          </div>
+                          <div className={styles.assetName}>
+                            {names[network] || "Unknown"}
+                          </div>
                         </div>
                       </div>
-                    </div>
 
-                    <div className={styles.assetRight}>
-                      <div className={styles.assetAmount}>
-                        {balance != null
-                          ? `${balance.toFixed(6)} ${network.toUpperCase()}`
-                          : "Loading..."}
+                      <div className={styles.assetRight}>
+                        <div className={styles.assetAmount}>
+                          {balance != null ? (
+                            `${balance.toFixed(6)} ${network.toUpperCase()}`
+                          ) : (
+                            <div className={styles.shimmerText} />
+                          )}
+                        </div>
+                        <div className={styles.assetEur}>
+                          {valueEur !== "–" ? (
+                            `≈ €${valueEur} | ≈ $${valueUsd}`
+                          ) : (
+                            <div className={styles.shimmerTextSmall} />
+                          )}
+                        </div>
                       </div>
-                      <div className={styles.assetEur}>
-                        {valueEur !== "–"
-                          ? `≈ €${valueEur} | ≈ $${valueUsd}`
-                          : "Fetching price..."}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })
-            )}
+                    </motion.div>
+                  );
+                })
+              )}
+            </AnimatePresence>
           </div>
         )}
       </div>
