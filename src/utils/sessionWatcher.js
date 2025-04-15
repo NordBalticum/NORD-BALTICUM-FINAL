@@ -59,12 +59,10 @@ export function startSessionWatcher({
 
   const visibilityHandler = () => {
     const current = document.visibilityState;
-
     if (current === "visible" && lastVisibility !== "visible") {
       logEvent("Tab became visible – immediate session check.");
       checkSession("visibility");
     }
-
     lastVisibility = current;
   };
 
@@ -78,22 +76,23 @@ export function startSessionWatcher({
     checkSession("wake-up");
   };
 
-  const visibilityEvents = () => {
+  const addEvents = () => {
     document.addEventListener("visibilitychange", visibilityHandler);
     window.addEventListener("online", onlineHandler);
-    document.addEventListener("resume", wakeHandler);
+    document.addEventListener("resume", wakeHandler); // Android wake
+    document.addEventListener("pageshow", wakeHandler); // iOS wake
   };
 
   const removeEvents = () => {
     document.removeEventListener("visibilitychange", visibilityHandler);
     window.removeEventListener("online", onlineHandler);
     document.removeEventListener("resume", wakeHandler);
+    document.removeEventListener("pageshow", wakeHandler);
   };
 
   const start = () => {
     if (intervalId) return;
-
-    visibilityEvents();
+    addEvents();
     intervalId = setInterval(() => checkSession("interval"), intervalMs);
     logEvent("SessionWatcher started.");
   };
