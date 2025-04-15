@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { toast } from "react-toastify";
 import debounce from "lodash.debounce";
+import { toast } from "react-toastify";
+
 import { useAuth } from "@/contexts/AuthContext";
 import { startSessionWatcher } from "@/utils/sessionWatcher";
 
@@ -17,32 +18,31 @@ export function useMinimalReady() {
   } = useAuth();
 
   const [isDomReady, setIsDomReady] = useState(false);
+  const [latencyMs, setLatencyMs] = useState(0);
+  const [sessionScore, setSessionScore] = useState(100);
+
+  const isClient = typeof window !== "undefined";
   const sessionWatcher = useRef(null);
   const refreshInterval = useRef(null);
   const lastRefreshTime = useRef(Date.now());
 
-  const isClient = typeof window !== "undefined";
-
-  // ✅ Mobile / PWA / WebView detektorius
+  // ✅ Mobile / WebView detection
   const isMobile = useMemo(() => {
     if (!isClient) return false;
     const ua = navigator.userAgent || navigator.vendor || "";
     return /android|iphone|ipad|ipod|opera mini|iemobile|mobile/i.test(ua);
   }, [isClient]);
 
-  // ✅ DOM + Window Ready
+  // ✅ DOM Ready
   useEffect(() => {
     if (!isClient) return;
-
     const markReady = () => setIsDomReady(true);
-
     if (document.readyState === "complete") {
       markReady();
     } else {
       const raf = requestAnimationFrame(markReady);
       const timeout = setTimeout(markReady, 1000);
       window.addEventListener("load", markReady);
-
       return () => {
         cancelAnimationFrame(raf);
         clearTimeout(timeout);
@@ -51,6 +51,7 @@ export function useMinimalReady() {
     }
   }, [isClient]);
 
+  // ✅ Readiness
   const minimalReady = useMemo(() =>
     isClient &&
     isDomReady &&
@@ -63,7 +64,19 @@ export function useMinimalReady() {
 
   const loading = !minimalReady;
 
-  // ✅ Debounced session refresh on visibility, focus, network online
+  // ✅ Session diagnostics score
+  useEffect(() => {
+    if (!isClient || !minimalReady) return;
+    const score =
+      100 -
+      (authLoading ? 20 : 0) -
+      (walletLoading ? 20 : 0) -
+      (!user ? 30 : 0) -
+      (!wallet?.wallet?.address ? 30 : 0);
+    setSessionScore(Math.max(0, score));
+  }, [minimalReady, authLoading, walletLoading, user, wallet]);
+
+  // ✅ Soft refresh on visibility/focus/network resume
   useEffect(() => {
     if (!isClient || !minimalReady) return;
 
@@ -72,7 +85,8 @@ export function useMinimalReady() {
       try {
         await safeRefreshSession?.();
         lastRefreshTime.current = Date.now();
-        console.log(`✅ MinimalRefresh [${trigger}] (${Math.round(performance.now() - start)}ms)`);
+        setLatencyMs(Math.round(performance.now() - start));
+        console.log(`✅ MinimalRefresh [${trigger}] (${latencyMs}ms)`);
       } catch (err) {
         console.error(`❌ MinimalRefresh failed [${trigger}]:`, err?.message || err);
       }
@@ -86,7 +100,6 @@ export function useMinimalReady() {
     window.addEventListener("focus", onFocus);
     window.addEventListener("online", onOnline);
 
-    // ✅ Specialiai mobiliems – extra resume timeout (PWA fix)
     if (isMobile) {
       const resumeTimeout = () => setTimeout(() => refresh("mobile-resume"), 800);
       document.addEventListener("resume", resumeTimeout);
@@ -108,7 +121,7 @@ export function useMinimalReady() {
     };
   }, [minimalReady, safeRefreshSession, isMobile]);
 
-  // ✅ Auto session refresh kas 5min
+  // ✅ Auto refresh kas 5 min
   useEffect(() => {
     if (!isClient || !minimalReady) return;
 
@@ -126,10 +139,8 @@ export function useMinimalReady() {
   // ✅ Offline warning
   useEffect(() => {
     if (!isClient) return;
-
-    const notifyOffline = () => toast.warning("⚠️ You are offline. Some features may not work.");
+    const notifyOffline = () => toast.warning("⚠️ You are offline. Using cached session.");
     window.addEventListener("offline", notifyOffline);
-
     return () => window.removeEventListener("offline", notifyOffline);
   }, []);
 
@@ -139,11 +150,11 @@ export function useMinimalReady() {
 
     sessionWatcher.current = startSessionWatcher({
       onSessionInvalid: () => {
-        toast.error("⚠️ Session lost. Logging out.");
+        toast.error("⚠️ Session expired. Logging out...");
         if (typeof signOut === "function") {
           signOut(true);
         } else {
-          console.warn("⚠️ signOut is not available.");
+          console.warn("⚠️ signOut handler is missing.");
         }
       },
       user,
@@ -156,9 +167,13 @@ export function useMinimalReady() {
     });
 
     sessionWatcher.current.start();
-
     return () => sessionWatcher.current?.stop?.();
   }, [minimalReady, user, wallet, safeRefreshSession, signOut]);
 
-  return { ready: minimalReady, loading };
+  return {
+    ready: minimalReady,
+    loading,
+    latencyMs,
+    sessionScore,
+  };
 }
