@@ -1,5 +1,6 @@
 "use client";
 
+// ✅ FINAL LOCKED VERSION 2025 | NordBalticum Auth Engine
 import { createContext, useContext, useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { ethers } from "ethers";
@@ -7,7 +8,7 @@ import { supabase } from "@/utils/supabaseClient";
 import { toast } from "react-toastify";
 import debounce from "lodash.debounce";
 
-// ✅ RPC
+// ✅ Blockchain RPC endpoints
 export const RPC = {
   eth: "https://rpc.ankr.com/eth",
   bnb: "https://bsc-dataseed.binance.org/",
@@ -16,7 +17,7 @@ export const RPC = {
   avax: "https://api.avax.network/ext/bc/C/rpc",
 };
 
-// ✅ Encryption
+// ✅ AES Encryption
 const ENCRYPTION_SECRET = process.env.NEXT_PUBLIC_ENCRYPTION_SECRET;
 
 const encode = (str) => new TextEncoder().encode(str);
@@ -52,7 +53,12 @@ export const encrypt = async (text) => {
     key,
     encode(text)
   );
-  return btoa(JSON.stringify({ iv: Array.from(iv), data: Array.from(new Uint8Array(encrypted)) }));
+  return btoa(
+    JSON.stringify({
+      iv: Array.from(iv),
+      data: Array.from(new Uint8Array(encrypted)),
+    })
+  );
 };
 
 export const decrypt = async (ciphertext) => {
@@ -70,6 +76,7 @@ export const decrypt = async (ciphertext) => {
 export const AuthContext = createContext();
 export const useAuth = () => useContext(AuthContext);
 
+// ✅ Auth Provider
 export const AuthProvider = ({ children }) => {
   const router = useRouter();
   const isClient = typeof window !== "undefined";
@@ -83,8 +90,10 @@ export const AuthProvider = ({ children }) => {
   const inactivityTimer = useRef(null);
   const lastSessionRefresh = useRef(Date.now());
 
+  // 1. Session Init
   useEffect(() => {
     if (!isClient) return;
+
     const loadSession = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
@@ -105,7 +114,9 @@ export const AuthProvider = ({ children }) => {
         setAuthLoading(false);
       }
     };
+
     loadSession();
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session) {
         setSession(session);
@@ -115,9 +126,11 @@ export const AuthProvider = ({ children }) => {
         signOut(false);
       }
     });
+
     return () => subscription?.unsubscribe();
   }, []);
 
+  // 2. Wallet loader
   useEffect(() => {
     if (!isClient || authLoading || !user?.email) return;
     loadOrCreateWallet(user.email);
@@ -132,6 +145,7 @@ export const AuthProvider = ({ children }) => {
         .eq("user_email", email)
         .maybeSingle();
       if (error) throw error;
+
       if (data?.encrypted_key) {
         const decryptedKey = await decrypt(data.encrypted_key);
         setupWallet(decryptedKey);
@@ -150,7 +164,7 @@ export const AuthProvider = ({ children }) => {
   const createAndStoreWallet = async (email) => {
     const newWallet = ethers.Wallet.createRandom();
     const encryptedKey = await encrypt(newWallet.privateKey);
-    const { error } = await supabase.from("wallets").upsert({
+    const { error } = await supabase.from("wallets").insert({
       user_email: email,
       eth_address: newWallet.address,
       encrypted_key: encryptedKey,
@@ -159,28 +173,6 @@ export const AuthProvider = ({ children }) => {
     if (error) throw error;
     setupWallet(newWallet.privateKey);
     toast.success("✅ Wallet created!");
-  };
-
-  const importWalletFromPrivateKey = async (email, privateKey) => {
-    try {
-      setWalletLoading(true);
-      const encryptedKey = await encrypt(privateKey);
-      const wallet = new ethers.Wallet(privateKey);
-      const { error } = await supabase.from("wallets").upsert({
-        user_email: email,
-        eth_address: wallet.address,
-        encrypted_key: encryptedKey,
-        updated_at: new Date().toISOString(),
-      });
-      if (error) throw error;
-      setupWallet(privateKey);
-      toast.success("✅ Wallet imported!");
-    } catch (err) {
-      console.error("Wallet import failed:", err.message);
-      toast.error("❌ Wallet import failed.");
-    } finally {
-      setWalletLoading(false);
-    }
   };
 
   const setupWallet = (privateKey) => {
@@ -193,9 +185,11 @@ export const AuthProvider = ({ children }) => {
     setWallet({ wallet: baseWallet, signers });
   };
 
+  // 3. Safe session refresh
   const safeRefreshSession = async () => {
     if (Date.now() - lastSessionRefresh.current < 60000) return null;
     lastSessionRefresh.current = Date.now();
+
     try {
       const { data: { session } } = await supabase.auth.refreshSession();
       if (session) {
@@ -216,18 +210,26 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // 4. Auto refresh every 5 min
   useEffect(() => {
     if (!isClient) return;
     const interval = setInterval(() => safeRefreshSession(), 300000);
     return () => clearInterval(interval);
   }, [safeRefreshSession, isClient]);
 
+  // 5. Visibility + network recovery
   useEffect(() => {
     if (!isClient) return;
-    const handleVisible = debounce(() => safeRefreshSession(), 500);
+
+    const handleVisible = debounce(() => {
+      if (document.visibilityState === "visible") safeRefreshSession();
+    }, 500);
+
     const handleOnline = debounce(() => safeRefreshSession(), 500);
+
     document.addEventListener("visibilitychange", handleVisible);
     window.addEventListener("online", handleOnline);
+
     return () => {
       document.removeEventListener("visibilitychange", handleVisible);
       window.removeEventListener("online", handleOnline);
@@ -236,8 +238,10 @@ export const AuthProvider = ({ children }) => {
     };
   }, [safeRefreshSession, isClient]);
 
+  // 6. Inactivity logout
   useEffect(() => {
     if (!isClient) return;
+
     const resetTimer = () => {
       clearTimeout(inactivityTimer.current);
       inactivityTimer.current = setTimeout(() => {
@@ -245,10 +249,13 @@ export const AuthProvider = ({ children }) => {
         signOut(true);
       }, 10 * 60 * 1000);
     };
+
     ["mousemove", "keydown", "touchstart", "touchmove"].forEach((event) =>
       window.addEventListener(event, resetTimer)
     );
+
     resetTimer();
+
     return () => {
       clearTimeout(inactivityTimer.current);
       ["mousemove", "keydown", "touchstart", "touchmove"].forEach((event) =>
@@ -257,6 +264,7 @@ export const AuthProvider = ({ children }) => {
     };
   }, []);
 
+  // 7. Sign in
   const signInWithMagicLink = async (email) => {
     const origin = isClient ? window.location.origin : "https://nordbalticum.com";
     const { error } = await supabase.auth.signInWithOtp({
@@ -276,7 +284,9 @@ export const AuthProvider = ({ children }) => {
     const origin = isClient ? window.location.origin : "https://nordbalticum.com";
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: `${origin}/dashboard` },
+      options: {
+        redirectTo: `${origin}/dashboard`,
+      },
     });
     if (error) {
       toast.error("❌ Google login error.");
@@ -284,21 +294,30 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // 8. Sign out
   const signOut = async (showToast = false, redirectPath = "/") => {
     try {
       await supabase.auth.signOut();
     } catch (err) {
       console.error("Sign out error:", err.message);
     }
+
     try { setUser(null); } catch {}
     try { setWallet(null); } catch {}
     try { setSession(null); } catch {}
+
     if (isClient) {
-      ["userPrivateKey", "activeNetwork", "sessionData"].forEach((key) =>
-        localStorage.removeItem(key)
-      );
+      try {
+        ["userPrivateKey", "activeNetwork", "sessionData"].forEach((key) =>
+          localStorage.removeItem(key)
+        );
+      } catch (err) {
+        console.warn("LocalStorage clear error:", err);
+      }
     }
+
     router.replace(redirectPath);
+
     if (showToast) {
       toast.info("👋 Logged out.", { position: "top-center", autoClose: 4000 });
     }
@@ -316,7 +335,6 @@ export const AuthProvider = ({ children }) => {
         signInWithMagicLink,
         signInWithGoogle,
         signOut,
-        importWalletFromPrivateKey,
       }}
     >
       {children}
