@@ -125,7 +125,10 @@ export default function HistoryPage() {
   }
 
   return (
-    <main className={`${styles.container} ${background.gradient}`} style={{ width: "100vw", height: "100vh", overflowY: "auto" }}>
+    <main
+      className={`${styles.container} ${background.gradient}`}
+      style={{ width: "100vw", height: "100vh", overflowY: "auto" }}
+    >
       <div className={styles.wrapper}>
         <h1 className={styles.title}>Transaction History</h1>
 
@@ -190,16 +193,16 @@ export default function HistoryPage() {
                   >
                     <div className={styles.txHeader}>
                       <div className={styles.txIconHash}>
-  <Image src={selectedNetwork.icon} alt="" width={20} height={20} />
-  <a
-    href={getExplorerLink(network, tx.hash)}
-    target="_blank"
-    rel="noopener noreferrer"
-    className={styles.txHash}
-  >
-    {tx.hash.substring(0, 10)}...{tx.hash.slice(-6)}
-  </a>
-</div>
+                        <Image src={selectedNetwork.icon} alt="" width={20} height={20} />
+                        <a
+                          href={getExplorerLink(network, tx.hash)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={styles.txHash}
+                        >
+                          {tx.hash.substring(0, 10)}...{tx.hash.slice(-6)}
+                        </a>
+                      </div>
                       <div className={styles.txStatus}>{renderStatusBadge(tx)}</div>
                     </div>
 
