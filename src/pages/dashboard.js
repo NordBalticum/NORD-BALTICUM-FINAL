@@ -50,7 +50,7 @@ export default function Dashboard() {
     if (ready && !initialLoadDone) {
       const timeout = setTimeout(() => {
         setInitialLoadDone(true);
-      }, 1200);
+      }, 500);
       return () => clearTimeout(timeout);
     }
   }, [ready, initialLoadDone]);
@@ -74,7 +74,7 @@ export default function Dashboard() {
         } finally {
           setTimeout(() => {
             visibilityHandled.current = false;
-          }, 3000);
+          }, 2500);
         }
       }
     };
@@ -82,6 +82,7 @@ export default function Dashboard() {
     if (typeof window !== "undefined") {
       document.addEventListener("visibilitychange", handleVisibilityChange);
     }
+
     return () => {
       if (typeof window !== "undefined") {
         document.removeEventListener("visibilitychange", handleVisibilityChange);
@@ -145,8 +146,12 @@ export default function Dashboard() {
                       unoptimized
                     />
                     <div className={styles.assetInfo}>
-                      <div className={styles.assetSymbol}>{network.toUpperCase()}</div>
-                      <div className={styles.assetName}>{names[network]}</div>
+                      <div className={styles.assetSymbol}>
+                        {network.toUpperCase()}
+                      </div>
+                      <div className={styles.assetName}>
+                        {names[network]}
+                      </div>
                     </div>
                   </div>
 
