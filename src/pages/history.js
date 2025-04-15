@@ -1,10 +1,11 @@
 // src/app/history.js
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
+import debounce from "lodash.debounce";
 
 import { useAuth } from "@/contexts/AuthContext";
 import { useMinimalReady } from "@/hooks/useMinimalReady";
@@ -38,30 +39,35 @@ export default function HistoryPage() {
   const [filter, setFilter] = useState("all");
 
   const dropdownRef = useRef();
+  const silentReload = useRef(false);
 
   const selectedNetwork = NETWORK_OPTIONS.find((net) => net.value === network);
 
-  const fetchTransactions = async () => {
-    if (!wallet?.wallet?.address) return;
-    try {
-      setTxLoading(true);
-      const txs = await fetchNetworkTransactions(network, wallet.wallet.address);
-      setTransactions(txs);
-    } catch (err) {
-      console.error("❌ Error fetching transactions:", err);
-      setTransactions([]);
-    } finally {
-      setTxLoading(false);
-    }
-  };
+  const fetchTransactions = useCallback(
+    async (isSilent = false) => {
+      if (!wallet?.wallet?.address) return;
+      try {
+        if (!isSilent) setTxLoading(true);
+        const txs = await fetchNetworkTransactions(network, wallet.wallet.address);
+        setTransactions(txs);
+      } catch (err) {
+        console.error("❌ Error fetching transactions:", err);
+        setTransactions([]);
+      } finally {
+        if (!isSilent) setTxLoading(false);
+      }
+    },
+    [network, wallet]
+  );
 
   useEffect(() => {
     if (ready && wallet?.wallet?.address) {
       fetchTransactions();
-      const interval = setInterval(fetchTransactions, 60000);
+      const silent = debounce(() => fetchTransactions(true), 60000);
+      const interval = setInterval(silent, 60000);
       return () => clearInterval(interval);
     }
-  }, [ready, wallet, network]);
+  }, [ready, wallet, fetchTransactions]);
 
   useEffect(() => {
     setVisibleCount(5);
