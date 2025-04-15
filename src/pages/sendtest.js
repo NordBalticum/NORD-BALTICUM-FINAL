@@ -10,8 +10,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNetwork } from "@/contexts/NetworkContext";
 import { useBalances } from "@/contexts/BalanceContext";
-import { useSend } from "@/contexts/SendContext"; // <- TAI BUVO TRŪKSTAMAS!
 import { useSystemReady } from "@/hooks/useSystemReady";
+import { useSend } from "@/contexts/SendContext"; // svarbu!
 
 import styles from "@/styles/sendtest.module.css";
 
@@ -28,6 +28,10 @@ export default function SendTest() {
   const { wallet, user } = useAuth();
   const { selectedNetwork, setSelectedNetwork } = useNetwork();
   const { balances } = useBalances();
+
+  const isClient = typeof window !== "undefined";
+
+  // ✅ Apsauga nuo SSR
   const {
     gasFee,
     adminFee,
@@ -35,7 +39,16 @@ export default function SendTest() {
     feeLoading,
     calculateFees,
     sendTransaction,
-  } = useSend();
+  } = isClient
+    ? useSend()
+    : {
+        gasFee: 0,
+        adminFee: 0,
+        totalFee: 0,
+        feeLoading: false,
+        calculateFees: () => {},
+        sendTransaction: async () => {},
+      };
 
   const [to, setTo] = useState("");
   const [amount, setAmount] = useState("");
@@ -47,18 +60,19 @@ export default function SendTest() {
   const amountRef = useRef();
 
   useEffect(() => {
-    if (selectedNetwork && amount) {
+    if (selectedNetwork && amount && isClient) {
       calculateFees(selectedNetwork, amount);
     }
-  }, [selectedNetwork, amount, calculateFees]);
+  }, [selectedNetwork, amount, calculateFees, isClient]);
 
   if (
     typeof window === "undefined" ||
     loading ||
     !ready ||
     !wallet?.wallet?.address
-  )
+  ) {
     return null;
+  }
 
   const handleSend = () => {
     if (!ethers.isAddress(to.trim())) {
@@ -97,7 +111,7 @@ export default function SendTest() {
       setTo("");
       setAmount("");
     } catch (err) {
-      setErrorData(err.message || "Unknown error.");
+      setErrorData(err?.message || "Unknown error.");
     } finally {
       setProcessing(false);
     }
@@ -182,6 +196,7 @@ export default function SendTest() {
         </button>
       </div>
 
+      {/* Confirm Modal */}
       <AnimatePresence>
         {confirmOpen && (
           <motion.div className={styles.modalOverlay} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
@@ -201,6 +216,7 @@ export default function SendTest() {
         )}
       </AnimatePresence>
 
+      {/* Success Modal */}
       <AnimatePresence>
         {successData && (
           <motion.div className={styles.modalOverlay} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
@@ -216,6 +232,7 @@ export default function SendTest() {
         )}
       </AnimatePresence>
 
+      {/* Error Modal */}
       <AnimatePresence>
         {errorData && (
           <motion.div className={styles.modalOverlay} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
@@ -229,4 +246,4 @@ export default function SendTest() {
       </AnimatePresence>
     </main>
   );
-                     }
+}
