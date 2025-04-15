@@ -34,16 +34,18 @@ const names = {
 export default function Dashboard() {
   const router = useRouter();
 
-  // ✅ Visi reikalingi context'ai – pilnas security + balance + wallet readiness
+  // ✅ Visi reikalingi context'ai – sesija, wallet, tinklas, balansas
   const { user, wallet } = useAuth();
   const { activeNetwork } = useNetwork();
   const { balances, prices } = useBalance();
   const { ready, loading } = useSystemReady();
 
+  // ✅ Tokenų masyvas
   const tokens = useMemo(() => {
     return balances ? Object.keys(balances) : [];
   }, [balances]);
 
+  // ✅ Kol sistema neparuošta – spinner
   if (loading || !ready) {
     return (
       <div className={styles.fullscreenCenter}>
