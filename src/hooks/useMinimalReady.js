@@ -16,16 +16,25 @@ export function useMinimalReady() {
 
   const isClient = typeof window !== "undefined";
 
-  // ✅ DOM + langas ready
+  // ✅ DOM + langas ready – su ultimate fix
   useEffect(() => {
     if (!isClient) return;
 
     const markReady = () => setIsDomReady(true);
+
     if (document.readyState === "complete") {
       markReady();
     } else {
+      const raf = requestAnimationFrame(() => markReady());
+      const timeout = setTimeout(() => markReady(), 1000); // fallback jei raf neiššauna
+
       window.addEventListener("load", markReady);
-      return () => window.removeEventListener("load", markReady);
+
+      return () => {
+        cancelAnimationFrame(raf);
+        clearTimeout(timeout);
+        window.removeEventListener("load", markReady);
+      };
     }
   }, [isClient]);
 
