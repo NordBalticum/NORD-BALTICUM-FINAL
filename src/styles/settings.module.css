@@ -34,19 +34,19 @@
   transition: transform 0.4s ease;
 }
 
-/* ✅ BOXES */
+/* ✅ BOXES (COMPACT VERSION) */
 .settingsBox {
   background: rgba(255, 255, 255, 0.06);
   backdrop-filter: blur(24px) saturate(160%);
   border-radius: 18px;
   box-shadow: 0 0 36px rgba(255, 255, 255, 0.08);
   width: 100%;
-  max-width: 440px; /* ✅ Vienodas visoms */
-  padding: clamp(20px, 4vw, 28px);
+  max-width: 380px; /* ⬅️ sumažinta iš 440px */
+  padding: clamp(16px, 3vw, 24px); /* ⬅️ sumažinta iš clamp(20px, 4vw, 28px) */
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: clamp(14px, 3vh, 24px);
+  gap: clamp(12px, 2.5vh, 20px); /* ⬅️ sumažinta iš clamp(14px, 3vh, 24px) */
   box-sizing: border-box;
   color: white;
   border: 1px solid rgba(255, 255, 255, 0.15);
