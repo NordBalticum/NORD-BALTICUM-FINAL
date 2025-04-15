@@ -6,60 +6,72 @@ import { createContext, useContext, useState, useEffect, useCallback } from "rea
 // ✅ Supported Networks
 export const SUPPORTED_NETWORKS = ["eth", "bnb", "tbnb", "matic", "avax"];
 
-export const NetworkContext = createContext();
-
+const NetworkContext = createContext();
 export const useNetwork = () => useContext(NetworkContext);
+
+// ✅ LocalStorage Keys
+const STORAGE_KEY = "activeNetwork";
 
 export function NetworkProvider({ children }) {
   const [activeNetwork, setActiveNetwork] = useState("bnb"); // ✅ Default: BNB
-  const [initialized, setInitialized] = useState(false); // ✅ Užtikrinam pirmą kartą užkrovimą saugiai
+  const [initialized, setInitialized] = useState(false);     // ✅ Tik pirmajam įkėlimui
 
-  // ✅ Saugi LocalStorage read funkcija
+  // ✅ Saugus LocalStorage reader
   const safeGetLocalStorage = (key) => {
     try {
       if (typeof window !== "undefined") {
         return localStorage.getItem(key);
       }
-    } catch (error) {
-      console.error("❌ LocalStorage get error:", error.message);
+    } catch (err) {
+      console.error("❌ LocalStorage read error:", err.message);
       return null;
     }
   };
 
-  // ✅ Saugi LocalStorage write funkcija
+  // ✅ Saugus LocalStorage writer
   const safeSetLocalStorage = (key, value) => {
     try {
       if (typeof window !== "undefined") {
         localStorage.setItem(key, value);
       }
-    } catch (error) {
-      console.error("❌ LocalStorage set error:", error.message);
+    } catch (err) {
+      console.error("❌ LocalStorage write error:", err.message);
     }
   };
 
-  // ✅ Užkraunam pasirinktą tinklą iš LocalStorage
+  // ✅ Inicializuojam aktyvų tinklą
   useEffect(() => {
-    const saved = safeGetLocalStorage("activeNetwork");
+    const saved = safeGetLocalStorage(STORAGE_KEY);
     if (saved && SUPPORTED_NETWORKS.includes(saved)) {
       setActiveNetwork(saved);
+      console.info(`✅ Loaded activeNetwork from localStorage: ${saved}`);
+    } else {
+      console.info(`ℹ️ No valid saved network, using default: bnb`);
     }
     setInitialized(true);
   }, []);
 
-  // ✅ Išsaugom kai aktyvus tinklas pasikeičia (tik po pirmo užkrovimo)
+  // ✅ Saugojam aktyvų tinklą po pirmo inicijavimo
   useEffect(() => {
-    if (initialized) {
-      safeSetLocalStorage("activeNetwork", activeNetwork);
-    }
+    if (!initialized) return;
+    safeSetLocalStorage(STORAGE_KEY, activeNetwork);
+    console.info(`✅ Saved activeNetwork: ${activeNetwork}`);
   }, [activeNetwork, initialized]);
 
-  // ✅ Saugi switchNetwork funkcija
+  // ✅ Saugi tinklo keitimo funkcija
   const switchNetwork = useCallback((network) => {
     if (!SUPPORTED_NETWORKS.includes(network)) {
-      console.warn(`❌ Attempted to switch to unsupported network: ${network}`);
+      console.warn(`❌ Unsupported network switch attempt: ${network}`);
       return;
     }
-    setActiveNetwork(network);
+
+    setActiveNetwork((prev) => {
+      if (prev !== network) {
+        console.info(`🔀 Switching network: ${prev} → ${network}`);
+        return network;
+      }
+      return prev;
+    });
   }, []);
 
   return (
