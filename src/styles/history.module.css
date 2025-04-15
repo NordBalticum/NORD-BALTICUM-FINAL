@@ -1,4 +1,4 @@
-/* === HISTORY MODULE – NordBalticum Ultra Premium v13 === */
+/* === HISTORY MODULE – NordBalticum Coinbase Style v1.0 === */
 
 /* ✅ CONTAINER */
 .container {
@@ -16,189 +16,269 @@
   z-index: 1;
 }
 
-/* ✅ WRAPPER */
-.wrapper {
-  width: calc(100vw - clamp(180px, 15vw, 360px)); /* ✅ Automatinis prisitaikymas */
+/* ✅ HEADER */
+.header {
+  width: 100%;
   max-width: 960px;
-  min-height: calc(100vh - clamp(180px, 15vh, 360px)); /* ✅ Automatinis aukštis */
-  padding: clamp(24px, 5vw, 48px);
-  background: transparent;
-  backdrop-filter: none;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: clamp(20px, 4vh, 40px);
-  box-sizing: border-box;
-  transform: scale(clamp(0.8, 1vw + 0.5, 1)); /* ✅ AUTOMATINIS MASTELIS! */
-  transform-origin: top center; /* ✅ Kad gražiai mažintųsi iš viršaus į apačią */
-  transition: transform 0.4s ease;
+  margin-bottom: 32px;
+  text-align: center;
 }
 
-/* ✅ TITLE */
 .title {
-  font-size: clamp(24px, 5vw, 42px);
+  font-size: clamp(28px, 6vw, 42px);
   font-weight: 900;
-  text-align: center;
   font-family: var(--font-crypto);
   background: linear-gradient(to right, #ffffff, #ffd700, #ffffff);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  text-shadow: 0 0 14px rgba(255, 255, 255, 0.3);
   animation: glowTitle 4s ease-in-out infinite;
+  text-shadow: 0 0 16px rgba(255, 255, 255, 0.3);
 }
 
-/* ✅ SUBTEXT */
-.subtext {
-  font-size: clamp(13px, 2.5vw, 18px);
-  color: rgba(255, 255, 255, 0.8);
-  text-align: center;
+/* ✅ FILTERS */
+.filters {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 24px 0;
+}
+
+.filterButton,
+.activeFilter {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  padding: 6px 16px;
+  color: white;
   font-family: var(--font-crypto);
-  font-weight: 500;
-  opacity: 0.8;
-  margin-top: -4px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: all 0.3s ease;
 }
 
-/* ✅ TRANSACTION LIST */
-.transactionList {
-  width: 100%;
-  max-width: 540px;
+.activeFilter {
+  background: rgba(255, 255, 255, 0.15);
+  color: #ffd700;
+  border-color: #ffd700;
+  box-shadow: 0 0 12px #ffd70066;
+}
+
+/* ✅ NETWORK SELECTOR */
+.networkSelector {
+  margin-top: 20px;
+  text-align: center;
+}
+
+.dropdownButton {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  padding: 8px 16px;
+  font-family: var(--font-crypto);
+  color: white;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.dropdownButton:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: #ffd700;
+}
+
+.dropdownList {
+  margin-top: 10px;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 8px;
   display: flex;
   flex-direction: column;
-  gap: clamp(14px, 2.5vw, 20px);
-  padding-bottom: 80px;
+  gap: 6px;
+}
+
+.dropdownItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-family: var(--font-crypto);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.dropdownItem:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* ✅ TRANSACTIONS LIST */
+.txList {
+  width: 100%;
+  max-width: 960px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
 }
 
 /* ✅ TRANSACTION CARD */
-.transactionCard {
+.txItem {
   background: rgba(255, 255, 255, 0.035);
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 16px;
-  padding: clamp(14px, 2vw, 20px);
-  box-shadow: 0 0 16px rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(16px);
+  padding: 16px 20px;
+  backdrop-filter: blur(14px);
   transition: all 0.3s ease;
-  animation: fadeIn 0.4s ease;
-  color: white;
   font-family: var(--font-crypto);
+  color: white;
+  cursor: pointer;
 }
 
-.transactionCard:hover {
-  box-shadow: 0 0 24px rgba(255, 215, 0, 0.25);
-  transform: scale(1.02);
+.txItem:hover {
+  border-color: #ffd700;
+  box-shadow: 0 0 24px #ffd70044;
+  transform: scale(1.01);
 }
 
-/* ✅ TRANSACTION TEXTS */
-.transactionHeader {
+/* ✅ HEADER + STATUS */
+.txHeader {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 6px;
-  font-weight: 600;
-  font-size: clamp(13px, 2vw, 15px);
+  margin-bottom: 10px;
 }
 
-.transactionType {
+.txIconHash {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+}
+
+.txHash {
   color: white;
+  font-size: 0.9rem;
+  transition: color 0.3s ease;
+  text-decoration: none;
+}
+
+.txHash:hover {
+  color: #ffd700;
+  text-shadow: 0 0 6px #ffd700;
+}
+
+/* ✅ STATUS BADGES */
+.statusSuccess,
+.statusFailed,
+.statusPending {
+  font-size: 0.75rem;
+  font-weight: bold;
+  padding: 4px 8px;
+  border-radius: 6px;
+  text-align: center;
   text-transform: uppercase;
   font-family: var(--font-crypto);
-  letter-spacing: 0.5px;
-  font-weight: 700;
-  font-size: clamp(12px, 2vw, 14px);
 }
 
-.transactionAmountSend {
-  color: #ff6b6b;
-  font-weight: 700;
+.statusSuccess {
+  color: #00ffb2;
+  background: rgba(0, 255, 178, 0.08);
 }
 
-.transactionAmountReceive {
-  color: #9aff9a;
-  font-weight: 700;
+.statusFailed {
+  color: #ff5c5c;
+  background: rgba(255, 92, 92, 0.08);
 }
 
-.transactionDetail {
-  font-size: clamp(11px, 1.8vw, 13px);
-  opacity: 0.85;
-  margin-top: 4px;
+.statusPending {
+  color: #ffd700;
+  background: rgba(255, 215, 0, 0.08);
 }
 
-.transactionDate {
-  font-size: clamp(10px, 1.8vw, 12px);
-  opacity: 0.7;
+/* ✅ Animacijos */
+.pulseSuccess {
+  animation: pulseGreen 1.4s infinite;
+}
+
+.pulseError {
+  animation: pulseRed 1.4s infinite;
+}
+
+.pulsePending {
+  animation: pulseGold 1.4s infinite;
+}
+
+@keyframes pulseGreen {
+  0% { box-shadow: 0 0 0 0 rgba(0, 255, 178, 0.5); }
+  70% { box-shadow: 0 0 0 10px rgba(0, 255, 178, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(0, 255, 178, 0); }
+}
+
+@keyframes pulseRed {
+  0% { box-shadow: 0 0 0 0 rgba(255, 92, 92, 0.5); }
+  70% { box-shadow: 0 0 0 10px rgba(255, 92, 92, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(255, 92, 92, 0); }
+}
+
+@keyframes pulseGold {
+  0% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.5); }
+  70% { box-shadow: 0 0 0 10px rgba(255, 215, 0, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0); }
+}
+
+/* ✅ DETAILS + META */
+.txDetails,
+.txMeta {
+  font-size: 0.85rem;
+  opacity: 0.9;
   margin-top: 6px;
-  font-style: italic;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
-.transactionLink {
-  margin-top: 10px;
-  display: inline-block;
-  font-size: clamp(11px, 2vw, 13px);
+/* ✅ LOADING */
+.loadingBox,
+.loading {
+  text-align: center;
+  margin-top: 60px;
+  font-family: var(--font-crypto);
   color: white;
-  text-decoration: underline;
+  font-size: 1rem;
+}
+
+/* ✅ LOAD MORE */
+.loadMoreBtn {
+  margin: 40px auto 80px;
+  padding: 10px 20px;
+  font-family: var(--font-crypto);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid #ffd70066;
+  color: white;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 0.95rem;
   font-weight: 600;
   transition: all 0.3s ease;
 }
 
-.transactionLink:hover {
-  opacity: 0.9;
-  color: #ffd700;
+.loadMoreBtn:hover {
+  background: rgba(255, 215, 0, 0.1);
+  box-shadow: 0 0 10px #ffd70066;
   transform: scale(1.02);
-  text-shadow: 0 0 6px #ffd700;
 }
 
-/* ✅ LOADING */
-.loading {
-  font-size: 1rem;
-  color: white;
-  text-align: center;
-  font-family: var(--font-crypto);
-  margin-top: 60px;
-}
-
-/* ✅ ANIMATIONS */
+/* === GLOW TITLE === */
 @keyframes glowTitle {
   0% { text-shadow: 0 0 8px #fff, 0 0 16px #ffd700; }
   50% { text-shadow: 0 0 16px #fffacd, 0 0 24px #ffd700; }
   100% { text-shadow: 0 0 8px #fff, 0 0 16px #ffd700; }
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(12px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-/* ✅ RESPONSIVE – Scale ir Layout */
-@media (max-width: 768px) {
-  .wrapper {
-    width: calc(100vw - 40px);
-    min-height: calc(100vh - 120px);
-    transform: scale(0.95); /* ✅ TELEFONAMS ŠIEK TIEK MAŽIAU */
-    padding: 24px 16px 100px;
-    gap: 28px;
-  }
-
-  .transactionCard {
-    padding: 14px;
-  }
-
-  .transactionType {
-    font-size: 0.8rem;
-  }
-
-  .transactionDetail {
-    font-size: 0.75rem;
-  }
-
-  .transactionLink {
-    font-size: 0.75rem;
-  }
-}
-
-/* ✅ MINI PHONES */
-@media (max-width: 480px) {
-  .wrapper {
-    transform: scale(0.92); /* ✅ Mažiausiems ekranams */
-    width: calc(100vw - 20px);
-    min-height: calc(100vh - 100px);
-  }
 }
