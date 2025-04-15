@@ -1,19 +1,21 @@
 "use client";
 
-import { useMemo, useEffect, useState } from "react";
+import { useMemo, useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import Image from "next/image";
-import { toast } from "react-toastify";
 
 import { useAuth } from "@/contexts/AuthContext";
 import { useBalance } from "@/contexts/BalanceContext";
-import { useSystemReady } from "@/hooks/useSystemReady";
+import { useMinimalReady } from "@/hooks/useMinimalReady";
 
 import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
+import { toast } from "react-toastify";
 import styles from "@/styles/dashboard.module.css";
 
-const LivePriceTable = dynamic(() => import("@/components/LivePriceTable"), { ssr: false });
+const LivePriceTable = dynamic(() => import("@/components/LivePriceTable"), {
+  ssr: false,
+});
 
 const iconUrls = {
   eth: "/icons/eth.svg",
@@ -33,11 +35,11 @@ const names = {
 
 export default function Dashboard() {
   const router = useRouter();
-  const { refetch } = useBalance();
-  const { ready, loading } = useSystemReady();
-  const { balances, prices } = useBalance();
+  const { balances, prices, refetch } = useBalance();
+  const { ready, loading } = useMinimalReady();
 
   const [initialLoadDone, setInitialLoadDone] = useState(false);
+  const visibilityHandled = useRef(false);
 
   const tokens = useMemo(() => {
     if (!balances || Object.keys(balances).length === 0) return [];
@@ -48,14 +50,19 @@ export default function Dashboard() {
     if (ready && !initialLoadDone) {
       const timeout = setTimeout(() => {
         setInitialLoadDone(true);
-      }, 2000);
+      }, 1200);
       return () => clearTimeout(timeout);
     }
   }, [ready, initialLoadDone]);
 
   useEffect(() => {
     const handleVisibilityChange = async () => {
-      if (document.visibilityState === "visible" && initialLoadDone) {
+      if (
+        document.visibilityState === "visible" &&
+        initialLoadDone &&
+        !visibilityHandled.current
+      ) {
+        visibilityHandled.current = true;
         try {
           await refetch();
           toast.success("✅ Balances refreshed.", {
@@ -64,6 +71,10 @@ export default function Dashboard() {
           });
         } catch (error) {
           console.error("Refetch error:", error.message);
+        } finally {
+          setTimeout(() => {
+            visibilityHandled.current = false;
+          }, 3000);
         }
       }
     };
@@ -71,7 +82,6 @@ export default function Dashboard() {
     if (typeof window !== "undefined") {
       document.addEventListener("visibilitychange", handleVisibilityChange);
     }
-
     return () => {
       if (typeof window !== "undefined") {
         document.removeEventListener("visibilitychange", handleVisibilityChange);
