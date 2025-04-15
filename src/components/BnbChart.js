@@ -14,22 +14,35 @@ import {
 } from "chart.js";
 
 import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
+import { startSessionWatcher } from "@/utils/sessionWatcher";
 import styles from "@/styles/tbnb.module.css";
 
-ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Filler, Decimation);
+ChartJS.register(
+  LineElement,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  Tooltip,
+  Filler,
+  Decimation
+);
 
 export default function BnbChart({ onChartReady, onMount }) {
   const [chartData, setChartData] = useState([]);
   const [loading, setLoading] = useState(true);
+
   const chartRef = useRef(null);
   const mountedRef = useRef(false);
   const controllerRef = useRef(null);
+  const sessionWatcher = useRef(null);
   const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
 
+  // ✅ Trigger parent on mount
   useEffect(() => {
     if (typeof onMount === "function") onMount();
   }, [onMount]);
 
+  // ✅ Fetch chart data
   const fetchChartData = useCallback(async (showSpinner = true) => {
     if (!mountedRef.current || document.visibilityState !== "visible") return;
 
@@ -50,8 +63,14 @@ export default function BnbChart({ onChartReady, onMount }) {
 
       const formatted = data.prices.map(([timestamp, price]) => {
         const date = new Date(timestamp);
-        const day = date.toLocaleDateString("en-GB", { day: "2-digit", month: "short" });
-        const hour = date.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+        const day = date.toLocaleDateString("en-GB", {
+          day: "2-digit",
+          month: "short",
+        });
+        const hour = date.toLocaleTimeString("en-GB", {
+          hour: "2-digit",
+          minute: "2-digit",
+        });
         return {
           fullLabel: `${day} ${hour}`,
           shortLabel: day,
@@ -75,6 +94,7 @@ export default function BnbChart({ onChartReady, onMount }) {
     }
   }, [isMobile]);
 
+  // ✅ Init, visibility + sessionWatcher
   useEffect(() => {
     mountedRef.current = true;
 
@@ -84,7 +104,7 @@ export default function BnbChart({ onChartReady, onMount }) {
       if (mountedRef.current && document.visibilityState === "visible") {
         fetchChartData(false);
       }
-    }, 3600000);
+    }, 3600000); // 1h refresh
 
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") {
@@ -96,20 +116,33 @@ export default function BnbChart({ onChartReady, onMount }) {
 
     document.addEventListener("visibilitychange", handleVisibilityChange);
 
+    // ✅ SessionWatcher
+    sessionWatcher.current = startSessionWatcher({
+      onSessionInvalid: () => {
+        console.warn("⚠️ Session invalid or network issue during chart render.");
+      },
+      intervalMs: 60000,
+      networkFailLimit: 3,
+    });
+    sessionWatcher.current.start();
+
     return () => {
       mountedRef.current = false;
       clearInterval(interval);
       controllerRef.current?.abort();
       document.removeEventListener("visibilitychange", handleVisibilityChange);
+      sessionWatcher.current?.stop?.();
     };
   }, [fetchChartData]);
 
+  // ✅ Notify parent that chart is ready
   useEffect(() => {
     if (!loading && chartData.length > 0 && typeof onChartReady === "function") {
-      onChartReady();
+      setTimeout(() => onChartReady(), 1000); // ⏳ 1s smooth transition
     }
   }, [loading, chartData, onChartReady]);
 
+  // ✅ Chart options
   const chartOptions = {
     responsive: true,
     maintainAspectRatio: false,
@@ -117,7 +150,9 @@ export default function BnbChart({ onChartReady, onMount }) {
       duration: 1000,
       easing: "easeOutBounce",
     },
-    layout: { padding: { left: 15, right: 15, top: 0, bottom: 0 } },
+    layout: {
+      padding: { left: 15, right: 15, top: 0, bottom: 0 },
+    },
     plugins: {
       tooltip: {
         mode: "index",
@@ -131,7 +166,8 @@ export default function BnbChart({ onChartReady, onMount }) {
         cornerRadius: 8,
         displayColors: false,
         callbacks: {
-          title: (tooltipItems) => chartData[tooltipItems[0].dataIndex]?.fullLabel || "",
+          title: (tooltipItems) =>
+            chartData[tooltipItems[0].dataIndex]?.fullLabel || "",
           label: (context) => `€ ${parseFloat(context.raw).toFixed(2)}`,
         },
       },
