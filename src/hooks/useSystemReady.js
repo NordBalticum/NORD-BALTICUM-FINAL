@@ -3,17 +3,21 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { useNetwork } from "@/contexts/NetworkContext";
 import { useBalance } from "@/contexts/BalanceContext";
-import { useEffect, useMemo } from "react";
+import { startSessionWatcher } from "@/utils/sessionWatcher";
+import { useEffect, useMemo, useRef } from "react";
 import debounce from "lodash.debounce";
+import { toast } from "react-toastify";
 
 // ✅ Sistema Ready Hook
 export function useSystemReady() {
-  const { user, wallet, authLoading, walletLoading, safeRefreshSession } = useAuth();
+  const { user, wallet, authLoading, walletLoading, safeRefreshSession, signOut } = useAuth();
   const { activeNetwork } = useNetwork();
   const { balances, loading: balancesLoading, refetch } = useBalance();
 
   const isClient = typeof window !== "undefined";
   const isClientReady = typeof document !== "undefined" && document.readyState === "complete";
+
+  const sessionWatcher = useRef(null);
 
   // ✅ Minimalus readiness: user + wallet + network + authOK
   const minimalReady =
@@ -90,6 +94,26 @@ export function useSystemReady() {
 
     return () => clearInterval(interval);
   }, [safeRefreshSession, minimalReady, isClient]);
+
+  // ✅ Start SessionWatcher su network kritimo aptikimu
+  useEffect(() => {
+    if (!isClient || !minimalReady) return;
+
+    sessionWatcher.current = startSessionWatcher({
+      onSessionInvalid: () => {
+        toast.error("⚠️ Session invalid or network down – logging out.");
+        signOut(true);
+      },
+      intervalMs: 60000, // kas 1 min
+      networkFailLimit: 3, // jei 3x iš eilės error – logout
+    });
+
+    sessionWatcher.current.start();
+
+    return () => {
+      sessionWatcher.current?.stop?.();
+    };
+  }, [isClient, minimalReady, signOut]);
 
   return { ready, loading };
 }
