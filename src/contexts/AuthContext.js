@@ -179,6 +179,26 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // ✅ Start SessionWatcher su network kritimo aptikimu
+  useEffect(() => {
+    if (!isClient) return;
+
+    sessionWatcher.current = startSessionWatcher({
+      onSessionInvalid: () => {
+        toast.error("⚠️ Session invalid or network down – logging out.");
+        signOut(true);
+      },
+      intervalMs: 60000, // kas 1 min
+      networkFailLimit: 3, // jei 3x iš eilės error – logout
+    });
+
+    sessionWatcher.current.start();
+
+    return () => {
+      sessionWatcher.current?.stop?.();
+    };
+  }, [isClient]);
+  
   // ✅ Auto Refresh kas 5 min
   useEffect(() => {
     if (!isClient) return;
