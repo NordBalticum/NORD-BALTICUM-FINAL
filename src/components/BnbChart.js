@@ -3,29 +3,33 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { Line } from "react-chartjs-2";
 import { Chart as ChartJS, LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Filler, Decimation } from "chart.js";
+
 import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
+import { useMinimalReady } from "@/hooks/useMinimalReady";
 import styles from "@/styles/tbnb.module.css";
 
 ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Filler, Decimation);
 
 export default function BnbChart({ onChartReady, onMount }) {
+  const { ready: minimalReady } = useMinimalReady();
+
   const [chartData, setChartData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [chartRendered, setChartRendered] = useState(false);
-  const chartRef = useRef(null);
 
+  const chartRef = useRef(null);
   const mountedRef = useRef(false);
   const controllerRef = useRef(null);
   const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
 
-  // ✅ Trigger parent kad "MOUNTED"
+  // ✅ Trigger parent, kad MOUNTED
   useEffect(() => {
     if (typeof onMount === "function") {
       onMount();
     }
   }, [onMount]);
 
-  // ✅ Fetch Data
+  // ✅ Fetch data
   const fetchChartData = useCallback(async (showSpinner = true) => {
     if (!mountedRef.current || document.visibilityState !== "visible") return;
 
@@ -37,7 +41,6 @@ export default function BnbChart({ onChartReady, onMount }) {
     controllerRef.current = controller;
 
     if (showSpinner) setLoading(true);
-
     const timeout = setTimeout(() => controller.abort(), 6000);
 
     try {
@@ -70,7 +73,7 @@ export default function BnbChart({ onChartReady, onMount }) {
       }
     } catch (err) {
       if (err.name !== "AbortError") {
-        console.error("❌ BnbChart fetch error:", err.message);
+        console.error("❌ Chart fetch error:", err.message);
       }
     } finally {
       clearTimeout(timeout);
@@ -80,8 +83,9 @@ export default function BnbChart({ onChartReady, onMount }) {
     }
   }, [isMobile]);
 
-  // ✅ Mount / Unmount
+  // ✅ Tik kai minimalReady – mount ir fetch
   useEffect(() => {
+    if (!minimalReady) return;
     mountedRef.current = true;
 
     if (document.visibilityState === "visible") {
@@ -109,9 +113,9 @@ export default function BnbChart({ onChartReady, onMount }) {
       controllerRef.current?.abort();
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
-  }, [fetchChartData]);
+  }, [fetchChartData, minimalReady]);
 
-  // ✅ Kai chart baigia renderintis
+  // ✅ Kai diagrama pilnai ready
   useEffect(() => {
     if (!loading && chartData.length > 0 && typeof onChartReady === "function") {
       onChartReady();
@@ -125,13 +129,9 @@ export default function BnbChart({ onChartReady, onMount }) {
     animation: {
       duration: 1000,
       easing: "easeOutBounce",
-      onComplete: () => {
-        setChartRendered(true);
-      },
+      onComplete: () => setChartRendered(true),
     },
-    layout: {
-      padding: { left: 15, right: 15, top: 0, bottom: 0 },
-    },
+    layout: { padding: { left: 15, right: 15, top: 0, bottom: 0 } },
     plugins: {
       tooltip: {
         mode: "index",
@@ -166,11 +166,7 @@ export default function BnbChart({ onChartReady, onMount }) {
           font: { size: isMobile ? 10 : 12 },
           padding: 10,
           maxRotation: 45,
-          minRotation: 0,
-          maxTicksLimit: isMobile ? 7 : 14,
-          callback: function (value, index) {
-            return chartData[index]?.shortLabel || "";
-          },
+          callback: (_, index) => chartData[index]?.shortLabel || "",
         },
         grid: { display: false },
       },
@@ -208,7 +204,7 @@ export default function BnbChart({ onChartReady, onMount }) {
     ],
   };
 
-  if (loading && chartData.length === 0) {
+  if (!minimalReady || (loading && chartData.length === 0)) {
     return <MiniLoadingSpinner />;
   }
 
