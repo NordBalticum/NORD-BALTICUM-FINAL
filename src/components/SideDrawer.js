@@ -88,12 +88,12 @@ export default function SideDrawer() {
 
             {/* ✅ Drawer */}
             <motion.aside
-              className={`${styles.drawer} ${open ? styles.open : ""}`}
-              initial={{ x: "-100%" }}
-              animate={{ x: 0 }}
-              exit={{ x: "-100%" }}
-              transition={{ type: "spring", stiffness: 260, damping: 30 }}
-            >
+  className={`${styles.drawer}`}
+  initial={{ opacity: 0, x: -80, scale: 0.92 }}
+  animate={{ opacity: 1, x: 0, scale: 1 }}
+  exit={{ opacity: 0, x: -80, scale: 0.92 }}
+  transition={{ duration: 0.5, ease: [0.68, -0.55, 0.27, 1.55] }}
+>
               {/* ✅ Header */}
               <div className={styles.drawerHeader}>
                 <motion.button
