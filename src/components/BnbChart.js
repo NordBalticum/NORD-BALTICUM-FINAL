@@ -14,6 +14,7 @@ import {
 } from "chart.js";
 
 import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
+import { useMinimalReady } from "@/hooks/useMinimalReady";
 import styles from "@/styles/tbnb.module.css";
 
 ChartJS.register(
@@ -27,6 +28,7 @@ ChartJS.register(
 );
 
 export default function BnbChart({ onChartReady, onMount }) {
+  const { ready, loading: systemLoading } = useMinimalReady();
   const [chartData, setChartData] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -41,59 +43,64 @@ export default function BnbChart({ onChartReady, onMount }) {
   }, [onMount]);
 
   // ✅ Fetch chart data
-  const fetchChartData = useCallback(async (showSpinner = true) => {
-    if (!mountedRef.current || document.visibilityState !== "visible") return;
+  const fetchChartData = useCallback(
+    async (showSpinner = true) => {
+      if (!mountedRef.current || !ready || document.visibilityState !== "visible") return;
 
-    controllerRef.current?.abort();
-    const controller = new AbortController();
-    controllerRef.current = controller;
+      controllerRef.current?.abort();
+      const controller = new AbortController();
+      controllerRef.current = controller;
 
-    if (showSpinner) setLoading(true);
-    const timeout = setTimeout(() => controller.abort(), 6000);
+      if (showSpinner) setLoading(true);
+      const timeout = setTimeout(() => controller.abort(), 6000);
 
-    try {
-      const res = await fetch(
-        "https://api.coingecko.com/api/v3/coins/binancecoin/market_chart?vs_currency=eur&days=7",
-        { signal: controller.signal }
-      );
-      const data = await res.json();
-      if (!data?.prices) throw new Error("No price data");
+      try {
+        const res = await fetch(
+          "https://api.coingecko.com/api/v3/coins/binancecoin/market_chart?vs_currency=eur&days=7",
+          { signal: controller.signal }
+        );
+        const data = await res.json();
+        if (!data?.prices) throw new Error("No price data");
 
-      const formatted = data.prices.map(([timestamp, price]) => {
-        const date = new Date(timestamp);
-        const day = date.toLocaleDateString("en-GB", {
-          day: "2-digit",
-          month: "short",
+        const formatted = data.prices.map(([timestamp, price]) => {
+          const date = new Date(timestamp);
+          const day = date.toLocaleDateString("en-GB", {
+            day: "2-digit",
+            month: "short",
+          });
+          const hour = date.toLocaleTimeString("en-GB", {
+            hour: "2-digit",
+            minute: "2-digit",
+          });
+          return {
+            fullLabel: `${day} ${hour}`,
+            shortLabel: day,
+            value: parseFloat(price).toFixed(2),
+          };
         });
-        const hour = date.toLocaleTimeString("en-GB", {
-          hour: "2-digit",
-          minute: "2-digit",
-        });
-        return {
-          fullLabel: `${day} ${hour}`,
-          shortLabel: day,
-          value: parseFloat(price).toFixed(2),
-        };
-      });
 
-      const step = Math.ceil(formatted.length / (isMobile ? 7 : 30));
-      const filtered = formatted.filter((_, i) => i % step === 0);
+        const step = Math.ceil(formatted.length / (isMobile ? 7 : 30));
+        const filtered = formatted.filter((_, i) => i % step === 0);
 
-      if (mountedRef.current && filtered.length > 0) {
-        setChartData(filtered);
+        if (mountedRef.current && filtered.length > 0) {
+          setChartData(filtered);
+        }
+      } catch (err) {
+        if (err.name !== "AbortError") {
+          console.error("❌ Chart fetch error:", err.message);
+        }
+      } finally {
+        clearTimeout(timeout);
+        if (mountedRef.current) setLoading(false);
       }
-    } catch (err) {
-      if (err.name !== "AbortError") {
-        console.error("❌ Chart fetch error:", err.message);
-      }
-    } finally {
-      clearTimeout(timeout);
-      if (mountedRef.current) setLoading(false);
-    }
-  }, [isMobile]);
+    },
+    [isMobile, ready]
+  );
 
   // ✅ Init + visibility events
   useEffect(() => {
+    if (!ready) return;
+
     mountedRef.current = true;
 
     if (document.visibilityState === "visible") fetchChartData(true);
@@ -120,12 +127,12 @@ export default function BnbChart({ onChartReady, onMount }) {
       controllerRef.current?.abort();
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
-  }, [fetchChartData]);
+  }, [fetchChartData, ready]);
 
   // ✅ Notify parent when ready
   useEffect(() => {
     if (!loading && chartData.length > 0 && typeof onChartReady === "function") {
-      setTimeout(() => onChartReady(), 1000); // ⏳ 1s smooth transition
+      setTimeout(() => onChartReady(), 1000);
     }
   }, [loading, chartData, onChartReady]);
 
@@ -210,7 +217,7 @@ export default function BnbChart({ onChartReady, onMount }) {
     ],
   };
 
-  if (loading && chartData.length === 0) {
+  if (systemLoading || (loading && chartData.length === 0)) {
     return <MiniLoadingSpinner />;
   }
 
