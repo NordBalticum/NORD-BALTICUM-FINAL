@@ -1,4 +1,3 @@
-// src/contexts/BalanceContext.js
 "use client";
 
 import {
@@ -38,16 +37,14 @@ const FALLBACK_PRICES = {
   avax: { eur: 30, usd: 32 },
 };
 
-const BalanceContext = createContext();
-export const useBalance = () => useContext(BalanceContext);
-
 const BALANCE_KEY = "nordbalticum_balances";
 const PRICE_KEY = "nordbalticum_prices";
 
+const BalanceContext = createContext();
+export const useBalance = () => useContext(BalanceContext);
+
 export const BalanceProvider = ({ children }) => {
   const { wallet, authLoading, walletLoading } = useAuth();
-  const { activeNetwork } = useNetwork();
-
   const [balances, setBalances] = useState({});
   const [prices, setPrices] = useState(FALLBACK_PRICES);
   const [loading, setLoading] = useState(true);
@@ -78,9 +75,15 @@ export const BalanceProvider = ({ children }) => {
       const address = wallet.wallet.address;
       const newBalances = {};
 
-      const provider = new ethers.JsonRpcProvider(RPC[activeNetwork]);
-      const balance = await provider.getBalance(address);
-      newBalances[activeNetwork] = parseFloat(ethers.formatEther(balance));
+      for (const network of Object.keys(RPC)) {
+        try {
+          const provider = new ethers.JsonRpcProvider(RPC[network]);
+          const balance = await provider.getBalance(address);
+          newBalances[network] = parseFloat(ethers.formatEther(balance));
+        } catch (err) {
+          console.warn(`❌ Failed to fetch balance for ${network}:`, err?.message);
+        }
+      }
 
       setBalances(newBalances);
       saveToLocal(BALANCE_KEY, newBalances);
@@ -111,7 +114,7 @@ export const BalanceProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  }, [wallet, activeNetwork]);
+  }, [wallet]);
 
   useEffect(() => {
     const cachedBalances = loadFromLocal(BALANCE_KEY);
@@ -124,7 +127,7 @@ export const BalanceProvider = ({ children }) => {
   useEffect(() => {
     if (authLoading || walletLoading || !wallet?.wallet?.address) return;
     fetchBalancesAndPrices();
-  }, [authLoading, walletLoading, wallet, activeNetwork, fetchBalancesAndPrices]);
+  }, [authLoading, walletLoading, wallet, fetchBalancesAndPrices]);
 
   useEffect(() => {
     if (!wallet?.wallet?.address) return;
@@ -133,7 +136,7 @@ export const BalanceProvider = ({ children }) => {
       fetchBalancesAndPrices();
     }, 30000);
     return () => clearInterval(intervalRef.current);
-  }, [wallet, activeNetwork, fetchBalancesAndPrices]);
+  }, [wallet, fetchBalancesAndPrices]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
