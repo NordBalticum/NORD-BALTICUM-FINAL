@@ -13,8 +13,11 @@ import { useNetwork } from "@/contexts/NetworkContext";
 import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
 import styles from "@/styles/dashboard.module.css";
 
-const LivePriceTable = dynamic(() => import("@/components/LivePriceTable"), { ssr: false });
+const LivePriceTable = dynamic(() => import("@/components/LivePriceTable"), {
+  ssr: false,
+});
 
+// ✅ Token icons & full names
 const iconUrls = {
   eth: "/icons/eth.svg",
   bnb: "/icons/bnb.svg",
@@ -34,18 +37,18 @@ const names = {
 export default function Dashboard() {
   const router = useRouter();
 
-  // ✅ Visi reikalingi context'ai – sesija, wallet, tinklas, balansas
+  // ✅ Pilnas konteksto paruošimas
   const { user, wallet } = useAuth();
   const { activeNetwork } = useNetwork();
   const { balances, prices } = useBalance();
   const { ready, loading } = useSystemReady();
 
-  // ✅ Tokenų masyvas
+  // ✅ Token sąrašas
   const tokens = useMemo(() => {
     return balances ? Object.keys(balances) : [];
   }, [balances]);
 
-  // ✅ Kol sistema neparuošta – spinner
+  // ✅ Kol sistema neparuošta – loader
   if (loading || !ready) {
     return (
       <div className={styles.fullscreenCenter}>
@@ -58,8 +61,10 @@ export default function Dashboard() {
   return (
     <main className={styles.container}>
       <div className={styles.dashboardWrapper}>
+        {/* ✅ Live kaina viršuje */}
         <LivePriceTable />
 
+        {/* ✅ Turimų asset'ų sąrašas */}
         <div className={styles.assetList}>
           {tokens.length === 0 ? (
             <div className={styles.noAssets}>No assets found.</div>
@@ -87,6 +92,7 @@ export default function Dashboard() {
                   role="button"
                   tabIndex={0}
                 >
+                  {/* ✅ Kairė pusė: ikona + pavadinimas */}
                   <div className={styles.assetLeft}>
                     <Image
                       src={iconUrls[network] || "/icons/default-icon.png"}
@@ -103,6 +109,7 @@ export default function Dashboard() {
                     </div>
                   </div>
 
+                  {/* ✅ Dešinė pusė: balansas ir vertė */}
                   <div className={styles.assetRight}>
                     <div className={styles.assetAmount}>
                       {balance.toFixed(6)} {network.toUpperCase()}
