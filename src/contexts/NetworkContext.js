@@ -2,6 +2,7 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect, useCallback } from "react";
+import { useBalance } from "@/contexts/BalanceContext";
 
 // ✅ Supported Networks
 export const SUPPORTED_NETWORKS = ["eth", "bnb", "tbnb", "matic", "avax"];
@@ -13,6 +14,7 @@ export const useNetwork = () => useContext(NetworkContext);
 const STORAGE_KEY = "activeNetwork";
 
 export function NetworkProvider({ children }) {
+  const { refetch } = useBalance(); // ✅ Auto-refresh po switch
   const [activeNetwork, setActiveNetwork] = useState("bnb"); // ✅ Default: BNB
   const [initialized, setInitialized] = useState(false);     // ✅ Tik pirmajam įkėlimui
 
@@ -58,7 +60,7 @@ export function NetworkProvider({ children }) {
     console.info(`✅ Saved activeNetwork: ${activeNetwork}`);
   }, [activeNetwork, initialized]);
 
-  // ✅ Saugi tinklo keitimo funkcija
+  // ✅ Saugi tinklo keitimo funkcija + auto refetch()
   const switchNetwork = useCallback((network) => {
     if (!SUPPORTED_NETWORKS.includes(network)) {
       console.warn(`❌ Unsupported network switch attempt: ${network}`);
@@ -68,11 +70,20 @@ export function NetworkProvider({ children }) {
     setActiveNetwork((prev) => {
       if (prev !== network) {
         console.info(`🔀 Switching network: ${prev} → ${network}`);
+        // ✅ Trigger balance refresh iškart po pakeitimo
+        setTimeout(() => {
+          try {
+            refetch?.();
+            console.info("✅ Auto-refetch after network switch.");
+          } catch (err) {
+            console.warn("⚠️ Auto-refetch failed:", err.message);
+          }
+        }, 250);
         return network;
       }
       return prev;
     });
-  }, []);
+  }, [refetch]);
 
   return (
     <NetworkContext.Provider value={{ activeNetwork, switchNetwork }}>
