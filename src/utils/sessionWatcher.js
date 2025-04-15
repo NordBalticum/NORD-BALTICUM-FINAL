@@ -1,3 +1,5 @@
+// === ULTIMATE SESSION WATCHER v2025 FINAL EDITION ===
+
 export function startSessionWatcher({
   onSessionInvalid,
   user,
@@ -11,9 +13,14 @@ export function startSessionWatcher({
   let intervalId = null;
   let failCount = 0;
   let lastVisibility = document.visibilityState;
+  let lastLatency = 0;
+
+  const isClient = typeof window !== "undefined";
+  const ua = isClient ? navigator.userAgent || navigator.vendor || "" : "";
+  const isMobile = /android|iphone|ipad|ipod|opera mini|iemobile|mobile/i.test(ua);
 
   const logEvent = (msg, type = "log") => {
-    if (!log) return;
+    if (!log || !console[type]) return;
     console[type](`[SessionWatcher] ${msg}`);
   };
 
@@ -21,13 +28,15 @@ export function startSessionWatcher({
     return !!user?.email && !!wallet?.wallet?.address;
   };
 
-  const checkSession = async (trigger = "interval") => {
+  const checkSession = async (trigger = "interval", attempt = 1) => {
     if (!isReady()) {
       logEvent(`Skipped check [${trigger}] – session not ready.`, "warn");
       return;
     }
 
     try {
+      const start = performance.now();
+
       const res = await fetch("/api/check-session", {
         method: "GET",
         headers: { "Content-Type": "application/json" },
@@ -41,13 +50,18 @@ export function startSessionWatcher({
         const { valid } = await res.json();
 
         if (!valid) {
+          if (attempt < 3) {
+            logEvent(`Attempt ${attempt} failed – retrying...`);
+            return setTimeout(() => checkSession(trigger, attempt + 1), 700);
+          }
           logEvent("Invalid session from API. Triggering logout.", "warn");
           onSessionInvalid?.();
         } else {
           failCount = 0;
           refreshSession?.();
           refetchBalances?.();
-          logEvent(`✅ Session OK [${trigger}]`);
+          lastLatency = Math.round(performance.now() - start);
+          logEvent(`✅ Session OK [${trigger}] (${lastLatency}ms)`);
         }
       }
 
@@ -57,7 +71,7 @@ export function startSessionWatcher({
       }
     } catch (err) {
       failCount++;
-      logEvent(`Network error (${failCount}): ${err.message}`, "error");
+      logEvent(`Network error (${failCount}): ${err?.message || err}`, "error");
       if (failCount >= networkFailLimit) {
         onSessionInvalid?.();
       }
@@ -73,6 +87,11 @@ export function startSessionWatcher({
     lastVisibility = current;
   };
 
+  const focusHandler = () => {
+    logEvent("Window focus – checking session...");
+    checkSession("focus");
+  };
+
   const onlineHandler = () => {
     logEvent("Network online – checking session...");
     checkSession("network-online");
@@ -85,16 +104,22 @@ export function startSessionWatcher({
 
   const addEvents = () => {
     document.addEventListener("visibilitychange", visibilityHandler);
+    window.addEventListener("focus", focusHandler);
     window.addEventListener("online", onlineHandler);
     document.addEventListener("resume", wakeHandler);
-    document.addEventListener("pageshow", wakeHandler);
+    window.addEventListener("pageshow", wakeHandler);
+
+    if (isMobile) {
+      logEvent("📱 Mobile device detected – enhanced session tracking enabled.");
+    }
   };
 
   const removeEvents = () => {
     document.removeEventListener("visibilitychange", visibilityHandler);
+    window.removeEventListener("focus", focusHandler);
     window.removeEventListener("online", onlineHandler);
     document.removeEventListener("resume", wakeHandler);
-    document.removeEventListener("pageshow", wakeHandler);
+    window.removeEventListener("pageshow", wakeHandler);
   };
 
   const start = () => {
