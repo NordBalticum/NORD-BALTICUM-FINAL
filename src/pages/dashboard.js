@@ -4,18 +4,17 @@ import { useMemo, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import Image from "next/image";
+import { toast } from "react-toastify";
 
 import { useAuth } from "@/contexts/AuthContext";
 import { useBalance } from "@/contexts/BalanceContext";
-import { useMinimalReady } from "@/hooks/useMinimalReady";
+import { useSystemReady } from "@/hooks/useSystemReady";
 
 import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
-import { toast } from "react-toastify";
 import styles from "@/styles/dashboard.module.css";
 
 const LivePriceTable = dynamic(() => import("@/components/LivePriceTable"), { ssr: false });
 
-// ✅ Ikonos
 const iconUrls = {
   eth: "/icons/eth.svg",
   bnb: "/icons/bnb.svg",
@@ -24,7 +23,6 @@ const iconUrls = {
   avax: "/icons/avax.svg",
 };
 
-// ✅ Tinklų pavadinimai
 const names = {
   eth: "Ethereum",
   bnb: "BNB Smart Chain",
@@ -35,34 +33,35 @@ const names = {
 
 export default function Dashboard() {
   const router = useRouter();
-  const { balances, prices, refetch } = useBalance();
-  const { ready, loading } = useMinimalReady(); // ✅ Naudojam minimalų tikrinimą
+  const { refetch } = useBalance();
+  const { ready, loading } = useSystemReady();
+  const { balances, prices } = useBalance();
 
   const [initialLoadDone, setInitialLoadDone] = useState(false);
 
-  // ✅ Tokenų sąrašas
   const tokens = useMemo(() => {
     if (!balances || Object.keys(balances).length === 0) return [];
     return Object.keys(balances);
   }, [balances]);
 
-  // ✅ Pirmas užkrovimas
   useEffect(() => {
     if (ready && !initialLoadDone) {
       const timeout = setTimeout(() => {
         setInitialLoadDone(true);
-      }, 2000); // 2s uždelsta pradžia
+      }, 2000);
       return () => clearTimeout(timeout);
     }
   }, [ready, initialLoadDone]);
 
-  // ✅ Visibility Change - kai jau buvo pirmas užkrovimas
   useEffect(() => {
     const handleVisibilityChange = async () => {
       if (document.visibilityState === "visible" && initialLoadDone) {
         try {
           await refetch();
-          toast.success("✅ Balances refreshed.", { position: "top-center", autoClose: 2500 });
+          toast.success("✅ Balances refreshed.", {
+            position: "top-center",
+            autoClose: 2500,
+          });
         } catch (error) {
           console.error("Refetch error:", error.message);
         }
@@ -72,6 +71,7 @@ export default function Dashboard() {
     if (typeof window !== "undefined") {
       document.addEventListener("visibilitychange", handleVisibilityChange);
     }
+
     return () => {
       if (typeof window !== "undefined") {
         document.removeEventListener("visibilitychange", handleVisibilityChange);
@@ -79,7 +79,6 @@ export default function Dashboard() {
     };
   }, [initialLoadDone, refetch]);
 
-  // ✅ Loaderis jei NE ready
   if (loading || !ready) {
     return (
       <div className={styles.fullscreenCenter}>
@@ -88,7 +87,6 @@ export default function Dashboard() {
     );
   }
 
-  // ✅ Dashboard turinys
   return (
     <main className={styles.container}>
       <div className={styles.dashboardWrapper}>
