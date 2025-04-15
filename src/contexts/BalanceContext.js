@@ -1,8 +1,16 @@
+// src/contexts/BalanceContext.js
 "use client";
 
-import { createContext, useContext, useState, useEffect, useCallback, useRef } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+  useRef,
+} from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { SUPPORTED_NETWORKS } from "@/contexts/NetworkContext";
+import { useNetwork } from "@/contexts/NetworkContext";
 import { ethers } from "ethers";
 import debounce from "lodash.debounce";
 
@@ -38,6 +46,7 @@ const PRICE_KEY = "nordbalticum_prices";
 
 export const BalanceProvider = ({ children }) => {
   const { wallet, authLoading, walletLoading } = useAuth();
+  const { activeNetwork } = useNetwork();
 
   const [balances, setBalances] = useState({});
   const [prices, setPrices] = useState(FALLBACK_PRICES);
@@ -69,24 +78,9 @@ export const BalanceProvider = ({ children }) => {
       const address = wallet.wallet.address;
       const newBalances = {};
 
-      await Promise.all(
-        Object.entries(RPC).map(async ([network, rpcUrl]) => {
-          try {
-            const provider = new ethers.JsonRpcProvider(rpcUrl);
-            const balance = await provider.getBalance(address);
-            newBalances[network] = parseFloat(ethers.formatEther(balance));
-          } catch (error) {
-            console.warn(`⚠️ Balance fetch failed for [${network}] – setting to 0.`);
-            newBalances[network] = 0;
-          }
-        })
-      );
-
-      SUPPORTED_NETWORKS.forEach((network) => {
-        if (newBalances[network] === undefined) {
-          newBalances[network] = 0;
-        }
-      });
+      const provider = new ethers.JsonRpcProvider(RPC[activeNetwork]);
+      const balance = await provider.getBalance(address);
+      newBalances[activeNetwork] = parseFloat(ethers.formatEther(balance));
 
       setBalances(newBalances);
       saveToLocal(BALANCE_KEY, newBalances);
@@ -117,40 +111,7 @@ export const BalanceProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  }, [wallet]);
-
-  const detectBalanceChanges = useCallback(async () => {
-    if (!wallet?.wallet?.address) return;
-    const address = wallet.wallet.address;
-    const updated = {};
-
-    await Promise.all(
-      Object.entries(RPC).map(async ([network, rpcUrl]) => {
-        try {
-          const provider = new ethers.JsonRpcProvider(rpcUrl);
-          const balance = await provider.getBalance(address);
-          updated[network] = parseFloat(ethers.formatEther(balance));
-        } catch {
-          updated[network] = 0;
-        }
-      })
-    );
-
-    let hasChanged = false;
-    for (const key of SUPPORTED_NETWORKS) {
-      const oldVal = lastKnownBalances.current?.[key] || 0;
-      const newVal = updated[key] || 0;
-      if (Math.abs(oldVal - newVal) > 0.000001) {
-        hasChanged = true;
-        break;
-      }
-    }
-
-    if (hasChanged) {
-      console.log("🔁 Detected balance change – refreshing...");
-      fetchBalancesAndPrices();
-    }
-  }, [wallet, fetchBalancesAndPrices]);
+  }, [wallet, activeNetwork]);
 
   useEffect(() => {
     const cachedBalances = loadFromLocal(BALANCE_KEY);
@@ -162,16 +123,17 @@ export const BalanceProvider = ({ children }) => {
 
   useEffect(() => {
     if (authLoading || walletLoading || !wallet?.wallet?.address) return;
-
     fetchBalancesAndPrices();
+  }, [authLoading, walletLoading, wallet, activeNetwork, fetchBalancesAndPrices]);
 
+  useEffect(() => {
+    if (!wallet?.wallet?.address) return;
     if (intervalRef.current) clearInterval(intervalRef.current);
     intervalRef.current = setInterval(() => {
-      detectBalanceChanges();
-    }, 15000);
-
+      fetchBalancesAndPrices();
+    }, 30000);
     return () => clearInterval(intervalRef.current);
-  }, [authLoading, walletLoading, wallet, fetchBalancesAndPrices, detectBalanceChanges]);
+  }, [wallet, activeNetwork, fetchBalancesAndPrices]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
