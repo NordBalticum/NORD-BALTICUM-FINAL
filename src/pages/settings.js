@@ -60,7 +60,9 @@ export default function SettingsPage() {
     }
     try {
       setLoadingEmail(true);
-      const { error } = await supabase.auth.updateUser({ email: emailInput.trim() });
+      const { error } = await supabase.auth.updateUser({
+        email: emailInput.trim(),
+      });
       if (error) throw error;
       toast.success("✅ Confirmation email sent! Check your inbox.");
       setEmailInput("");
@@ -150,8 +152,8 @@ export default function SettingsPage() {
               priority
               className={styles.logo}
             />
+            <p className={styles.changeEmailTitle}>Your Wallet:</p>
             <div className={styles.walletBox} onClick={handleCopyWallet}>
-              <p className={styles.walletLabel}>Your Wallet:</p>
               <p className={styles.walletAddress}>{walletAddress}</p>
               {copied && <p className={styles.copyStatus}>✅ Copied!</p>}
             </div>
@@ -159,7 +161,7 @@ export default function SettingsPage() {
 
           {/* === IMPORT WALLET === */}
           <div className={styles.settingsBox}>
-            <h2 className={styles.sectionTitle}>Import Wallet</h2>
+            <h2 className={styles.changeEmailTitle}>Import Wallet</h2>
             <input
               type="text"
               placeholder="Private key"
@@ -211,11 +213,7 @@ export default function SettingsPage() {
             <button
               className={styles.dangerButton}
               onClick={() =>
-                openModal(
-                  "Reset Wallet",
-                  "This will generate a new wallet.",
-                  handleDeleteWallet
-                )
+                openModal("Reset Wallet", "This will generate a new wallet.", handleDeleteWallet)
               }
               disabled={loadingDeleteWallet}
             >
