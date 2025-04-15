@@ -1,9 +1,9 @@
-/* === HISTORY MODULE – NordBalticum Coinbase Style v1.0 === */
+/* === HISTORY MODULE – NordBalticum Coinbase Style v2.0 FINAL === */
 
 /* ✅ CONTAINER */
 .container {
   width: 100vw;
-  min-height: calc(100vh - 100px); /* ✅ Palik vietos BottomNavigation */
+  min-height: calc(100vh - 100px);
   overflow-y: auto;
   overflow-x: hidden;
   display: flex;
@@ -11,6 +11,22 @@
   align-items: center;
   justify-content: flex-start;
   padding: clamp(24px, 5vw, 48px);
+}
+
+/* ✅ WRAPPER */
+.contentWrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: clamp(24px, 5vw, 48px);
+  border-radius: var(--radius);
+  backdrop-filter: blur(18px) saturate(160%);
+  background: rgba(255, 255, 255, 0.06);
+  box-shadow: 0 0 28px var(--gold-glow);
+  max-width: 640px;
+  width: 100%;
+  transform: scale(0.95);
 }
 
 /* ✅ HEADER */
@@ -30,6 +46,7 @@
   -webkit-text-fill-color: transparent;
   animation: glowTitle 4s ease-in-out infinite;
   text-shadow: 0 0 16px rgba(255, 255, 255, 0.3);
+  margin-bottom: 40px;
 }
 
 /* ✅ FILTERS */
@@ -67,6 +84,7 @@
 .networkSelector {
   margin-top: 20px;
   text-align: center;
+  margin-bottom: 40px;
 }
 
 .dropdownButton {
@@ -214,21 +232,39 @@
 }
 
 @keyframes pulseGreen {
-  0% { box-shadow: 0 0 0 0 rgba(0, 255, 178, 0.5); }
-  70% { box-shadow: 0 0 0 10px rgba(0, 255, 178, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(0, 255, 178, 0); }
+  0% {
+    box-shadow: 0 0 0 0 rgba(0, 255, 178, 0.5);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(0, 255, 178, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(0, 255, 178, 0);
+  }
 }
 
 @keyframes pulseRed {
-  0% { box-shadow: 0 0 0 0 rgba(255, 92, 92, 0.5); }
-  70% { box-shadow: 0 0 0 10px rgba(255, 92, 92, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(255, 92, 92, 0); }
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 92, 92, 0.5);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(255, 92, 92, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 92, 92, 0);
+  }
 }
 
 @keyframes pulseGold {
-  0% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.5); }
-  70% { box-shadow: 0 0 0 10px rgba(255, 215, 0, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0); }
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.5);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(255, 215, 0, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 215, 0, 0);
+  }
 }
 
 /* ✅ DETAILS + META */
@@ -273,9 +309,32 @@
   transform: scale(1.02);
 }
 
-/* === GLOW TITLE === */
+/* ✅ MOBILE OPTIMIZATION */
+@media (max-width: 768px) {
+  .title {
+    font-size: clamp(24px, 6vw, 32px);
+    text-align: center;
+    transform: scale(0.85);
+  }
+
+  .networkSelector {
+    margin-bottom: 32px;
+  }
+
+  .txItem {
+    transform: scale(0.96);
+  }
+}
+
+/* ✅ TITLE ANIMATION */
 @keyframes glowTitle {
-  0% { text-shadow: 0 0 8px #fff, 0 0 16px #ffd700; }
-  50% { text-shadow: 0 0 16px #fffacd, 0 0 24px #ffd700; }
-  100% { text-shadow: 0 0 8px #fff, 0 0 16px #ffd700; }
+  0% {
+    text-shadow: 0 0 8px #fff, 0 0 16px #ffd700;
+  }
+  50% {
+    text-shadow: 0 0 16px #fffacd, 0 0 24px #ffd700;
+  }
+  100% {
+    text-shadow: 0 0 8px #fff, 0 0 16px #ffd700;
+  }
 }
