@@ -7,6 +7,7 @@ import { supabase } from "@/utils/supabaseClient";
 import { toast } from "react-toastify";
 import debounce from "lodash.debounce";
 
+// ✅ RPC
 export const RPC = {
   eth: "https://rpc.ankr.com/eth",
   bnb: "https://bsc-dataseed.binance.org/",
@@ -15,6 +16,7 @@ export const RPC = {
   avax: "https://api.avax.network/ext/bc/C/rpc",
 };
 
+// ✅ Encryption
 const ENCRYPTION_SECRET = process.env.NEXT_PUBLIC_ENCRYPTION_SECRET;
 
 const encode = (str) => new TextEncoder().encode(str);
@@ -64,9 +66,9 @@ export const decrypt = async (ciphertext) => {
   return decode(decrypted);
 };
 
-// ------------------------------
-// AUTH CONTEXT
-// ------------------------------
+export const isValidPrivateKey = (key) => /^0x[a-fA-F0-9]{64}$/.test(key);
+
+// ✅ Context
 export const AuthContext = createContext();
 export const useAuth = () => useContext(AuthContext);
 
@@ -83,10 +85,8 @@ export const AuthProvider = ({ children }) => {
   const inactivityTimer = useRef(null);
   const lastSessionRefresh = useRef(Date.now());
 
-  // ✅ Load Session
   useEffect(() => {
     if (!isClient) return;
-
     const loadSession = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
@@ -94,22 +94,20 @@ export const AuthProvider = ({ children }) => {
           setSession(session);
           setUser(session.user);
         } else {
+          setSession(null);
           setUser(null);
           setWallet(null);
-          setSession(null);
         }
       } catch (err) {
         console.error("Session load failed:", err.message);
+        setSession(null);
         setUser(null);
         setWallet(null);
-        setSession(null);
       } finally {
         setAuthLoading(false);
       }
     };
-
     loadSession();
-
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session) {
         setSession(session);
@@ -119,11 +117,9 @@ export const AuthProvider = ({ children }) => {
         signOut(false);
       }
     });
-
     return () => subscription?.unsubscribe();
   }, []);
 
-  // ✅ Wallet Loader
   useEffect(() => {
     if (!isClient || authLoading || !user?.email) return;
     loadOrCreateWallet(user.email);
@@ -138,7 +134,6 @@ export const AuthProvider = ({ children }) => {
         .eq("user_email", email)
         .maybeSingle();
       if (error) throw error;
-
       if (data?.encrypted_key) {
         const decryptedKey = await decrypt(data.encrypted_key);
         setupWallet(decryptedKey);
@@ -148,7 +143,7 @@ export const AuthProvider = ({ children }) => {
     } catch (err) {
       console.error("Wallet load failed:", err.message);
       toast.error("❌ Wallet load failed.");
-      try { setWallet(null); } catch {}
+      setWallet(null);
     } finally {
       setWalletLoading(false);
     }
@@ -157,7 +152,7 @@ export const AuthProvider = ({ children }) => {
   const createAndStoreWallet = async (email) => {
     const newWallet = ethers.Wallet.createRandom();
     const encryptedKey = await encrypt(newWallet.privateKey);
-    const { error } = await supabase.from("wallets").insert({
+    const { error } = await supabase.from("wallets").upsert({
       user_email: email,
       eth_address: newWallet.address,
       encrypted_key: encryptedKey,
@@ -166,6 +161,37 @@ export const AuthProvider = ({ children }) => {
     if (error) throw error;
     setupWallet(newWallet.privateKey);
     toast.success("✅ Wallet created!");
+  };
+
+  const importWalletFromPrivateKey = async (email, privateKey) => {
+    if (!isValidPrivateKey(privateKey)) {
+      toast.error("❌ Invalid private key format.");
+      return;
+    }
+    try {
+      setWalletLoading(true);
+      const existing = await supabase.from("wallets").select("eth_address").eq("user_email", email).single();
+      const newAddress = new ethers.Wallet(privateKey).address;
+      if (existing.data?.eth_address === newAddress) {
+        toast.info("⚠️ Same wallet already imported.");
+        return setupWallet(privateKey);
+      }
+      const encryptedKey = await encrypt(privateKey);
+      const { error } = await supabase.from("wallets").upsert({
+        user_email: email,
+        eth_address: newAddress,
+        encrypted_key: encryptedKey,
+        updated_at: new Date().toISOString(),
+      });
+      if (error) throw error;
+      setupWallet(privateKey);
+      toast.success("✅ Wallet imported!");
+    } catch (err) {
+      console.error("Wallet import failed:", err.message);
+      toast.error("❌ Wallet import failed.");
+    } finally {
+      setWalletLoading(false);
+    }
   };
 
   const setupWallet = (privateKey) => {
@@ -178,7 +204,6 @@ export const AuthProvider = ({ children }) => {
     setWallet({ wallet: baseWallet, signers });
   };
 
-  // ✅ Safe Refresh
   const safeRefreshSession = async () => {
     if (Date.now() - lastSessionRefresh.current < 60000) return null;
     lastSessionRefresh.current = Date.now();
@@ -190,34 +215,30 @@ export const AuthProvider = ({ children }) => {
       } else {
         setSession(null);
         setUser(null);
-        try { setWallet(null); } catch {}
+        setWallet(null);
       }
       return session ?? null;
     } catch (err) {
       console.error("Session refresh failed:", err.message);
       setSession(null);
       setUser(null);
-      try { setWallet(null); } catch {}
+      setWallet(null);
       return null;
     }
   };
 
-  // ✅ Auto Refresh (5 min)
   useEffect(() => {
     if (!isClient) return;
     const interval = setInterval(() => safeRefreshSession(), 300000);
     return () => clearInterval(interval);
   }, [safeRefreshSession, isClient]);
 
-  // ✅ Tab / Network Recovery
   useEffect(() => {
     if (!isClient) return;
     const handleVisible = debounce(() => safeRefreshSession(), 500);
     const handleOnline = debounce(() => safeRefreshSession(), 500);
-
     document.addEventListener("visibilitychange", handleVisible);
     window.addEventListener("online", handleOnline);
-
     return () => {
       document.removeEventListener("visibilitychange", handleVisible);
       window.removeEventListener("online", handleOnline);
@@ -226,7 +247,6 @@ export const AuthProvider = ({ children }) => {
     };
   }, [safeRefreshSession, isClient]);
 
-  // ✅ Inactivity
   useEffect(() => {
     if (!isClient) return;
     const resetTimer = () => {
@@ -248,7 +268,6 @@ export const AuthProvider = ({ children }) => {
     };
   }, []);
 
-  // ✅ Signin
   const signInWithMagicLink = async (email) => {
     const origin = isClient ? window.location.origin : "https://nordbalticum.com";
     const { error } = await supabase.auth.signInWithOtp({
@@ -276,26 +295,21 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // ✅ SignOut
   const signOut = async (showToast = false, redirectPath = "/") => {
     try {
       await supabase.auth.signOut();
     } catch (err) {
       console.error("Sign out error:", err.message);
     }
-
     try { setUser(null); } catch {}
     try { setWallet(null); } catch {}
     try { setSession(null); } catch {}
-
     if (isClient) {
       ["userPrivateKey", "activeNetwork", "sessionData"].forEach((key) =>
         localStorage.removeItem(key)
       );
     }
-
     router.replace(redirectPath);
-
     if (showToast) {
       toast.info("👋 Logged out.", { position: "top-center", autoClose: 4000 });
     }
@@ -313,6 +327,8 @@ export const AuthProvider = ({ children }) => {
         signInWithMagicLink,
         signInWithGoogle,
         signOut,
+        importWalletFromPrivateKey,
+        isValidPrivateKey,
       }}
     >
       {children}
