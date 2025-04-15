@@ -1,16 +1,17 @@
 "use client";
 
-import { useMemo, useEffect, useState, useRef } from "react";
+import { useMemo } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 
-import { useAuth } from "@/contexts/AuthContext";
+// ✅ Contexts
+import { useSystemReady } from "@/hooks/useSystemReady";
 import { useBalance } from "@/contexts/BalanceContext";
-import { useMinimalReady } from "@/hooks/useMinimalReady";
+import { useAuth } from "@/contexts/AuthContext";
+import { useNetwork } from "@/contexts/NetworkContext";
 
 import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
-import { toast } from "react-toastify";
 import styles from "@/styles/dashboard.module.css";
 
 const LivePriceTable = dynamic(() => import("@/components/LivePriceTable"), {
@@ -35,65 +36,22 @@ const names = {
 
 export default function Dashboard() {
   const router = useRouter();
-  const { balances, prices, refetch } = useBalance();
-  const { ready, loading } = useMinimalReady();
+  const { balances, prices } = useBalance();
+  const { ready, loading } = useSystemReady();
 
-  const [initialLoadDone, setInitialLoadDone] = useState(false);
-  const visibilityHandled = useRef(false);
+  // ✅ Naudojam kontekstus, jei reikia (nebūtina, jei tik useSystemReady)
+  const { user } = useAuth();
+  const { activeNetwork } = useNetwork();
 
   const tokens = useMemo(() => {
-    if (!balances || Object.keys(balances).length === 0) return [];
-    return Object.keys(balances);
+    return balances ? Object.keys(balances) : [];
   }, [balances]);
-
-  useEffect(() => {
-    if (ready && !initialLoadDone) {
-      const timeout = setTimeout(() => {
-        setInitialLoadDone(true);
-      }, 500);
-      return () => clearTimeout(timeout);
-    }
-  }, [ready, initialLoadDone]);
-
-  useEffect(() => {
-    const handleVisibilityChange = async () => {
-      if (
-        document.visibilityState === "visible" &&
-        initialLoadDone &&
-        !visibilityHandled.current
-      ) {
-        visibilityHandled.current = true;
-        try {
-          await refetch();
-          toast.success("✅ Balances refreshed.", {
-            position: "top-center",
-            autoClose: 2500,
-          });
-        } catch (error) {
-          console.error("Refetch error:", error.message);
-        } finally {
-          setTimeout(() => {
-            visibilityHandled.current = false;
-          }, 2500);
-        }
-      }
-    };
-
-    if (typeof window !== "undefined") {
-      document.addEventListener("visibilitychange", handleVisibilityChange);
-    }
-
-    return () => {
-      if (typeof window !== "undefined") {
-        document.removeEventListener("visibilitychange", handleVisibilityChange);
-      }
-    };
-  }, [initialLoadDone, refetch]);
 
   if (loading || !ready) {
     return (
       <div className={styles.fullscreenCenter}>
         <MiniLoadingSpinner size={32} />
+        <p className={styles.loadingText}>Loading dashboard...</p>
       </div>
     );
   }
@@ -108,10 +66,10 @@ export default function Dashboard() {
             <div className={styles.noAssets}>No assets found.</div>
           ) : (
             tokens.map((network) => {
-              const balanceValue = balances?.[network];
-              const priceData = prices?.[network];
+              const balance = balances?.[network];
+              const price = prices?.[network];
 
-              if (balanceValue == null || priceData == null) {
+              if (balance == null || price == null) {
                 return (
                   <div key={network} className={styles.assetItem}>
                     <MiniLoadingSpinner size={16} />
@@ -119,13 +77,8 @@ export default function Dashboard() {
                 );
               }
 
-              const balance = parseFloat(balanceValue || 0);
-              const eur = parseFloat(priceData?.eur || 0);
-              const usd = parseFloat(priceData?.usd || 0);
-
-              const balanceFormatted = balance.toFixed(6);
-              const eurValue = (balance * eur).toFixed(2);
-              const usdValue = (balance * usd).toFixed(2);
+              const eur = (balance * price.eur).toFixed(2);
+              const usd = (balance * price.usd).toFixed(2);
 
               return (
                 <div
@@ -157,10 +110,10 @@ export default function Dashboard() {
 
                   <div className={styles.assetRight}>
                     <div className={styles.assetAmount}>
-                      {balanceFormatted} {network.toUpperCase()}
+                      {balance.toFixed(6)} {network.toUpperCase()}
                     </div>
                     <div className={styles.assetEur}>
-                      ≈ €{eurValue} | ≈ ${usdValue}
+                      ≈ €{eur} | ≈ ${usd}
                     </div>
                   </div>
                 </div>
