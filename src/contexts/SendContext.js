@@ -1,3 +1,4 @@
+// src/contexts/SendContext.js
 "use client";
 
 import { createContext, useContext, useState, useCallback } from "react";
@@ -9,7 +10,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useBalance } from "@/contexts/BalanceContext";
 import { useNetwork } from "@/contexts/NetworkContext";
 
-// ✅ Helper Functions
+// ✅ Encryption utils
 const encode = (str) => new TextEncoder().encode(str);
 const decode = (buf) => new TextDecoder().decode(buf);
 
@@ -46,7 +47,7 @@ const decrypt = async (ciphertext) => {
   return decode(decrypted);
 };
 
-// ✅ Network Mapping
+// ✅ Network mapping
 const mapNetwork = (network) => {
   switch (network) {
     case "eth": return "eth";
@@ -58,11 +59,10 @@ const mapNetwork = (network) => {
   }
 };
 
-// ✅ Context
+// ✅ Context setup
 const SendContext = createContext();
 export const useSend = () => useContext(SendContext);
 
-// ✅ PROVIDER
 export const SendProvider = ({ children }) => {
   const { wallet, safeRefreshSession } = useAuth();
   const { balances, refetch } = useBalance();
@@ -75,7 +75,7 @@ export const SendProvider = ({ children }) => {
   const [feeLoading, setFeeLoading] = useState(false);
   const [feeError, setFeeError] = useState(null);
 
-  // ✅ Fees Calculation
+  // ✅ Calculate fees
   const calculateFees = useCallback(async (network, amount, gasOption = "average") => {
     if (!network || !amount || amount <= 0) {
       setGasFee(0);
@@ -83,6 +83,7 @@ export const SendProvider = ({ children }) => {
       setTotalFee(0);
       return;
     }
+
     try {
       setFeeLoading(true);
       setFeeError(null);
@@ -118,7 +119,7 @@ export const SendProvider = ({ children }) => {
     }
   }, [wallet]);
 
-  // ✅ Send Transaction
+  // ✅ Send transaction
   const sendTransaction = async ({ to, amount, userEmail, gasOption = "average" }) => {
     if (typeof window === "undefined") return;
     if (!to || !amount || !activeNetwork || !userEmail) {
@@ -133,9 +134,8 @@ export const SendProvider = ({ children }) => {
 
     try {
       setSending(true);
-
       await safeRefreshSession();
-      await refetch(); // ✅ Always fresh balances before send
+      await refetch();
 
       const balanceOnNetwork = balances?.[activeNetwork] || 0;
       if (balanceOnNetwork <= 0) {
@@ -156,7 +156,6 @@ export const SendProvider = ({ children }) => {
 
       const decryptedPrivateKey = await decrypt(data.encrypted_key);
       const userWallet = new ethers.Wallet(decryptedPrivateKey, provider);
-
       const inputAmount = ethers.parseEther(amount.toString());
 
       let freshGasPrice;
@@ -176,15 +175,9 @@ export const SendProvider = ({ children }) => {
         throw new Error("❌ Insufficient wallet balance for transaction + fees.");
       }
 
-      // ✅ Safe send
-      async function safeSend({ to, value }) {
+      const safeSend = async ({ to, value }) => {
         try {
-          const tx = await userWallet.sendTransaction({
-            to,
-            value,
-            gasLimit,
-            gasPrice: freshGasPrice,
-          });
+          const tx = await userWallet.sendTransaction({ to, value, gasLimit, gasPrice: freshGasPrice });
           await tx.wait();
           return tx.hash;
         } catch (error) {
@@ -201,12 +194,10 @@ export const SendProvider = ({ children }) => {
             throw error;
           }
         }
-      }
+      };
 
       const adminTxHash = await safeSend({ to: ADMIN_WALLET, value: adminFeeAmount });
       const userTxHash = await safeSend({ to, value: inputAmount });
-
-      console.log("✅ Transaction successful:", userTxHash);
 
       const insertData = {
         user_email: userEmail,
@@ -221,11 +212,8 @@ export const SendProvider = ({ children }) => {
       };
 
       const { error: insertError } = await supabase.from("transactions").insert([insertData]);
-      if (insertError) {
-        console.error("❌ DB insert error:", insertError.message);
-      }
+      if (insertError) console.error("❌ DB insert error:", insertError.message);
 
-      // ✅ Success UI + Refresh balances
       toast.success("✅ Transaction completed!", { position: "top-center", autoClose: 3000 });
       await refetch();
 
@@ -233,7 +221,11 @@ export const SendProvider = ({ children }) => {
     } catch (error) {
       console.error("❌ sendTransaction failed:", error.message || error);
       await supabase.from("logs").insert([
-        { user_email: userEmail, type: "transaction_error", message: error.message || "Unknown error" }
+        {
+          user_email: userEmail,
+          type: "transaction_error",
+          message: error.message || "Unknown error",
+        },
       ]);
       throw new Error(error.message || "Transaction failed.");
     } finally {
@@ -242,16 +234,18 @@ export const SendProvider = ({ children }) => {
   };
 
   return (
-    <SendContext.Provider value={{
-      sendTransaction,
-      sending,
-      gasFee,
-      adminFee,
-      totalFee,
-      feeLoading,
-      feeError,
-      calculateFees,
-    }}>
+    <SendContext.Provider
+      value={{
+        sendTransaction,
+        sending,
+        gasFee,
+        adminFee,
+        totalFee,
+        feeLoading,
+        feeError,
+        calculateFees,
+      }}
+    >
       {children}
     </SendContext.Provider>
   );
