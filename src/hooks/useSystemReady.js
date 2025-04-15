@@ -21,12 +21,7 @@ export function useSystemReady() {
   } = useAuth();
 
   const { activeNetwork } = useNetwork();
-  const {
-    balances,
-    loading: balancesLoading,
-    prices,
-    refetch,
-  } = useBalance();
+  const { balances, loading: balancesLoading, prices, refetch } = useBalance();
 
   const [isDomReady, setIsDomReady] = useState(false);
   const [latencyMs, setLatencyMs] = useState(0);
@@ -37,13 +32,17 @@ export function useSystemReady() {
   const sessionWatcher = useRef(null);
   const refreshInterval = useRef(null);
   const lastRefreshTime = useRef(Date.now());
+  const failureCount = useRef(0);
 
   const isClient = typeof window !== "undefined";
 
   const isMobile = useMemo(() => {
     if (!isClient) return false;
-    const ua = navigator.userAgent || navigator.vendor || "";
-    return /android|iphone|ipad|ipod|opera mini|iemobile|mobile/i.test(ua);
+    const ua = navigator.userAgent.toLowerCase();
+    return (
+      /android|iphone|ipad|ipod|opera mini|iemobile|mobile|samsung|sm-|nexus|pixel/.test(ua) &&
+      !/tablet|ipad|macintosh/.test(ua)
+    );
   }, [isClient]);
 
   useEffect(() => {
@@ -85,14 +84,15 @@ export function useSystemReady() {
     }
   }, [isClient]);
 
-  const minimalReady = useMemo(() =>
-    isClient &&
-    isDomReady &&
-    !!user?.email &&
-    !!wallet?.wallet?.address &&
-    !!activeNetwork &&
-    !authLoading &&
-    !walletLoading,
+  const minimalReady = useMemo(
+    () =>
+      isClient &&
+      isDomReady &&
+      !!user?.email &&
+      !!wallet?.wallet?.address &&
+      !!activeNetwork &&
+      !authLoading &&
+      !walletLoading,
     [isClient, isDomReady, user, wallet, activeNetwork, authLoading, walletLoading]
   );
 
@@ -135,9 +135,18 @@ export function useSystemReady() {
         lastRefreshTime.current = Date.now();
         const duration = Math.round(performance.now() - start);
         setLatencyMs(duration);
+        failureCount.current = 0;
         console.log(`✅ System refreshed [${trigger}] (${duration}ms)`);
       } catch (err) {
-        console.error(`❌ Refresh failed [${trigger}]:`, err?.message || err);
+        failureCount.current += 1;
+        console.error(`❌ Refresh failed [${trigger}] (${failureCount.current}/3):`, err?.message || err);
+
+        if (failureCount.current >= 3) {
+          toast.error("⚠️ Session expired. Logging out...");
+          if (typeof signOut === "function") {
+            signOut(true);
+          }
+        }
       }
     };
 
@@ -168,7 +177,7 @@ export function useSystemReady() {
       window.removeEventListener("focus", onFocus);
       window.removeEventListener("online", onOnline);
     };
-  }, [minimalReady, safeRefreshSession, refetch, isMobile]);
+  }, [minimalReady, safeRefreshSession, refetch, isMobile, signOut]);
 
   useEffect(() => {
     if (!isClient || !minimalReady) return;
@@ -188,9 +197,7 @@ export function useSystemReady() {
   useEffect(() => {
     if (!isClient) return;
 
-    const notifyOffline = () =>
-      toast.warning("⚠️ You are offline. Using cached data.");
-
+    const notifyOffline = () => toast.warning("⚠️ You are offline. Using cached data.");
     window.addEventListener("offline", notifyOffline);
     return () => window.removeEventListener("offline", notifyOffline);
   }, []);
@@ -200,11 +207,14 @@ export function useSystemReady() {
 
     sessionWatcher.current = startSessionWatcher({
       onSessionInvalid: () => {
-        toast.error("⚠️ Session expired or invalid. Logging out...");
-        if (typeof signOut === "function") {
-          signOut(true);
-        } else {
-          console.warn("⚠️ signOut handler missing.");
+        failureCount.current += 1;
+        console.warn("⚠️ Session may be invalid. Failure count:", failureCount.current);
+
+        if (failureCount.current >= 3) {
+          toast.error("⚠️ Session invalid. Logging out...");
+          if (typeof signOut === "function") {
+            signOut(true);
+          }
         }
       },
       user,
@@ -227,5 +237,6 @@ export function useSystemReady() {
     sessionScore,
     fallbackBalances,
     fallbackPrices,
+    isMobile,
   };
 }
