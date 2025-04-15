@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { fetchNetworkTransactions } from "@/utils/networkApi";
 import { useAuth } from "@/contexts/AuthContext";
+import { useMinimalReady } from "@/hooks/useMinimalReady";
 import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
 import styles from "@/styles/history.module.css";
 import background from "@/styles/background.module.css";
@@ -18,47 +19,37 @@ const NETWORK_OPTIONS = [
 ];
 
 export default function HistoryPage() {
-  const { user, wallet, authLoading, walletLoading } = useAuth();
   const router = useRouter();
+  const { wallet } = useAuth();
+  const { ready, loading } = useMinimalReady();
 
-  const [isClient, setIsClient] = useState(false);
   const [network, setNetwork] = useState("bnb");
   const [transactions, setTransactions] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [txLoading, setTxLoading] = useState(false);
   const [visibleCount, setVisibleCount] = useState(5);
-
-  useEffect(() => {
-    if (typeof window !== "undefined") setIsClient(true);
-  }, []);
-
-  useEffect(() => {
-    if (isClient && !authLoading && !wallet?.wallet?.address) {
-      router.replace("/");
-    }
-  }, [isClient, authLoading, wallet, router]);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
 
   const fetchTransactions = async () => {
     if (!wallet?.wallet?.address) return;
     try {
-      setLoading(true);
+      setTxLoading(true);
       const txs = await fetchNetworkTransactions(network, wallet.wallet.address);
       setTransactions(txs);
     } catch (err) {
       console.error("❌ Error fetching transactions:", err);
       setTransactions([]);
     } finally {
-      setLoading(false);
+      setTxLoading(false);
     }
   };
 
   useEffect(() => {
-    if (wallet?.wallet?.address) {
+    if (ready && wallet?.wallet?.address) {
       fetchTransactions();
       const interval = setInterval(fetchTransactions, 60000);
       return () => clearInterval(interval);
     }
-  }, [wallet, network]);
+  }, [ready, wallet, network]);
 
   const selectedNetwork = NETWORK_OPTIONS.find(net => net.value === network);
 
@@ -83,15 +74,16 @@ export default function HistoryPage() {
     return <span style={{ color: "orange", fontWeight: "bold" }}>⏳ Pending</span>;
   };
 
-  if (!isClient || authLoading || walletLoading) {
+  if (loading || !ready) {
     return (
       <div className={styles.loading}>
-        <MiniLoadingSpinner /> Loading wallet...
+        <MiniLoadingSpinner /> Loading session...
       </div>
     );
   }
 
-  if (!user || !wallet?.wallet) {
+  if (!wallet?.wallet?.address) {
+    router.replace("/");
     return (
       <div className={styles.loading}>
         <MiniLoadingSpinner /> Redirecting...
@@ -104,7 +96,7 @@ export default function HistoryPage() {
       style={{ width: "100vw", height: "100vh", overflowY: "auto" }}
       className={`${styles.container} ${background.gradient}`}
     >
-      {/* ... tavo dropdown, transaction list, ir visa kita kaip parašei ... */}
+      {/* ... tavo dropdown, transaction list ir kt. */}
     </main>
   );
 }
