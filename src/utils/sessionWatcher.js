@@ -1,38 +1,57 @@
 "use client";
 
-export function startSessionWatcher({ onSessionInvalid, intervalMinutes = 1 }) {
+export function startSessionWatcher({
+  onSessionInvalid,
+  user,
+  wallet,
+  refreshSession,
+  refetchBalances,
+  log = true,
+  intervalMs = 60000,
+  networkFailLimit = 3,
+}) {
   let intervalId = null;
+  let failCount = 0;
 
   const start = () => {
-    if (intervalId) return; // ✅ Jau veikia? Niekur neik
+    if (intervalId) return;
+
     intervalId = setInterval(async () => {
       try {
         const res = await fetch("/api/check-session", {
           method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
           cache: "no-store",
         });
 
         if (!res.ok) {
-          console.warn("⚠️ Session API error, server not responding.");
-          return; // ✅ Jei tik serverio klaida, nieko nedarom, laukiam kito intervalo
-        }
+          failCount++;
+          if (log) console.warn(`⚠️ API error (${failCount}/${networkFailLimit})`);
+        } else {
+          const { valid } = await res.json();
 
-        const data = await res.json();
-
-        if (!data?.valid) {
-          console.warn("❌ Session invalid detected (token expired).");
-          if (typeof onSessionInvalid === "function") {
-            onSessionInvalid();
+          if (!valid || !user || !wallet?.wallet?.address) {
+            if (log) console.warn("❌ Invalid session detected.");
+            onSessionInvalid?.();
+          } else {
+            failCount = 0;
+            refreshSession?.();
+            refetchBalances?.();
           }
         }
-      } catch (error) {
-        console.error("Session watcher network error:", error.message || error);
-        // ✅ Jei tik network klaida (pvz. 502, 503), ne logoutinam, o laukiam kito bandymo
+
+        if (failCount >= networkFailLimit) {
+          if (log) console.warn("❌ Network failed too many times – triggering logout.");
+          onSessionInvalid?.();
+        }
+      } catch (err) {
+        failCount++;
+        if (log) console.error(`❌ Network error (${failCount}):`, err.message);
+        if (failCount >= networkFailLimit) {
+          onSessionInvalid?.();
+        }
       }
-    }, intervalMinutes * 60 * 1000); // ✅ Pvz. kas 1 minutę
+    }, intervalMs);
   };
 
   const stop = () => {
