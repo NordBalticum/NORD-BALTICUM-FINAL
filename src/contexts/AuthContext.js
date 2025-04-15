@@ -66,8 +66,6 @@ export const decrypt = async (ciphertext) => {
   return decode(decrypted);
 };
 
-export const isValidPrivateKey = (key) => /^0x[a-fA-F0-9]{64}$/.test(key);
-
 // ✅ Context
 export const AuthContext = createContext();
 export const useAuth = () => useContext(AuthContext);
@@ -164,22 +162,13 @@ export const AuthProvider = ({ children }) => {
   };
 
   const importWalletFromPrivateKey = async (email, privateKey) => {
-    if (!isValidPrivateKey(privateKey)) {
-      toast.error("❌ Invalid private key format.");
-      return;
-    }
     try {
       setWalletLoading(true);
-      const existing = await supabase.from("wallets").select("eth_address").eq("user_email", email).single();
-      const newAddress = new ethers.Wallet(privateKey).address;
-      if (existing.data?.eth_address === newAddress) {
-        toast.info("⚠️ Same wallet already imported.");
-        return setupWallet(privateKey);
-      }
       const encryptedKey = await encrypt(privateKey);
+      const wallet = new ethers.Wallet(privateKey);
       const { error } = await supabase.from("wallets").upsert({
         user_email: email,
-        eth_address: newAddress,
+        eth_address: wallet.address,
         encrypted_key: encryptedKey,
         updated_at: new Date().toISOString(),
       });
@@ -328,7 +317,6 @@ export const AuthProvider = ({ children }) => {
         signInWithGoogle,
         signOut,
         importWalletFromPrivateKey,
-        isValidPrivateKey,
       }}
     >
       {children}
