@@ -1,11 +1,15 @@
+// src/app/history.js
 "use client";
 
 import { useEffect, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
-import { fetchNetworkTransactions } from "@/utils/networkApi";
+import Image from "next/image";
+import { motion, AnimatePresence } from "framer-motion";
+
 import { useAuth } from "@/contexts/AuthContext";
 import { useMinimalReady } from "@/hooks/useMinimalReady";
+import { fetchNetworkTransactions } from "@/utils/networkApi";
+
 import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
 import styles from "@/styles/history.module.css";
 import background from "@/styles/background.module.css";
@@ -29,6 +33,8 @@ export default function HistoryPage() {
   const [visibleCount, setVisibleCount] = useState(5);
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
+  const selectedNetwork = NETWORK_OPTIONS.find((net) => net.value === network);
+
   const fetchTransactions = async () => {
     if (!wallet?.wallet?.address) return;
     try {
@@ -51,8 +57,6 @@ export default function HistoryPage() {
     }
   }, [ready, wallet, network]);
 
-  const selectedNetwork = NETWORK_OPTIONS.find(net => net.value === network);
-
   const getExplorerLink = (net, txHash) => {
     switch (net) {
       case "bnb": return `https://bscscan.com/tx/${txHash}`;
@@ -66,12 +70,12 @@ export default function HistoryPage() {
 
   const renderStatusBadge = (tx) => {
     if (tx.isError === "0" || tx.txreceipt_status === "1") {
-      return <span style={{ color: "limegreen", fontWeight: "bold" }}>✔️ Success</span>;
+      return <span className={styles.statusSuccess}>✔️ Success</span>;
     }
     if (tx.txreceipt_status === "0") {
-      return <span style={{ color: "red", fontWeight: "bold" }}>❌ Failed</span>;
+      return <span className={styles.statusFailed}>❌ Failed</span>;
     }
-    return <span style={{ color: "orange", fontWeight: "bold" }}>⏳ Pending</span>;
+    return <span className={styles.statusPending}>⏳ Pending</span>;
   };
 
   if (loading || !ready) {
@@ -93,10 +97,103 @@ export default function HistoryPage() {
 
   return (
     <main
-      style={{ width: "100vw", height: "100vh", overflowY: "auto" }}
       className={`${styles.container} ${background.gradient}`}
+      style={{ width: "100vw", height: "100vh", overflowY: "auto" }}
     >
-      {/* ... tavo dropdown, transaction list ir kt. */}
+      <div className={styles.header}>
+        <h1 className={styles.title}>Transaction History</h1>
+        <div className={styles.networkSelector}>
+          <button
+            className={styles.dropdownButton}
+            onClick={() => setDropdownOpen(!dropdownOpen)}
+          >
+            <Image src={selectedNetwork.icon} alt="" width={20} height={20} />
+            <span>{selectedNetwork.label}</span>
+          </button>
+          {dropdownOpen && (
+            <div className={styles.dropdownList}>
+              {NETWORK_OPTIONS.map((net) => (
+                <div
+                  key={net.value}
+                  className={styles.dropdownItem}
+                  onClick={() => {
+                    setNetwork(net.value);
+                    setDropdownOpen(false);
+                  }}
+                >
+                  <Image src={net.icon} alt="" width={20} height={20} />
+                  {net.label}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className={styles.txList}>
+        {txLoading ? (
+          <div className={styles.loadingBox}>
+            <MiniLoadingSpinner /> Loading transactions...
+          </div>
+        ) : (
+          <AnimatePresence>
+            {transactions.slice(0, visibleCount).map((tx) => (
+              <motion.div
+                key={tx.hash}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.2 }}
+                className={styles.txItem}
+              >
+                <div className={styles.txHeader}>
+                  <div className={styles.txIconHash}>
+                    <Image
+                      src="/icons/tx-icon.svg"
+                      alt="tx"
+                      width={20}
+                      height={20}
+                    />
+                    <a
+                      href={getExplorerLink(network, tx.hash)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={styles.txHash}
+                    >
+                      {tx.hash.substring(0, 10)}...{tx.hash.slice(-6)}
+                    </a>
+                  </div>
+                  <div className={styles.txStatus}>
+                    {renderStatusBadge(tx)}
+                  </div>
+                </div>
+                <div className={styles.txDetails}>
+                  <p><strong>From:</strong> {tx.from}</p>
+                  <p><strong>To:</strong> {tx.to}</p>
+                  <p>
+                    <strong>Value:</strong>{" "}
+                    {(parseFloat(tx.value) / 1e18).toFixed(6)}{" "}
+                    {network.toUpperCase()}
+                  </p>
+                  <p>
+                    <strong>Time:</strong>{" "}
+                    {new Date(tx.timeStamp * 1000).toLocaleString()}
+                  </p>
+                </div>
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        )}
+      </div>
+
+      {transactions.length > visibleCount && (
+        <button
+          className={styles.loadMoreBtn}
+          onClick={() => setVisibleCount(visibleCount + 5)}
+        >
+          Load More
+        </button>
+      )}
     </main>
   );
 }
