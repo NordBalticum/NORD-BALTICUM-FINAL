@@ -123,7 +123,7 @@ export default function HistoryPage() {
   }
 
   return (
-    <main className={`${styles.container} ${background.gradient}`} style={{ paddingBottom: "100px" }}>
+    <main className={`${styles.container} ${background.gradient}`} style={{ width: "100vw", height: "100vh", overflowY: "auto" }}>
       <div className={styles.wrapper}>
         <h1 className={styles.title}>Transaction History</h1>
 
