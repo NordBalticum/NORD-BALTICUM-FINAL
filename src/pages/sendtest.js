@@ -1,4 +1,3 @@
-// src/pages/sendtest.js
 "use client";
 
 import { useState, useEffect, useRef } from "react";
@@ -12,19 +11,16 @@ import { useBalances } from "@/contexts/BalanceContext";
 import { useSend } from "@/contexts/SendContext";
 import { useSystemReady } from "@/hooks/useSystemReady";
 
-import { getGasPrices } from "@/utils/getGasPrice";
-import styles from "@/styles/sendtest.module.css"; // CSS kursim atskirai
+import { getGasPrices } from "@/utils/getGasPrices";
+import styles from "@/styles/sendtest.module.css";
 
-import bnbIcon from "/icons/bnb.svg";
-import ethIcon from "/icons/eth.svg";
-import maticIcon from "/icons/matic.svg";
-import avaxIcon from "/icons/avax.svg";
-
-const NETWORKS = [
-  { label: "BNB", value: "bnb", icon: bnbIcon },
-  { label: "ETH", value: "eth", icon: ethIcon },
-  { label: "Polygon", value: "matic", icon: maticIcon },
-  { label: "Avalanche", value: "avax", icon: avaxIcon },
+// Tinklas + ikonos
+const NETWORK_OPTIONS = [
+  { label: "BNB", value: "bnb", icon: "/icons/bnb.svg" },
+  { label: "TBNB", value: "tbnb", icon: "/icons/bnb.svg" },
+  { label: "ETH", value: "eth", icon: "/icons/eth.svg" },
+  { label: "Polygon", value: "matic", icon: "/icons/matic.svg" },
+  { label: "Avalanche", value: "avax", icon: "/icons/avax.svg" },
 ];
 
 export default function SendTest() {
@@ -97,6 +93,26 @@ export default function SendTest() {
   };
 
   const currentBalance = parseFloat(balances[selectedNetwork]?.balance || 0);
+  const networkInfo = NETWORK_OPTIONS.find((n) => n.value === selectedNetwork);
+  const networkLabel = networkInfo?.label || selectedNetwork.toUpperCase();
+  const networkIcon = networkInfo?.icon;
+
+  const getExplorerLink = (net, hash) => {
+    switch (net) {
+      case "bnb":
+        return `https://bscscan.com/tx/${hash}`;
+      case "tbnb":
+        return `https://testnet.bscscan.com/tx/${hash}`;
+      case "eth":
+        return `https://etherscan.io/tx/${hash}`;
+      case "matic":
+        return `https://polygonscan.com/tx/${hash}`;
+      case "avax":
+        return `https://snowtrace.io/tx/${hash}`;
+      default:
+        return "#";
+    }
+  };
 
   return (
     <main className={styles.container}>
@@ -104,7 +120,7 @@ export default function SendTest() {
 
       {/* Network Selector */}
       <div className={styles.networkDropdown}>
-        {NETWORKS.map((net) => (
+        {NETWORK_OPTIONS.map((net) => (
           <button
             key={net.value}
             className={`${styles.networkOption} ${selectedNetwork === net.value ? styles.active : ""}`}
@@ -138,11 +154,13 @@ export default function SendTest() {
           onChange={(e) => setAmount(e.target.value)}
         />
 
-        <p className={styles.balance}>Balance: {currentBalance.toFixed(6)} {selectedNetwork.toUpperCase()}</p>
+        <p className={styles.balance}>
+          Balance: {currentBalance.toFixed(6)} {networkLabel}
+        </p>
 
         <div className={styles.feeBox}>
           <span>Estimated Fees:</span>
-          <span>{fees} {selectedNetwork.toUpperCase()}</span>
+          <span>{fees} {networkLabel}</span>
         </div>
 
         <button
@@ -166,8 +184,8 @@ export default function SendTest() {
             <motion.div className={styles.modal}>
               <h2>Confirm Transaction</h2>
               <p><strong>To:</strong> {to}</p>
-              <p><strong>Amount:</strong> {amount} {selectedNetwork.toUpperCase()}</p>
-              <p><strong>Fees:</strong> {fees} {selectedNetwork.toUpperCase()}</p>
+              <p><strong>Amount:</strong> {amount} {networkLabel}</p>
+              <p><strong>Fees:</strong> {fees} {networkLabel}</p>
               <div className={styles.modalActions}>
                 <button onClick={confirmSend} className={styles.confirmBtn}>Confirm</button>
                 <button onClick={() => setConfirmOpen(false)} className={styles.cancelBtn}>Cancel</button>
@@ -190,7 +208,7 @@ export default function SendTest() {
               <h2>Transaction Successful</h2>
               <p>TxHash:</p>
               <a
-                href={`https://${selectedNetwork}.scan.com/tx/${successData.hash}`}
+                href={getExplorerLink(selectedNetwork, successData.hash)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className={styles.txLink}
