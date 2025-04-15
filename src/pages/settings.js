@@ -109,7 +109,7 @@ export default function SettingsPage() {
       return;
     }
     window.open(
-      `mailto:support@nordbalticum.com?subject=Delete%20Account%20Request&body=I%20would%20like%20to%20delete%20my%20account.%20Email:%20${user.email}`,
+      `mailto:nordbalticum@gmail.com?subject=Delete%20Account%20Request&body=I%20would%20like%20to%20delete%20my%20account.%20Email:%20${user.email}`,
       "_blank"
     );
     toast.success("✅ Request initiated. Complete the email to delete your account.");
