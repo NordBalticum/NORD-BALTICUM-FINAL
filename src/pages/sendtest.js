@@ -10,6 +10,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNetwork } from "@/contexts/NetworkContext";
 import { useBalances } from "@/contexts/BalanceContext";
+import { useSend } from "@/contexts/SendContext"; // <- TAI BUVO TRŪKSTAMAS!
 import { useSystemReady } from "@/hooks/useSystemReady";
 
 import styles from "@/styles/sendtest.module.css";
@@ -27,7 +28,6 @@ export default function SendTest() {
   const { wallet, user } = useAuth();
   const { selectedNetwork, setSelectedNetwork } = useNetwork();
   const { balances } = useBalances();
-
   const {
     gasFee,
     adminFee,
@@ -35,14 +35,7 @@ export default function SendTest() {
     feeLoading,
     calculateFees,
     sendTransaction,
-  } = typeof window !== "undefined" ? useSend() : {
-    gasFee: 0,
-    adminFee: 0,
-    totalFee: 0,
-    feeLoading: false,
-    calculateFees: () => {},
-    sendTransaction: async () => {},
-  };
+  } = useSend();
 
   const [to, setTo] = useState("");
   const [amount, setAmount] = useState("");
@@ -57,7 +50,7 @@ export default function SendTest() {
     if (selectedNetwork && amount) {
       calculateFees(selectedNetwork, amount);
     }
-  }, [selectedNetwork, amount]);
+  }, [selectedNetwork, amount, calculateFees]);
 
   if (
     typeof window === "undefined" ||
@@ -68,8 +61,25 @@ export default function SendTest() {
     return null;
 
   const handleSend = () => {
-    if (!ethers.isAddress(to)) return alert("Invalid address.");
-    if (parseFloat(amount) <= 0) return alert("Enter valid amount.");
+    if (!ethers.isAddress(to.trim())) {
+      alert("❌ Invalid wallet address.");
+      return;
+    }
+
+    const parsed = parseFloat(amount);
+    if (!parsed || parsed <= 0) {
+      alert("❌ Enter a valid amount.");
+      return;
+    }
+
+    const totalRequired = parsed + totalFee;
+    const current = parseFloat(balances[selectedNetwork]?.balance || "0");
+
+    if (totalRequired > current) {
+      alert(`❌ Insufficient balance. Required: ${totalRequired.toFixed(6)}`);
+      return;
+    }
+
     setConfirmOpen(true);
   };
 
@@ -78,8 +88,8 @@ export default function SendTest() {
     setProcessing(true);
     try {
       const txHash = await sendTransaction({
-        to,
-        amount,
+        to: to.trim(),
+        amount: parseFloat(amount),
         network: selectedNetwork,
         userEmail: user?.email,
       });
@@ -87,7 +97,7 @@ export default function SendTest() {
       setTo("");
       setAmount("");
     } catch (err) {
-      setErrorData(err?.message || "Unknown error.");
+      setErrorData(err.message || "Unknown error.");
     } finally {
       setProcessing(false);
     }
@@ -136,7 +146,6 @@ export default function SendTest() {
           onChange={(e) => setTo(e.target.value)}
           className={styles.input}
         />
-
         <input
           ref={amountRef}
           type="number"
@@ -144,6 +153,7 @@ export default function SendTest() {
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
           className={styles.input}
+          min="0"
         />
 
         <p className={styles.balance}>
@@ -172,7 +182,6 @@ export default function SendTest() {
         </button>
       </div>
 
-      {/* Confirm Modal */}
       <AnimatePresence>
         {confirmOpen && (
           <motion.div className={styles.modalOverlay} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
@@ -192,7 +201,6 @@ export default function SendTest() {
         )}
       </AnimatePresence>
 
-      {/* Success Modal */}
       <AnimatePresence>
         {successData && (
           <motion.div className={styles.modalOverlay} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
@@ -208,7 +216,6 @@ export default function SendTest() {
         )}
       </AnimatePresence>
 
-      {/* Error Modal */}
       <AnimatePresence>
         {errorData && (
           <motion.div className={styles.modalOverlay} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
@@ -222,4 +229,4 @@ export default function SendTest() {
       </AnimatePresence>
     </main>
   );
-}
+                     }
