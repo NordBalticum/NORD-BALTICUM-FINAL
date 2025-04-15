@@ -1,12 +1,11 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState, useRef } from "react";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { ethers } from "ethers";
 import { supabase } from "@/utils/supabaseClient";
 import { toast } from "react-toastify";
 import debounce from "lodash.debounce";
-import { startSessionWatcher } from "@/utils/sessionWatcher";
 
 // ✅ RPC adresai
 export const RPC = {
@@ -17,7 +16,7 @@ export const RPC = {
   avax: "https://api.avax.network/ext/bc/C/rpc",
 };
 
-// ✅ Encryption setup
+// ✅ Encryption
 const ENCRYPTION_SECRET = process.env.NEXT_PUBLIC_ENCRYPTION_SECRET;
 
 const encode = (str) => new TextEncoder().encode(str);
@@ -25,11 +24,7 @@ const decode = (buf) => new TextDecoder().decode(buf);
 
 const getKey = async () => {
   const keyMaterial = await window.crypto.subtle.importKey(
-    "raw",
-    encode(ENCRYPTION_SECRET),
-    { name: "PBKDF2" },
-    false,
-    ["deriveKey"]
+    "raw", encode(ENCRYPTION_SECRET), { name: "PBKDF2" }, false, ["deriveKey"]
   );
   return window.crypto.subtle.deriveKey(
     {
@@ -77,39 +72,54 @@ export const AuthProvider = ({ children }) => {
 
   const [user, setUser] = useState(null);
   const [wallet, setWallet] = useState(null);
+  const [session, setSession] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [walletLoading, setWalletLoading] = useState(true);
 
-  const sessionWatcher = useRef(null);
   const inactivityTimer = useRef(null);
   const lastSessionRefresh = useRef(Date.now());
 
-  // ✅ Session INIT
+  // ✅ Init Session
   useEffect(() => {
     if (!isClient) return;
+
     const loadSession = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
-        setUser(session?.user || null);
-      } catch (error) {
-        console.error("Session load error:", error.message);
+        if (!session) {
+          setUser(null);
+          setWallet(null);
+          setSession(null);
+        } else {
+          setSession(session);
+          setUser(session.user);
+        }
+      } catch (err) {
+        console.error("Session load failed:", err.message);
+        setUser(null);
+        setWallet(null);
+        setSession(null);
       } finally {
         setAuthLoading(false);
       }
     };
+
     loadSession();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user || null);
       if (!session) {
         toast.error("⚠️ Session ended. Redirecting...");
-        setTimeout(() => signOut(false), 3000);
+        signOut(false);
+      } else {
+        setSession(session);
+        setUser(session.user);
       }
     });
+
     return () => subscription?.unsubscribe();
   }, []);
 
-  // ✅ Wallet INIT
+  // ✅ Load or create wallet
   useEffect(() => {
     if (!isClient || authLoading || !user?.email) return;
     loadOrCreateWallet(user.email);
@@ -132,7 +142,7 @@ export const AuthProvider = ({ children }) => {
         await createAndStoreWallet(email);
       }
     } catch (error) {
-      console.error("Wallet load error:", error.message);
+      console.error("Wallet load failed:", error.message);
       toast.error("❌ Wallet load failed.");
       setWallet(null);
     } finally {
@@ -157,84 +167,61 @@ export const AuthProvider = ({ children }) => {
   const setupWallet = (privateKey) => {
     const baseWallet = new ethers.Wallet(privateKey);
     const signers = {};
-
     Object.entries(RPC).forEach(([net, url]) => {
       const provider = new ethers.JsonRpcProvider(url);
-      const signer = new ethers.Wallet(privateKey, provider);
-      signers[net] = signer;
+      signers[net] = new ethers.Wallet(privateKey, provider);
     });
-
     setWallet({ wallet: baseWallet, signers });
   };
 
-  // ✅ Safe Refresh
+  // ✅ Safe session refresh
   const safeRefreshSession = async () => {
     if (Date.now() - lastSessionRefresh.current < 60000) return;
     lastSessionRefresh.current = Date.now();
     try {
       const { data: { session } } = await supabase.auth.refreshSession();
-      setUser(session?.user || null);
-    } catch (error) {
-      console.error("Session refresh failed:", error.message);
+      if (!session) {
+        setUser(null);
+        setWallet(null);
+        setSession(null);
+      } else {
+        setSession(session);
+        setUser(session.user);
+      }
+      return session;
+    } catch (err) {
+      console.error("Session refresh failed:", err.message);
+      setUser(null);
+      setWallet(null);
+      setSession(null);
     }
   };
 
-  // ✅ Start SessionWatcher su network kritimo aptikimu
-  useEffect(() => {
-    if (!isClient) return;
-
-    sessionWatcher.current = startSessionWatcher({
-      onSessionInvalid: () => {
-        toast.error("⚠️ Session invalid or network down – logging out.");
-        signOut(true);
-      },
-      intervalMs: 60000, // kas 1 min
-      networkFailLimit: 3, // jei 3x iš eilės error – logout
-    });
-
-    sessionWatcher.current.start();
-
-    return () => {
-      sessionWatcher.current?.stop?.();
-    };
-  }, [isClient]);
-  
-  // ✅ Auto Refresh kas 5 min
+  // ✅ Auto Refresh
   useEffect(() => {
     if (!isClient) return;
     const interval = setInterval(() => {
-      console.log("⏳ Auto refreshing session...");
       safeRefreshSession();
     }, 5 * 60 * 1000);
     return () => clearInterval(interval);
   }, [safeRefreshSession, isClient]);
 
-  // ✅ Visibility Change + Online Recovery
+  // ✅ Visibility / Online Recovery
   useEffect(() => {
     if (!isClient) return;
+    const handleVisible = debounce(() => safeRefreshSession(), 500);
+    const handleOnline = debounce(() => safeRefreshSession(), 500);
 
-    const handleVisibilityChange = debounce(async () => {
-      if (document.visibilityState === "visible") {
-        console.log("✅ Tab visible – refreshing session...");
-        await safeRefreshSession();
-      }
-    }, 500);
-
-    const handleOnline = debounce(async () => {
-      console.log("✅ Network online – refreshing session...");
-      await safeRefreshSession();
-    }, 500);
-
-    document.addEventListener("visibilitychange", handleVisibilityChange);
+    document.addEventListener("visibilitychange", handleVisible);
     window.addEventListener("online", handleOnline);
 
     return () => {
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      document.removeEventListener("visibilitychange", handleVisible);
       window.removeEventListener("online", handleOnline);
     };
   }, [safeRefreshSession, isClient]);
 
-  // ✅ Inactivity Logout
+  // ✅ Inactivity logout
   useEffect(() => {
     if (!isClient) return;
     const resetTimer = () => {
@@ -256,7 +243,7 @@ export const AuthProvider = ({ children }) => {
     };
   }, []);
 
-  // ✅ SignIn Magic Link
+  // ✅ Sign in (magic)
   const signInWithMagicLink = async (email) => {
     const origin = isClient ? window.location.origin : "https://nordbalticum.com";
     const { error } = await supabase.auth.signInWithOtp({
@@ -264,13 +251,12 @@ export const AuthProvider = ({ children }) => {
       options: { shouldCreateUser: true, emailRedirectTo: `${origin}/dashboard` },
     });
     if (error) {
-      console.error(error.message);
       toast.error("❌ Magic link error.");
       throw error;
     }
   };
 
-  // ✅ SignIn Google
+  // ✅ Sign in (Google)
   const signInWithGoogle = async () => {
     const origin = isClient ? window.location.origin : "https://nordbalticum.com";
     const { error } = await supabase.auth.signInWithOAuth({
@@ -278,40 +264,50 @@ export const AuthProvider = ({ children }) => {
       options: { redirectTo: `${origin}/dashboard` },
     });
     if (error) {
-      console.error(error.message);
       toast.error("❌ Google login error.");
       throw error;
     }
   };
 
-  // ✅ SignOut
+  // ✅ Sign out
   const signOut = async (showToast = false) => {
-    await supabase.auth.signOut();
+    try {
+      await supabase.auth.signOut();
+    } catch (err) {
+      console.error("Sign out error:", err.message);
+    }
+
     setUser(null);
     setWallet(null);
-    sessionWatcher.current?.stop?.();
+    setSession(null);
+
     if (isClient) {
       ["userPrivateKey", "activeNetwork", "sessionData"].forEach((key) =>
         localStorage.removeItem(key)
       );
     }
+
     router.replace("/");
+
     if (showToast) {
       toast.info("👋 Logged out.", { position: "top-center", autoClose: 4000 });
     }
   };
 
   return (
-    <AuthContext.Provider value={{
-      user,
-      wallet,
-      authLoading,
-      walletLoading,
-      safeRefreshSession,
-      signInWithMagicLink,
-      signInWithGoogle,
-      signOut,
-    }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        session,
+        wallet,
+        authLoading,
+        walletLoading,
+        safeRefreshSession,
+        signInWithMagicLink,
+        signInWithGoogle,
+        signOut,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
