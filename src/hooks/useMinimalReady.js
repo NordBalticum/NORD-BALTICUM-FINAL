@@ -1,23 +1,23 @@
 "use client";
 
 import { useAuth } from "@/contexts/AuthContext";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
+import { toast } from "react-toastify";
+import { startSessionWatcher } from "@/utils/sessionWatcher";
 
 // ✅ Minimal readiness hook
 export function useMinimalReady() {
-  const { user, wallet, authLoading, walletLoading, safeRefreshSession } = useAuth();
+  const { user, wallet, authLoading, walletLoading, safeRefreshSession, signOut } = useAuth();
 
   const [isClientReady, setIsClientReady] = useState(false);
-
+  const sessionWatcher = useRef(null);
   const isClient = typeof window !== "undefined";
 
   // ✅ Kai DOM pilnai pasikrovęs
   useEffect(() => {
     if (!isClient) return;
 
-    const handleLoad = () => {
-      setIsClientReady(true);
-    };
+    const handleLoad = () => setIsClientReady(true);
 
     if (document.readyState === "complete") {
       setIsClientReady(true);
@@ -92,6 +92,26 @@ export function useMinimalReady() {
 
     return () => clearInterval(interval);
   }, [safeRefreshSession, isClient]);
+
+  // ✅ Start SessionWatcher su network kritimo aptikimu
+  useEffect(() => {
+    if (!isClient) return;
+
+    sessionWatcher.current = startSessionWatcher({
+      onSessionInvalid: () => {
+        toast.error("⚠️ Session invalid or network down – logging out.");
+        signOut(true);
+      },
+      intervalMs: 60000, // kas 1 min
+      networkFailLimit: 3, // jei 3x iš eilės error – logout
+    });
+
+    sessionWatcher.current.start();
+
+    return () => {
+      sessionWatcher.current?.stop?.();
+    };
+  }, [isClient]);
 
   return { ready: minimalReady, loading };
 }
