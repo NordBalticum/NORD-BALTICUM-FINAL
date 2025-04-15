@@ -36,11 +36,10 @@ const names = {
 export default function Dashboard() {
   const router = useRouter();
 
-  // ✅ Visi reikalingi context'ai – pilnas security + balance + wallet readiness
   const { user, wallet } = useAuth();
   const { activeNetwork } = useNetwork();
   const { balances, prices } = useBalance();
-  const { ready, loading } = useSystemReady();
+  const { ready, loading, sessionScore, latencyMs } = useSystemReady();
 
   const tokens = useMemo(() => {
     return balances ? Object.keys(balances) : [];
@@ -51,6 +50,10 @@ export default function Dashboard() {
       <div className={styles.fullscreenCenter}>
         <MiniLoadingSpinner size={32} />
         <p className={styles.loadingText}>Loading dashboard...</p>
+        <p className={styles.loadingSub}>
+          Checking session... <br />
+          Latency: {latencyMs}ms | Score: {sessionScore}%
+        </p>
       </div>
     );
   }
@@ -101,7 +104,9 @@ export default function Dashboard() {
                       <div className={styles.assetSymbol}>
                         {network.toUpperCase()}
                       </div>
-                      <div className={styles.assetName}>{names[network]}</div>
+                      <div className={styles.assetName}>
+                        {names[network] || "Unknown"}
+                      </div>
                     </div>
                   </div>
 
