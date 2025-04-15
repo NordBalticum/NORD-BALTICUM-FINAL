@@ -1,163 +1,115 @@
-/* === THEME.CSS — NordBalticum Ferrari Ultra Final REMASTERED === */
-
-/* ✅ GOOGLE FONT */
-@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
-
-/* ✅ ABSOLUTE FULL BACKGROUND */
-html, body {
-  margin: 0;
-  padding: 0;
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
   width: 100vw;
   height: 100vh;
-  background: radial-gradient(circle at center, #0a122a 10%, #1b2370 55%, #2b37ff 90%) no-repeat center center fixed;
-  background-size: cover;
-  background-attachment: fixed;
-  overflow-x: hidden;
-  overflow-y: auto;
-  filter: brightness(95%);
-  font-family: 'Share Tech Mono', monospace;
-  color: white;
-  -webkit-font-smoothing: antialiased;
-  position: relative;
-  z-index: 1;
-}
-
-/* ✅ TYPOGRAPHY PURE WHITE */
-h1, h2, h3, h4, h5, h6, p, span, label, a, input, textarea, select, button {
-  color: white;
-  text-shadow: 0 0 6px rgba(255, 255, 255, 0.1);
-  letter-spacing: 0.03em;
-}
-
-/* ✅ BUTTON BASE */
-.buttonBase {
-  padding: 14px 22px;
-  font-weight: 700;
-  text-transform: uppercase;
-  border-radius: 16px;
-  border: 2px solid white;
-  background: black;
-  color: white;
-  box-shadow: 0 0 14px rgba(255, 255, 255, 0.15);
-  cursor: pointer;
-  transition: 0.4s ease;
-}
-
-.buttonBase:hover {
-  background: white;
-  color: black;
-  transform: scale(1.06);
-  box-shadow: 0 0 28px #FFD700;
-}
-
-/* ✅ GLASS EFFECT BOX */
-.glassBox {
-  background: rgba(255, 255, 255, 0.06);
-  backdrop-filter: blur(24px) saturate(160%);
-  -webkit-backdrop-filter: blur(24px) saturate(160%);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 16px;
-  box-shadow: 0 0 32px rgba(255, 255, 255, 0.06);
-  padding: clamp(24px, 5vw, 48px);
-}
-
-/* ✅ INPUT FIELDS */
-input, textarea, select {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 16px;
-  color: white;
-  padding: 14px 20px;
-  outline: none;
-  font-family: 'Share Tech Mono', monospace;
-  transition: 0.4s ease;
-}
-
-input:focus, textarea:focus, select:focus {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: #FFD700;
-  box-shadow: 0 0 16px rgba(255, 255, 255, 0.3);
-}
-
-/* ✅️ Toast Glassmorphism Premium */
-.Toastify__toast {
-  background: rgba(255, 255, 255, 0.08) !important;
-  backdrop-filter: blur(12px) saturate(180%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.18) !important;
-  box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37) !important;
-  border-radius: 16px !important;
-  color: #ffffff !important;
-  font-weight: 500;
-  font-size: 16px;
-  letter-spacing: 0.4px;
-}
-
-.Toastify__toast-body {
+  background: radial-gradient(circle at center, rgba(10, 18, 42, 0.98), rgba(0, 0, 0, 0.95));
+  backdrop-filter: blur(24px);
+  z-index: 9999;
   display: flex;
-  align-items: center;
   justify-content: center;
-}
-
-.Toastify__close-button {
-  color: #ffffff !important;
-}
-
-/* ✅ LOGO EFFECT */
-.logoImage {
-  filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.2));
-  transition: transform 0.4s ease, filter 0.4s ease;
-}
-
-.logoImage:hover {
-  transform: scale(1.05);
-  filter: drop-shadow(0 0 24px rgba(255, 255, 255, 0.4));
-}
-
-/* ✅ BACKGROUND ANIMATION */
-@keyframes moveGradient {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-}
-
-.gradientBg {
-  background: linear-gradient(
-    135deg,
-    oklch(65% 0.18 255),
-    oklch(42% 0.10 250),
-    oklch(22% 0.04 240)
-  );
-  background-size: 200% 200%;
-  animation: moveGradient 6s ease infinite;
-}
-
-/* ✅ ANIMATIONS */
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(20px) scale(0.98); }
-  to   { opacity: 1; transform: translateY(0) scale(1); }
-}
-
-@keyframes pulseGlow {
-  0%, 100% { transform: scale(1); opacity: 0.2; }
-  50% { transform: scale(1.1); opacity: 0.5; }
-}
-
-/* ✅ UTILITIES */
-.flexCenter {
-  display: flex;
   align-items: center;
-  justify-content: center;
 }
 
-.hidden {
-  display: none !important;
+.modalContent {
+  background: rgba(18, 22, 40, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 24px;
+  padding: 32px;
+  max-width: 440px;
+  width: 92%;
+  color: #fff;
+  box-shadow: 0 0 60px rgba(255, 215, 0, 0.25);
+  animation: fadeScaleIn 0.35s ease-out forwards;
+  font-family: var(--font-family);
+  backdrop-filter: blur(18px);
 }
 
-/* ✅ RESPONSIVE FULL SCREEN */
-@media (max-width: 768px) {
-  html, body {
-    width: 100vw;
-    height: 100vh;
-    background-size: cover;
+@keyframes fadeScaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
   }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.input {
+  width: 100%;
+  padding: 14px 18px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+  font-size: 1rem;
+  margin-bottom: 16px;
+  transition: all 0.3s ease;
+  font-weight: 500;
+  font-family: var(--font-family);
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--gold);
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 14px rgba(255, 215, 0, 0.3);
+}
+
+.balance {
+  font-size: 0.95rem;
+  color: rgba(255, 255, 255, 0.55);
+  margin-bottom: 20px;
+  font-weight: 400;
+}
+
+.error {
+  color: #ff4d4d;
+  font-size: 0.9rem;
+  margin-top: 12px;
+  font-weight: 500;
+}
+
+.buttonGroup {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 28px;
+}
+
+.confirmButton,
+.cancelButton {
+  flex: 1;
+  padding: 13px 16px;
+  font-size: 1rem;
+  border-radius: 14px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: var(--font-family);
+  font-weight: 600;
+}
+
+.confirmButton {
+  background: linear-gradient(135deg, #ffd700, #ffaa00);
+  color: #111;
+  box-shadow: 0 0 16px rgba(255, 215, 0, 0.4);
+}
+
+.confirmButton:hover {
+  filter: brightness(1.1);
+  transform: scale(1.03);
+}
+
+.cancelButton {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: #ffffff;
+}
+
+.cancelButton:hover {
+  background: rgba(255, 255, 255, 0.08);
+  transform: scale(1.03);
 }
