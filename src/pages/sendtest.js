@@ -11,7 +11,7 @@ import { useBalances } from "@/contexts/BalanceContext";
 import { useSend } from "@/contexts/SendContext";
 import { useSystemReady } from "@/hooks/useSystemReady";
 
-import { getGasPrice } from "@/utils/getGasPrice"; // Pakeista čia
+import getGasPrice from "@/utils/getGasPrice"; // Pakeista čia
 import styles from "@/styles/sendtest.module.css";
 
 // Tinklas + ikonos
