@@ -36,93 +36,87 @@ const names = {
 export default function Dashboard() {
   const router = useRouter();
 
-  const { user, wallet } = useAuth();
+  const { wallet } = useAuth();
   const { activeNetwork } = useNetwork();
-  const { balances, prices } = useBalance();
-  const { ready, loading, sessionScore, latencyMs } = useSystemReady();
+  const { balances, prices, loading: balanceLoading } = useBalance();
+  const { latencyMs, sessionScore } = useSystemReady();
 
   const tokens = useMemo(() => {
     return balances ? Object.keys(balances) : [];
   }, [balances]);
 
-  if (loading || !ready) {
-    return (
-      <div className={styles.fullscreenCenter}>
-        <MiniLoadingSpinner size={32} />
-        <p className={styles.loadingText}>Loading dashboard...</p>
-        <p className={styles.loadingSub}>
-          Checking session... <br />
-          Latency: {latencyMs}ms | Score: {sessionScore}%
-        </p>
-      </div>
-    );
-  }
+  const walletReady = !!wallet?.wallet?.address;
 
   return (
     <main className={styles.container}>
       <div className={styles.dashboardWrapper}>
         <LivePriceTable />
 
-        <div className={styles.assetList}>
-          {tokens.length === 0 ? (
-            <div className={styles.noAssets}>No assets found.</div>
-          ) : (
-            tokens.map((network) => {
-              const balance = balances?.[network];
-              const price = prices?.[network];
+        {!walletReady ? (
+          <div className={styles.fullscreenCenter}>
+            <MiniLoadingSpinner size={28} />
+            <p className={styles.loadingText}>Loading wallet...</p>
+            <p className={styles.loadingSub}>
+              Session Score: {sessionScore}% | Latency: {latencyMs}ms
+            </p>
+          </div>
+        ) : (
+          <div className={styles.assetList}>
+            {tokens.length === 0 ? (
+              <div className={styles.noAssets}>No assets found.</div>
+            ) : (
+              tokens.map((network) => {
+                const balance = balances?.[network];
+                const price = prices?.[network];
+                const valueEur = price && balance ? (balance * price.eur).toFixed(2) : "–";
+                const valueUsd = price && balance ? (balance * price.usd).toFixed(2) : "–";
 
-              if (balance == null || price == null) {
                 return (
-                  <div key={network} className={styles.assetItem}>
-                    <MiniLoadingSpinner size={16} />
+                  <div
+                    key={network}
+                    className={styles.assetItem}
+                    onClick={() => router.push(`/${network}`)}
+                    role="button"
+                    tabIndex={0}
+                  >
+                    <div className={styles.assetLeft}>
+                      <Image
+                        src={iconUrls[network] || "/icons/default-icon.png"}
+                        alt={`${network.toUpperCase()} logo`}
+                        width={40}
+                        height={40}
+                        className={styles.assetLogo}
+                        priority
+                        unoptimized
+                      />
+                      <div className={styles.assetInfo}>
+                        <div className={styles.assetSymbol}>
+                          {network.toUpperCase()}
+                        </div>
+                        <div className={styles.assetName}>
+                          {names[network] || "Unknown"}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className={styles.assetRight}>
+                      <div className={styles.assetAmount}>
+                        {balance != null
+                          ? `${balance.toFixed(6)} ${network.toUpperCase()}`
+                          : "Loading..."}
+                      </div>
+                      <div className={styles.assetEur}>
+                        {valueEur !== "–"
+                          ? `≈ €${valueEur} | ≈ $${valueUsd}`
+                          : "Fetching price..."}
+                      </div>
+                    </div>
                   </div>
                 );
-              }
-
-              const valueEur = (balance * price.eur).toFixed(2);
-              const valueUsd = (balance * price.usd).toFixed(2);
-
-              return (
-                <div
-                  key={network}
-                  className={styles.assetItem}
-                  onClick={() => router.push(`/${network}`)}
-                  role="button"
-                  tabIndex={0}
-                >
-                  <div className={styles.assetLeft}>
-                    <Image
-                      src={iconUrls[network] || "/icons/default-icon.png"}
-                      alt={`${network.toUpperCase()} logo`}
-                      width={40}
-                      height={40}
-                      className={styles.assetLogo}
-                      priority
-                      unoptimized
-                    />
-                    <div className={styles.assetInfo}>
-                      <div className={styles.assetSymbol}>
-                        {network.toUpperCase()}
-                      </div>
-                      <div className={styles.assetName}>
-                        {names[network] || "Unknown"}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className={styles.assetRight}>
-                    <div className={styles.assetAmount}>
-                      {balance.toFixed(6)} {network.toUpperCase()}
-                    </div>
-                    <div className={styles.assetEur}>
-                      ≈ €{valueEur} | ≈ ${valueUsd}
-                    </div>
-                  </div>
-                </div>
-              );
-            })
-          )}
-        </div>
+              })
+            )}
+          </div>
+        )}
       </div>
     </main>
   );
