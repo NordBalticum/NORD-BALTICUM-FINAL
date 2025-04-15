@@ -5,18 +5,15 @@ import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 
-// ✅ Contexts
 import { useSystemReady } from "@/hooks/useSystemReady";
-import { useBalance } from "@/contexts/BalanceContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { useBalance } from "@/contexts/BalanceContext";
 import { useNetwork } from "@/contexts/NetworkContext";
 
 import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
 import styles from "@/styles/dashboard.module.css";
 
-const LivePriceTable = dynamic(() => import("@/components/LivePriceTable"), {
-  ssr: false,
-});
+const LivePriceTable = dynamic(() => import("@/components/LivePriceTable"), { ssr: false });
 
 const iconUrls = {
   eth: "/icons/eth.svg",
@@ -36,12 +33,12 @@ const names = {
 
 export default function Dashboard() {
   const router = useRouter();
+
+  // ✅ Visi reikalingi context'ai – pilnas security + balance + wallet readiness
+  const { user, wallet } = useAuth();
+  const { activeNetwork } = useNetwork();
   const { balances, prices } = useBalance();
   const { ready, loading } = useSystemReady();
-
-  // ✅ Naudojam kontekstus, jei reikia (nebūtina, jei tik useSystemReady)
-  const { user } = useAuth();
-  const { activeNetwork } = useNetwork();
 
   const tokens = useMemo(() => {
     return balances ? Object.keys(balances) : [];
@@ -77,8 +74,8 @@ export default function Dashboard() {
                 );
               }
 
-              const eur = (balance * price.eur).toFixed(2);
-              const usd = (balance * price.usd).toFixed(2);
+              const valueEur = (balance * price.eur).toFixed(2);
+              const valueUsd = (balance * price.usd).toFixed(2);
 
               return (
                 <div
@@ -99,12 +96,8 @@ export default function Dashboard() {
                       unoptimized
                     />
                     <div className={styles.assetInfo}>
-                      <div className={styles.assetSymbol}>
-                        {network.toUpperCase()}
-                      </div>
-                      <div className={styles.assetName}>
-                        {names[network]}
-                      </div>
+                      <div className={styles.assetSymbol}>{network.toUpperCase()}</div>
+                      <div className={styles.assetName}>{names[network]}</div>
                     </div>
                   </div>
 
@@ -113,7 +106,7 @@ export default function Dashboard() {
                       {balance.toFixed(6)} {network.toUpperCase()}
                     </div>
                     <div className={styles.assetEur}>
-                      ≈ €{eur} | ≈ ${usd}
+                      ≈ €{valueEur} | ≈ ${valueUsd}
                     </div>
                   </div>
                 </div>
