@@ -14,7 +14,6 @@ import {
 } from "chart.js";
 import debounce from "lodash.debounce";
 
-import { useMinimalReady } from "@/hooks/useMinimalReady";
 import styles from "@/styles/tbnb.module.css";
 
 ChartJS.register(
@@ -28,7 +27,6 @@ ChartJS.register(
 );
 
 export default function BnbChart({ onChartReady, onMount }) {
-  const { ready } = useMinimalReady();
   const [chartData, setChartData] = useState([]);
   const chartRef = useRef(null);
   const mountedRef = useRef(false);
@@ -41,7 +39,7 @@ export default function BnbChart({ onChartReady, onMount }) {
 
   const fetchChartData = useCallback(
     debounce(async () => {
-      if (!mountedRef.current || !ready || document.visibilityState !== "visible") return;
+      if (!mountedRef.current || document.visibilityState !== "visible") return;
       controllerRef.current?.abort();
       const controller = new AbortController();
       controllerRef.current = controller;
@@ -76,11 +74,10 @@ export default function BnbChart({ onChartReady, onMount }) {
         if (err.name !== "AbortError") console.error("Chart fetch error:", err.message);
       }
     }, 500),
-    [isMobile, ready, onChartReady]
+    [isMobile, onChartReady]
   );
 
   useEffect(() => {
-    if (!ready) return;
     mountedRef.current = true;
     fetchChartData();
 
@@ -101,7 +98,7 @@ export default function BnbChart({ onChartReady, onMount }) {
       controllerRef.current?.abort();
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
-  }, [fetchChartData, ready]);
+  }, [fetchChartData]);
 
   const chartOptions = {
     responsive: true,
