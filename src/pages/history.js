@@ -109,7 +109,6 @@ export default function HistoryPage() {
     return <span className={`${styles.statusPending} ${animationClass}`}>⏳ Pending</span>;
   };
 
-const { wallet } = useAuth();
 const adminWallet = (process.env.NEXT_PUBLIC_ADMIN_WALLET || "").toLowerCase();
 
 const filteredTxs =
