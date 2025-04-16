@@ -1,3 +1,27 @@
+"use client";
+
+import { useEffect, useState, useMemo } from "react";
+import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
+import Image from "next/image";
+import { AnimatePresence, motion } from "framer-motion";
+
+import { useSystemReady } from "@/hooks/useSystemReady";
+import { useAuth } from "@/contexts/AuthContext";
+import { useBalance } from "@/contexts/BalanceContext";
+import { useNetwork } from "@/contexts/NetworkContext";
+import { useSend } from "@/contexts/SendContext";
+
+import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
+import SendModal from "@/components/SendModal";
+
+import styles from "@/styles/tbnb.module.css";
+
+const BnbChartDynamic = dynamic(() => import("@/components/BnbChart"), {
+  ssr: false,
+  loading: () => null,
+});
+
 export default function TBnbPage() {
   const router = useRouter();
   const { user, wallet } = useAuth();
@@ -11,17 +35,30 @@ export default function TBnbPage() {
   const [retryCount, setRetryCount] = useState(0);
   const [errorChart, setErrorChart] = useState(false);
   const [showSendModal, setShowSendModal] = useState(false);
-  const [scale, setScale] = useState(0.92); // <- DINAMINIS SCALE
+  const [scale, setScale] = useState(0.92);
 
+  // Debounced scale update
   useEffect(() => {
-    if (typeof window !== "undefined") {
+    let resizeTimer;
+    const updateScale = () => {
       const width = window.innerWidth;
       if (width < 468) setScale(0.64);
       else if (width < 768) setScale(0.67);
       else setScale(0.92);
+    };
+
+    if (typeof window !== "undefined") {
+      updateScale();
+      const handleResize = () => {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(updateScale, 150);
+      };
+      window.addEventListener("resize", handleResize);
+      return () => window.removeEventListener("resize", handleResize);
     }
   }, []);
 
+  // Reload on tab focus
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") {
@@ -29,10 +66,10 @@ export default function TBnbPage() {
       }
     };
     document.addEventListener("visibilitychange", handleVisibilityChange);
-    return () =>
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
   }, []);
 
+  // Retry loading chart
   useEffect(() => {
     if (chartMounted && !chartReady && retryCount < 2) {
       const timeout = setTimeout(() => {
@@ -46,6 +83,7 @@ export default function TBnbPage() {
     }
   }, [chartMounted, chartReady, retryCount]);
 
+  // Redirect if not logged in
   useEffect(() => {
     if (ready && !wallet?.wallet?.address) {
       router.replace("/");
