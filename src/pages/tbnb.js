@@ -93,7 +93,7 @@ export default function TBnbPage() {
   }
 
   return (
-    <main key={retryCount} className={styles.pageContainer}>
+    <main className={styles.pageContainer}>
       <AnimatePresence mode="wait">
         <motion.div
           key="tbnb-content"
