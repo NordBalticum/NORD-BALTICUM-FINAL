@@ -1,4 +1,3 @@
-// src/contexts/SendContext.js
 "use client";
 
 import { createContext, useContext, useState, useCallback } from "react";
@@ -9,6 +8,50 @@ import { getGasPrice } from "@/utils/getGasPrice";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBalance } from "@/contexts/BalanceContext";
 import { useNetwork } from "@/contexts/NetworkContext";
+
+// ✅ RPC (Fallback ready)
+export const RPC = {
+  eth: {
+    urls: [
+      "https://rpc.ankr.com/eth",
+      "https://eth.llamarpc.com",
+    ],
+    chainId: 1,
+    name: "eth",
+  },
+  bnb: {
+    urls: [
+      "https://bsc-dataseed.binance.org/",
+      "https://bsc.publicnode.com",
+    ],
+    chainId: 56,
+    name: "bnb",
+  },
+  tbnb: {
+    urls: [
+      "https://data-seed-prebsc-1-s1.binance.org:8545/",
+      "https://endpoints.omniatech.io/v1/bsc/testnet/public",
+    ],
+    chainId: 97,
+    name: "tbnb",
+  },
+  matic: {
+    urls: [
+      "https://rpc.ankr.com/polygon",
+      "https://polygon.llamarpc.com",
+    ],
+    chainId: 137,
+    name: "matic",
+  },
+  avax: {
+    urls: [
+      "https://rpc.ankr.com/avalanche",
+      "https://avalanche.public-rpc.com",
+    ],
+    chainId: 43114,
+    name: "avax",
+  },
+};
 
 // ✅ Encryption utils
 const encode = (str) => new TextEncoder().encode(str);
@@ -75,51 +118,60 @@ export const SendProvider = ({ children }) => {
   const [feeLoading, setFeeLoading] = useState(false);
   const [feeError, setFeeError] = useState(null);
 
-  // ✅ Calculate fees
-  const calculateFees = useCallback(async (network, amount, gasOption = "average") => {
-    if (!network || !amount || amount <= 0) {
-      setGasFee(0);
-      setAdminFee(0);
-      setTotalFee(0);
-      return;
-    }
+  const getFallbackProvider = (network) => {
+    return new ethers.FallbackProvider(
+      RPC[network].urls.map((url) =>
+        new ethers.JsonRpcProvider(url, {
+          chainId: RPC[network].chainId,
+          name: RPC[network].name,
+        })
+      )
+    );
+  };
 
-    try {
-      setFeeLoading(true);
-      setFeeError(null);
-
-      const rpcUrl = wallet?.signers?.[network]?.provider?.connection?.url;
-      if (!rpcUrl) throw new Error(`❌ Unsupported network: ${network}`);
-
-      const provider = new ethers.JsonRpcProvider(rpcUrl);
-
-      let gasPrice;
-      try {
-        gasPrice = await getGasPrice(provider, gasOption);
-      } catch {
-        gasPrice = ethers.parseUnits("5", "gwei");
+  const calculateFees = useCallback(
+    async (network, amount, gasOption = "average") => {
+      if (!network || !amount || amount <= 0) {
+        setGasFee(0);
+        setAdminFee(0);
+        setTotalFee(0);
+        return;
       }
 
-      const estimatedGasFee = Number(ethers.formatEther(gasPrice * 21000n * 2n));
-      const parsedAmount = Number(amount);
-      const estimatedAdminFee = parsedAmount * 0.03;
-      const total = estimatedGasFee + estimatedAdminFee;
+      try {
+        setFeeLoading(true);
+        setFeeError(null);
 
-      setGasFee(estimatedGasFee);
-      setAdminFee(estimatedAdminFee);
-      setTotalFee(total);
-    } catch (err) {
-      console.error("❌ Fee calculation error:", err.message || err);
-      setFeeError(err.message || "Fee calculation failed.");
-      setGasFee(0);
-      setAdminFee(0);
-      setTotalFee(0);
-    } finally {
-      setFeeLoading(false);
-    }
-  }, [wallet]);
+        const provider = getFallbackProvider(network);
 
-  // ✅ Send transaction
+        let gasPrice;
+        try {
+          gasPrice = await getGasPrice(provider, gasOption);
+        } catch {
+          gasPrice = ethers.parseUnits("5", "gwei");
+        }
+
+        const estimatedGasFee = Number(ethers.formatEther(gasPrice * 21000n * 2n));
+        const parsedAmount = Number(amount);
+        const estimatedAdminFee = parsedAmount * 0.03;
+        const total = estimatedGasFee + estimatedAdminFee;
+
+        setGasFee(estimatedGasFee);
+        setAdminFee(estimatedAdminFee);
+        setTotalFee(total);
+      } catch (err) {
+        console.error("❌ Fee calculation error:", err.message || err);
+        setFeeError(err.message || "Fee calculation failed.");
+        setGasFee(0);
+        setAdminFee(0);
+        setTotalFee(0);
+      } finally {
+        setFeeLoading(false);
+      }
+    },
+    [wallet]
+  );
+
   const sendTransaction = async ({ to, amount, userEmail, gasOption = "average" }) => {
     if (typeof window === "undefined") return;
     if (!to || !amount || !activeNetwork || !userEmail) {
@@ -128,9 +180,6 @@ export const SendProvider = ({ children }) => {
 
     const ADMIN_WALLET = process.env.NEXT_PUBLIC_ADMIN_WALLET;
     if (!ADMIN_WALLET) throw new Error("❌ ADMIN_WALLET missing.");
-
-    const rpcUrl = wallet?.signers?.[activeNetwork]?.provider?.connection?.url;
-    if (!rpcUrl) throw new Error(`❌ Unsupported network: ${activeNetwork}`);
 
     try {
       setSending(true);
@@ -142,7 +191,7 @@ export const SendProvider = ({ children }) => {
         throw new Error(`❌ Insufficient balance on ${activeNetwork.toUpperCase()}.`);
       }
 
-      const provider = new ethers.JsonRpcProvider(rpcUrl);
+      const provider = getFallbackProvider(activeNetwork);
 
       const { data, error: walletError } = await supabase
         .from("wallets")
@@ -181,7 +230,10 @@ export const SendProvider = ({ children }) => {
           await tx.wait();
           return tx.hash;
         } catch (error) {
-          if (error.message?.toLowerCase().includes("underpriced") || error.message?.toLowerCase().includes("fee too low")) {
+          if (
+            error.message?.toLowerCase().includes("underpriced") ||
+            error.message?.toLowerCase().includes("fee too low")
+          ) {
             const retryTx = await userWallet.sendTransaction({
               to,
               value,
