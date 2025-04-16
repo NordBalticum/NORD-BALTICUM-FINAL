@@ -35,16 +35,16 @@ export default function TBnbPage() {
   const [retryCount, setRetryCount] = useState(0);
   const [errorChart, setErrorChart] = useState(false);
   const [showSendModal, setShowSendModal] = useState(false);
-  const [scale, setScale] = useState(0.92);
+  const [scale, setScale] = useState(0.99);
 
   // Debounced scale update
   useEffect(() => {
     let resizeTimer;
     const updateScale = () => {
       const width = window.innerWidth;
-      if (width < 468) setScale(0.64);
-      else if (width < 768) setScale(0.67);
-      else setScale(0.92);
+      if (width < 468) setScale(0.67);
+      else if (width < 768) setScale(0.70);
+      else setScale(0.99);
     };
 
     if (typeof window !== "undefined") {
