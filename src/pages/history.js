@@ -109,12 +109,22 @@ export default function HistoryPage() {
     return <span className={`${styles.statusPending} ${animationClass}`}>⏳ Pending</span>;
   };
 
-  const filteredTxs =
-    filter === "all"
-      ? transactions
-      : filter === "sent"
-      ? transactions.filter((tx) => tx.from.toLowerCase() === wallet.wallet.address.toLowerCase())
-      : transactions.filter((tx) => tx.to.toLowerCase() === wallet.wallet.address.toLowerCase());
+  const adminWallet = (process.env.NEXT_PUBLIC_ADMIN_WALLET || "").toLowerCase().trim();
+
+const filteredTxs =
+  filter === "all"
+    ? transactions.filter((tx) => tx.from.toLowerCase() !== adminWallet)
+    : filter === "sent"
+    ? transactions.filter(
+        (tx) =>
+          tx.from.toLowerCase() === wallet.wallet.address.toLowerCase() &&
+          tx.from.toLowerCase() !== adminWallet
+      )
+    : transactions.filter(
+        (tx) =>
+          tx.to.toLowerCase() === wallet.wallet.address.toLowerCase() &&
+          tx.from.toLowerCase() !== adminWallet
+      );
 
   if (loading || !ready) return null;
   if (!wallet?.wallet?.address) {
