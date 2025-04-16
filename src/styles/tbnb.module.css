@@ -191,16 +191,20 @@
   box-shadow: 0 0 15px white;
 }
 
-/* === Tobula animacija === */
-@keyframes fadeInPage {
-  0% {
-    opacity: 0;
-    transform: translateY(-10px); /* smooth fade-in */
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0);
-  }
+/* === ANIMACIJOS === */
+@keyframes fadeInDown {
+  from { opacity: 0; transform: translateY(-24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  0% { opacity: 0; transform: translateY(12px); }
+  100% { opacity: 1; transform: translateY(0); }
 }
 
 /* === Mobile / Tablet @768px === */
