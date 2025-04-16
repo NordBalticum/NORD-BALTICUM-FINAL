@@ -19,7 +19,7 @@ import styles from "@/styles/tbnb.module.css";
 
 const BnbChartDynamic = dynamic(() => import("@/components/BnbChart"), {
   ssr: false,
-  loading: () => <MiniLoadingSpinner />,
+  loading: () => null, // no visible spinner
 });
 
 export default function TBnbPage() {
@@ -111,33 +111,31 @@ export default function TBnbPage() {
           </div>
         </div>
 
-        {/* Chart */}
-        <div className={styles.chartWrapper}>
-          <div className={styles.chartBorder}>
-            {!chartMounted || !chartReady ? (
-              <div className={styles.chartLoading}>
-                <MiniLoadingSpinner />
-              </div>
-            ) : null}
-            <div
-              style={{
-                opacity: chartMounted && chartReady ? 1 : 0,
-                transform: chartMounted && chartReady ? "scale(1)" : "scale(0.8)",
-                transition: "opacity 0.8s ease, transform 0.8s ease",
-                width: "100%",
-                height: "100%",
-              }}
-            >
-              <BnbChartDynamic
-                onMount={() => {
-                  setChartMounted(true);
-                  setRetryCount(0);
-                }}
-                onChartReady={() => setChartReady(true)}
-              />
-            </div>
-          </div>
-        </div>
+{/* Chart */}
+<div className={styles.chartWrapper}>
+  <div className={styles.chartBorder}>
+    <div
+      style={{
+        opacity: chartMounted && chartReady ? 1 : 0,
+        transform: chartMounted && chartReady ? "scale(1)" : "scale(0.85)",
+        transition: "opacity 0.8s ease, transform 0.8s ease",
+        width: "100%",
+        height: "100%",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+      }}
+    >
+      <BnbChartDynamic
+        onMount={() => {
+          setChartMounted(true);
+          setRetryCount(0);
+        }}
+        onChartReady={() => setChartReady(true)}
+      />
+    </div>
+  </div>
+</div>
 
         {/* Action Buttons */}
         <div className={styles.actionButtons}>
