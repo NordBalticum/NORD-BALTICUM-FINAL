@@ -32,28 +32,11 @@ export default function TBnbPage() {
   const { sending } = useSend();
   const scale = useScale();
 
-  const [chartReady, setChartReady] = useState(false);
-  const [chartMounted, setChartMounted] = useState(false);
-  const [retryCount, setRetryCount] = useState(0);
-  const [errorChart, setErrorChart] = useState(false);
   const [showSendModal, setShowSendModal] = useState(false);
   const [showReceiveModal, setShowReceiveModal] = useState(false);
   const [copied, setCopied] = useState(false);
 
   const address = wallet?.wallet?.address ?? "";
-
-  useEffect(() => {
-    if (chartMounted && !chartReady && retryCount < 2) {
-      const timeout = setTimeout(() => {
-        console.warn(`⏳ Chart not ready. Retrying attempt ${retryCount + 1}...`);
-        setRetryCount((prev) => prev + 1);
-      }, 8000);
-      return () => clearTimeout(timeout);
-    } else if (chartMounted && !chartReady && retryCount >= 2) {
-      console.error("❌ Chart failed to load after retries.");
-      setErrorChart(true);
-    }
-  }, [chartMounted, chartReady, retryCount]);
 
   useEffect(() => {
     if (ready && !wallet?.wallet?.address) {
@@ -75,19 +58,6 @@ export default function TBnbPage() {
     return (
       <main className={styles.pageContainer}>
         <MiniLoadingSpinner />
-      </main>
-    );
-  }
-
-  if (errorChart) {
-    return (
-      <main className={styles.pageContainer}>
-        <div className={styles.pageContent}>
-          <div className={styles.errorBox}>
-            <h2>Chart failed to load.</h2>
-            <p>Please refresh the page or try again later.</p>
-          </div>
-        </div>
       </main>
     );
   }
@@ -127,9 +97,6 @@ export default function TBnbPage() {
             <div className={styles.chartBorder}>
               <div
                 style={{
-                  opacity: chartMounted && chartReady ? 1 : 0,
-                  transform: chartMounted && chartReady ? "scale(1)" : "scale(0.85)",
-                  transition: "opacity 0.8s ease, transform 0.8s ease",
                   width: "100%",
                   height: "100%",
                   display: "flex",
@@ -137,13 +104,7 @@ export default function TBnbPage() {
                   alignItems: "center",
                 }}
               >
-                <BnbChartDynamic
-                  onMount={() => {
-                    setChartMounted(true);
-                    setRetryCount(0);
-                  }}
-                  onChartReady={() => setChartReady(true)}
-                />
+                <BnbChartDynamic />
               </div>
             </div>
           </div>
