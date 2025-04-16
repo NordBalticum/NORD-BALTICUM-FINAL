@@ -10,7 +10,7 @@ import debounce from "lodash.debounce";
 
 // ✅ RPC
 export const RPC = {
-  eth: "https://rpc.ankr.com/eth",
+  eth: "https://eth-mainnet.g.alchemy.com/v2/EFtfSTaltc-SAMmrDcE2je-U0JrCdQvB",
   bnb: "https://bsc-dataseed.binance.org/",
   tbnb: "https://data-seed-prebsc-1-s1.binance.org:8545/",
   matic: "https://polygon-rpc.com",
