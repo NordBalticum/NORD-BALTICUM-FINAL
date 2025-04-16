@@ -1,3 +1,5 @@
+// BnbChart.js – ULTIMATE SWISS BANK EDITION
+
 "use client";
 
 import { useEffect, useState, useRef, useCallback } from "react";
@@ -28,20 +30,26 @@ ChartJS.register(
   Decimation
 );
 
+const STORAGE_KEY = "nb_bnb_chart_7d";
+
 export default function BnbChart() {
   const { ready } = useMinimalReady();
+
   const [chartData, setChartData] = useState([]);
   const [chartLoading, setChartLoading] = useState(true);
+  const [days, setDays] = useState(7);
+  const [showDropdown, setShowDropdown] = useState(false);
 
   const chartRef = useRef(null);
   const mountedRef = useRef(false);
   const controllerRef = useRef(null);
   const resizeTimeout = useRef(null);
+  const dropdownRef = useRef(null);
 
   const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
 
   const fetchChartData = useCallback(
-    debounce(async () => {
+    debounce(async (daysParam = 7) => {
       if (!mountedRef.current || document.visibilityState !== "visible") return;
 
       try {
@@ -51,7 +59,7 @@ export default function BnbChart() {
         controllerRef.current = controller;
 
         const res = await fetch(
-          "https://api.coingecko.com/api/v3/coins/binancecoin/market_chart?vs_currency=eur&days=7",
+          `https://api.coingecko.com/api/v3/coins/binancecoin/market_chart?vs_currency=eur&days=${daysParam}`,
           { signal: controller.signal }
         );
         const data = await res.json();
@@ -59,64 +67,77 @@ export default function BnbChart() {
 
         const formatted = data.prices.map(([timestamp, price]) => {
           const date = new Date(timestamp);
-          const day = date.toLocaleDateString("en-GB", {
-            day: "2-digit",
-            month: "short",
-          });
-          const hour = date.toLocaleTimeString("en-GB", {
-            hour: "2-digit",
-            minute: "2-digit",
-          });
+          const day = date.toLocaleDateString("en-GB", { day: "2-digit", month: "short" });
+          const hour = date.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
           return {
             fullLabel: `${day} ${hour}`,
-            shortLabel: isMobile ? hour : `${day} ${hour}`,
+            shortLabel: day,
             value: parseFloat(price).toFixed(2),
           };
         });
 
-        const pointsPerDay = isMobile ? 3 : 6; // kas 8h arba kas 4h
-        const step = Math.ceil(formatted.length / (7 * pointsPerDay));
+        const pointsPerDay = isMobile ? 3 : 6;
+        const step = Math.ceil(formatted.length / (daysParam * pointsPerDay));
         const filtered = formatted.filter((_, i) => i % step === 0);
 
-        if (mountedRef.current && filtered.length > 0) {
-          setChartData(filtered);
-        }
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({ filtered, days: daysParam }));
+        setChartData(filtered);
       } catch (err) {
-        if (err.name !== "AbortError") {
-          console.error("Chart fetch error:", err.message || err);
+        console.error("Chart fetch error:", err?.message || err);
+        const cached = localStorage.getItem(STORAGE_KEY);
+        if (cached) {
+          const { filtered, days: cachedDays } = JSON.parse(cached);
+          setDays(cachedDays);
+          setChartData(filtered);
         }
       } finally {
         setChartLoading(false);
       }
-    }, 500),
+    }, 300),
     [isMobile]
   );
 
   useEffect(() => {
     if (!ready) return;
     mountedRef.current = true;
-    fetchChartData();
+
+    const cached = localStorage.getItem(STORAGE_KEY);
+    if (cached) {
+      const { filtered, days: cachedDays } = JSON.parse(cached);
+      setDays(cachedDays);
+      setChartData(filtered);
+      setChartLoading(false);
+    } else {
+      fetchChartData(days);
+    }
 
     const hourlyInterval = setInterval(() => {
-      if (document.visibilityState === "visible") fetchChartData();
-    }, 60 * 60 * 1000); // kas 1h
+      if (document.visibilityState === "visible") fetchChartData(days);
+    }, 60 * 60 * 1000);
 
     const handleVisibilityChange = () => {
-      if (document.visibilityState === "visible") fetchChartData();
+      if (document.visibilityState === "visible") fetchChartData(days);
       else controllerRef.current?.abort();
     };
 
-    const handleReconnect = () => fetchChartData();
+    const handleReconnect = () => fetchChartData(days);
 
     const handleResize = () => {
       clearTimeout(resizeTimeout.current);
-      resizeTimeout.current = setTimeout(() => fetchChartData(), 600);
+      resizeTimeout.current = setTimeout(() => fetchChartData(days), 600);
+    };
+
+    const handleOutsideClick = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setShowDropdown(false);
+      }
     };
 
     window.addEventListener("focus", handleReconnect);
     window.addEventListener("online", handleReconnect);
     document.addEventListener("visibilitychange", handleVisibilityChange);
     window.addEventListener("resize", handleResize);
+    document.addEventListener("mousedown", handleOutsideClick);
 
     return () => {
       mountedRef.current = false;
@@ -127,8 +148,9 @@ export default function BnbChart() {
       window.removeEventListener("online", handleReconnect);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       window.removeEventListener("resize", handleResize);
+      document.removeEventListener("mousedown", handleOutsideClick);
     };
-  }, [ready, fetchChartData]);
+  }, [ready, days, fetchChartData]);
 
   const chartOptions = {
     responsive: true,
@@ -212,6 +234,33 @@ export default function BnbChart() {
 
   return (
     <div className={styles.chartContainer}>
+      <div className={styles.chartDropdownWrapper} ref={dropdownRef}>
+        <button
+          onClick={() => setShowDropdown((prev) => !prev)}
+          className={styles.dropdownButton}
+        >
+          {days}D ▾
+        </button>
+
+        {showDropdown && (
+          <div className={styles.dropdownMenu}>
+            {[1, 7, 30].map((d) => (
+              <div
+                key={d}
+                onClick={() => {
+                  setDays(d);
+                  fetchChartData(d);
+                  setShowDropdown(false);
+                }}
+                className={styles.dropdownItem}
+              >
+                {d}D
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
       {!ready || chartLoading || chartData.length === 0 ? (
         <MiniLoadingSpinner />
       ) : (
