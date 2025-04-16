@@ -30,18 +30,18 @@ export const RPC = {
     chainId: 56,
     name: "bnb",
   },
-  tbnb: {
-    urls: [
-      "https://data-seed-prebsc-1-s1.binance.org:8545/", // primary
-      "https://endpoints.omniatech.io/v1/bsc/testnet/public", // fallback
-    ],
-    chainId: 97,
-    name: "tbnb",
-  },
-  matic: {
+  "tbnb": {
   urls: [
-    "https://rpc.ankr.com/polygon", // primary
-    "https://polygon-bor.publicnode.com", // ✅ CORS-friendly fallback
+    "https://data-seed-prebsc-1-s1.binance.org:8545/", // primary
+    "https://bsc-testnet.public.blastapi.io",          // ✅ CORS-friendly fallback
+  ],
+  chainId: 97,
+  name: "tbnb",
+},
+  "matic": {
+  urls: [
+    "https://polygon-bor.publicnode.com",              // ✅ primary – CORS friendly
+    "https://1rpc.io/matic",                            // ✅ fallback – 100% CORS support, greitas
   ],
   chainId: 137,
   name: "matic",
