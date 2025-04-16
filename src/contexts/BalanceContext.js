@@ -53,8 +53,9 @@ avax: {
   ],
   chainId: 43114,
   name: "avax",
-},
-
+  },
+};
+  
 export const TOKEN_IDS = {
   eth: "ethereum",
   bnb: "binancecoin",
