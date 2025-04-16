@@ -14,7 +14,7 @@ export const RPC = {
   eth: {
     urls: [
       "https://rpc.ankr.com/eth",
-      "https://eth.llamarpc.com",
+      "https://eth.llamarpc.com"
     ],
     chainId: 1,
     name: "eth",
@@ -22,36 +22,36 @@ export const RPC = {
   bnb: {
     urls: [
       "https://bsc-dataseed.binance.org/",
-      "https://bsc.publicnode.com",
+      "https://bsc.publicnode.com"
     ],
     chainId: 56,
     name: "bnb",
   },
-  "tbnb": {
-  urls: [
-    "https://data-seed-prebsc-1-s1.binance.org:8545/", // primary
-    "https://bsc-testnet.public.blastapi.io",          // ✅ CORS-friendly fallback
-  ],
-  chainId: 97,
-  name: "tbnb",
-},
-  "matic": {
-  urls: [
-    "https://polygon-bor.publicnode.com",              // ✅ primary – CORS friendly
-    "https://1rpc.io/matic",                            // ✅ fallback – 100% CORS support, greitas
-  ],
-  chainId: 137,
-  name: "matic",
-},
-avax: {
-  urls: [
-    "https://rpc.ankr.com/avalanche", // primary
-    "https://avalanche.drpc.org", // ✅ CORS-friendly fallback
-  ],
-  chainId: 43114,
-  name: "avax",
+  tbnb: {
+    urls: [
+      "https://data-seed-prebsc-1-s1.binance.org:8545/",
+      "https://bsc-testnet.public.blastapi.io"
+    ],
+    chainId: 97,
+    name: "tbnb",
   },
-};  
+  matic: {
+    urls: [
+      "https://polygon-bor.publicnode.com",
+      "https://1rpc.io/matic"
+    ],
+    chainId: 137,
+    name: "matic",
+  },
+  avax: {
+    urls: [
+      "https://rpc.ankr.com/avalanche",
+      "https://avalanche.drpc.org"
+    ],
+    chainId: 43114,
+    name: "avax",
+  },
+};
 
 // ✅ Encryption utils
 const encode = (str) => new TextEncoder().encode(str);
@@ -65,6 +65,7 @@ const getKey = async () => {
     false,
     ["deriveKey"]
   );
+
   return window.crypto.subtle.deriveKey(
     {
       name: "PBKDF2",
@@ -90,7 +91,6 @@ const decrypt = async (ciphertext) => {
   return decode(decrypted);
 };
 
-// ✅ Network mapping
 const mapNetwork = (network) => {
   switch (network) {
     case "eth": return "eth";
@@ -129,67 +129,51 @@ export const SendProvider = ({ children }) => {
     );
   };
 
-  const calculateFees = useCallback(
-    async (network, amount, gasOption = "average") => {
-      if (!network || !amount || amount <= 0) {
-        setGasFee(0);
-        setAdminFee(0);
-        setTotalFee(0);
-        return;
-      }
+  const calculateFees = useCallback(async (network, amount) => {
+    if (!network || !amount || amount <= 0) return;
+
+    setFeeLoading(true);
+    setFeeError(null);
+
+    try {
+      const provider = getFallbackProvider(network);
+      let gasPrice;
 
       try {
-        setFeeLoading(true);
-        setFeeError(null);
-
-        const provider = getFallbackProvider(network);
-
-        let gasPrice;
-        try {
-          gasPrice = await getGasPrice(provider, gasOption);
-        } catch {
-          gasPrice = ethers.parseUnits("5", "gwei");
-        }
-
-        const estimatedGasFee = Number(ethers.formatEther(gasPrice * 21000n * 2n));
-        const parsedAmount = Number(amount);
-        const estimatedAdminFee = parsedAmount * 0.03;
-        const total = estimatedGasFee + estimatedAdminFee;
-
-        setGasFee(estimatedGasFee);
-        setAdminFee(estimatedAdminFee);
-        setTotalFee(total);
-      } catch (err) {
-        console.error("❌ Fee calculation error:", err.message || err);
-        setFeeError(err.message || "Fee calculation failed.");
-        setGasFee(0);
-        setAdminFee(0);
-        setTotalFee(0);
-      } finally {
-        setFeeLoading(false);
+        gasPrice = await getGasPrice(provider);
+      } catch {
+        gasPrice = ethers.parseUnits("5", "gwei");
       }
-    },
-    [wallet]
-  );
 
-  const sendTransaction = async ({ to, amount, userEmail, gasOption = "average" }) => {
-    if (typeof window === "undefined") return;
-    if (!to || !amount || !activeNetwork || !userEmail) {
-      throw new Error("❌ Missing parameters.");
+      const estimatedGasFee = Number(ethers.formatEther(gasPrice * 21000n * 2n));
+      const parsedAmount = Number(amount);
+      const estimatedAdminFee = parsedAmount * 0.03;
+      const total = estimatedGasFee + estimatedAdminFee;
+
+      setGasFee(estimatedGasFee);
+      setAdminFee(estimatedAdminFee);
+      setTotalFee(total);
+    } catch (err) {
+      setFeeError(err.message || "Fee calculation failed.");
+      setGasFee(0);
+      setAdminFee(0);
+      setTotalFee(0);
+    } finally {
+      setFeeLoading(false);
     }
+  }, [wallet]);
+
+  const sendTransaction = async ({ to, amount, userEmail }) => {
+    if (!to || !amount || !activeNetwork || !userEmail)
+      throw new Error("Missing data");
 
     const ADMIN_WALLET = process.env.NEXT_PUBLIC_ADMIN_WALLET;
-    if (!ADMIN_WALLET) throw new Error("❌ ADMIN_WALLET missing.");
+    if (!ADMIN_WALLET) throw new Error("Missing ADMIN_WALLET");
 
     try {
       setSending(true);
       await safeRefreshSession();
       await refetch();
-
-      const balanceOnNetwork = balances?.[activeNetwork] || 0;
-      if (balanceOnNetwork <= 0) {
-        throw new Error(`❌ Insufficient balance on ${activeNetwork.toUpperCase()}.`);
-      }
 
       const provider = getFallbackProvider(activeNetwork);
 
@@ -199,9 +183,8 @@ export const SendProvider = ({ children }) => {
         .eq("user_email", userEmail)
         .single();
 
-      if (walletError || !data?.encrypted_key) {
-        throw new Error("❌ Encrypted key missing.");
-      }
+      if (walletError || !data?.encrypted_key)
+        throw new Error("Encrypted key error");
 
       const decryptedPrivateKey = await decrypt(data.encrypted_key);
       const userWallet = new ethers.Wallet(decryptedPrivateKey, provider);
@@ -209,7 +192,7 @@ export const SendProvider = ({ children }) => {
 
       let freshGasPrice;
       try {
-        freshGasPrice = await getGasPrice(provider, gasOption);
+        freshGasPrice = await getGasPrice(provider);
       } catch {
         freshGasPrice = ethers.parseUnits("5", "gwei");
       }
@@ -218,22 +201,24 @@ export const SendProvider = ({ children }) => {
       const adminFeeAmount = inputAmount * 3n / 100n;
       const totalGasFee = freshGasPrice * gasLimit * 2n;
       const requiredBalance = inputAmount + adminFeeAmount + totalGasFee;
-      const walletBalance = await provider.getBalance(userWallet.address);
 
-      if (walletBalance < requiredBalance) {
-        throw new Error("❌ Insufficient wallet balance for transaction + fees.");
-      }
+      const walletBalance = await provider.getBalance(userWallet.address);
+      if (walletBalance < requiredBalance)
+        throw new Error("Not enough funds");
 
       const safeSend = async ({ to, value }) => {
         try {
-          const tx = await userWallet.sendTransaction({ to, value, gasLimit, gasPrice: freshGasPrice });
+          const tx = await userWallet.sendTransaction({
+            to,
+            value,
+            gasLimit,
+            gasPrice: freshGasPrice,
+          });
           await tx.wait();
           return tx.hash;
         } catch (error) {
-          if (
-            error.message?.toLowerCase().includes("underpriced") ||
-            error.message?.toLowerCase().includes("fee too low")
-          ) {
+          const message = error?.message?.toLowerCase() || "";
+          if (message.includes("underpriced") || message.includes("fee too low")) {
             const retryTx = await userWallet.sendTransaction({
               to,
               value,
@@ -251,35 +236,39 @@ export const SendProvider = ({ children }) => {
       const adminTxHash = await safeSend({ to: ADMIN_WALLET, value: adminFeeAmount });
       const userTxHash = await safeSend({ to, value: inputAmount });
 
-      const insertData = {
-        user_email: userEmail,
-        sender_address: userWallet.address,
-        receiver_address: to,
-        amount: Number(ethers.formatEther(inputAmount)),
-        fee: Number(ethers.formatEther(adminFeeAmount)),
-        network: mapNetwork(activeNetwork),
-        type: "send",
-        tx_hash: userTxHash,
-        status: "completed",
-      };
+      await supabase.from("transactions").insert([
+        {
+          user_email: userEmail,
+          sender_address: userWallet.address,
+          receiver_address: to,
+          amount: Number(ethers.formatEther(inputAmount)),
+          fee: Number(ethers.formatEther(adminFeeAmount)),
+          network: mapNetwork(activeNetwork),
+          type: "send",
+          tx_hash: userTxHash,
+          status: "completed",
+        },
+      ]);
 
-      const { error: insertError } = await supabase.from("transactions").insert([insertData]);
-      if (insertError) console.error("❌ DB insert error:", insertError.message);
+      toast.success("✅ Transaction completed!", {
+        position: "top-center",
+        autoClose: 3000,
+      });
 
-      toast.success("✅ Transaction completed!", { position: "top-center", autoClose: 3000 });
       await refetch();
-
       return userTxHash;
-    } catch (error) {
-      console.error("❌ sendTransaction failed:", error.message || error);
+    } catch (err) {
+      console.error("❌ TX Error:", err.message || err);
+
       await supabase.from("logs").insert([
         {
           user_email: userEmail,
           type: "transaction_error",
-          message: error.message || "Unknown error",
+          message: err.message || "Unknown",
         },
       ]);
-      throw new Error(error.message || "Transaction failed.");
+
+      throw new Error(err.message || "TX failed");
     } finally {
       setSending(false);
     }
