@@ -49,7 +49,8 @@ avax: {
   ],
   chainId: 43114,
   name: "avax",
-},
+  },
+};  
 
 // ✅ Encryption
 const ENCRYPTION_SECRET = process.env.NEXT_PUBLIC_ENCRYPTION_SECRET;
