@@ -205,54 +205,39 @@
 /* === RESPONSIVE - MOBILE + TABLET === */
 @media (max-width: 768px) {
   .pageContent {
-    transform: scale(0.82);
-    padding: 10px;
-    height: calc(100vh - 260px);
+    transform: none;
+    padding: 12px;
+    height: auto;
   }
 
   .chartWrapper {
-    max-width: 100%;
-    padding: 8px;
+    width: 100%;
+    padding: 0 12px;
+    margin-top: 12px;
   }
 
   .chartBorder {
     width: 100%;
-    height: clamp(200px, 42vh, 320px);
+    height: clamp(240px, 42vh, 320px);
+    margin: 0 auto;
   }
 
   .chartContainer {
     width: 100%;
-    height: clamp(220px, 40vh, 340px);
-  }
-
-  .updatingText {
-    font-size: 0.8rem;
+    height: 100%;
   }
 
   .actionButtons {
-    flex-direction: row;
+    flex-direction: column;
     gap: 12px;
+    width: 100%;
+    padding: 0 16px;
+    margin-top: 20px;
   }
 
   .actionButton {
-    flex: 1 1 45%;
-    font-size: clamp(0.9rem, 4vw, 1.2rem);
-    padding: 12px 16px;
-  }
-}
-
-@media (max-width: 1098px) {
-  .pageContent {
-    transform: scale(0.88);
-    padding: 14px;
-  }
-
-  .chartWrapper {
-    max-width: 100%;
-  }
-
-  .chartContainer {
     width: 100%;
-    height: clamp(240px, 42vh, 360px);
+    font-size: clamp(1rem, 4vw, 1.3rem);
+    padding: 14px 0;
   }
 }
