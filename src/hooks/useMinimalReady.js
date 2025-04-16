@@ -1,4 +1,3 @@
-// src/hooks/useMinimalReady.js
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -7,6 +6,7 @@ import { toast } from "react-toastify";
 
 import { useAuth } from "@/contexts/AuthContext";
 import { startSessionWatcher } from "@/utils/sessionWatcher";
+import { detectIsMobile } from "@/utils/detectIsMobile";
 
 export function useMinimalReady() {
   const {
@@ -28,25 +28,7 @@ export function useMinimalReady() {
   const lastRefreshTime = useRef(Date.now());
   const failureCount = useRef(0);
 
-  const isMobile = useMemo(() => {
-  if (!isClient) return false;
-
-  const ua = navigator.userAgent.toLowerCase();
-  const isTouch =
-    navigator.maxTouchPoints > 1 ||
-    "ontouchstart" in window ||
-    window.matchMedia("(pointer: coarse)").matches;
-
-  const isMobileUA = /android|iphone|ipod|iemobile|blackberry|bada|webos|opera mini|mobile|palm|windows phone|nexus|pixel|sm-|samsung/.test(
-    ua
-  );
-
-  const isTabletUA = /ipad|tablet/.test(ua);
-
-  const isDesktopUA = /macintosh|windows nt|linux x86_64/.test(ua);
-
-  return isTouch && (isMobileUA || (!isDesktopUA && !isTabletUA));
-}, [isClient]);
+  const isMobile = useMemo(() => detectIsMobile(), []);
 
   useEffect(() => {
     if (!isClient) return;
@@ -174,7 +156,6 @@ export function useMinimalReady() {
       onSessionInvalid: () => {
         failureCount.current += 1;
         console.warn("⚠️ Session may be invalid. Failure count:", failureCount.current);
-
         if (failureCount.current >= 3) {
           toast.error("⚠️ Session invalid. Logging out...");
           if (typeof signOut === "function") {
