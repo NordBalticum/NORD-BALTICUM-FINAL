@@ -39,7 +39,6 @@ export default function HistoryPage() {
   const [filter, setFilter] = useState("all");
 
   const dropdownRef = useRef();
-
   const selectedNetwork = NETWORK_OPTIONS.find((net) => net.value === network);
 
   const fetchTransactions = useCallback(async (isSilent = false) => {
@@ -109,26 +108,22 @@ export default function HistoryPage() {
     return <span className={`${styles.statusPending} ${animationClass}`}>⏳ Pending</span>;
   };
 
-const adminWallet = (process.env.NEXT_PUBLIC_ADMIN_WALLET || "").toLowerCase();
-const userAddress = wallet?.wallet?.address?.toLowerCase();
+  // === ADMIN FILTER LOGIKA ===
+  const adminWallet = (process.env.NEXT_PUBLIC_ADMIN_WALLET || "").toLowerCase();
+  const userAddress = wallet?.wallet?.address?.toLowerCase();
 
-const filteredTxs =
-  filter === "all"
-    ? transactions.filter(
-        (tx) =>
-          !(tx.from?.toLowerCase() === adminWallet && tx.to?.toLowerCase() === userAddress)
-      )
-    : filter === "sent"
-    ? transactions.filter(
-        (tx) =>
-          tx.from?.toLowerCase() === userAddress &&
-          tx.from?.toLowerCase() !== adminWallet
-      )
-    : transactions.filter(
-        (tx) =>
-          tx.to?.toLowerCase() === userAddress &&
-          tx.from?.toLowerCase() !== adminWallet
-      );
+  const cleanTxs = transactions.filter((tx) => {
+    const from = tx.from?.toLowerCase();
+    const to = tx.to?.toLowerCase();
+    return !(from === adminWallet && to === userAddress);
+  });
+
+  const filteredTxs =
+    filter === "all"
+      ? cleanTxs
+      : filter === "sent"
+      ? cleanTxs.filter((tx) => tx.from?.toLowerCase() === userAddress)
+      : cleanTxs.filter((tx) => tx.to?.toLowerCase() === userAddress);
 
   if (loading || !ready) return null;
   if (!wallet?.wallet?.address) {
@@ -188,7 +183,7 @@ const filteredTxs =
             ) : (
               filteredTxs.slice(0, visibleCount).map((tx) => {
                 const isExpanded = expanded === tx.hash;
-                const direction = tx.from.toLowerCase() === wallet.wallet.address.toLowerCase() ? "SENT" : "RECEIVED";
+                const direction = tx.from.toLowerCase() === userAddress ? "SENT" : "RECEIVED";
 
                 return (
                   <motion.div
