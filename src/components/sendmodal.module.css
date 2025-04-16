@@ -4,33 +4,38 @@
   left: 0;
   width: 100vw;
   height: 100vh;
-  background: radial-gradient(circle at center, rgba(10, 18, 42, 0.98), rgba(0, 0, 0, 0.95));
-  backdrop-filter: blur(24px);
+  background: transparent;
+  backdrop-filter: none;
   z-index: 9999;
   display: flex;
   justify-content: center;
   align-items: center;
+  pointer-events: auto;
 }
 
 .modalContent {
-  background: rgba(18, 22, 40, 0.85);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 24px;
-  padding: 32px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 28px;
+  padding: 34px;
   max-width: 480px;
   width: 92%;
-  color: #fff;
-  box-shadow: 0 0 60px rgba(255, 215, 0, 0.25);
-  animation: fadeScaleIn 0.35s ease-out forwards;
+  color: #ffffff;
+  box-shadow:
+    0 0 12px rgba(255, 255, 255, 0.04),
+    0 0 38px rgba(255, 215, 0, 0.25),
+    0 0 120px rgba(255, 215, 0, 0.2);
+  animation: fadeZoomIn 0.4s ease-out forwards;
   font-family: var(--font-family);
-  backdrop-filter: blur(18px);
+  backdrop-filter: blur(28px) saturate(180%);
   position: relative;
+  transition: all 0.3s ease-in-out;
 }
 
-@keyframes fadeScaleIn {
+@keyframes fadeZoomIn {
   from {
     opacity: 0;
-    transform: scale(0.92);
+    transform: scale(0.88);
   }
   to {
     opacity: 1;
@@ -42,21 +47,22 @@
   width: 100%;
   padding: 14px 18px;
   border-radius: 16px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   color: #ffffff;
   font-size: 1rem;
   margin-bottom: 16px;
   transition: all 0.3s ease;
   font-weight: 500;
   font-family: var(--font-family);
+  backdrop-filter: blur(4px);
 }
 
 .input:focus {
   outline: none;
   border-color: var(--gold);
-  background: rgba(255, 255, 255, 0.08);
-  box-shadow: 0 0 14px rgba(255, 215, 0, 0.3);
+  background: rgba(255, 255, 255, 0.05);
+  box-shadow: 0 0 18px rgba(255, 215, 0, 0.35);
 }
 
 .amountRow {
@@ -67,12 +73,13 @@
 
 .maxButton {
   padding: 12px 16px;
-  background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.18);
   color: #ffffffcc;
   border-radius: 14px;
   font-weight: 600;
   transition: all 0.25s ease;
+  backdrop-filter: blur(4px);
 }
 
 .maxButton:hover {
@@ -83,7 +90,7 @@
 
 .balance {
   font-size: 0.95rem;
-  color: rgba(255, 255, 255, 0.55);
+  color: rgba(255, 255, 255, 0.5);
   margin-bottom: 20px;
   font-weight: 400;
 }
@@ -106,7 +113,7 @@
 
 @keyframes pulseError {
   0% { transform: scale(1); }
-  50% { transform: scale(1.02); }
+  50% { transform: scale(1.03); }
   100% { transform: scale(1); }
 }
 
@@ -133,28 +140,30 @@
 .confirmButton {
   background: linear-gradient(135deg, #ffd700, #ffaa00);
   color: #111;
-  box-shadow: 0 0 16px rgba(255, 215, 0, 0.4);
+  box-shadow: 0 0 16px rgba(255, 215, 0, 0.5);
+  backdrop-filter: blur(4px);
 }
 
 .confirmButton:hover {
   filter: brightness(1.1);
-  transform: scale(1.03);
+  transform: scale(1.04);
 }
 
 .cancelButton {
   background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.16);
   color: #ffffff;
+  backdrop-filter: blur(4px);
 }
 
 .cancelButton:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.05);
   transform: scale(1.03);
 }
 
 .loadingText {
   margin-top: 14px;
-  color: #aaa;
+  color: #bbb;
   font-size: 0.95rem;
   text-align: center;
 }
