@@ -27,17 +27,6 @@
   transform-origin: top center;
 }
 
-@keyframes fadeInPage {
-  0% {
-    opacity: 0;
-    transform: scale(0.88);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(0.92);
-  }
-}
-
 /* === HEADER === */
 .header {
   display: flex;
@@ -202,9 +191,22 @@
   box-shadow: 0 0 15px white;
 }
 
+/* === Tobula animacija === */
+@keyframes fadeInPage {
+  0% {
+    opacity: 0;
+    transform: translateY(-10px); /* smooth fade-in */
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* === Mobile / Tablet @768px === */
 @media (max-width: 768px) {
   .pageContainer {
-    overflow-y: hidden; /* scroll lock */
+    overflow-y: hidden;
   }
 
   .pageContent {
@@ -216,13 +218,13 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    animation: fadeInPage 1.2s ease-out;
+    animation: fadeInPage 1s ease-out;
   }
 
   .chartWrapper {
     width: 100%;
     padding: 0 8px;
-    margin-top: 16px; /* padidintas tarpas tarp balanso ir grafiko */
+    margin-top: 16px;
   }
 
   .chartBorder {
@@ -241,12 +243,49 @@
     gap: 12px;
     width: 100%;
     padding: 0 16px;
-    margin-top: 40px; /* padidintas tarpas tarp grafiko ir mygtukų */
+    margin-top: 40px;
   }
 
   .actionButton {
     width: 100%;
     font-size: clamp(1rem, 4vw, 1.3rem);
     padding: 14px 0;
+  }
+}
+
+/* === Extra Mobile - @468px === */
+@media (max-width: 468px) {
+  .pageContainer {
+    overflow-y: hidden;
+  }
+
+  .pageContent {
+    transform: scale(0.74);
+    transform-origin: top center;
+    padding: 0;
+    margin-top: 18px;
+    height: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    animation: fadeInPage 1s ease-out;
+  }
+
+  .chartWrapper {
+    padding: 0 6px;
+    margin-top: 14px;
+  }
+
+  .chartBorder {
+    height: clamp(220px, 40vh, 300px);
+  }
+
+  .actionButtons {
+    margin-top: 36px;
+    padding: 0 12px;
+  }
+
+  .actionButton {
+    padding: 13px 0;
   }
 }
