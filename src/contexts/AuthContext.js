@@ -12,7 +12,7 @@ import debounce from "lodash.debounce";
 export const RPC = {
   eth: {
     urls: [
-      "https://rpc.ankr.com/eth", // primary: Ankr
+      "https://ethereum.publicnode.com", // primary
       "https://eth.llamarpc.com", // fallback: LlamaNodes (nemokamas, be API)
     ],
     chainId: 1,
@@ -44,7 +44,7 @@ export const RPC = {
 },
 avax: {
   urls: [
-    "https://rpc.ankr.com/avalanche", // primary
+    "https://avalanche-c-chain.publicnode.com", // primary
     "https://avalanche.drpc.org", // ✅ CORS-friendly fallback
   ],
   chainId: 43114,
