@@ -1,12 +1,12 @@
-// BnbChart.js – ULTIMATE SWISS BANK EDITION
-
 "use client";
 
 import { useEffect, useState, useRef, useCallback } from "react";
-import { Line } from "react-chartjs-2";
+import { Line, Bar } from "react-chartjs-2";
 import {
   Chart as ChartJS,
   LineElement,
+  BarElement,
+  BarController,
   CategoryScale,
   LinearScale,
   PointElement,
@@ -22,6 +22,8 @@ import styles from "@/styles/tbnb.module.css";
 
 ChartJS.register(
   LineElement,
+  BarElement,
+  BarController,
   CategoryScale,
   LinearScale,
   PointElement,
@@ -34,11 +36,11 @@ const STORAGE_KEY = "nb_bnb_chart_7d";
 
 export default function BnbChart() {
   const { ready } = useMinimalReady();
-
   const [chartData, setChartData] = useState([]);
   const [chartLoading, setChartLoading] = useState(true);
   const [days, setDays] = useState(7);
   const [showDropdown, setShowDropdown] = useState(false);
+  const [useBarChart, setUseBarChart] = useState(true);
 
   const chartRef = useRef(null);
   const mountedRef = useRef(false);
@@ -77,19 +79,24 @@ export default function BnbChart() {
         });
 
         const pointsPerDay = isMobile ? 3 : 6;
-        const step = Math.ceil(formatted.length / (daysParam * pointsPerDay));
+        const step = Math.max(1, Math.ceil(formatted.length / (daysParam * pointsPerDay)));
         const filtered = formatted.filter((_, i) => i % step === 0);
 
-        localStorage.setItem(STORAGE_KEY, JSON.stringify({ filtered, days: daysParam }));
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify({ filtered, days: daysParam }));
+        } catch {}
+
         setChartData(filtered);
       } catch (err) {
         console.error("Chart fetch error:", err?.message || err);
-        const cached = localStorage.getItem(STORAGE_KEY);
-        if (cached) {
-          const { filtered, days: cachedDays } = JSON.parse(cached);
-          setDays(cachedDays);
-          setChartData(filtered);
-        }
+        try {
+          const cached = localStorage.getItem(STORAGE_KEY);
+          if (cached) {
+            const { filtered, days: cachedDays } = JSON.parse(cached);
+            setDays(cachedDays);
+            setChartData(filtered);
+          }
+        } catch {}
       } finally {
         setChartLoading(false);
       }
@@ -101,26 +108,28 @@ export default function BnbChart() {
     if (!ready) return;
     mountedRef.current = true;
 
-    const cached = localStorage.getItem(STORAGE_KEY);
-    if (cached) {
-      const { filtered, days: cachedDays } = JSON.parse(cached);
-      setDays(cachedDays);
-      setChartData(filtered);
-      setChartLoading(false);
-    } else {
+    try {
+      const cached = localStorage.getItem(STORAGE_KEY);
+      if (cached) {
+        const { filtered, days: cachedDays } = JSON.parse(cached);
+        setDays(cachedDays);
+        setChartData(filtered);
+        setChartLoading(false);
+      } else {
+        fetchChartData(days);
+      }
+    } catch {
       fetchChartData(days);
     }
 
     const hourlyInterval = setInterval(() => {
       if (document.visibilityState === "visible") fetchChartData(days);
-    }, 60 * 60 * 1000);
+    }, 60000);
 
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") fetchChartData(days);
       else controllerRef.current?.abort();
     };
-
-    const handleReconnect = () => fetchChartData(days);
 
     const handleResize = () => {
       clearTimeout(resizeTimeout.current);
@@ -133,11 +142,19 @@ export default function BnbChart() {
       }
     };
 
+    const handleEsc = (e) => {
+      if (e.key === "Escape") setShowDropdown(false);
+    };
+
+    const handleReconnect = () => fetchChartData(days);
+
     window.addEventListener("focus", handleReconnect);
     window.addEventListener("online", handleReconnect);
     document.addEventListener("visibilitychange", handleVisibilityChange);
     window.addEventListener("resize", handleResize);
     document.addEventListener("mousedown", handleOutsideClick);
+    document.addEventListener("touchstart", handleOutsideClick);
+    document.addEventListener("keydown", handleEsc);
 
     return () => {
       mountedRef.current = false;
@@ -149,6 +166,8 @@ export default function BnbChart() {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       window.removeEventListener("resize", handleResize);
       document.removeEventListener("mousedown", handleOutsideClick);
+      document.removeEventListener("touchstart", handleOutsideClick);
+      document.removeEventListener("keydown", handleEsc);
     };
   }, [ready, days, fetchChartData]);
 
@@ -160,32 +179,26 @@ export default function BnbChart() {
       easing: "easeOutCubic",
     },
     layout: {
-      padding: { left: 15, right: 15, top: 0, bottom: 0 },
+      padding: { left: 15, right: 15, top: 10, bottom: 0 },
     },
     plugins: {
       tooltip: {
         mode: "index",
         intersect: false,
         backgroundColor: "rgba(15,15,15,0.92)",
-        titleColor: "#ffffff",
-        bodyColor: "#dddddd",
+        titleColor: "#fff",
+        bodyColor: "#ddd",
         borderColor: "#555",
         borderWidth: 1,
         padding: 10,
         cornerRadius: 8,
         displayColors: false,
         callbacks: {
-          title: (tooltipItems) =>
-            chartData[tooltipItems[0].dataIndex]?.fullLabel || "",
+          title: (tooltipItems) => chartData[tooltipItems[0].dataIndex]?.fullLabel || "",
           label: (context) => `€ ${parseFloat(context.raw).toFixed(2)}`,
         },
       },
       legend: { display: false },
-      decimation: {
-        enabled: true,
-        algorithm: "lttb",
-        samples: isMobile ? 21 : 42,
-      },
     },
     scales: {
       x: {
@@ -218,66 +231,95 @@ export default function BnbChart() {
     labels: chartData.map((p) => p.shortLabel),
     datasets: [
       {
+        label: "BNB Price",
         data: chartData.map((p) => parseFloat(p.value)),
-        fill: true,
         backgroundColor: (ctx) => {
-          const gradient = ctx.chart.ctx.createLinearGradient(0, 0, 0, 300);
-          gradient.addColorStop(0, "rgba(255,255,255,0.3)");
-          gradient.addColorStop(1, "rgba(255,255,255,0)");
-          return gradient;
+          const gradient = ctx?.chart?.ctx?.createLinearGradient?.(0, 0, 0, 300);
+          if (gradient) {
+            gradient.addColorStop(0, "rgba(255,255,255,0.6)");
+            gradient.addColorStop(1, "rgba(255,255,255,0.1)");
+            return gradient;
+          }
+          return "rgba(255,255,255,0.2)";
         },
         borderColor: "#ffffff",
         borderWidth: 2,
+        borderRadius: 6,
+        barPercentage: 0.65,
+        categoryPercentage: 0.9,
+        fill: true,
       },
     ],
   };
 
-  return (
-  <div className={styles.chartWrapper}>
-    <div className={styles.chartBorder}>
-      <div className={styles.chartContainer}>
-        <div className={styles.chartDropdownWrapper} ref={dropdownRef}>
-          <button
-            onClick={() => setShowDropdown((prev) => !prev)}
-            className={styles.dropdownButton}
-          >
-            {days}D ▾
-          </button>
+  const downloadChart = () => {
+    if (!chartRef.current) return;
+    const url = chartRef.current.toBase64Image();
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `bnb_chart_${days}d.png`;
+    link.click();
+  };
 
-          {showDropdown && (
-            <div className={styles.dropdownMenu}>
-              {[1, 7, 30].map((d) => (
+  return (
+    <div className={styles.chartWrapper}>
+      <div className={styles.chartBorder}>
+        <div className={styles.chartContainer}>
+          <div className={styles.chartDropdownWrapper} ref={dropdownRef}>
+            <button
+              onClick={() => setShowDropdown((prev) => !prev)}
+              className={styles.dropdownButton}
+            >
+              {days}D ▾
+            </button>
+
+            {showDropdown && (
+              <div className={styles.dropdownMenu}>
+                {[1, 7, 30].map((d) => (
+                  <div
+                    key={d}
+                    onClick={() => {
+                      setDays(d);
+                      fetchChartData(d);
+                      setShowDropdown(false);
+                    }}
+                    className={styles.dropdownItem}
+                  >
+                    {d}D
+                  </div>
+                ))}
                 <div
-                  key={d}
-                  onClick={() => {
-                    setDays(d);
-                    fetchChartData(d);
-                    setShowDropdown(false);
-                  }}
                   className={styles.dropdownItem}
+                  onClick={() => setUseBarChart((v) => !v)}
                 >
-                  {d}D
+                  Switch to {useBarChart ? "Line" : "Bar"}
                 </div>
-              ))}
-            </div>
+                <div className={styles.dropdownItem} onClick={downloadChart}>
+                  Download PNG
+                </div>
+              </div>
+            )}
+          </div>
+
+          {!ready || chartLoading || chartData.length === 0 ? (
+            <MiniLoadingSpinner />
+          ) : useBarChart ? (
+            <Bar
+              ref={chartRef}
+              data={chartDataset}
+              options={chartOptions}
+              style={{ width: "100%", height: "100%", display: "block" }}
+            />
+          ) : (
+            <Line
+              ref={chartRef}
+              data={chartDataset}
+              options={chartOptions}
+              style={{ width: "100%", height: "100%", display: "block" }}
+            />
           )}
         </div>
-
-        {!ready || chartLoading || chartData.length === 0 ? (
-          <MiniLoadingSpinner />
-        ) : (
-          <Line
-            ref={chartRef}
-            data={chartDataset}
-            options={chartOptions}
-            style={{
-              width: "100%",
-              height: "100%",
-              display: "block",
-            }}
-          />
-        )}
       </div>
     </div>
-  </div>
-);
+  );
+}
