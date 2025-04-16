@@ -35,22 +35,21 @@ export const RPC = {
     name: "tbnb",
   },
   matic: {
-    urls: [
-      "https://rpc.ankr.com/polygon", // primary
-      "https://polygon.llamarpc.com", // fallback
-    ],
-    chainId: 137,
-    name: "matic",
-  },
-  avax: {
-    urls: [
-      "https://rpc.ankr.com/avalanche", // primary
-      "https://avalanche.public-rpc.com", // fallback
-    ],
-    chainId: 43114,
-    name: "avax",
-  },
-};
+  urls: [
+    "https://rpc.ankr.com/polygon", // primary
+    "https://polygon-bor.publicnode.com", // ✅ CORS-friendly fallback
+  ],
+  chainId: 137,
+  name: "matic",
+},
+avax: {
+  urls: [
+    "https://rpc.ankr.com/avalanche", // primary
+    "https://avalanche.drpc.org", // ✅ CORS-friendly fallback
+  ],
+  chainId: 43114,
+  name: "avax",
+},
 
 // ✅ Encryption
 const ENCRYPTION_SECRET = process.env.NEXT_PUBLIC_ENCRYPTION_SECRET;
