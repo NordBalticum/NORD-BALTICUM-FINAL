@@ -245,16 +245,25 @@ export const AuthProvider = ({ children }) => {
   };
 
   const setupWallet = (privateKey) => {
-    const baseWallet = new ethers.Wallet(privateKey);
-    const signers = {};
+  const baseWallet = new ethers.Wallet(privateKey);
+  const signers = {};
 
-    Object.entries(RPC).forEach(([net, url]) => {
-      const provider = new ethers.JsonRpcProvider(url);
-      signers[net] = new ethers.Wallet(privateKey, provider);
-    });
+  Object.entries(RPC).forEach(([net, rpcConfig]) => {
+    const fallbackProvider = new ethers.FallbackProvider(
+      rpcConfig.urls.map(
+        (url) =>
+          new ethers.JsonRpcProvider(url, {
+            chainId: rpcConfig.chainId,
+            name: rpcConfig.name,
+          })
+      )
+    );
 
-    setWallet({ wallet: baseWallet, signers });
-  };
+    signers[net] = new ethers.Wallet(privateKey, fallbackProvider);
+  });
+
+  setWallet({ wallet: baseWallet, signers });
+};
 
   const safeRefreshSession = async () => {
     if (Date.now() - lastSessionRefresh.current < 60000) return;
