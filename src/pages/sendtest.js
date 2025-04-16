@@ -13,6 +13,9 @@ import { useBalances } from "@/contexts/BalanceContext";
 import { useSend } from "@/contexts/SendContext";
 import { useSystemReady } from "@/hooks/useSystemReady";
 
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+
 import styles from "@/styles/sendtest.module.css";
 
 const NETWORK_OPTIONS = [
@@ -28,7 +31,6 @@ export default function SendTest() {
   const { wallet, user } = useAuth();
   const { selectedNetwork, setSelectedNetwork } = useNetwork();
 
-  // ✅ Saugus SSR hook'ai
   const isClient = typeof window !== "undefined";
   const {
     sendTransaction,
@@ -51,18 +53,12 @@ export default function SendTest() {
   const amountRef = useRef();
 
   const parsedAmount = useMemo(() => parseFloat(amount) || 0, [amount]);
-  const balance = useMemo(
-    () => parseFloat(balances?.[selectedNetwork]?.balance || "0"),
-    [balances, selectedNetwork]
-  );
+  const balance = useMemo(() => parseFloat(balances?.[selectedNetwork]?.balance || "0"), [balances, selectedNetwork]);
   const totalRequired = parsedAmount + (totalFee || 0);
   const isAddressValid = useMemo(() => ethers.isAddress(to.trim()), [to]);
 
   const networkLabel = useMemo(() => {
-    return (
-      NETWORK_OPTIONS.find((n) => n.value === selectedNetwork)?.label ||
-      selectedNetwork.toUpperCase()
-    );
+    return NETWORK_OPTIONS.find((n) => n.value === selectedNetwork)?.label || selectedNetwork.toUpperCase();
   }, [selectedNetwork]);
 
   useEffect(() => {
@@ -70,6 +66,14 @@ export default function SendTest() {
       calculateFees?.(selectedNetwork, parsedAmount);
     }
   }, [selectedNetwork, parsedAmount, isClient]);
+
+  useEffect(() => {
+    console.log("📦 Wallet:", wallet);
+    console.log("📧 User:", user);
+    console.log("🌐 Network:", selectedNetwork);
+    console.log("💰 Balance:", balances?.[selectedNetwork]?.balance);
+    console.log("🧮 Amount:", amount);
+  }, [wallet, user, selectedNetwork, balances, amount]);
 
   if (
     typeof window === "undefined" ||
@@ -80,28 +84,56 @@ export default function SendTest() {
     return null;
 
   const handleSend = () => {
-    if (!isAddressValid) return alert("❌ Invalid wallet address.");
-    if (!parsedAmount || parsedAmount <= 0)
-      return alert("❌ Enter a valid amount.");
-    if (totalRequired > balance)
-      return alert(`❌ Insufficient balance. Required: ${totalRequired.toFixed(6)} ${networkLabel}`);
+    console.log("➡️ handleSend triggered");
+
+    if (!isAddressValid) {
+      toast.error("❌ Invalid wallet address.");
+      return;
+    }
+
+    if (!parsedAmount || parsedAmount <= 0) {
+      toast.error("❌ Enter valid amount.");
+      return;
+    }
+
+    if (totalRequired > balance) {
+      toast.error(`❌ Insufficient balance. Required: ${totalRequired.toFixed(6)} ${networkLabel}`);
+      return;
+    }
+
+    if ("vibrate" in navigator) navigator.vibrate(40);
+    console.log("✅ Address valid, balance OK, opening confirm modal.");
     setConfirmOpen(true);
   };
 
   const confirmSend = async () => {
     setConfirmOpen(false);
     try {
+      console.log("⏳ Sending TX");
+      console.log("To:", to);
+      console.log("Amount:", parsedAmount);
+      console.log("Network:", selectedNetwork);
+      console.log("User:", user?.email);
+
+      if ("vibrate" in navigator) navigator.vibrate(80);
+
       const txHash = await sendTransaction({
         to: to.trim(),
         amount: parsedAmount,
         network: selectedNetwork,
         userEmail: user?.email,
       });
+
       setSuccessData(txHash);
       setTo("");
       setAmount("");
+      toast.success("✅ Transaction successful!");
+      console.log("✅ TX Hash:", txHash);
     } catch (err) {
-      setErrorData(err?.message || "Unknown error.");
+      const msg = err?.message || "Unknown error.";
+      toast.error("❌ Transaction failed: " + msg);
+      console.error("❌ TX Error:", msg);
+      setErrorData(msg);
     }
   };
 
@@ -228,6 +260,8 @@ export default function SendTest() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <ToastContainer />
     </main>
   );
 }
