@@ -106,7 +106,7 @@ export default function TBnbPage() {
           />
           <h1 className={styles.networkNameSmall}>Binance Smart Chain (Testnet)</h1>
           <div className={styles.balanceBox}>
-            <p className={styles.balanceText}>{balance.toFixed(4)} BNB</p>
+            <p className={styles.balanceText}>{balance.toFixed(6)} BNB</p>
             <p className={styles.balanceFiat}>{eurValue} € | {usdValue} $</p>
           </div>
         </div>
