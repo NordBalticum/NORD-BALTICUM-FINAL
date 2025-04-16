@@ -14,8 +14,8 @@ import {
 } from "chart.js";
 import debounce from "lodash.debounce";
 
+import { useMinimalReady } from "@/hooks/useMinimalReady";
 import styles from "@/styles/tbnb.module.css";
-import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
 
 ChartJS.register(
   LineElement,
@@ -27,32 +27,27 @@ ChartJS.register(
   Decimation
 );
 
-export default function BnbChart({ onChartReady, onMount }) {
+export default function BnbChart() {
+  const { ready, loading } = useMinimalReady(); // Tikrinam sesijos būseną
   const [chartData, setChartData] = useState([]);
-  const [loading, setLoading] = useState(true);
   const chartRef = useRef(null);
-  const mountedRef = useRef(false);
   const controllerRef = useRef(null);
+  const mountedRef = useRef(false);
   const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
-
-  useEffect(() => {
-    if (typeof onMount === "function") onMount();
-  }, [onMount]);
 
   const fetchChartData = useCallback(
     debounce(async () => {
       if (!mountedRef.current || document.visibilityState !== "visible") return;
 
-      try {
-        controllerRef.current?.abort();
-        const controller = new AbortController();
-        controllerRef.current = controller;
+      controllerRef.current?.abort();
+      const controller = new AbortController();
+      controllerRef.current = controller;
 
+      try {
         const res = await fetch(
           "https://api.coingecko.com/api/v3/coins/binancecoin/market_chart?vs_currency=eur&days=7",
           { signal: controller.signal }
         );
-
         const data = await res.json();
         if (!data?.prices) throw new Error("No price data");
 
@@ -72,33 +67,28 @@ export default function BnbChart({ onChartReady, onMount }) {
 
         if (mountedRef.current && filtered.length > 0) {
           setChartData(filtered);
-          setLoading(false);
-          if (typeof onChartReady === "function") onChartReady();
         }
       } catch (err) {
         if (err.name !== "AbortError") {
-          console.error("Chart fetch error:", err.message);
+          console.error("Chart fetch error:", err.message || err);
         }
-        setLoading(false);
       }
-    }, 300),
-    [isMobile, onChartReady]
+    }, 500),
+    [isMobile]
   );
 
   useEffect(() => {
+    if (!ready) return;
     mountedRef.current = true;
     fetchChartData();
 
     const interval = setInterval(() => {
       if (document.visibilityState === "visible") fetchChartData();
-    }, 60000); // kas 1min
+    }, 60000);
 
     const handleVisibilityChange = () => {
-      if (document.visibilityState === "visible") {
-        fetchChartData();
-      } else {
-        controllerRef.current?.abort();
-      }
+      if (document.visibilityState === "visible") fetchChartData();
+      else controllerRef.current?.abort();
     };
 
     document.addEventListener("visibilitychange", handleVisibilityChange);
@@ -109,7 +99,7 @@ export default function BnbChart({ onChartReady, onMount }) {
       controllerRef.current?.abort();
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
-  }, [fetchChartData]);
+  }, [ready, fetchChartData]);
 
   const chartOptions = {
     responsive: true,
@@ -191,26 +181,24 @@ export default function BnbChart({ onChartReady, onMount }) {
     ],
   };
 
-  if (loading) {
-    return (
-      <div className={styles.chartContainer}>
-        <MiniLoadingSpinner />
-      </div>
-    );
-  }
-
   return (
     <div className={styles.chartContainer}>
-      <Line
-        ref={chartRef}
-        data={chartDataset}
-        options={chartOptions}
-        style={{
-          width: "100%",
-          height: "100%",
-          display: "block",
-        }}
-      />
+      {loading ? (
+        <div style={{ padding: "20px", textAlign: "center", color: "#ccc" }}>
+          Loading session...
+        </div>
+      ) : (
+        <Line
+          ref={chartRef}
+          data={chartDataset}
+          options={chartOptions}
+          style={{
+            width: "100%",
+            height: "100%",
+            display: "block",
+          }}
+        />
+      )}
     </div>
   );
 }
