@@ -233,48 +233,51 @@ export default function BnbChart() {
   };
 
   return (
-    <div className={styles.chartContainer}>
-      <div className={styles.chartDropdownWrapper} ref={dropdownRef}>
-        <button
-          onClick={() => setShowDropdown((prev) => !prev)}
-          className={styles.dropdownButton}
-        >
-          {days}D ▾
-        </button>
+  <div className={styles.chartWrapper}>
+    <div className={styles.chartBorder}>
+      <div className={styles.chartContainer}>
+        <div className={styles.chartDropdownWrapper} ref={dropdownRef}>
+          <button
+            onClick={() => setShowDropdown((prev) => !prev)}
+            className={styles.dropdownButton}
+          >
+            {days}D ▾
+          </button>
 
-        {showDropdown && (
-          <div className={styles.dropdownMenu}>
-            {[1, 7, 30].map((d) => (
-              <div
-                key={d}
-                onClick={() => {
-                  setDays(d);
-                  fetchChartData(d);
-                  setShowDropdown(false);
-                }}
-                className={styles.dropdownItem}
-              >
-                {d}D
-              </div>
-            ))}
-          </div>
+          {showDropdown && (
+            <div className={styles.dropdownMenu}>
+              {[1, 7, 30].map((d) => (
+                <div
+                  key={d}
+                  onClick={() => {
+                    setDays(d);
+                    fetchChartData(d);
+                    setShowDropdown(false);
+                  }}
+                  className={styles.dropdownItem}
+                >
+                  {d}D
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {!ready || chartLoading || chartData.length === 0 ? (
+          <MiniLoadingSpinner />
+        ) : (
+          <Line
+            ref={chartRef}
+            data={chartDataset}
+            options={chartOptions}
+            style={{
+              width: "100%",
+              height: "100%",
+              display: "block",
+            }}
+          />
         )}
       </div>
-
-      {!ready || chartLoading || chartData.length === 0 ? (
-        <MiniLoadingSpinner />
-      ) : (
-        <Line
-          ref={chartRef}
-          data={chartDataset}
-          options={chartOptions}
-          style={{
-            width: "100%",
-            height: "100%",
-            display: "block",
-          }}
-        />
-      )}
     </div>
-  );
-}
+  </div>
+);
