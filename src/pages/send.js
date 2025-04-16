@@ -2,7 +2,6 @@
 
 export const dynamic = "force-dynamic";
 
-// 1️⃣ IMPORTAI
 import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
@@ -21,7 +20,7 @@ import SuccessToast from "@/components/SuccessToast";
 import styles from "@/styles/send.module.css";
 import background from "@/styles/background.module.css";
 
-// 2️⃣ NETWORK KONFIG
+// === NETWORK CONFIG ===
 const networkShortNames = {
   eth: "ETH",
   bnb: "BNB",
@@ -46,16 +45,25 @@ const buttonColors = {
   avax: "#e84142",
 };
 
-// 3️⃣ SEND PAGE
+// === MAIN COMPONENT ===
 export default function SendPage() {
   const router = useRouter();
   const { user } = useAuth();
   const { activeNetwork, switchNetwork } = useNetwork();
   const { ready, loading } = useSystemReady();
 
-  // ✅ Hook'ai tik jeigu window yra
-  const { sendTransaction, sending, gasFee, adminFee, totalFee, feeLoading, feeError } = typeof window !== "undefined" ? useSend() : {};
-  const { balances, getUsdBalance, getEurBalance } = typeof window !== "undefined" ? useBalance() : {};
+  const {
+    sendTransaction,
+    sending,
+    gasFee,
+    adminFee,
+    totalFee,
+    feeLoading,
+    feeError,
+    calculateFees,
+  } = useSend();
+
+  const { balances, getUsdBalance, getEurBalance } = useBalance();
 
   const [receiver, setReceiver] = useState("");
   const [amount, setAmount] = useState("");
@@ -66,38 +74,56 @@ export default function SendPage() {
   const [error, setError] = useState(null);
   const [transactionHash, setTransactionHash] = useState(null);
 
-  const shortName = useMemo(() => networkShortNames[activeNetwork] || activeNetwork.toUpperCase(), [activeNetwork]);
+  const shortName = useMemo(
+    () => networkShortNames[activeNetwork] || activeNetwork.toUpperCase(),
+    [activeNetwork]
+  );
+
   const parsedAmount = useMemo(() => Number(amount) || 0, [amount]);
-  const netBalance = useMemo(() => balances?.[activeNetwork] || 0, [balances, activeNetwork]);
+  const netBalance = useMemo(
+    () => balances?.[activeNetwork] || 0,
+    [balances, activeNetwork]
+  );
+
   const balanceEur = getEurBalance?.(activeNetwork) || "0.00";
   const balanceUsd = getUsdBalance?.(activeNetwork) || "0.00";
 
-  const isValidAddress = (address) => /^0x[a-fA-F0-9]{40}$/.test(address.trim());
+  const isValidAddress = (address) =>
+    /^0x[a-fA-F0-9]{40}$/.test(address.trim());
+
+  useEffect(() => {
+    if (activeNetwork && parsedAmount > 0) {
+      calculateFees?.(activeNetwork, parsedAmount);
+    }
+  }, [activeNetwork, parsedAmount]);
 
   const handleNetworkChange = (selectedNetwork) => {
     if (!selectedNetwork) return;
     switchNetwork(selectedNetwork);
     setReceiver("");
     setAmount("");
-    setToastMessage(`Switched to ${networkShortNames[selectedNetwork] || selectedNetwork.toUpperCase()}`);
+    setToastMessage(
+      `Switched to ${networkShortNames[selectedNetwork] || selectedNetwork.toUpperCase()}`
+    );
     setShowToast(true);
-    if (typeof window !== "undefined" && "vibrate" in navigator) navigator.vibrate(30);
+    if (typeof window !== "undefined" && "vibrate" in navigator)
+      navigator.vibrate(30);
     setTimeout(() => setShowToast(false), 1500);
   };
 
   const handleSend = () => {
-    if (!isValidAddress(receiver)) {
-      alert("❌ Invalid wallet address.");
-      return;
-    }
-    if (parsedAmount <= 0 || parsedAmount < minAmounts[activeNetwork]) {
-      alert(`❌ Minimum to send is ${minAmounts[activeNetwork]} ${shortName}`);
-      return;
-    }
-    if (parsedAmount + totalFee > netBalance) {
-      alert(`❌ Insufficient balance. Required: ${(parsedAmount + totalFee).toFixed(6)} ${shortName}`);
-      return;
-    }
+    if (!isValidAddress(receiver))
+      return alert("❌ Invalid wallet address.");
+    if (parsedAmount <= 0 || parsedAmount < minAmounts[activeNetwork])
+      return alert(
+        `❌ Minimum to send is ${minAmounts[activeNetwork]} ${shortName}`
+      );
+    if (parsedAmount + totalFee > netBalance)
+      return alert(
+        `❌ Insufficient balance. Required: ${(parsedAmount + totalFee).toFixed(
+          6
+        )} ${shortName}`
+      );
     setShowConfirm(true);
   };
 
@@ -105,21 +131,18 @@ export default function SendPage() {
     setShowConfirm(false);
     setError(null);
     try {
-      if (typeof window !== "undefined" && user?.email) {
-        const txHash = await sendTransaction({
-          to: receiver.trim().toLowerCase(),
-          amount: parsedAmount,
-          network: activeNetwork,
-          userEmail: user.email,
-        });
-        setTransactionHash(txHash);
-        setReceiver("");
-        setAmount("");
-        setShowSuccess(true);
-        if ("vibrate" in navigator) navigator.vibrate(80);
-      }
+      const txHash = await sendTransaction({
+        to: receiver.trim().toLowerCase(),
+        amount: parsedAmount,
+        network: activeNetwork,
+        userEmail: user.email,
+      });
+      setTransactionHash(txHash);
+      setReceiver("");
+      setAmount("");
+      setShowSuccess(true);
+      if ("vibrate" in navigator) navigator.vibrate(80);
     } catch (err) {
-      console.error("❌ Transaction error:", err?.message || err);
       setError(err?.message || "Transaction failed.");
     }
   };
@@ -127,22 +150,15 @@ export default function SendPage() {
   const handleRetry = () => setError(null);
 
   useEffect(() => {
-    if (!user && ready) {
-      router.replace("/");
-    }
+    if (!user && ready) router.replace("/");
   }, [user, ready, router]);
-
-  if (loading) {
-    return (
-      <div className={styles.loader}>
-        <MiniLoadingSpinner />
-      </div>
-    );
-  }
 
   const sendButtonStyle = {
     backgroundColor: buttonColors[activeNetwork] || "#ffffff",
-    color: activeNetwork === "bnb" || activeNetwork === "tbnb" ? "#000000" : "#ffffff",
+    color:
+      activeNetwork === "bnb" || activeNetwork === "tbnb"
+        ? "#000000"
+        : "#ffffff",
     border: "2px solid white",
     width: "100%",
     padding: "12px",
@@ -157,25 +173,40 @@ export default function SendPage() {
     justifyContent: "center",
   };
 
+  if (loading) {
+    return (
+      <div className={styles.loader}>
+        <MiniLoadingSpinner />
+      </div>
+    );
+  }
+
   return (
     <main className={`${styles.main} ${background.gradient}`}>
       <div className={styles.wrapper}>
-        <SuccessToast show={showToast} message={toastMessage} networkKey={activeNetwork} />
+        <SuccessToast
+          show={showToast}
+          message={toastMessage}
+          networkKey={activeNetwork}
+        />
 
-        {/* ✅ Tinklo pasirinkimas */}
-        <SwipeSelector selected={activeNetwork} onSelect={handleNetworkChange} />
+        <SwipeSelector
+          selected={activeNetwork}
+          onSelect={handleNetworkChange}
+        />
 
-        {/* ✅ Balansas */}
         <div className={styles.balanceTable}>
           <p className={styles.whiteText}>
-            Your Balance: <span className={styles.balanceAmount}>{netBalance.toFixed(6)} {shortName}</span>
+            Your Balance:{" "}
+            <span className={styles.balanceAmount}>
+              {netBalance.toFixed(6)} {shortName}
+            </span>
           </p>
           <p className={styles.whiteText}>
             ≈ €{balanceEur} | ≈ ${balanceUsd}
           </p>
         </div>
 
-        {/* ✅ Forma */}
         <div className={styles.walletActions}>
           <input
             type="text"
@@ -184,8 +215,6 @@ export default function SendPage() {
             onChange={(e) => setReceiver(e.target.value)}
             className={styles.inputField}
             disabled={sending}
-            autoComplete="off"
-            spellCheck="false"
           />
           <input
             type="number"
@@ -194,8 +223,6 @@ export default function SendPage() {
             onChange={(e) => setAmount(e.target.value)}
             className={styles.inputField}
             disabled={sending}
-            autoComplete="off"
-            spellCheck="false"
             min="0"
           />
 
@@ -207,7 +234,8 @@ export default function SendPage() {
             ) : (
               <>
                 <p className={styles.whiteText}>
-                  Estimated Total Fees: {(gasFee + adminFee).toFixed(6)} {shortName}
+                  Total to Pay: {(parsedAmount + totalFee).toFixed(6)}{" "}
+                  {shortName}
                 </p>
                 <p className={styles.minimumText}>
                   Minimum to send: {minAmounts[activeNetwork]} {shortName}
@@ -216,7 +244,6 @@ export default function SendPage() {
             )}
           </div>
 
-          {/* ✅ Mygtukas */}
           <button
             onClick={handleSend}
             disabled={!receiver || sending || feeLoading}
@@ -230,17 +257,35 @@ export default function SendPage() {
           </button>
         </div>
 
-        {/* ✅ Confirm Modal */}
         {showConfirm && (
           <div className={styles.overlay}>
             <div className={styles.confirmModal}>
               <div className={styles.modalTitle}>Confirm Transaction</div>
               <div className={styles.modalInfo}>
-                <p><strong>Network:</strong> {shortName}</p>
-                <p><strong>Receiver:</strong> {receiver}</p>
-                <p><strong>Amount:</strong> {parsedAmount.toFixed(6)} {shortName}</p>
-                <p><strong>Total Fees:</strong> {(gasFee + adminFee).toFixed(6)} {shortName}</p>
-                <p><strong>Remaining Balance:</strong> {(netBalance - parsedAmount - (gasFee + adminFee)).toFixed(6)} {shortName}</p>
+                <p>
+                  <strong>Network:</strong> {shortName}
+                </p>
+                <p>
+                  <strong>Receiver:</strong> {receiver}
+                </p>
+                <p>
+                  <strong>Amount:</strong> {parsedAmount.toFixed(6)} {shortName}
+                </p>
+                <p>
+                  <strong>Gas Fee:</strong> {gasFee.toFixed(6)} {shortName}
+                </p>
+                <p>
+                  <strong>Admin Fee:</strong> {adminFee.toFixed(6)} {shortName}
+                </p>
+                <p>
+                  <strong>Total:</strong>{" "}
+                  {(parsedAmount + totalFee).toFixed(6)} {shortName}
+                </p>
+                <p>
+                  <strong>Remaining Balance:</strong>{" "}
+                  {(netBalance - parsedAmount - totalFee).toFixed(6)}{" "}
+                  {shortName}
+                </p>
               </div>
               <div className={styles.modalActions}>
                 <button
@@ -261,7 +306,6 @@ export default function SendPage() {
           </div>
         )}
 
-        {/* ✅ Success Modal */}
         {showSuccess && transactionHash && (
           <SuccessModal
             message="✅ Transaction Successful!"
@@ -271,13 +315,7 @@ export default function SendPage() {
           />
         )}
 
-        {/* ✅ Error Modal */}
-        {error && (
-          <ErrorModal
-            error={error}
-            onClose={handleRetry}
-          />
-        )}
+        {error && <ErrorModal error={error} onClose={handleRetry} />}
       </div>
     </main>
   );
