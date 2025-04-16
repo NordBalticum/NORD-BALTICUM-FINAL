@@ -2,7 +2,7 @@
 
 export const dynamic = "force-dynamic";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { ethers } from "ethers";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
@@ -10,8 +10,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNetwork } from "@/contexts/NetworkContext";
 import { useBalances } from "@/contexts/BalanceContext";
+import { useSend } from "@/contexts/SendContext";
 import { useSystemReady } from "@/hooks/useSystemReady";
-import { useSend } from "@/contexts/SendContext"; // svarbu!
 
 import styles from "@/styles/sendtest.module.css";
 
@@ -27,83 +27,73 @@ export default function SendTest() {
   const { ready, loading } = useSystemReady();
   const { wallet, user } = useAuth();
   const { selectedNetwork, setSelectedNetwork } = useNetwork();
-  const { balances } = useBalances();
 
+  // ✅ Saugus SSR hook'ai
   const isClient = typeof window !== "undefined";
-
-  // ✅ Apsauga nuo SSR
   const {
+    sendTransaction,
+    sending,
     gasFee,
     adminFee,
     totalFee,
     feeLoading,
+    feeError,
     calculateFees,
-    sendTransaction,
-  } = isClient
-    ? useSend()
-    : {
-        gasFee: 0,
-        adminFee: 0,
-        totalFee: 0,
-        feeLoading: false,
-        calculateFees: () => {},
-        sendTransaction: async () => {},
-      };
+  } = isClient ? useSend() : {};
+
+  const { balances } = isClient ? useBalances() : {};
 
   const [to, setTo] = useState("");
   const [amount, setAmount] = useState("");
   const [confirmOpen, setConfirmOpen] = useState(false);
-  const [processing, setProcessing] = useState(false);
   const [successData, setSuccessData] = useState(null);
   const [errorData, setErrorData] = useState(null);
-
   const amountRef = useRef();
 
+  const parsedAmount = useMemo(() => parseFloat(amount) || 0, [amount]);
+  const balance = useMemo(
+    () => parseFloat(balances?.[selectedNetwork]?.balance || "0"),
+    [balances, selectedNetwork]
+  );
+  const totalRequired = parsedAmount + (totalFee || 0);
+  const isAddressValid = useMemo(() => ethers.isAddress(to.trim()), [to]);
+
+  const networkLabel = useMemo(() => {
+    return (
+      NETWORK_OPTIONS.find((n) => n.value === selectedNetwork)?.label ||
+      selectedNetwork.toUpperCase()
+    );
+  }, [selectedNetwork]);
+
   useEffect(() => {
-    if (selectedNetwork && amount && isClient) {
-      calculateFees(selectedNetwork, amount);
+    if (selectedNetwork && parsedAmount && isClient) {
+      calculateFees?.(selectedNetwork, parsedAmount);
     }
-  }, [selectedNetwork, amount, calculateFees, isClient]);
+  }, [selectedNetwork, parsedAmount, isClient]);
 
   if (
     typeof window === "undefined" ||
     loading ||
     !ready ||
     !wallet?.wallet?.address
-  ) {
+  )
     return null;
-  }
 
   const handleSend = () => {
-    if (!ethers.isAddress(to.trim())) {
-      alert("❌ Invalid wallet address.");
-      return;
-    }
-
-    const parsed = parseFloat(amount);
-    if (!parsed || parsed <= 0) {
-      alert("❌ Enter a valid amount.");
-      return;
-    }
-
-    const totalRequired = parsed + totalFee;
-    const current = parseFloat(balances[selectedNetwork]?.balance || "0");
-
-    if (totalRequired > current) {
-      alert(`❌ Insufficient balance. Required: ${totalRequired.toFixed(6)}`);
-      return;
-    }
-
+    if (!isAddressValid) return alert("❌ Invalid wallet address.");
+    if (!parsedAmount || parsedAmount <= 0)
+      return alert("❌ Enter a valid amount.");
+    if (totalRequired > balance)
+      return alert(`❌ Insufficient balance. Required: ${totalRequired.toFixed(6)} ${networkLabel}`);
     setConfirmOpen(true);
   };
 
   const confirmSend = async () => {
     setConfirmOpen(false);
-    setProcessing(true);
     try {
       const txHash = await sendTransaction({
         to: to.trim(),
-        amount: parseFloat(amount),
+        amount: parsedAmount,
         network: selectedNetwork,
         userEmail: user?.email,
       });
@@ -112,14 +102,8 @@ export default function SendTest() {
       setAmount("");
     } catch (err) {
       setErrorData(err?.message || "Unknown error.");
-    } finally {
-      setProcessing(false);
     }
   };
-
-  const currentBalance = parseFloat(balances[selectedNetwork]?.balance || 0);
-  const networkInfo = NETWORK_OPTIONS.find((n) => n.value === selectedNetwork);
-  const networkLabel = networkInfo?.label || selectedNetwork.toUpperCase();
 
   const explorerLink = (hash) => {
     const explorers = {
@@ -171,18 +155,18 @@ export default function SendTest() {
         />
 
         <p className={styles.balance}>
-          Balance: {currentBalance.toFixed(6)} {networkLabel}
+          Balance: {balance.toFixed(6)} {networkLabel}
         </p>
 
         <div className={styles.feeBox}>
           {feeLoading ? (
             <span>Calculating fees...</span>
+          ) : feeError ? (
+            <span style={{ color: "red" }}>Fee error</span>
           ) : (
             <>
               <span>Fees:</span>
-              <span>
-                {totalFee.toFixed(6)} {networkLabel}
-              </span>
+              <span>{totalFee?.toFixed(6)} {networkLabel}</span>
             </>
           )}
         </div>
@@ -190,9 +174,9 @@ export default function SendTest() {
         <button
           className={styles.sendButton}
           onClick={handleSend}
-          disabled={processing || !to || !amount}
+          disabled={sending || !to || !amount}
         >
-          {processing ? "Processing..." : "Send"}
+          {sending ? "Processing..." : "Send"}
         </button>
       </div>
 
@@ -203,10 +187,10 @@ export default function SendTest() {
             <motion.div className={styles.modal}>
               <h2>Confirm Transaction</h2>
               <p><strong>To:</strong> {to}</p>
-              <p><strong>Amount:</strong> {amount} {networkLabel}</p>
-              <p><strong>Gas Fee:</strong> {gasFee.toFixed(6)} {networkLabel}</p>
-              <p><strong>Admin Fee:</strong> {adminFee.toFixed(6)} {networkLabel}</p>
-              <p><strong>Total:</strong> {totalFee.toFixed(6)} {networkLabel}</p>
+              <p><strong>Amount:</strong> {parsedAmount.toFixed(6)} {networkLabel}</p>
+              <p><strong>Gas Fee:</strong> {gasFee?.toFixed(6)} {networkLabel}</p>
+              <p><strong>Admin Fee:</strong> {adminFee?.toFixed(6)} {networkLabel}</p>
+              <p><strong>Total:</strong> {totalFee?.toFixed(6)} {networkLabel}</p>
               <div className={styles.modalActions}>
                 <button onClick={confirmSend} className={styles.confirmBtn}>Confirm</button>
                 <button onClick={() => setConfirmOpen(false)} className={styles.cancelBtn}>Cancel</button>
