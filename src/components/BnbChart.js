@@ -38,8 +38,7 @@ export default function BnbChart() {
   const controllerRef = useRef(null);
   const resizeTimeout = useRef(null);
 
-  const isMobile =
-    typeof window !== "undefined" && window.innerWidth < 768;
+  const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
 
   const fetchChartData = useCallback(
     debounce(async () => {
@@ -75,8 +74,7 @@ export default function BnbChart() {
           };
         });
 
-        // Daugiau taškų mobilui – kas 6 valandas
-        const pointsPerDay = isMobile ? 4 : 8;
+        const pointsPerDay = isMobile ? 3 : 6; // kas 8h arba kas 4h
         const step = Math.ceil(formatted.length / (7 * pointsPerDay));
         const filtered = formatted.filter((_, i) => i % step === 0);
 
@@ -99,10 +97,9 @@ export default function BnbChart() {
     mountedRef.current = true;
     fetchChartData();
 
-    // Interval: kas 1h (realiai užtenka)
     const hourlyInterval = setInterval(() => {
       if (document.visibilityState === "visible") fetchChartData();
-    }, 60 * 60 * 1000);
+    }, 60 * 60 * 1000); // kas 1h
 
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") fetchChartData();
@@ -113,10 +110,9 @@ export default function BnbChart() {
 
     const handleResize = () => {
       clearTimeout(resizeTimeout.current);
-      resizeTimeout.current = setTimeout(() => fetchChartData(), 800);
+      resizeTimeout.current = setTimeout(() => fetchChartData(), 600);
     };
 
-    // Events
     window.addEventListener("focus", handleReconnect);
     window.addEventListener("online", handleReconnect);
     document.addEventListener("visibilitychange", handleVisibilityChange);
@@ -166,7 +162,7 @@ export default function BnbChart() {
       decimation: {
         enabled: true,
         algorithm: "lttb",
-        samples: isMobile ? 28 : 56,
+        samples: isMobile ? 21 : 42,
       },
     },
     scales: {
