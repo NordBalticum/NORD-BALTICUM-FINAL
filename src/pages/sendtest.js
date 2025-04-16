@@ -6,15 +6,14 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import { ethers } from "ethers";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 import { useAuth } from "@/contexts/AuthContext";
 import { useNetwork } from "@/contexts/NetworkContext";
-import { useBalances } from "@/contexts/BalanceContext";
+import { useBalance } from "@/contexts/BalanceContext"; // ✅ FIXED
 import { useSend } from "@/contexts/SendContext";
 import { useSystemReady } from "@/hooks/useSystemReady";
-
-import { toast, ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
 
 import styles from "@/styles/sendtest.module.css";
 
@@ -30,8 +29,8 @@ export default function SendTest() {
   const { ready, loading } = useSystemReady();
   const { wallet, user } = useAuth();
   const { selectedNetwork, setSelectedNetwork } = useNetwork();
+  const { balances } = typeof window !== "undefined" ? useBalance() : {};
 
-  const isClient = typeof window !== "undefined";
   const {
     sendTransaction,
     sending,
@@ -41,31 +40,37 @@ export default function SendTest() {
     feeLoading,
     feeError,
     calculateFees,
-  } = isClient ? useSend() : {};
-
-  const { balances } = isClient ? useBalances() : {};
+  } = typeof window !== "undefined" ? useSend() : {};
 
   const [to, setTo] = useState("");
   const [amount, setAmount] = useState("");
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [successData, setSuccessData] = useState(null);
   const [errorData, setErrorData] = useState(null);
-  const amountRef = useRef();
 
+  const amountRef = useRef();
   const parsedAmount = useMemo(() => parseFloat(amount) || 0, [amount]);
-  const balance = useMemo(() => parseFloat(balances?.[selectedNetwork]?.balance || "0"), [balances, selectedNetwork]);
+
+  const balance = useMemo(
+    () => parseFloat(balances?.[selectedNetwork]?.balance || "0"),
+    [balances, selectedNetwork]
+  );
+
   const totalRequired = parsedAmount + (totalFee || 0);
   const isAddressValid = useMemo(() => ethers.isAddress(to.trim()), [to]);
 
   const networkLabel = useMemo(() => {
-    return NETWORK_OPTIONS.find((n) => n.value === selectedNetwork)?.label || selectedNetwork.toUpperCase();
+    return (
+      NETWORK_OPTIONS.find((n) => n.value === selectedNetwork)?.label ||
+      selectedNetwork.toUpperCase()
+    );
   }, [selectedNetwork]);
 
   useEffect(() => {
-    if (selectedNetwork && parsedAmount && isClient) {
+    if (selectedNetwork && parsedAmount) {
       calculateFees?.(selectedNetwork, parsedAmount);
     }
-  }, [selectedNetwork, parsedAmount, isClient]);
+  }, [selectedNetwork, parsedAmount]);
 
   useEffect(() => {
     console.log("📦 Wallet:", wallet);
@@ -75,45 +80,24 @@ export default function SendTest() {
     console.log("🧮 Amount:", amount);
   }, [wallet, user, selectedNetwork, balances, amount]);
 
-  if (
-    typeof window === "undefined" ||
-    loading ||
-    !ready ||
-    !wallet?.wallet?.address
-  )
-    return null;
+  if (loading || !ready || !wallet?.wallet?.address) return null;
 
   const handleSend = () => {
     console.log("➡️ handleSend triggered");
 
-    if (!isAddressValid) {
-      toast.error("❌ Invalid wallet address.");
-      return;
-    }
-
-    if (!parsedAmount || parsedAmount <= 0) {
-      toast.error("❌ Enter valid amount.");
-      return;
-    }
-
-    if (totalRequired > balance) {
-      toast.error(`❌ Insufficient balance. Required: ${totalRequired.toFixed(6)} ${networkLabel}`);
-      return;
-    }
+    if (!isAddressValid) return toast.error("❌ Invalid wallet address.");
+    if (!parsedAmount || parsedAmount <= 0) return toast.error("❌ Enter valid amount.");
+    if (totalRequired > balance)
+      return toast.error(`❌ Insufficient balance. Required: ${totalRequired.toFixed(6)} ${networkLabel}`);
 
     if ("vibrate" in navigator) navigator.vibrate(40);
-    console.log("✅ Address valid, balance OK, opening confirm modal.");
     setConfirmOpen(true);
   };
 
   const confirmSend = async () => {
     setConfirmOpen(false);
     try {
-      console.log("⏳ Sending TX");
-      console.log("To:", to);
-      console.log("Amount:", parsedAmount);
-      console.log("Network:", selectedNetwork);
-      console.log("User:", user?.email);
+      console.log("⏳ Sending TX", { to, parsedAmount, selectedNetwork });
 
       if ("vibrate" in navigator) navigator.vibrate(80);
 
@@ -128,11 +112,9 @@ export default function SendTest() {
       setTo("");
       setAmount("");
       toast.success("✅ Transaction successful!");
-      console.log("✅ TX Hash:", txHash);
     } catch (err) {
       const msg = err?.message || "Unknown error.";
       toast.error("❌ Transaction failed: " + msg);
-      console.error("❌ TX Error:", msg);
       setErrorData(msg);
     }
   };
@@ -156,7 +138,9 @@ export default function SendTest() {
         {NETWORK_OPTIONS.map((net) => (
           <button
             key={net.value}
-            className={`${styles.networkOption} ${selectedNetwork === net.value ? styles.active : ""}`}
+            className={`${styles.networkOption} ${
+              selectedNetwork === net.value ? styles.active : ""
+            }`}
             onClick={() => {
               setSelectedNetwork(net.value);
               setTimeout(() => amountRef.current?.focus(), 300);
@@ -215,7 +199,12 @@ export default function SendTest() {
       {/* Confirm Modal */}
       <AnimatePresence>
         {confirmOpen && (
-          <motion.div className={styles.modalOverlay} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+          <motion.div
+            className={styles.modalOverlay}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
             <motion.div className={styles.modal}>
               <h2>Confirm Transaction</h2>
               <p><strong>To:</strong> {to}</p>
@@ -235,11 +224,21 @@ export default function SendTest() {
       {/* Success Modal */}
       <AnimatePresence>
         {successData && (
-          <motion.div className={styles.modalOverlay} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+          <motion.div
+            className={styles.modalOverlay}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
             <motion.div className={styles.modal}>
               <h2>Transaction Successful</h2>
               <p>TxHash:</p>
-              <a href={explorerLink(successData)} target="_blank" rel="noopener noreferrer" className={styles.txLink}>
+              <a
+                href={explorerLink(successData)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={styles.txLink}
+              >
                 {successData.slice(0, 10)}...{successData.slice(-6)}
               </a>
               <button onClick={() => setSuccessData(null)} className={styles.confirmBtn}>Close</button>
@@ -251,7 +250,12 @@ export default function SendTest() {
       {/* Error Modal */}
       <AnimatePresence>
         {errorData && (
-          <motion.div className={styles.modalOverlay} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+          <motion.div
+            className={styles.modalOverlay}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
             <motion.div className={styles.modal}>
               <h2>Error</h2>
               <p>{errorData}</p>
