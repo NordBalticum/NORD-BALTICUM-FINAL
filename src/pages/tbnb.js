@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, Suspense } from "react"; // pridėtas Suspense
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import Image from "next/image";
@@ -20,7 +20,6 @@ import styles from "@/styles/tbnb.module.css";
 
 const BnbChartDynamic = dynamic(() => import("@/components/BnbChart"), {
   ssr: false,
-  loading: () => <MiniLoadingSpinner />,
 });
 
 export default function TBnbPage() {
@@ -95,7 +94,9 @@ export default function TBnbPage() {
           <div className={styles.chartWrapper}>
             <div className={styles.chartBorder}>
               <div className={styles.chartInner}>
-                <BnbChartDynamic />
+                <Suspense fallback={<MiniLoadingSpinner />}>
+                  <BnbChartDynamic />
+                </Suspense>
               </div>
             </div>
           </div>
