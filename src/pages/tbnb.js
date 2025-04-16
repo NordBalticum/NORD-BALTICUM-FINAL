@@ -5,8 +5,10 @@ import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
+import QRCode from "react-qr-code";
 
 import { useSystemReady } from "@/hooks/useSystemReady";
+import { useScale } from "@/hooks/useScale";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBalance } from "@/contexts/BalanceContext";
 import { useNetwork } from "@/contexts/NetworkContext";
@@ -27,55 +29,25 @@ export default function TBnbPage() {
   const { user, wallet } = useAuth();
   const { balances, prices } = useBalance();
   const { ready, loading } = useSystemReady();
-  const { activeNetwork } = useNetwork();
   const { sending } = useSend();
+  const scale = useScale();
 
   const [chartReady, setChartReady] = useState(false);
   const [chartMounted, setChartMounted] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
   const [errorChart, setErrorChart] = useState(false);
   const [showSendModal, setShowSendModal] = useState(false);
-  const [scale, setScale] = useState(0.99);
+  const [showReceiveModal, setShowReceiveModal] = useState(false);
+  const [copied, setCopied] = useState(false);
 
-  // Debounced scale update
-  useEffect(() => {
-    let resizeTimer;
-    const updateScale = () => {
-      const width = window.innerWidth;
-      if (width < 468) setScale(0.67);
-      else if (width < 768) setScale(0.70);
-      else setScale(0.99);
-    };
+  const address = wallet?.wallet?.address ?? "";
 
-    if (typeof window !== "undefined") {
-      updateScale();
-      const handleResize = () => {
-        clearTimeout(resizeTimer);
-        resizeTimer = setTimeout(updateScale, 150);
-      };
-      window.addEventListener("resize", handleResize);
-      return () => window.removeEventListener("resize", handleResize);
-    }
-  }, []);
-
-  // Reload on tab focus
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === "visible") {
-        setTimeout(() => window.location.reload(), 300);
-      }
-    };
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-    return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
-  }, []);
-
-  // Retry loading chart
   useEffect(() => {
     if (chartMounted && !chartReady && retryCount < 2) {
       const timeout = setTimeout(() => {
         console.warn(`⏳ Chart not ready. Retrying attempt ${retryCount + 1}...`);
         setRetryCount((prev) => prev + 1);
-      }, 10000);
+      }, 8000);
       return () => clearTimeout(timeout);
     } else if (chartMounted && !chartReady && retryCount >= 2) {
       console.error("❌ Chart failed to load after retries.");
@@ -83,7 +55,6 @@ export default function TBnbPage() {
     }
   }, [chartMounted, chartReady, retryCount]);
 
-  // Redirect if not logged in
   useEffect(() => {
     if (ready && !wallet?.wallet?.address) {
       router.replace("/");
@@ -93,6 +64,12 @@ export default function TBnbPage() {
   const balance = useMemo(() => parseFloat(balances?.tbnb ?? 0), [balances]);
   const eurValue = useMemo(() => (balance * (prices?.tbnb?.eur ?? 0)).toFixed(2), [balance, prices]);
   const usdValue = useMemo(() => (balance * (prices?.tbnb?.usd ?? 0)).toFixed(2), [balance, prices]);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(address);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   if (loading || !ready || sending) {
     return (
@@ -139,7 +116,9 @@ export default function TBnbPage() {
             <h1 className={styles.networkNameSmall}>Binance Smart Chain (Testnet)</h1>
             <div className={styles.balanceBox}>
               <p className={styles.balanceText}>{balance.toFixed(6)} BNB</p>
-              <p className={styles.balanceFiat}>{eurValue} € | {usdValue} $</p>
+              <p className={styles.balanceFiat}>
+                {eurValue} € | {usdValue} $
+              </p>
             </div>
           </div>
 
@@ -169,12 +148,12 @@ export default function TBnbPage() {
             </div>
           </div>
 
-          {/* Buttons */}
+          {/* Action Buttons */}
           <div className={styles.actionButtons}>
             <button onClick={() => setShowSendModal(true)} className={styles.actionButton}>
               Send
             </button>
-            <button onClick={() => router.push("/receive")} className={styles.actionButton}>
+            <button onClick={() => setShowReceiveModal(true)} className={styles.actionButton}>
               Receive
             </button>
             <button onClick={() => router.push("/transactions")} className={styles.actionButton}>
@@ -182,13 +161,31 @@ export default function TBnbPage() {
             </button>
           </div>
 
-          {/* Modal */}
+          {/* Send Modal */}
           {showSendModal && (
             <SendModal
               onClose={() => setShowSendModal(false)}
               network="tbnb"
               userEmail={user?.email}
             />
+          )}
+
+          {/* Receive Modal */}
+          {showReceiveModal && (
+            <div className={styles.receiveModalOverlay} onClick={() => setShowReceiveModal(false)}>
+              <div className={styles.receiveModal} onClick={(e) => e.stopPropagation()}>
+                <h2 className={styles.modalTitle}>Receive BNB</h2>
+                <div className={styles.qrContainer} onClick={handleCopy}>
+                  <QRCode
+                    value={address}
+                    size={160}
+                    style={{ height: "auto", maxWidth: "100%", width: "100%" }}
+                  />
+                  <p className={styles.qrAddress}>{address}</p>
+                  <p className={styles.qrCopy}>{copied ? "Copied!" : "Tap to copy address"}</p>
+                </div>
+              </div>
+            </div>
           )}
         </motion.div>
       </AnimatePresence>
