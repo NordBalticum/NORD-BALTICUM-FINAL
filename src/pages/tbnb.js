@@ -1,28 +1,3 @@
-"use client";
-
-import { useEffect, useState, useMemo } from "react";
-import { useRouter } from "next/navigation";
-import dynamic from "next/dynamic";
-import Image from "next/image";
-import { toast } from "react-toastify";
-import { AnimatePresence, motion } from "framer-motion";
-
-import { useSystemReady } from "@/hooks/useSystemReady";
-import { useAuth } from "@/contexts/AuthContext";
-import { useBalance } from "@/contexts/BalanceContext";
-import { useNetwork } from "@/contexts/NetworkContext";
-import { useSend } from "@/contexts/SendContext";
-
-import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
-import SendModal from "@/components/SendModal";
-
-import styles from "@/styles/tbnb.module.css";
-
-const BnbChartDynamic = dynamic(() => import("@/components/BnbChart"), {
-  ssr: false,
-  loading: () => null,
-});
-
 export default function TBnbPage() {
   const router = useRouter();
   const { user, wallet } = useAuth();
@@ -36,8 +11,17 @@ export default function TBnbPage() {
   const [retryCount, setRetryCount] = useState(0);
   const [errorChart, setErrorChart] = useState(false);
   const [showSendModal, setShowSendModal] = useState(false);
+  const [scale, setScale] = useState(0.92); // <- DINAMINIS SCALE
 
-  // Reload on tab focus
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const width = window.innerWidth;
+      if (width < 468) setScale(0.64);
+      else if (width < 768) setScale(0.67);
+      else setScale(0.92);
+    }
+  }, []);
+
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") {
@@ -45,10 +29,10 @@ export default function TBnbPage() {
       }
     };
     document.addEventListener("visibilitychange", handleVisibilityChange);
-    return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
+    return () =>
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
   }, []);
 
-  // Chart retry logic
   useEffect(() => {
     if (chartMounted && !chartReady && retryCount < 2) {
       const timeout = setTimeout(() => {
@@ -62,19 +46,16 @@ export default function TBnbPage() {
     }
   }, [chartMounted, chartReady, retryCount]);
 
-  // Redirect if wallet not ready
   useEffect(() => {
     if (ready && !wallet?.wallet?.address) {
       router.replace("/");
     }
   }, [ready, wallet, router]);
 
-  // Computed values
   const balance = useMemo(() => parseFloat(balances?.tbnb ?? 0), [balances]);
   const eurValue = useMemo(() => (balance * (prices?.tbnb?.eur ?? 0)).toFixed(2), [balance, prices]);
   const usdValue = useMemo(() => (balance * (prices?.tbnb?.usd ?? 0)).toFixed(2), [balance, prices]);
 
-  // Loading state
   if (loading || !ready || sending) {
     return (
       <main className={styles.pageContainer}>
@@ -83,7 +64,6 @@ export default function TBnbPage() {
     );
   }
 
-  // Error state
   if (errorChart) {
     return (
       <main className={styles.pageContainer}>
@@ -97,16 +77,15 @@ export default function TBnbPage() {
     );
   }
 
-  // Main content
   return (
     <main key={retryCount} className={styles.pageContainer}>
       <AnimatePresence mode="wait">
         <motion.div
           key="tbnb-content"
           className={styles.pageContent}
-          initial={{ opacity: 0, scale: 0.92, y: 20 }}
-          animate={{ opacity: 1, scale: 0.92, y: 0 }}
-          exit={{ opacity: 0, scale: 0.92, y: -20 }}
+          initial={{ opacity: 0, scale, y: 20 }}
+          animate={{ opacity: 1, scale, y: 0 }}
+          exit={{ opacity: 0, scale, y: -20 }}
           transition={{ duration: 0.8, ease: [0.25, 1, 0.5, 1] }}
         >
           {/* Header */}
@@ -120,12 +99,9 @@ export default function TBnbPage() {
               priority
             />
             <h1 className={styles.networkNameSmall}>Binance Smart Chain (Testnet)</h1>
-
             <div className={styles.balanceBox}>
               <p className={styles.balanceText}>{balance.toFixed(6)} BNB</p>
-              <p className={styles.balanceFiat}>
-                {eurValue} € | {usdValue} $
-              </p>
+              <p className={styles.balanceFiat}>{eurValue} € | {usdValue} $</p>
             </div>
           </div>
 
