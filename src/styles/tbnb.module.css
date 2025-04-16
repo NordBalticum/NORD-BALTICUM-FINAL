@@ -212,7 +212,7 @@
   }
 
   .pageContent {
-    transform: scale(0.77);
+    transform: scale(0.67); /* ↓ buvo 0.77 */
     transform-origin: top center;
     padding: 0;
     margin-top: 20px;
@@ -261,7 +261,7 @@
   }
 
   .pageContent {
-    transform: scale(0.74);
+    transform: scale(0.64); /* ↓ buvo 0.74 */
     transform-origin: top center;
     padding: 0;
     margin-top: 18px;
