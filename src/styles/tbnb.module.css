@@ -22,7 +22,6 @@
   align-items: center;
   padding: clamp(20px, 5vh, 50px) clamp(16px, 4vw, 32px);
   box-sizing: border-box;
-  transform: scale(0.92);
   transform-origin: top center;
 }
 
@@ -212,7 +211,6 @@
   }
 
   .pageContent {
-    transform: scale(0.67); /* ↓ buvo 0.77 */
     transform-origin: top center;
     padding: 0;
     margin-top: 20px;
@@ -261,7 +259,6 @@
   }
 
   .pageContent {
-    transform: scale(0.64); /* ↓ buvo 0.74 */
     transform-origin: top center;
     padding: 0;
     margin-top: 18px;
