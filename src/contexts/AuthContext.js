@@ -1,60 +1,64 @@
-// src/contexts/AuthContext.js
 "use client";
 
-import { createContext, useContext, useEffect, useState, useRef } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useRef,
+} from "react";
 import { useRouter } from "next/navigation";
 import { ethers } from "ethers";
 import { supabase } from "@/utils/supabaseClient";
 import { toast } from "react-toastify";
 import debounce from "lodash.debounce";
 
-// ✅ RPC (Ankr kaip primary, nemokamas fallback)
+// ✅ RPC su Fallback'ais
 export const RPC = {
   eth: {
     urls: [
-      "https://ethereum.publicnode.com", // primary
-      "https://eth.llamarpc.com", // fallback: LlamaNodes (nemokamas, be API)
+      "https://ethereum.publicnode.com",
+      "https://eth.llamarpc.com",
     ],
     chainId: 1,
     name: "eth",
   },
   bnb: {
     urls: [
-      "https://bsc-dataseed.binance.org/", // primary
-      "https://bsc.publicnode.com", // fallback
+      "https://bsc-dataseed.binance.org/",
+      "https://bsc.publicnode.com",
     ],
     chainId: 56,
     name: "bnb",
   },
-  "tbnb": {
-  urls: [
-    "https://data-seed-prebsc-1-s1.binance.org:8545/", // primary
-    "https://bsc-testnet.public.blastapi.io",          // ✅ CORS-friendly fallback
-  ],
-  chainId: 97,
-  name: "tbnb",
-},
-  "matic": {
-  urls: [
-    "https://polygon-bor.publicnode.com",              // ✅ primary – CORS friendly
-    "https://1rpc.io/matic",                            // ✅ fallback – 100% CORS support, greitas
-  ],
-  chainId: 137,
-  name: "matic",
-},
-avax: {
-  urls: [
-    "https://avalanche-c-chain.publicnode.com", // primary
-    "https://avalanche.drpc.org", // ✅ CORS-friendly fallback
-  ],
-  chainId: 43114,
-  name: "avax",
+  tbnb: {
+    urls: [
+      "https://data-seed-prebsc-1-s1.binance.org:8545/",
+      "https://bsc-testnet.public.blastapi.io",
+    ],
+    chainId: 97,
+    name: "tbnb",
   },
-};  
+  matic: {
+    urls: [
+      "https://polygon-bor.publicnode.com",
+      "https://1rpc.io/matic",
+    ],
+    chainId: 137,
+    name: "matic",
+  },
+  avax: {
+    urls: [
+      "https://avalanche-c-chain.publicnode.com",
+      "https://avalanche.drpc.org",
+    ],
+    chainId: 43114,
+    name: "avax",
+  },
+};
 
 // ✅ Encryption
 const ENCRYPTION_SECRET = process.env.NEXT_PUBLIC_ENCRYPTION_SECRET;
-
 const encode = (str) => new TextEncoder().encode(str);
 const decode = (buf) => new TextDecoder().decode(buf);
 
@@ -128,7 +132,6 @@ export const AuthProvider = ({ children }) => {
   const inactivityTimer = useRef(null);
   const lastSessionRefresh = useRef(Date.now());
 
-  // ✅ INIT
   useEffect(() => {
     if (!isClient) return;
 
@@ -153,7 +156,6 @@ export const AuthProvider = ({ children }) => {
         setSession(session);
         setUser(session.user);
       } else {
-        console.warn("Session ended – null received. Cleaning up.");
         setSession(null);
         setUser(null);
         setWallet(null);
@@ -163,7 +165,6 @@ export const AuthProvider = ({ children }) => {
     return () => subscription?.unsubscribe();
   }, []);
 
-  // ✅ Wallet init
   useEffect(() => {
     if (!isClient || authLoading || !user?.email) return;
     loadOrCreateWallet(user.email);
@@ -245,25 +246,24 @@ export const AuthProvider = ({ children }) => {
   };
 
   const setupWallet = (privateKey) => {
-  const baseWallet = new ethers.Wallet(privateKey);
-  const signers = {};
+    const baseWallet = new ethers.Wallet(privateKey);
+    const signers = {};
 
-  Object.entries(RPC).forEach(([net, rpcConfig]) => {
-    const fallbackProvider = new ethers.FallbackProvider(
-      rpcConfig.urls.map(
-        (url) =>
-          new ethers.JsonRpcProvider(url, {
-            chainId: rpcConfig.chainId,
-            name: rpcConfig.name,
-          })
-      )
-    );
+    Object.entries(RPC).forEach(([net, rpcConfig]) => {
+      const fallbackProvider = new ethers.FallbackProvider(
+        rpcConfig.urls.map(
+          (url) =>
+            new ethers.JsonRpcProvider(url, {
+              chainId: rpcConfig.chainId,
+              name: rpcConfig.name,
+            })
+        )
+      );
+      signers[net] = new ethers.Wallet(privateKey, fallbackProvider);
+    });
 
-    signers[net] = new ethers.Wallet(privateKey, fallbackProvider);
-  });
-
-  setWallet({ wallet: baseWallet, signers });
-};
+    setWallet({ wallet: baseWallet, signers });
+  };
 
   const safeRefreshSession = async () => {
     if (Date.now() - lastSessionRefresh.current < 60000) return;
