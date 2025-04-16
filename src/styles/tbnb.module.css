@@ -24,7 +24,6 @@
   box-sizing: border-box;
   transform: scale(0.92);
   transform-origin: top center;
-  animation: fadeIn 0.8s ease forwards;
 }
 
 /* === HEADER === */
