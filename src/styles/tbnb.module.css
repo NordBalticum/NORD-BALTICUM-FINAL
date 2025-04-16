@@ -207,6 +207,7 @@
     transform: scale(0.77);
     transform-origin: top center;
     padding: 0;
+    margin-top: 20px; /* <- svarbiausia naujovė */
     height: auto;
     display: flex;
     flex-direction: column;
@@ -236,7 +237,7 @@
     gap: 12px;
     width: 100%;
     padding: 0 16px;
-    margin-top: 32px; /* padidintas tarpas nuo chart iki mygtukų */
+    margin-top: 32px;
   }
 
   .actionButton {
