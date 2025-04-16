@@ -12,8 +12,8 @@ import {
   Filler,
   Decimation,
 } from "chart.js";
+import debounce from "lodash.debounce";
 
-import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
 import { useMinimalReady } from "@/hooks/useMinimalReady";
 import styles from "@/styles/tbnb.module.css";
 
@@ -28,31 +28,26 @@ ChartJS.register(
 );
 
 export default function BnbChart({ onChartReady, onMount }) {
-  const { ready, loading: systemLoading } = useMinimalReady();
+  const { ready } = useMinimalReady();
   const [chartData, setChartData] = useState([]);
-  const [loading, setLoading] = useState(true);
-
   const chartRef = useRef(null);
   const mountedRef = useRef(false);
   const controllerRef = useRef(null);
   const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
 
-  // ✅ Trigger parent on mount
+  // Notify parent on mount
   useEffect(() => {
     if (typeof onMount === "function") onMount();
   }, [onMount]);
 
-  // ✅ Fetch chart data
+  // Fetch chart data
   const fetchChartData = useCallback(
-    async (showSpinner = true) => {
+    debounce(async () => {
       if (!mountedRef.current || !ready || document.visibilityState !== "visible") return;
 
       controllerRef.current?.abort();
       const controller = new AbortController();
       controllerRef.current = controller;
-
-      if (showSpinner) setLoading(true);
-      const timeout = setTimeout(() => controller.abort(), 6000);
 
       try {
         const res = await fetch(
@@ -84,36 +79,32 @@ export default function BnbChart({ onChartReady, onMount }) {
 
         if (mountedRef.current && filtered.length > 0) {
           setChartData(filtered);
+          if (typeof onChartReady === "function") onChartReady();
         }
       } catch (err) {
         if (err.name !== "AbortError") {
-          console.error("❌ Chart fetch error:", err.message);
+          console.error("Chart fetch error:", err.message);
         }
-      } finally {
-        clearTimeout(timeout);
-        if (mountedRef.current) setLoading(false);
       }
-    },
-    [isMobile, ready]
+    }, 500),
+    [isMobile, ready, onChartReady]
   );
 
-  // ✅ Init + visibility events
+  // Init + visibility listener
   useEffect(() => {
     if (!ready) return;
-
     mountedRef.current = true;
-
-    if (document.visibilityState === "visible") fetchChartData(true);
+    fetchChartData();
 
     const interval = setInterval(() => {
       if (mountedRef.current && document.visibilityState === "visible") {
-        fetchChartData(false);
+        fetchChartData();
       }
-    }, 3600000); // 1h refresh
+    }, 60000); // refresh every 1 min
 
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") {
-        fetchChartData(false);
+        fetchChartData();
       } else {
         controllerRef.current?.abort();
       }
@@ -129,20 +120,12 @@ export default function BnbChart({ onChartReady, onMount }) {
     };
   }, [fetchChartData, ready]);
 
-  // ✅ Notify parent when ready
-  useEffect(() => {
-    if (!loading && chartData.length > 0 && typeof onChartReady === "function") {
-      setTimeout(() => onChartReady(), 1000);
-    }
-  }, [loading, chartData, onChartReady]);
-
-  // ✅ Chart config
   const chartOptions = {
     responsive: true,
     maintainAspectRatio: false,
     animation: {
-      duration: 1000,
-      easing: "easeOutBounce",
+      duration: 800,
+      easing: "easeOutCubic",
     },
     layout: {
       padding: { left: 15, right: 15, top: 0, bottom: 0 },
@@ -216,10 +199,6 @@ export default function BnbChart({ onChartReady, onMount }) {
       },
     ],
   };
-
-  if (systemLoading || (loading && chartData.length === 0)) {
-    return <MiniLoadingSpinner />;
-  }
 
   return (
     <div className={styles.chartContainer}>
