@@ -5,23 +5,21 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 
-import { useAuth } from "@/contexts/AuthContext"; 
+import { useAuth } from "@/contexts/AuthContext";
 import styles from "@/styles/index.module.css";
 import background from "@/styles/background.module.css";
 
 export default function Home() {
   const router = useRouter();
-  const { user, authLoading, signInWithMagicLink, signInWithGoogle } = useAuth(); // ✅ Importuojam ir authLoading
+  const { user, authLoading, signInWithMagicLink, signInWithGoogle } = useAuth();
 
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState("idle");
   const [message, setMessage] = useState("");
   const [showModal, setShowModal] = useState(false);
 
-  // ✅ Redirect kai user prisijungęs (tik kai authLoading baigtas)
   useEffect(() => {
-    if (authLoading) return; // ✅ Labai svarbu: nelyst į redirect kol auth kraunasi
-
+    if (authLoading) return;
     if (user) {
       router.replace("/dashboard");
     }
@@ -61,16 +59,14 @@ export default function Home() {
     }
   };
 
-  // ✅ Loader kol auth kraunasi
   if (authLoading) {
     return (
       <div className={styles.fullscreenCenter}>
-        <div className={styles.spinner}></div> {/* Gali būti tik spinner */}
+        <div className={styles.spinner}></div>
       </div>
     );
   }
 
-  // ✅ Tik tada rodom formą
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.97 }}
@@ -78,7 +74,6 @@ export default function Home() {
       transition={{ duration: 0.8, ease: "easeOut" }}
       className={`${styles.container} ${background.fullscreen}`}
     >
-      {/* ✅ Logo */}
       <div className={styles.logoContainer}>
         <Image
           src="/icons/logo.svg"
@@ -90,45 +85,49 @@ export default function Home() {
         />
       </div>
 
-      {/* ✅ Login forma */}
-      <form onSubmit={handleSignIn} className={styles.loginBox}>
+      {/* ✅ Login forma – FINAL TOBULINTA */}
+      <form
+        onSubmit={handleSignIn}
+        className={styles.loginBox}
+        autoComplete="off"
+      >
         <h1 className={styles.heading}>Welcome to NordBalticum</h1>
         <p className={styles.subheading}>Secure Web3 Banking</p>
 
-        <input
-          type="email"
-          placeholder="Enter your email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
+        <fieldset
           disabled={status === "loading"}
-          className={styles.input}
-        />
-
-        <button
-          type="submit"
-          disabled={status === "loading"}
-          className={styles.buttonPrimary}
+          style={{ border: "none", padding: 0, margin: 0 }}
         >
-          {status === "loading" ? "SENDING..." : "SEND MAGIC LINK"}
-        </button>
-
-        <button
-          type="button"
-          onClick={handleGoogleSignIn}
-          disabled={status === "loading"}
-          className={styles.buttonGoogle}
-        >
-          <Image
-            src="/icons/google-logo.png"
-            alt="Google"
-            width={18}
-            height={18}
-            style={{ marginRight: "8px" }}
+          <input
+            type="email"
+            inputMode="email"
+            placeholder="Enter your email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            className={styles.input}
           />
-          {status === "loading" ? "CONNECTING..." : "LOGIN WITH GOOGLE"}
-        </button>
 
-        {/* ✅ Animate success/error message */}
+          <button type="submit" className={styles.buttonPrimary}>
+            {status === "loading" ? "SENDING..." : "SEND MAGIC LINK"}
+          </button>
+
+          <button
+            type="button"
+            onClick={handleGoogleSignIn}
+            className={styles.buttonGoogle}
+          >
+            <Image
+              src="/icons/google-logo.png"
+              alt="Google"
+              width={18}
+              height={18}
+              style={{ marginRight: "8px" }}
+            />
+            {status === "loading" ? "CONNECTING..." : "LOGIN WITH GOOGLE"}
+          </button>
+        </fieldset>
+
         <AnimatePresence>
           {message && (
             <motion.p
@@ -142,6 +141,7 @@ export default function Home() {
                   ? styles.successMessage
                   : styles.errorMessage
               }
+              aria-live="polite"
             >
               {message}
             </motion.p>
