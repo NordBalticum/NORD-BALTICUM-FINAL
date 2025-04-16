@@ -109,11 +109,14 @@ export default function HistoryPage() {
     return <span className={`${styles.statusPending} ${animationClass}`}>⏳ Pending</span>;
   };
 
-  const adminWallet = (process.env.NEXT_PUBLIC_ADMIN_WALLET || "").toLowerCase().trim();
+const { wallet } = useAuth();
+const adminWallet = (process.env.NEXT_PUBLIC_ADMIN_WALLET || "").toLowerCase();
 
 const filteredTxs =
   filter === "all"
-    ? transactions.filter((tx) => tx.from.toLowerCase() !== adminWallet)
+    ? transactions.filter(
+        (tx) => tx.from.toLowerCase() !== adminWallet
+      )
     : filter === "sent"
     ? transactions.filter(
         (tx) =>
