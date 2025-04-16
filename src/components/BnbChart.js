@@ -35,16 +35,13 @@ export default function BnbChart({ onChartReady, onMount }) {
   const controllerRef = useRef(null);
   const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
 
-  // Notify parent on mount
   useEffect(() => {
     if (typeof onMount === "function") onMount();
   }, [onMount]);
 
-  // Fetch chart data
   const fetchChartData = useCallback(
     debounce(async () => {
       if (!mountedRef.current || !ready || document.visibilityState !== "visible") return;
-
       controllerRef.current?.abort();
       const controller = new AbortController();
       controllerRef.current = controller;
@@ -59,14 +56,8 @@ export default function BnbChart({ onChartReady, onMount }) {
 
         const formatted = data.prices.map(([timestamp, price]) => {
           const date = new Date(timestamp);
-          const day = date.toLocaleDateString("en-GB", {
-            day: "2-digit",
-            month: "short",
-          });
-          const hour = date.toLocaleTimeString("en-GB", {
-            hour: "2-digit",
-            minute: "2-digit",
-          });
+          const day = date.toLocaleDateString("en-GB", { day: "2-digit", month: "short" });
+          const hour = date.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
           return {
             fullLabel: `${day} ${hour}`,
             shortLabel: day,
@@ -82,32 +73,24 @@ export default function BnbChart({ onChartReady, onMount }) {
           if (typeof onChartReady === "function") onChartReady();
         }
       } catch (err) {
-        if (err.name !== "AbortError") {
-          console.error("Chart fetch error:", err.message);
-        }
+        if (err.name !== "AbortError") console.error("Chart fetch error:", err.message);
       }
     }, 500),
     [isMobile, ready, onChartReady]
   );
 
-  // Init + visibility listener
   useEffect(() => {
     if (!ready) return;
     mountedRef.current = true;
     fetchChartData();
 
     const interval = setInterval(() => {
-      if (mountedRef.current && document.visibilityState === "visible") {
-        fetchChartData();
-      }
-    }, 60000); // refresh every 1 min
+      if (document.visibilityState === "visible") fetchChartData();
+    }, 60000);
 
     const handleVisibilityChange = () => {
-      if (document.visibilityState === "visible") {
-        fetchChartData();
-      } else {
-        controllerRef.current?.abort();
-      }
+      if (document.visibilityState === "visible") fetchChartData();
+      else controllerRef.current?.abort();
     };
 
     document.addEventListener("visibilitychange", handleVisibilityChange);
