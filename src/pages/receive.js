@@ -1,3 +1,4 @@
+// src/app/receive.js
 "use client";
 
 import { useEffect, useState, useRef } from "react";
@@ -7,15 +8,16 @@ import QRCode from "react-qr-code";
 import { supabase } from "@/utils/supabaseClient";
 import { toast } from "react-hot-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { useMinimalReady } from "@/hooks/useMinimalReady";
 import ReceiveSuccessModal from "@/components/modals/ReceiveSuccessModal";
 import styles from "@/styles/receive.module.css";
 import background from "@/styles/background.module.css";
 
 export default function Receive() {
   const router = useRouter();
-  const { user, wallet, authLoading, walletLoading } = useAuth();
+  const { wallet } = useAuth();
+  const { ready, loading: minimalLoading } = useMinimalReady();
 
-  const [isClient, setIsClient] = useState(false);
   const [copied, setCopied] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [receivedAmount, setReceivedAmount] = useState("");
@@ -30,102 +32,6 @@ export default function Receive() {
     }
     audioRef.current.play();
   };
-
-  const requestNotificationPermission = async () => {
-    if (typeof Notification !== "undefined" && Notification.permission !== "granted") {
-      try {
-        await Notification.requestPermission();
-      } catch (err) {
-        console.warn("Notification permission denied:", err);
-      }
-    }
-  };
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      setIsClient(true);
-      requestNotificationPermission();
-    }
-  }, []);
-
-  useEffect(() => {
-    if (isClient && !authLoading && !walletLoading && !user) {
-      router.replace("/");
-    }
-  }, [user, authLoading, walletLoading, isClient, router]);
-
-  const handleCopy = async (address) => {
-    if (!address) return;
-    try {
-      await navigator.clipboard.writeText(address);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch (err) {
-      console.error("Clipboard error:", err);
-    }
-  };
-
-  useEffect(() => {
-    if (!wallet?.wallet?.address || subscribed) return;
-
-    const subscription = supabase
-      .channel('realtime:transactions')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'transactions' }, (payload) => {
-        const { new: tx } = payload;
-        if (tx?.receiver_address?.toLowerCase() === wallet.wallet.address.toLowerCase()) {
-          console.log("✅ New Incoming Transaction Received:", tx);
-
-          playReceiveSound();
-          setReceivedAmount(tx.amount);
-          setReceivedNetwork(tx.network);
-          setReceivedTxHash(tx.tx_hash);
-          setModalOpen(true);
-
-          toast.success(
-            (t) => (
-              <span>
-                +{tx.amount} {tx.network.toUpperCase()} received!
-                <br />
-                <a
-                  href={getExplorerUrl(tx.network, tx.tx_hash)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{ color: "#00FF00", textDecoration: "underline", fontSize: "0.85rem" }}
-                >
-                  View on Explorer
-                </a>
-              </span>
-            ),
-            {
-              style: {
-                background: "#0a0a0a",
-                color: "#fff",
-                border: "2px solid #00FF00",
-                animation: "bounce 0.5s ease",
-              },
-              iconTheme: {
-                primary: "#00FF00",
-                secondary: "#0a0a0a",
-              },
-            }
-          );
-
-          if (typeof Notification !== "undefined" && Notification.permission === "granted") {
-            new Notification("Received Crypto", {
-              body: `+${tx.amount} ${tx.network.toUpperCase()} received!`,
-              icon: "https://cryptologos.cc/logos/binance-coin-bnb-logo.png",
-            });
-          }
-        }
-      })
-      .subscribe();
-
-    setSubscribed(true);
-
-    return () => {
-      supabase.removeChannel(subscription);
-    };
-  }, [wallet, subscribed]);
 
   const getExplorerUrl = (network, txHash) => {
     switch (network) {
@@ -144,22 +50,83 @@ export default function Receive() {
     }
   };
 
-  if (!isClient || authLoading || walletLoading) {
-    return (
-      <div className={styles.loadingScreen}>
-        <motion.div animate={{ scale: [0.9, 1.1, 0.9] }} transition={{ repeat: Infinity, duration: 1.5 }}>
-          Loading Wallet...
-        </motion.div>
-      </div>
-    );
-  }
+  const handleCopy = async (address) => {
+    if (!address) return;
+    try {
+      await navigator.clipboard.writeText(address);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error("Clipboard error:", err);
+    }
+  };
+
+  useEffect(() => {
+    if (!wallet?.wallet?.address || subscribed || !ready) return;
+
+    const subscription = supabase
+      .channel("realtime:transactions")
+      .on("postgres_changes", {
+        event: "INSERT",
+        schema: "public",
+        table: "transactions",
+      }, (payload) => {
+        const { new: tx } = payload;
+        if (tx?.receiver_address?.toLowerCase() === wallet.wallet.address.toLowerCase()) {
+          playReceiveSound();
+          setReceivedAmount(tx.amount);
+          setReceivedNetwork(tx.network);
+          setReceivedTxHash(tx.tx_hash);
+          setModalOpen(true);
+
+          toast.success(() => (
+            <span>
+              +{tx.amount} {tx.network.toUpperCase()} received!
+              <br />
+              <a
+                href={getExplorerUrl(tx.network, tx.tx_hash)}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ color: "#00FF00", textDecoration: "underline", fontSize: "0.85rem" }}
+              >
+                View on Explorer
+              </a>
+            </span>
+          ), {
+            style: {
+              background: "#0a0a0a",
+              color: "#fff",
+              border: "2px solid #00FF00",
+            },
+            iconTheme: {
+              primary: "#00FF00",
+              secondary: "#0a0a0a",
+            },
+          });
+
+          if (typeof Notification !== "undefined" && Notification.permission === "granted") {
+            new Notification("Received Crypto", {
+              body: `+${tx.amount} ${tx.network.toUpperCase()} received!`,
+              icon: "https://cryptologos.cc/logos/binance-coin-bnb-logo.png",
+            });
+          }
+        }
+      })
+      .subscribe();
+
+    setSubscribed(true);
+    return () => supabase.removeChannel(subscription);
+  }, [wallet, subscribed, ready]);
 
   const address = wallet?.wallet?.address;
 
-  if (!user || !address) {
+  if (!ready || !address) {
     return (
       <div className={styles.loadingScreen}>
-        <motion.div animate={{ scale: [0.9, 1.1, 0.9] }} transition={{ repeat: Infinity, duration: 1.5 }}>
+        <motion.div
+          animate={{ scale: [0.9, 1.1, 0.9] }}
+          transition={{ repeat: Infinity, duration: 1.5 }}
+        >
           Preparing Wallet...
         </motion.div>
       </div>
