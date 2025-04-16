@@ -16,7 +16,7 @@ export const RPC = {
       "https://eth.llamarpc.com", // fallback: LlamaNodes (nemokamas, be API)
     ],
     chainId: 1,
-    name: "mainnet",
+    name: "eth",
   },
   bnb: {
     urls: [
@@ -24,7 +24,7 @@ export const RPC = {
       "https://bsc.publicnode.com", // fallback
     ],
     chainId: 56,
-    name: "bsc",
+    name: "bnb",
   },
   tbnb: {
     urls: [
@@ -32,7 +32,7 @@ export const RPC = {
       "https://endpoints.omniatech.io/v1/bsc/testnet/public", // fallback
     ],
     chainId: 97,
-    name: "bsctest",
+    name: "tbnb",
   },
   matic: {
     urls: [
@@ -40,7 +40,7 @@ export const RPC = {
       "https://polygon.llamarpc.com", // fallback
     ],
     chainId: 137,
-    name: "polygon",
+    name: "matic",
   },
   avax: {
     urls: [
@@ -48,7 +48,7 @@ export const RPC = {
       "https://avalanche.public-rpc.com", // fallback
     ],
     chainId: 43114,
-    name: "avalanche",
+    name: "avax",
   },
 };
 
