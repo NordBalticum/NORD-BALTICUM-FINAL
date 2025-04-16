@@ -13,49 +13,51 @@ import { useNetwork } from "@/contexts/NetworkContext";
 import { ethers } from "ethers";
 import debounce from "lodash.debounce";
 
+// ✅ RPC su Fallback support
 export const RPC = {
   eth: {
     urls: [
-      "https://rpc.ankr.com/eth", // primary: Ankr
-      "https://eth.llamarpc.com", // fallback: LlamaNodes (nemokamas, be API)
+      "https://rpc.ankr.com/eth",
+      "https://eth.llamarpc.com",
     ],
     chainId: 1,
     name: "eth",
   },
   bnb: {
     urls: [
-      "https://bsc-dataseed.binance.org/", // primary
-      "https://bsc.publicnode.com", // fallback
+      "https://bsc-dataseed.binance.org/",
+      "https://bsc.publicnode.com",
     ],
     chainId: 56,
     name: "bnb",
   },
-  "tbnb": {
-  urls: [
-    "https://data-seed-prebsc-1-s1.binance.org:8545/", // primary
-    "https://bsc-testnet.public.blastapi.io",          // ✅ CORS-friendly fallback
-  ],
-  chainId: 97,
-  name: "tbnb",
-},
-  "matic": {
-  urls: [
-    "https://polygon-bor.publicnode.com",              // ✅ primary – CORS friendly
-    "https://1rpc.io/matic",                            // ✅ fallback – 100% CORS support, greitas
-  ],
-  chainId: 137,
-  name: "matic",
-},
-avax: {
-  urls: [
-    "https://rpc.ankr.com/avalanche", // primary
-    "https://avalanche.drpc.org", // ✅ CORS-friendly fallback
-  ],
-  chainId: 43114,
-  name: "avax",
+  tbnb: {
+    urls: [
+      "https://data-seed-prebsc-1-s1.binance.org:8545/",
+      "https://bsc-testnet.public.blastapi.io",
+    ],
+    chainId: 97,
+    name: "tbnb",
+  },
+  matic: {
+    urls: [
+      "https://polygon-bor.publicnode.com",
+      "https://1rpc.io/matic",
+    ],
+    chainId: 137,
+    name: "matic",
+  },
+  avax: {
+    urls: [
+      "https://rpc.ankr.com/avalanche",
+      "https://avalanche.drpc.org",
+    ],
+    chainId: 43114,
+    name: "avax",
   },
 };
-  
+
+// ✅ CoinGecko token ID mapping
 export const TOKEN_IDS = {
   eth: "ethereum",
   bnb: "binancecoin",
@@ -64,6 +66,7 @@ export const TOKEN_IDS = {
   avax: "avalanche-2",
 };
 
+// ✅ fallback kainos jeigu API neveikia
 const FALLBACK_PRICES = {
   eth: { eur: 2900, usd: 3100 },
   bnb: { eur: 450, usd: 480 },
@@ -103,62 +106,62 @@ export const BalanceProvider = ({ children }) => {
   };
 
   const fetchBalancesAndPrices = useCallback(async () => {
-  if (!wallet?.wallet?.address) return;
+    if (!wallet?.wallet?.address) return;
 
-  try {
-    setLoading(true);
-    const address = wallet.wallet.address;
-    const newBalances = {};
+    try {
+      setLoading(true);
+      const address = wallet.wallet.address;
+      const newBalances = {};
 
-    for (const network of Object.keys(RPC)) {
-      try {
-        const fallbackProvider = new ethers.FallbackProvider(
-          RPC[network].urls.map(
-            (url) =>
-              new ethers.JsonRpcProvider(url, {
-                chainId: RPC[network].chainId,
-                name: RPC[network].name,
-              })
-          )
-        );
+      for (const network of Object.keys(RPC)) {
+        try {
+          const fallbackProvider = new ethers.FallbackProvider(
+            RPC[network].urls.map(
+              (url) =>
+                new ethers.JsonRpcProvider(url, {
+                  chainId: RPC[network].chainId,
+                  name: RPC[network].name,
+                })
+            )
+          );
 
-        const balance = await fallbackProvider.getBalance(address);
-        newBalances[network] = parseFloat(ethers.formatEther(balance));
-      } catch (err) {
-        console.warn(`❌ Failed to fetch balance for ${network}:`, err?.message);
+          const balance = await fallbackProvider.getBalance(address);
+          newBalances[network] = parseFloat(ethers.formatEther(balance));
+        } catch (err) {
+          console.warn(`❌ Failed to fetch balance for ${network}:`, err?.message);
+        }
       }
+
+      setBalances(newBalances);
+      saveToLocal(BALANCE_KEY, newBalances);
+      lastKnownBalances.current = newBalances;
+
+      const ids = Array.from(new Set(Object.values(TOKEN_IDS))).join(",");
+      const res = await fetch(
+        `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=eur,usd`,
+        { cache: "no-store" }
+      );
+
+      if (!res.ok) throw new Error("Failed to fetch prices from CoinGecko");
+
+      const data = await res.json();
+      const newPrices = {};
+
+      for (const [symbol, id] of Object.entries(TOKEN_IDS)) {
+        newPrices[symbol] = {
+          eur: data[id]?.eur ?? FALLBACK_PRICES[symbol].eur,
+          usd: data[id]?.usd ?? FALLBACK_PRICES[symbol].usd,
+        };
+      }
+
+      setPrices(newPrices);
+      saveToLocal(PRICE_KEY, newPrices);
+    } catch (error) {
+      console.error("❌ Critical error in fetchBalancesAndPrices:", error.message);
+    } finally {
+      setLoading(false);
     }
-
-    setBalances(newBalances);
-    saveToLocal(BALANCE_KEY, newBalances);
-    lastKnownBalances.current = newBalances;
-
-    const ids = Array.from(new Set(Object.values(TOKEN_IDS))).join(",");
-    const res = await fetch(
-      `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=eur,usd`,
-      { cache: "no-store" }
-    );
-
-    if (!res.ok) throw new Error("Failed to fetch prices from CoinGecko");
-
-    const data = await res.json();
-    const newPrices = {};
-
-    for (const [symbol, id] of Object.entries(TOKEN_IDS)) {
-      newPrices[symbol] = {
-        eur: data[id]?.eur ?? FALLBACK_PRICES[symbol].eur,
-        usd: data[id]?.usd ?? FALLBACK_PRICES[symbol].usd,
-      };
-    }
-
-    setPrices(newPrices);
-    saveToLocal(PRICE_KEY, newPrices);
-  } catch (error) {
-    console.error("❌ Critical error in fetchBalancesAndPrices:", error.message);
-  } finally {
-    setLoading(false);
-  }
-}, [wallet]);
+  }, [wallet]);
 
   useEffect(() => {
     const cachedBalances = loadFromLocal(BALANCE_KEY);
