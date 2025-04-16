@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import Image from "next/image";
@@ -24,7 +24,7 @@ const BnbChartDynamic = dynamic(() => import("@/components/BnbChart"), {
 
 export default function TBnbPage() {
   const router = useRouter();
-  const { wallet } = useAuth();
+  const { user, wallet } = useAuth();
   const { balances, prices } = useBalance();
   const { ready, loading } = useSystemReady();
   const { activeNetwork } = useNetwork();
@@ -66,6 +66,10 @@ export default function TBnbPage() {
     }
   }, [ready, wallet, router]);
 
+  const balance = useMemo(() => parseFloat(balances?.tbnb ?? 0), [balances]);
+  const eurValue = useMemo(() => (balance * (prices?.tbnb?.eur ?? 0)).toFixed(2), [balance, prices]);
+  const usdValue = useMemo(() => (balance * (prices?.tbnb?.usd ?? 0)).toFixed(2), [balance, prices]);
+
   if (loading || !ready || sending) {
     return (
       <main className={styles.pageContainer}>
@@ -73,10 +77,6 @@ export default function TBnbPage() {
       </main>
     );
   }
-
-  const balance = parseFloat(balances?.tbnb ?? 0);
-  const eurValue = (balance * (prices?.tbnb?.eur ?? 0)).toFixed(2);
-  const usdValue = (balance * (prices?.tbnb?.usd ?? 0)).toFixed(2);
 
   if (errorChart) {
     return (
@@ -94,6 +94,7 @@ export default function TBnbPage() {
   return (
     <main key={retryCount} className={styles.pageContainer}>
       <div className={styles.pageContent}>
+        {/* Header */}
         <div className={styles.header}>
           <Image
             src="/icons/bnb.svg"
@@ -110,6 +111,7 @@ export default function TBnbPage() {
           </div>
         </div>
 
+        {/* Chart */}
         <div className={styles.chartWrapper}>
           <div className={styles.chartBorder}>
             {!chartMounted || !chartReady ? (
@@ -137,6 +139,7 @@ export default function TBnbPage() {
           </div>
         </div>
 
+        {/* Action Buttons */}
         <div className={styles.actionButtons}>
           <button onClick={() => setShowSendModal(true)} className={styles.actionButton}>
             Send
@@ -149,7 +152,14 @@ export default function TBnbPage() {
           </button>
         </div>
 
-        {showSendModal && <SendModal onClose={() => setShowSendModal(false)} />}
+        {/* SendModal */}
+        {showSendModal && (
+          <SendModal
+            onClose={() => setShowSendModal(false)}
+            network="tbnb"
+            userEmail={user?.email}
+          />
+        )}
       </div>
     </main>
   );
