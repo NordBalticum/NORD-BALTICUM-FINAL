@@ -15,6 +15,7 @@ import {
 import debounce from "lodash.debounce";
 
 import styles from "@/styles/tbnb.module.css";
+import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
 
 ChartJS.register(
   LineElement,
@@ -28,6 +29,7 @@ ChartJS.register(
 
 export default function BnbChart({ onChartReady, onMount }) {
   const [chartData, setChartData] = useState([]);
+  const [loading, setLoading] = useState(true);
   const chartRef = useRef(null);
   const mountedRef = useRef(false);
   const controllerRef = useRef(null);
@@ -40,15 +42,17 @@ export default function BnbChart({ onChartReady, onMount }) {
   const fetchChartData = useCallback(
     debounce(async () => {
       if (!mountedRef.current || document.visibilityState !== "visible") return;
-      controllerRef.current?.abort();
-      const controller = new AbortController();
-      controllerRef.current = controller;
 
       try {
+        controllerRef.current?.abort();
+        const controller = new AbortController();
+        controllerRef.current = controller;
+
         const res = await fetch(
           "https://api.coingecko.com/api/v3/coins/binancecoin/market_chart?vs_currency=eur&days=7",
           { signal: controller.signal }
         );
+
         const data = await res.json();
         if (!data?.prices) throw new Error("No price data");
 
@@ -68,12 +72,16 @@ export default function BnbChart({ onChartReady, onMount }) {
 
         if (mountedRef.current && filtered.length > 0) {
           setChartData(filtered);
+          setLoading(false);
           if (typeof onChartReady === "function") onChartReady();
         }
       } catch (err) {
-        if (err.name !== "AbortError") console.error("Chart fetch error:", err.message);
+        if (err.name !== "AbortError") {
+          console.error("Chart fetch error:", err.message);
+        }
+        setLoading(false);
       }
-    }, 500),
+    }, 300),
     [isMobile, onChartReady]
   );
 
@@ -83,11 +91,14 @@ export default function BnbChart({ onChartReady, onMount }) {
 
     const interval = setInterval(() => {
       if (document.visibilityState === "visible") fetchChartData();
-    }, 60000);
+    }, 60000); // kas 1min
 
     const handleVisibilityChange = () => {
-      if (document.visibilityState === "visible") fetchChartData();
-      else controllerRef.current?.abort();
+      if (document.visibilityState === "visible") {
+        fetchChartData();
+      } else {
+        controllerRef.current?.abort();
+      }
     };
 
     document.addEventListener("visibilitychange", handleVisibilityChange);
@@ -179,6 +190,14 @@ export default function BnbChart({ onChartReady, onMount }) {
       },
     ],
   };
+
+  if (loading) {
+    return (
+      <div className={styles.chartContainer}>
+        <MiniLoadingSpinner />
+      </div>
+    );
+  }
 
   return (
     <div className={styles.chartContainer}>
