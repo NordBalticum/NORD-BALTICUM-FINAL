@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo, Suspense } from "react"; // pridėtas Suspense
+import { useEffect, useState, useMemo, Suspense } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import Image from "next/image";
@@ -20,6 +20,7 @@ import styles from "@/styles/tbnb.module.css";
 
 const BnbChartDynamic = dynamic(() => import("@/components/BnbChart"), {
   ssr: false,
+  loading: () => <MiniLoadingSpinner />, // fallback ant dinaminio importo
 });
 
 export default function TBnbPage() {
