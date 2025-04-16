@@ -110,22 +110,24 @@ export default function HistoryPage() {
   };
 
 const adminWallet = (process.env.NEXT_PUBLIC_ADMIN_WALLET || "").toLowerCase();
+const userAddress = wallet?.wallet?.address?.toLowerCase();
 
 const filteredTxs =
   filter === "all"
     ? transactions.filter(
-        (tx) => tx.from.toLowerCase() !== adminWallet
+        (tx) =>
+          !(tx.from?.toLowerCase() === adminWallet && tx.to?.toLowerCase() === userAddress)
       )
     : filter === "sent"
     ? transactions.filter(
         (tx) =>
-          tx.from.toLowerCase() === wallet.wallet.address.toLowerCase() &&
-          tx.from.toLowerCase() !== adminWallet
+          tx.from?.toLowerCase() === userAddress &&
+          tx.from?.toLowerCase() !== adminWallet
       )
     : transactions.filter(
         (tx) =>
-          tx.to.toLowerCase() === wallet.wallet.address.toLowerCase() &&
-          tx.from.toLowerCase() !== adminWallet
+          tx.to?.toLowerCase() === userAddress &&
+          tx.from?.toLowerCase() !== adminWallet
       );
 
   if (loading || !ready) return null;
