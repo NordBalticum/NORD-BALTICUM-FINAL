@@ -11,7 +11,6 @@ import { useSystemReady } from "@/hooks/useSystemReady";
 import { useScale } from "@/hooks/useScale";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBalance } from "@/contexts/BalanceContext";
-import { useNetwork } from "@/contexts/NetworkContext";
 import { useSend } from "@/contexts/SendContext";
 
 import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
@@ -21,7 +20,7 @@ import styles from "@/styles/tbnb.module.css";
 
 const BnbChartDynamic = dynamic(() => import("@/components/BnbChart"), {
   ssr: false,
-  loading: () => null,
+  loading: () => <MiniLoadingSpinner />,
 });
 
 export default function TBnbPage() {
@@ -95,15 +94,7 @@ export default function TBnbPage() {
           {/* Chart */}
           <div className={styles.chartWrapper}>
             <div className={styles.chartBorder}>
-              <div
-                style={{
-                  width: "100%",
-                  height: "100%",
-                  display: "flex",
-                  justifyContent: "center",
-                  alignItems: "center",
-                }}
-              >
+              <div className={styles.chartInner}>
                 <BnbChartDynamic />
               </div>
             </div>
