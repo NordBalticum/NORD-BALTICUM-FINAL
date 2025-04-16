@@ -9,6 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useBalance } from "@/contexts/BalanceContext";
 import { useNetwork } from "@/contexts/NetworkContext";
 import { startSessionWatcher } from "@/utils/sessionWatcher";
+import { detectIsMobile } from "@/utils/detectIsMobile";
 
 export function useSystemReady() {
   const {
@@ -36,25 +37,7 @@ export function useSystemReady() {
 
   const isClient = typeof window !== "undefined";
 
-  const isMobile = useMemo(() => {
-  if (!isClient) return false;
-
-  const ua = navigator.userAgent.toLowerCase();
-  const isTouch =
-    navigator.maxTouchPoints > 1 ||
-    "ontouchstart" in window ||
-    window.matchMedia("(pointer: coarse)").matches;
-
-  const isMobileUA = /android|iphone|ipod|iemobile|blackberry|bada|webos|opera mini|mobile|palm|windows phone|nexus|pixel|sm-|samsung/.test(
-    ua
-  );
-
-  const isTabletUA = /ipad|tablet/.test(ua);
-
-  const isDesktopUA = /macintosh|windows nt|linux x86_64/.test(ua);
-
-  return isTouch && (isMobileUA || (!isDesktopUA && !isTabletUA));
-}, [isClient]);
+  const isMobile = useMemo(() => detectIsMobile(), []);
 
   useEffect(() => {
     if (!isClient) return;
