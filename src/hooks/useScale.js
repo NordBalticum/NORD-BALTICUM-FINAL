@@ -4,17 +4,13 @@ import { useEffect, useState, useCallback } from "react";
 import debounce from "lodash.debounce";
 
 /**
- * useScale – Premium Responsive Scaling Hook
- * ==========================================
- * Automatiškai grąžina optimalų `scale` skaičių pagal:
- * - lango plotį (responsive)
- * - įrenginio orientaciją
- * - ekrano tankį (Retina/HDPI)
- * - user motion preferences
- * - SSR-safety
- *
- * Naudojama animacijose, transformuose ar layoutuose.
- * Tinka visam projektui: Dashboard, Onboarding, Wallet, Modals.
+ * useScale – Iron-Class Responsive Hook (2025 Edition)
+ * ====================================================
+ * Maksimaliai tikslus ir išmanus „scale“ hookas:
+ * - Tiksliai veikia desktop/mobile režimuose
+ * - Reaguoja į virtualią rezoliuciją, orientaciją, HDPI, OS perjungimus
+ * - Naudojamas per motion.div, transform, layout
+ * - Suderinamas su SSR + 100% saugus
  */
 export function useScale(initial = 0.92) {
   const [scale, setScale] = useState(initial);
@@ -23,29 +19,41 @@ export function useScale(initial = 0.92) {
     if (typeof window === "undefined") return;
 
     const width = window.innerWidth;
+    const screenWidth = window.screen?.width || width;
+    const outerWidth = window.outerWidth || width;
     const pixelRatio = window.devicePixelRatio || 1;
-    const prefersReducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+
+    const prefersReducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
     const isPortrait = window.matchMedia?.("(orientation: portrait)")?.matches;
 
     let newScale = initial;
 
-    if (width < 468) {
+    const effectiveWidth = Math.min(width, screenWidth, outerWidth);
+
+    if (effectiveWidth < 468) {
       newScale = prefersReducedMotion ? 0.70 : 0.67;
-    } else if (width < 768) {
+    } else if (effectiveWidth < 768) {
       newScale = prefersReducedMotion ? 0.74 : 0.70;
+    } else if (effectiveWidth < 1024) {
+      newScale = prefersReducedMotion ? 0.95 : 0.97;
     } else {
       newScale = prefersReducedMotion ? 0.96 : 0.99;
     }
 
-    if (pixelRatio >= 2 && width < 480) {
-      newScale -= 0.02; // Retina phones
+    // Retina / HiDPI papildoma korekcija
+    if (pixelRatio >= 2 && effectiveWidth < 500) {
+      newScale -= 0.015;
     }
 
-    if (isPortrait && width < 768) {
+    // Portreto režimo papildomas sumažinimas
+    if (isPortrait && effectiveWidth < 768) {
       newScale -= 0.01;
     }
 
+    // Užtikrinam limitus
+    newScale = Math.max(0.55, Math.min(1.0, newScale));
     newScale = parseFloat(newScale.toFixed(4));
+
     setScale(newScale);
   }, [initial]);
 
@@ -55,10 +63,12 @@ export function useScale(initial = 0.92) {
     updateScale(); // Init
 
     const debouncedResize = debounce(updateScale, 120);
-    const orientationChange = () => setTimeout(updateScale, 100);
+    const orientationChange = () => setTimeout(updateScale, 80);
+    const visualViewportChange = () => setTimeout(updateScale, 100);
 
     window.addEventListener("resize", debouncedResize);
     window.addEventListener("orientationchange", orientationChange);
+    window.visualViewport?.addEventListener("resize", visualViewportChange);
 
     const motionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
     motionQuery.addEventListener?.("change", updateScale);
@@ -66,6 +76,7 @@ export function useScale(initial = 0.92) {
     return () => {
       window.removeEventListener("resize", debouncedResize);
       window.removeEventListener("orientationchange", orientationChange);
+      window.visualViewport?.removeEventListener("resize", visualViewportChange);
       motionQuery.removeEventListener?.("change", updateScale);
     };
   }, [updateScale]);
