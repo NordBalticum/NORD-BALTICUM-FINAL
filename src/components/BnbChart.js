@@ -224,15 +224,15 @@ export default function BnbChart({ onChartReady, onMount }) {
   return (
     <div className={styles.chartContainer}>
       <Line
-  ref={chartRef}
-  data={chartDataset}
-  options={chartOptions}
-  style={{
-    width: "100%",
-    height: "100%",
-    display: "block",
-  }}
-/>
+        ref={chartRef}
+        data={chartDataset}
+        options={chartOptions}
+        style={{
+          width: "100%",
+          height: "100%",
+          display: "block",
+        }}
+      />
     </div>
   );
 }
