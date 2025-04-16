@@ -15,6 +15,14 @@ const tokens = [
 const currencies = ["eur", "usd"];
 const LOCAL_CACHE_KEY = "livePriceCache";
 
+// ✅ Fallback kainos (jei CoinGecko neveikia)
+const FALLBACK_PRICES = {
+  "binancecoin": { eur: 450, usd: 480 },
+  "ethereum": { eur: 2900, usd: 3100 },
+  "matic-network": { eur: 1.5, usd: 1.6 },
+  "avalanche-2": { eur: 30, usd: 32 },
+};
+
 export default function LivePriceTable() {
   const router = useRouter();
   const [prices, setPrices] = useState({});
@@ -28,7 +36,7 @@ export default function LivePriceTable() {
     if (!mountedRef.current) return;
 
     try {
-      const { default: axios } = await import("axios"); // ✅ Axios tik client-side
+      const { default: axios } = await import("axios");
       const ids = tokens.map((t) => t.id).join(",");
       const res = await axios.get("https://api.coingecko.com/api/v3/simple/price", {
         params: { ids, vs_currencies: currencies.join(",") },
@@ -36,27 +44,47 @@ export default function LivePriceTable() {
       });
 
       if (mountedRef.current && res.data) {
-        const newPrices = res.data;
-        const priceChange = Object.keys(newPrices).find(id =>
-          prices[id]?.[currency] !== newPrices[id][currency]
+        const newPrices = {};
+
+        tokens.forEach(({ id }) => {
+          const fromAPI = res.data?.[id];
+          newPrices[id] = {
+            eur: fromAPI?.eur ?? FALLBACK_PRICES[id].eur,
+            usd: fromAPI?.usd ?? FALLBACK_PRICES[id].usd,
+          };
+        });
+
+        const priceChange = Object.keys(newPrices).find(
+          (id) => prices[id]?.[currency] !== newPrices[id][currency]
         );
+
         if (priceChange) {
           setUpdatedToken(priceChange);
           setTimeout(() => setUpdatedToken(null), 1000);
         }
+
         setPrices(newPrices);
-        if (typeof window !== "undefined") {
-          localStorage.setItem(LOCAL_CACHE_KEY, JSON.stringify(newPrices));
-        }
+        localStorage.setItem(LOCAL_CACHE_KEY, JSON.stringify(newPrices));
         setLoading(false);
       }
     } catch (err) {
       console.warn("❌ CoinGecko fetch failed:", err.message);
+
+      const fallback = {};
+      tokens.forEach(({ id }) => {
+        fallback[id] = {
+          eur: FALLBACK_PRICES[id].eur,
+          usd: FALLBACK_PRICES[id].usd,
+        };
+      });
+
+      setPrices(fallback);
+      setLoading(false);
     }
   };
 
   const loadFromCache = () => {
-    const cached = typeof window !== "undefined" ? localStorage.getItem(LOCAL_CACHE_KEY) : null;
+    const cached = localStorage.getItem(LOCAL_CACHE_KEY);
     if (cached) {
       try {
         const parsed = JSON.parse(cached);
@@ -93,9 +121,7 @@ export default function LivePriceTable() {
   }, []);
 
   const handleCardClick = (route) => {
-    if (navigator.vibrate) {
-      navigator.vibrate(10);
-    }
+    if (navigator.vibrate) navigator.vibrate(10);
     router.push(route);
   };
 
@@ -141,7 +167,11 @@ export default function LivePriceTable() {
                 priority
               />
               <div className={styles.symbol}>{token.symbol}</div>
-              <div className={`${styles.price} ${updatedToken === token.id ? styles.updated : ""}`}>
+              <div
+                className={`${styles.price} ${
+                  updatedToken === token.id ? styles.updated : ""
+                }`}
+              >
                 {price !== undefined
                   ? `${currency === "eur" ? "€" : "$"}${price.toFixed(2)}`
                   : loading
