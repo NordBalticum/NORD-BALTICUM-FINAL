@@ -50,7 +50,8 @@ avax: {
   ],
   chainId: 43114,
   name: "avax",
-},
+  },
+};  
 
 // ✅ Encryption utils
 const encode = (str) => new TextEncoder().encode(str);
