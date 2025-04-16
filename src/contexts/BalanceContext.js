@@ -14,11 +14,46 @@ import { ethers } from "ethers";
 import debounce from "lodash.debounce";
 
 export const RPC = {
-  eth: "https://eth-mainnet.g.alchemy.com/v2/EFtfSTaltc-SAMmrDcE2je-U0JrCdQvB",
-  bnb: "https://bsc-dataseed.binance.org/",
-  tbnb: "https://data-seed-prebsc-1-s1.binance.org:8545/",
-  matic: "https://polygon-rpc.com",
-  avax: "https://api.avax.network/ext/bc/C/rpc",
+  eth: {
+    urls: [
+      "https://rpc.ankr.com/eth", // primary: Ankr
+      "https://eth.llamarpc.com", // fallback: LlamaNodes (nemokamas, be API)
+    ],
+    chainId: 1,
+    name: "eth",
+  },
+  bnb: {
+    urls: [
+      "https://bsc-dataseed.binance.org/", // primary
+      "https://bsc.publicnode.com", // fallback
+    ],
+    chainId: 56,
+    name: "bnb",
+  },
+  tbnb: {
+    urls: [
+      "https://data-seed-prebsc-1-s1.binance.org:8545/", // primary
+      "https://endpoints.omniatech.io/v1/bsc/testnet/public", // fallback
+    ],
+    chainId: 97,
+    name: "tbnb",
+  },
+  matic: {
+    urls: [
+      "https://rpc.ankr.com/polygon", // primary
+      "https://polygon.llamarpc.com", // fallback
+    ],
+    chainId: 137,
+    name: "matic",
+  },
+  avax: {
+    urls: [
+      "https://rpc.ankr.com/avalanche", // primary
+      "https://avalanche.public-rpc.com", // fallback
+    ],
+    chainId: 43114,
+    name: "avax",
+  },
 };
 
 export const TOKEN_IDS = {
