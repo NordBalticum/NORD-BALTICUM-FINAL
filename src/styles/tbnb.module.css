@@ -216,12 +216,12 @@
   }
 
   .chartBorder {
-    width: 96%;
+    width: 100%;
     height: clamp(200px, 42vh, 320px);
   }
 
   .chartContainer {
-    width: 94%;
+    width: 100%;
     height: clamp(220px, 40vh, 340px);
   }
 
@@ -252,7 +252,7 @@
   }
 
   .chartContainer {
-    width: 94%;
+    width: 100%;
     height: clamp(240px, 42vh, 360px);
   }
 }
