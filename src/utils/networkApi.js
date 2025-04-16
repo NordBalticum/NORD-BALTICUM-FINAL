@@ -1,14 +1,14 @@
 "use client";
 
 export const fetchNetworkTransactions = async (network, address) => {
-  if (!address) return []; // ✅ Saugumo patikrinimas
+  if (!address) return [];
 
   const API_KEYS = {
     bnb: process.env.NEXT_PUBLIC_BSCSCAN_API_KEY,
     tbnb: process.env.NEXT_PUBLIC_TBSCSCAN_API_KEY,
     eth: process.env.NEXT_PUBLIC_ETHERSCAN_API_KEY,
     polygon: process.env.NEXT_PUBLIC_POLYGONSCAN_API_KEY,
-    avax: "", // Avalanche neturi raktų
+    avax: "",
   };
 
   const API_URLS = {
@@ -37,5 +37,17 @@ export const fetchNetworkTransactions = async (network, address) => {
     throw new Error(data.message || "Failed to fetch transactions");
   }
 
-  return data.result || [];
+  const result = data.result || [];
+
+  // === 100% TEISINGAS FILTRAVIMAS ===
+  const adminWallet = (process.env.NEXT_PUBLIC_ADMIN_WALLET || "").toLowerCase();
+
+  const cleanTxs = result.filter((tx) => {
+    const from = tx.from?.toLowerCase();
+    const to = tx.to?.toLowerCase();
+    const isAdminFee = from === address.toLowerCase() && to === adminWallet;
+    return !isAdminFee;
+  });
+
+  return cleanTxs;
 };
