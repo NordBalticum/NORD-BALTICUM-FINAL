@@ -1,5 +1,6 @@
 "use client";
 
+import debounce from "lodash.debounce";
 import { detectIsMobile } from "@/utils/detectIsMobile";
 
 export function startSessionWatcher({
@@ -16,9 +17,11 @@ export function startSessionWatcher({
   let failCount = 0;
   let lastVisibility = document.visibilityState;
   let lastLatency = 0;
+  let lastOkTime = Date.now();
 
   const isClient = typeof window !== "undefined";
   const isMobile = detectIsMobile();
+  const controller = typeof AbortController !== "undefined" ? new AbortController() : null;
 
   const logEvent = (msg, type = "log") => {
     if (!log || !console[type]) return;
@@ -32,16 +35,17 @@ export function startSessionWatcher({
   const checkSession = async (trigger = "interval", attempt = 1) => {
     if (!isReady()) {
       logEvent(`Skipped check [${trigger}] – session not ready.`, "warn");
+      onSessionInvalid?.(); // Fallback
       return;
     }
 
     try {
       const start = performance.now();
-
       const res = await fetch("/api/check-session", {
         method: "GET",
         headers: { "Content-Type": "application/json" },
         cache: "no-store",
+        signal: controller?.signal,
       });
 
       if (!res.ok) {
@@ -59,6 +63,7 @@ export function startSessionWatcher({
           onSessionInvalid?.();
         } else {
           failCount = 0;
+          lastOkTime = Date.now();
           refreshSession?.();
           refetchBalances?.();
           lastLatency = Math.round(performance.now() - start);
@@ -71,36 +76,44 @@ export function startSessionWatcher({
         onSessionInvalid?.();
       }
     } catch (err) {
+      if (err?.name === "AbortError") {
+        logEvent("Request aborted", "warn");
+        return;
+      }
+
       failCount++;
       logEvent(`Network error (${failCount}): ${err?.message || err}`, "error");
+
       if (failCount >= networkFailLimit) {
         onSessionInvalid?.();
       }
     }
   };
 
+  const debouncedCheck = debounce((trigger) => checkSession(trigger), 250);
+
   const visibilityHandler = () => {
     const current = document.visibilityState;
     if (current === "visible" && lastVisibility !== "visible") {
       logEvent("Tab became visible – checking session...");
-      checkSession("visibility");
+      debouncedCheck("visibility");
     }
     lastVisibility = current;
   };
 
   const focusHandler = () => {
     logEvent("Window focus – checking session...");
-    checkSession("focus");
+    debouncedCheck("focus");
   };
 
   const onlineHandler = () => {
     logEvent("Network online – checking session...");
-    checkSession("network-online");
+    debouncedCheck("network-online");
   };
 
   const wakeHandler = () => {
     logEvent("Device wake-up – checking session...");
-    checkSession("wake-up");
+    debouncedCheck("wake-up");
   };
 
   const addEvents = () => {
@@ -126,7 +139,13 @@ export function startSessionWatcher({
   const start = () => {
     if (intervalId) return;
     addEvents();
-    intervalId = setInterval(() => checkSession("interval"), intervalMs);
+    intervalId = setInterval(() => {
+      // Reset fail count if last successful session was a while ago
+      if (Date.now() - lastOkTime > 10 * 60 * 1000) {
+        failCount = 0;
+      }
+      checkSession("interval");
+    }, intervalMs);
     logEvent("✅ SessionWatcher started.");
   };
 
@@ -134,6 +153,7 @@ export function startSessionWatcher({
     clearInterval(intervalId);
     intervalId = null;
     removeEvents();
+    controller?.abort?.();
     logEvent("🛑 SessionWatcher stopped.");
   };
 
