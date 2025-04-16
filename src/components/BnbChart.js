@@ -15,6 +15,7 @@ import {
 import debounce from "lodash.debounce";
 
 import { useMinimalReady } from "@/hooks/useMinimalReady";
+import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
 import styles from "@/styles/tbnb.module.css";
 
 ChartJS.register(
@@ -28,22 +29,28 @@ ChartJS.register(
 );
 
 export default function BnbChart() {
-  const { ready, loading } = useMinimalReady(); // Tikrinam sesijos būseną
+  const { ready } = useMinimalReady();
   const [chartData, setChartData] = useState([]);
+  const [chartLoading, setChartLoading] = useState(true);
+
   const chartRef = useRef(null);
-  const controllerRef = useRef(null);
   const mountedRef = useRef(false);
-  const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
+  const controllerRef = useRef(null);
+  const resizeTimeout = useRef(null);
+
+  const isMobile =
+    typeof window !== "undefined" && window.innerWidth < 768;
 
   const fetchChartData = useCallback(
     debounce(async () => {
       if (!mountedRef.current || document.visibilityState !== "visible") return;
 
-      controllerRef.current?.abort();
-      const controller = new AbortController();
-      controllerRef.current = controller;
-
       try {
+        setChartLoading(true);
+        controllerRef.current?.abort();
+        const controller = new AbortController();
+        controllerRef.current = controller;
+
         const res = await fetch(
           "https://api.coingecko.com/api/v3/coins/binancecoin/market_chart?vs_currency=eur&days=7",
           { signal: controller.signal }
@@ -53,16 +60,24 @@ export default function BnbChart() {
 
         const formatted = data.prices.map(([timestamp, price]) => {
           const date = new Date(timestamp);
-          const day = date.toLocaleDateString("en-GB", { day: "2-digit", month: "short" });
-          const hour = date.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+          const day = date.toLocaleDateString("en-GB", {
+            day: "2-digit",
+            month: "short",
+          });
+          const hour = date.toLocaleTimeString("en-GB", {
+            hour: "2-digit",
+            minute: "2-digit",
+          });
           return {
             fullLabel: `${day} ${hour}`,
-            shortLabel: day,
+            shortLabel: isMobile ? hour : `${day} ${hour}`,
             value: parseFloat(price).toFixed(2),
           };
         });
 
-        const step = Math.ceil(formatted.length / (isMobile ? 7 : 30));
+        // Daugiau taškų mobilui – kas 6 valandas
+        const pointsPerDay = isMobile ? 4 : 8;
+        const step = Math.ceil(formatted.length / (7 * pointsPerDay));
         const filtered = formatted.filter((_, i) => i % step === 0);
 
         if (mountedRef.current && filtered.length > 0) {
@@ -72,6 +87,8 @@ export default function BnbChart() {
         if (err.name !== "AbortError") {
           console.error("Chart fetch error:", err.message || err);
         }
+      } finally {
+        setChartLoading(false);
       }
     }, 500),
     [isMobile]
@@ -82,22 +99,38 @@ export default function BnbChart() {
     mountedRef.current = true;
     fetchChartData();
 
-    const interval = setInterval(() => {
+    // Interval: kas 1h (realiai užtenka)
+    const hourlyInterval = setInterval(() => {
       if (document.visibilityState === "visible") fetchChartData();
-    }, 60000);
+    }, 60 * 60 * 1000);
 
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") fetchChartData();
       else controllerRef.current?.abort();
     };
 
+    const handleReconnect = () => fetchChartData();
+
+    const handleResize = () => {
+      clearTimeout(resizeTimeout.current);
+      resizeTimeout.current = setTimeout(() => fetchChartData(), 800);
+    };
+
+    // Events
+    window.addEventListener("focus", handleReconnect);
+    window.addEventListener("online", handleReconnect);
     document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("resize", handleResize);
 
     return () => {
       mountedRef.current = false;
-      clearInterval(interval);
+      clearInterval(hourlyInterval);
       controllerRef.current?.abort();
+
+      window.removeEventListener("focus", handleReconnect);
+      window.removeEventListener("online", handleReconnect);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("resize", handleResize);
     };
   }, [ready, fetchChartData]);
 
@@ -133,7 +166,7 @@ export default function BnbChart() {
       decimation: {
         enabled: true,
         algorithm: "lttb",
-        samples: isMobile ? 7 : 50,
+        samples: isMobile ? 28 : 56,
       },
     },
     scales: {
@@ -183,10 +216,8 @@ export default function BnbChart() {
 
   return (
     <div className={styles.chartContainer}>
-      {loading ? (
-        <div style={{ padding: "20px", textAlign: "center", color: "#ccc" }}>
-          Loading session...
-        </div>
+      {!ready || chartLoading || chartData.length === 0 ? (
+        <MiniLoadingSpinner />
       ) : (
         <Line
           ref={chartRef}
