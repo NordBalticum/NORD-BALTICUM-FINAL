@@ -103,53 +103,62 @@ export const BalanceProvider = ({ children }) => {
   };
 
   const fetchBalancesAndPrices = useCallback(async () => {
-    if (!wallet?.wallet?.address) return;
+  if (!wallet?.wallet?.address) return;
 
-    try {
-      setLoading(true);
-      const address = wallet.wallet.address;
-      const newBalances = {};
+  try {
+    setLoading(true);
+    const address = wallet.wallet.address;
+    const newBalances = {};
 
-      for (const network of Object.keys(RPC)) {
-        try {
-          const provider = new ethers.JsonRpcProvider(RPC[network]);
-          const balance = await provider.getBalance(address);
-          newBalances[network] = parseFloat(ethers.formatEther(balance));
-        } catch (err) {
-          console.warn(`❌ Failed to fetch balance for ${network}:`, err?.message);
-        }
+    for (const network of Object.keys(RPC)) {
+      try {
+        const fallbackProvider = new ethers.FallbackProvider(
+          RPC[network].urls.map(
+            (url) =>
+              new ethers.JsonRpcProvider(url, {
+                chainId: RPC[network].chainId,
+                name: RPC[network].name,
+              })
+          )
+        );
+
+        const balance = await fallbackProvider.getBalance(address);
+        newBalances[network] = parseFloat(ethers.formatEther(balance));
+      } catch (err) {
+        console.warn(`❌ Failed to fetch balance for ${network}:`, err?.message);
       }
-
-      setBalances(newBalances);
-      saveToLocal(BALANCE_KEY, newBalances);
-      lastKnownBalances.current = newBalances;
-
-      const ids = Array.from(new Set(Object.values(TOKEN_IDS))).join(",");
-      const res = await fetch(
-        `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=eur,usd`,
-        { cache: "no-store" }
-      );
-
-      if (!res.ok) throw new Error("Failed to fetch prices from CoinGecko");
-
-      const data = await res.json();
-      const newPrices = {};
-
-      for (const [symbol, id] of Object.entries(TOKEN_IDS)) {
-        newPrices[symbol] = {
-          eur: data[id]?.eur ?? FALLBACK_PRICES[symbol].eur,
-          usd: data[id]?.usd ?? FALLBACK_PRICES[symbol].usd,
-        };
-      }
-
-      setPrices(newPrices);
-      saveToLocal(PRICE_KEY, newPrices);
-    } catch (error) {
-      console.error("❌ Critical error in fetchBalancesAndPrices:", error.message);
-    } finally {
-      setLoading(false);
     }
-  }, [wallet]);
+
+    setBalances(newBalances);
+    saveToLocal(BALANCE_KEY, newBalances);
+    lastKnownBalances.current = newBalances;
+
+    const ids = Array.from(new Set(Object.values(TOKEN_IDS))).join(",");
+    const res = await fetch(
+      `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=eur,usd`,
+      { cache: "no-store" }
+    );
+
+    if (!res.ok) throw new Error("Failed to fetch prices from CoinGecko");
+
+    const data = await res.json();
+    const newPrices = {};
+
+    for (const [symbol, id] of Object.entries(TOKEN_IDS)) {
+      newPrices[symbol] = {
+        eur: data[id]?.eur ?? FALLBACK_PRICES[symbol].eur,
+        usd: data[id]?.usd ?? FALLBACK_PRICES[symbol].usd,
+      };
+    }
+
+    setPrices(newPrices);
+    saveToLocal(PRICE_KEY, newPrices);
+  } catch (error) {
+    console.error("❌ Critical error in fetchBalancesAndPrices:", error.message);
+  } finally {
+    setLoading(false);
+  }
+}, [wallet]);
 
   useEffect(() => {
     const cachedBalances = loadFromLocal(BALANCE_KEY);
