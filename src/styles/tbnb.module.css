@@ -203,11 +203,15 @@
 }
 
 @media (max-width: 768px) {
+  .pageContainer {
+    overflow-y: hidden; /* scroll lock */
+  }
+
   .pageContent {
     transform: scale(0.77);
     transform-origin: top center;
     padding: 0;
-    margin-top: 20px; /* <- svarbiausia naujovė */
+    margin-top: 20px;
     height: auto;
     display: flex;
     flex-direction: column;
@@ -218,7 +222,7 @@
   .chartWrapper {
     width: 100%;
     padding: 0 8px;
-    margin-top: 8px;
+    margin-top: 16px; /* padidintas tarpas tarp balanso ir grafiko */
   }
 
   .chartBorder {
@@ -237,7 +241,7 @@
     gap: 12px;
     width: 100%;
     padding: 0 16px;
-    margin-top: 32px;
+    margin-top: 40px; /* padidintas tarpas tarp grafiko ir mygtukų */
   }
 
   .actionButton {
