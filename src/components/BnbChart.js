@@ -311,14 +311,14 @@ export default function BnbChart() {
               ref={chartRef}
               data={chartDataset}
               options={chartOptions}
-              style={{ width: "100%", height: "100%", display: "block" }}
+              className={styles.chartCanvas}
             />
           ) : (
             <Line
               ref={chartRef}
               data={chartDataset}
               options={chartOptions}
-              style={{ width: "100%", height: "100%", display: "block" }}
+              className={styles.chartCanvas}
             />
           )}
         </div>
