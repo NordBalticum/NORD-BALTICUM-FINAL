@@ -148,11 +148,7 @@ export default function TBnbPage() {
                   <QRCode
                     value={address}
                     size={160}
-                    style={{
-                      height: "auto",
-                      maxWidth: "100%",
-                      width: "100%",
-                    }}
+                    className={styles.qrCode}
                   />
                   <p className={styles.qrAddress}>{address}</p>
                   <p className={styles.qrCopy}>
