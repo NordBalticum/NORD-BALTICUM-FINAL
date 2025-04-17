@@ -14,9 +14,7 @@ import {
   Filler,
   Decimation,
 } from "chart.js";
-import debounce from "lodash.debounce";
 
-import { useMinimalReady } from "@/hooks/useMinimalReady";
 import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
 import styles from "@/styles/tbnb.module.css";
 
@@ -35,7 +33,6 @@ ChartJS.register(
 const STORAGE_KEY = "nb_bnb_chart";
 
 export default function BnbChart() {
-  const { ready } = useMinimalReady();
   const [chartData, setChartData] = useState([]);
   const [chartLoading, setChartLoading] = useState(true);
   const [days, setDays] = useState(7);
@@ -107,7 +104,6 @@ export default function BnbChart() {
   }, [isMobile]);
 
   useEffect(() => {
-    if (!ready) return;
     mountedRef.current = true;
     fetchChartData(days);
 
@@ -120,7 +116,7 @@ export default function BnbChart() {
       clearInterval(interval);
       controllerRef.current?.abort();
     };
-  }, [ready, days, fetchChartData]);
+  }, [days, fetchChartData]);
 
   const maxY = Math.max(...chartData.map((p) => parseFloat(p.value) || 0)) * 1.15;
 
@@ -259,7 +255,7 @@ export default function BnbChart() {
             )}
           </div>
 
-          {!ready || chartLoading || chartData.length === 0 ? (
+          {chartLoading || chartData.length === 0 ? (
             <MiniLoadingSpinner />
           ) : useBarChart ? (
             <Bar
