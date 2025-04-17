@@ -1,3 +1,4 @@
+// src/contexts/AuthContext.js
 "use client";
 
 import {
@@ -77,7 +78,6 @@ const getKey = async () => {
     false,
     ["deriveKey"]
   );
-
   return window.crypto.subtle.deriveKey(
     {
       name: "PBKDF2",
@@ -99,11 +99,7 @@ export const encrypt = async (text) => {
   const iv = window.crypto.getRandomValues(new Uint8Array(12));
   const key = await getKey();
   const data = encode(text);
-  const encrypted = await window.crypto.subtle.encrypt(
-    { name: "AES-GCM", iv },
-    key,
-    data
-  );
+  const encrypted = await window.crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, data);
   return btoa(
     JSON.stringify({
       iv: Array.from(iv),
@@ -158,19 +154,14 @@ export const AuthProvider = ({ children }) => {
   const setupWallet = useCallback((privateKey) => {
     const base = new ethers.Wallet(privateKey);
     const signers = {};
-
     Object.entries(RPC).forEach(([net, cfg]) => {
       const provider = new ethers.FallbackProvider(
         cfg.urls.map((url) =>
-          new ethers.JsonRpcProvider(url, {
-            chainId: cfg.chainId,
-            name: cfg.name,
-          })
+          new ethers.JsonRpcProvider(url, { chainId: cfg.chainId, name: cfg.name })
         )
       );
       signers[net] = new ethers.Wallet(privateKey, provider);
     });
-
     setWallet({ wallet: base, signers });
   }, []);
 
@@ -181,7 +172,6 @@ export const AuthProvider = ({ children }) => {
     async (email) => {
       const newWallet = ethers.Wallet.createRandom();
       const encryptedKey = await encrypt(newWallet.privateKey);
-
       const { error } = await supabase.from("wallets").upsert({
         user_email: email,
         eth_address: newWallet.address,
@@ -189,9 +179,8 @@ export const AuthProvider = ({ children }) => {
         created_at: new Date().toISOString(),
       });
       if (error) throw error;
-
       setupWallet(newWallet.privateKey);
-      toast.success("✅ Wallet created!");
+      toast.success("✅ Wallet created!", { position: "top-center", autoClose: 3000 });
     },
     [setupWallet]
   );
@@ -203,14 +192,12 @@ export const AuthProvider = ({ children }) => {
     async (email) => {
       try {
         setWalletLoading(true);
-
         const { data, error } = await supabase
           .from("wallets")
           .select("encrypted_key")
           .eq("user_email", email)
           .maybeSingle();
         if (error) throw error;
-
         if (data?.encrypted_key) {
           const pk = await decrypt(data.encrypted_key);
           setupWallet(pk);
@@ -219,7 +206,7 @@ export const AuthProvider = ({ children }) => {
         }
       } catch (err) {
         console.error("Wallet load/create error:", err);
-        toast.error("❌ Wallet load failed");
+        toast.error("❌ Wallet load failed", { position: "top-center", autoClose: 3000 });
         setWallet(null);
       } finally {
         setWalletLoading(false);
@@ -234,16 +221,13 @@ export const AuthProvider = ({ children }) => {
   const importWalletFromPrivateKey = useCallback(
     async (email, privateKey) => {
       if (!isValidPrivateKey(privateKey)) {
-        toast.error("❌ Invalid private key format");
+        toast.error("❌ Invalid private key format", { position: "top-center", autoClose: 3000 });
         return;
       }
-
       try {
         setWalletLoading(true);
-
         const address = new ethers.Wallet(privateKey).address;
         const encryptedKey = await encrypt(privateKey);
-
         const { error } = await supabase.from("wallets").upsert({
           user_email: email,
           eth_address: address,
@@ -251,12 +235,11 @@ export const AuthProvider = ({ children }) => {
           updated_at: new Date().toISOString(),
         });
         if (error) throw error;
-
         setupWallet(privateKey);
-        toast.success("✅ Wallet imported!");
+        toast.success("✅ Wallet imported!", { position: "top-center", autoClose: 3000 });
       } catch (err) {
         console.error("Import failed:", err);
-        toast.error("❌ Wallet import failed");
+        toast.error("❌ Wallet import failed", { position: "top-center", autoClose: 3000 });
       } finally {
         setWalletLoading(false);
       }
@@ -270,24 +253,22 @@ export const AuthProvider = ({ children }) => {
   const safeRefreshSession = useCallback(async () => {
     if (Date.now() - lastSessionRefresh.current < 60_000) return;
     lastSessionRefresh.current = Date.now();
-
     try {
       const {
         data: { session: newSession },
       } = await supabase.auth.refreshSession();
-
       if (newSession) {
         setSession(newSession);
         setUser(newSession.user);
       } else {
-        setUser(null);
         setSession(null);
+        setUser(null);
         setWallet(null);
       }
     } catch (err) {
       console.error("Session refresh error:", err);
-      setUser(null);
       setSession(null);
+      setUser(null);
       setWallet(null);
     }
   }, []);
@@ -297,19 +278,13 @@ export const AuthProvider = ({ children }) => {
    */
   const signInWithMagicLink = useCallback(
     async (email) => {
-      const redirectTo =
-        (isClient ? window.location.origin : "https://nordbalticum.com") +
-        "/dashboard";
-
+      const redirectTo = (isClient ? window.location.origin : "https://nordbalticum.com") + "/dashboard";
       const { error } = await supabase.auth.signInWithOtp({
         email,
-        options: {
-          shouldCreateUser: true,
-          emailRedirectTo: redirectTo,
-        },
+        options: { shouldCreateUser: true, emailRedirectTo: redirectTo },
       });
       if (error) {
-        toast.error("❌ Magic link error");
+        toast.error("❌ Magic link error", { position: "top-center", autoClose: 3000 });
         throw error;
       }
     },
@@ -317,16 +292,13 @@ export const AuthProvider = ({ children }) => {
   );
 
   const signInWithGoogle = useCallback(async () => {
-    const redirectTo =
-      (isClient ? window.location.origin : "https://nordbalticum.com") +
-      "/dashboard";
-
+    const redirectTo = (isClient ? window.location.origin : "https://nordbalticum.com") + "/dashboard";
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: { redirectTo },
     });
     if (error) {
-      toast.error("❌ Google login error");
+      toast.error("❌ Google login error", { position: "top-center", autoClose: 3000 });
       throw error;
     }
   }, [isClient]);
@@ -341,24 +313,15 @@ export const AuthProvider = ({ children }) => {
       } catch (err) {
         console.error("Sign out error:", err);
       }
-
       setUser(null);
       setSession(null);
       setWallet(null);
-
       if (isClient) {
-        ["userPrivateKey", "activeNetwork", "sessionData"].forEach((k) =>
-          localStorage.removeItem(k)
-        );
+        ["userPrivateKey", "activeNetwork", "sessionData"].forEach((k) => localStorage.removeItem(k));
       }
-
       router.replace(redirectPath);
-
       if (showToast) {
-        toast.info("👋 Logged out", {
-          position: "top-center",
-          autoClose: 4000,
-        });
+        toast.info("👋 Logged out", { position: "top-center", autoClose: 3000 });
       }
     },
     [router, isClient]
@@ -371,12 +334,9 @@ export const AuthProvider = ({ children }) => {
   // Initialize session & auth state
   useEffect(() => {
     if (!isClient) return;
-
     (async () => {
       try {
-        const {
-          data: { session: initSession },
-        } = await supabase.auth.getSession();
+        const { data: { session: initSession } } = await supabase.auth.getSession();
         if (initSession) {
           setSession(initSession);
           setUser(initSession.user);
@@ -388,9 +348,7 @@ export const AuthProvider = ({ children }) => {
       }
     })();
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_, newSession) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, newSession) => {
       if (newSession) {
         setSession(newSession);
         setUser(newSession.user);
@@ -413,7 +371,6 @@ export const AuthProvider = ({ children }) => {
   // Auto-refresh session on focus/visibility
   useEffect(() => {
     if (!isClient) return;
-
     const onFocus = debounce(() => safeRefreshSession(), 300);
     const onVisible = debounce(() => {
       if (document.visibilityState === "visible") safeRefreshSession();
@@ -433,20 +390,15 @@ export const AuthProvider = ({ children }) => {
   // Inactivity logout (15 min)
   useEffect(() => {
     if (!isClient) return;
-
     const events = ["mousemove", "keydown", "click", "touchstart"];
     const resetTimer = () => {
       clearTimeout(inactivityTimer.current);
       inactivityTimer.current = setTimeout(() => signOut(true), 15 * 60 * 1000);
     };
-
     events.forEach((evt) => window.addEventListener(evt, resetTimer));
     resetTimer();
-
     return () => {
-      events.forEach((evt) =>
-        window.removeEventListener(evt, resetTimer)
-      );
+      events.forEach((evt) => window.removeEventListener(evt, resetTimer));
     };
   }, [signOut, isClient]);
 
