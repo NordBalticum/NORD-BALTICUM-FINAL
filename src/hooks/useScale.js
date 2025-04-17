@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import debounce from "lodash.debounce";
 
 /**
- * useScale – Ferrari Ultra Responsive Hook v2.0
+ * useScale – Ferrari Ultra Responsive Hook v3.0
  * =============================================
  * • Multi‑breakpoint scaling for any viewport, DPI & orientation
  * • Auto‑throttles on resize/orientation/viewport changes
@@ -12,23 +12,24 @@ import debounce from "lodash.debounce";
  * • SSR‑safe
  */
 export function useScale(
-  base = 0.92,
+  base = 1.0, // Default scale remains 1 for desktop.
   {
     breakpoints = [
-      { max: 360, scale: 0.65 },
-      { max: 460, scale: 0.70 },
-      { max: 576, scale: 0.75 },
-      { max: 768, scale: 0.85 },
-      { max: 992, scale: 0.95 },
-      { max: Infinity, scale: 0.97 },
+      { max: 360, scale: 0.55 },
+      { max: 460, scale: 0.60 },
+      { max: 576, scale: 0.65 },
+      { max: 768, scale: 0.75 },
+      { max: 992, scale: 0.85 },
+      { max: 1200, scale: 0.90 }, // For larger mobile devices
+      { max: Infinity, scale: 1.0 }, // For large devices, no scaling
     ],
-    desktopFactor = 0.99,
-    mobileFactor = 0.67,
-    hdpiAdjustment = 0.015,
-    portraitAdjustment = 0.01,
-    minScale = 0.55,
-    maxScale = 1.0,
-    debounceMs = 120,
+    desktopFactor = 1.0, // No scaling factor on desktop
+    mobileFactor = 0.75, // Mobile devices will have this factor
+    hdpiAdjustment = 0.015, // Small HDPI adjustment for small screens
+    portraitAdjustment = 0.01, // Extra adjustment for portrait mode
+    minScale = 0.55, // Minimum scale value for mobile devices
+    maxScale = 1.0, // Maximum scale value
+    debounceMs = 120, // Debouncing for resize events
   } = {}
 ) {
   const [scale, setScale] = useState(base);
@@ -43,9 +44,11 @@ export function useScale(
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const portrait = window.matchMedia("(orientation: portrait)").matches;
 
-    // pick base by breakpoint
+    // Pick base scale by breakpoint
     let chosen = base;
     const effW = Math.min(w, sw, ow);
+
+    // Adjusting scale based on device size and breakpoints
     for (const bp of breakpoints) {
       if (effW <= bp.max) {
         chosen = reduced ? bp.scale * 0.95 : bp.scale;
@@ -53,17 +56,18 @@ export function useScale(
       }
     }
 
-    // device‑type factor
+    // Device type factor
     chosen *= effW < 768 ? mobileFactor : desktopFactor;
 
-    // retina/HDPI tweak for small screens
+    // Retina/HDPI adjustment for small screens
     if (pr >= 2 && effW < 500) chosen -= hdpiAdjustment;
 
-    // extra portrait tweak
+    // Portrait mode adjustment
     if (portrait && effW < 768) chosen -= portraitAdjustment;
 
-    // clamp & round
+    // Clamp scale to ensure it's within minScale and maxScale
     chosen = Math.max(minScale, Math.min(maxScale, chosen));
+
     setScale(parseFloat(chosen.toFixed(4)));
   }, [
     base,
@@ -77,9 +81,10 @@ export function useScale(
   ]);
 
   useEffect(() => {
-    // initial
+    // Initial scale update
     update();
 
+    // Resize and orientation event listeners
     const onResize = debounce(update, debounceMs);
     const onOrient = () => setTimeout(update, 80);
     const onViewport = () => setTimeout(update, 100);
@@ -90,6 +95,7 @@ export function useScale(
     window.visualViewport?.addEventListener("resize", onViewport);
     media.addEventListener?.("change", update);
 
+    // Cleanup event listeners
     return () => {
       window.removeEventListener("resize", onResize);
       window.removeEventListener("orientationchange", onOrient);
