@@ -6,6 +6,7 @@ import {
   useEffect,
   useState,
   useRef,
+  useCallback,
 } from "react";
 import { useRouter } from "next/navigation";
 import { ethers } from "ethers";
@@ -13,21 +14,21 @@ import { supabase } from "@/utils/supabaseClient";
 import { toast } from "react-toastify";
 import debounce from "lodash.debounce";
 
-// ✅ RPC su Fallback'ais
+// ========================
+// 🛠️ CONFIG & UTILITIES
+// ========================
+
+/**
+ * RPC configurations with fallbacks for each supported network.
+ */
 export const RPC = {
   eth: {
-    urls: [
-      "https://ethereum.publicnode.com",
-      "https://eth.llamarpc.com",
-    ],
+    urls: ["https://ethereum.publicnode.com", "https://eth.llamarpc.com"],
     chainId: 1,
     name: "eth",
   },
   bnb: {
-    urls: [
-      "https://bsc-dataseed.binance.org/",
-      "https://bsc.publicnode.com",
-    ],
+    urls: ["https://bsc-dataseed.binance.org/", "https://bsc.publicnode.com"],
     chainId: 56,
     name: "bnb",
   },
@@ -40,10 +41,7 @@ export const RPC = {
     name: "tbnb",
   },
   matic: {
-    urls: [
-      "https://polygon-bor.publicnode.com",
-      "https://1rpc.io/matic",
-    ],
+    urls: ["https://polygon-bor.publicnode.com", "https://1rpc.io/matic"],
     chainId: 137,
     name: "matic",
   },
@@ -57,13 +55,22 @@ export const RPC = {
   },
 };
 
-// ✅ Encryption
+/**
+ * Encryption secret must be defined in env: NEXT_PUBLIC_ENCRYPTION_SECRET
+ */
 const ENCRYPTION_SECRET = process.env.NEXT_PUBLIC_ENCRYPTION_SECRET;
+if (!ENCRYPTION_SECRET) {
+  console.error("Missing NEXT_PUBLIC_ENCRYPTION_SECRET");
+}
+
 const encode = (str) => new TextEncoder().encode(str);
 const decode = (buf) => new TextDecoder().decode(buf);
 
+/**
+ * Derive AES-GCM key using PBKDF2
+ */
 const getKey = async () => {
-  const keyMaterial = await window.crypto.subtle.importKey(
+  const baseKey = await window.crypto.subtle.importKey(
     "raw",
     encode(ENCRYPTION_SECRET),
     { name: "PBKDF2" },
@@ -75,25 +82,28 @@ const getKey = async () => {
     {
       name: "PBKDF2",
       salt: encode("nordbalticum-salt"),
-      iterations: 100000,
+      iterations: 100_000,
       hash: "SHA-256",
     },
-    keyMaterial,
+    baseKey,
     { name: "AES-GCM", length: 256 },
     false,
     ["encrypt", "decrypt"]
   );
 };
 
+/**
+ * Encrypt text using AES-GCM
+ */
 export const encrypt = async (text) => {
   const iv = window.crypto.getRandomValues(new Uint8Array(12));
   const key = await getKey();
+  const data = encode(text);
   const encrypted = await window.crypto.subtle.encrypt(
     { name: "AES-GCM", iv },
     key,
-    encode(text)
+    data
   );
-
   return btoa(
     JSON.stringify({
       iv: Array.from(iv),
@@ -102,6 +112,9 @@ export const encrypt = async (text) => {
   );
 };
 
+/**
+ * Decrypt ciphertext
+ */
 export const decrypt = async (ciphertext) => {
   const { iv, data } = JSON.parse(atob(ciphertext));
   const key = await getKey();
@@ -113,10 +126,17 @@ export const decrypt = async (ciphertext) => {
   return decode(decrypted);
 };
 
-export const isValidPrivateKey = (key) => /^0x[a-fA-F0-9]{64}$/.test(key);
+/**
+ * Validate Ethereum private key
+ */
+export const isValidPrivateKey = (key) =>
+  /^0x[a-fA-F0-9]{64}$/.test(key.trim());
 
-// ✅ Context
-export const AuthContext = createContext();
+// ========================
+// 📦 CONTEXT SETUP
+// ========================
+
+export const AuthContext = createContext(null);
 export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider = ({ children }) => {
@@ -129,219 +149,306 @@ export const AuthProvider = ({ children }) => {
   const [authLoading, setAuthLoading] = useState(true);
   const [walletLoading, setWalletLoading] = useState(true);
 
-  const inactivityTimer = useRef(null);
   const lastSessionRefresh = useRef(Date.now());
+  const inactivityTimer = useRef(null);
 
-  useEffect(() => {
-    if (!isClient) return;
+  /**
+   * Setup wallet instance and per-network signers
+   */
+  const setupWallet = useCallback((privateKey) => {
+    const base = new ethers.Wallet(privateKey);
+    const signers = {};
 
-    const init = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session) {
-          setSession(session);
-          setUser(session.user);
-        }
-      } catch (err) {
-        console.error("Initial session load error:", err.message);
-      } finally {
-        setAuthLoading(false);
-      }
-    };
-
-    init();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session) {
-        setSession(session);
-        setUser(session.user);
-      } else {
-        setSession(null);
-        setUser(null);
-        setWallet(null);
-      }
+    Object.entries(RPC).forEach(([net, cfg]) => {
+      const provider = new ethers.FallbackProvider(
+        cfg.urls.map((url) =>
+          new ethers.JsonRpcProvider(url, {
+            chainId: cfg.chainId,
+            name: cfg.name,
+          })
+        )
+      );
+      signers[net] = new ethers.Wallet(privateKey, provider);
     });
 
-    return () => subscription?.unsubscribe();
+    setWallet({ wallet: base, signers });
   }, []);
 
-  useEffect(() => {
-    if (!isClient || authLoading || !user?.email) return;
-    loadOrCreateWallet(user.email);
-  }, [authLoading, user]);
-
-  const loadOrCreateWallet = async (email) => {
-    try {
-      setWalletLoading(true);
-
-      const { data, error } = await supabase
-        .from("wallets")
-        .select("*")
-        .eq("user_email", email)
-        .maybeSingle();
-
-      if (error) throw error;
-
-      if (data?.encrypted_key) {
-        const decryptedKey = await decrypt(data.encrypted_key);
-        setupWallet(decryptedKey);
-      } else {
-        await createAndStoreWallet(email);
-      }
-    } catch (err) {
-      console.error("Wallet load failed:", err.message);
-      toast.error("❌ Wallet load failed.");
-      setWallet(null);
-    } finally {
-      setWalletLoading(false);
-    }
-  };
-
-  const createAndStoreWallet = async (email) => {
-    const newWallet = ethers.Wallet.createRandom();
-    const encryptedKey = await encrypt(newWallet.privateKey);
-
-    const { error } = await supabase.from("wallets").upsert({
-      user_email: email,
-      eth_address: newWallet.address,
-      encrypted_key: encryptedKey,
-      created_at: new Date().toISOString(),
-    });
-
-    if (error) throw error;
-
-    setupWallet(newWallet.privateKey);
-    toast.success("✅ Wallet created!");
-  };
-
-  const importWalletFromPrivateKey = async (email, privateKey) => {
-    if (!isValidPrivateKey(privateKey)) {
-      toast.error("❌ Invalid private key format.");
-      return;
-    }
-
-    try {
-      setWalletLoading(true);
-
-      const newAddress = new ethers.Wallet(privateKey).address;
-      const encryptedKey = await encrypt(privateKey);
+  /**
+   * Create new wallet and store encrypted key
+   */
+  const createAndStoreWallet = useCallback(
+    async (email) => {
+      const newWallet = ethers.Wallet.createRandom();
+      const encryptedKey = await encrypt(newWallet.privateKey);
 
       const { error } = await supabase.from("wallets").upsert({
         user_email: email,
-        eth_address: newAddress,
+        eth_address: newWallet.address,
         encrypted_key: encryptedKey,
-        updated_at: new Date().toISOString(),
+        created_at: new Date().toISOString(),
       });
-
       if (error) throw error;
 
-      setupWallet(privateKey);
-      toast.success("✅ Wallet imported!");
-    } catch (err) {
-      console.error("Wallet import failed:", err.message);
-      toast.error("❌ Wallet import failed.");
-    } finally {
-      setWalletLoading(false);
-    }
-  };
+      setupWallet(newWallet.privateKey);
+      toast.success("✅ Wallet created!");
+    },
+    [setupWallet]
+  );
 
-  const setupWallet = (privateKey) => {
-    const baseWallet = new ethers.Wallet(privateKey);
-    const signers = {};
+  /**
+   * Load existing or create new wallet
+   */
+  const loadOrCreateWallet = useCallback(
+    async (email) => {
+      try {
+        setWalletLoading(true);
 
-    Object.entries(RPC).forEach(([net, rpcConfig]) => {
-      const fallbackProvider = new ethers.FallbackProvider(
-        rpcConfig.urls.map(
-          (url) =>
-            new ethers.JsonRpcProvider(url, {
-              chainId: rpcConfig.chainId,
-              name: rpcConfig.name,
-            })
-        )
-      );
-      signers[net] = new ethers.Wallet(privateKey, fallbackProvider);
-    });
+        const { data, error } = await supabase
+          .from("wallets")
+          .select("encrypted_key")
+          .eq("user_email", email)
+          .maybeSingle();
+        if (error) throw error;
 
-    setWallet({ wallet: baseWallet, signers });
-  };
+        if (data?.encrypted_key) {
+          const pk = await decrypt(data.encrypted_key);
+          setupWallet(pk);
+        } else {
+          await createAndStoreWallet(email);
+        }
+      } catch (err) {
+        console.error("Wallet load/create error:", err);
+        toast.error("❌ Wallet load failed");
+        setWallet(null);
+      } finally {
+        setWalletLoading(false);
+      }
+    },
+    [createAndStoreWallet, setupWallet]
+  );
 
-  const safeRefreshSession = async () => {
-    if (Date.now() - lastSessionRefresh.current < 60000) return;
+  /**
+   * Import wallet from private key string
+   */
+  const importWalletFromPrivateKey = useCallback(
+    async (email, privateKey) => {
+      if (!isValidPrivateKey(privateKey)) {
+        toast.error("❌ Invalid private key format");
+        return;
+      }
 
+      try {
+        setWalletLoading(true);
+
+        const address = new ethers.Wallet(privateKey).address;
+        const encryptedKey = await encrypt(privateKey);
+
+        const { error } = await supabase.from("wallets").upsert({
+          user_email: email,
+          eth_address: address,
+          encrypted_key: encryptedKey,
+          updated_at: new Date().toISOString(),
+        });
+        if (error) throw error;
+
+        setupWallet(privateKey);
+        toast.success("✅ Wallet imported!");
+      } catch (err) {
+        console.error("Import failed:", err);
+        toast.error("❌ Wallet import failed");
+      } finally {
+        setWalletLoading(false);
+      }
+    },
+    [setupWallet]
+  );
+
+  /**
+   * Refresh Supabase session & optionally schedule next
+   */
+  const safeRefreshSession = useCallback(async () => {
+    if (Date.now() - lastSessionRefresh.current < 60_000) return;
     lastSessionRefresh.current = Date.now();
 
     try {
-      const { data: { session } } = await supabase.auth.refreshSession();
-      if (session) {
-        setSession(session);
-        setUser(session.user);
+      const {
+        data: { session: newSession },
+      } = await supabase.auth.refreshSession();
+
+      if (newSession) {
+        setSession(newSession);
+        setUser(newSession.user);
+      } else {
+        setUser(null);
+        setSession(null);
+        setWallet(null);
+      }
+    } catch (err) {
+      console.error("Session refresh error:", err);
+      setUser(null);
+      setSession(null);
+      setWallet(null);
+    }
+  }, []);
+
+  /**
+   * Sign in flows
+   */
+  const signInWithMagicLink = useCallback(
+    async (email) => {
+      const redirectTo =
+        (isClient ? window.location.origin : "https://nordbalticum.com") +
+        "/dashboard";
+
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+          shouldCreateUser: true,
+          emailRedirectTo: redirectTo,
+        },
+      });
+      if (error) {
+        toast.error("❌ Magic link error");
+        throw error;
+      }
+    },
+    [isClient]
+  );
+
+  const signInWithGoogle = useCallback(async () => {
+    const redirectTo =
+      (isClient ? window.location.origin : "https://nordbalticum.com") +
+      "/dashboard";
+
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo },
+    });
+    if (error) {
+      toast.error("❌ Google login error");
+      throw error;
+    }
+  }, [isClient]);
+
+  /**
+   * Sign out (Supabase + clear state)
+   */
+  const signOut = useCallback(
+    async (showToast = false, redirectPath = "/") => {
+      try {
+        await supabase.auth.signOut();
+      } catch (err) {
+        console.error("Sign out error:", err);
+      }
+
+      setUser(null);
+      setSession(null);
+      setWallet(null);
+
+      if (isClient) {
+        ["userPrivateKey", "activeNetwork", "sessionData"].forEach((k) =>
+          localStorage.removeItem(k)
+        );
+      }
+
+      router.replace(redirectPath);
+
+      if (showToast) {
+        toast.info("👋 Logged out", {
+          position: "top-center",
+          autoClose: 4000,
+        });
+      }
+    },
+    [router, isClient]
+  );
+
+  // ========================
+  // 🔌 SIDE EFFECTS
+  // ========================
+
+  // Initialize session & auth state
+  useEffect(() => {
+    if (!isClient) return;
+
+    (async () => {
+      try {
+        const {
+          data: { session: initSession },
+        } = await supabase.auth.getSession();
+        if (initSession) {
+          setSession(initSession);
+          setUser(initSession.user);
+        }
+      } catch (err) {
+        console.error("Initial session load error:", err);
+      } finally {
+        setAuthLoading(false);
+      }
+    })();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_, newSession) => {
+      if (newSession) {
+        setSession(newSession);
+        setUser(newSession.user);
       } else {
         setSession(null);
         setUser(null);
         setWallet(null);
       }
-    } catch (err) {
-      console.error("Session refresh failed:", err.message);
-      setSession(null);
-      setUser(null);
-      setWallet(null);
-    }
-  };
-
-  const signInWithMagicLink = async (email) => {
-    const origin = isClient ? window.location.origin : "https://nordbalticum.com";
-
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: {
-        shouldCreateUser: true,
-        emailRedirectTo: `${origin}/dashboard`,
-      },
     });
 
-    if (error) {
-      toast.error("❌ Magic link error.");
-      throw error;
-    }
-  };
+    return () => subscription.unsubscribe();
+  }, [isClient]);
 
-  const signInWithGoogle = async () => {
-    const origin = isClient ? window.location.origin : "https://nordbalticum.com";
+  // Load or create wallet when authenticated
+  useEffect(() => {
+    if (!isClient || authLoading || !user?.email) return;
+    loadOrCreateWallet(user.email);
+  }, [authLoading, user?.email, isClient, loadOrCreateWallet]);
 
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo: `${origin}/dashboard` },
-    });
+  // Auto-refresh session on focus/visibility
+  useEffect(() => {
+    if (!isClient) return;
 
-    if (error) {
-      toast.error("❌ Google login error.");
-      throw error;
-    }
-  };
+    const onFocus = debounce(() => safeRefreshSession(), 300);
+    const onVisible = debounce(() => {
+      if (document.visibilityState === "visible") safeRefreshSession();
+    }, 300);
 
-  const signOut = async (showToast = false, redirectPath = "/") => {
-    try {
-      await supabase.auth.signOut();
-    } catch (err) {
-      console.error("Sign out error:", err.message);
-    }
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVisible);
 
-    try { setUser(null); } catch {}
-    try { setWallet(null); } catch {}
-    try { setSession(null); } catch {}
+    return () => {
+      onFocus.cancel();
+      onVisible.cancel();
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, [safeRefreshSession, isClient]);
 
-    if (isClient) {
-      ["userPrivateKey", "activeNetwork", "sessionData"].forEach((key) =>
-        localStorage.removeItem(key)
+  // Inactivity logout (15 min)
+  useEffect(() => {
+    if (!isClient) return;
+
+    const events = ["mousemove", "keydown", "click", "touchstart"];
+    const resetTimer = () => {
+      clearTimeout(inactivityTimer.current);
+      inactivityTimer.current = setTimeout(() => signOut(true), 15 * 60 * 1000);
+    };
+
+    events.forEach((evt) => window.addEventListener(evt, resetTimer));
+    resetTimer();
+
+    return () => {
+      events.forEach((evt) =>
+        window.removeEventListener(evt, resetTimer)
       );
-    }
-
-    router.replace(redirectPath);
-
-    if (showToast) {
-      toast.info("👋 Logged out.", { position: "top-center", autoClose: 4000 });
-    }
-  };
+    };
+  }, [signOut, isClient]);
 
   return (
     <AuthContext.Provider
