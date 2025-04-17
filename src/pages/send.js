@@ -10,7 +10,7 @@ import { useNetwork } from "@/contexts/NetworkContext";
 import { useSend } from "@/contexts/SendContext";
 import { useBalance } from "@/contexts/BalanceContext";
 import { useSystemReady } from "@/hooks/useSystemReady";
-import { useScale } from "@/hooks/useScale";   // ← importuojame useScale
+import { useScale } from "@/hooks/useScale";
 
 import SwipeSelector from "@/components/SwipeSelector";
 import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
@@ -20,7 +20,7 @@ import SuccessToast from "@/components/SuccessToast";
 
 import styles from "@/styles/send.module.css";
 
-// ✅ Network metadata
+// — Network metadata
 const NETWORKS = {
   eth:   { label: "ETH",   min: 0.001,  explorer: "https://etherscan.io/tx/" },
   bnb:   { label: "BNB",   min: 0.0005, explorer: "https://bscscan.com/tx/" },
@@ -32,9 +32,9 @@ const NETWORKS = {
 export default function SendPage() {
   const router = useRouter();
   const { user } = useAuth();
-  const { activeNetwork } = useNetwork();
+  const { activeNetwork, switchNetwork } = useNetwork();
   const { ready, loading: sysLoading } = useSystemReady();
-  const scale = useScale();                    // ← gauname mastelį
+  const scale = useScale();
 
   const {
     sendTransaction,
@@ -49,7 +49,7 @@ export default function SendPage() {
 
   const { balances, prices } = useBalance();
 
-  // — UI state
+  // UI state
   const [receiver, setReceiver]       = useState("");
   const [amount, setAmount]           = useState("");
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -58,13 +58,13 @@ export default function SendPage() {
   const [error, setError]             = useState(null);
   const [txHash, setTxHash]           = useState("");
 
-  // — Derived config
+  // Derived config
   const cfg    = NETWORKS[activeNetwork] || {};
   const { label: short, min, explorer } = cfg;
   const val    = useMemo(() => parseFloat(amount) || 0, [amount]);
   const bal    = useMemo(() => balances?.[activeNetwork] || 0, [balances, activeNetwork]);
 
-  // — Fiat conversions
+  // Fiat conversions
   const eurBal = useMemo(() => {
     const rate = prices?.[activeNetwork]?.eur ?? 0;
     return (bal * rate).toFixed(2);
@@ -75,24 +75,24 @@ export default function SendPage() {
     return (bal * rate).toFixed(2);
   }, [prices, activeNetwork, bal]);
 
-  // — Address validator
+  // Address validator
   const isValidAddress = useCallback(addr =>
     /^0x[a-fA-F0-9]{40}$/.test(addr.trim()), []
   );
 
-  // — Recalculate fees when network or amount changes
+  // Recalculate fees when network or amount changes
   useEffect(() => {
     if (val > 0) calculateFees(activeNetwork, val);
   }, [activeNetwork, val, calculateFees]);
 
-  // — Redirect if not authenticated once system is ready
+  // Redirect if not authenticated once system is ready
   useEffect(() => {
     if (ready && !user) {
       router.replace("/");
     }
   }, [ready, user, router]);
 
-  // — Show global loader during system init
+  // Global loader until system ready
   if (sysLoading) {
     return (
       <div className={styles.loader}>
@@ -101,16 +101,19 @@ export default function SendPage() {
     );
   }
 
-  // — Handle network switch from SwipeSelector
+  // Handle network switch
   const onNetworkSelect = useCallback(sym => {
-    setReceiver("");
-    setAmount("");
-    setToast({ show: true, msg: `Switched to ${NETWORKS[sym].label}` });
-    navigator.vibrate?.(30);
-    setTimeout(() => setToast({ show: false, msg: "" }), 1200);
-  }, []);
+    if (sym !== activeNetwork) {
+      switchNetwork(sym);
+      setReceiver("");
+      setAmount("");
+      setToast({ show: true, msg: `Switched to ${NETWORKS[sym].label}` });
+      navigator.vibrate?.(30);
+      setTimeout(() => setToast({ show: false, msg: "" }), 1200);
+    }
+  }, [activeNetwork, switchNetwork]);
 
-  // — Validate inputs and open confirm modal
+  // Validate inputs and open confirm modal
   const onSendClick = useCallback(() => {
     if (!isValidAddress(receiver)) {
       alert("❌ Invalid address");
@@ -127,7 +130,7 @@ export default function SendPage() {
     setConfirmOpen(true);
   }, [receiver, val, min, short, totalFee, bal, isValidAddress]);
 
-  // — Confirm and execute transaction
+  // Confirm and execute transaction
   const onConfirm = useCallback(async () => {
     setConfirmOpen(false);
     setError(null);
