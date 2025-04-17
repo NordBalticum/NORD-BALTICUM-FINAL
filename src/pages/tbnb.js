@@ -20,7 +20,7 @@ import styles from "@/styles/tbnb.module.css";
 
 const BnbChartDynamic = dynamic(() => import("@/components/BnbChart"), {
   ssr: false,
-  loading: () => <MiniLoadingSpinner />, // fallback ant dinaminio importo
+  loading: () => <MiniLoadingSpinner />,
 });
 
 export default function TBnbPage() {
@@ -72,7 +72,7 @@ export default function TBnbPage() {
           exit={{ opacity: 0, scale, y: -20 }}
           transition={{ duration: 0.8, ease: [0.25, 1, 0.5, 1] }}
         >
-          {/* Header */}
+          {/* HEADER */}
           <div className={styles.header}>
             <Image
               src="/icons/bnb.svg"
@@ -91,7 +91,7 @@ export default function TBnbPage() {
             </div>
           </div>
 
-          {/* Chart */}
+          {/* CHART */}
           <div className={styles.chartWrapper}>
             <div className={styles.chartBorder}>
               <div className={styles.chartInner}>
@@ -102,20 +102,29 @@ export default function TBnbPage() {
             </div>
           </div>
 
-          {/* Action Buttons */}
+          {/* ACTION BUTTONS */}
           <div className={styles.actionButtons}>
-            <button onClick={() => setShowSendModal(true)} className={styles.actionButton}>
+            <button
+              className={styles.actionButton}
+              onClick={() => setShowSendModal(true)}
+            >
               Send
             </button>
-            <button onClick={() => setShowReceiveModal(true)} className={styles.actionButton}>
+            <button
+              className={styles.actionButton}
+              onClick={() => setShowReceiveModal(true)}
+            >
               Receive
             </button>
-            <button onClick={() => router.push("/transactions")} className={styles.actionButton}>
+            <button
+              className={styles.actionButton}
+              onClick={() => router.push("/transactions")}
+            >
               History
             </button>
           </div>
 
-          {/* Send Modal */}
+          {/* SEND MODAL */}
           {showSendModal && (
             <SendModal
               onClose={() => setShowSendModal(false)}
@@ -124,19 +133,31 @@ export default function TBnbPage() {
             />
           )}
 
-          {/* Receive Modal */}
+          {/* RECEIVE MODAL */}
           {showReceiveModal && (
-            <div className={styles.receiveModalOverlay} onClick={() => setShowReceiveModal(false)}>
-              <div className={styles.receiveModal} onClick={(e) => e.stopPropagation()}>
+            <div
+              className={styles.receiveModalOverlay}
+              onClick={() => setShowReceiveModal(false)}
+            >
+              <div
+                className={styles.receiveModal}
+                onClick={(e) => e.stopPropagation()}
+              >
                 <h2 className={styles.modalTitle}>Receive BNB</h2>
                 <div className={styles.qrContainer} onClick={handleCopy}>
                   <QRCode
                     value={address}
                     size={160}
-                    style={{ height: "auto", maxWidth: "100%", width: "100%" }}
+                    style={{
+                      height: "auto",
+                      maxWidth: "100%",
+                      width: "100%",
+                    }}
                   />
                   <p className={styles.qrAddress}>{address}</p>
-                  <p className={styles.qrCopy}>{copied ? "Copied!" : "Tap to copy address"}</p>
+                  <p className={styles.qrCopy}>
+                    {copied ? "Copied!" : "Tap to copy address"}
+                  </p>
                 </div>
               </div>
             </div>
