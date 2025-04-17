@@ -1,4 +1,3 @@
-// components/BnbChart.js
 "use client";
 
 import { useEffect, useState, useRef, useCallback } from "react";
@@ -34,19 +33,23 @@ ChartJS.register(
 const STORAGE_KEY = "nb_bnb_chart";
 
 export default function BnbChart() {
+  // State
   const [chartData, setChartData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [days, setDays] = useState(7);
   const [showDropdown, setShowDropdown] = useState(false);
   const [useBar, setUseBar] = useState(true);
 
+  // Refs
   const chartRef = useRef(null);
   const mountedRef = useRef(false);
   const controllerRef = useRef(null);
   const dropdownRef = useRef(null);
 
+  // Detect mobile
   const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
 
+  // Fetch + downsample + cache
   const fetchData = useCallback(
     async (d = 7) => {
       if (!mountedRef.current) return;
@@ -97,6 +100,7 @@ export default function BnbChart() {
     [isMobile]
   );
 
+  // Lifecycle
   useEffect(() => {
     mountedRef.current = true;
     fetchData(days);
@@ -110,8 +114,10 @@ export default function BnbChart() {
     };
   }, [days, fetchData]);
 
+  // Dynamic max Y
   const maxY = Math.max(...chartData.map((p) => p.value || 0)) * 1.15;
 
+  // Chart configuration
   const chartOptions = {
     responsive: true,
     maintainAspectRatio: false,
@@ -164,6 +170,7 @@ export default function BnbChart() {
     },
   };
 
+  // Dataset
   const chartDataset = {
     labels: chartData.map((p) => p.shortLabel),
     datasets: [
@@ -185,6 +192,7 @@ export default function BnbChart() {
     ],
   };
 
+  // PNG export
   const downloadChart = () => {
     const url = chartRef.current?.toBase64Image();
     if (!url) return;
@@ -195,69 +203,74 @@ export default function BnbChart() {
   };
 
   return (
-    <>
-      {/* time‑range dropdown */}
-      <div
-        className={styles.chartDropdownWrapper}
-        ref={dropdownRef}
-      >
-        <button
-          className={styles.dropdownButton}
-          onClick={() => setShowDropdown((v) => !v)}
-        >
-          {days}D ▾
-        </button>
-        {showDropdown && (
-          <div className={styles.dropdownMenu}>
-            {[1, 7, 30].map((d) => (
+    <div className={styles.chartWrapper}>
+      <div className={styles.chartBorder}>
+        {/* dropdown moved above chartContainer */}
+        <div className={styles.chartDropdownWrapper} ref={dropdownRef}>
+          <button
+            className={styles.dropdownButton}
+            aria-haspopup="menu"
+            aria-expanded={showDropdown}
+            onClick={() => setShowDropdown((v) => !v)}
+          >
+            {days}D ▾
+          </button>
+          {showDropdown && (
+            <div className={styles.dropdownMenu} role="menu">
+              {[1, 7, 30].map((d) => (
+                <div
+                  key={d}
+                  role="menuitem"
+                  className={styles.dropdownItem}
+                  onClick={() => {
+                    if (d !== days) setDays(d);
+                    setShowDropdown(false);
+                  }}
+                >
+                  {d}D
+                </div>
+              ))}
               <div
-                key={d}
+                role="menuitem"
                 className={styles.dropdownItem}
                 onClick={() => {
-                  if (d !== days) setDays(d);
+                  setUseBar((v) => !v);
                   setShowDropdown(false);
                 }}
               >
-                {d}D
+                {useBar ? "Switch to Line" : "Switch to Bar"}
               </div>
-            ))}
-            <div
-              className={styles.dropdownItem}
-              onClick={() => {
-                setUseBar((v) => !v);
-                setShowDropdown(false);
-              }}
-            >
-              {useBar ? "Switch to Line" : "Switch to Bar"}
+              <div
+                role="menuitem"
+                className={styles.dropdownItem}
+                onClick={downloadChart}
+              >
+                Download PNG
+              </div>
             </div>
-            <div
-              className={styles.dropdownItem}
-              onClick={downloadChart}
-            >
-              Download PNG
-            </div>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
 
-      {/* chart or spinner */}
-      {loading || !chartData.length ? (
-        <MiniLoadingSpinner />
-      ) : useBar ? (
-        <Bar
-          ref={chartRef}
-          data={chartDataset}
-          options={chartOptions}
-          className={styles.chartCanvas}
-        />
-      ) : (
-        <Line
-          ref={chartRef}
-          data={chartDataset}
-          options={chartOptions}
-          className={styles.chartCanvas}
-        />
-      )}
-    </>
+        <div className={styles.chartContainer}>
+          {loading || !chartData.length ? (
+            <MiniLoadingSpinner />
+          ) : useBar ? (
+            <Bar
+              ref={chartRef}
+              data={chartDataset}
+              options={chartOptions}
+              className={styles.chartCanvas}
+            />
+          ) : (
+            <Line
+              ref={chartRef}
+              data={chartDataset}
+              options={chartOptions}
+              className={styles.chartCanvas}
+            />
+          )}
+        </div>
+      </div>
+    </div>
   );
 }
