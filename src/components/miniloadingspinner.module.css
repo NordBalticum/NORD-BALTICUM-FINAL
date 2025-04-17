@@ -1,17 +1,7 @@
-/* src/components/miniloadingspinner.module.css */
-
-.fullscreenOverlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  z-index: 9999;
-  background: rgba(15, 23, 42, 0.5); /* ✅ Soft semi-dark background */
-  backdrop-filter: blur(14px);        /* ✅ Subtilus blur */
-  display: flex;
-  justify-content: center;
-  align-items: center;
+/* — Spinner styling */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 .spinnerWrapper {
@@ -20,7 +10,26 @@
   justify-content: center;
 }
 
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+.fullscreenOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 9999;
+  background: rgba(15, 23, 42, 0.5); /* Soft semi-dark background */
+  backdrop-filter: blur(14px);        /* Subtle blur */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Spinner animation */
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid #3498db;
+  border-radius: 50%;
+  animation: spin 2s linear infinite;
 }
