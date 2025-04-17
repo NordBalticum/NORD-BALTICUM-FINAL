@@ -71,6 +71,7 @@ export default function BnbChart() {
           const date = new Date(timestamp);
           const day = date.toLocaleDateString("en-GB", { day: "2-digit", month: "short" });
           const hour = date.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+
           return {
             fullLabel: `${day} ${hour}`,
             shortLabel: day,
@@ -78,7 +79,7 @@ export default function BnbChart() {
           };
         });
 
-        const pointsPerDay = isMobile ? 3 : 6;
+        const pointsPerDay = isMobile ? 2 : 6;
         const step = Math.max(1, Math.ceil(formatted.length / (daysParam * pointsPerDay)));
         const filtered = formatted.filter((_, i) => i % step === 0);
 
@@ -171,6 +172,8 @@ export default function BnbChart() {
     };
   }, [ready, days, fetchChartData]);
 
+  const maxY = Math.max(...chartData.map((p) => parseFloat(p.value))) * 1.15;
+
   const chartOptions = {
     responsive: true,
     maintainAspectRatio: false,
@@ -218,6 +221,7 @@ export default function BnbChart() {
           callback: (v) => `€${parseFloat(v).toFixed(2)}`,
           padding: 6,
         },
+        suggestedMax: maxY,
         grid: { color: "rgba(255,255,255,0.05)" },
       },
     },
@@ -236,17 +240,17 @@ export default function BnbChart() {
         backgroundColor: (ctx) => {
           const gradient = ctx?.chart?.ctx?.createLinearGradient?.(0, 0, 0, 300);
           if (gradient) {
-            gradient.addColorStop(0, "rgba(255,255,255,0.6)");
-            gradient.addColorStop(1, "rgba(255,255,255,0.1)");
+            gradient.addColorStop(0, "rgba(255,255,255,0.25)");
+            gradient.addColorStop(1, "rgba(255,255,255,0.05)");
             return gradient;
           }
-          return "rgba(255,255,255,0.2)";
+          return "rgba(255,255,255,0.15)";
         },
         borderColor: "#ffffff",
         borderWidth: 2,
         borderRadius: 6,
-        barPercentage: 0.65,
-        categoryPercentage: 0.9,
+        barPercentage: isMobile ? 0.6 : 0.5,
+        categoryPercentage: isMobile ? 0.8 : 0.7,
         fill: true,
       },
     ],
