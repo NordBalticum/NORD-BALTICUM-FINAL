@@ -10,6 +10,7 @@ import { useNetwork } from "@/contexts/NetworkContext";
 import { useSend } from "@/contexts/SendContext";
 import { useBalance } from "@/contexts/BalanceContext";
 import { useSystemReady } from "@/hooks/useSystemReady";
+import { useScale } from "@/hooks/useScale";   // ← importuojame useScale
 
 import SwipeSelector from "@/components/SwipeSelector";
 import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
@@ -19,7 +20,7 @@ import SuccessToast from "@/components/SuccessToast";
 
 import styles from "@/styles/send.module.css";
 
-// ✅ Network metadata (labels, minima, explorers)
+// ✅ Network metadata
 const NETWORKS = {
   eth:   { label: "ETH",   min: 0.001,  explorer: "https://etherscan.io/tx/" },
   bnb:   { label: "BNB",   min: 0.0005, explorer: "https://bscscan.com/tx/" },
@@ -33,6 +34,7 @@ export default function SendPage() {
   const { user } = useAuth();
   const { activeNetwork } = useNetwork();
   const { ready, loading: sysLoading } = useSystemReady();
+  const scale = useScale();                    // ← gauname mastelį
 
   const {
     sendTransaction,
@@ -146,7 +148,10 @@ export default function SendPage() {
   }, [receiver, val, user, sendTransaction]);
 
   return (
-    <main className={styles.main}>
+    <main
+      className={styles.main}
+      style={{ transform: `scale(${scale})`, transformOrigin: "top center" }}
+    >
       <div className={styles.wrapper}>
         <SuccessToast show={toast.show} message={toast.msg} networkKey={activeNetwork} />
 
