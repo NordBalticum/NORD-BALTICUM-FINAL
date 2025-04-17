@@ -1,4 +1,3 @@
-// src/components/SwipeSelector.js
 "use client";
 
 import { useEffect, useRef, useState, useCallback, useMemo } from "react";
@@ -7,7 +6,9 @@ import Image from "next/image";
 
 import { useNetwork } from "@/contexts/NetworkContext";
 import { useSystemReady } from "@/contexts/SystemReadyContext"; // ← čia pataisyta
-import styles from "@/components/swipeselector.module.css";
+import { useScale } from "@/hooks/useScale"; // Naudojame skalę čia
+
+import styles from "@/styles/send.module.css"; // Keičiamas kelias į send.module.css
 
 // 🎯 Supported networks (keep in sync with NetworkContext.SUPPORTED_NETWORKS)
 const supportedNetworks = [
@@ -21,6 +22,7 @@ const supportedNetworks = [
 export default function SwipeSelector({ onSelect }) {
   const { activeNetwork, switchNetwork } = useNetwork();
   const { ready } = useSystemReady(); // dabar iš konteksto
+  const scale = useScale(); // Paėmimas scale hook iš /hooks/useScale.js
 
   const containerRef = useRef(null);
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -88,6 +90,15 @@ export default function SwipeSelector({ onSelect }) {
     return () => window.removeEventListener("keydown", onKey);
   }, [goLeft, goRight]);
 
+  // Mobile touch swipe support
+  const handleTouchStart = useCallback((e) => {
+    // Code to handle touch start for swipe detection
+  }, []);
+
+  const handleTouchEnd = useCallback((e) => {
+    // Code to handle touch end for swipe detection
+  }, []);
+
   if (!ready) {
     return (
       <div className={styles.loading}>
@@ -120,6 +131,8 @@ export default function SwipeSelector({ onSelect }) {
       <div
         ref={containerRef}
         className={isMobile ? styles.scrollableWrapper : styles.staticWrapper}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
       >
         {supportedNetworks.map((net, idx) => (
           <motion.div
