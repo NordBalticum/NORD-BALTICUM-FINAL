@@ -1,17 +1,12 @@
 // src/components/SwipeSelector.js
 "use client";
 
-import {
-  useEffect,
-  useRef,
-  useState,
-  useCallback,
-  useMemo,
-} from "react";
+import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
+
 import { useNetwork } from "@/contexts/NetworkContext";
-import { useSystemReady } from "@/hooks/useSystemReady";
+import { useSystemReady } from "@/contexts/SystemReadyContext"; // ← čia pataisyta
 import styles from "@/components/swipeselector.module.css";
 
 // 🎯 Supported networks (keep in sync with NetworkContext.SUPPORTED_NETWORKS)
@@ -25,7 +20,7 @@ const supportedNetworks = [
 
 export default function SwipeSelector({ onSelect }) {
   const { activeNetwork, switchNetwork } = useNetwork();
-  const { ready } = useSystemReady();
+  const { ready } = useSystemReady(); // dabar iš konteksto
 
   const containerRef = useRef(null);
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -34,49 +29,48 @@ export default function SwipeSelector({ onSelect }) {
   // Determine mobile layout
   useEffect(() => {
     const mql = window.matchMedia("(max-width:1024px)");
-    const update = () => setIsMobile(mql.matches);
-    mql.addEventListener("change", update);
-    update();
-    return () => mql.removeEventListener("change", update);
+    const handle = () => setIsMobile(mql.matches);
+    mql.addEventListener("change", handle);
+    handle();
+    return () => mql.removeEventListener("change", handle);
   }, []);
 
-  // Initialize selectedIndex from activeNetwork once
+  // Sync selectedIndex su activeNetwork
   useEffect(() => {
     if (!ready) return;
     const idx = supportedNetworks.findIndex((n) => n.symbol === activeNetwork);
     if (idx >= 0) setSelectedIndex(idx);
   }, [activeNetwork, ready]);
 
-  // Expose onSelect callback
+  // onSelect wrapper
   const notifySelect = useCallback(
     (idx) => {
       const sym = supportedNetworks[idx]?.symbol;
-      switchNetwork(sym);
-      onSelect?.(sym);
+      if (sym && sym !== activeNetwork) {
+        switchNetwork(sym);
+        onSelect?.(sym);
+      }
     },
-    [switchNetwork, onSelect]
+    [activeNetwork, switchNetwork, onSelect]
   );
 
-  // Scroll container to center selected card
-  const scrollToCenter = useCallback(
-    (idx) => {
-      const cont = containerRef.current;
-      const card = cont?.children[idx];
-      if (!cont || !card) return;
-      const offset = card.offsetLeft - (cont.offsetWidth - card.offsetWidth) / 2;
-      cont.scrollTo({ left: offset, behavior: "smooth" });
-    },
-    []
-  );
+  // Scroll to center
+  const scrollToCenter = useCallback((idx) => {
+    const cont = containerRef.current;
+    const card = cont?.children[idx];
+    if (!cont || !card) return;
+    const offset = card.offsetLeft - (cont.offsetWidth - card.offsetWidth) / 2;
+    cont.scrollTo({ left: offset, behavior: "smooth" });
+  }, []);
 
-  // When selection changes, scroll and vibrate
+  // Kai keičiasi selectedIndex → scroll + vibrate
   useEffect(() => {
     if (!ready) return;
     scrollToCenter(selectedIndex);
     navigator.vibrate?.(10);
   }, [selectedIndex, ready, scrollToCenter]);
 
-  // Handle arrow buttons
+  // Arrow handlers
   const goLeft = useCallback(() => {
     setSelectedIndex((i) => Math.max(0, i - 1));
   }, []);
@@ -84,7 +78,7 @@ export default function SwipeSelector({ onSelect }) {
     setSelectedIndex((i) => Math.min(supportedNetworks.length - 1, i + 1));
   }, []);
 
-  // Keyboard navigation
+  // Keyboard nav
   useEffect(() => {
     const onKey = (e) => {
       if (e.key === "ArrowLeft") goLeft();
@@ -132,9 +126,7 @@ export default function SwipeSelector({ onSelect }) {
             key={net.symbol}
             role="option"
             aria-selected={selectedIndex === idx}
-            className={`${styles.card} ${
-              selectedIndex === idx ? styles.selected : ""
-            }`}
+            className={`${styles.card} ${selectedIndex === idx ? styles.selected : ""}`}
             onClick={() => {
               setSelectedIndex(idx);
               notifySelect(idx);
