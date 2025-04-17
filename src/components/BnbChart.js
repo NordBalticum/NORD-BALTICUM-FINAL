@@ -1,3 +1,4 @@
+// components/BnbChart.js
 "use client";
 
 import { useEffect, useState, useRef, useCallback } from "react";
@@ -14,6 +15,7 @@ import {
   Filler,
   Decimation,
 } from "chart.js";
+
 import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
 import styles from "@/styles/tbnb.module.css";
 
@@ -128,8 +130,7 @@ export default function BnbChart() {
         cornerRadius: 8,
         displayColors: false,
         callbacks: {
-          title: (items) =>
-            chartData[items[0].dataIndex]?.fullLabel || "",
+          title: (items) => chartData[items[0].dataIndex]?.fullLabel || "",
           label: (ctx) => `€ ${ctx.raw.toFixed(2)}`,
         },
       },
@@ -194,8 +195,52 @@ export default function BnbChart() {
   };
 
   return (
-    <div className={styles.chartContainer}>
-      {/* dropdown code omitted for brevity */}
+    <>
+      {/* time‑range dropdown */}
+      <div
+        className={styles.chartDropdownWrapper}
+        ref={dropdownRef}
+      >
+        <button
+          className={styles.dropdownButton}
+          onClick={() => setShowDropdown((v) => !v)}
+        >
+          {days}D ▾
+        </button>
+        {showDropdown && (
+          <div className={styles.dropdownMenu}>
+            {[1, 7, 30].map((d) => (
+              <div
+                key={d}
+                className={styles.dropdownItem}
+                onClick={() => {
+                  if (d !== days) setDays(d);
+                  setShowDropdown(false);
+                }}
+              >
+                {d}D
+              </div>
+            ))}
+            <div
+              className={styles.dropdownItem}
+              onClick={() => {
+                setUseBar((v) => !v);
+                setShowDropdown(false);
+              }}
+            >
+              {useBar ? "Switch to Line" : "Switch to Bar"}
+            </div>
+            <div
+              className={styles.dropdownItem}
+              onClick={downloadChart}
+            >
+              Download PNG
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* chart or spinner */}
       {loading || !chartData.length ? (
         <MiniLoadingSpinner />
       ) : useBar ? (
@@ -213,6 +258,6 @@ export default function BnbChart() {
           className={styles.chartCanvas}
         />
       )}
-    </div>
+    </>
   );
 }
