@@ -15,9 +15,10 @@ import SuccessModal from "@/components/modals/SuccessModal";
 import ErrorModal from "@/components/modals/ErrorModal";
 import StepModal from "@/components/modals/StepModal";
 import NetworkSelector from "@/components/NetworkSelector";
+import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
 import { NETWORKS } from "@/constants";
 
-// — Network metadata (to be used in dropdown and fee calculations)
+// Network metadata
 const networkList = [
   { name: "Ethereum", symbol: "eth", logo: "/icons/eth.svg" },
   { name: "BNB Chain", symbol: "bnb", logo: "/icons/bnb.svg" },
@@ -224,4 +225,4 @@ export default function SendPage() {
       </div>
     </main>
   );
-                       }
+}
