@@ -1,0 +1,38 @@
+/* Modal Styles */
+.overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(10px);
+}
+
+.stepModal {
+  background: var(--overlay);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  color: var(--text-primary);
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+  text-align: center;
+}
+
+.modalTitle {
+  font-size: 1.5rem;
+  margin-bottom: 20px;
+}
+
+.modalContent button {
+  margin: 10px;
+  padding: 10px 20px;
+  background: var(--accent);
+  border: none;
+  border-radius: var(--radius-base);
+  color: #fff;
+  cursor: pointer;
+}
+
+.modalContent button:hover {
+  background: var(--accent-dark);
+}
