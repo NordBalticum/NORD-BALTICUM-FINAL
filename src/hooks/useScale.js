@@ -15,20 +15,20 @@ export function useScale(
   base = 1.0, // Default scale remains 1 for desktop.
   {
     breakpoints = [
-      { max: 360, scale: 0.55 },
-      { max: 460, scale: 0.60 },
-      { max: 576, scale: 0.65 },
-      { max: 768, scale: 0.75 },
-      { max: 992, scale: 0.85 },
-      { max: 1200, scale: 0.90 }, // For larger mobile devices
-      { max: Infinity, scale: 1.0 }, // For large devices, no scaling
+      { max: 360, scale: 0.45 },
+      { max: 460, scale: 0.50 },
+      { max: 576, scale: 0.55 },
+      { max: 768, scale: 0.65 },
+      { max: 992, scale: 0.75 },
+      { max: 1200, scale: 0.80 }, // For larger mobile devices
+      { max: Infinity, scale: 0.9 }, // For large devices, no scaling
     ],
     desktopFactor = 1.0, // No scaling factor on desktop
     mobileFactor = 0.75, // Mobile devices will have this factor
     hdpiAdjustment = 0.015, // Small HDPI adjustment for small screens
     portraitAdjustment = 0.01, // Extra adjustment for portrait mode
-    minScale = 0.55, // Minimum scale value for mobile devices
-    maxScale = 1.0, // Maximum scale value
+    minScale = 0.45, // Minimum scale value for mobile devices
+    maxScale = 0.9, // Maximum scale value
     debounceMs = 120, // Debouncing for resize events
   } = {}
 ) {
@@ -51,7 +51,7 @@ export function useScale(
     // Adjusting scale based on device size and breakpoints
     for (const bp of breakpoints) {
       if (effW <= bp.max) {
-        chosen = reduced ? bp.scale * 0.95 : bp.scale;
+        chosen = reduced ? bp.scale * 0.9 : bp.scale;
         break;
       }
     }
