@@ -33,82 +33,79 @@ ChartJS.register(
 const STORAGE_KEY = "nb_bnb_chart";
 
 export default function BnbChart() {
+  // — State
   const [chartData, setChartData] = useState([]);
-  const [chartLoading, setChartLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
   const [days, setDays] = useState(7);
   const [showDropdown, setShowDropdown] = useState(false);
-  const [useBarChart, setUseBarChart] = useState(true);
+  const [useBar, setUseBar] = useState(true);
 
+  // — Refs
   const chartRef = useRef(null);
   const mountedRef = useRef(false);
   const controllerRef = useRef(null);
   const dropdownRef = useRef(null);
 
+  // — Detect mobile
   const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
 
-  const fetchChartData = useCallback(async (daysParam = 7) => {
-    if (!mountedRef.current || document.visibilityState !== "visible") return;
-
-    try {
-      setChartLoading(true);
+  // — Fetch and format data
+  const fetchData = useCallback(
+    async (d = 7) => {
+      if (!mountedRef.current) return;
+      setLoading(true);
       controllerRef.current?.abort();
-      const controller = new AbortController();
-      controllerRef.current = controller;
 
-      const res = await fetch(
-        `https://api.coingecko.com/api/v3/coins/binancecoin/market_chart?vs_currency=eur&days=${daysParam}`,
-        { signal: controller.signal }
-      );
-
-      const data = await res.json();
-      if (!data?.prices) throw new Error("No price data");
-
-      const formatted = data.prices.map(([timestamp, price]) => {
-        const date = new Date(timestamp);
-        const day = date.toLocaleDateString("en-GB", {
-          day: "2-digit",
-          month: "short",
-        });
-        const hour = date.toLocaleTimeString("en-GB", {
-          hour: "2-digit",
-          minute: "2-digit",
-        });
-
-        return {
-          fullLabel: `${day} ${hour}`,
-          shortLabel: day,
-          value: parseFloat(price).toFixed(2),
-        };
-      });
-
-      const pointsPerDay = isMobile ? 2 : 6;
-      const step = Math.max(1, Math.ceil(formatted.length / (daysParam * pointsPerDay)));
-      const filtered = formatted.filter((_, i) => i % step === 0);
+      const ctrl = new AbortController();
+      controllerRef.current = ctrl;
 
       try {
-        localStorage.setItem(`${STORAGE_KEY}_${daysParam}`, JSON.stringify(filtered));
-      } catch {}
+        const res = await fetch(
+          `https://api.coingecko.com/api/v3/coins/binancecoin/market_chart?vs_currency=eur&days=${d}`,
+          { signal: ctrl.signal }
+        );
+        const json = await res.json();
+        if (!json.prices) throw new Error("No data");
 
-      setChartData(filtered);
-    } catch (err) {
-      console.error("Chart fetch error:", err);
-      try {
-        const cached = localStorage.getItem(`${STORAGE_KEY}_${daysParam}`);
-        if (cached) {
-          setChartData(JSON.parse(cached));
-        }
-      } catch {}
-    } finally {
-      setChartLoading(false);
-    }
-  }, [isMobile]);
+        const raw = json.prices.map(([t, p]) => {
+          const date = new Date(t);
+          const day = date.toLocaleDateString("en-GB", { day: "2-digit", month: "short" });
+          const hour = date.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+          return { fullLabel: `${day} ${hour}`, shortLabel: day, value: +p };
+        });
 
+        // — Downsample
+        const per = isMobile ? 2 : 6;
+        const step = Math.max(1, Math.ceil(raw.length / (d * per)));
+        const sampled = raw.filter((_, i) => i % step === 0);
+
+        // — Cache
+        try {
+          localStorage.setItem(`${STORAGE_KEY}_${d}`, JSON.stringify(sampled));
+        } catch {}
+
+        setChartData(sampled);
+      } catch (err) {
+        console.warn("Fetch error:", err);
+        // — Fallback to cache
+        try {
+          const cached = localStorage.getItem(`${STORAGE_KEY}_${d}`);
+          if (cached) setChartData(JSON.parse(cached));
+        } catch {}
+      } finally {
+        setLoading(false);
+      }
+    },
+    [isMobile]
+  );
+
+  // — Lifecycle
   useEffect(() => {
     mountedRef.current = true;
-    fetchChartData(days);
+    fetchData(days);
 
     const interval = setInterval(() => {
-      if (document.visibilityState === "visible") fetchChartData(days);
+      if (mountedRef.current) fetchData(days);
     }, 60000);
 
     return () => {
@@ -116,20 +113,17 @@ export default function BnbChart() {
       clearInterval(interval);
       controllerRef.current?.abort();
     };
-  }, [days, fetchChartData]);
+  }, [days, fetchData]);
 
-  const maxY = Math.max(...chartData.map((p) => parseFloat(p.value) || 0)) * 1.15;
+  // — Dynamic max Y
+  const maxY = Math.max(...chartData.map((p) => p.value || 0)) * 1.15;
 
+  // — Chart options
   const chartOptions = {
     responsive: true,
     maintainAspectRatio: false,
-    animation: {
-      duration: 800,
-      easing: "easeOutCubic",
-    },
-    layout: {
-      padding: { left: 15, right: 15, top: 10, bottom: 0 },
-    },
+    animation: { duration: 800, easing: "easeOutCubic" },
+    layout: { padding: { left: 15, right: 15, top: 10, bottom: 0 } },
     plugins: {
       tooltip: {
         mode: "index",
@@ -144,7 +138,7 @@ export default function BnbChart() {
         displayColors: false,
         callbacks: {
           title: (items) => chartData[items[0].dataIndex]?.fullLabel || "",
-          label: (ctx) => `€ ${parseFloat(ctx.raw).toFixed(2)}`,
+          label: (ctx) => `€ ${ctx.raw.toFixed(2)}`,
         },
       },
       legend: { display: false },
@@ -164,8 +158,8 @@ export default function BnbChart() {
         ticks: {
           color: "#bbb",
           font: { size: isMobile ? 10 : 12 },
-          callback: (v) => `€${parseFloat(v).toFixed(2)}`,
           padding: 6,
+          callback: (v) => `€${v.toFixed(2)}`,
         },
         suggestedMax: maxY,
         grid: { color: "rgba(255,255,255,0.05)" },
@@ -177,22 +171,19 @@ export default function BnbChart() {
     },
   };
 
+  // — Dataset
   const chartDataset = {
     labels: chartData.map((p) => p.shortLabel),
     datasets: [
       {
-        label: "BNB Price",
-        data: chartData.map((p) => parseFloat(p.value)),
+        data: chartData.map((p) => p.value),
         backgroundColor: (ctx) => {
-          const gradient = ctx?.chart?.ctx?.createLinearGradient?.(0, 0, 0, 300);
-          if (gradient) {
-            gradient.addColorStop(0, "rgba(255,255,255,0.25)");
-            gradient.addColorStop(1, "rgba(255,255,255,0.05)");
-            return gradient;
-          }
-          return "rgba(255,255,255,0.15)";
+          const g = ctx.chart.ctx.createLinearGradient(0, 0, 0, 300);
+          g.addColorStop(0, "rgba(255,255,255,0.25)");
+          g.addColorStop(1, "rgba(255,255,255,0.05)");
+          return g;
         },
-        borderColor: "#ffffff",
+        borderColor: "#fff",
         borderWidth: 2,
         borderRadius: 6,
         barPercentage: isMobile ? 0.6 : 0.5,
@@ -202,9 +193,10 @@ export default function BnbChart() {
     ],
   };
 
+  // — Download PNG
   const downloadChart = () => {
-    if (!chartRef.current) return;
-    const url = chartRef.current.toBase64Image();
+    const url = chartRef.current?.toBase64Image();
+    if (!url) return;
     const link = document.createElement("a");
     link.href = url;
     link.download = `bnb_chart_${days}d.png`;
@@ -215,49 +207,49 @@ export default function BnbChart() {
     <div className={styles.chartWrapper}>
       <div className={styles.chartBorder}>
         <div className={styles.chartContainer}>
+          {/* Dropdown */}
           <div className={styles.chartDropdownWrapper} ref={dropdownRef}>
             <button
-              onClick={() => setShowDropdown(!showDropdown)}
               className={styles.dropdownButton}
+              onClick={() => setShowDropdown((v) => !v)}
+              aria-label="Select time range"
             >
               {days}D ▾
             </button>
-
             {showDropdown && (
               <div className={styles.dropdownMenu}>
                 {[1, 7, 30].map((d) => (
                   <div
                     key={d}
+                    className={styles.dropdownItem}
                     onClick={() => {
-                      if (d !== days) {
-                        setDays(d);
-                      }
+                      if (d !== days) setDays(d);
                       setShowDropdown(false);
                     }}
-                    className={styles.dropdownItem}
                   >
                     {d}D
                   </div>
                 ))}
                 <div
                   className={styles.dropdownItem}
-                  onClick={() => setUseBarChart((v) => !v)}
+                  onClick={() => {
+                    setUseBar((v) => !v);
+                    setShowDropdown(false);
+                  }}
                 >
-                  Switch to {useBarChart ? "Line" : "Bar"}
+                  {useBar ? "Switch to Line" : "Switch to Bar"}
                 </div>
-                <div
-                  className={styles.dropdownItem}
-                  onClick={downloadChart}
-                >
+                <div className={styles.dropdownItem} onClick={downloadChart}>
                   Download PNG
                 </div>
               </div>
             )}
           </div>
 
-          {chartLoading || chartData.length === 0 ? (
+          {/* Chart */}
+          {loading || !chartData.length ? (
             <MiniLoadingSpinner />
-          ) : useBarChart ? (
+          ) : useBar ? (
             <Bar
               ref={chartRef}
               data={chartDataset}
