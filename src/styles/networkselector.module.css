@@ -1,0 +1,28 @@
+/* Network Selector Styles */
+.networkSelector {
+  background: var(--overlay);
+  padding: 20px;
+  border-radius: var(--radius-base);
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+  text-align: center;
+}
+
+.networkSelector h3 {
+  font-size: 1.5rem;
+  margin-bottom: 10px;
+}
+
+.networkSelector ul {
+  list-style: none;
+  padding: 0;
+}
+
+.networkSelector li {
+  margin: 10px;
+  cursor: pointer;
+  color: var(--text-primary);
+}
+
+.networkSelector li:hover {
+  text-decoration: underline;
+}
