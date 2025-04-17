@@ -9,7 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useNetwork } from "@/contexts/NetworkContext";
 import { useSend } from "@/contexts/SendContext";
 import { useBalance } from "@/contexts/BalanceContext";
-import { useSystemReady } from "@/hooks/useSystemReady";
+import { useSystemReady } from "@/contexts/SystemReadyContext"; // ← CONTEXT
 import { useScale } from "@/hooks/useScale";
 
 import SwipeSelector from "@/components/SwipeSelector";
@@ -33,7 +33,7 @@ export default function SendPage() {
   const router = useRouter();
   const { user } = useAuth();
   const { activeNetwork, switchNetwork } = useNetwork();
-  const { ready, loading: sysLoading } = useSystemReady();
+  const { ready, loading: sysLoading } = useSystemReady();  // ← Tik vieną kartą iš context'o
   const scale = useScale();
 
   const {
@@ -92,7 +92,7 @@ export default function SendPage() {
     }
   }, [ready, user, router]);
 
-  // Global loader until system ready
+  // Global loader until system is ready
   if (sysLoading) {
     return (
       <div className={styles.loader}>
