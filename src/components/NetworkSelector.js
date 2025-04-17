@@ -1,7 +1,7 @@
 "use client";
 
 import { useNetwork } from "@/contexts/NetworkContext";
-import styles from "@/styles/networkSelector.module.css";
+import styles from "@/styles/networkselector.module.css";
 
 export default function NetworkSelector({ onSelect }) {
   const { activeNetwork, switchNetwork } = useNetwork();
