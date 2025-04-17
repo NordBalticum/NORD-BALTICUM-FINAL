@@ -4,7 +4,13 @@
 .pageContainer {
   width: 100vw;
   height: 100vh;
-  background: radial-gradient(circle at center, oklch(28% 0.12 250) 10%, oklch(34% 0.15 270) 55%, oklch(48% 0.2 280) 90%) no-repeat center center fixed;
+  background: radial-gradient(
+      circle at center,
+      oklch(28% 0.12 250) 10%,
+      oklch(34% 0.15 270) 55%,
+      oklch(48% 0.2 280) 90%
+    )
+    no-repeat center center fixed;
   background-size: cover;
   display: flex;
   flex-direction: column;
@@ -177,12 +183,41 @@
 
 /* === CHART === */
 .chartCanvas {
-  width: 100%;
-  height: 100%;
+  width: 100% !important;
+  height: 100% !important;
   display: block;
   border-radius: 20px;
   overflow: hidden;
   pointer-events: auto;
+}
+
+/* === CHART INNER & CONTAINER (fill parent) === */
+.chartInner {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  animation: fadeInUp 0.6s ease-out;
+  pointer-events: none;
+}
+
+.chartContainer {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0));
+  border-radius: 26px;
+  box-shadow: inset 0 0 50px rgba(255, 255, 255, 0.05);
+  overflow: hidden;
+  contain: strict;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background-blend-mode: overlay;
+  transition: all 0.3s ease;
+  z-index: 3;
 }
 
 /* === MODALS + QR === */
