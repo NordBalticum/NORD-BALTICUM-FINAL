@@ -1,5 +1,5 @@
+// src/app/send.js
 "use client";
-
 export const dynamic = "force-dynamic";
 
 import { useState, useMemo, useEffect } from "react";
@@ -20,32 +20,15 @@ import SuccessToast from "@/components/SuccessToast";
 import styles from "@/styles/send.module.css";
 import background from "@/styles/background.module.css";
 
-// === NETWORK CONFIG ===
-const networkShortNames = {
-  eth: "ETH",
-  bnb: "BNB",
-  tbnb: "tBNB",
-  matic: "MATIC",
-  avax: "AVAX",
+// — Network labels, minimums & button colors
+const NETWORKS = {
+  eth:  { label: "ETH",   min: 0.001,    color: "#0072ff" },
+  bnb:  { label: "BNB",   min: 0.0005,   color: "#f0b90b" },
+  tbnb: { label: "tBNB",  min: 0.0005,   color: "#f0b90b" },
+  matic:{ label: "MATIC", min: 0.1,      color: "#8247e5" },
+  avax: { label: "AVAX",  min: 0.01,     color: "#e84142" },
 };
 
-const minAmounts = {
-  eth: 0.001,
-  bnb: 0.0005,
-  tbnb: 0.0005,
-  matic: 0.1,
-  avax: 0.01,
-};
-
-const buttonColors = {
-  eth: "#0072ff",
-  bnb: "#f0b90b",
-  tbnb: "#f0b90b",
-  matic: "#8247e5",
-  avax: "#e84142",
-};
-
-// === MAIN COMPONENT ===
 export default function SendPage() {
   const router = useRouter();
   const { user } = useAuth();
@@ -72,106 +55,75 @@ export default function SendPage() {
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
   const [error, setError] = useState(null);
-  const [transactionHash, setTransactionHash] = useState(null);
+  const [txHash, setTxHash] = useState(null);
 
-  const shortName = useMemo(
-    () => networkShortNames[activeNetwork] || activeNetwork.toUpperCase(),
-    [activeNetwork]
-  );
-
-  const parsedAmount = useMemo(() => Number(amount) || 0, [amount]);
-  const netBalance = useMemo(
-    () => balances?.[activeNetwork] || 0,
-    [balances, activeNetwork]
-  );
-
+  // Derive everything from activeNetwork
+  const { label: shortName, min, color } = NETWORKS[activeNetwork] || {};
+  const parsedAmount = Number(amount) || 0;
+  const netBalance = balances?.[activeNetwork] || 0;
   const balanceEur = getEurBalance?.(activeNetwork) || "0.00";
   const balanceUsd = getUsdBalance?.(activeNetwork) || "0.00";
 
-  const isValidAddress = (address) =>
-    /^0x[a-fA-F0-9]{40}$/.test(address.trim());
+  // Validate address (0x…40 hex chars)
+  const isValidAddress = (addr) =>
+    /^0x[a-fA-F0-9]{40}$/.test(addr.trim());
 
+  // Recalculate fees whenever network or amount changes
   useEffect(() => {
     if (activeNetwork && parsedAmount > 0) {
-      calculateFees?.(activeNetwork, parsedAmount);
+      calculateFees(activeNetwork, parsedAmount);
     }
-  }, [activeNetwork, parsedAmount]);
+  }, [activeNetwork, parsedAmount, calculateFees]);
 
-  const handleNetworkChange = (selectedNetwork) => {
-    if (!selectedNetwork) return;
-    switchNetwork(selectedNetwork);
+  const handleNetworkChange = (net) => {
+    switchNetwork(net);
     setReceiver("");
     setAmount("");
-    setToastMessage(
-      `Switched to ${networkShortNames[selectedNetwork] || selectedNetwork.toUpperCase()}`
-    );
+    setToastMessage(`Switched to ${NETWORKS[net]?.label || net.toUpperCase()}`);
     setShowToast(true);
-    if (typeof window !== "undefined" && "vibrate" in navigator)
-      navigator.vibrate(30);
+    navigator.vibrate?.(30);
     setTimeout(() => setShowToast(false), 1500);
   };
 
   const handleSend = () => {
-    if (!isValidAddress(receiver))
-      return alert("❌ Invalid wallet address.");
-    if (parsedAmount <= 0 || parsedAmount < minAmounts[activeNetwork])
-      return alert(
-        `❌ Minimum to send is ${minAmounts[activeNetwork]} ${shortName}`
-      );
-    if (parsedAmount + totalFee > netBalance)
-      return alert(
-        `❌ Insufficient balance. Required: ${(parsedAmount + totalFee).toFixed(
-          6
-        )} ${shortName}`
-      );
+    if (!isValidAddress(receiver)) {
+      return alert("❌ Invalid wallet address");
+    }
+    if (parsedAmount < min) {
+      return alert(`❌ Minimum is ${min} ${shortName}`);
+    }
+    if (parsedAmount + totalFee > netBalance) {
+      return alert("❌ Insufficient balance");
+    }
     setShowConfirm(true);
   };
 
   const confirmSend = async () => {
     setShowConfirm(false);
     setError(null);
+
     try {
-      const txHash = await sendTransaction({
+      console.log("🚀 Sending on", activeNetwork, "to", receiver, parsedAmount);
+      const hash = await sendTransaction({
         to: receiver.trim().toLowerCase(),
         amount: parsedAmount,
-        network: activeNetwork,
+        network: activeNetwork,    // <— make sure context uses this
         userEmail: user.email,
       });
-      setTransactionHash(txHash);
+      setTxHash(hash);
       setReceiver("");
       setAmount("");
       setShowSuccess(true);
-      if ("vibrate" in navigator) navigator.vibrate(80);
+      navigator.vibrate?.(80);
     } catch (err) {
-      setError(err?.message || "Transaction failed.");
+      console.error("❌ send error:", err);
+      setError(err.message || "Transaction failed");
     }
   };
-
-  const handleRetry = () => setError(null);
 
   useEffect(() => {
     if (!user && ready) router.replace("/");
   }, [user, ready, router]);
-
-  const sendButtonStyle = {
-    backgroundColor: buttonColors[activeNetwork] || "#ffffff",
-    color:
-      activeNetwork === "bnb" || activeNetwork === "tbnb"
-        ? "#000000"
-        : "#ffffff",
-    border: "2px solid white",
-    width: "100%",
-    padding: "12px",
-    fontSize: "18px",
-    borderRadius: "12px",
-    cursor: "pointer",
-    transition: "background-color 0.3s ease, transform 0.3s ease",
-    marginTop: "16px",
-    boxShadow: "0 8px 24px rgba(0, 0, 0, 0.2)",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-  };
 
   if (loading) {
     return (
@@ -184,29 +136,18 @@ export default function SendPage() {
   return (
     <main className={`${styles.main} ${background.gradient}`}>
       <div className={styles.wrapper}>
-        <SuccessToast
-          show={showToast}
-          message={toastMessage}
-          networkKey={activeNetwork}
-        />
+        <SuccessToast show={showToast} message={toastMessage} networkKey={activeNetwork} />
 
-        <SwipeSelector
-          selected={activeNetwork}
-          onSelect={handleNetworkChange}
-        />
+        {/* 🔀 Network Switcher */}
+        <SwipeSelector selected={activeNetwork} onSelect={handleNetworkChange} />
 
+        {/* 💰 Balances */}
         <div className={styles.balanceTable}>
-          <p className={styles.whiteText}>
-            Your Balance:{" "}
-            <span className={styles.balanceAmount}>
-              {netBalance.toFixed(6)} {shortName}
-            </span>
-          </p>
-          <p className={styles.whiteText}>
-            ≈ €{balanceEur} | ≈ ${balanceUsd}
-          </p>
+          <p>Your Balance: <strong>{netBalance.toFixed(6)} {shortName}</strong></p>
+          <p>≈ €{balanceEur} | ≈ ${balanceUsd}</p>
         </div>
 
+        {/* 💼 Inputs */}
         <div className={styles.walletActions}>
           <input
             type="text"
@@ -226,97 +167,69 @@ export default function SendPage() {
             min="0"
           />
 
+          {/* ⚙️ Fees */}
           <div className={styles.feesInfo}>
-            {feeLoading ? (
-              <p className={styles.whiteText}>Calculating Fees...</p>
-            ) : feeError ? (
-              <p style={{ color: "red" }}>Failed to load fees.</p>
-            ) : (
-              <>
-                <p className={styles.whiteText}>
-                  Total to Pay: {(parsedAmount + totalFee).toFixed(6)}{" "}
-                  {shortName}
-                </p>
-                <p className={styles.minimumText}>
-                  Minimum to send: {minAmounts[activeNetwork]} {shortName}
-                </p>
-              </>
-            )}
+            {feeLoading
+              ? <p>Calculating fees…</p>
+              : feeError
+                ? <p style={{ color: "red" }}>Fee error.</p>
+                : <>
+                    <p>Total: {(parsedAmount + totalFee).toFixed(6)} {shortName}</p>
+                    <p>Min: {min} {shortName}</p>
+                  </>
+            }
           </div>
 
+          {/* ▶️ Send Button */}
           <button
             onClick={handleSend}
             disabled={!receiver || sending || feeLoading}
-            style={sendButtonStyle}
+            style={{
+              backgroundColor: color,
+              color: (activeNetwork==="bnb"||activeNetwork==="tbnb") ? "#000":"#fff",
+              border: "2px solid white",
+              width:"100%", padding:"12px",
+              fontSize:"18px", borderRadius:"12px",
+              boxShadow:"0 8px 24px rgba(0,0,0,0.2)",
+              marginTop:"16px",
+            }}
           >
-            {sending ? (
-              <MiniLoadingSpinner size={20} color="#fff" />
-            ) : (
-              "SEND NOW"
-            )}
+            {sending ? <MiniLoadingSpinner size={20} color="#fff" /> : "SEND NOW"}
           </button>
         </div>
 
+        {/* ✔️ Confirm Modal */}
         {showConfirm && (
           <div className={styles.overlay}>
             <div className={styles.confirmModal}>
-              <div className={styles.modalTitle}>Confirm Transaction</div>
-              <div className={styles.modalInfo}>
-                <p>
-                  <strong>Network:</strong> {shortName}
-                </p>
-                <p>
-                  <strong>Receiver:</strong> {receiver}
-                </p>
-                <p>
-                  <strong>Amount:</strong> {parsedAmount.toFixed(6)} {shortName}
-                </p>
-                <p>
-                  <strong>Gas Fee:</strong> {gasFee.toFixed(6)} {shortName}
-                </p>
-                <p>
-                  <strong>Admin Fee:</strong> {adminFee.toFixed(6)} {shortName}
-                </p>
-                <p>
-                  <strong>Total:</strong>{" "}
-                  {(parsedAmount + totalFee).toFixed(6)} {shortName}
-                </p>
-                <p>
-                  <strong>Remaining Balance:</strong>{" "}
-                  {(netBalance - parsedAmount - totalFee).toFixed(6)}{" "}
-                  {shortName}
-                </p>
-              </div>
+              <h3>Confirm Transaction</h3>
+              <p><b>Network:</b> {shortName}</p>
+              <p><b>To:</b> {receiver}</p>
+              <p><b>Amount:</b> {parsedAmount.toFixed(6)} {shortName}</p>
+              <p><b>Gas Fee:</b> {gasFee.toFixed(6)} {shortName}</p>
+              <p><b>Admin Fee:</b> {adminFee.toFixed(6)} {shortName}</p>
+              <p><b>Total:</b> {(parsedAmount+totalFee).toFixed(6)} {shortName}</p>
               <div className={styles.modalActions}>
-                <button
-                  className={styles.modalButton}
-                  onClick={confirmSend}
-                  disabled={sending}
-                >
-                  {sending ? "Confirming..." : "Confirm"}
+                <button onClick={confirmSend} disabled={sending}>
+                  {sending ? "Confirming…" : "Confirm"}
                 </button>
-                <button
-                  className={`${styles.modalButton} ${styles.cancel}`}
-                  onClick={() => setShowConfirm(false)}
-                >
-                  Cancel
-                </button>
+                <button onClick={() => setShowConfirm(false)}>Cancel</button>
               </div>
             </div>
           </div>
         )}
 
-        {showSuccess && transactionHash && (
+        {/* 🎉 Success / ❌ Error */}
+        {showSuccess && txHash && (
           <SuccessModal
             message="✅ Transaction Successful!"
-            onClose={() => setShowSuccess(false)}
-            transactionHash={transactionHash}
+            transactionHash={txHash}
             network={activeNetwork}
+            onClose={() => setShowSuccess(false)}
           />
         )}
-
-        {error && <ErrorModal error={error} onClose={handleRetry} />}
+        {error && <ErrorModal error={error} onClose={() => setError(null)} />}
       </div>
     </main>
   );
-        }
+}
