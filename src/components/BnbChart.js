@@ -294,7 +294,10 @@ export default function BnbChart() {
                 >
                   Switch to {useBarChart ? "Line" : "Bar"}
                 </div>
-                <div className={styles.dropdownItem} onClick={downloadChart}>
+                <div
+                  className={styles.dropdownItem}
+                  onClick={downloadChart}
+                >
                   Download PNG
                 </div>
               </div>
