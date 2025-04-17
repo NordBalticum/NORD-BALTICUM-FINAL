@@ -214,6 +214,112 @@
   background: linear-gradient(to right, var(--accent-end), var(--accent-start));
 }
 
+/* === SEND MODULE FINAL ULTRA PREMIUM v7 (ULTIMATE) === */
+
+/* — SWIPE SELECTOR STYLES — */
+
+/* Main selector container */
+.selectorContainer {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  overflow: hidden;
+}
+
+.arrows {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-between;
+  transform: translateY(-50%);
+  z-index: 2;
+}
+
+.arrowBtn {
+  background: none;
+  border: none;
+  font-size: 2rem;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: transform var(--trans-fast);
+}
+
+.arrowBtn:hover {
+  transform: scale(1.1);
+}
+
+/* Scrollable Wrapper */
+.scrollableWrapper {
+  display: flex;
+  gap: var(--gap-md);
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  padding: 10px;
+}
+
+/* Static Wrapper */
+.staticWrapper {
+  display: flex;
+  gap: var(--gap-md);
+  justify-content: center;
+  padding: 10px;
+}
+
+/* Card styles */
+.card {
+  width: 100%;
+  max-width: 200px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: var(--overlay);
+  border-radius: var(--radius-base);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 8px rgba(255, 255, 255, 0.2);
+  transition: transform var(--trans-fast);
+  scroll-snap-align: center;
+}
+
+.card:hover {
+  transform: scale(1.05);
+}
+
+.selected {
+  transform: scale(1.1);
+  box-shadow: 0 8px 16px rgba(255, 255, 255, 0.4);
+}
+
+.logo {
+  width: 40px;
+  height: 40px;
+  margin-bottom: 0.5rem;
+}
+
+.name {
+  font-size: var(--font-size-md);
+  font-weight: 600;
+  color: var(--text-primary);
+  text-align: center;
+}
+
+/* Loading State */
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  font-size: var(--font-size-lg);
+  color: var(--text-primary);
+}
+
 /* — RESPONSIVE RULES */
 @media (min-width: 1280px) {
   .wrapper {
