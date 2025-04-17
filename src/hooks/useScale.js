@@ -20,7 +20,7 @@ export function useScale(
       { max: 576, scale: 0.75 },
       { max: 768, scale: 0.85 },
       { max: 992, scale: 0.95 },
-      { max: Infinity, scale: 1.0 },
+      { max: Infinity, scale: 0.97 },
     ],
     desktopFactor = 0.99,
     mobileFactor = 0.67,
