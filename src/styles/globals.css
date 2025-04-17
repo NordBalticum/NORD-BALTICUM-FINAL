@@ -1,149 +1,297 @@
-/* === GLOBAL ROOT VARIABLES — NordBalticum Ferrari Ultra Supreme === */
-:root {
-  --max-width: 1440px;
-  --min-width: 320px;
-  --main-padding: clamp(16px, 5vw, 32px);
-  --radius: 18px;
-  --transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
-  --safe-area-inset-bottom: env(safe-area-inset-bottom);
+/* ==========================================================================
+   NORDBALTICUM FERRARI ULTRA SUPREME v2.0
+   Next‑Gen 2025 Global & Theme CSS — Unified Single File
+   ========================================================================== */
 
-  /* SPALVOS */
-  --font-crypto: 'Share Tech Mono', monospace;
-  --white-gold: #FFD700;
-  --gold-glow: rgba(255, 215, 0, 0.3);
+/* ==========================================================================
+   CSS VARIABLES & THEME SETUP
+   ========================================================================== */
+:root {
+  /* SIZING & SAFE AREAS */
+  --max-width:         1440px;
+  --min-width:         320px;
+  --main-padding:      clamp(16px, 5vw, 32px);
+  --radius-sm:         12px;
+  --radius-base:       18px;
+  --radius-lg:         24px;
+  --radius-xl:         32px;
+  --gap-xs:            8px;
+  --gap-sm:            12px;
+  --gap-base:          16px;
+  --gap-lg:            24px;
+  --safe-bottom:       env(safe-area-inset-bottom);
+
+  /* TRANSITIONS */
+  --trans-in:          0.2s ease-in-out;
+  --trans-fast:        0.2s ease-out;
+  --trans-medium:      0.4s cubic-bezier(0.25,1,0.5,1);
+  --trans-slow:        0.6s ease-in-out;
+
+  /* TYPOGRAPHY */
+  --font-mono:         'Share Tech Mono', monospace;
+  --font-size-xs:      0.75rem;
+  --font-size-sm:      0.875rem;
+  --font-size-base:    1rem;
+  --font-size-lg:      1.125rem;
+  --font-size-xl:      1.25rem;
+  --line-height:       1.5;
+
+  /* COLOR PALETTE */
+  --bg-start:          oklch(28% 0.12 250);
+  --bg-mid:            oklch(34% 0.15 270);
+  --bg-end:            oklch(48% 0.2 280);
+  --corner-shadow-dk:  rgba(0,0,0,0.8);
+  --corner-shadow-lt:  rgba(0,0,0,0.6);
+
+  --overlay:           rgba(0,0,0,0.6);
+  --overlay-hover:     rgba(0,0,0,0.8);
+
+  --text-primary:      #ffffff;
+  --text-secondary:    #cccccc;
+  --text-muted:        #999;
+
+  --accent-start:      #ffffff;
+  --accent-end:        #dddddd;
+
+  --gold:              #FFD700;
+  --gold-glow:         rgba(255,215,0,0.3);
+
+  --gradient-speed:    6s;
 }
 
-/* === RESETAS — ULTRA CLEAN === */
-* {
+/* ==========================================================================
+   GLOBAL RESET & BASE
+   ========================================================================== */
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+
+*, *::before, *::after {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
   -webkit-tap-highlight-color: transparent;
+  scroll-behavior: smooth;
 }
 
-/* === HTML & BODY — FULLSCREEN FIX === */
 html, body {
-  width: 100%;
-  height: 100%;
+  width: 100vw;
+  height: 100vh;
   min-height: 100vh;
-  font-family: var(--font-crypto);
-  font-size: 100%;
-  color: white;
-  background: radial-gradient(circle at center, #0a122a 15%, #1b2370 60%, #2b37ff 95%) no-repeat center center fixed;
+  font-family: var(--font-mono);
+  font-size: var(--font-size-base);
+  line-height: var(--line-height);
+  color: var(--text-primary);
+  background: radial-gradient(
+    circle at center,
+    var(--bg-start) 10%,
+    var(--bg-mid)   55%,
+    var(--bg-end)   90%
+  ) no-repeat center center fixed;
   background-size: cover;
   background-attachment: fixed;
-  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
   position: fixed;
   inset: 0;
+  overflow: hidden;
   touch-action: none;
   user-select: none;
-  -webkit-font-smoothing: antialiased;
+  box-shadow:
+    inset 0 0 120px var(--corner-shadow-dk),
+    inset 80px 0 120px var(--corner-shadow-lt),
+    inset -80px 0 120px var(--corner-shadow-lt);
 }
 
-/* === SCROLLBAR — OFF VISIEM === */
-::-webkit-scrollbar, body::-moz-scrollbar {
-  display: none;
-}
-::-webkit-scrollbar-thumb, ::-webkit-scrollbar-track {
-  background: transparent;
-}
-body {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
+/* hide scrollbars everywhere */
+::-webkit-scrollbar { display: none; }
+body { -ms-overflow-style: none; scrollbar-width: none; }
 
-/* === GLOBAL FULLSCREEN CONTAINER === */
+/* ==========================================================================
+   GLOBAL CONTAINERS & UTILITIES
+   ========================================================================== */
 .globalContainer {
   position: fixed;
   top: 50%;
   left: 50%;
-  width: calc(100vw - 160px);
-  height: calc(100vh - 160px);
+  width:  calc(100vw - var(--gap-lg)*2);
+  height: calc(100vh - var(--gap-lg)*2);
   display: flex;
   align-items: center;
   justify-content: center;
   transform: translate(-50%, -50%);
   background: inherit;
   background-size: cover;
-  background-position: center;
   overflow: visible;
-  padding: clamp(16px, 4vw, 64px);
-  transition: var(--transition);
+  padding: var(--main-padding);
+  transition: var(--trans-medium);
   z-index: 1;
 }
 
-/* === CONTENT WRAPPER INSIDE GLOBAL === */
 .contentWrapper {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  padding: clamp(24px, 5vw, 48px);
-  border-radius: var(--radius);
-  backdrop-filter: blur(18px) saturate(160%);
-  background: rgba(255, 255, 255, 0.06);
-  box-shadow: 0 0 28px var(--gold-glow);
-  max-width: 640px;
   width: 100%;
+  max-width: 640px;
+  background: rgba(255,255,255,0.06);
+  backdrop-filter: blur(18px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 0 32px var(--gold-glow);
+  padding: clamp(24px,5vw,48px);
+  text-align: center;
+  opacity: 0;
+  animation: fadeIn 0.6s var(--trans-medium) forwards;
 }
 
-/* === UTILITY CLASSES === */
-.hidden {
-  display: none !important;
-}
 .flexCenter {
   display: flex;
   align-items: center;
   justify-content: center;
 }
+
+.hidden { display: none !important; }
+
 .padBottom {
-  padding-bottom: calc(80px + var(--safe-area-inset-bottom));
+  padding-bottom: calc(var(--safe-bottom) + 80px);
 }
 
-/* === ANIMATIONS — SMOOTH PREMIUM === */
+/* ==========================================================================
+   TYPOGRAPHY & ELEMENT STYLING
+   ========================================================================== */
+h1,h2,h3,h4,h5,h6,
+p, span, label, a {
+  color: var(--text-primary);
+  text-shadow: 0 0 6px rgba(255,255,255,0.1);
+}
+
+small, .text-sm { font-size: var(--font-size-sm); color: var(--text-muted); }
+.text-lg { font-size: var(--font-size-lg); }
+
+/* ==========================================================================
+   BUTTONS
+   ========================================================================== */
+.buttonBase {
+  display: inline-block;
+  padding: 0.875rem 1.375rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  border-radius: var(--radius-base);
+  border: 2px solid var(--text-primary);
+  background: var(--overlay);
+  color: var(--text-primary);
+  box-shadow: 0 0 14px rgba(255,255,255,0.15);
+  cursor: pointer;
+  transition: transform var(--trans-fast), box-shadow var(--trans-fast), background var(--trans-fast);
+}
+.buttonBase:hover {
+  background: var(--overlay-hover);
+  transform: scale(1.05);
+  box-shadow: 0 0 28px var(--gold);
+}
+
+/* ==========================================================================
+   FORM FIELDS & GLASS EFFECT
+   ========================================================================== */
+input, textarea, select, .glassBox {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: var(--radius-base);
+  color: var(--text-primary);
+  transition: background var(--trans-medium), border-color var(--trans-medium), box-shadow var(--trans-medium);
+}
+input, textarea, select {
+  width: 100%;
+  padding: 0.875rem 1.25rem;
+  font-family: var(--font-mono);
+}
+input:focus, textarea:focus, select:focus {
+  background: rgba(255,255,255,0.08);
+  border-color: var(--gold);
+  box-shadow: 0 0 16px rgba(255,255,255,0.3);
+}
+.glassBox {
+  padding: clamp(24px,5vw,48px);
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  border: 1px solid rgba(255,255,255,0.15);
+  box-shadow: 0 0 32px rgba(255,255,255,0.06);
+}
+
+/* ==========================================================================
+   TOASTIFY STYLING
+   ========================================================================== */
+.Toastify__toast {
+  background: rgba(255,255,255,0.08) !important;
+  backdrop-filter: blur(12px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(12px) saturate(180%) !important;
+  border: 1px solid rgba(255,255,255,0.18) !important;
+  box-shadow: 0 8px 32px rgba(31,38,135,0.37) !important;
+  border-radius: var(--radius-base) !important;
+  color: var(--text-primary) !important;
+  font-size: var(--font-size-base);
+}
+.Toastify__toast-body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.Toastify__close-button { color: var(--text-primary) !important; }
+
+/* ==========================================================================
+   LOGO & IMAGE EFFECTS
+   ========================================================================== */
+.logoImage {
+  filter: drop-shadow(0 0 12px rgba(255,255,255,0.2));
+  transition: transform var(--trans-medium), filter var(--trans-medium);
+}
+.logoImage:hover {
+  transform: scale(1.05);
+  filter: drop-shadow(0 0 24px rgba(255,255,255,0.4));
+}
+
+/* ==========================================================================
+   BACKGROUND & GRADIENT ANIMATIONS
+   ========================================================================== */
+@keyframes moveGradient {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+.gradientBg {
+  background: linear-gradient(
+    135deg,
+    oklch(65% 0.18 255),
+    oklch(42% 0.10 250),
+    oklch(22% 0.04 240)
+  );
+  background-size: 200% 200%;
+  animation: moveGradient var(--gradient-speed) ease infinite;
+}
+
+/* ==========================================================================
+   CORE ANIMATIONS
+   ========================================================================== */
 @keyframes fadeIn {
   0% { opacity: 0; transform: translateY(20px) scale(0.98); }
   100% { opacity: 1; transform: translateY(0) scale(1); }
 }
-.fadeIn {
-  animation: fadeIn 0.6s cubic-bezier(0.25, 1, 0.5, 1) forwards;
-}
-
 @keyframes fadeOut {
   0% { opacity: 1; transform: translateY(0); }
   100% { opacity: 0; transform: translateY(12px); }
 }
-.fadeOut {
-  animation: fadeOut 0.5s cubic-bezier(0.25, 1, 0.5, 1) forwards;
-}
 
-/* === RESPONSIVE — GALUTINIS PREMIUM LYGIS === */
+/* ==========================================================================
+   RESPONSIVE BREAKPOINTS
+   ========================================================================== */
 @media (max-width: 1600px) {
-  .globalContainer {
-    width: calc(100vw - 140px);
-    height: calc(100vh - 140px);
-    background-size: 180% 180%;
-  }
+  .globalContainer { width: calc(100vw - 140px); height: calc(100vh - 140px); }
 }
 @media (max-width: 1200px) {
-  .globalContainer {
-    width: calc(100vw - 120px);
-    height: calc(100vh - 120px);
-    background-size: 160% 160%;
-  }
+  .globalContainer { width: calc(100vw - 120px); height: calc(100vh - 120px); }
 }
 @media (max-width: 992px) {
-  .globalContainer {
-    width: calc(100vw - 100px);
-    height: calc(100vh - 100px);
-    background-size: 140% 140%;
-  }
+  .globalContainer { width: calc(100vw - 100px); height: calc(100vh - 100px); }
 }
 @media (max-width: 768px) {
   .globalContainer {
     width: calc(100vw - 80px);
     height: calc(100vh - 80px);
-    background-size: 120% 120%;
     transform: scale(0.92) translateY(5%);
     transform-origin: top center;
   }
@@ -152,7 +300,6 @@ body {
   .globalContainer {
     width: 100vw;
     height: 100vh;
-    background-size: 100% 100%;
     transform: scale(0.90) translateY(8%);
   }
 }
@@ -160,7 +307,6 @@ body {
   .globalContainer {
     width: 100vw;
     height: 100vh;
-    background-size: 100% 100%;
     transform: scale(0.88) translateY(10%);
   }
 }
@@ -168,7 +314,6 @@ body {
   .globalContainer {
     width: 100vw;
     height: 100vh;
-    background-size: 100% 100%;
     transform: scale(0.86) translateY(12%);
   }
 }
@@ -176,7 +321,6 @@ body {
   .globalContainer {
     width: 100vw;
     height: 100vh;
-    background-size: 100% 100%;
     transform: scale(0.84) translateY(14%);
   }
 }
