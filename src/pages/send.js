@@ -1,32 +1,31 @@
-// src/app/send.js
 "use client";
 export const dynamic = "force-dynamic";
 
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
+
 import { useAuth } from "@/contexts/AuthContext";
 import { useNetwork } from "@/contexts/NetworkContext";
 import { useSend } from "@/contexts/SendContext";
 import { useBalance } from "@/contexts/BalanceContext";
 import { useSystemReady } from "@/hooks/useSystemReady";
 
-import dynamic from "next/dynamic";
-const SuccessModal = dynamic(() => import("@/components/modals/SuccessModal"));
-const ErrorModal   = dynamic(() => import("@/components/modals/ErrorModal"));
-
 import SwipeSelector from "@/components/SwipeSelector";
 import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
+import SuccessModal from "@/components/modals/SuccessModal";
+import ErrorModal from "@/components/modals/ErrorModal";
 import SuccessToast from "@/components/SuccessToast";
 
 import styles from "@/styles/send.module.css";
 import background from "@/styles/background.module.css";
 
+// network metadata
 const NETWORKS = {
-  eth:   { label:"ETH",   min:0.001,  color:"#0072ff", explorer:"https://etherscan.io/tx/" },
-  bnb:   { label:"BNB",   min:0.0005, color:"#f0b90b", explorer:"https://bscscan.com/tx/" },
-  tbnb:  { label:"tBNB",  min:0.0005, color:"#f0b90b", explorer:"https://testnet.bscscan.com/tx/" },
-  matic: { label:"MATIC", min:0.1,    color:"#8247e5", explorer:"https://polygonscan.com/tx/" },
-  avax:  { label:"AVAX",  min:0.01,   color:"#e84142", explorer:"https://snowtrace.io/tx/" },
+  eth:   { label: "ETH",   min: 0.001,  color: "#0072ff", explorer: "https://etherscan.io/tx/" },
+  bnb:   { label: "BNB",   min: 0.0005, color: "#f0b90b", explorer: "https://bscscan.com/tx/" },
+  tbnb:  { label: "tBNB",  min: 0.0005, color: "#f0b90b", explorer: "https://testnet.bscscan.com/tx/" },
+  matic: { label: "MATIC", min: 0.1,    color: "#8247e5", explorer: "https://polygonscan.com/tx/" },
+  avax:  { label: "AVAX",  min: 0.01,   color: "#e84142", explorer: "https://snowtrace.io/tx/" },
 };
 
 export default function SendPage() {
@@ -36,65 +35,89 @@ export default function SendPage() {
   const { ready, loading: sysLoading } = useSystemReady();
 
   const {
-    sendTransaction, sending, gasFee, adminFee, totalFee,
-    feeLoading, feeError, calculateFees
+    sendTransaction,
+    sending,
+    gasFee,
+    adminFee,
+    totalFee,
+    feeLoading,
+    feeError,
+    calculateFees,
   } = useSend();
 
   const { balances, getUsdBalance, getEurBalance } = useBalance();
 
+  // local UI state
   const [receiver, setReceiver]       = useState("");
   const [amount, setAmount]           = useState("");
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [successOpen, setSuccessOpen] = useState(false);
-  const [toast, setToast]             = useState({ show:false, msg:"" });
+  const [toast, setToast]             = useState({ show: false, msg: "" });
   const [error, setError]             = useState(null);
   const [txHash, setTxHash]           = useState("");
 
-  // derive network info
+  // derive network config
   const cfg    = useMemo(() => NETWORKS[activeNetwork] || {}, [activeNetwork]);
   const { label: short, min, color: btnClr, explorer } = cfg;
   const val    = useMemo(() => parseFloat(amount) || 0, [amount]);
-  const bal    = balances?.[activeNetwork] || 0;
-  const eurBal = getEurBalance?.(activeNetwork) || "0.00";
-  const usdBal = getUsdBalance?.(activeNetwork) || "0.00";
+  const bal    = useMemo(() => balances?.[activeNetwork] || 0, [balances, activeNetwork]);
+  const eurBal = useMemo(() => getEurBalance?.(activeNetwork) || "0.00", [getEurBalance, activeNetwork]);
+  const usdBal = useMemo(() => getUsdBalance?.(activeNetwork) || "0.00", [getUsdBalance, activeNetwork]);
 
-  const isValidAddress = useCallback(
-    adr => /^0x[a-fA-F0-9]{40}$/.test(adr.trim()),
-    []
+  // address validator
+  const isValidAddress = useCallback(addr =>
+    /^0x[a-fA-F0-9]{40}$/.test(addr.trim()), []
   );
 
-  // recalc fees (debounced)
+  // recalc fees on network or amount change
   useEffect(() => {
     if (val > 0) calculateFees(activeNetwork, val);
   }, [activeNetwork, val, calculateFees]);
 
-  // redirect if not authed
+  // redirect if not authed once system ready
   useEffect(() => {
-    if (ready && !user) router.replace("/");
+    if (ready && !user) {
+      router.replace("/");
+    }
   }, [user, ready, router]);
 
+  // initial system loading spinner
   if (sysLoading) {
     return (
-      <div className={styles.loader}><MiniLoadingSpinner size={40} /></div>
+      <div className={styles.loader}>
+        <MiniLoadingSpinner size={40} />
+      </div>
     );
   }
 
+  // network switch handler
   const switchNet = useCallback(net => {
     switchNetwork(net);
     setReceiver("");
     setAmount("");
-    setToast({ show:true, msg:`Switched to ${NETWORKS[net].label}` });
+    setToast({ show: true, msg: `Switched to ${NETWORKS[net].label}` });
     navigator.vibrate?.(30);
-    setTimeout(() => setToast({ show:false,msg:"" }), 1200);
+    setTimeout(() => setToast({ show: false, msg: "" }), 1200);
   }, [switchNetwork]);
 
+  // input validation before confirm
   const onSendClick = useCallback(() => {
-    if (!isValidAddress(receiver)) return alert("❌ Invalid address");
-    if (val < min)                  return alert(`❌ Min is ${min} ${short}`);
-    if (val + totalFee > bal)       return alert("❌ Insufficient funds");
+    if (!isValidAddress(receiver)) {
+      alert("❌ Invalid address");
+      return;
+    }
+    if (val < min) {
+      alert(`❌ Minimum is ${min} ${short}`);
+      return;
+    }
+    if (val + totalFee > bal) {
+      alert("❌ Insufficient balance");
+      return;
+    }
     setConfirmOpen(true);
   }, [receiver, val, min, short, totalFee, bal, isValidAddress]);
 
+  // perform actual send
   const onConfirm = useCallback(async () => {
     setConfirmOpen(false);
     setError(null);
@@ -149,9 +172,9 @@ export default function SendPage() {
 
           <div className={styles.feesInfo}>
             {feeLoading ? (
-              <p><MiniLoadingSpinner size={14} /> Calculating…</p>
+              <p><MiniLoadingSpinner size={14} /> Calculating fees…</p>
             ) : feeError ? (
-              <p style={{color:"red"}}>Fee error: {feeError}</p>
+              <p style={{ color: "red" }}>Fee error: {feeError}</p>
             ) : (
               <>
                 <p>Total: {(val + totalFee).toFixed(6)} {short}</p>
@@ -162,31 +185,37 @@ export default function SendPage() {
 
           <button
             onClick={onSendClick}
-            disabled={!receiver||sending||feeLoading}
+            disabled={!receiver || sending || feeLoading}
             aria-busy={sending}
-            className={styles.sendButton}
             style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
               backgroundColor: btnClr,
-              color: (activeNetwork==="bnb"||activeNetwork==="tbnb")?"#000":"#fff",
+              color: (activeNetwork === "bnb" || activeNetwork === "tbnb") ? "#000" : "#fff",
+              border: "2px solid #fff",
+              padding: "12px 0",
+              fontSize: "18px",
+              width: "100%",
+              marginTop: "16px",
+              borderRadius: "12px",
+              boxShadow: "0 8px 24px rgba(0,0,0,0.2)",
             }}
           >
-            {sending
-              ? <MiniLoadingSpinner size={20} color="#fff" />
-              : "SEND NOW"
-            }
+            {sending ? <MiniLoadingSpinner size={20} color="#fff" /> : "SEND NOW"}
           </button>
         </div>
 
         {confirmOpen && (
-          <div className={styles.overlay} onKeyDown={e=>e.key==="Escape"&&setConfirmOpen(false)}>
+          <div className={styles.overlay}>
             <div className={styles.confirmModal} role="dialog" aria-modal="true">
               <h3>Confirm Transaction</h3>
-              <p><b>Network:</b> {short}</p>
-              <p><b>To:</b> {receiver}</p>
-              <p><b>Amount:</b> {val.toFixed(6)} {short}</p>
-              <p><b>Gas Fee:</b> {gasFee.toFixed(6)} {short}</p>
-              <p><b>Admin Fee:</b> {adminFee.toFixed(6)} {short}</p>
-              <p><b>Total:</b> {(val + totalFee).toFixed(6)} {short}</p>
+              <p><strong>Network:</strong> {short}</p>
+              <p><strong>To:</strong> {receiver}</p>
+              <p><strong>Amount:</strong> {val.toFixed(6)} {short}</p>
+              <p><strong>Gas Fee:</strong> {gasFee.toFixed(6)} {short}</p>
+              <p><strong>Admin Fee:</strong> {adminFee.toFixed(6)} {short}</p>
+              <p><strong>Total:</strong> {(val + totalFee).toFixed(6)} {short}</p>
               <div className={styles.modalActions}>
                 <button onClick={onConfirm} disabled={sending}>
                   {sending ? "Processing…" : "Confirm"}
@@ -205,7 +234,10 @@ export default function SendPage() {
             onClose={() => setSuccessOpen(false)}
           />
         )}
-        {error && <ErrorModal error={error} onClose={() => setError(null)} />}
+
+        {error && (
+          <ErrorModal error={error} onClose={() => setError(null)} />
+        )}
       </div>
     </main>
   );
