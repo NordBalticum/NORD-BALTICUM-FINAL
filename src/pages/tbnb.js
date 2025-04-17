@@ -118,7 +118,7 @@ export default function TBnbPage() {
             </button>
             <button
               className={styles.actionButton}
-              onClick={() => router.push("/transactions")}
+              onClick={() => router.push("/history")}
             >
               History
             </button>
