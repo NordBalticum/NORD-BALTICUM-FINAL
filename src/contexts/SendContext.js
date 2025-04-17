@@ -1,4 +1,3 @@
-// src/contexts/SendContext.js
 "use client";
 
 import { createContext, useContext, useState, useCallback, useMemo } from "react";
@@ -12,21 +11,24 @@ import { useNetwork } from "@/contexts/NetworkContext";
 
 // — RPC endpoints with fallback providers
 const RPC = {
-  eth:   { urls: ["https://rpc.ankr.com/eth","https://eth.llamarpc.com"],         chainId: 1,    name: "eth"   },
-  bnb:   { urls: ["https://bsc-dataseed.binance.org/","https://bsc.publicnode.com"],chainId: 56,   name: "bnb"   },
-  tbnb:  { urls: ["https://data-seed-prebsc-1-s1.binance.org:8545/","https://bsc-testnet.public.blastapi.io"], chainId: 97, name: "tbnb"  },
-  matic: { urls: ["https://polygon-bor.publicnode.com","https://1rpc.io/matic"],   chainId: 137,  name: "matic" },
-  avax:  { urls: ["https://rpc.ankr.com/avalanche","https://avalanche.drpc.org"], chainId: 43114,name: "avax"  },
+  eth:   { urls: ["https://rpc.ankr.com/eth","https://eth.llamarpc.com"],                      chainId:1, name:"eth"   },
+  bnb:   { urls: ["https://bsc-dataseed.binance.org/","https://bsc.publicnode.com"],             chainId:56,name:"bnb"   },
+  tbnb:  { urls: ["https://data-seed-prebsc-1-s1.binance.org:8545/","https://bsc-testnet.public.blastapi.io"],chainId:97,name:"tbnb"  },
+  matic: { urls: ["https://polygon-bor.publicnode.com","https://1rpc.io/matic"],                  chainId:137,name:"matic" },
+  avax:  { urls: ["https://rpc.ankr.com/avalanche","https://avalanche.drpc.org"],                 chainId:43114,name:"avax"  },
 };
 
 // — AES‑GCM decryption (PBKDF2)
 const encode = s => new TextEncoder().encode(s);
 const decode = b => new TextDecoder().decode(b);
+
 const getKey = async () => {
   const material = await window.crypto.subtle.importKey(
     "raw",
     encode(process.env.NEXT_PUBLIC_ENCRYPTION_SECRET || "super_secret"),
-    { name: "PBKDF2" }, false, ["deriveKey"]
+    { name: "PBKDF2" },
+    false,
+    ["deriveKey"]
   );
   return window.crypto.subtle.deriveKey(
     {
@@ -41,6 +43,7 @@ const getKey = async () => {
     ["decrypt"]
   );
 };
+
 const decrypt = async ciphertext => {
   const { iv, data } = JSON.parse(atob(ciphertext));
   const key = await getKey();
@@ -52,7 +55,7 @@ const decrypt = async ciphertext => {
   return decode(decrypted);
 };
 
-// — Map our shorthand to DB naming
+// — Map shorthand to DB naming
 const mapNetwork = net => (net === "matic" ? "polygon" : net);
 
 // — Create context
@@ -64,7 +67,7 @@ export function SendProvider({ children }) {
   const { refetch } = useBalance();
   const { activeNetwork } = useNetwork();
 
-  // — Local state
+  // local state
   const [sending, setSending]       = useState(false);
   const [gasFee, setGasFee]         = useState(0);
   const [adminFee, setAdminFee]     = useState(0);
@@ -72,18 +75,21 @@ export function SendProvider({ children }) {
   const [feeLoading, setFeeLoading] = useState(false);
   const [feeError, setFeeError]     = useState(null);
 
-  // — Memoize providers per network
+  // memoize providers
   const providers = useMemo(() => {
     const map = {};
-    for (const [key, cfg] of Object.entries(RPC)) {
-      map[key] = new ethers.FallbackProvider(
-        cfg.urls.map(url => new ethers.JsonRpcProvider(url, { chainId: cfg.chainId, name: cfg.name }))
+    for (const [net, cfg] of Object.entries(RPC)) {
+      map[net] = new ethers.FallbackProvider(
+        cfg.urls.map(url => new ethers.JsonRpcProvider(url, {
+          chainId: cfg.chainId,
+          name: cfg.name
+        }))
       );
     }
     return map;
   }, []);
 
-  // — Estimate gas + admin fee
+  // calculate fees
   const calculateFees = useCallback(async (network, amount) => {
     if (!network || amount <= 0) return;
     setFeeLoading(true);
@@ -96,7 +102,6 @@ export function SendProvider({ children }) {
       } catch {
         gasPrice = ethers.parseUnits("5", "gwei");
       }
-      // double buffer (21000 * 2)
       const gasCost   = Number(ethers.formatEther(gasPrice * 21000n * 2n));
       const adminCost = Number(amount) * 0.03;
       setGasFee(gasCost);
@@ -110,21 +115,23 @@ export function SendProvider({ children }) {
     }
   }, [providers]);
 
-  // — Perform a two‑step send (admin fee → user), with auto‑retry on underpriced
+  // send transaction
   const sendTransaction = useCallback(async ({ to, amount, userEmail }) => {
     if (!to || amount <= 0 || !activeNetwork || !userEmail) {
       throw new Error("Missing transaction data");
     }
     const ADMIN = process.env.NEXT_PUBLIC_ADMIN_WALLET;
-    if (!ADMIN) throw new Error("Admin wallet not configured");
+    if (!ADMIN) {
+      throw new Error("Admin wallet not configured");
+    }
 
     setSending(true);
     try {
-      // 1) Refresh session & balances
+      // refresh session & balances
       await safeRefreshSession();
       await refetch();
 
-      // 2) Load encrypted key
+      // load encrypted key
       const { data, error } = await supabase
         .from("wallets")
         .select("encrypted_key")
@@ -134,29 +141,29 @@ export function SendProvider({ children }) {
         throw new Error("Encrypted key fetch error");
       }
 
-      // 3) Decrypt & build signer
+      // decrypt & build signer
       const privKey  = await decrypt(data.encrypted_key);
       const provider = providers[activeNetwork];
       const signer   = new ethers.Wallet(privKey, provider);
       const value    = ethers.parseEther(amount.toString());
 
-      // 4) Recompute gasPrice / limits
+      // recompute gasPrice & limits
       let gasPrice;
       try {
         gasPrice = await getGasPrice(provider);
       } catch {
         gasPrice = ethers.parseUnits("5", "gwei");
       }
-      const gasLimit  = 21000n;
-      const adminVal  = value * 3n / 100n;
-      const totalGas  = gasPrice * gasLimit * 2n;
-      const balance   = await provider.getBalance(signer.address);
+      const gasLimit = 21000n;
+      const adminVal = value * 3n / 100n;
+      const totalGas = gasPrice * gasLimit * 2n;
+      const balance  = await provider.getBalance(signer.address);
 
       if (balance < value + adminVal + totalGas) {
         throw new Error("Insufficient on‑chain balance");
       }
 
-      // 5) Helper: auto‑bump gas by 1.5× on underpriced
+      // helper: auto‑bump gas
       const safeSend = async (recipient, val) => {
         let attemptGas = gasPrice;
         for (let i = 0; i < 2; i++) {
@@ -170,8 +177,11 @@ export function SendProvider({ children }) {
             try { await tx.wait(); } catch {}
             return tx.hash;
           } catch (err) {
-            const m = (err.message || "").toLowerCase();
-            if (i === 0 && (m.includes("underpriced") || m.includes("tip cap") || m.includes("fee too low"))) {
+            const msg = (err.message || "").toLowerCase();
+            if (
+              i === 0 &&
+              (msg.includes("underpriced") || msg.includes("tip cap") || msg.includes("fee too low"))
+            ) {
               attemptGas = attemptGas * 3n / 2n;
               console.warn("⏫ Bumping gasPrice to", attemptGas.toString());
               continue;
@@ -181,11 +191,11 @@ export function SendProvider({ children }) {
         }
       };
 
-      // 6) Pay admin fee, then user
+      // pay admin fee then user
       await safeSend(ADMIN, adminVal);
       const userHash = await safeSend(to, value);
 
-      // 7) Record to DB
+      // record to DB
       await supabase.from("transactions").insert([{
         user_email:       userEmail,
         sender_address:   signer.address,
@@ -198,19 +208,20 @@ export function SendProvider({ children }) {
         status:           "completed",
       }]);
 
-      // 8) Notify + refresh
+      // success & refresh
       toast.success("✅ Transaction completed!", { position: "top-center", autoClose: 3000 });
       await refetch();
       return userHash;
+
     } catch (err) {
       console.error("❌ sendTransaction error:", err);
-      // log failure
       await supabase.from("logs").insert([{
         user_email: userEmail,
         type:       "transaction_error",
         message:    err.message || "Unknown error",
       }]);
       throw err;
+
     } finally {
       setSending(false);
     }
