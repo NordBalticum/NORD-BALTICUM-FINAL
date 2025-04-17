@@ -1,7 +1,8 @@
+// src/app/send.js
 "use client";
 export const dynamic = "force-dynamic";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 
 import { useAuth } from "@/contexts/AuthContext";
@@ -47,50 +48,59 @@ export default function SendPage() {
 
   const { balances, getUsdBalance, getEurBalance } = useBalance();
 
-  const [receiver, setReceiver]     = useState("");
-  const [amount, setAmount]         = useState("");
+  const [receiver, setReceiver]       = useState("");
+  const [amount, setAmount]           = useState("");
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [successOpen, setSuccessOpen] = useState(false);
-  const [toast, setToast]           = useState({ show:false, msg:"" });
-  const [error, setError]           = useState(null);
-  const [txHash, setTxHash]         = useState("");
+  const [toast, setToast]             = useState({ show:false, msg:"" });
+  const [error, setError]             = useState(null);
+  const [txHash, setTxHash]           = useState("");
 
   // derive network info
-  const cfg     = NETWORKS[activeNetwork] || {};
-  const short   = cfg.label || activeNetwork.toUpperCase();
-  const minAmt  = cfg.min   || 0;
-  const btnClr  = cfg.color || "#888";
-  const val     = parseFloat(amount)||0;
-  const bal     = balances?.[activeNetwork]||0;
-  const eurBal  = getEurBalance?.(activeNetwork)||"0.00";
-  const usdBal  = getUsdBalance?.(activeNetwork)||"0.00";
+  const cfg    = NETWORKS[activeNetwork] || {};
+  const short  = cfg.label       || activeNetwork.toUpperCase();
+  const minAmt = cfg.min         || 0;
+  const btnClr = cfg.color       || "#888";
+  const val    = parseFloat(amount) || 0;
+  const bal    = balances?.[activeNetwork]    || 0;
+  const eurBal = getEurBalance?.(activeNetwork) || "0.00";
+  const usdBal = getUsdBalance?.(activeNetwork) || "0.00";
 
   // address validator
   const isValidAddress = adr => /^0x[a-fA-F0-9]{40}$/.test(adr.trim());
 
   // recalc fees
   useEffect(() => {
-    if (val>0) calculateFees(activeNetwork,val);
-  }, [activeNetwork,val,calculateFees]);
+    if (val > 0) calculateFees(activeNetwork, val);
+  }, [activeNetwork, val, calculateFees]);
 
-  // guard: not authed → back
+  // redirect if not authed, but wait for system ready
   useEffect(() => {
-    if (!user) router.replace("/");
-  }, [user,router]);
+    if (ready && !user) {
+      router.replace("/");
+    }
+  }, [user, ready, router]);
 
-  // guard: system not ready → spinner
-  if (sysLoading || !ready) {
-    return <div className={styles.loader}><MiniLoadingSpinner /></div>;
+  // show only while system is initializing
+  if (sysLoading) {
+    return (
+      <div className={styles.loader}>
+        <MiniLoadingSpinner size={40} />
+      </div>
+    );
   }
 
-  const switchNet = n => {
-    switchNetwork(n);
-    setReceiver(""); setAmount("");
-    setToast({ show:true, msg:`Switched to ${NETWORKS[n].label}` });
+  // network switch handler
+  const switchNet = net => {
+    switchNetwork(net);
+    setReceiver("");
+    setAmount("");
+    setToast({ show: true, msg: `Switched to ${NETWORKS[net].label}` });
     navigator.vibrate?.(30);
-    setTimeout(()=>setToast({ show:false,msg:""}),1200);
+    setTimeout(() => setToast({ show: false, msg: "" }), 1200);
   };
 
+  // preliminary validation
   const onSendClick = () => {
     if (!isValidAddress(receiver)) return alert("❌ Invalid address");
     if (val < minAmt)                  return alert(`❌ Minimum is ${minAmt} ${short}`);
@@ -98,6 +108,7 @@ export default function SendPage() {
     setConfirmOpen(true);
   };
 
+  // perform send
   const onConfirm = async () => {
     setConfirmOpen(false);
     setError(null);
@@ -108,11 +119,12 @@ export default function SendPage() {
         userEmail: user.email,
       });
       setTxHash(hash);
-      setReceiver(""); setAmount("");
+      setReceiver("");
+      setAmount("");
       setSuccessOpen(true);
       navigator.vibrate?.(80);
     } catch (e) {
-      setError(e.message||"Transaction failed");
+      setError(e.message || "Transaction failed");
     }
   };
 
@@ -133,43 +145,53 @@ export default function SendPage() {
         {/* inputs & fees */}
         <div className={styles.walletActions}>
           <input
-            type="text" placeholder="Receiver address"
-            value={receiver} onChange={e=>setReceiver(e.target.value)}
-            disabled={sending} className={styles.inputField}
+            type="text"
+            placeholder="Receiver address"
+            value={receiver}
+            onChange={e => setReceiver(e.target.value)}
+            disabled={sending}
+            className={styles.inputField}
           />
           <input
-            type="number" placeholder="Amount"
-            value={amount} onChange={e=>setAmount(e.target.value)}
-            disabled={sending} className={styles.inputField} min="0"
+            type="number"
+            placeholder="Amount"
+            value={amount}
+            onChange={e => setAmount(e.target.value)}
+            disabled={sending}
+            className={styles.inputField}
+            min="0"
           />
 
           <div className={styles.feesInfo}>
-            {feeLoading
-              ? <p><MiniLoadingSpinner size={14}/> Calculating fees…</p>
-              : feeError
-                ? <p style={{color:"red"}}>Fee error: {feeError}</p>
-                : <>
-                    <p>Total: {(val+totalFee).toFixed(6)} {short}</p>
-                    <p>Min: {minAmt} {short}</p>
-                  </>
-            }
+            {feeLoading ? (
+              <p><MiniLoadingSpinner size={14} /> Calculating fees…</p>
+            ) : feeError ? (
+              <p style={{ color:"red" }}>Fee error: {feeError}</p>
+            ) : (
+              <>
+                <p>Total: {(val + totalFee).toFixed(6)} {short}</p>
+                <p>Min: {minAmt} {short}</p>
+              </>
+            )}
           </div>
 
           <button
             onClick={onSendClick}
-            disabled={!receiver||sending||feeLoading}
+            disabled={!receiver || sending || feeLoading}
             style={{
               backgroundColor: btnClr,
-              color: (activeNetwork==="bnb"||activeNetwork==="tbnb")?"#000":"#fff",
-              border:"2px solid #fff",
-              padding:"12px 0", fontSize:"18px",
-              width:"100%", marginTop:"16px",
-              borderRadius:"12px",
-              boxShadow:"0 8px 24px rgba(0,0,0,0.2)"
+              color: (activeNetwork==="bnb"||activeNetwork==="tbnb") ? "#000" : "#fff",
+              border: "2px solid #fff",
+              padding: "12px 0",
+              fontSize: "18px",
+              width: "100%",
+              marginTop: "16px",
+              borderRadius: "12px",
+              boxShadow: "0 8px 24px rgba(0,0,0,0.2)"
             }}
           >
             {sending
-              ? <MiniLoadingSpinner size={20} color="#fff"/>
+              ? <MiniLoadingSpinner size={20} color="#fff" />
               : "SEND NOW"
             }
           </button>
@@ -185,12 +207,12 @@ export default function SendPage() {
               <p><b>Amount:</b> {val.toFixed(6)} {short}</p>
               <p><b>Gas Fee:</b> {gasFee.toFixed(6)} {short}</p>
               <p><b>Admin Fee:</b> {adminFee.toFixed(6)} {short}</p>
-              <p><b>Total:</b> {(val+totalFee).toFixed(6)} {short}</p>
+              <p><b>Total:</b> {(val + totalFee).toFixed(6)} {short}</p>
               <div className={styles.modalActions}>
                 <button onClick={onConfirm} disabled={sending}>
                   {sending ? "Sending…" : "Confirm"}
                 </button>
-                <button onClick={()=>setConfirmOpen(false)}>Cancel</button>
+                <button onClick={() => setConfirmOpen(false)}>Cancel</button>
               </div>
             </div>
           </div>
@@ -202,11 +224,11 @@ export default function SendPage() {
             message="✅ Transaction Sent!"
             transactionHash={txHash}
             network={activeNetwork}
-            onClose={()=>setSuccessOpen(false)}
+            onClose={() => setSuccessOpen(false)}
           />
         )}
         {error && (
-          <ErrorModal error={error} onClose={()=>setError(null)} />
+          <ErrorModal error={error} onClose={() => setError(null)} />
         )}
       </div>
     </main>
