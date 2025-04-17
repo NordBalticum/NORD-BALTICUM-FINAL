@@ -83,10 +83,17 @@ export function useSystemReady() {
     }
   }, [isClient]);
 
-  // 🏁 Ready check
+  // 🏁 Ready check (minimal)
   const minimalReady = useMemo(() => {
     return isClient && isDomReady && !!user?.email && !!wallet?.wallet?.address && !!activeNetwork && !authLoading && !walletLoading;
   }, [isClient, isDomReady, user, wallet, activeNetwork, authLoading, walletLoading]);
+
+  // 🏁 Full readiness check (with balances and prices)
+  const fullReady = useMemo(() => {
+    const hasBalances = balances && Object.keys(balances).length > 0;
+    const hasPrices = prices && Object.keys(prices).length > 0;
+    return minimalReady && hasBalances && hasPrices;
+  }, [minimalReady, balances, prices]);
 
   // 🏁 Balances and prices readiness
   const hasBalancesReady = useMemo(() => {
@@ -100,10 +107,6 @@ export function useSystemReady() {
     const cached = fallbackPrices && Object.keys(fallbackPrices).length > 0;
     return live || cached;
   }, [prices, fallbackPrices]);
-
-  // 🏁 Final system readiness check
-  const ready = minimalReady && hasBalancesReady && hasPricesReady;
-  const loading = !ready;
 
   // 🏁 Session health scoring
   useEffect(() => {
@@ -192,8 +195,8 @@ export function useSystemReady() {
 
   // 🏁 Return system readiness states
   return {
-    ready,
-    loading,
+    ready: fullReady,
+    loading: !fullReady,
     latencyMs,
     sessionScore,
     fallbackBalances,
