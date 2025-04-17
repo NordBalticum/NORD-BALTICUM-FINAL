@@ -32,7 +32,7 @@ ChartJS.register(
   Decimation
 );
 
-const STORAGE_KEY = "nb_bnb_chart_7d";
+const STORAGE_KEY = "nb_bnb_chart";
 
 export default function BnbChart() {
   const { ready } = useMinimalReady();
@@ -45,134 +45,84 @@ export default function BnbChart() {
   const chartRef = useRef(null);
   const mountedRef = useRef(false);
   const controllerRef = useRef(null);
-  const resizeTimeout = useRef(null);
   const dropdownRef = useRef(null);
 
   const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
 
-  const fetchChartData = useCallback(
-    debounce(async (daysParam = 7) => {
-      if (!mountedRef.current || document.visibilityState !== "visible") return;
+  const fetchChartData = useCallback(async (daysParam = 7) => {
+    if (!mountedRef.current || document.visibilityState !== "visible") return;
 
-      try {
-        setChartLoading(true);
-        controllerRef.current?.abort();
-        const controller = new AbortController();
-        controllerRef.current = controller;
+    try {
+      setChartLoading(true);
+      controllerRef.current?.abort();
+      const controller = new AbortController();
+      controllerRef.current = controller;
 
-        const res = await fetch(
-          `https://api.coingecko.com/api/v3/coins/binancecoin/market_chart?vs_currency=eur&days=${daysParam}`,
-          { signal: controller.signal }
-        );
-        const data = await res.json();
-        if (!data?.prices) throw new Error("No price data");
+      const res = await fetch(
+        `https://api.coingecko.com/api/v3/coins/binancecoin/market_chart?vs_currency=eur&days=${daysParam}`,
+        { signal: controller.signal }
+      );
 
-        const formatted = data.prices.map(([timestamp, price]) => {
-          const date = new Date(timestamp);
-          const day = date.toLocaleDateString("en-GB", { day: "2-digit", month: "short" });
-          const hour = date.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+      const data = await res.json();
+      if (!data?.prices) throw new Error("No price data");
 
-          return {
-            fullLabel: `${day} ${hour}`,
-            shortLabel: day,
-            value: parseFloat(price).toFixed(2),
-          };
+      const formatted = data.prices.map(([timestamp, price]) => {
+        const date = new Date(timestamp);
+        const day = date.toLocaleDateString("en-GB", {
+          day: "2-digit",
+          month: "short",
+        });
+        const hour = date.toLocaleTimeString("en-GB", {
+          hour: "2-digit",
+          minute: "2-digit",
         });
 
-        const pointsPerDay = isMobile ? 2 : 6;
-        const step = Math.max(1, Math.ceil(formatted.length / (daysParam * pointsPerDay)));
-        const filtered = formatted.filter((_, i) => i % step === 0);
+        return {
+          fullLabel: `${day} ${hour}`,
+          shortLabel: day,
+          value: parseFloat(price).toFixed(2),
+        };
+      });
 
-        try {
-          localStorage.setItem(STORAGE_KEY, JSON.stringify({ filtered, days: daysParam }));
-        } catch {}
+      const pointsPerDay = isMobile ? 2 : 6;
+      const step = Math.max(1, Math.ceil(formatted.length / (daysParam * pointsPerDay)));
+      const filtered = formatted.filter((_, i) => i % step === 0);
 
-        setChartData(filtered);
-      } catch (err) {
-        console.error("Chart fetch error:", err?.message || err);
-        try {
-          const cached = localStorage.getItem(STORAGE_KEY);
-          if (cached) {
-            const { filtered, days: cachedDays } = JSON.parse(cached);
-            setDays(cachedDays);
-            setChartData(filtered);
-          }
-        } catch {}
-      } finally {
-        setChartLoading(false);
-      }
-    }, 300),
-    [isMobile]
-  );
+      try {
+        localStorage.setItem(`${STORAGE_KEY}_${daysParam}`, JSON.stringify(filtered));
+      } catch {}
+
+      setChartData(filtered);
+    } catch (err) {
+      console.error("Chart fetch error:", err);
+      try {
+        const cached = localStorage.getItem(`${STORAGE_KEY}_${daysParam}`);
+        if (cached) {
+          setChartData(JSON.parse(cached));
+        }
+      } catch {}
+    } finally {
+      setChartLoading(false);
+    }
+  }, [isMobile]);
 
   useEffect(() => {
     if (!ready) return;
     mountedRef.current = true;
+    fetchChartData(days);
 
-    try {
-      const cached = localStorage.getItem(STORAGE_KEY);
-      if (cached) {
-        const { filtered, days: cachedDays } = JSON.parse(cached);
-        setDays(cachedDays);
-        setChartData(filtered);
-        setChartLoading(false);
-      } else {
-        fetchChartData(days);
-      }
-    } catch {
-      fetchChartData(days);
-    }
-
-    const hourlyInterval = setInterval(() => {
+    const interval = setInterval(() => {
       if (document.visibilityState === "visible") fetchChartData(days);
     }, 60000);
 
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === "visible") fetchChartData(days);
-      else controllerRef.current?.abort();
-    };
-
-    const handleResize = () => {
-      clearTimeout(resizeTimeout.current);
-      resizeTimeout.current = setTimeout(() => fetchChartData(days), 600);
-    };
-
-    const handleOutsideClick = (e) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
-        setShowDropdown(false);
-      }
-    };
-
-    const handleEsc = (e) => {
-      if (e.key === "Escape") setShowDropdown(false);
-    };
-
-    const handleReconnect = () => fetchChartData(days);
-
-    window.addEventListener("focus", handleReconnect);
-    window.addEventListener("online", handleReconnect);
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-    window.addEventListener("resize", handleResize);
-    document.addEventListener("mousedown", handleOutsideClick);
-    document.addEventListener("touchstart", handleOutsideClick);
-    document.addEventListener("keydown", handleEsc);
-
     return () => {
       mountedRef.current = false;
-      clearInterval(hourlyInterval);
+      clearInterval(interval);
       controllerRef.current?.abort();
-
-      window.removeEventListener("focus", handleReconnect);
-      window.removeEventListener("online", handleReconnect);
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-      window.removeEventListener("resize", handleResize);
-      document.removeEventListener("mousedown", handleOutsideClick);
-      document.removeEventListener("touchstart", handleOutsideClick);
-      document.removeEventListener("keydown", handleEsc);
     };
   }, [ready, days, fetchChartData]);
 
-  const maxY = Math.max(...chartData.map((p) => parseFloat(p.value))) * 1.15;
+  const maxY = Math.max(...chartData.map((p) => parseFloat(p.value) || 0)) * 1.15;
 
   const chartOptions = {
     responsive: true,
@@ -197,8 +147,8 @@ export default function BnbChart() {
         cornerRadius: 8,
         displayColors: false,
         callbacks: {
-          title: (tooltipItems) => chartData[tooltipItems[0].dataIndex]?.fullLabel || "",
-          label: (context) => `€ ${parseFloat(context.raw).toFixed(2)}`,
+          title: (items) => chartData[items[0].dataIndex]?.fullLabel || "",
+          label: (ctx) => `€ ${parseFloat(ctx.raw).toFixed(2)}`,
         },
       },
       legend: { display: false },
@@ -271,7 +221,7 @@ export default function BnbChart() {
         <div className={styles.chartContainer}>
           <div className={styles.chartDropdownWrapper} ref={dropdownRef}>
             <button
-              onClick={() => setShowDropdown((prev) => !prev)}
+              onClick={() => setShowDropdown(!showDropdown)}
               className={styles.dropdownButton}
             >
               {days}D ▾
@@ -283,8 +233,9 @@ export default function BnbChart() {
                   <div
                     key={d}
                     onClick={() => {
-                      setDays(d);
-                      fetchChartData(d);
+                      if (d !== days) {
+                        setDays(d);
+                      }
                       setShowDropdown(false);
                     }}
                     className={styles.dropdownItem}
