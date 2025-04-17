@@ -1,3 +1,4 @@
+// src/app/send.js
 "use client";
 export const dynamic = "force-dynamic";
 
@@ -45,9 +46,9 @@ export default function SendPage() {
     calculateFees,
   } = useSend();
 
-  const { balances, getUsdBalance, getEurBalance } = useBalance();
+  const { balances, prices } = useBalance();
 
-  // local UI state
+  // UI state
   const [receiver, setReceiver]       = useState("");
   const [amount, setAmount]           = useState("");
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -56,32 +57,40 @@ export default function SendPage() {
   const [error, setError]             = useState(null);
   const [txHash, setTxHash]           = useState("");
 
-  // derive network config
+  // derive config
   const cfg    = useMemo(() => NETWORKS[activeNetwork] || {}, [activeNetwork]);
   const { label: short, min, color: btnClr, explorer } = cfg;
   const val    = useMemo(() => parseFloat(amount) || 0, [amount]);
   const bal    = useMemo(() => balances?.[activeNetwork] || 0, [balances, activeNetwork]);
-  const eurBal = useMemo(() => getEurBalance?.(activeNetwork) || "0.00", [getEurBalance, activeNetwork]);
-  const usdBal = useMemo(() => getUsdBalance?.(activeNetwork) || "0.00", [getUsdBalance, activeNetwork]);
 
-  // address validator
+  // compute fiat balances
+  const eurBal = useMemo(() => {
+    const rate = prices?.[activeNetwork]?.eur ?? 0;
+    return (bal * rate).toFixed(2);
+  }, [prices, activeNetwork, bal]);
+
+  const usdBal = useMemo(() => {
+    const rate = prices?.[activeNetwork]?.usd ?? 0;
+    return (bal * rate).toFixed(2);
+  }, [prices, activeNetwork, bal]);
+
   const isValidAddress = useCallback(addr =>
     /^0x[a-fA-F0-9]{40}$/.test(addr.trim()), []
   );
 
-  // recalc fees on network or amount change
+  // recalc fees
   useEffect(() => {
     if (val > 0) calculateFees(activeNetwork, val);
   }, [activeNetwork, val, calculateFees]);
 
-  // redirect if not authed once system ready
+  // redirect if not logged-in once ready
   useEffect(() => {
     if (ready && !user) {
       router.replace("/");
     }
   }, [user, ready, router]);
 
-  // initial system loading spinner
+  // show spinner during system init
   if (sysLoading) {
     return (
       <div className={styles.loader}>
@@ -90,7 +99,6 @@ export default function SendPage() {
     );
   }
 
-  // network switch handler
   const switchNet = useCallback(net => {
     switchNetwork(net);
     setReceiver("");
@@ -100,7 +108,6 @@ export default function SendPage() {
     setTimeout(() => setToast({ show: false, msg: "" }), 1200);
   }, [switchNetwork]);
 
-  // input validation before confirm
   const onSendClick = useCallback(() => {
     if (!isValidAddress(receiver)) {
       alert("❌ Invalid address");
@@ -117,7 +124,6 @@ export default function SendPage() {
     setConfirmOpen(true);
   }, [receiver, val, min, short, totalFee, bal, isValidAddress]);
 
-  // perform actual send
   const onConfirm = useCallback(async () => {
     setConfirmOpen(false);
     setError(null);
