@@ -4,82 +4,100 @@ import { useEffect, useState, useCallback } from "react";
 import debounce from "lodash.debounce";
 
 /**
- * useScale – Iron-Class Responsive Hook (2025 Edition)
- * ====================================================
- * Maksimaliai tikslus ir išmanus „scale“ hookas:
- * - Tiksliai veikia desktop/mobile režimuose
- * - Reaguoja į virtualią rezoliuciją, orientaciją, HDPI, OS perjungimus
- * - Naudojamas per motion.div, transform, layout
- * - Suderinamas su SSR + 100% saugus
+ * useScale – Ferrari Ultra Responsive Hook v2.0
+ * =============================================
+ * • Multi‑breakpoint scaling for any viewport, DPI & orientation
+ * • Auto‑throttles on resize/orientation/viewport changes
+ * • Honors prefers-reduced-motion
+ * • SSR‑safe
  */
-export function useScale(initial = 0.92) {
-  const [scale, setScale] = useState(initial);
+export function useScale(
+  base = 0.92,
+  {
+    breakpoints = [
+      { max: 360, scale: 0.65 },
+      { max: 460, scale: 0.70 },
+      { max: 576, scale: 0.75 },
+      { max: 768, scale: 0.85 },
+      { max: 992, scale: 0.95 },
+      { max: Infinity, scale: 1.0 },
+    ],
+    desktopFactor = 0.99,
+    mobileFactor = 0.67,
+    hdpiAdjustment = 0.015,
+    portraitAdjustment = 0.01,
+    minScale = 0.55,
+    maxScale = 1.0,
+    debounceMs = 120,
+  } = {}
+) {
+  const [scale, setScale] = useState(base);
 
-  const updateScale = useCallback(() => {
+  const update = useCallback(() => {
     if (typeof window === "undefined") return;
 
-    const width = window.innerWidth;
-    const screenWidth = window.screen?.width || width;
-    const outerWidth = window.outerWidth || width;
-    const pixelRatio = window.devicePixelRatio || 1;
+    const w = window.innerWidth;
+    const sw = window.screen?.width || w;
+    const ow = window.outerWidth || w;
+    const pr = window.devicePixelRatio || 1;
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const portrait = window.matchMedia("(orientation: portrait)").matches;
 
-    const prefersReducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
-    const isPortrait = window.matchMedia?.("(orientation: portrait)")?.matches;
-
-    let newScale = initial;
-
-    const effectiveWidth = Math.min(width, screenWidth, outerWidth);
-
-    if (effectiveWidth < 468) {
-      newScale = prefersReducedMotion ? 0.70 : 0.67;
-    } else if (effectiveWidth < 768) {
-      newScale = prefersReducedMotion ? 0.74 : 0.70;
-    } else if (effectiveWidth < 1024) {
-      newScale = prefersReducedMotion ? 0.95 : 0.97;
-    } else {
-      newScale = prefersReducedMotion ? 0.96 : 0.99;
+    // pick base by breakpoint
+    let chosen = base;
+    const effW = Math.min(w, sw, ow);
+    for (const bp of breakpoints) {
+      if (effW <= bp.max) {
+        chosen = reduced ? bp.scale * 0.95 : bp.scale;
+        break;
+      }
     }
 
-    // Retina / HiDPI papildoma korekcija
-    if (pixelRatio >= 2 && effectiveWidth < 500) {
-      newScale -= 0.015;
-    }
+    // device‑type factor
+    chosen *= effW < 768 ? mobileFactor : desktopFactor;
 
-    // Portreto režimo papildomas sumažinimas
-    if (isPortrait && effectiveWidth < 768) {
-      newScale -= 0.01;
-    }
+    // retina/HDPI tweak for small screens
+    if (pr >= 2 && effW < 500) chosen -= hdpiAdjustment;
 
-    // Užtikrinam limitus
-    newScale = Math.max(0.55, Math.min(1.0, newScale));
-    newScale = parseFloat(newScale.toFixed(4));
+    // extra portrait tweak
+    if (portrait && effW < 768) chosen -= portraitAdjustment;
 
-    setScale(newScale);
-  }, [initial]);
+    // clamp & round
+    chosen = Math.max(minScale, Math.min(maxScale, chosen));
+    setScale(parseFloat(chosen.toFixed(4)));
+  }, [
+    base,
+    breakpoints,
+    desktopFactor,
+    mobileFactor,
+    hdpiAdjustment,
+    portraitAdjustment,
+    minScale,
+    maxScale,
+  ]);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    // initial
+    update();
 
-    updateScale(); // Init
+    const onResize = debounce(update, debounceMs);
+    const onOrient = () => setTimeout(update, 80);
+    const onViewport = () => setTimeout(update, 100);
+    const media = window.matchMedia("(prefers-reduced-motion: reduce)");
 
-    const debouncedResize = debounce(updateScale, 120);
-    const orientationChange = () => setTimeout(updateScale, 80);
-    const visualViewportChange = () => setTimeout(updateScale, 100);
-
-    window.addEventListener("resize", debouncedResize);
-    window.addEventListener("orientationchange", orientationChange);
-    window.visualViewport?.addEventListener("resize", visualViewportChange);
-
-    const motionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
-    motionQuery.addEventListener?.("change", updateScale);
+    window.addEventListener("resize", onResize);
+    window.addEventListener("orientationchange", onOrient);
+    window.visualViewport?.addEventListener("resize", onViewport);
+    media.addEventListener?.("change", update);
 
     return () => {
-      window.removeEventListener("resize", debouncedResize);
-      window.removeEventListener("orientationchange", orientationChange);
-      window.visualViewport?.removeEventListener("resize", visualViewportChange);
-      motionQuery.removeEventListener?.("change", updateScale);
+      window.removeEventListener("resize", onResize);
+      window.removeEventListener("orientationchange", onOrient);
+      window.visualViewport?.removeEventListener("resize", onViewport);
+      media.removeEventListener?.("change", update);
+      onResize.cancel();
     };
-  }, [updateScale]);
+  }, [update, debounceMs]);
 
   return scale;
 }
