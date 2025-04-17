@@ -14,7 +14,7 @@ import { useScale } from "@/hooks/useScale";
 const SystemReadyContext = createContext(null);
 
 export function SystemReadyProvider({ children }) {
-  const state = useSystemReady();
+  const state = useSystemReadyHook();  // Iškviesta atskira hook funkcija `useSystemReadyHook`
   return (
     <SystemReadyContext.Provider value={state}>
       {children}
@@ -33,7 +33,7 @@ export function useSystemReady() {
 /**
  * Custom hook to manage system readiness, scaling, and device-specific logic
  */
-export function useSystemReady() {
+export function useSystemReadyHook() {
   // 🎯 Context & hooks
   const { user, wallet, authLoading, walletLoading, safeRefreshSession, signOut } = useAuth();
   const { activeNetwork } = useNetwork();
@@ -83,17 +83,10 @@ export function useSystemReady() {
     }
   }, [isClient]);
 
-  // 🏁 Ready check (minimal)
+  // 🏁 Ready check
   const minimalReady = useMemo(() => {
     return isClient && isDomReady && !!user?.email && !!wallet?.wallet?.address && !!activeNetwork && !authLoading && !walletLoading;
   }, [isClient, isDomReady, user, wallet, activeNetwork, authLoading, walletLoading]);
-
-  // 🏁 Full readiness check (with balances and prices)
-  const fullReady = useMemo(() => {
-    const hasBalances = balances && Object.keys(balances).length > 0;
-    const hasPrices = prices && Object.keys(prices).length > 0;
-    return minimalReady && hasBalances && hasPrices;
-  }, [minimalReady, balances, prices]);
 
   // 🏁 Balances and prices readiness
   const hasBalancesReady = useMemo(() => {
@@ -107,6 +100,10 @@ export function useSystemReady() {
     const cached = fallbackPrices && Object.keys(fallbackPrices).length > 0;
     return live || cached;
   }, [prices, fallbackPrices]);
+
+  // 🏁 Final system readiness check
+  const ready = minimalReady && hasBalancesReady && hasPricesReady;
+  const loading = !ready;
 
   // 🏁 Session health scoring
   useEffect(() => {
@@ -195,8 +192,8 @@ export function useSystemReady() {
 
   // 🏁 Return system readiness states
   return {
-    ready: fullReady,
-    loading: !fullReady,
+    ready,
+    loading,
     latencyMs,
     sessionScore,
     fallbackBalances,
