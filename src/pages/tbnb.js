@@ -18,6 +18,7 @@ import SendModal from "@/components/SendModal";
 
 import styles from "@/styles/tbnb.module.css";
 
+// Dinamiškai užkraunamas BnbChart (be SSR, veikia 100% kaip reikia)
 const BnbChartDynamic = dynamic(() => import("@/components/BnbChart"), {
   ssr: false,
   loading: () => <MiniLoadingSpinner />,
