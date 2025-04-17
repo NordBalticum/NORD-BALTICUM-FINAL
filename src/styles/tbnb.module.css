@@ -2,7 +2,7 @@
 .pageContainer {
   width: 100vw;
   height: 100vh;
-  background: radial-gradient(circle at center, #0a122a 10%, #1b2370 55%, #2b37ff 90%) no-repeat center center fixed;
+  background: radial-gradient(circle at center, oklch(28% 0.12 250) 10%, oklch(34% 0.15 270) 55%, oklch(48% 0.2 280) 90%) no-repeat center center fixed;
   background-size: cover;
   display: flex;
   flex-direction: column;
@@ -10,6 +10,13 @@
   overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior: contain;
+  box-shadow: inset 0 0 80px rgba(0, 0, 0, 0.5);
+  -webkit-font-smoothing: antialiased;
+  scroll-behavior: smooth;
+  animation: fadeInScale 0.6s ease-out;
+  transition: background 0.5s ease-in-out, box-shadow 0.5s ease-in-out;
+  font-family: "Inter", system-ui, sans-serif;
+  backdrop-filter: brightness(105%) saturate(140%);
 }
 
 /* === CONTENT === */
@@ -23,6 +30,8 @@
   padding: clamp(20px, 5vh, 50px) clamp(16px, 4vw, 32px);
   box-sizing: border-box;
   transform-origin: top center;
+  animation: fadeInScale 0.6s ease-out;
+  z-index: 1;
 }
 
 /* === HEADER === */
@@ -33,19 +42,24 @@
   gap: 12px;
   margin-bottom: clamp(12px, 3vh, 24px);
   text-align: center;
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+  transform: translateZ(0);
 }
 
 .networkLogo {
   width: clamp(48px, 8vw, 60px);
   height: clamp(48px, 8vw, 60px);
   transition: transform 0.3s ease;
-  filter: drop-shadow(0 0 4px rgba(255, 215, 0, 0.5));
+  filter: drop-shadow(0 0 4px oklch(85% 0.08 100));
+  transform: perspective(500px) rotateX(2deg);
+  will-change: transform;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.05), transparent);
 }
 
 .networkLogo:hover {
-  transform: scale(1.1);
-  filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.7));
+  transform: scale(1.1) rotateZ(2deg);
+  filter: drop-shadow(0 0 8px oklch(95% 0.08 100));
 }
 
 .networkNameSmall {
@@ -60,7 +74,7 @@
 .balanceBox {
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.12);
-  backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px) saturate(120%);
   border-radius: 20px;
   box-shadow: 0 0 30px rgba(255, 255, 255, 0.06);
   padding: clamp(18px, 3vh, 28px) clamp(24px, 5vw, 36px);
@@ -68,24 +82,30 @@
   margin-bottom: clamp(8px, 2vh, 14px);
   text-align: center;
   transition: all 0.4s ease;
+  animation: fadeInScale 0.5s ease-out;
+  z-index: 1;
 }
 
 .balanceBox:hover {
   box-shadow: 0 0 50px rgba(255, 255, 255, 0.08);
+  transform: translateY(-2px);
 }
 
 .balanceText {
   font-size: clamp(1.9rem, 4vw, 2.8rem);
   font-weight: 800;
-  color: white;
   letter-spacing: 0.03em;
+  background: linear-gradient(90deg, oklch(100% 0.01 270), oklch(90% 0.03 260));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: fadeInScale 0.6s ease-in-out;
 }
 
 .balanceFiat {
   margin-top: 6px;
   font-size: clamp(1.1rem, 2.5vw, 1.5rem);
   opacity: 0.82;
-  color: #d1d5db;
+  color: oklch(85% 0.02 260);
 }
 
 /* === CHART WRAPPER === */
@@ -98,43 +118,56 @@
   padding: clamp(16px, 4vw, 32px);
   margin-top: clamp(10px, 2vh, 18px);
   box-sizing: border-box;
+  animation: fadeInUp 0.5s ease-out;
+  gap: 16px;
+  min-height: 300px;
+  transition: all 0.4s ease;
+  backdrop-filter: blur(6px) brightness(1.1);
+  z-index: 2;
 }
 
 /* === CHART BORDER === */
 .chartBorder {
   width: 100%;
-  height: clamp(260px, 45vh, 400px);
-  background: rgba(255, 255, 255, 0.04);
+  height: clamp(280px, 50vh, 460px);
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.03), rgba(0, 0, 0, 0.1));
   border: 1px solid rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(10px);
-  border-radius: 26px;
-  box-shadow: 0 0 40px rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(16px);
+  border-radius: 28px;
+  box-shadow: 0 0 60px rgba(255, 255, 255, 0.1);
   display: flex;
   align-items: stretch;
-  justify-content: stretch;
+  justify-content: center;
   padding: 0;
+  position: relative;
   transition: all 0.4s ease;
+  cursor: pointer;
+  animation: fadeInScale 0.4s ease-in-out;
 }
 
 .chartBorder:hover {
-  box-shadow: 0 0 60px rgba(255, 255, 255, 0.12);
+  box-shadow: 0 0 80px rgba(255, 255, 255, 0.15);
+  transform: scale3d(1.01, 1.01, 1);
+  filter: brightness(1.07);
 }
 
 /* === CHART CONTAINER === */
 .chartContainer {
   width: 100%;
   height: 100%;
-  padding: 0;
-  margin: 0;
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01));
-  border-radius: 24px;
-  box-shadow: inset 0 0 40px rgba(255, 255, 255, 0.05);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0));
+  border-radius: 26px;
+  box-shadow: inset 0 0 50px rgba(255, 255, 255, 0.05);
   overflow: hidden;
   contain: strict;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background-blend-mode: overlay;
+  transition: all 0.3s ease;
+  z-index: 3;
 }
 
 .chartInner {
@@ -144,284 +177,85 @@
   align-items: center;
   justify-content: center;
   position: relative;
-}
-
-/* === OVERLAY === */
-.chartOverlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  backdrop-filter: blur(6px);
-  background: rgba(0, 0, 0, 0.2);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 24px;
-  z-index: 5;
-}
-
-.updatingText {
-  color: #ccc;
-  font-size: 0.9rem;
-  opacity: 0.85;
-  text-shadow: 0 0 4px rgba(255, 255, 255, 0.1);
-}
-
-/* === ACTION BUTTONS === */
-.actionButtons {
-  display: flex;
-  justify-content: center;
-  gap: clamp(16px, 4vw, 32px);
-  margin: clamp(16px, 4vh, 32px) 0;
   flex-wrap: wrap;
+  animation: fadeInUp 0.6s ease-out;
+  pointer-events: none;
 }
 
-.actionButton {
-  padding: clamp(12px, 2.5vw, 18px) clamp(26px, 6vw, 48px);
-  background: black;
-  color: white;
-  border: 1px solid white;
-  border-radius: 9999px;
-  font-size: clamp(1rem, 2vw, 1.3rem);
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
-}
-
-.actionButton:hover {
-  background: white;
-  color: black;
-  transform: scale(1.05);
-  box-shadow: 0 0 15px white;
-}
-
-/* === MODAL === */
-.receiveModalOverlay {
-  position: fixed;
-  inset: 0;
-  z-index: 50;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  backdrop-filter: none;
-  background: none;
-}
-
-.receiveModal {
-  width: 100%;
-  max-width: 500px;
-  border-radius: 24px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  backdrop-filter: blur(20px);
-  box-shadow: 0 0 40px rgba(255, 255, 255, 0.08);
-  padding: 36px;
-  text-align: center;
-  animation: fadeIn 0.4s ease;
-}
-
-.modalTitle {
-  font-size: clamp(1.4rem, 3vw, 1.8rem);
-  font-weight: 700;
-  color: white;
-  margin-bottom: 24px;
-  text-shadow: 0 0 8px rgba(255, 255, 255, 0.1);
-}
-
-.qrContainer {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  align-items: center;
-  cursor: pointer;
-  padding: 20px;
-  border-radius: 20px;
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: inset 0 0 30px rgba(255, 255, 255, 0.03);
-  transition: all 0.3s ease;
-}
-
-.qrContainer:hover {
-  background: rgba(255, 255, 255, 0.03);
-  box-shadow: 0 0 30px rgba(255, 255, 255, 0.08);
-}
-
-.qrAddress {
-  word-break: break-all;
-  font-size: 0.85rem;
-  color: #ccc;
-  font-family: monospace;
-}
-
-.qrCopy {
-  font-size: 0.9rem;
-  color: #999;
-  font-weight: 500;
-  text-shadow: 0 0 4px rgba(255, 255, 255, 0.1);
-}
-
-/* === ANIMACIJOS === */
-@keyframes fadeInDown {
-  from { opacity: 0; transform: translateY(-24px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
+/* === ANIMATIONS === */
 @keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(24px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-@keyframes fadeIn {
-  0% { opacity: 0; transform: translateY(12px); }
-  100% { opacity: 1; transform: translateY(0); }
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
-/* === Mobile / Tablet @768px === */
+/* === RESPONSIVE === */
 @media (max-width: 768px) {
-  .pageContainer {
-    overflow-y: hidden;
-  }
-
   .pageContent {
-    transform-origin: top center;
-    padding: 0;
-    margin-top: 20px;
+    padding: 24px 16px;
     height: auto;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
   }
-
+  .header {
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .networkLogo {
+    width: 56px;
+    height: 56px;
+  }
+  .balanceBox {
+    padding: 20px;
+    margin: 12px 0;
+  }
+  .balanceText {
+    font-size: 2rem;
+  }
   .chartWrapper {
-    width: 100%;
-    padding: 0 8px;
-    margin-top: 16px;
+    flex-direction: column;
+    padding: 16px;
   }
-
   .chartBorder {
-    width: 100%;
-    height: clamp(240px, 42vh, 320px);
-    margin: 0 auto;
+    height: 320px;
   }
-
   .chartContainer {
-    width: 100%;
-    height: 100%;
-  }
-
-  .actionButtons {
-    flex-direction: column;
-    gap: 12px;
-    width: 100%;
-    padding: 0 16px;
-    margin-top: 40px;
-  }
-
-  .actionButton {
-    width: 100%;
-    font-size: clamp(1rem, 4vw, 1.3rem);
-    padding: 14px 0;
+    border-radius: 20px;
   }
 }
 
-.chartDropdownWrapper {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  z-index: 10;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-}
-
-.dropdownButton {
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  backdrop-filter: blur(10px);
-  padding: 8px 16px;
-  border-radius: 12px;
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: white;
-  cursor: pointer;
-  transition: all 0.25s ease;
-  text-shadow: 0 0 6px rgba(255, 255, 255, 0.08);
-  box-shadow: 0 0 10px rgba(255, 255, 255, 0.04);
-}
-
-.dropdownButton:hover {
-  background: rgba(255, 255, 255, 0.12);
-  box-shadow: 0 0 20px rgba(255, 255, 255, 0.12);
-  transform: scale(1.03);
-}
-
-.dropdownMenu {
-  margin-top: 8px;
-  background: rgba(0, 0, 0, 0.8);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 14px;
-  box-shadow: 0 0 24px rgba(255, 255, 255, 0.08);
-  min-width: 100%;
-  animation: fadeInUp 0.25s ease-out;
-  overflow: hidden;
-}
-
-.dropdownItem {
-  padding: 10px 16px;
-  color: white;
-  font-size: 0.88rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-  text-align: right;
-}
-
-.dropdownItem:last-child {
-  border-bottom: none;
-}
-
-.dropdownItem:hover {
-  background: rgba(255, 255, 255, 0.06);
-  color: #ffd700;
-  transform: translateX(-2px);
-}
-
-/* === Extra Mobile - @468px === */
-@media (max-width: 468px) {
-  .pageContainer {
-    overflow-y: hidden;
-  }
-
+@media (max-width: 480px) {
   .pageContent {
-    transform-origin: top center;
-    padding: 0;
-    margin-top: 18px;
-    height: auto;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+    padding: 16px 12px;
   }
-
-  .chartWrapper {
-    padding: 0 6px;
-    margin-top: 14px;
+  .header {
+    margin-bottom: 12px;
   }
-
+  .networkLogo {
+    width: 48px;
+    height: 48px;
+  }
+  .balanceText {
+    font-size: 1.8rem;
+  }
   .chartBorder {
-    height: clamp(220px, 40vh, 300px);
+    height: 280px;
   }
-
-  .actionButtons {
-    margin-top: 36px;
-    padding: 0 12px;
-  }
-
-  .actionButton {
-    padding: 13px 0;
+  .chartContainer {
+    padding: 0;
   }
 }
