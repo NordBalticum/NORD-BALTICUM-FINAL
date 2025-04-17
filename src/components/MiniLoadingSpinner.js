@@ -1,39 +1,16 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
-
-export default function MiniLoadingSpinner() {
-  const [isClient, setIsClient] = useState(false);
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      setIsClient(true);
-    }
-  }, []);
-
-  if (!isClient) {
-    return null;
-  }
-
+export default function MiniLoadingSpinner({ size = 20 }) {
   return (
-    <motion.div
-      animate={{ rotate: 360 }}
-      transition={{ repeat: Infinity, duration: 1.2, ease: "easeInOut" }} // ✅ Smoother rotation
-      style={styles.spinner}
-    />
+    <div
+      style={{
+        width: size,
+        height: size,
+        border: "3px solid #f3f3f3",
+        borderTop: "3px solid #3498db",
+        borderRadius: "50%",
+        animation: "spin 2s linear infinite",
+      }}
+    ></div>
   );
 }
-
-const styles = {
-  spinner: {
-    width: "32px",                       // ✅ Didesnis, elegantiškesnis
-    height: "32px",
-    border: "4px solid rgba(255, 255, 255, 0.15)", // ✅ Premium švelnus apvadas
-    borderTop: "4px solid #ffffff",       // ✅ Balta viršūnė
-    borderRadius: "50%",
-    boxShadow: "0 0 12px rgba(255, 255, 255, 0.4)", // ✅ Glow efektas aplink
-    marginLeft: "8px",
-    background: "transparent",
-  },
-};
