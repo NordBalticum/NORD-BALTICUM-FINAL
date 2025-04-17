@@ -16,8 +16,10 @@
   background-size: cover;
   position: relative;
   overflow: hidden;
-  transform: scale(0.8);
-  transform-origin: top center;
+
+  /* transform: scale(0.8); */            /* PAŠALINTA */
+  /* transform-origin: top center; */     /* PAŠALINTA */
+
   animation: fadeIn 1.2s var(--trans-medium) forwards;
   z-index: 0;
 }
@@ -26,11 +28,12 @@
 @keyframes fadeIn {
   0% {
     opacity: 0;
-    transform: scale(0.78);
+    /* Šiek tiek „pop-in“, mastelis valdomas JS */
+    transform: scale(0.95);
   }
   100% {
     opacity: 1;
-    transform: scale(0.8);
+    transform: scale(1);
   }
 }
 
@@ -222,6 +225,6 @@
 @media (max-width: 1279px) {
   .main,
   .wrapper {
-    transform: scale(0.8);
+    /* transform: scale(0.8); */  /* PAŠALINTA */
   }
 }
