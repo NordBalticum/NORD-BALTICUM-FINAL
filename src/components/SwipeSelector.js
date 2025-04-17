@@ -1,13 +1,20 @@
+// src/components/SwipeSelector.js
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  useCallback,
+  useMemo,
+} from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import { useNetwork } from "@/contexts/NetworkContext";
-import { useSystemReady } from "@/hooks/useSystemReady"; // ✅ Tikras readiness
+import { useSystemReady } from "@/hooks/useSystemReady";
 import styles from "@/components/swipeselector.module.css";
 
-// ✅ Palaikomi tinklai
+// 🎯 Supported networks (keep in sync with NetworkContext.SUPPORTED_NETWORKS)
 const supportedNetworks = [
   { name: "Ethereum", symbol: "eth", logo: "/icons/eth.svg" },
   { name: "BNB Chain", symbol: "bnb", logo: "/icons/bnb.svg" },
@@ -17,69 +24,75 @@ const supportedNetworks = [
 ];
 
 export default function SwipeSelector({ onSelect }) {
-  const { activeNetwork, switchNetwork } = useNetwork(); // ✅ Tik NetworkContext
-  const { ready } = useSystemReady(); // ✅ Pilnas readiness hook
+  const { activeNetwork, switchNetwork } = useNetwork();
+  const { ready } = useSystemReady();
 
   const containerRef = useRef(null);
-  const [selectedIndex, setSelectedIndex] = useState(1);
+  const [selectedIndex, setSelectedIndex] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
-  const hasInitialized = useRef(false);
 
+  // Determine mobile layout
   useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth <= 1024);
-    handleResize();
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
+    const mql = window.matchMedia("(max-width:1024px)");
+    const update = () => setIsMobile(mql.matches);
+    mql.addEventListener("change", update);
+    update();
+    return () => mql.removeEventListener("change", update);
   }, []);
 
-  useEffect(() => {
-    if (!ready || hasInitialized.current) return;
-    if (supportedNetworks[selectedIndex]) {
-      const selectedSymbol = supportedNetworks[selectedIndex].symbol;
-      switchNetwork(selectedSymbol);
-      onSelect?.(selectedSymbol);
-      hasInitialized.current = true;
-    }
-    if (isMobile) scrollToCenter(selectedIndex);
-  }, [ready, isMobile, selectedIndex, switchNetwork, onSelect]);
-
+  // Initialize selectedIndex from activeNetwork once
   useEffect(() => {
     if (!ready) return;
-    const idx = supportedNetworks.findIndex((net) => net.symbol === activeNetwork);
-    if (idx >= 0 && idx !== selectedIndex) {
-      setSelectedIndex(idx);
-    }
+    const idx = supportedNetworks.findIndex((n) => n.symbol === activeNetwork);
+    if (idx >= 0) setSelectedIndex(idx);
   }, [activeNetwork, ready]);
 
-  const scrollToCenter = (index) => {
-    const container = containerRef.current;
-    const card = container?.children?.[index];
-    if (card && container) {
-      const offset = card.offsetLeft - container.offsetWidth / 2 + card.offsetWidth / 2;
-      container.scrollTo({ left: offset, behavior: "smooth" });
-    }
-  };
+  // Expose onSelect callback
+  const notifySelect = useCallback(
+    (idx) => {
+      const sym = supportedNetworks[idx]?.symbol;
+      switchNetwork(sym);
+      onSelect?.(sym);
+    },
+    [switchNetwork, onSelect]
+  );
 
-  const handleSelect = (index) => {
-    setSelectedIndex(index);
-    const selectedSymbol = supportedNetworks[index].symbol;
-    switchNetwork(selectedSymbol);
-    onSelect?.(selectedSymbol);
+  // Scroll container to center selected card
+  const scrollToCenter = useCallback(
+    (idx) => {
+      const cont = containerRef.current;
+      const card = cont?.children[idx];
+      if (!cont || !card) return;
+      const offset = card.offsetLeft - (cont.offsetWidth - card.offsetWidth) / 2;
+      cont.scrollTo({ left: offset, behavior: "smooth" });
+    },
+    []
+  );
 
-    if (typeof window !== "undefined" && "vibrate" in navigator) {
-      navigator.vibrate(10);
-    }
+  // When selection changes, scroll and vibrate
+  useEffect(() => {
+    if (!ready) return;
+    scrollToCenter(selectedIndex);
+    navigator.vibrate?.(10);
+  }, [selectedIndex, ready, scrollToCenter]);
 
-    if (isMobile) scrollToCenter(index);
-  };
+  // Handle arrow buttons
+  const goLeft = useCallback(() => {
+    setSelectedIndex((i) => Math.max(0, i - 1));
+  }, []);
+  const goRight = useCallback(() => {
+    setSelectedIndex((i) => Math.min(supportedNetworks.length - 1, i + 1));
+  }, []);
 
-  const goLeft = () => {
-    if (selectedIndex > 0) handleSelect(selectedIndex - 1);
-  };
-
-  const goRight = () => {
-    if (selectedIndex < supportedNetworks.length - 1) handleSelect(selectedIndex + 1);
-  };
+  // Keyboard navigation
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === "ArrowLeft") goLeft();
+      if (e.key === "ArrowRight") goRight();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [goLeft, goRight]);
 
   if (!ready) {
     return (
@@ -90,17 +103,23 @@ export default function SwipeSelector({ onSelect }) {
   }
 
   return (
-    <div className={styles.selectorContainer}>
+    <div className={styles.selectorContainer} role="listbox" aria-label="Network selector">
       <div className={styles.arrows}>
-        <button className={styles.arrowBtn} onClick={goLeft} disabled={selectedIndex === 0}>
-          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="15 18 9 12 15 6" />
-          </svg>
+        <button
+          onClick={goLeft}
+          disabled={selectedIndex === 0}
+          aria-label="Previous network"
+          className={styles.arrowBtn}
+        >
+          ‹
         </button>
-        <button className={styles.arrowBtn} onClick={goRight} disabled={selectedIndex === supportedNetworks.length - 1}>
-          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="9 18 15 12 9 6" />
-          </svg>
+        <button
+          onClick={goRight}
+          disabled={selectedIndex === supportedNetworks.length - 1}
+          aria-label="Next network"
+          className={styles.arrowBtn}
+        >
+          ›
         </button>
       </div>
 
@@ -108,24 +127,30 @@ export default function SwipeSelector({ onSelect }) {
         ref={containerRef}
         className={isMobile ? styles.scrollableWrapper : styles.staticWrapper}
       >
-        {supportedNetworks.map((net, index) => (
+        {supportedNetworks.map((net, idx) => (
           <motion.div
             key={net.symbol}
-            className={`${styles.card} ${selectedIndex === index ? styles.selected : ""}`}
-            onClick={() => handleSelect(index)}
+            role="option"
+            aria-selected={selectedIndex === idx}
+            className={`${styles.card} ${
+              selectedIndex === idx ? styles.selected : ""
+            }`}
+            onClick={() => {
+              setSelectedIndex(idx);
+              notifySelect(idx);
+            }}
             whileTap={{ scale: 0.95 }}
-            role="button"
             tabIndex={0}
           >
             <Image
               src={net.logo}
               alt={`${net.name} logo`}
-              width={60}
-              height={60}
+              width={48}
+              height={48}
               className={styles.logo}
               unoptimized
             />
-            <div className={styles.name}>{net.name}</div>
+            <span className={styles.name}>{net.name}</span>
           </motion.div>
         ))}
       </div>
