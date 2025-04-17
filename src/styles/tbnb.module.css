@@ -126,7 +126,6 @@
   z-index: 2;
 }
 
-/* === CHART BORDER === */
 .chartBorder {
   width: 100%;
   height: clamp(280px, 50vh, 460px);
@@ -141,7 +140,6 @@
   padding: 0;
   position: relative;
   transition: all 0.4s ease;
-  cursor: pointer;
   animation: fadeInScale 0.4s ease-in-out;
 }
 
@@ -151,7 +149,6 @@
   filter: brightness(1.07);
 }
 
-/* === CHART CONTAINER === */
 .chartContainer {
   width: 100%;
   height: 100%;
@@ -180,6 +177,70 @@
   flex-wrap: wrap;
   animation: fadeInUp 0.6s ease-out;
   pointer-events: none;
+}
+
+/* === MODALS + QR === */
+.receiveModalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+}
+
+.receiveModal {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 24px;
+  padding: 32px;
+  max-width: 420px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 0 40px rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(20px);
+  animation: fadeInScale 0.4s ease-in-out;
+}
+
+.modalTitle {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: white;
+  margin-bottom: 20px;
+}
+
+.qrContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+}
+
+.qrCode {
+  border-radius: 12px;
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.08);
+  background: white;
+  padding: 10px;
+}
+
+.qrAddress {
+  word-break: break-all;
+  font-size: 0.95rem;
+  color: white;
+  opacity: 0.85;
+}
+
+.qrCopy {
+  font-size: 0.85rem;
+  color: oklch(85% 0.02 260);
+  opacity: 0.85;
+  transition: opacity 0.2s ease;
 }
 
 /* === ANIMATIONS === */
@@ -236,6 +297,9 @@
   .chartContainer {
     border-radius: 20px;
   }
+  .receiveModal {
+    padding: 24px;
+  }
 }
 
 @media (max-width: 480px) {
@@ -257,5 +321,8 @@
   }
   .chartContainer {
     padding: 0;
+  }
+  .receiveModal {
+    padding: 20px;
   }
 }
