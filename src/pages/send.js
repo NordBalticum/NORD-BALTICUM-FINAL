@@ -8,7 +8,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useNetwork } from "@/contexts/NetworkContext";
 import { useSend } from "@/contexts/SendContext";
 import { useBalance } from "@/contexts/BalanceContext";
-import { useSystemReady } from "@/contexts/SystemReadyContext"; // Importuojame iš konteksto
+import { useSystemReadyContext } from "@/contexts/SystemReadyContext"; // Importuojame iš konteksto
 import { useScale } from "@/hooks/useScale";
 
 import SwipeSelector from "@/components/SwipeSelector";
@@ -32,7 +32,7 @@ export default function SendPage() {
   const router = useRouter();
   const { user } = useAuth();
   const { activeNetwork, switchNetwork } = useNetwork();
-  const { ready, loading: sysLoading } = useSystemReady();  // Naudojame useSystemReady iš konteksto
+  const { ready, loading: sysLoading } = useSystemReadyContext();  // Naudojame useSystemReady iš konteksto
   const scale = useScale();
 
   const {
