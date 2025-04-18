@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
-import styles from "@/styles/ErrorBoundary.module.css"; // Sukurkite stilių klaidų puslapiui
+import styles from "@/styles/errorboundary.module.css"; // Sukurkite stilių klaidų puslapiui
 
 // Error Boundary Component
 const ErrorBoundary = ({ children }) => {
