@@ -1,4 +1,3 @@
-// src/app/send.js
 "use client";
 export const dynamic = "force-dynamic";
 
@@ -20,7 +19,6 @@ import SuccessToast from "@/components/SuccessToast";
 import styles from "@/styles/send.module.css";
 import background from "@/styles/background.module.css";
 
-// network metadata
 const NETWORKS = {
   eth:   { label: "ETH",   min: 0.001,  color: "#0072ff", explorer: "https://etherscan.io/tx/" },
   bnb:   { label: "BNB",   min: 0.0005, color: "#f0b90b", explorer: "https://bscscan.com/tx/" },
@@ -34,21 +32,9 @@ export default function SendPage() {
   const { user } = useAuth();
   const { activeNetwork, switchNetwork } = useNetwork();
   const { ready, loading: sysLoading } = useSystemReady();
-
-  const {
-    sendTransaction,
-    sending,
-    gasFee,
-    adminFee,
-    totalFee,
-    feeLoading,
-    feeError,
-    calculateFees,
-  } = useSend();
-
+  const { sendTransaction, sending, gasFee, adminFee, totalFee, feeLoading, feeError, calculateFees } = useSend();
   const { balances, prices } = useBalance();
 
-  // UI state
   const [receiver, setReceiver]       = useState("");
   const [amount, setAmount]           = useState("");
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -57,13 +43,11 @@ export default function SendPage() {
   const [error, setError]             = useState(null);
   const [txHash, setTxHash]           = useState("");
 
-  // derive config
   const cfg    = useMemo(() => NETWORKS[activeNetwork] || {}, [activeNetwork]);
   const { label: short, min, color: btnClr, explorer } = cfg;
   const val    = useMemo(() => parseFloat(amount) || 0, [amount]);
   const bal    = useMemo(() => balances?.[activeNetwork] || 0, [balances, activeNetwork]);
 
-  // compute fiat balances
   const eurBal = useMemo(() => {
     const rate = prices?.[activeNetwork]?.eur ?? 0;
     return (bal * rate).toFixed(2);
@@ -78,19 +62,16 @@ export default function SendPage() {
     /^0x[a-fA-F0-9]{40}$/.test(addr.trim()), []
   );
 
-  // recalc fees
   useEffect(() => {
     if (val > 0) calculateFees(activeNetwork, val);
   }, [activeNetwork, val, calculateFees]);
 
-  // redirect if not logged-in once ready
   useEffect(() => {
     if (ready && !user) {
       router.replace("/");
     }
   }, [user, ready, router]);
 
-  // show spinner during system init
   if (sysLoading) {
     return (
       <div className={styles.loader}>
