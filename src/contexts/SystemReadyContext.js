@@ -1,8 +1,8 @@
+// src/contexts/SystemReadyContext.js
 "use client";
 
 import { createContext, useContext } from "react";
 import { useSystemReady } from "@/hooks/useSystemReady";  // Importuojame mūsų custom hook'ą
-import { toast } from "react-toastify";  // Toast pranešimams, jei klaida
 
 // Sukuriame kontekstą SystemReady duomenims laikyti
 const SystemReadyContext = createContext(null);
@@ -24,9 +24,6 @@ export function useSystemReadyContext() {
 
   // Tikriname, ar SystemReadyContext buvo teisingai užpildytas
   if (!context) {
-    // Pridedame toast pranešimą klaidos atveju, kad būtų informuojami vartotojai
-    toast.error("SystemReadyContext must be used within SystemReadyProvider.");
-    
     console.error("useSystemReadyContext has been used outside of SystemReadyProvider.");
     throw new Error("useSystemReadyContext must be used within SystemReadyProvider");
   }
