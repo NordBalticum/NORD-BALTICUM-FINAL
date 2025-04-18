@@ -9,6 +9,7 @@ import { useNetwork } from "@/contexts/NetworkContext";
 import { useSend } from "@/contexts/SendContext";
 import { useBalance } from "@/contexts/BalanceContext";
 import { useSystemReady } from "@/hooks/useSystemReady";
+import { useScale } from "@/hooks/useScale";
 
 import SwipeSelector from "@/components/SwipeSelector";
 import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
@@ -32,7 +33,19 @@ export default function SendPage() {
   const { user } = useAuth();
   const { activeNetwork, switchNetwork } = useNetwork();
   const { ready, loading: sysLoading } = useSystemReady();
-  const { sendTransaction, sending, gasFee, adminFee, totalFee, feeLoading, feeError, calculateFees } = useSend();
+  const scale = useScale();
+
+  const {
+    sendTransaction,
+    sending,
+    gasFee,
+    adminFee,
+    totalFee,
+    feeLoading,
+    feeError,
+    calculateFees,
+  } = useSend();
+
   const { balances, prices } = useBalance();
 
   const [receiver, setReceiver]       = useState("");
@@ -43,10 +56,10 @@ export default function SendPage() {
   const [error, setError]             = useState(null);
   const [txHash, setTxHash]           = useState("");
 
-  const cfg    = useMemo(() => NETWORKS[activeNetwork] || {}, [activeNetwork]);
+  const cfg = useMemo(() => NETWORKS[activeNetwork] || {}, [activeNetwork]);
   const { label: short, min, color: btnClr, explorer } = cfg;
-  const val    = useMemo(() => parseFloat(amount) || 0, [amount]);
-  const bal    = useMemo(() => balances?.[activeNetwork] || 0, [balances, activeNetwork]);
+  const val = useMemo(() => parseFloat(amount) || 0, [amount]);
+  const bal = useMemo(() => balances?.[activeNetwork] || 0, [balances, activeNetwork]);
 
   const eurBal = useMemo(() => {
     const rate = prices?.[activeNetwork]?.eur ?? 0;
@@ -90,18 +103,9 @@ export default function SendPage() {
   }, [switchNetwork]);
 
   const onSendClick = useCallback(() => {
-    if (!isValidAddress(receiver)) {
-      alert("❌ Invalid address");
-      return;
-    }
-    if (val < min) {
-      alert(`❌ Minimum is ${min} ${short}`);
-      return;
-    }
-    if (val + totalFee > bal) {
-      alert("❌ Insufficient balance");
-      return;
-    }
+    if (!isValidAddress(receiver)) return alert("❌ Invalid address");
+    if (val < min) return alert(`❌ Minimum is ${min} ${short}`);
+    if (val + totalFee > bal) return alert("❌ Insufficient balance");
     setConfirmOpen(true);
   }, [receiver, val, min, short, totalFee, bal, isValidAddress]);
 
@@ -125,10 +129,9 @@ export default function SendPage() {
   }, [receiver, val, user, sendTransaction]);
 
   return (
-    <main className={`${styles.main} ${background.gradient}`}>
+    <main className={`${styles.main} ${background.gradient}`} style={{ transform: `scale(${scale})`, transformOrigin: "top center" }}>
       <div className={styles.wrapper}>
         <SuccessToast show={toast.show} message={toast.msg} networkKey={activeNetwork} />
-
         <SwipeSelector selected={activeNetwork} onSelect={switchNet} />
 
         <div className={styles.balanceTable}>
@@ -139,7 +142,6 @@ export default function SendPage() {
         <div className={styles.walletActions}>
           <input
             type="text"
-            aria-label="Receiver address"
             placeholder="0x..."
             value={receiver}
             onChange={e => setReceiver(e.target.value)}
@@ -148,7 +150,6 @@ export default function SendPage() {
           />
           <input
             type="number"
-            aria-label="Amount to send"
             placeholder="0.0"
             value={amount}
             onChange={e => setAmount(e.target.value)}
@@ -173,11 +174,7 @@ export default function SendPage() {
           <button
             onClick={onSendClick}
             disabled={!receiver || sending || feeLoading}
-            aria-busy={sending}
             style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
               backgroundColor: btnClr,
               color: (activeNetwork === "bnb" || activeNetwork === "tbnb") ? "#000" : "#fff",
               border: "2px solid #fff",
@@ -187,6 +184,9 @@ export default function SendPage() {
               marginTop: "16px",
               borderRadius: "12px",
               boxShadow: "0 8px 24px rgba(0,0,0,0.2)",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center"
             }}
           >
             {sending ? <MiniLoadingSpinner size={20} color="#fff" /> : "SEND NOW"}
@@ -195,7 +195,7 @@ export default function SendPage() {
 
         {confirmOpen && (
           <div className={styles.overlay}>
-            <div className={styles.confirmModal} role="dialog" aria-modal="true">
+            <div className={styles.confirmModal}>
               <h3>Confirm Transaction</h3>
               <p><strong>Network:</strong> {short}</p>
               <p><strong>To:</strong> {receiver}</p>
