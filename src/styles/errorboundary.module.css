@@ -1,0 +1,39 @@
+.errorContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  background-color: #fff;
+  color: #000;
+  text-align: center;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+.errorMessage {
+  font-size: 24px;
+  font-weight: bold;
+  color: #f44336;
+  margin-bottom: 20px;
+}
+
+.errorDetails {
+  font-size: 18px;
+  color: #555;
+  margin-bottom: 20px;
+}
+
+.reloadButton {
+  padding: 10px 20px;
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: background-color 0.3s;
+}
+
+.reloadButton:hover {
+  background-color: #45a049;
+}
