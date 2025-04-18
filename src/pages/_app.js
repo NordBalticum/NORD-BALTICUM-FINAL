@@ -7,7 +7,6 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { NetworkProvider } from "@/contexts/NetworkContext";
 import { BalanceProvider } from "@/contexts/BalanceContext";
 import { SendProvider } from "@/contexts/SendContext";
-import { SystemReadyProvider } from "@/contexts/SystemReadyContext";
 import ErrorBoundary from "@/components/ErrorBoundary"; // Importuojame ErrorBoundary
 
 import Layout from "@/components/Layout";
@@ -18,13 +17,11 @@ export default function App({ Component, pageProps }) {
       <NetworkProvider>
         <BalanceProvider>
           <SendProvider>
-            <SystemReadyProvider>
-              <ErrorBoundary> {/* Apvyniojame visą aplikaciją ErrorBoundary */}
-                <Layout>
-                  <Component {...pageProps} />
-                </Layout>
-              </ErrorBoundary>
-            </SystemReadyProvider>
+            <ErrorBoundary> {/* Apvyniojame visą aplikaciją ErrorBoundary */}
+              <Layout>
+                <Component {...pageProps} />
+              </Layout>
+            </ErrorBoundary>
           </SendProvider>
         </BalanceProvider>
       </NetworkProvider>
