@@ -20,6 +20,7 @@ import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
 import styles from "@/styles/send.module.css";
 import background from "@/styles/background.module.css";
 
+// Network definitions
 const NETWORKS = {
   eth:   { label: "ETH",   min: 0.001,  color: "#0072ff", explorer: "https://etherscan.io/tx/" },
   bnb:   { label: "BNB",   min: 0.0005, color: "#f0b90b", explorer: "https://bscscan.com/tx/" },
@@ -39,7 +40,7 @@ export default function SendPage() {
   const router = useRouter();
   const { user } = useAuth();
   const { activeNetwork, switchNetwork } = useNetwork();
-  const { ready, loading: sysLoading } = useSystemReady();
+  const { ready } = useSystemReady();
   const { sendTransaction, sending, gasFee, adminFee, totalFee, feeLoading, feeError, calculateFees } = useSend();
   const { balances, prices } = useBalance();
   const scale = useScale();
@@ -84,8 +85,8 @@ export default function SendPage() {
   }, [ready, user, router]);
 
   const handleSend = useCallback(() => {
-    if (!isValidAddress(receiver)) return alert("❌ Invalid address");
-    if (val < min) return alert(`❌ Minimum is ${min} ${short}`);
+    if (!isValidAddress(receiver)) return alert("❌ Invalid address format");
+    if (val < min) return alert(`❌ Minimum amount is ${min} ${short}`);
     if (val + totalFee > bal) return alert("❌ Insufficient balance");
     setConfirmOpen(true);
   }, [receiver, val, min, short, totalFee, bal, isValidAddress]);
@@ -128,6 +129,8 @@ export default function SendPage() {
   return (
     <main className={`${styles.main} ${background.gradient}`} style={{ transform: `scale(${scale})` }}>
       <div className={styles.wrapper}>
+
+        {/* Network Selector */}
         <div className={styles.selectorContainer}>
           {NETWORK_LIST.map((net, idx) => (
             <motion.div
@@ -142,11 +145,13 @@ export default function SendPage() {
           ))}
         </div>
 
+        {/* Balance Info */}
         <div className={styles.balanceTable}>
           <p>Your Balance: <strong>{bal.toFixed(6)} {short}</strong></p>
           <p>≈ €{eurBal} | ≈ ${usdBal}</p>
         </div>
 
+        {/* Form */}
         <div className={styles.walletActions}>
           <input
             type="text"
@@ -189,6 +194,7 @@ export default function SendPage() {
           </button>
         </div>
 
+        {/* Confirm Modal */}
         {confirmOpen && (
           <div className={styles.overlay}>
             <div className={styles.confirmModal}>
@@ -209,6 +215,7 @@ export default function SendPage() {
           </div>
         )}
 
+        {/* Success & Error */}
         {successOpen && txHash && (
           <SuccessModal
             message="✅ Transaction Sent!"
