@@ -10,48 +10,23 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useBalance } from "@/contexts/BalanceContext";
 import { useNetwork } from "@/contexts/NetworkContext";
 
-// ─────────────────────────────────────────
-// RPC SETUP (FallbackProvider)
-// ─────────────────────────────────────────
+// RPC fallback setup
 const RPC = {
-  eth: {
-    urls: ["https://rpc.ankr.com/eth", "https://eth.llamarpc.com"],
-    chainId: 1,
-    name: "eth",
-  },
-  bnb: {
-    urls: ["https://bsc-dataseed.binance.org/", "https://bsc.publicnode.com"],
-    chainId: 56,
-    name: "bnb",
-  },
-  tbnb: {
-    urls: ["https://data-seed-prebsc-1-s1.binance.org:8545/", "https://bsc-testnet.public.blastapi.io"],
-    chainId: 97,
-    name: "tbnb",
-  },
-  matic: {
-    urls: ["https://polygon-bor.publicnode.com", "https://1rpc.io/matic"],
-    chainId: 137,
-    name: "matic",
-  },
-  avax: {
-    urls: ["https://rpc.ankr.com/avalanche", "https://avalanche.drpc.org"],
-    chainId: 43114,
-    name: "avax",
-  },
+  eth:   { urls: ["https://rpc.ankr.com/eth", "https://eth.llamarpc.com"], chainId: 1,     name: "eth"   },
+  bnb:   { urls: ["https://bsc-dataseed.binance.org/", "https://bsc.publicnode.com"], chainId: 56,    name: "bnb"   },
+  tbnb:  { urls: ["https://data-seed-prebsc-1-s1.binance.org:8545/", "https://bsc-testnet.public.blastapi.io"], chainId: 97, name: "tbnb"  },
+  matic: { urls: ["https://polygon-bor.publicnode.com", "https://1rpc.io/matic"], chainId: 137,   name: "matic" },
+  avax:  { urls: ["https://rpc.ankr.com/avalanche", "https://avalanche.drpc.org"], chainId: 43114, name: "avax"  },
 };
 
-// ─────────────────────────────────────────
-// AES-GCM DECRYPTION
-// ─────────────────────────────────────────
+// AES decryption
 const encode = (str) => new TextEncoder().encode(str);
 const decode = (buf) => new TextDecoder().decode(buf);
 
 const getKey = async () => {
-  const secret = process.env.NEXT_PUBLIC_ENCRYPTION_SECRET || "super_secret";
+  const secret = process.env.NEXT_PUBLIC_ENCRYPTION_SECRET || "secret";
   const keyMaterial = await window.crypto.subtle.importKey(
-    "raw", encode(secret),
-    { name: "PBKDF2" }, false, ["deriveKey"]
+    "raw", encode(secret), { name: "PBKDF2" }, false, ["deriveKey"]
   );
 
   return window.crypto.subtle.deriveKey(
@@ -81,69 +56,53 @@ const decrypt = async (ciphertext) => {
 
 const mapNetwork = (net) => (net === "matic" ? "polygon" : net);
 
-// ─────────────────────────────────────────
-// CONTEXT
-// ─────────────────────────────────────────
+// Create context
 const SendContext = createContext();
 export const useSend = () => useContext(SendContext);
 
-// ─────────────────────────────────────────
-// PROVIDER
-// ─────────────────────────────────────────
+// Main provider
 export function SendProvider({ children }) {
   const { safeRefreshSession } = useAuth();
-  const { refetch, balances } = useBalance();
+  const { refetch } = useBalance();
   const { activeNetwork } = useNetwork();
 
-  const [sending, setSending]       = useState(false);
-  const [gasFee, setGasFee]         = useState(0);
-  const [adminFee, setAdminFee]     = useState(0);
-  const [totalFee, setTotalFee]     = useState(0);
+  const [sending, setSending] = useState(false);
+  const [gasFee, setGasFee] = useState(0);
+  const [adminFee, setAdminFee] = useState(0);
+  const [totalFee, setTotalFee] = useState(0);
   const [feeLoading, setFeeLoading] = useState(false);
-  const [feeError, setFeeError]     = useState(null);
+  const [feeError, setFeeError] = useState(null);
 
   const providers = useMemo(() => {
     return Object.fromEntries(
       Object.entries(RPC).map(([key, cfg]) => [
         key,
         new ethers.FallbackProvider(
-          cfg.urls.map(url =>
-            new ethers.JsonRpcProvider(url, {
-              chainId: cfg.chainId,
-              name: cfg.name,
-            })
-          )
-        )
+          cfg.urls.map((url) => new ethers.JsonRpcProvider(url, { chainId: cfg.chainId, name: cfg.name }))
+        ),
       ])
     );
   }, []);
 
   const calculateFees = useCallback(async (network, amount) => {
-    if (!network || amount <= 0 || !providers[network]) return;
+    if (!network || !providers[network] || isNaN(amount) || amount <= 0) return;
 
     setFeeLoading(true);
     setFeeError(null);
 
     try {
       const provider = providers[network];
+      const gasPrice = await getGasPrice(provider).catch(() => ethers.parseUnits("5", "gwei"));
+      const gasLimit = ethers.toBigInt(21000);
+      const estGas = ethers.formatEther(gasPrice * gasLimit * 2n);
+      const admin = parseFloat(amount) * 0.03;
 
-      let gasPrice;
-      try {
-        gasPrice = await getGasPrice(provider);
-      } catch {
-        gasPrice = ethers.parseUnits("5", "gwei");
-      }
-
-      const estGas = Number(ethers.formatEther(gasPrice.mul(21000).mul(2)));
-      const admin = amount * 0.03;
-      const total = estGas + admin;
-
-      setGasFee(estGas);
+      setGasFee(parseFloat(estGas));
       setAdminFee(admin);
-      setTotalFee(total);
+      setTotalFee(parseFloat(estGas) + admin);
     } catch (err) {
       console.error("❌ Fee calculation error:", err);
-      setFeeError(err.message || "Fee calculation failed");
+      setFeeError(err.message || "Fee calc error");
       setGasFee(0);
       setAdminFee(0);
       setTotalFee(0);
@@ -154,14 +113,11 @@ export function SendProvider({ children }) {
 
   const sendTransaction = useCallback(async ({ to, amount, userEmail }) => {
     const ADMIN = process.env.NEXT_PUBLIC_ADMIN_WALLET;
-    if (!to || !amount || !userEmail || !activeNetwork) throw new Error("Missing data");
-    if (!ADMIN) throw new Error("Admin wallet missing");
+    if (!to || !amount || !userEmail || !activeNetwork || !providers[activeNetwork])
+      throw new Error("❌ Missing transaction data");
 
-    const cleanTo = to.trim().toLowerCase();
     const provider = providers[activeNetwork];
-    if (!provider) throw new Error("No provider for current network");
-
-    const gasLimit = ethers.BigNumber.from(21000);
+    const gasLimit = ethers.toBigInt(21000);
     const value = ethers.parseEther(amount.toString());
 
     setSending(true);
@@ -176,85 +132,50 @@ export function SendProvider({ children }) {
         .eq("user_email", userEmail)
         .single();
 
-      if (error || !data?.encrypted_key)
-        throw new Error("Encrypted key not found");
+      if (error || !data?.encrypted_key) throw new Error("❌ Encrypted key not found");
 
       const privKey = await decrypt(data.encrypted_key);
       const signer = new ethers.Wallet(privKey, provider);
+      const gasPrice = await getGasPrice(provider).catch(() => ethers.parseUnits("5", "gwei"));
 
-      let gasPrice;
-      try {
-        gasPrice = await getGasPrice(provider);
-      } catch {
-        gasPrice = ethers.parseUnits("5", "gwei");
-      }
+      const adminVal = value * 3n / 100n;
+      const totalNeeded = value + adminVal + gasPrice * gasLimit * 2n;
+      const balance = await provider.getBalance(signer.address);
 
-      const adminVal = value.mul(3).div(100);
-      const totalGas = gasPrice.mul(gasLimit).mul(2);
-      const onChain = await provider.getBalance(signer.address);
-
-      if (onChain.lt(value.add(adminVal).add(totalGas))) {
-        throw new Error("Insufficient funds for transaction and fees");
-      }
+      if (balance < totalNeeded) throw new Error("❌ Not enough balance (incl. fees)");
 
       const safeSend = async (recipient, val) => {
-        try {
-          const tx = await signer.sendTransaction({
-            to: recipient,
-            value: val,
-            gasLimit,
-            gasPrice,
-          });
-          await tx.wait();
-          return tx.hash;
-        } catch (err) {
-          const msg = err.message?.toLowerCase() || "";
-          if (msg.includes("underpriced") || msg.includes("fee too low")) {
-            const retryTx = await signer.sendTransaction({
-              to: recipient,
-              value: val,
-              gasLimit,
-              gasPrice: gasPrice.mul(3).div(2),
-            });
-            await retryTx.wait();
-            return retryTx.hash;
-          }
-          throw err;
-        }
+        const tryTx = await signer.sendTransaction({ to: recipient, value: val, gasLimit, gasPrice });
+        await tryTx.wait();
+        return tryTx.hash;
       };
 
       await safeSend(ADMIN, adminVal);
-      const hash = await safeSend(cleanTo, value);
+      const hash = await safeSend(to.trim().toLowerCase(), value);
 
       await supabase.from("transactions").insert([{
         user_email: userEmail,
         sender_address: signer.address,
-        receiver_address: cleanTo,
-        amount: parseFloat(ethers.formatEther(value)),
-        fee: parseFloat(ethers.formatEther(adminVal)),
+        receiver_address: to,
+        amount: Number(ethers.formatEther(value)),
+        fee: Number(ethers.formatEther(adminVal)),
         network: mapNetwork(activeNetwork),
         type: "send",
         tx_hash: hash,
         status: "completed",
       }]);
 
-      toast.success("✅ Transaction completed!", {
-        position: "top-center",
-        autoClose: 3000,
-      });
-
+      toast.success("✅ Transaction completed!", { position: "top-center", autoClose: 3000 });
       await refetch();
       return hash;
     } catch (err) {
-      console.error("❌ sendTransaction error:", err);
+      console.error("❌ Transaction error:", err);
       await supabase.from("logs").insert([{
         user_email: userEmail,
         type: "transaction_error",
         message: err.message || "Unknown error",
       }]);
-      toast.error(`Transaction failed: ${err.message || "Unknown error"}`, {
-        position: "top-center",
-      });
+      toast.error(`❌ ${err.message || "Send failed"}`, { position: "top-center" });
       throw err;
     } finally {
       setSending(false);
@@ -262,18 +183,16 @@ export function SendProvider({ children }) {
   }, [activeNetwork, providers, safeRefreshSession, refetch]);
 
   return (
-    <SendContext.Provider
-      value={{
-        sendTransaction,
-        sending,
-        gasFee,
-        adminFee,
-        totalFee,
-        feeLoading,
-        feeError,
-        calculateFees,
-      }}
-    >
+    <SendContext.Provider value={{
+      sendTransaction,
+      sending,
+      gasFee,
+      adminFee,
+      totalFee,
+      feeLoading,
+      feeError,
+      calculateFees,
+    }}>
       {children}
     </SendContext.Provider>
   );
