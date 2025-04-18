@@ -21,9 +21,9 @@ import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
 import styles from "@/styles/send.module.css";
 import background from "@/styles/background.module.css";
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Network definitions
-// ─────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────
+// NETWORK DEFINITIONS
+// ─────────────────────────────────────────
 const NETWORKS = {
   eth:   { label: "ETH",   min: 0.001,  color: "#0072ff", explorer: "https://etherscan.io/tx/" },
   bnb:   { label: "BNB",   min: 0.0005, color: "#f0b90b", explorer: "https://bscscan.com/tx/" },
@@ -39,9 +39,9 @@ const NETWORK_LIST = Object.entries(NETWORKS).map(([symbol, { label, color }]) =
   logo: `/icons/${symbol.includes("bnb") ? "bnb" : symbol}.svg`,
 }));
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Component
-// ─────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────
+// COMPONENT
+// ─────────────────────────────────────────
 export default function SendPage() {
   const router = useRouter();
   const { user } = useAuth();
@@ -57,12 +57,14 @@ export default function SendPage() {
   const [successOpen, setSuccessOpen] = useState(false);
   const [error, setError] = useState(null);
   const [txHash, setTxHash] = useState("");
+
   const [selectedIndex, setSelectedIndex] = useState(
     NETWORK_LIST.findIndex(n => n.symbol === activeNetwork)
   );
 
   const cfg = NETWORKS[activeNetwork] || {};
   const { label: short, min, color: btnClr, explorer } = cfg;
+
   const val = useMemo(() => parseFloat(amount) || 0, [amount]);
   const bal = useMemo(() => balances?.[activeNetwork] || 0, [balances, activeNetwork]);
 
@@ -76,8 +78,9 @@ export default function SendPage() {
     return (bal * rate).toFixed(2);
   }, [prices, activeNetwork, bal]);
 
-  const isValidAddress = useCallback(addr =>
-    /^0x[a-fA-F0-9]{40}$/.test(addr.trim()), []
+  const isValidAddress = useCallback(
+    (addr) => /^0x[a-fA-F0-9]{40}$/.test(addr.trim()),
+    []
   );
 
   useEffect(() => {
@@ -98,6 +101,7 @@ export default function SendPage() {
   const onConfirm = useCallback(async () => {
     setConfirmOpen(false);
     setError(null);
+
     try {
       const hash = await sendTransaction({
         to: receiver.trim().toLowerCase(),
@@ -134,11 +138,9 @@ export default function SendPage() {
   }
 
   return (
-    <main
-      className={`${styles.main} ${background.gradient}`}
-      style={{ transform: `scale(${scale})` }}
-    >
+    <main className={`${styles.main} ${background.gradient}`} style={{ transform: `scale(${scale})` }}>
       <div className={styles.wrapper}>
+        
         {/* Network Selector */}
         <div className={styles.selectorContainer}>
           {NETWORK_LIST.map((net, idx) => (
@@ -160,7 +162,7 @@ export default function SendPage() {
           <p>≈ €{eurBal} | ≈ ${usdBal}</p>
         </div>
 
-        {/* Input Fields */}
+        {/* Form Inputs */}
         <div className={styles.walletActions}>
           <input
             type="text"
@@ -180,7 +182,7 @@ export default function SendPage() {
             min="0"
           />
 
-          {/* Fee Info */}
+          {/* Fees */}
           <div className={styles.feesInfo}>
             {feeLoading ? (
               <p><MiniLoadingSpinner size={14} /> Calculating fees…</p>
@@ -224,7 +226,7 @@ export default function SendPage() {
           </div>
         )}
 
-        {/* Result */}
+        {/* Success Modal */}
         {successOpen && txHash && (
           <SuccessModal
             message="✅ Transaction Sent!"
@@ -234,6 +236,7 @@ export default function SendPage() {
           />
         )}
 
+        {/* Error Modal */}
         {error && <ErrorModal error={error} onClose={() => setError(null)} />}
       </div>
     </main>
