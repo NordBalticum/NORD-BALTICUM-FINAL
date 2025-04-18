@@ -8,7 +8,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useNetwork } from "@/contexts/NetworkContext";
 import { useSend } from "@/contexts/SendContext";
 import { useBalance } from "@/contexts/BalanceContext";
-import { useSystemReadyContext } from "@/contexts/SystemReadyContext"; // Importuojame iš konteksto
+import { useSystemReady } from "@/hooks/useSystemReady"; // Dabar naudojame hook'ą tiesiogiai
 import { useScale } from "@/hooks/useScale";
 
 import SwipeSelector from "@/components/SwipeSelector";
@@ -32,7 +32,7 @@ export default function SendPage() {
   const router = useRouter();
   const { user } = useAuth();
   const { activeNetwork, switchNetwork } = useNetwork();
-  const { ready, loading: sysLoading } = useSystemReadyContext();  // Naudojame useSystemReady iš konteksto
+  const { ready, loading: sysLoading } = useSystemReady();  // Naudojame useSystemReady tiesiogiai iš hook'o
   const scale = useScale();
 
   const {
@@ -225,40 +225,4 @@ export default function SendPage() {
                 <p><strong>Amount:</strong> {val.toFixed(6)} {short}</p>
                 <p><strong>Gas Fee:</strong> {gasFee.toFixed(6)} {short}</p>
                 <p><strong>Admin Fee:</strong> {adminFee.toFixed(6)} {short}</p>
-                <p><strong>Total:</strong> {(val + totalFee).toFixed(6)} {short}</p>
-              </div>
-              <div className={styles.modalActions}>
-                <button
-                  onClick={onConfirm}
-                  disabled={sending}
-                  className={styles.modalButton}
-                >
-                  {sending ? "Processing…" : "Confirm"}
-                </button>
-                <button
-                  onClick={() => setConfirmOpen(false)}
-                  className={`${styles.modalButton} ${styles.cancel}`}
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Success & Error */}
-        {successOpen && txHash && (
-          <SuccessModal
-            message="✅ Transaction Sent!"
-            transactionHash={txHash}
-            explorerUrl={`${explorer}${txHash}`}
-            onClose={() => setSuccessOpen(false)}
-          />
-        )}
-        {error && (
-          <ErrorModal error={error} onClose={() => setError(null)} />
-        )}
-      </div>
-    </main>
-  );
-}
+                <p><strong>Total:</strong> {(val + totalFee).toFixed(6)}
