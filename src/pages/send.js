@@ -212,8 +212,22 @@ export default function SendPage() {
           </button>
         </div>
 
-        {confirmOpen && (...)}
+        {confirmOpen && (
+  <div className={styles.overlay}>
+    <div className={styles.confirmModal} role="dialog" aria-modal="true">
+      <h3>Confirm Transaction</h3>
+      <p><strong>Network:</strong> {short}</p>
+      <p><strong>To:</strong> {receiver}</p>
+      <p><strong>Amount:</strong> {val.toFixed(6)} {short}</p>
+      <p><strong>Gas Fee:</strong> {gasFee.toFixed(6)} {short}</p>
+      <p><strong>Admin Fee:</strong> {adminFee.toFixed(6)} {short}</p>
+      <p><strong>Total:</strong> {(val + totalFee).toFixed(6)} {short}</p>
+      <div className={styles.modalActions}>
+        <button onClick={onConfirm} disabled={sending}>
+          {sending ? "Processing…" : "Confirm"}
+        </button>
+        <button onClick={() => setConfirmOpen(false)}>Cancel</button>
       </div>
-    </main>
-  );
-}
+    </div>
+  </div>
+)}
