@@ -6,7 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useNetwork } from "@/contexts/NetworkContext";
 import { useSend } from "@/contexts/SendContext";
 import { useBalance } from "@/contexts/BalanceContext";
-import { useSystemReady } from "@/contexts/SystemReadyContext";
+import { useSystemReady } from "@/hooks/useSystemReady";
 import { useScale } from "@/hooks/useScale";
 import { motion } from "framer-motion";
 import Image from "next/image";
