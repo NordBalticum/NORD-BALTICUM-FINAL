@@ -125,14 +125,6 @@ export default function SendPage() {
     color: (activeNetwork === "bnb" || activeNetwork === "tbnb") ? "#000" : "#fff",
   };
 
-  if (sysLoading) {
-    return (
-      <div className={styles.loader}>
-        <MiniLoadingSpinner size={40} />
-      </div>
-    );
-  }
-
   return (
     <main className={`${styles.main} ${background.gradient}`} style={{ transform: `scale(${scale})` }}>
       <div className={styles.wrapper}>
