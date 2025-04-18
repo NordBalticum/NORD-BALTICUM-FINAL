@@ -20,9 +20,6 @@ import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
 import styles from "@/styles/send.module.css";
 import background from "@/styles/background.module.css";
 
-// ─────────────────────────────────────────
-// NETWORKS
-// ─────────────────────────────────────────
 const NETWORKS = {
   eth:   { label: "ETH",   min: 0.001,  color: "#0072ff", explorer: "https://etherscan.io/tx/" },
   bnb:   { label: "BNB",   min: 0.0005, color: "#f0b90b", explorer: "https://bscscan.com/tx/" },
@@ -79,7 +76,7 @@ export default function SendPage() {
   );
 
   useEffect(() => {
-    if (val > 0) calculateFees(activeNetwork, val);
+    if (val > 0 && activeNetwork) calculateFees(activeNetwork, val);
   }, [activeNetwork, val, calculateFees]);
 
   useEffect(() => {
@@ -99,7 +96,7 @@ export default function SendPage() {
     try {
       const hash = await sendTransaction({
         to: receiver.trim().toLowerCase(),
-        amount: val,
+        amount: parseFloat(amount),
         userEmail: user.email,
       });
       setTxHash(hash);
@@ -110,7 +107,7 @@ export default function SendPage() {
     } catch (e) {
       setError(e.message || "Transaction failed");
     }
-  }, [receiver, val, user, sendTransaction]);
+  }, [receiver, amount, user, sendTransaction]);
 
   const switchNet = useCallback((idx) => {
     const net = NETWORK_LIST[idx].symbol;
@@ -139,8 +136,6 @@ export default function SendPage() {
   return (
     <main className={`${styles.main} ${background.gradient}`} style={{ transform: `scale(${scale})` }}>
       <div className={styles.wrapper}>
-        
-        {/* Network Selector */}
         <div className={styles.selectorContainer}>
           {NETWORK_LIST.map((net, idx) => (
             <motion.div
@@ -155,13 +150,11 @@ export default function SendPage() {
           ))}
         </div>
 
-        {/* Balance Info */}
         <div className={styles.balanceTable}>
           <p>Your Balance: <strong>{bal.toFixed(6)} {short}</strong></p>
           <p>≈ €{eurBal} | ≈ ${usdBal}</p>
         </div>
 
-        {/* Form Inputs */}
         <div className={styles.walletActions}>
           <input
             type="text"
@@ -237,4 +230,4 @@ export default function SendPage() {
       </div>
     </main>
   );
-                                 }
+}
