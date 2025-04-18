@@ -1,15 +1,13 @@
 "use client";
-export const dynamic = "force-dynamic";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useRef, useEffect, useState, useCallback } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
 
 import { useNetwork } from "@/contexts/NetworkContext";
-import { useSystemReady } from "@/hooks/useSystemReady"; // Dabar iš hook'o
-import { useScale } from "@/hooks/useScale"; // Naudojame skalę
+import { useScale } from "@/hooks/useScale";
 
-import styles from "@/styles/send.module.css"; // Dabar naudojame send.module.css
+import styles from "@/styles/send.module.css";
 
 const supportedNetworks = [
   { name: "Ethereum", symbol: "eth", logo: "/icons/eth.svg" },
@@ -21,14 +19,13 @@ const supportedNetworks = [
 
 export default function SwipeSelector({ onSelect }) {
   const { activeNetwork, switchNetwork } = useNetwork();
-  const { ready } = useSystemReady(); // Naudojame useSystemReady hook'ą
-  const scale = useScale(); // Naudojame skalę
+  const scale = useScale();
 
   const containerRef = useRef(null);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
 
-  // Determine mobile layout
+  // Detect mobile layout
   useEffect(() => {
     const mql = window.matchMedia("(max-width:1024px)");
     const handle = () => setIsMobile(mql.matches);
@@ -37,12 +34,11 @@ export default function SwipeSelector({ onSelect }) {
     return () => mql.removeEventListener("change", handle);
   }, []);
 
-  // Sync selectedIndex su activeNetwork
+  // Sync selectedIndex with activeNetwork
   useEffect(() => {
-    if (!ready) return;
     const idx = supportedNetworks.findIndex((n) => n.symbol === activeNetwork);
     if (idx >= 0) setSelectedIndex(idx);
-  }, [activeNetwork, ready]);
+  }, [activeNetwork]);
 
   // onSelect wrapper
   const notifySelect = useCallback(
@@ -65,14 +61,12 @@ export default function SwipeSelector({ onSelect }) {
     cont.scrollTo({ left: offset, behavior: "smooth" });
   }, []);
 
-  // Kai keičiasi selectedIndex → scroll + vibrate
+  // Auto scroll on index change
   useEffect(() => {
-    if (!ready) return;
     scrollToCenter(selectedIndex);
     navigator.vibrate?.(10);
-  }, [selectedIndex, ready, scrollToCenter]);
+  }, [selectedIndex, scrollToCenter]);
 
-  // Arrow handlers
   const goLeft = useCallback(() => {
     setSelectedIndex((i) => Math.max(0, i - 1));
   }, []);
@@ -80,7 +74,6 @@ export default function SwipeSelector({ onSelect }) {
     setSelectedIndex((i) => Math.min(supportedNetworks.length - 1, i + 1));
   }, []);
 
-  // Keyboard nav
   useEffect(() => {
     const onKey = (e) => {
       if (e.key === "ArrowLeft") goLeft();
@@ -89,14 +82,6 @@ export default function SwipeSelector({ onSelect }) {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [goLeft, goRight]);
-
-  if (!ready) {
-    return (
-      <div className={styles.loading}>
-        <p>Loading networks...</p>
-      </div>
-    );
-  }
 
   return (
     <div className={styles.selectorContainer} role="listbox" aria-label="Network selector">
