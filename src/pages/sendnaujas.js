@@ -1,3 +1,4 @@
+// src/app/sendnaujas.js
 "use client";
 export const dynamic = "force-dynamic";
 
@@ -20,6 +21,9 @@ import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
 import styles from "@/styles/send.module.css";
 import background from "@/styles/background.module.css";
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Network definitions
+// ─────────────────────────────────────────────────────────────────────────────
 const NETWORKS = {
   eth:   { label: "ETH",   min: 0.001,  color: "#0072ff", explorer: "https://etherscan.io/tx/" },
   bnb:   { label: "BNB",   min: 0.0005, color: "#f0b90b", explorer: "https://bscscan.com/tx/" },
@@ -35,6 +39,9 @@ const NETWORK_LIST = Object.entries(NETWORKS).map(([symbol, { label, color }]) =
   logo: `/icons/${symbol.includes("bnb") ? "bnb" : symbol}.svg`,
 }));
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Component
+// ─────────────────────────────────────────────────────────────────────────────
 export default function SendPage() {
   const router = useRouter();
   const { user } = useAuth();
@@ -127,9 +134,12 @@ export default function SendPage() {
   }
 
   return (
-    <main className={`${styles.main} ${background.gradient}`} style={{ transform: `scale(${scale})` }}>
+    <main
+      className={`${styles.main} ${background.gradient}`}
+      style={{ transform: `scale(${scale})` }}
+    >
       <div className={styles.wrapper}>
-        {/* Network Switcher */}
+        {/* Network Selector */}
         <div className={styles.selectorContainer}>
           {NETWORK_LIST.map((net, idx) => (
             <motion.div
@@ -150,7 +160,7 @@ export default function SendPage() {
           <p>≈ €{eurBal} | ≈ ${usdBal}</p>
         </div>
 
-        {/* Inputs */}
+        {/* Input Fields */}
         <div className={styles.walletActions}>
           <input
             type="text"
@@ -194,7 +204,7 @@ export default function SendPage() {
           </button>
         </div>
 
-        {/* Confirmation */}
+        {/* Confirm Modal */}
         {confirmOpen && (
           <div className={styles.overlay}>
             <div className={styles.confirmModal}>
@@ -223,6 +233,7 @@ export default function SendPage() {
             onClose={() => setSuccessOpen(false)}
           />
         )}
+
         {error && <ErrorModal error={error} onClose={() => setError(null)} />}
       </div>
     </main>
