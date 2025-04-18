@@ -1,4 +1,3 @@
-// src/contexts/SendContext.js
 "use client";
 
 import { createContext, useContext, useState, useCallback, useMemo } from "react";
@@ -10,34 +9,22 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useBalance } from "@/contexts/BalanceContext";
 import { useNetwork } from "@/contexts/NetworkContext";
 
-// ─────────────────────────────────────────
-// RPC ENDPOINTS (Multi‑chain ready)
-// ─────────────────────────────────────────
+// RPC endpoints
 const RPC = {
-  eth:   { urls: ["https://rpc.ankr.com/eth", "https://eth.llamarpc.com"], chainId: 1, name: "eth" },
-  bnb:   { urls: ["https://bsc-dataseed.binance.org/", "https://bsc.publicnode.com"], chainId: 56, name: "bnb" },
-  tbnb:  { urls: ["https://data-seed-prebsc-1-s1.binance.org:8545/", "https://bsc-testnet.public.blastapi.io"], chainId: 97, name: "tbnb" },
-  matic: { urls: ["https://polygon-bor.publicnode.com", "https://1rpc.io/matic"], chainId: 137, name: "matic" },
-  avax:  { urls: ["https://rpc.ankr.com/avalanche", "https://avalanche.drpc.org"], chainId: 43114, name: "avax" },
+  eth:   { urls: ["https://rpc.ankr.com/eth", "https://eth.llamarpc.com"], chainId: 1,     name: "eth"   },
+  bnb:   { urls: ["https://bsc-dataseed.binance.org/", "https://bsc.publicnode.com"], chainId: 56,    name: "bnb"   },
+  tbnb:  { urls: ["https://data-seed-prebsc-1-s1.binance.org:8545/", "https://bsc-testnet.public.blastapi.io"], chainId: 97, name: "tbnb"  },
+  matic: { urls: ["https://polygon-bor.publicnode.com", "https://1rpc.io/matic"], chainId: 137,   name: "matic" },
+  avax:  { urls: ["https://rpc.ankr.com/avalanche", "https://avalanche.drpc.org"], chainId: 43114, name: "avax"  },
 };
 
-// ─────────────────────────────────────────
-// ENCRYPTION HELPERS
-// ─────────────────────────────────────────
+// Encryption helpers
 const encode = (s) => new TextEncoder().encode(s);
 const decode = (b) => new TextDecoder().decode(b);
 
 const getKey = async () => {
   const secret = process.env.NEXT_PUBLIC_ENCRYPTION_SECRET || "";
-
-  const baseKey = await window.crypto.subtle.importKey(
-    "raw",
-    encode(secret),
-    { name: "PBKDF2" },
-    false,
-    ["deriveKey"]
-  );
-
+  const baseKey = await window.crypto.subtle.importKey("raw", encode(secret), { name: "PBKDF2" }, false, ["deriveKey"]);
   return window.crypto.subtle.deriveKey(
     {
       name: "PBKDF2",
@@ -69,15 +56,11 @@ const decrypt = async (ciphertext) => {
 
 const mapNetwork = (net) => (net === "matic" ? "polygon" : net);
 
-// ─────────────────────────────────────────
-// CONTEXT
-// ─────────────────────────────────────────
+// Create context
 const SendContext = createContext(null);
 export const useSend = () => useContext(SendContext);
 
-// ─────────────────────────────────────────
-// PROVIDER
-// ─────────────────────────────────────────
+// Main Provider
 export function SendProvider({ children }) {
   const { safeRefreshSession } = useAuth();
   const { refetch } = useBalance();
@@ -90,21 +73,18 @@ export function SendProvider({ children }) {
   const [feeLoading, setFeeLoading] = useState(false);
   const [feeError, setFeeError]     = useState(null);
 
-  const providers = useMemo(() =>
-    Object.fromEntries(
+  const providers = useMemo(() => {
+    return Object.fromEntries(
       Object.entries(RPC).map(([net, cfg]) => [
         net,
         new ethers.FallbackProvider(
-          cfg.urls.map((url) =>
-            new ethers.JsonRpcProvider(url, {
-              chainId: cfg.chainId,
-              name: cfg.name,
-            })
+          cfg.urls.map(
+            (url) => new ethers.JsonRpcProvider(url, { chainId: cfg.chainId, name: cfg.name })
           )
         ),
       ])
-    ), []
-  );
+    );
+  }, []);
 
   const calculateFees = useCallback(async (network, amount) => {
     if (!network || amount <= 0 || !providers[network]) return;
@@ -114,16 +94,16 @@ export function SendProvider({ children }) {
 
     try {
       const provider = providers[network];
-
       let gasPrice;
+
       try {
         gasPrice = await getGasPrice(provider);
       } catch {
         gasPrice = ethers.parseUnits("5", "gwei");
       }
 
-      const gasUnits   = 21000n * 2n;
-      const gasCostWei = gasPrice * gasUnits;
+      const gasUnits   = ethers.BigNumber.from(21000).mul(2);
+      const gasCostWei = gasPrice.mul(gasUnits);
       const gasCost    = Number(ethers.formatEther(gasCostWei));
       const adminCost  = amount * 0.03;
 
@@ -139,6 +119,17 @@ export function SendProvider({ children }) {
       setFeeLoading(false);
     }
   }, [providers]);
+
+  const waitTx = async (tx) => {
+    const timeout = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error("Timeout waiting for tx")), 15000)
+    );
+    try {
+      await Promise.race([tx.wait(), timeout]);
+    } catch {
+      // Ignored
+    }
+  };
 
   const sendTransaction = useCallback(async ({ to, amount, userEmail }) => {
     const cleanTo = to?.trim().toLowerCase();
@@ -176,12 +167,12 @@ export function SendProvider({ children }) {
         gasPrice = ethers.parseUnits("5", "gwei");
       }
 
-      const gasLimit = 21000n;
-      const adminVal = (value * 3n) / 100n;
-      const totalGas = gasPrice * gasLimit * 2n;
+      const gasLimit = ethers.BigNumber.from(21000);
+      const adminVal = value.mul(3).div(100);
+      const totalGas = gasPrice.mul(gasLimit).mul(2);
       const onChain  = await provider.getBalance(signer.address);
 
-      if (onChain < value + adminVal + totalGas)
+      if (onChain.lt(value.add(adminVal).add(totalGas)))
         throw new Error("Insufficient on-chain balance");
 
       const safeSend = async (recipient, val) => {
@@ -194,7 +185,7 @@ export function SendProvider({ children }) {
               gasLimit,
               gasPrice: attemptGas,
             });
-            try { await tx.wait(); } catch {}
+            await waitTx(tx);
             return tx.hash;
           } catch (err) {
             const msg = (err.message || "").toLowerCase();
@@ -202,7 +193,7 @@ export function SendProvider({ children }) {
               i === 0 &&
               (msg.includes("underpriced") || msg.includes("fee too low") || msg.includes("tip cap"))
             ) {
-              attemptGas = (attemptGas * 3n) / 2n;
+              attemptGas = attemptGas.mul(3).div(2);
               continue;
             }
             throw err;
