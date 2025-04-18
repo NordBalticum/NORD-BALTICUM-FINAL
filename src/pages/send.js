@@ -3,6 +3,8 @@ export const dynamic = "force-dynamic";
 
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
+import Image from "next/image";
 
 import { useAuth } from "@/contexts/AuthContext";
 import { useNetwork } from "@/contexts/NetworkContext";
@@ -11,15 +13,16 @@ import { useBalance } from "@/contexts/BalanceContext";
 import { useSystemReady } from "@/hooks/useSystemReady";
 import { useScale } from "@/hooks/useScale";
 
-import SwipeSelector from "@/components/SwipeSelector";
-import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
 import SuccessModal from "@/components/modals/SuccessModal";
 import ErrorModal from "@/components/modals/ErrorModal";
-import SuccessToast from "@/components/SuccessToast";
+import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
 
 import styles from "@/styles/send.module.css";
 import background from "@/styles/background.module.css";
 
+// ─────────────────────────────────────────
+// NETWORKS
+// ─────────────────────────────────────────
 const NETWORKS = {
   eth:   { label: "ETH",   min: 0.001,  color: "#0072ff", explorer: "https://etherscan.io/tx/" },
   bnb:   { label: "BNB",   min: 0.0005, color: "#f0b90b", explorer: "https://bscscan.com/tx/" },
@@ -28,36 +31,35 @@ const NETWORKS = {
   avax:  { label: "AVAX",  min: 0.01,   color: "#e84142", explorer: "https://snowtrace.io/tx/" },
 };
 
+const NETWORK_LIST = Object.entries(NETWORKS).map(([symbol, { label, color }]) => ({
+  name: label,
+  symbol,
+  color,
+  logo: `/icons/${symbol.includes("bnb") ? "bnb" : symbol}.svg`,
+}));
+
 export default function SendPage() {
   const router = useRouter();
   const { user } = useAuth();
   const { activeNetwork, switchNetwork } = useNetwork();
   const { ready, loading: sysLoading } = useSystemReady();
+  const { sendTransaction, sending, gasFee, adminFee, totalFee, feeLoading, feeError, calculateFees } = useSend();
+  const { balances, prices } = useBalance();
   const scale = useScale();
 
-  const {
-    sendTransaction,
-    sending,
-    gasFee,
-    adminFee,
-    totalFee,
-    feeLoading,
-    feeError,
-    calculateFees,
-  } = useSend();
-
-  const { balances, prices } = useBalance();
-
-  const [receiver, setReceiver]       = useState("");
-  const [amount, setAmount]           = useState("");
+  const [receiver, setReceiver] = useState("");
+  const [amount, setAmount] = useState("");
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [successOpen, setSuccessOpen] = useState(false);
-  const [toast, setToast]             = useState({ show: false, msg: "" });
-  const [error, setError]             = useState(null);
-  const [txHash, setTxHash]           = useState("");
+  const [error, setError] = useState(null);
+  const [txHash, setTxHash] = useState("");
+  const [selectedIndex, setSelectedIndex] = useState(
+    NETWORK_LIST.findIndex(n => n.symbol === activeNetwork)
+  );
 
-  const cfg = useMemo(() => NETWORKS[activeNetwork] || {}, [activeNetwork]);
+  const cfg = NETWORKS[activeNetwork] || {};
   const { label: short, min, color: btnClr, explorer } = cfg;
+
   const val = useMemo(() => parseFloat(amount) || 0, [amount]);
   const bal = useMemo(() => balances?.[activeNetwork] || 0, [balances, activeNetwork]);
 
@@ -71,8 +73,9 @@ export default function SendPage() {
     return (bal * rate).toFixed(2);
   }, [prices, activeNetwork, bal]);
 
-  const isValidAddress = useCallback(addr =>
-    /^0x[a-fA-F0-9]{40}$/.test(addr.trim()), []
+  const isValidAddress = useCallback(
+    (addr) => /^0x[a-fA-F0-9]{40}$/.test(addr.trim()),
+    []
   );
 
   useEffect(() => {
@@ -80,29 +83,10 @@ export default function SendPage() {
   }, [activeNetwork, val, calculateFees]);
 
   useEffect(() => {
-    if (ready && !user) {
-      router.replace("/");
-    }
-  }, [user, ready, router]);
+    if (ready && !user) router.replace("/");
+  }, [ready, user, router]);
 
-  if (sysLoading) {
-    return (
-      <div className={styles.loader}>
-        <MiniLoadingSpinner size={40} />
-      </div>
-    );
-  }
-
-  const switchNet = useCallback(net => {
-    switchNetwork(net);
-    setReceiver("");
-    setAmount("");
-    setToast({ show: true, msg: `Switched to ${NETWORKS[net].label}` });
-    navigator.vibrate?.(30);
-    setTimeout(() => setToast({ show: false, msg: "" }), 1200);
-  }, [switchNetwork]);
-
-  const onSendClick = useCallback(() => {
+  const handleSend = useCallback(() => {
     if (!isValidAddress(receiver)) return alert("❌ Invalid address");
     if (val < min) return alert(`❌ Minimum is ${min} ${short}`);
     if (val + totalFee > bal) return alert("❌ Insufficient balance");
@@ -128,31 +112,70 @@ export default function SendPage() {
     }
   }, [receiver, val, user, sendTransaction]);
 
-  return (
-    <main className={`${styles.main} ${background.gradient}`} style={{ transform: `scale(${scale})`, transformOrigin: "top center" }}>
-      <div className={styles.wrapper}>
-        <SuccessToast show={toast.show} message={toast.msg} networkKey={activeNetwork} />
-        <SwipeSelector selected={activeNetwork} onSelect={switchNet} />
+  const switchNet = useCallback((idx) => {
+    const net = NETWORK_LIST[idx].symbol;
+    if (net !== activeNetwork) {
+      switchNetwork(net);
+      setSelectedIndex(idx);
+      setReceiver("");
+      setAmount("");
+      navigator.vibrate?.(10);
+    }
+  }, [activeNetwork, switchNetwork]);
 
+  const buttonStyle = {
+    backgroundColor: btnClr,
+    color: (activeNetwork === "bnb" || activeNetwork === "tbnb") ? "#000" : "#fff",
+  };
+
+  if (sysLoading) {
+    return (
+      <div className={styles.loader}>
+        <MiniLoadingSpinner size={40} />
+      </div>
+    );
+  }
+
+  return (
+    <main className={`${styles.main} ${background.gradient}`} style={{ transform: `scale(${scale})` }}>
+      <div className={styles.wrapper}>
+        
+        {/* Network Selector */}
+        <div className={styles.selectorContainer}>
+          {NETWORK_LIST.map((net, idx) => (
+            <motion.div
+              key={net.symbol}
+              className={`${styles.card} ${idx === selectedIndex ? styles.selected : ""}`}
+              onClick={() => switchNet(idx)}
+              whileTap={{ scale: 0.96 }}
+            >
+              <Image src={net.logo} alt={net.name} width={44} height={44} />
+              <span>{net.name}</span>
+            </motion.div>
+          ))}
+        </div>
+
+        {/* Balance Info */}
         <div className={styles.balanceTable}>
           <p>Your Balance: <strong>{bal.toFixed(6)} {short}</strong></p>
           <p>≈ €{eurBal} | ≈ ${usdBal}</p>
         </div>
 
+        {/* Form Inputs */}
         <div className={styles.walletActions}>
           <input
             type="text"
             placeholder="0x..."
             value={receiver}
-            onChange={e => setReceiver(e.target.value)}
+            onChange={(e) => setReceiver(e.target.value)}
             disabled={sending}
             className={styles.inputField}
           />
           <input
             type="number"
-            placeholder="0.0"
+            placeholder="Amount"
             value={amount}
-            onChange={e => setAmount(e.target.value)}
+            onChange={(e) => setAmount(e.target.value)}
             disabled={sending}
             className={styles.inputField}
             min="0"
@@ -172,22 +195,10 @@ export default function SendPage() {
           </div>
 
           <button
-            onClick={onSendClick}
+            onClick={handleSend}
             disabled={!receiver || sending || feeLoading}
-            style={{
-              backgroundColor: btnClr,
-              color: (activeNetwork === "bnb" || activeNetwork === "tbnb") ? "#000" : "#fff",
-              border: "2px solid #fff",
-              padding: "12px 0",
-              fontSize: "18px",
-              width: "100%",
-              marginTop: "16px",
-              borderRadius: "12px",
-              boxShadow: "0 8px 24px rgba(0,0,0,0.2)",
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center"
-            }}
+            className={styles.sendNowButton}
+            style={buttonStyle}
           >
             {sending ? <MiniLoadingSpinner size={20} color="#fff" /> : "SEND NOW"}
           </button>
@@ -222,10 +233,8 @@ export default function SendPage() {
           />
         )}
 
-        {error && (
-          <ErrorModal error={error} onClose={() => setError(null)} />
-        )}
+        {error && <ErrorModal error={error} onClose={() => setError(null)} />}
       </div>
     </main>
   );
-}
+                                 }
