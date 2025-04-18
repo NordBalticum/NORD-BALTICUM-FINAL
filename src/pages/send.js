@@ -1,3 +1,4 @@
+// src/app/send.js
 "use client";
 export const dynamic = "force-dynamic";
 
@@ -8,8 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useNetwork } from "@/contexts/NetworkContext";
 import { useSend } from "@/contexts/SendContext";
 import { useBalance } from "@/contexts/BalanceContext";
-import { useSystemReady } from "@/hooks/useSystemReady"; // Dabar naudojame hook'ą tiesiogiai
-import { useScale } from "@/hooks/useScale";
+import { useSystemReady } from "@/hooks/useSystemReady";
 
 import SwipeSelector from "@/components/SwipeSelector";
 import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
@@ -18,22 +18,22 @@ import ErrorModal from "@/components/modals/ErrorModal";
 import SuccessToast from "@/components/SuccessToast";
 
 import styles from "@/styles/send.module.css";
+import background from "@/styles/background.module.css";
 
-// — Network metadata
+// network metadata
 const NETWORKS = {
-  eth:   { label: "ETH",   min: 0.001,  explorer: "https://etherscan.io/tx/" },
-  bnb:   { label: "BNB",   min: 0.0005, explorer: "https://bscscan.com/tx/" },
-  tbnb:  { label: "tBNB",  min: 0.0005, explorer: "https://testnet.bscscan.com/tx/" },
-  matic: { label: "MATIC", min: 0.1,    explorer: "https://polygonscan.com/tx/" },
-  avax:  { label: "AVAX",  min: 0.01,   explorer: "https://snowtrace.io/tx/" },
+  eth:   { label: "ETH",   min: 0.001,  color: "#0072ff", explorer: "https://etherscan.io/tx/" },
+  bnb:   { label: "BNB",   min: 0.0005, color: "#f0b90b", explorer: "https://bscscan.com/tx/" },
+  tbnb:  { label: "tBNB",  min: 0.0005, color: "#f0b90b", explorer: "https://testnet.bscscan.com/tx/" },
+  matic: { label: "MATIC", min: 0.1,    color: "#8247e5", explorer: "https://polygonscan.com/tx/" },
+  avax:  { label: "AVAX",  min: 0.01,   color: "#e84142", explorer: "https://snowtrace.io/tx/" },
 };
 
 export default function SendPage() {
   const router = useRouter();
   const { user } = useAuth();
   const { activeNetwork, switchNetwork } = useNetwork();
-  const { ready, loading: sysLoading } = useSystemReady();  // Naudojame useSystemReady tiesiogiai iš hook'o
-  const scale = useScale();
+  const { ready, loading: sysLoading } = useSystemReady();
 
   const {
     sendTransaction,
@@ -57,13 +57,13 @@ export default function SendPage() {
   const [error, setError]             = useState(null);
   const [txHash, setTxHash]           = useState("");
 
-  // Derived config
-  const cfg    = NETWORKS[activeNetwork] || {};
-  const { label: short, min, explorer } = cfg;
+  // derive config
+  const cfg    = useMemo(() => NETWORKS[activeNetwork] || {}, [activeNetwork]);
+  const { label: short, min, color: btnClr, explorer } = cfg;
   const val    = useMemo(() => parseFloat(amount) || 0, [amount]);
   const bal    = useMemo(() => balances?.[activeNetwork] || 0, [balances, activeNetwork]);
 
-  // Fiat conversions
+  // compute fiat balances
   const eurBal = useMemo(() => {
     const rate = prices?.[activeNetwork]?.eur ?? 0;
     return (bal * rate).toFixed(2);
@@ -74,24 +74,23 @@ export default function SendPage() {
     return (bal * rate).toFixed(2);
   }, [prices, activeNetwork, bal]);
 
-  // Address validator
   const isValidAddress = useCallback(addr =>
     /^0x[a-fA-F0-9]{40}$/.test(addr.trim()), []
   );
 
-  // Recalculate fees when network or amount changes
+  // recalc fees
   useEffect(() => {
     if (val > 0) calculateFees(activeNetwork, val);
   }, [activeNetwork, val, calculateFees]);
 
-  // Redirect if not authenticated once system is ready
+  // redirect if not logged-in once ready
   useEffect(() => {
     if (ready && !user) {
       router.replace("/");
     }
-  }, [ready, user, router]);
+  }, [user, ready, router]);
 
-  // Global loader until system is ready
+  // show spinner during system init
   if (sysLoading) {
     return (
       <div className={styles.loader}>
@@ -100,19 +99,15 @@ export default function SendPage() {
     );
   }
 
-  // Handle network switch
-  const onNetworkSelect = useCallback(sym => {
-    if (sym !== activeNetwork) {
-      switchNetwork(sym);
-      setReceiver("");
-      setAmount("");
-      setToast({ show: true, msg: `Switched to ${NETWORKS[sym].label}` });
-      navigator.vibrate?.(30);
-      setTimeout(() => setToast({ show: false, msg: "" }), 1200);
-    }
-  }, [activeNetwork, switchNetwork]);
+  const switchNet = useCallback(net => {
+    switchNetwork(net);
+    setReceiver("");
+    setAmount("");
+    setToast({ show: true, msg: `Switched to ${NETWORKS[net].label}` });
+    navigator.vibrate?.(30);
+    setTimeout(() => setToast({ show: false, msg: "" }), 1200);
+  }, [switchNetwork]);
 
-  // Validate inputs and open confirm modal
   const onSendClick = useCallback(() => {
     if (!isValidAddress(receiver)) {
       alert("❌ Invalid address");
@@ -129,7 +124,6 @@ export default function SendPage() {
     setConfirmOpen(true);
   }, [receiver, val, min, short, totalFee, bal, isValidAddress]);
 
-  // Confirm and execute transaction
   const onConfirm = useCallback(async () => {
     setConfirmOpen(false);
     setError(null);
@@ -150,23 +144,17 @@ export default function SendPage() {
   }, [receiver, val, user, sendTransaction]);
 
   return (
-    <main
-      className={styles.main}
-      style={{ transform: `scale(${scale})`, transformOrigin: "top center" }}
-    >
+    <main className={`${styles.main} ${background.gradient}`}>
       <div className={styles.wrapper}>
         <SuccessToast show={toast.show} message={toast.msg} networkKey={activeNetwork} />
 
-        {/* Network Selector */}
-        <SwipeSelector onSelect={onNetworkSelect} />
+        <SwipeSelector selected={activeNetwork} onSelect={switchNet} />
 
-        {/* Balances */}
         <div className={styles.balanceTable}>
           <p>Your Balance: <strong>{bal.toFixed(6)} {short}</strong></p>
           <p>≈ €{eurBal} | ≈ ${usdBal}</p>
         </div>
 
-        {/* Inputs & Fees */}
         <div className={styles.walletActions}>
           <input
             type="text"
@@ -192,7 +180,7 @@ export default function SendPage() {
             {feeLoading ? (
               <p><MiniLoadingSpinner size={14} /> Calculating fees…</p>
             ) : feeError ? (
-              <p style={{ color: "var(--gold)" }}>Fee error: {feeError}</p>
+              <p style={{ color: "red" }}>Fee error: {feeError}</p>
             ) : (
               <>
                 <p>Total: {(val + totalFee).toFixed(6)} {short}</p>
@@ -205,24 +193,27 @@ export default function SendPage() {
             onClick={onSendClick}
             disabled={!receiver || sending || feeLoading}
             aria-busy={sending}
-            className={styles.sendNowButton}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              backgroundColor: btnClr,
+              color: (activeNetwork === "bnb" || activeNetwork === "tbnb") ? "#000" : "#fff",
+              border: "2px solid #fff",
+              padding: "12px 0",
+              fontSize: "18px",
+              width: "100%",
+              marginTop: "16px",
+              borderRadius: "12px",
+              boxShadow: "0 8px 24px rgba(0,0,0,0.2)",
+            }}
           >
-            {sending
-              ? <MiniLoadingSpinner size={20} color="var(--text-primary)" />
-              : "SEND NOW"
-            }
+            {sending ? <MiniLoadingSpinner size={20} color="#fff" /> : "SEND NOW"}
           </button>
         </div>
 
-        {/* Confirm Modal */}
-        {confirmOpen && (
-          <div className={styles.overlay}>
-            <div className={styles.confirmModal} role="dialog" aria-modal="true">
-              <h3 className={styles.modalTitle}>Confirm Transaction</h3>
-              <div className={styles.modalInfo}>
-                <p><strong>Network:</strong> {short}</p>
-                <p><strong>To:</strong> {receiver}</p>
-                <p><strong>Amount:</strong> {val.toFixed(6)} {short}</p>
-                <p><strong>Gas Fee:</strong> {gasFee.toFixed(6)} {short}</p>
-                <p><strong>Admin Fee:</strong> {adminFee.toFixed(6)} {short}</p>
-                <p><strong>Total:</strong> {(val + totalFee).toFixed(6)}
+        {confirmOpen && (...)}
+      </div>
+    </main>
+  );
+}
