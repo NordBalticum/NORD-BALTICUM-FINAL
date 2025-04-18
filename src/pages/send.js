@@ -8,7 +8,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useNetwork } from "@/contexts/NetworkContext";
 import { useSend } from "@/contexts/SendContext";
 import { useBalance } from "@/contexts/BalanceContext";
-import { useScale } from "@/hooks/useScale"; // Importuojame useScale
+import { useSystemReady } from "@/hooks/useSystemReady"; 
+import { useScale } from "@/hooks/useScale"; 
 
 import SwipeSelector from "@/components/SwipeSelector";
 import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
@@ -31,36 +32,36 @@ export default function SendPage() {
   const router = useRouter();
   const { user } = useAuth();
   const { activeNetwork, switchNetwork } = useNetwork();
-  const { ready, loading: sysLoading } = useSystemReady();  // Pridėta useSystemReady logika
-  const scale = useScale(); // Pridėta useScale hook
+  const { ready, loading: sysLoading } = useSystemReady();  
+  const scale = useScale();
 
-  const {
-    sendTransaction,
-    sending,
-    gasFee,
-    adminFee,
-    totalFee,
-    feeLoading,
-    feeError,
-    calculateFees,
+  const { 
+    sendTransaction, 
+    sending, 
+    gasFee, 
+    adminFee, 
+    totalFee, 
+    feeLoading, 
+    feeError, 
+    calculateFees 
   } = useSend();
 
   const { balances, prices } = useBalance();
 
   // UI state
-  const [receiver, setReceiver]       = useState("");
-  const [amount, setAmount]           = useState("");
+  const [receiver, setReceiver] = useState("");
+  const [amount, setAmount] = useState("");
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [successOpen, setSuccessOpen] = useState(false);
-  const [toast, setToast]             = useState({ show: false, msg: "" });
-  const [error, setError]             = useState(null);
-  const [txHash, setTxHash]           = useState("");
+  const [toast, setToast] = useState({ show: false, msg: "" });
+  const [error, setError] = useState(null);
+  const [txHash, setTxHash] = useState("");
 
   // Derived config
-  const cfg    = NETWORKS[activeNetwork] || {};
+  const cfg = NETWORKS[activeNetwork] || {};
   const { label: short, min, explorer } = cfg;
-  const val    = useMemo(() => parseFloat(amount) || 0, [amount]);
-  const bal    = useMemo(() => balances?.[activeNetwork] || 0, [balances, activeNetwork]);
+  const val = useMemo(() => parseFloat(amount) || 0, [amount]);
+  const bal = useMemo(() => balances?.[activeNetwork] || 0, [balances, activeNetwork]);
 
   // Fiat conversions
   const eurBal = useMemo(() => {
@@ -90,7 +91,7 @@ export default function SendPage() {
     }
   }, [ready, user, router]);
 
-  // Global loader until system is ready
+  // Global loader until system ready
   if (sysLoading) {
     return (
       <div className={styles.loader}>
