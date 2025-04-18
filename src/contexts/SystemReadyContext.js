@@ -10,11 +10,11 @@ import { startSessionWatcher } from "@/utils/sessionWatcher";
 import { detectIsMobile } from "@/utils/detectIsMobile";
 import { useScale } from "@/hooks/useScale";
 
-// Centralized context for system readiness, device-specific logic, scaling, and session management
+// Create a Context for System Ready state
 const SystemReadyContext = createContext(null);
 
 export function SystemReadyProvider({ children }) {
-  const state = useSystemReadyHook();  // Iškviesta atskira hook funkcija `useSystemReadyHook`
+  const state = useSystemReadyHook();  // Use the custom hook to manage state
   return (
     <SystemReadyContext.Provider value={state}>
       {children}
@@ -31,44 +31,43 @@ export function useSystemReady() {
 }
 
 /**
- * Custom hook to manage system readiness, scaling, and device-specific logic
+ * Custom hook to manage system readiness, scaling, and session health.
  */
 export function useSystemReadyHook() {
-  // 🎯 Context & hooks
+  // Context & hooks
   const { user, wallet, authLoading, walletLoading, safeRefreshSession, signOut } = useAuth();
   const { activeNetwork } = useNetwork();
   const { balances, prices, refetch } = useBalance();
 
-  // 🎯 Internal state for system readiness
+  // Internal states for system readiness
   const [isDomReady, setIsDomReady] = useState(false);
   const [latencyMs, setLatencyMs] = useState(0);
   const [sessionScore, setSessionScore] = useState(100);
   const [fallbackBalances, setFallbackBalances] = useState(null);
   const [fallbackPrices, setFallbackPrices] = useState(null);
-  const [isMobile, setIsMobile] = useState(false); // Mobile check based on device screen
-  const [scale, setScale] = useState(1); // Scaling factor
+  const [isMobile, setIsMobile] = useState(false);
+  const [scale, setScale] = useState(1);
 
-  // 🎯 Refs for tracking state and session
+  // Refs for session and refresh tracking
   const sessionWatcher = useRef(null);
   const lastRefreshTime = useRef(Date.now());
   const failureCount = useRef(0);
 
-  // 🏁 Mobile check (detect device type)
+  // Device-specific logic (mobile detection)
   useEffect(() => {
-    setIsMobile(detectIsMobile()); // Automatically sets the device type (mobile, tablet, desktop)
+    setIsMobile(detectIsMobile());
   }, []);
 
-  // 🏁 Scaling with `useScale` (custom scaling logic)
-  const baseScale = 1.0;
-  const scaleConfig = useScale(baseScale); // Dynamically set scaling factor
+  // Scaling logic
+  const scaleConfig = useScale(1.0);
 
-  // 🎯 Client-side checks and updates
+  // Check if we are running on the client side
   const isClient = typeof window !== "undefined";
 
+  // DOM readiness check
   useEffect(() => {
     if (!isClient) return;
-    const markReady = () => setIsDomReady(true); // Mark DOM as ready when fully loaded
-
+    const markReady = () => setIsDomReady(true);
     if (document.readyState === "complete") {
       markReady();
     } else {
@@ -83,12 +82,20 @@ export function useSystemReadyHook() {
     }
   }, [isClient]);
 
-  // 🏁 Ready check
+  // Minimum readiness checks
   const minimalReady = useMemo(() => {
-    return isClient && isDomReady && !!user?.email && !!wallet?.wallet?.address && !!activeNetwork && !authLoading && !walletLoading;
+    return (
+      isClient &&
+      isDomReady &&
+      !!user?.email &&
+      !!wallet?.wallet?.address &&
+      !!activeNetwork &&
+      !authLoading &&
+      !walletLoading
+    );
   }, [isClient, isDomReady, user, wallet, activeNetwork, authLoading, walletLoading]);
 
-  // 🏁 Balances and prices readiness
+  // Balances and prices readiness
   const hasBalancesReady = useMemo(() => {
     const live = balances && Object.keys(balances).length > 0;
     const cached = fallbackBalances && Object.keys(fallbackBalances).length > 0;
@@ -101,21 +108,24 @@ export function useSystemReadyHook() {
     return live || cached;
   }, [prices, fallbackPrices]);
 
-  // 🏁 Final system readiness check
   const ready = minimalReady && hasBalancesReady && hasPricesReady;
   const loading = !ready;
 
-  // 🏁 Session health scoring
+  // Session health scoring based on various conditions
   useEffect(() => {
     if (!minimalReady) return;
-    const score = 100 - (authLoading ? 20 : 0) - (walletLoading ? 20 : 0) - (!user ? 30 : 0) - (!wallet?.wallet?.address ? 30 : 0);
+    const score =
+      100 -
+      (authLoading ? 20 : 0) -
+      (walletLoading ? 20 : 0) -
+      (!user ? 30 : 0) -
+      (!wallet?.wallet?.address ? 30 : 0);
     setSessionScore(Math.max(0, score));
   }, [minimalReady, authLoading, walletLoading, user, wallet]);
 
-  // 🏁 Session monitoring with `startSessionWatcher`
+  // Session monitoring logic using startSessionWatcher
   useEffect(() => {
     if (!minimalReady) return;
-
     sessionWatcher.current = startSessionWatcher({
       user,
       wallet,
@@ -123,7 +133,6 @@ export function useSystemReadyHook() {
       refetchBalances: refetch,
       onSessionInvalid: () => {
         failureCount.current += 1;
-        console.warn("⚠️ Session invalid detected:", failureCount.current);
         if (failureCount.current >= 3) {
           toast.error("⚠️ Persistent session error. Logging out...");
           signOut(true);
@@ -133,16 +142,13 @@ export function useSystemReadyHook() {
       intervalMs: 60000,
       networkFailLimit: 3,
     });
-
     sessionWatcher.current.start();
-
     return () => sessionWatcher.current?.stop();
   }, [minimalReady, user, wallet, safeRefreshSession, refetch, signOut]);
 
-  // 🏁 Refresh handling (visibility change, focus, etc.)
+  // Handle refresh behavior on visibility change, focus, or network status
   useEffect(() => {
     if (!minimalReady) return;
-
     const runRefresh = async (trigger) => {
       const start = performance.now();
       try {
@@ -152,10 +158,8 @@ export function useSystemReadyHook() {
         const dur = Math.round(performance.now() - start);
         setLatencyMs(dur);
         failureCount.current = 0;
-        console.debug(`✅ Manual refresh [${trigger}] ${dur}ms`);
       } catch (err) {
         failureCount.current += 1;
-        console.error(`❌ Refresh [${trigger}] failed (${failureCount.current}/3):`, err);
         if (failureCount.current >= 3) {
           toast.error("⚠️ Session expired. Logging out...");
           signOut(true);
@@ -190,7 +194,28 @@ export function useSystemReadyHook() {
     };
   }, [minimalReady, safeRefreshSession, refetch, signOut, isMobile]);
 
-  // 🏁 Return system readiness states
+  // Auto-refresh logic (polling every 30s)
+  useEffect(() => {
+    if (!minimalReady) return;
+    const lightPoll = setInterval(async () => {
+      if (Date.now() - lastRefreshTime.current >= 30000) {
+        await safeRefreshSession();
+        await refetch();
+        lastRefreshTime.current = Date.now();
+      }
+    }, 30000);
+
+    const heavyReset = setInterval(() => {
+      failureCount.current = 0;
+    }, 5 * 60 * 1000);
+
+    return () => {
+      clearInterval(lightPoll);
+      clearInterval(heavyReset);
+    };
+  }, [minimalReady, safeRefreshSession, refetch]);
+
+  // Return the system readiness states
   return {
     ready,
     loading,
