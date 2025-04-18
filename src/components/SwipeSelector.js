@@ -1,11 +1,12 @@
 "use client";
+export const dynamic = "force-dynamic";
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
 
 import { useNetwork } from "@/contexts/NetworkContext";
-import { useSystemReady } from "@/contexts/SystemReadyContext"; // Dabar iš konteksto
+import { useSystemReady } from "@/hooks/useSystemReady"; // Dabar iš hook'o
 import { useScale } from "@/hooks/useScale"; // Naudojame skalę
 
 import styles from "@/styles/send.module.css"; // Dabar naudojame send.module.css
@@ -20,7 +21,7 @@ const supportedNetworks = [
 
 export default function SwipeSelector({ onSelect }) {
   const { activeNetwork, switchNetwork } = useNetwork();
-  const { ready } = useSystemReady();
+  const { ready } = useSystemReady(); // Naudojame useSystemReady hook'ą
   const scale = useScale(); // Naudojame skalę
 
   const containerRef = useRef(null);
