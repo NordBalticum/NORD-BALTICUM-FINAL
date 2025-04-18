@@ -1,3 +1,4 @@
+// src/hooks/useSystemReady.js
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -9,31 +10,29 @@ import { useBalance } from "@/contexts/BalanceContext";
 import { useNetwork } from "@/contexts/NetworkContext";
 import { startSessionWatcher } from "@/utils/sessionWatcher";
 import { detectIsMobile } from "@/utils/detectIsMobile";
-import { useScale } from "@/hooks/useScale";
 
-/**
- * Custom hook to manage system readiness, scaling, and session health.
- */
 export function useSystemReady() {
+  // 🎯 Context & hooks
   const { user, wallet, authLoading, walletLoading, safeRefreshSession, signOut } = useAuth();
   const { activeNetwork } = useNetwork();
   const { balances, prices, refetch } = useBalance();
 
-  // Internal state
+  // 🎯 Internal state
   const [isDomReady, setIsDomReady] = useState(false);
   const [latencyMs, setLatencyMs] = useState(0);
   const [sessionScore, setSessionScore] = useState(100);
   const [fallbackBalances, setFallbackBalances] = useState(null);
   const [fallbackPrices, setFallbackPrices] = useState(null);
 
-  // Refs & flags
+  // 🎯 Refs & flags
   const sessionWatcher = useRef(null);
+  const refreshInterval = useRef(null);
   const lastRefreshTime = useRef(Date.now());
   const failureCount = useRef(0);
   const isClient = typeof window !== "undefined";
   const isMobile = useMemo(() => detectIsMobile(), []);
 
-  // ─── DOM ready ────────────────────────────────────────────────────────
+  // ─── 1) DOM ready ────────────────────────────────────────────────────────
   useEffect(() => {
     if (!isClient) return;
     const markReady = () => setIsDomReady(true);
@@ -52,24 +51,26 @@ export function useSystemReady() {
     }
   }, [isClient]);
 
-  // ─── Load fallbacks from localStorage ─────────────────────────────────
+  // ─── 2) Load fallbacks from localStorage ─────────────────────────────────
   useEffect(() => {
     if (!isClient) return;
     try {
       const b = localStorage.getItem("nordbalticum_balances");
       if (b) {
         setFallbackBalances(JSON.parse(b));
+        console.debug("🪄 fallbackBalances loaded");
       }
       const p = localStorage.getItem("nordbalticum_prices");
       if (p) {
         setFallbackPrices(JSON.parse(p));
+        console.debug("💱 fallbackPrices loaded");
       }
     } catch (err) {
-      console.warn("Fallback load error:", err);
+      console.warn("❌ Fallback load error:", err);
     }
   }, [isClient]);
 
-  // ─── Readiness checks ──────────────────────────────────────────────────
+  // ─── 3) Compute readiness booleans ──────────────────────────────────────
   const minimalReady = useMemo(() => {
     return (
       isClient &&
@@ -97,7 +98,7 @@ export function useSystemReady() {
   const ready = minimalReady && hasBalancesReady && hasPricesReady;
   const loading = !ready;
 
-  // ─── Session health scoring ───────────────────────────────────────────
+  // ─── 4) Compute session health score ────────────────────────────────────
   useEffect(() => {
     if (!minimalReady) return;
     const score =
@@ -109,34 +110,10 @@ export function useSystemReady() {
     setSessionScore(Math.max(0, score));
   }, [minimalReady, authLoading, walletLoading, user, wallet]);
 
-  // ─── SessionWatcher background monitor ──────────────────────────────
+  // ─── 5) Manual refresh on user events ──────────────────────────────────
   useEffect(() => {
     if (!minimalReady) return;
 
-    sessionWatcher.current = startSessionWatcher({
-      user,
-      wallet,
-      refreshSession: safeRefreshSession,
-      refetchBalances: refetch,
-      onSessionInvalid: () => {
-        failureCount.current += 1;
-        if (failureCount.current >= 3) {
-          toast.error("⚠️ Persistent session error. Logging out...");
-          signOut(true);
-        }
-      },
-      log: true,
-      intervalMs: 60000,
-      networkFailLimit: 3,
-    });
-
-    sessionWatcher.current.start();
-    return () => sessionWatcher.current?.stop();
-  }, [minimalReady, user, wallet, safeRefreshSession, refetch, signOut]);
-
-  // ─── Refresh behavior ─────────────────────────────────────────────────
-  useEffect(() => {
-    if (!minimalReady) return;
     const runRefresh = async (trigger) => {
       const start = performance.now();
       try {
@@ -146,8 +123,10 @@ export function useSystemReady() {
         const dur = Math.round(performance.now() - start);
         setLatencyMs(dur);
         failureCount.current = 0;
+        console.debug(`✅ Manual refresh [${trigger}] ${dur}ms`);
       } catch (err) {
         failureCount.current += 1;
+        console.error(`❌ Refresh [${trigger}] failed (${failureCount.current}/3):`, err);
         if (failureCount.current >= 3) {
           toast.error("⚠️ Session expired. Logging out...");
           signOut(true);
@@ -182,17 +161,18 @@ export function useSystemReady() {
     };
   }, [minimalReady, safeRefreshSession, refetch, signOut, isMobile]);
 
-  // ─── Auto-refresh (every 30s) ─────────────────────────────────────────
+  // ─── 6) Auto‑refresh interval (every 30s, heavy‑duty every 5min) ───────
   useEffect(() => {
     if (!minimalReady) return;
+    // lightweight poll
     const lightPoll = setInterval(async () => {
-      if (Date.now() - lastRefreshTime.current >= 30000) {
+      if (Date.now() - lastRefreshTime.current >= 30_000) {
         await safeRefreshSession();
         await refetch();
         lastRefreshTime.current = Date.now();
       }
-    }, 30000);
-
+    }, 30_000);
+    // heavy‑duty reset
     const heavyReset = setInterval(() => {
       failureCount.current = 0;
     }, 5 * 60 * 1000);
@@ -203,6 +183,40 @@ export function useSystemReady() {
     };
   }, [minimalReady, safeRefreshSession, refetch]);
 
+  // ─── 7) Offline notification ──────────────────────────────────────────
+  useEffect(() => {
+    if (!isClient) return;
+    const notify = () => toast.warning("⚠️ You are offline. Using cached data.");
+    window.addEventListener("offline", notify);
+    return () => window.removeEventListener("offline", notify);
+  }, [isClient]);
+
+  // ─── 8) SessionWatcher background monitor ──────────────────────────────
+  useEffect(() => {
+    if (!minimalReady) return;
+
+    sessionWatcher.current = startSessionWatcher({
+      user,
+      wallet,
+      refreshSession: safeRefreshSession,
+      refetchBalances: refetch,
+      onSessionInvalid: () => {
+        failureCount.current += 1;
+        console.warn("⚠️ Session invalid detected:", failureCount.current);
+        if (failureCount.current >= 3) {
+          toast.error("⚠️ Persistent session error. Logging out...");
+          signOut(true);
+        }
+      },
+      log: true,
+      intervalMs: 60000,
+      networkFailLimit: 3,
+    });
+
+    sessionWatcher.current.start();
+    return () => sessionWatcher.current?.stop();
+  }, [minimalReady, user, wallet, safeRefreshSession, refetch, signOut]);
+
   // ─── Final return ───────────────────────────────────────────────────────
   return {
     ready,
@@ -212,6 +226,5 @@ export function useSystemReady() {
     fallbackBalances,
     fallbackPrices,
     isMobile,
-    scale,
   };
 }
