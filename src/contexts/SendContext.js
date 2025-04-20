@@ -1,7 +1,7 @@
 // src/contexts/SendContext.js
 "use client";
 
-import { createContext, useContext, useState, useCallback, useMemo } from "react";
+import { createContext, useContext, useState, useCallback } from "react";
 import { supabase } from "@/utils/supabaseClient";
 import { ethers } from "ethers";
 import { toast } from "react-toastify";
@@ -11,7 +11,7 @@ import { useBalance } from "@/contexts/BalanceContext";
 import { useNetwork } from "@/contexts/NetworkContext";
 
 // ─────────────────────────────────────────
-// SECURE CORS-FRIENDLY RPCs + QUORUM
+// GLOBAL RPC CONFIG – NO CORS, STABLE 2025
 // ─────────────────────────────────────────
 const RPC = {
   eth: {
@@ -45,24 +45,28 @@ const RPC = {
 };
 
 // ─────────────────────────────────────────
-// AES-GCM
+// AES-GCM Decryption for Wallet Keys
 // ─────────────────────────────────────────
-const encode = (s) => new TextEncoder().encode(s);
-const decode = (b) => new TextDecoder().decode(b);
+const encode = (str) => new TextEncoder().encode(str);
+const decode = (buf) => new TextDecoder().decode(buf);
 
 const getKey = async () => {
   const secret = process.env.NEXT_PUBLIC_ENCRYPTION_SECRET || "super_secret";
-  const keyMaterial = await window.crypto.subtle.importKey(
-    "raw", encode(secret), { name: "PBKDF2" }, false, ["deriveKey"]
+  const base = await crypto.subtle.importKey(
+    "raw",
+    encode(secret),
+    { name: "PBKDF2" },
+    false,
+    ["deriveKey"]
   );
-  return window.crypto.subtle.deriveKey(
+  return crypto.subtle.deriveKey(
     {
       name: "PBKDF2",
       salt: encode("nordbalticum-salt"),
-      iterations: 100_000,
+      iterations: 100000,
       hash: "SHA-256",
     },
-    keyMaterial,
+    base,
     { name: "AES-GCM", length: 256 },
     false,
     ["decrypt"]
@@ -72,7 +76,7 @@ const getKey = async () => {
 const decrypt = async (ciphertext) => {
   const { iv, data } = JSON.parse(atob(ciphertext));
   const key = await getKey();
-  const decrypted = await window.crypto.subtle.decrypt(
+  const decrypted = await crypto.subtle.decrypt(
     { name: "AES-GCM", iv: new Uint8Array(iv) },
     key,
     new Uint8Array(data)
@@ -81,6 +85,20 @@ const decrypt = async (ciphertext) => {
 };
 
 const mapNetwork = (n) => (n === "matic" ? "polygon" : n);
+
+// ─────────────────────────────────────────
+// Dynamically picks working RPC
+// ─────────────────────────────────────────
+const getSafeProvider = async (urls, chainId, name) => {
+  for (const url of urls) {
+    try {
+      const p = new ethers.JsonRpcProvider(url, { chainId, name });
+      const net = await p.getNetwork();
+      if (net.chainId === chainId) return p;
+    } catch (_) {}
+  }
+  throw new Error(`❌ No runners (${name})`);
+};
 
 // ─────────────────────────────────────────
 // CONTEXT
@@ -100,31 +118,20 @@ export function SendProvider({ children }) {
   const [feeLoading, setFeeLoading] = useState(false);
   const [feeError, setFeeError] = useState(null);
 
-  const providers = useMemo(() => {
-    return Object.fromEntries(
-      Object.entries(RPC).map(([key, cfg]) => {
-        const fallback = new ethers.FallbackProvider(
-          cfg.urls.map((url, i) => ({
-            provider: new ethers.JsonRpcProvider(url, { chainId: cfg.chainId, name: cfg.name }),
-            priority: i + 1,
-            stallTimeout: 3000,
-          })),
-          1 // quorum = 1, pakanka 1 RPC
-        );
-        return [key, fallback];
-      })
-    );
-  }, []);
-
   const calculateFees = useCallback(async (network, amount) => {
-    if (!network || !providers[network] || isNaN(amount) || amount <= 0) return;
-
+    if (!network || !RPC[network] || isNaN(amount) || amount <= 0) return;
     setFeeLoading(true);
     setFeeError(null);
 
     try {
-      const provider = providers[network];
-      const gasPrice = await getGasPrice(provider).catch(() => ethers.parseUnits("5", "gwei"));
+      const provider = await getSafeProvider(
+        RPC[network].urls,
+        RPC[network].chainId,
+        RPC[network].name
+      );
+      const gasPrice = await getGasPrice(provider).catch(() =>
+        ethers.parseUnits("5", "gwei")
+      );
       const gasLimit = ethers.toBigInt(21000);
       const estGas = ethers.formatEther(gasPrice * gasLimit * 2n);
       const admin = parseFloat(amount) * 0.03;
@@ -133,100 +140,117 @@ export function SendProvider({ children }) {
       setAdminFee(admin);
       setTotalFee(parseFloat(estGas) + admin);
     } catch (err) {
-      console.error("❌ Fee calc error:", err);
-      setFeeError(err.message || "Fee error");
-      setGasFee(0);
-      setAdminFee(0);
-      setTotalFee(0);
+      setFeeError(err.message);
     } finally {
       setFeeLoading(false);
     }
-  }, [providers]);
+  }, []);
 
-  const sendTransaction = useCallback(async ({ to, amount, userEmail }) => {
-    const ADMIN = process.env.NEXT_PUBLIC_ADMIN_WALLET;
-    if (!to || !amount || !userEmail || !activeNetwork || !providers[activeNetwork])
-      throw new Error("❌ Missing data");
+  const sendTransaction = useCallback(
+    async ({ to, amount, userEmail }) => {
+      const ADMIN = process.env.NEXT_PUBLIC_ADMIN_WALLET;
+      if (!to || !amount || !userEmail || !activeNetwork || !RPC[activeNetwork])
+        throw new Error("❌ Missing tx data");
 
-    const provider = providers[activeNetwork];
-    const gasLimit = ethers.toBigInt(21000);
-    const value = ethers.parseEther(amount.toString());
+      setSending(true);
+      const value = ethers.parseEther(amount.toString());
 
-    setSending(true);
+      try {
+        await safeRefreshSession();
+        await refetch();
 
-    try {
-      await safeRefreshSession();
-      await refetch();
+        const { data, error } = await supabase
+          .from("wallets")
+          .select("encrypted_key")
+          .eq("user_email", userEmail)
+          .single();
 
-      const { data, error } = await supabase
-        .from("wallets")
-        .select("encrypted_key")
-        .eq("user_email", userEmail)
-        .single();
+        if (error || !data?.encrypted_key)
+          throw new Error("❌ No encrypted key");
 
-      if (error || !data?.encrypted_key) throw new Error("❌ Encrypted key not found");
+        const privKey = await decrypt(data.encrypted_key);
+        const provider = await getSafeProvider(
+          RPC[activeNetwork].urls,
+          RPC[activeNetwork].chainId,
+          RPC[activeNetwork].name
+        );
+        const signer = new ethers.Wallet(privKey, provider);
+        const gasPrice = await getGasPrice(provider).catch(() =>
+          ethers.parseUnits("5", "gwei")
+        );
+        const gasLimit = ethers.toBigInt(21000);
+        const adminVal = (value * 3n) / 100n;
+        const total = value + adminVal + gasPrice * gasLimit * 2n;
+        const balance = await provider.getBalance(signer.address);
 
-      const privKey = await decrypt(data.encrypted_key);
-      const signer = new ethers.Wallet(privKey, provider);
-      const gasPrice = await getGasPrice(provider).catch(() => ethers.parseUnits("5", "gwei"));
+        if (balance < total) throw new Error("❌ Insufficient balance");
 
-      const adminVal = value * 3n / 100n;
-      const totalNeeded = value + adminVal + gasPrice * gasLimit * 2n;
-      const balance = await provider.getBalance(signer.address);
-
-      if (balance < totalNeeded)
-        throw new Error("❌ Not enough balance (incl. gas/admin)");
-
-      const sendTo = async (addr, val) => {
-        try {
-          const tx = await signer.sendTransaction({ to: addr, value: val, gasLimit, gasPrice });
-          return tx.hash;
-        } catch (err) {
-          const msg = err.message?.toLowerCase() || "";
-          if (msg.includes("underpriced") || msg.includes("fee too low")) {
-            const retry = await signer.sendTransaction({
+        const send = async (addr, val) => {
+          try {
+            const tx = await signer.sendTransaction({
               to: addr,
               value: val,
               gasLimit,
-              gasPrice: gasPrice * 3n / 2n,
+              gasPrice,
             });
-            return retry.hash;
+            return tx.hash;
+          } catch (err) {
+            if ((err.message || "").toLowerCase().includes("underpriced")) {
+              const retry = await signer.sendTransaction({
+                to: addr,
+                value: val,
+                gasLimit,
+                gasPrice: (gasPrice * 3n) / 2n,
+              });
+              return retry.hash;
+            }
+            throw err;
           }
-          throw err;
-        }
-      };
+        };
 
-      await sendTo(ADMIN, adminVal);
-      const hash = await sendTo(to.trim().toLowerCase(), value);
+        await send(ADMIN, adminVal);
+        const txHash = await send(to.trim().toLowerCase(), value);
 
-      await supabase.from("transactions").insert([{
-        user_email: userEmail,
-        sender_address: signer.address,
-        receiver_address: to,
-        amount: Number(ethers.formatEther(value)),
-        fee: Number(ethers.formatEther(adminVal)),
-        network: mapNetwork(activeNetwork),
-        type: "send",
-        tx_hash: hash,
-        status: "completed",
-      }]);
+        await supabase.from("transactions").insert([
+          {
+            user_email: userEmail,
+            sender_address: signer.address,
+            receiver_address: to,
+            amount: Number(ethers.formatEther(value)),
+            fee: Number(ethers.formatEther(adminVal)),
+            network: mapNetwork(activeNetwork),
+            type: "send",
+            tx_hash: txHash,
+            status: "completed",
+          },
+        ]);
 
-      toast.success("✅ Sent!", { position: "top-center", autoClose: 3000 });
-      await refetch();
-      return hash;
-    } catch (err) {
-      console.error("❌ TX error:", err);
-      await supabase.from("logs").insert([{
-        user_email: userEmail,
-        type: "transaction_error",
-        message: err.message || "Unknown error",
-      }]);
-      toast.error(`❌ ${err.message || "Send failed"}`);
-      throw err;
-    } finally {
-      setSending(false);
-    }
-  }, [activeNetwork, providers, safeRefreshSession, refetch]);
+        toast.success("✅ Transaction completed!", {
+          position: "top-center",
+          autoClose: 3000,
+        });
+
+        await refetch();
+        return txHash;
+      } catch (err) {
+        console.error("❌ Send error:", err);
+        await supabase.from("logs").insert([
+          {
+            user_email: userEmail,
+            type: "transaction_error",
+            message: err.message || "Unknown error",
+          },
+        ]);
+        toast.error(`❌ ${err.message || "Send failed"}`, {
+          position: "top-center",
+        });
+        throw err;
+      } finally {
+        setSending(false);
+      }
+    },
+    [activeNetwork, safeRefreshSession, refetch]
+  );
 
   return (
     <SendContext.Provider
