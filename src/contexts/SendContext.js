@@ -11,7 +11,7 @@ import { useBalance } from "@/contexts/BalanceContext";
 import { useNetwork } from "@/contexts/NetworkContext";
 
 // ─────────────────────────────────────────
-// GLOBAL RPC CONFIG – NO CORS, STABLE 2025
+// GLOBAL RPC CONFIG – ULTRA STABLE (NO CORS)
 // ─────────────────────────────────────────
 const RPC = {
   eth: {
@@ -45,7 +45,7 @@ const RPC = {
 };
 
 // ─────────────────────────────────────────
-// AES-GCM Decryption for Wallet Keys
+// AES-GCM DECRYPTION – Ultra Secure Wallet Key
 // ─────────────────────────────────────────
 const encode = (str) => new TextEncoder().encode(str);
 const decode = (buf) => new TextDecoder().decode(buf);
@@ -63,7 +63,7 @@ const getKey = async () => {
     {
       name: "PBKDF2",
       salt: encode("nordbalticum-salt"),
-      iterations: 100000,
+      iterations: 100_000,
       hash: "SHA-256",
     },
     base,
@@ -87,7 +87,7 @@ const decrypt = async (ciphertext) => {
 const mapNetwork = (n) => (n === "matic" ? "polygon" : n);
 
 // ─────────────────────────────────────────
-// Dynamically picks working RPC
+// GET A SAFE PROVIDER WITH FALLBACK
 // ─────────────────────────────────────────
 const getSafeProvider = async (urls, chainId, name) => {
   for (const url of urls) {
@@ -101,7 +101,7 @@ const getSafeProvider = async (urls, chainId, name) => {
 };
 
 // ─────────────────────────────────────────
-// CONTEXT
+// CONTEXT DEFINITION – SEND SYSTEM
 // ─────────────────────────────────────────
 const SendContext = createContext();
 export const useSend = () => useContext(SendContext);
