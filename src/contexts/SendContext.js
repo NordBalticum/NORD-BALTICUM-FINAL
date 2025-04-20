@@ -1,4 +1,3 @@
-// src/contexts/SendContext.js
 "use client";
 
 import { createContext, useContext, useState, useCallback } from "react";
@@ -11,59 +10,75 @@ import { useBalance } from "@/contexts/BalanceContext";
 import { useNetwork } from "@/contexts/NetworkContext";
 
 // ─────────────────────────────────────────
-// GLOBAL RPC CONFIG – ULTRA STABLE (NO CORS)
+// STABILŪS RPC – BE CORS, BE API KEY
 // ─────────────────────────────────────────
 const RPC = {
   eth: {
-    urls: ["https://rpc.ankr.com/eth", "https://eth.llamarpc.com"],
+    urls: [
+      "https://eth.drpc.org",
+      "https://rpc.ankr.com/eth",
+      "https://eth.llamarpc.com",
+      "https://ethereum.blockpi.network/v1/rpc/public"
+    ],
     chainId: 1,
     name: "eth",
   },
   bnb: {
-    urls: ["https://bsc-dataseed1.binance.org", "https://bsc.publicnode.com"],
+    urls: [
+      "https://bsc.drpc.org",
+      "https://bsc.publicnode.com",
+      "https://rpc.ankr.com/bsc",
+      "https://binance.llamarpc.com"
+    ],
     chainId: 56,
     name: "bnb",
   },
   tbnb: {
     urls: [
-      "https://data-seed-prebsc-1-s1.binance.org:8545",
+      "https://data-seed-prebsc-2-s1.binance.org:8545",
       "https://bsc-testnet.public.blastapi.io",
+      "https://endpoints.omniatech.io/v1/bsc/testnet/public",
+      "https://rpc.ankr.com/bsc_testnet_chapel"
     ],
     chainId: 97,
     name: "tbnb",
   },
   matic: {
-    urls: ["https://polygon.llamarpc.com", "https://polygon.rpc.blxrbdn.com"],
+    urls: [
+      "https://polygon.llamarpc.com",
+      "https://polygon-rpc.com",
+      "https://rpc.ankr.com/polygon",
+      "https://polygon.drpc.org"
+    ],
     chainId: 137,
     name: "matic",
   },
   avax: {
-    urls: ["https://rpc.ankr.com/avalanche", "https://avalanche.drpc.org"],
+    urls: [
+      "https://avax.meowrpc.com",
+      "https://rpc.ankr.com/avalanche",
+      "https://avalanche.drpc.org",
+      "https://api.avax.network/ext/bc/C/rpc"
+    ],
     chainId: 43114,
     name: "avax",
   },
 };
 
 // ─────────────────────────────────────────
-// AES-GCM DECRYPTION – Ultra Secure Wallet Key
+// AES-GCM Wallet Decryption
 // ─────────────────────────────────────────
 const encode = (str) => new TextEncoder().encode(str);
 const decode = (buf) => new TextDecoder().decode(buf);
 
 const getKey = async () => {
   const secret = process.env.NEXT_PUBLIC_ENCRYPTION_SECRET || "super_secret";
-  const base = await crypto.subtle.importKey(
-    "raw",
-    encode(secret),
-    { name: "PBKDF2" },
-    false,
-    ["deriveKey"]
-  );
+  const base = await crypto.subtle.importKey("raw", encode(secret), { name: "PBKDF2" }, false, ["deriveKey"]);
   return crypto.subtle.deriveKey(
     {
       name: "PBKDF2",
       salt: encode("nordbalticum-salt"),
-      iterations: 100_000,
+      iterations: 100000,
       hash: "SHA-256",
     },
     base,
@@ -87,21 +102,22 @@ const decrypt = async (ciphertext) => {
 const mapNetwork = (n) => (n === "matic" ? "polygon" : n);
 
 // ─────────────────────────────────────────
-// GET A SAFE PROVIDER WITH FALLBACK
+// Get Safe Provider
 // ─────────────────────────────────────────
 const getSafeProvider = async (urls, chainId, name) => {
   for (const url of urls) {
     try {
-      const p = new ethers.JsonRpcProvider(url, { chainId, name });
-      const net = await p.getNetwork();
-      if (net.chainId === chainId) return p;
+      const provider = new ethers.JsonRpcProvider(url, { chainId, name });
+      const net = await provider.getNetwork();
+      if (net.chainId === chainId) return provider;
     } catch (_) {}
   }
-  throw new Error(`❌ No runners (${name})`);
+  // Paskutinis bandymas su pirmu RPC (fallback)
+  return new ethers.JsonRpcProvider(urls[0], { chainId, name });
 };
 
 // ─────────────────────────────────────────
-// CONTEXT DEFINITION – SEND SYSTEM
+// CONTEXT – Send System
 // ─────────────────────────────────────────
 const SendContext = createContext();
 export const useSend = () => useContext(SendContext);
@@ -122,16 +138,9 @@ export function SendProvider({ children }) {
     if (!network || !RPC[network] || isNaN(amount) || amount <= 0) return;
     setFeeLoading(true);
     setFeeError(null);
-
     try {
-      const provider = await getSafeProvider(
-        RPC[network].urls,
-        RPC[network].chainId,
-        RPC[network].name
-      );
-      const gasPrice = await getGasPrice(provider).catch(() =>
-        ethers.parseUnits("5", "gwei")
-      );
+      const provider = await getSafeProvider(RPC[network].urls, RPC[network].chainId, RPC[network].name);
+      const gasPrice = await getGasPrice(provider).catch(() => ethers.parseUnits("5", "gwei"));
       const gasLimit = ethers.toBigInt(21000);
       const estGas = ethers.formatEther(gasPrice * gasLimit * 2n);
       const admin = parseFloat(amount) * 0.03;
@@ -140,117 +149,93 @@ export function SendProvider({ children }) {
       setAdminFee(admin);
       setTotalFee(parseFloat(estGas) + admin);
     } catch (err) {
-      setFeeError(err.message);
+      setFeeError("Failed to estimate fees");
     } finally {
       setFeeLoading(false);
     }
   }, []);
 
-  const sendTransaction = useCallback(
-    async ({ to, amount, userEmail }) => {
-      const ADMIN = process.env.NEXT_PUBLIC_ADMIN_WALLET;
-      if (!to || !amount || !userEmail || !activeNetwork || !RPC[activeNetwork])
-        throw new Error("❌ Missing tx data");
+  const sendTransaction = useCallback(async ({ to, amount, userEmail }) => {
+    const ADMIN = process.env.NEXT_PUBLIC_ADMIN_WALLET;
+    if (!to || !amount || !userEmail || !activeNetwork || !RPC[activeNetwork]) throw new Error("❌ Missing tx data");
 
-      setSending(true);
-      const value = ethers.parseEther(amount.toString());
+    setSending(true);
+    const value = ethers.parseEther(amount.toString());
 
-      try {
-        await safeRefreshSession();
-        await refetch();
+    try {
+      await safeRefreshSession();
+      await refetch();
 
-        const { data, error } = await supabase
-          .from("wallets")
-          .select("encrypted_key")
-          .eq("user_email", userEmail)
-          .single();
+      const { data, error } = await supabase
+        .from("wallets")
+        .select("encrypted_key")
+        .eq("user_email", userEmail)
+        .single();
 
-        if (error || !data?.encrypted_key)
-          throw new Error("❌ No encrypted key");
+      if (error || !data?.encrypted_key) throw new Error("❌ No encrypted key");
 
-        const privKey = await decrypt(data.encrypted_key);
-        const provider = await getSafeProvider(
-          RPC[activeNetwork].urls,
-          RPC[activeNetwork].chainId,
-          RPC[activeNetwork].name
-        );
-        const signer = new ethers.Wallet(privKey, provider);
-        const gasPrice = await getGasPrice(provider).catch(() =>
-          ethers.parseUnits("5", "gwei")
-        );
-        const gasLimit = ethers.toBigInt(21000);
-        const adminVal = (value * 3n) / 100n;
-        const total = value + adminVal + gasPrice * gasLimit * 2n;
-        const balance = await provider.getBalance(signer.address);
+      const privKey = await decrypt(data.encrypted_key);
+      const provider = await getSafeProvider(RPC[activeNetwork].urls, RPC[activeNetwork].chainId, RPC[activeNetwork].name);
+      const signer = new ethers.Wallet(privKey, provider);
+      const gasPrice = await getGasPrice(provider).catch(() => ethers.parseUnits("5", "gwei"));
+      const gasLimit = ethers.toBigInt(21000);
+      const adminVal = (value * 3n) / 100n;
+      const total = value + adminVal + gasPrice * gasLimit * 2n;
+      const balance = await provider.getBalance(signer.address);
+      if (balance < total) throw new Error("❌ Insufficient balance");
 
-        if (balance < total) throw new Error("❌ Insufficient balance");
-
-        const send = async (addr, val) => {
-          try {
-            const tx = await signer.sendTransaction({
+      const send = async (addr, val) => {
+        try {
+          const tx = await signer.sendTransaction({ to: addr, value: val, gasLimit, gasPrice });
+          return tx.hash;
+        } catch (err) {
+          if ((err.message || "").toLowerCase().includes("underpriced")) {
+            const retry = await signer.sendTransaction({
               to: addr,
               value: val,
               gasLimit,
-              gasPrice,
+              gasPrice: (gasPrice * 3n) / 2n,
             });
-            return tx.hash;
-          } catch (err) {
-            if ((err.message || "").toLowerCase().includes("underpriced")) {
-              const retry = await signer.sendTransaction({
-                to: addr,
-                value: val,
-                gasLimit,
-                gasPrice: (gasPrice * 3n) / 2n,
-              });
-              return retry.hash;
-            }
-            throw err;
+            return retry.hash;
           }
-        };
+          throw err;
+        }
+      };
 
-        await send(ADMIN, adminVal);
-        const txHash = await send(to.trim().toLowerCase(), value);
+      await send(ADMIN, adminVal);
+      const txHash = await send(to.trim().toLowerCase(), value);
 
-        await supabase.from("transactions").insert([
-          {
-            user_email: userEmail,
-            sender_address: signer.address,
-            receiver_address: to,
-            amount: Number(ethers.formatEther(value)),
-            fee: Number(ethers.formatEther(adminVal)),
-            network: mapNetwork(activeNetwork),
-            type: "send",
-            tx_hash: txHash,
-            status: "completed",
-          },
-        ]);
+      await supabase.from("transactions").insert([
+        {
+          user_email: userEmail,
+          sender_address: signer.address,
+          receiver_address: to,
+          amount: Number(ethers.formatEther(value)),
+          fee: Number(ethers.formatEther(adminVal)),
+          network: mapNetwork(activeNetwork),
+          type: "send",
+          tx_hash: txHash,
+        },
+      ]);
 
-        toast.success("✅ Transaction completed!", {
-          position: "top-center",
-          autoClose: 3000,
-        });
-
-        await refetch();
-        return txHash;
-      } catch (err) {
-        console.error("❌ Send error:", err);
-        await supabase.from("logs").insert([
-          {
-            user_email: userEmail,
-            type: "transaction_error",
-            message: err.message || "Unknown error",
-          },
-        ]);
-        toast.error(`❌ ${err.message || "Send failed"}`, {
-          position: "top-center",
-        });
-        throw err;
-      } finally {
-        setSending(false);
-      }
-    },
-    [activeNetwork, safeRefreshSession, refetch]
-  );
+      toast.success("✅ Transaction completed!", { position: "top-center", autoClose: 3000 });
+      await refetch();
+      return txHash;
+    } catch (err) {
+      console.error("❌ Send error:", err);
+      await supabase.from("logs").insert([
+        {
+          user_email: userEmail,
+          type: "transaction_error",
+          message: err.message || "Unknown error",
+        },
+      ]);
+      toast.error(`❌ ${err.message || "Send failed"}`, { position: "top-center" });
+      throw err;
+    } finally {
+      setSending(false);
+    }
+  }, [activeNetwork, safeRefreshSession, refetch]);
 
   return (
     <SendContext.Provider
