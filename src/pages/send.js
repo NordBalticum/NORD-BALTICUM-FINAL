@@ -20,7 +20,7 @@ import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
 import styles from "@/styles/send.module.css";
 import background from "@/styles/background.module.css";
 
-// Network definitions
+// Network config
 const NETWORKS = {
   eth:   { label: "ETH",   min: 0.001,  color: "#0072ff", explorer: "https://etherscan.io/tx/" },
   bnb:   { label: "BNB",   min: 0.0005, color: "#f0b90b", explorer: "https://bscscan.com/tx/" },
@@ -29,10 +29,10 @@ const NETWORKS = {
   avax:  { label: "AVAX",  min: 0.01,   color: "#e84142", explorer: "https://snowtrace.io/tx/" },
 };
 
-const NETWORK_LIST = Object.entries(NETWORKS).map(([symbol, { label, color }]) => ({
+const NETWORK_LIST = Object.entries(NETWORKS).map(([symbol, { label }]) => ({
   name: label,
   symbol,
-  color,
+  color: NETWORKS[symbol].color,
   logo: `/icons/${symbol.includes("bnb") ? "bnb" : symbol}.svg`,
 }));
 
@@ -123,13 +123,12 @@ export default function SendPage() {
 
   const buttonStyle = {
     backgroundColor: btnClr,
-    color: (activeNetwork === "bnb" || activeNetwork === "tbnb") ? "#000" : "#fff",
+    color: ["bnb", "tbnb"].includes(activeNetwork) ? "#000" : "#fff",
   };
 
   return (
     <main className={`${styles.main} ${background.gradient}`} style={{ transform: `scale(${scale})` }}>
       <div className={styles.wrapper}>
-
         {/* Network Selector */}
         <div className={styles.selectorContainer}>
           {NETWORK_LIST.map((net, idx) => (
@@ -215,7 +214,7 @@ export default function SendPage() {
           </div>
         )}
 
-        {/* Success & Error */}
+        {/* Success Modal */}
         {successOpen && txHash && (
           <SuccessModal
             message="✅ Transaction Sent!"
@@ -225,6 +224,7 @@ export default function SendPage() {
           />
         )}
 
+        {/* Error Modal */}
         {error && <ErrorModal error={error} onClose={() => setError(null)} />}
       </div>
     </main>
