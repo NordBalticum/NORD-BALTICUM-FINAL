@@ -20,7 +20,9 @@ import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
 import styles from "@/styles/send.module.css";
 import background from "@/styles/background.module.css";
 
-// Network config
+// ─────────────────────────────────────────
+// NETWORK CONFIG
+// ─────────────────────────────────────────
 const NETWORKS = {
   eth:   { label: "ETH",   min: 0.001,  color: "#0072ff", explorer: "https://etherscan.io/tx/" },
   bnb:   { label: "BNB",   min: 0.0005, color: "#f0b90b", explorer: "https://bscscan.com/tx/" },
@@ -72,7 +74,7 @@ export default function SendPage() {
   }, [prices, activeNetwork, bal]);
 
   const isValidAddress = useCallback(
-    (addr) => /^0x[a-fA-F0-9]{40}$/.test(addr.trim()),
+    addr => /^0x[a-fA-F0-9]{40}$/.test(addr.trim()),
     []
   );
 
