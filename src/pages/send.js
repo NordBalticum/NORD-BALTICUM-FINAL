@@ -20,9 +20,7 @@ import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
 import styles from "@/styles/send.module.css";
 import background from "@/styles/background.module.css";
 
-// ─────────────────────────────────────────
-// NETWORK CONFIG
-// ─────────────────────────────────────────
+// 💎 Reali RPC config iš SendContext
 const NETWORKS = {
   eth:   { label: "ETH",   min: 0.001,  color: "#0072ff", explorer: "https://etherscan.io/tx/" },
   bnb:   { label: "BNB",   min: 0.0005, color: "#f0b90b", explorer: "https://bscscan.com/tx/" },
@@ -43,7 +41,16 @@ export default function SendPage() {
   const { user } = useAuth();
   const { activeNetwork, switchNetwork } = useNetwork();
   const { ready } = useSystemReady();
-  const { sendTransaction, sending, gasFee, adminFee, totalFee, feeLoading, feeError, calculateFees } = useSend();
+  const {
+    sendTransaction,
+    sending,
+    gasFee,
+    adminFee,
+    totalFee,
+    feeLoading,
+    feeError,
+    calculateFees
+  } = useSend();
   const { balances, prices } = useBalance();
   const scale = useScale();
 
@@ -53,12 +60,12 @@ export default function SendPage() {
   const [successOpen, setSuccessOpen] = useState(false);
   const [error, setError] = useState(null);
   const [txHash, setTxHash] = useState("");
-  const [selectedIndex, setSelectedIndex] = useState(
-    NETWORK_LIST.findIndex(n => n.symbol === activeNetwork)
-  );
 
-  const cfg = NETWORKS[activeNetwork] || {};
-  const { label: short, min, color: btnClr, explorer } = cfg;
+  const selectedIndex = useMemo(() =>
+    NETWORK_LIST.findIndex(n => n.symbol === activeNetwork), [activeNetwork]);
+
+  const cfg = NETWORKS[activeNetwork];
+  const { label: short = "", min = 0, color: btnClr = "#333", explorer = "" } = cfg || {};
 
   const val = useMemo(() => parseFloat(amount) || 0, [amount]);
   const bal = useMemo(() => balances?.[activeNetwork] || 0, [balances, activeNetwork]);
@@ -87,11 +94,12 @@ export default function SendPage() {
   }, [ready, user, router]);
 
   const handleSend = useCallback(() => {
+    if (!cfg) return alert("❌ Unsupported network");
     if (!isValidAddress(receiver)) return alert("❌ Invalid address format");
     if (val < min) return alert(`❌ Minimum amount is ${min} ${short}`);
     if (val + totalFee > bal) return alert("❌ Insufficient balance");
     setConfirmOpen(true);
-  }, [receiver, val, min, short, totalFee, bal, isValidAddress]);
+  }, [receiver, val, min, short, totalFee, bal, isValidAddress, cfg]);
 
   const onConfirm = useCallback(async () => {
     setConfirmOpen(false);
@@ -116,7 +124,6 @@ export default function SendPage() {
     const net = NETWORK_LIST[idx].symbol;
     if (net !== activeNetwork) {
       switchNetwork(net);
-      setSelectedIndex(idx);
       setReceiver("");
       setAmount("");
       navigator.vibrate?.(10);
@@ -131,6 +138,7 @@ export default function SendPage() {
   return (
     <main className={`${styles.main} ${background.gradient}`} style={{ transform: `scale(${scale})` }}>
       <div className={styles.wrapper}>
+
         {/* Network Selector */}
         <div className={styles.selectorContainer}>
           {NETWORK_LIST.map((net, idx) => (
