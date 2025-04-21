@@ -8,66 +8,10 @@ import { getGasPrice } from "@/utils/getGasPrice";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBalance } from "@/contexts/BalanceContext";
 import { useNetwork } from "@/contexts/NetworkContext";
+import { getProviderForChain } from "@/utils/getProviderForChain";
+import { RPC } from "@/utils/fallbackRPCs"; // fallbackRPCs.js turi eksportuoti `RPC`
 
-// ==========================
-// 🌐 Fallback RPC konfigūracija
-// ==========================
-const RPC = {
-  eth: {
-    urls: [
-      "https://eth.drpc.org",
-      "https://rpc.ankr.com/eth",
-      "https://ethereum.publicnode.com",
-      "https://eth.llamarpc.com",
-    ],
-    chainId: 1,
-    name: "eth",
-  },
-  bnb: {
-    urls: [
-      "https://bsc.drpc.org",
-      "https://rpc.ankr.com/bsc",
-      "https://bsc.publicnode.com",
-      "https://binance.llamarpc.com",
-    ],
-    chainId: 56,
-    name: "bnb",
-  },
-  tbnb: {
-    urls: [
-      "https://data-seed-prebsc-2-s1.binance.org:8545",
-      "https://bsc-testnet.public.blastapi.io",
-      "https://rpc.ankr.com/bsc_testnet_chapel",
-      "https://endpoints.omniatech.io/v1/bsc/testnet/public",
-    ],
-    chainId: 97,
-    name: "tbnb",
-  },
-  matic: {
-    urls: [
-      "https://polygon.llamarpc.com",
-      "https://polygon-rpc.com",
-      "https://rpc.ankr.com/polygon",
-      "https://polygon.drpc.org",
-    ],
-    chainId: 137,
-    name: "matic",
-  },
-  avax: {
-    urls: [
-      "https://rpc.ankr.com/avalanche",
-      "https://avax.meowrpc.com",
-      "https://avalanche.drpc.org",
-      "https://api.avax.network/ext/bc/C/rpc",
-    ],
-    chainId: 43114,
-    name: "avax",
-  },
-};
-
-// ==========================
 // 🔐 AES-GCM Decryption
-// ==========================
 const encode = (txt) => new TextEncoder().encode(txt);
 const decode = (buf) => new TextDecoder().decode(buf);
 
@@ -102,25 +46,7 @@ const decrypt = async (ciphertext) => {
 
 const mapNetwork = (n) => (n === "matic" ? "polygon" : n);
 
-// ==========================
-// 🔌 Patikrintas provideris
-// ==========================
-const getSafeProvider = async (urls, chainId, name) => {
-  for (const url of urls) {
-    try {
-      const provider = new ethers.JsonRpcProvider(url, { chainId, name });
-      const net = await provider.getNetwork();
-      if (net.chainId === chainId) return provider;
-    } catch (e) {
-      console.warn(`❌ RPC klaida (${name}): ${url}`, e.message);
-    }
-  }
-  throw new Error(`❌ No working RPCs for ${name}`);
-};
-
-// ==========================
-// 📦 SEND KONTEKSTAS
-// ==========================
+// 📦 SEND CONTEXT
 const SendContext = createContext();
 export const useSend = () => useContext(SendContext);
 
@@ -137,16 +63,12 @@ export function SendProvider({ children }) {
   const [feeError, setFeeError] = useState(null);
 
   const calculateFees = useCallback(async (network, amount) => {
-    if (!network || !RPC[network] || isNaN(amount) || amount <= 0) return;
+    if (!network || isNaN(amount) || amount <= 0) return;
     setFeeLoading(true);
     setFeeError(null);
 
     try {
-      const provider = await getSafeProvider(
-        RPC[network].urls,
-        RPC[network].chainId,
-        RPC[network].name
-      );
+      const provider = await getProviderForChain(network);
       const gasPrice = await getGasPrice(provider).catch(() => ethers.parseUnits("5", "gwei"));
       const gasLimit = ethers.toBigInt(21000);
       const estGas = ethers.formatEther(gasPrice * gasLimit * 2n);
@@ -164,7 +86,7 @@ export function SendProvider({ children }) {
 
   const sendTransaction = useCallback(async ({ to, amount, userEmail }) => {
     const ADMIN = process.env.NEXT_PUBLIC_ADMIN_WALLET;
-    if (!to || !amount || !userEmail || !activeNetwork || !RPC[activeNetwork]) {
+    if (!to || !amount || !userEmail || !activeNetwork) {
       throw new Error("❌ Missing transaction data");
     }
 
@@ -183,11 +105,7 @@ export function SendProvider({ children }) {
       if (error || !data?.encrypted_key) throw new Error("❌ Encrypted key not found");
 
       const privKey = await decrypt(data.encrypted_key);
-      const provider = await getSafeProvider(
-        RPC[activeNetwork].urls,
-        RPC[activeNetwork].chainId,
-        RPC[activeNetwork].name
-      );
+      const provider = await getProviderForChain(activeNetwork);
       const signer = new ethers.Wallet(privKey, provider);
 
       const gasPrice = await getGasPrice(provider).catch(() => ethers.parseUnits("5", "gwei"));
