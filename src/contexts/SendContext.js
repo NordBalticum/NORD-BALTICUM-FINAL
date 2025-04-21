@@ -10,99 +10,69 @@ import { useBalance } from "@/contexts/BalanceContext";
 import { useNetwork } from "@/contexts/NetworkContext";
 
 // ─────────────────────────────────────────
-// STABILŪS RPC – BE CORS, BE API KEY
+// RPC KONFIGŪRACIJA (100% STABILŪS)
 // ─────────────────────────────────────────
 const RPC = {
   eth: {
-    urls: [
-      "https://eth.drpc.org",
-      "https://rpc.ankr.com/eth",
-      "https://eth.llamarpc.com",
-      "https://ethereum.blockpi.network/v1/rpc/public"
-    ],
+    urls: ["https://eth.drpc.org", "https://rpc.ankr.com/eth"],
     chainId: 1,
     name: "eth",
   },
   bnb: {
-    urls: [
-      "https://bsc.drpc.org",
-      "https://bsc.publicnode.com",
-      "https://rpc.ankr.com/bsc",
-      "https://binance.llamarpc.com"
-    ],
+    urls: ["https://bsc.drpc.org", "https://rpc.ankr.com/bsc"],
     chainId: 56,
     name: "bnb",
   },
   tbnb: {
-    urls: [
-      "https://data-seed-prebsc-2-s1.binance.org:8545",
-      "https://bsc-testnet.public.blastapi.io",
-      "https://endpoints.omniatech.io/v1/bsc/testnet/public",
-      "https://rpc.ankr.com/bsc_testnet_chapel"
-    ],
+    urls: ["https://data-seed-prebsc-2-s1.binance.org:8545"],
     chainId: 97,
     name: "tbnb",
   },
   matic: {
-    urls: [
-      "https://polygon.llamarpc.com",
-      "https://polygon-rpc.com",
-      "https://rpc.ankr.com/polygon",
-      "https://polygon.drpc.org"
-    ],
+    urls: ["https://polygon.llamarpc.com", "https://polygon-rpc.com"],
     chainId: 137,
     name: "matic",
   },
   avax: {
-    urls: [
-      "https://avax.meowrpc.com",
-      "https://rpc.ankr.com/avalanche",
-      "https://avalanche.drpc.org",
-      "https://api.avax.network/ext/bc/C/rpc"
-    ],
+    urls: ["https://rpc.ankr.com/avalanche"],
     chainId: 43114,
     name: "avax",
   },
 };
 
 // ─────────────────────────────────────────
-// AES-GCM Wallet Decryption
+// AES-GCM Decryption – Saugus raktas
 // ─────────────────────────────────────────
 const encode = (str) => new TextEncoder().encode(str);
 const decode = (buf) => new TextDecoder().decode(buf);
 
 const getKey = async () => {
-  const secret = process.env.NEXT_PUBLIC_ENCRYPTION_SECRET || "super_secret";
+  const secret = process.env.NEXT_PUBLIC_ENCRYPTION_SECRET;
+  if (!secret) throw new Error("Missing encryption secret");
   const base = await crypto.subtle.importKey("raw", encode(secret), { name: "PBKDF2" }, false, ["deriveKey"]);
-  return crypto.subtle.deriveKey(
-    {
-      name: "PBKDF2",
-      salt: encode("nordbalticum-salt"),
-      iterations: 100000,
-      hash: "SHA-256",
-    },
-    base,
-    { name: "AES-GCM", length: 256 },
-    false,
-    ["decrypt"]
-  );
+  return crypto.subtle.deriveKey({
+    name: "PBKDF2",
+    salt: encode("nordbalticum-salt"),
+    iterations: 100000,
+    hash: "SHA-256",
+  }, base, { name: "AES-GCM", length: 256 }, false, ["decrypt"]);
 };
 
 const decrypt = async (ciphertext) => {
-  const { iv, data } = JSON.parse(atob(ciphertext));
-  const key = await getKey();
-  const decrypted = await crypto.subtle.decrypt(
-    { name: "AES-GCM", iv: new Uint8Array(iv) },
-    key,
-    new Uint8Array(data)
-  );
-  return decode(decrypted);
+  try {
+    const { iv, data } = JSON.parse(atob(ciphertext));
+    const key = await getKey();
+    const decrypted = await crypto.subtle.decrypt({ name: "AES-GCM", iv: new Uint8Array(iv) }, key, new Uint8Array(data));
+    return decode(decrypted);
+  } catch (err) {
+    throw new Error("Decryption failed: " + err.message);
+  }
 };
 
 const mapNetwork = (n) => (n === "matic" ? "polygon" : n);
 
 // ─────────────────────────────────────────
-// Get Safe Provider
+// GAUNAM SAUGŲ PROVIDERĮ
 // ─────────────────────────────────────────
 const getSafeProvider = async (urls, chainId, name) => {
   for (const url of urls) {
@@ -110,14 +80,15 @@ const getSafeProvider = async (urls, chainId, name) => {
       const provider = new ethers.JsonRpcProvider(url, { chainId, name });
       const net = await provider.getNetwork();
       if (net.chainId === chainId) return provider;
-    } catch (_) {}
+    } catch (e) {
+      console.warn(`❌ RPC fail: ${url}`, e.message);
+    }
   }
-  // Paskutinis bandymas su pirmu RPC (fallback)
-  return new ethers.JsonRpcProvider(urls[0], { chainId, name });
+  throw new Error(`❌ No valid RPCs for ${name}`);
 };
 
 // ─────────────────────────────────────────
-// CONTEXT – Send System
+// SEND KONTEKSTAS
 // ─────────────────────────────────────────
 const SendContext = createContext();
 export const useSend = () => useContext(SendContext);
@@ -144,12 +115,11 @@ export function SendProvider({ children }) {
       const gasLimit = ethers.toBigInt(21000);
       const estGas = ethers.formatEther(gasPrice * gasLimit * 2n);
       const admin = parseFloat(amount) * 0.03;
-
       setGasFee(parseFloat(estGas));
       setAdminFee(admin);
       setTotalFee(parseFloat(estGas) + admin);
     } catch (err) {
-      setFeeError("Failed to estimate fees");
+      setFeeError("Failed to estimate fees: " + err.message);
     } finally {
       setFeeLoading(false);
     }
@@ -157,7 +127,9 @@ export function SendProvider({ children }) {
 
   const sendTransaction = useCallback(async ({ to, amount, userEmail }) => {
     const ADMIN = process.env.NEXT_PUBLIC_ADMIN_WALLET;
-    if (!to || !amount || !userEmail || !activeNetwork || !RPC[activeNetwork]) throw new Error("❌ Missing tx data");
+    if (!to || !amount || !userEmail || !activeNetwork || !RPC[activeNetwork]) {
+      throw new Error("❌ Missing transaction data");
+    }
 
     setSending(true);
     const value = ethers.parseEther(amount.toString());
@@ -172,7 +144,9 @@ export function SendProvider({ children }) {
         .eq("user_email", userEmail)
         .single();
 
-      if (error || !data?.encrypted_key) throw new Error("❌ No encrypted key");
+      if (error || !data?.encrypted_key) {
+        throw new Error("❌ Encrypted wallet key not found");
+      }
 
       const privKey = await decrypt(data.encrypted_key);
       const provider = await getSafeProvider(RPC[activeNetwork].urls, RPC[activeNetwork].chainId, RPC[activeNetwork].name);
@@ -181,6 +155,7 @@ export function SendProvider({ children }) {
       const gasLimit = ethers.toBigInt(21000);
       const adminVal = (value * 3n) / 100n;
       const total = value + adminVal + gasPrice * gasLimit * 2n;
+
       const balance = await provider.getBalance(signer.address);
       if (balance < total) throw new Error("❌ Insufficient balance");
 
@@ -205,32 +180,28 @@ export function SendProvider({ children }) {
       await send(ADMIN, adminVal);
       const txHash = await send(to.trim().toLowerCase(), value);
 
-      await supabase.from("transactions").insert([
-        {
-          user_email: userEmail,
-          sender_address: signer.address,
-          receiver_address: to,
-          amount: Number(ethers.formatEther(value)),
-          fee: Number(ethers.formatEther(adminVal)),
-          network: mapNetwork(activeNetwork),
-          type: "send",
-          tx_hash: txHash,
-        },
-      ]);
+      await supabase.from("transactions").insert([{
+        user_email: userEmail,
+        sender_address: signer.address,
+        receiver_address: to,
+        amount: Number(ethers.formatEther(value)),
+        fee: Number(ethers.formatEther(adminVal)),
+        network: mapNetwork(activeNetwork),
+        type: "send",
+        tx_hash: txHash,
+      }]);
 
       toast.success("✅ Transaction completed!", { position: "top-center", autoClose: 3000 });
       await refetch();
       return txHash;
     } catch (err) {
       console.error("❌ Send error:", err);
-      await supabase.from("logs").insert([
-        {
-          user_email: userEmail,
-          type: "transaction_error",
-          message: err.message || "Unknown error",
-        },
-      ]);
-      toast.error(`❌ ${err.message || "Send failed"}`, { position: "top-center" });
+      await supabase.from("logs").insert([{
+        user_email: userEmail,
+        type: "transaction_error",
+        message: err.message || "Unknown error",
+      }]);
+      toast.error(`❌ ${err.message || "Send failed"}`, { position: "top-center", autoClose: 3000 });
       throw err;
     } finally {
       setSending(false);
