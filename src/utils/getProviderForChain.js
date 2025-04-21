@@ -1,25 +1,28 @@
 "use client";
 
-import { JsonRpcProvider } from "ethers";
-import { ethersFallbackProviders } from "../constants/fallbackRPCs";
+import { JsonRpcProvider, FallbackProvider } from "ethers";
+import { ethersFallbackProviders } from "@/utils/fallbackRPCs";
 
+/**
+ * Grąžina saugų providerį, su fallback mechanizmu
+ * @param {number|string} chainId - chainId kaip skaičius (pvz. 1, 137, 56)
+ * @returns {JsonRpcProvider|FallbackProvider}
+ */
 export const getProviderForChain = (chainId) => {
-  const fallbackURLs = ethersFallbackProviders[chainId];
+  const id = typeof chainId === "string" ? parseInt(chainId) : chainId;
+  const fallbackURLs = ethersFallbackProviders[id];
 
   if (!fallbackURLs || fallbackURLs.length === 0) {
-    throw new Error(`No fallback RPCs found for chainId ${chainId}`);
+    throw new Error(`❌ No fallback RPCs found for chainId ${id}`);
   }
 
-  // Tik vienas URL – grąžinam paprastą providerį
   if (fallbackURLs.length === 1) {
-    return new JsonRpcProvider(fallbackURLs[0]);
+    return new JsonRpcProvider(fallbackURLs[0], id);
   }
 
-  // Keli URL – grąžinam fallback providerį su prioriteto tvarka
-  const providers = fallbackURLs.map((url) => new JsonRpcProvider(url));
-
-  return new ethers.FallbackProvider(providers, {
-    quorum: 1, // Gali būti padidintas jei nori daugiau patvirtinimų
+  const providers = fallbackURLs.map((url) => new JsonRpcProvider(url, id));
+  return new FallbackProvider(providers, {
+    quorum: 1,
     weight: providers.map(() => 1),
   });
 };
