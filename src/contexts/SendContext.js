@@ -1,6 +1,11 @@
 "use client";
 
-import { createContext, useContext, useState, useCallback } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  useCallback
+} from "react";
 import { supabase } from "@/utils/supabaseClient";
 import { ethers } from "ethers";
 import { toast } from "react-toastify";
@@ -9,7 +14,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useBalance } from "@/contexts/BalanceContext";
 import { useNetwork } from "@/contexts/NetworkContext";
 import { getProviderForChain } from "@/utils/getProviderForChain";
-import { RPC } from "@/utils/fallbackRPCs"; // fallbackRPCs.js turi eksportuoti `RPC`
 
 // 🔐 AES-GCM Decryption
 const encode = (txt) => new TextEncoder().encode(txt);
@@ -18,6 +22,7 @@ const decode = (buf) => new TextDecoder().decode(buf);
 const getKey = async () => {
   const secret = process.env.NEXT_PUBLIC_ENCRYPTION_SECRET;
   if (!secret) throw new Error("🔐 Encryption secret is missing");
+
   const base = await crypto.subtle.importKey("raw", encode(secret), { name: "PBKDF2" }, false, ["deriveKey"]);
   return crypto.subtle.deriveKey(
     {
@@ -46,14 +51,16 @@ const decrypt = async (ciphertext) => {
 
 const mapNetwork = (n) => (n === "matic" ? "polygon" : n);
 
-// 📦 SEND CONTEXT
+// ========================
+// 🧠 KONTEKSTAS
+// ========================
 const SendContext = createContext();
 export const useSend = () => useContext(SendContext);
 
 export function SendProvider({ children }) {
   const { safeRefreshSession } = useAuth();
   const { refetch } = useBalance();
-  const { activeNetwork } = useNetwork();
+  const { activeNetwork, chainId } = useNetwork();
 
   const [sending, setSending] = useState(false);
   const [gasFee, setGasFee] = useState(0);
@@ -62,13 +69,13 @@ export function SendProvider({ children }) {
   const [feeLoading, setFeeLoading] = useState(false);
   const [feeError, setFeeError] = useState(null);
 
-  const calculateFees = useCallback(async (network, amount) => {
-    if (!network || isNaN(amount) || amount <= 0) return;
+  const calculateFees = useCallback(async (amount) => {
+    if (!chainId || isNaN(amount) || amount <= 0) return;
     setFeeLoading(true);
     setFeeError(null);
 
     try {
-      const provider = await getProviderForChain(network);
+      const provider = getProviderForChain(chainId);
       const gasPrice = await getGasPrice(provider).catch(() => ethers.parseUnits("5", "gwei"));
       const gasLimit = ethers.toBigInt(21000);
       const estGas = ethers.formatEther(gasPrice * gasLimit * 2n);
@@ -78,15 +85,16 @@ export function SendProvider({ children }) {
       setAdminFee(admin);
       setTotalFee(parseFloat(estGas) + admin);
     } catch (err) {
+      console.error("⛽ Fee error:", err);
       setFeeError("⛽ Fee calculation failed: " + err.message);
     } finally {
       setFeeLoading(false);
     }
-  }, []);
+  }, [chainId]);
 
   const sendTransaction = useCallback(async ({ to, amount, userEmail }) => {
     const ADMIN = process.env.NEXT_PUBLIC_ADMIN_WALLET;
-    if (!to || !amount || !userEmail || !activeNetwork) {
+    if (!to || !amount || !userEmail || !activeNetwork || !chainId) {
       throw new Error("❌ Missing transaction data");
     }
 
@@ -102,10 +110,11 @@ export function SendProvider({ children }) {
         .select("encrypted_key")
         .eq("user_email", userEmail)
         .single();
+
       if (error || !data?.encrypted_key) throw new Error("❌ Encrypted key not found");
 
       const privKey = await decrypt(data.encrypted_key);
-      const provider = await getProviderForChain(activeNetwork);
+      const provider = getProviderForChain(chainId);
       const signer = new ethers.Wallet(privKey, provider);
 
       const gasPrice = await getGasPrice(provider).catch(() => ethers.parseUnits("5", "gwei"));
@@ -167,7 +176,7 @@ export function SendProvider({ children }) {
     } finally {
       setSending(false);
     }
-  }, [activeNetwork, safeRefreshSession, refetch]);
+  }, [activeNetwork, chainId, safeRefreshSession, refetch]);
 
   return (
     <SendContext.Provider
