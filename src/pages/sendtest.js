@@ -14,10 +14,10 @@ import * as Select from "@radix-ui/react-select";
 import styles from "@/styles/sendtest.module.css";
 
 const networks = [
-  { label: "Ethereum", value: "eth", color: "bg-blue-500", icon: "/icons/eth.svg" },
-  { label: "Polygon", value: "polygon", color: "bg-purple-500", icon: "/icons/matic.svg" },
-  { label: "BNB", value: "bnb", color: "bg-yellow-400", icon: "/icons/bnb.svg" },
-  { label: "Avalanche", value: "avax", color: "bg-red-500", icon: "/icons/avax.svg" },
+  { label: "Ethereum", value: "eth", color: "color-eth", icon: "/icons/eth.svg" },
+  { label: "Polygon", value: "polygon", color: "color-polygon", icon: "/icons/matic.svg" },
+  { label: "BNB", value: "bnb", color: "color-bnb", icon: "/icons/bnb.svg" },
+  { label: "Avalanche", value: "avax", color: "color-avax", icon: "/icons/avax.svg" },
 ];
 
 const SendTest = () => {
@@ -67,7 +67,7 @@ const SendTest = () => {
     }
   };
 
-  const currentColor = networks.find(n => n.value === selectedNetwork)?.color || "bg-gray-500";
+  const currentColorClass = networks.find(n => n.value === selectedNetwork)?.color || "bg-gray-500";
 
   if (!systemReady) {
     return (
@@ -92,7 +92,7 @@ const SendTest = () => {
                   <Select.Icon><ChevronDown size={18} /></Select.Icon>
                 </Select.Trigger>
                 <Select.Content className="z-50 bg-neutral-900 border border-neutral-700 rounded-xl shadow-xl">
-                  {networks.map((net) => (
+                  {networks.map(net => (
                     <Select.Item key={net.value} value={net.value} className={styles.selectItem}>
                       <img src={net.icon} alt={net.label} className={styles.selectIcon} />
                       <Select.ItemText>{net.label}</Select.ItemText>
@@ -118,11 +118,11 @@ const SendTest = () => {
                   <QrCode size={20} />
                 </Button>
               </div>
-              <div className="flex justify-between gap-4 mt-4">
-                <Button onClick={() => setStep(1)} className={`w-1/2 ${currentColor} text-black`}>
+              <div className={styles.buttonsRow}>
+                <Button onClick={() => setStep(1)} className={`w-1/2 ${styles[currentColorClass]}`}>
                   Back
                 </Button>
-                <Button onClick={() => setStep(3)} className={`w-1/2 ${currentColor} text-black`}>
+                <Button onClick={() => setStep(3)} className={`w-1/2 ${styles[currentColorClass]}`}>
                   Next
                 </Button>
               </div>
@@ -141,22 +141,18 @@ const SendTest = () => {
                   placeholder="Amount"
                   className="text-center text-xl pr-14"
                 />
-                <Button
-                  size="sm"
-                  onClick={handleMax}
-                  className="absolute right-2 top-2 text-xs px-2 py-1 bg-neutral-800"
-                >
+                <Button size="sm" onClick={handleMax} className={styles.inputAddonRight}>
                   Max
                 </Button>
               </div>
               <p className="text-sm text-center text-gray-400">
                 ≈ {amount ? `${(Number(amount) * 1.2).toFixed(2)} $ | €` : "€ | $ estimate"}
               </p>
-              <div className="flex justify-between gap-4 mt-4">
-                <Button onClick={() => setStep(2)} className={`w-1/2 ${currentColor} text-black`}>
+              <div className={styles.buttonsRow}>
+                <Button onClick={() => setStep(2)} className={`w-1/2 ${styles[currentColorClass]}`}>
                   Back
                 </Button>
-                <Button onClick={() => setStep(4)} className={`w-1/2 ${currentColor} text-black`}>
+                <Button onClick={() => setStep(4)} className={`w-1/2 ${styles[currentColorClass]}`}>
                   Next
                 </Button>
               </div>
@@ -169,23 +165,24 @@ const SendTest = () => {
               <h2 className={styles.stepTitle}>Confirm Transfer</h2>
               <div className={styles.confirmBox}>
                 <p className={styles.amountDisplay}>{amount} {selectedNetwork.toUpperCase()}</p>
-                <p className={styles.usdValue}>
-                  ≈ {(Number(amount) * 1.2).toFixed(2)} $ | €
-                </p>
+                <p className={styles.usdValue}>≈ {(Number(amount) * 1.2).toFixed(2)} $ | €</p>
                 <div className={styles.confirmDetails}>
                   <p><b>To:</b> {to}</p>
                   <p><b>Network:</b> {selectedNetwork}</p>
-                  <p><b>Fee:</b> {feeLoading ? "Calculating..." : `${(Number(gasFee) + Number(adminFee)).toFixed(6)} ${selectedNetwork.toUpperCase()}`}</p>
+                  <p><b>Fee:</b> {feeLoading
+                    ? "Calculating..."
+                    : `${(Number(gasFee) + Number(adminFee)).toFixed(6)} ${selectedNetwork.toUpperCase()}`}
+                  </p>
                 </div>
               </div>
-              <div className="flex justify-between gap-4 mt-4">
-                <Button onClick={() => setStep(3)} className={`w-1/2 ${currentColor} text-black`}>
+              <div className={styles.buttonsRow}>
+                <Button onClick={() => setStep(3)} className={`w-1/2 ${styles[currentColorClass]}`}>
                   Back
                 </Button>
                 <Button
                   onClick={handleSend}
                   disabled={sending || feeLoading}
-                  className={`w-1/2 ${currentColor} text-black`}
+                  className={`w-1/2 ${styles[currentColorClass]}`}
                 >
                   {sending ? <Loader2 className="animate-spin" /> : "Send"}
                 </Button>
@@ -197,10 +194,13 @@ const SendTest = () => {
           {step === 5 && txHash && (
             <div className="text-center space-y-4">
               <h2 className={styles.successText}>✅ Sent!</h2>
-              <p className={styles.txHashBox}>TX Hash:<br />{txHash}</p>
+              <p className={styles.txHashBox}>
+                TX Hash:<br />{txHash}
+              </p>
               <Button onClick={() => setStep(1)} className="w-full mt-4">Send Another</Button>
             </div>
           )}
+
         </CardContent>
       </Card>
     </div>
