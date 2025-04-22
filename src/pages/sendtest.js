@@ -5,12 +5,14 @@ import { useSend } from "@/contexts/SendContext";
 import { useBalance } from "@/contexts/BalanceContext";
 import { useNetwork } from "@/contexts/NetworkContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { useSystemReady } from "@/hooks/useSystemReady";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Card, CardContent } from "@/components/ui/card";
-import { Loader2, QrCode, Wallet, ChevronDown, Send } from "lucide-react";
+import { Loader2, QrCode } from "lucide-react";
 import dynamic from "next/dynamic";
+import styles from "@/styles/sendtest.module.css";
 
 const networks = [
   { label: "Ethereum", value: "eth", color: "bg-blue-500", icon: "/icons/eth.svg" },
@@ -32,6 +34,8 @@ const SendTest = () => {
     totalFee,
     feeLoading,
   } = useSend();
+
+  const systemReady = useSystemReady();
 
   const [step, setStep] = useState(1);
   const [selectedNetwork, setSelectedNetwork] = useState("eth");
@@ -66,11 +70,18 @@ const SendTest = () => {
 
   const currentColor = networks.find(n => n.value === selectedNetwork)?.color || "bg-gray-500";
 
+  if (!systemReady) {
+    return (
+      <div className="flex items-center justify-center h-screen text-white">
+        <Loader2 className="animate-spin mr-2" /> Preparing system...
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-black text-white p-4 flex flex-col items-center justify-center">
       <Card className="w-full max-w-md">
         <CardContent className="space-y-6 p-6">
-
           {step === 1 && (
             <div className="space-y-4">
               <h2 className="text-xl font-bold text-center">Select Network</h2>
@@ -130,12 +141,21 @@ const SendTest = () => {
             <div className="space-y-4">
               <h2 className="text-xl font-bold text-center">Confirm Transfer</h2>
               <div className="bg-zinc-900 rounded-xl p-4 space-y-2">
-                <p className="text-center text-2xl font-bold">{amount} {selectedNetwork.toUpperCase()}</p>
-                <p className="text-center text-sm text-gray-400">≈ ${(Number(amount) * 1.2).toFixed(2)} USD</p>
+                <p className="text-center text-2xl font-bold">
+                  {amount} {selectedNetwork.toUpperCase()}
+                </p>
+                <p className="text-center text-sm text-gray-400">
+                  ≈ ${(Number(amount) * 1.2).toFixed(2)} USD
+                </p>
                 <div className="text-sm mt-4">
                   <p><b>To:</b> {to}</p>
                   <p><b>Network:</b> {selectedNetwork}</p>
-                  <p><b>Fee:</b> {feeLoading ? "Calculating..." : `${(Number(gasFee) + Number(adminFee)).toFixed(6)} ${selectedNetwork.toUpperCase()}`}</p>
+                  <p>
+                    <b>Fee:</b>{" "}
+                    {feeLoading
+                      ? "Calculating..."
+                      : `${(Number(gasFee) + Number(adminFee)).toFixed(6)} ${selectedNetwork.toUpperCase()}`}
+                  </p>
                 </div>
               </div>
               <Button
@@ -155,7 +175,6 @@ const SendTest = () => {
               <Button onClick={() => setStep(1)} className="w-full mt-4">Send Another</Button>
             </div>
           )}
-
         </CardContent>
       </Card>
     </div>
