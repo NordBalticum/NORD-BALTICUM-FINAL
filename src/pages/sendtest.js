@@ -10,7 +10,8 @@ import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { Dialog, DialogContent } from "@/components/ui/Dialog";
 import { Card, CardContent } from "@/components/ui/Card";
-import { Loader2, QrCode } from "lucide-react";
+import { Loader2, QrCode, ChevronDown } from "lucide-react";
+import * as Select from "@radix-ui/react-select";
 import styles from "@/styles/sendtest.module.css";
 
 const networks = [
@@ -84,23 +85,30 @@ const SendTest = () => {
           {step === 1 && (
             <div className="space-y-4">
               <h2 className="text-xl font-bold text-center">Select Network</h2>
-              <div className="space-y-2 max-h-[280px] overflow-y-auto pr-1">
-                {networks.map((net) => (
-                  <Button
-                    key={net.value}
-                    variant={selectedNetwork === net.value ? "default" : "outline"}
-                    className="w-full flex items-center justify-start gap-3 px-4 py-2"
-                    onClick={() => handleNetworkChange(net.value)}
-                  >
-                    <img
-                      src={net.icon}
-                      alt={net.label}
-                      className="networkIcon"
-                    />
-                    {net.label}
-                  </Button>
-                ))}
-              </div>
+              <Select.Root value={selectedNetwork} onValueChange={handleNetworkChange}>
+                <Select.Trigger className="w-full flex items-center justify-between border border-neutral-700 bg-neutral-900 px-4 py-2 rounded-lg">
+                  <Select.Value />
+                  <Select.Icon>
+                    <ChevronDown />
+                  </Select.Icon>
+                </Select.Trigger>
+                <Select.Content className="z-50 bg-neutral-900 border border-neutral-700 rounded-xl shadow-xl">
+                  {networks.map((net) => (
+                    <Select.Item
+                      key={net.value}
+                      value={net.value}
+                      className="flex items-center gap-3 px-4 py-2 cursor-pointer text-white hover:bg-neutral-800 rounded-md"
+                    >
+                      <img
+                        src={net.icon}
+                        alt={net.label}
+                        className="w-5 h-5 object-contain rounded-full"
+                      />
+                      <Select.ItemText>{net.label}</Select.ItemText>
+                    </Select.Item>
+                  ))}
+                </Select.Content>
+              </Select.Root>
               <Button onClick={() => setStep(2)} className="w-full mt-4">Next</Button>
             </div>
           )}
