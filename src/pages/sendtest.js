@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/Button";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Loader2, QrCode, ChevronDown } from "lucide-react";
 import * as Select from "@radix-ui/react-select";
+import { Scanner } from "@yudiel/react-qr-scanner";
 import styles from "@/styles/sendtest.module.css";
 
 const networks = [
@@ -27,6 +28,8 @@ const coingeckoIds = {
   avax: "avalanche-2",
 };
 
+const isValidAddress = (address) => /^0x[a-fA-F0-9]{40}$/.test(address);
+
 const Logo = () => (
   <div className={styles.logoWrapper}>
     <img src="/icons/logo.svg" alt="Nord Balticum" className={styles.logoImage} />
@@ -37,7 +40,14 @@ const SendTest = () => {
   const { user } = useAuth();
   const { balance } = useBalance();
   const { switchNetwork } = useNetwork();
-  const { sendTransaction, sending, calculateFees, gasFee, adminFee, feeLoading } = useSend();
+  const {
+    sendTransaction,
+    sending,
+    calculateFees,
+    gasFee,
+    adminFee,
+    feeLoading,
+  } = useSend();
   const systemReady = useSystemReady();
 
   const [step, setStep] = useState(1);
@@ -47,6 +57,7 @@ const SendTest = () => {
   const [txHash, setTxHash] = useState(null);
   const [lastSentTime, setLastSentTime] = useState(0);
   const [usdPrices, setUsdPrices] = useState({});
+  const [showScanner, setShowScanner] = useState(false);
 
   useEffect(() => {
     if (step === 3) calculateFees(amount);
@@ -83,18 +94,22 @@ const SendTest = () => {
     const min = networks.find(n => n.value === selectedNetwork)?.min || 0;
     const currentBalance = Number(balance[selectedNetwork] || 0);
     const parsedAmount = Number(amount);
+    const cleanTo = to.trim().toLowerCase();
 
+    if (!isValidAddress(cleanTo)) return alert("Invalid recipient address.");
     if (now - lastSentTime < 10000) return alert("Please wait before sending again.");
     if (parsedAmount < min) return alert(`Minimum amount on ${selectedNetwork.toUpperCase()}: ${min}`);
     if (parsedAmount > currentBalance) return alert("Insufficient balance.");
 
     try {
-      const hash = await sendTransaction({ to, amount, userEmail: user.email });
+      const hash = await sendTransaction({ to: cleanTo, amount, userEmail: user.email });
+      if (!hash) throw new Error("No transaction hash returned");
       setTxHash(hash);
       setLastSentTime(now);
       setStep(5);
     } catch (err) {
-      console.error("TX Error:", err);
+      console.error("TX ERROR:", err);
+      alert("Transaction failed: " + (err.message || "Unknown error"));
     }
   };
 
@@ -115,9 +130,28 @@ const SendTest = () => {
 
   return (
     <div className={styles.container}>
+      {showScanner && (
+        <div className={styles.scannerOverlay}>
+          <Scanner
+            onScan={(result) => {
+              if (result[0]?.rawValue) {
+                setTo(result[0].rawValue);
+                setShowScanner(false);
+              }
+            }}
+            onError={(err) => {
+              console.error("Scanner error:", err);
+              setShowScanner(false);
+            }}
+            constraints={{ facingMode: "environment" }}
+          />
+        </div>
+      )}
+
       <Card className={`${styles.card} pt-16`}>
         <CardContent className="space-y-10 p-8">
 
+          {/* STEP 1 */}
           {step === 1 && (
             <div className="space-y-8">
               <Logo />
@@ -141,6 +175,7 @@ const SendTest = () => {
             </div>
           )}
 
+          {/* STEP 2 */}
           {step === 2 && (
             <div className="space-y-8">
               <Logo />
@@ -152,7 +187,7 @@ const SendTest = () => {
                   placeholder="0x... address"
                   className="pr-14"
                 />
-                <Button variant="ghost" className={styles.inputAddonRight}>
+                <Button variant="ghost" className={styles.inputAddonRight} onClick={() => setShowScanner(true)}>
                   <QrCode size={18} />
                 </Button>
               </div>
@@ -163,6 +198,7 @@ const SendTest = () => {
             </div>
           )}
 
+          {/* STEP 3 */}
           {step === 3 && (
             <div className="space-y-8">
               <Logo />
@@ -195,6 +231,7 @@ const SendTest = () => {
             </div>
           )}
 
+          {/* STEP 4 */}
           {step === 4 && (
             <div className="space-y-8">
               <Logo />
@@ -219,10 +256,13 @@ const SendTest = () => {
             </div>
           )}
 
+          {/* STEP 5 */}
           {step === 5 && txHash && (
             <div className="text-center space-y-4">
               <h2 className={styles.successText}>✅ Sent!</h2>
-              <p className={styles.txHashBox}>TX Hash:<br />{txHash}</p>
+              <p className={styles.txHashBox}>
+                TX Hash:<br />{txHash}
+              </p>
               <Button className={`${styles.btn} w-full mt-4`} onClick={() => setStep(1)}>Send Another</Button>
             </div>
           )}
