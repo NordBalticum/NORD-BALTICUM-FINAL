@@ -13,8 +13,14 @@
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .card {
@@ -30,8 +36,14 @@
 }
 
 @keyframes floatUp {
-  from { opacity: 0; transform: scale(0.95); }
-  to { opacity: 1; transform: scale(1); }
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 .stepTitle {
@@ -175,4 +187,39 @@
 .color-avax {
   background-color: #f87171;
   color: black;
+}
+
+/* Radix Select dropdown support */
+.selectTrigger {
+  background-color: #111;
+  border: 1px solid #333;
+  padding: 0.75rem 1rem;
+  border-radius: 0.75rem;
+  color: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.selectItem {
+  padding: 0.5rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  border-radius: 0.5rem;
+  color: white;
+  cursor: pointer;
+  transition: background 0.2s ease-in-out;
+}
+
+.selectItem:hover {
+  background-color: #292929;
+}
+
+.selectIcon {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  border-radius: 50%;
 }
