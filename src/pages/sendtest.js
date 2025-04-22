@@ -48,7 +48,7 @@ const SendTest = () => {
   const handleNetworkChange = (value) => {
     setSelectedNetwork(value);
     switchNetwork(value);
-    setTimeout(() => setStep(2), 300); // auto next step after animation
+    setTimeout(() => setStep(2), 250);
   };
 
   const handleMax = () => {
@@ -79,10 +79,12 @@ const SendTest = () => {
 
   return (
     <div className={styles.container}>
-      <Card className={styles.card}>
-        <CardContent className="space-y-6 p-6">
+      <Card className={`${styles.card} pt-12`}>
+        <CardContent className="space-y-8 p-6">
+
+          {/* STEP 1: SELECT NETWORK */}
           {step === 1 && (
-            <div className="space-y-6">
+            <div className="space-y-8">
               <h2 className={styles.stepTitle}>Select Network</h2>
               <Select.Root value={selectedNetwork} onValueChange={handleNetworkChange}>
                 <Select.Trigger className={styles.selectTrigger}>
@@ -101,8 +103,9 @@ const SendTest = () => {
             </div>
           )}
 
+          {/* STEP 2: RECIPIENT ADDRESS */}
           {step === 2 && (
-            <div className="space-y-6">
+            <div className="space-y-8">
               <h2 className={styles.stepTitle}>Recipient Address</h2>
               <div className="relative flex items-center">
                 <Input
@@ -115,14 +118,20 @@ const SendTest = () => {
                   <QrCode size={20} />
                 </Button>
               </div>
-              <Button onClick={() => setStep(3)} className={`w-full mt-6 ${currentColor} text-black`}>
-                Next
-              </Button>
+              <div className="flex justify-between gap-4 mt-4">
+                <Button onClick={() => setStep(1)} className={`w-1/2 ${currentColor} text-black`}>
+                  Back
+                </Button>
+                <Button onClick={() => setStep(3)} className={`w-1/2 ${currentColor} text-black`}>
+                  Next
+                </Button>
+              </div>
             </div>
           )}
 
+          {/* STEP 3: ENTER AMOUNT */}
           {step === 3 && (
-            <div className="space-y-6">
+            <div className="space-y-8">
               <h2 className={styles.stepTitle}>Enter Amount</h2>
               <div className="relative">
                 <Input
@@ -132,41 +141,59 @@ const SendTest = () => {
                   placeholder="Amount"
                   className="text-center text-xl pr-14"
                 />
-                <Button size="sm" onClick={handleMax} className="absolute right-2 top-2 text-xs px-2 py-1 bg-neutral-800">
+                <Button
+                  size="sm"
+                  onClick={handleMax}
+                  className="absolute right-2 top-2 text-xs px-2 py-1 bg-neutral-800"
+                >
                   Max
                 </Button>
               </div>
               <p className="text-sm text-center text-gray-400">
                 ≈ {amount ? `${(Number(amount) * 1.2).toFixed(2)} $ | €` : "€ | $ estimate"}
               </p>
-              <Button onClick={() => setStep(4)} className={`w-full mt-6 ${currentColor} text-black`}>
-                Next
-              </Button>
+              <div className="flex justify-between gap-4 mt-4">
+                <Button onClick={() => setStep(2)} className={`w-1/2 ${currentColor} text-black`}>
+                  Back
+                </Button>
+                <Button onClick={() => setStep(4)} className={`w-1/2 ${currentColor} text-black`}>
+                  Next
+                </Button>
+              </div>
             </div>
           )}
 
+          {/* STEP 4: CONFIRM TRANSFER */}
           {step === 4 && (
-            <div className="space-y-6">
+            <div className="space-y-8">
               <h2 className={styles.stepTitle}>Confirm Transfer</h2>
               <div className={styles.confirmBox}>
                 <p className={styles.amountDisplay}>{amount} {selectedNetwork.toUpperCase()}</p>
-                <p className={styles.usdValue}>≈ {(Number(amount) * 1.2).toFixed(2)} $</p>
+                <p className={styles.usdValue}>
+                  ≈ {(Number(amount) * 1.2).toFixed(2)} $ | €
+                </p>
                 <div className={styles.confirmDetails}>
                   <p><b>To:</b> {to}</p>
                   <p><b>Network:</b> {selectedNetwork}</p>
                   <p><b>Fee:</b> {feeLoading ? "Calculating..." : `${(Number(gasFee) + Number(adminFee)).toFixed(6)} ${selectedNetwork.toUpperCase()}`}</p>
                 </div>
               </div>
-              <Button
-                onClick={handleSend}
-                disabled={sending || feeLoading}
-                className={`w-full mt-6 ${currentColor} text-black`}
-              >
-                {sending ? <Loader2 className="animate-spin" /> : "Send"}
-              </Button>
+              <div className="flex justify-between gap-4 mt-4">
+                <Button onClick={() => setStep(3)} className={`w-1/2 ${currentColor} text-black`}>
+                  Back
+                </Button>
+                <Button
+                  onClick={handleSend}
+                  disabled={sending || feeLoading}
+                  className={`w-1/2 ${currentColor} text-black`}
+                >
+                  {sending ? <Loader2 className="animate-spin" /> : "Send"}
+                </Button>
+              </div>
             </div>
           )}
 
+          {/* STEP 5: SUCCESS */}
           {step === 5 && txHash && (
             <div className="text-center space-y-4">
               <h2 className={styles.successText}>✅ Sent!</h2>
