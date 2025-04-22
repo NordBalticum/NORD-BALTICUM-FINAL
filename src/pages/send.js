@@ -20,7 +20,7 @@ import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
 import styles from "@/styles/send.module.css";
 import background from "@/styles/background.module.css";
 
-// 💎 Reali RPC config iš SendContext
+// UI CONFIG — same keys as in contexts
 const NETWORKS = {
   eth:   { label: "ETH",   min: 0.001,  color: "#0072ff", explorer: "https://etherscan.io/tx/" },
   bnb:   { label: "BNB",   min: 0.0005, color: "#f0b90b", explorer: "https://bscscan.com/tx/" },
@@ -29,10 +29,9 @@ const NETWORKS = {
   avax:  { label: "AVAX",  min: 0.01,   color: "#e84142", explorer: "https://snowtrace.io/tx/" },
 };
 
-const NETWORK_LIST = Object.entries(NETWORKS).map(([symbol, { label }]) => ({
-  name: label,
+const NETWORK_LIST = Object.entries(NETWORKS).map(([symbol, net]) => ({
   symbol,
-  color: NETWORKS[symbol].color,
+  ...net,
   logo: `/icons/${symbol.includes("bnb") ? "bnb" : symbol}.svg`,
 }));
 
@@ -40,7 +39,10 @@ export default function SendPage() {
   const router = useRouter();
   const { user } = useAuth();
   const { activeNetwork, switchNetwork } = useNetwork();
+  const { balances, prices } = useBalance();
   const { ready } = useSystemReady();
+  const scale = useScale();
+
   const {
     sendTransaction,
     sending,
@@ -49,24 +51,23 @@ export default function SendPage() {
     totalFee,
     feeLoading,
     feeError,
-    calculateFees
+    calculateFees,
   } = useSend();
-  const { balances, prices } = useBalance();
-  const scale = useScale();
 
   const [receiver, setReceiver] = useState("");
   const [amount, setAmount] = useState("");
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [successOpen, setSuccessOpen] = useState(false);
-  const [error, setError] = useState(null);
   const [txHash, setTxHash] = useState("");
+  const [error, setError] = useState(null);
 
-  const selectedIndex = useMemo(() =>
-    NETWORK_LIST.findIndex(n => n.symbol === activeNetwork), [activeNetwork]);
+  const selectedIndex = useMemo(
+    () => NETWORK_LIST.findIndex((n) => n.symbol === activeNetwork),
+    [activeNetwork]
+  );
 
   const cfg = NETWORKS[activeNetwork];
-  const { label: short = "", min = 0, color: btnClr = "#333", explorer = "" } = cfg || {};
-
+  const { label: short = "", min = 0, color = "#333", explorer = "" } = cfg || {};
   const val = useMemo(() => parseFloat(amount) || 0, [amount]);
   const bal = useMemo(() => balances?.[activeNetwork] || 0, [balances, activeNetwork]);
 
@@ -81,7 +82,7 @@ export default function SendPage() {
   }, [prices, activeNetwork, bal]);
 
   const isValidAddress = useCallback(
-    addr => /^0x[a-fA-F0-9]{40}$/.test(addr.trim()),
+    (addr) => /^0x[a-fA-F0-9]{40}$/.test(addr.trim()),
     []
   );
 
@@ -93,15 +94,15 @@ export default function SendPage() {
     if (ready && !user) router.replace("/");
   }, [ready, user, router]);
 
-  const handleSend = useCallback(() => {
+  const handleSend = () => {
     if (!cfg) return alert("❌ Unsupported network");
-    if (!isValidAddress(receiver)) return alert("❌ Invalid address format");
+    if (!isValidAddress(receiver)) return alert("❌ Invalid address");
     if (val < min) return alert(`❌ Minimum amount is ${min} ${short}`);
     if (val + totalFee > bal) return alert("❌ Insufficient balance");
     setConfirmOpen(true);
-  }, [receiver, val, min, short, totalFee, bal, isValidAddress, cfg]);
+  };
 
-  const onConfirm = useCallback(async () => {
+  const onConfirm = async () => {
     setConfirmOpen(false);
     setError(null);
     try {
@@ -114,24 +115,24 @@ export default function SendPage() {
       setReceiver("");
       setAmount("");
       setSuccessOpen(true);
-      navigator.vibrate?.(80);
+      navigator.vibrate?.(100);
     } catch (e) {
       setError(e.message || "Transaction failed");
     }
-  }, [receiver, amount, user, sendTransaction]);
+  };
 
-  const switchNet = useCallback((idx) => {
-    const net = NETWORK_LIST[idx].symbol;
+  const switchNet = (index) => {
+    const net = NETWORK_LIST[index].symbol;
     if (net !== activeNetwork) {
       switchNetwork(net);
       setReceiver("");
       setAmount("");
-      navigator.vibrate?.(10);
+      navigator.vibrate?.(20);
     }
-  }, [activeNetwork, switchNetwork]);
+  };
 
   const buttonStyle = {
-    backgroundColor: btnClr,
+    backgroundColor: color,
     color: ["bnb", "tbnb"].includes(activeNetwork) ? "#000" : "#fff",
   };
 
@@ -164,7 +165,7 @@ export default function SendPage() {
         <div className={styles.walletActions}>
           <input
             type="text"
-            placeholder="0x..."
+            placeholder="0xRecipientAddress..."
             value={receiver}
             onChange={(e) => setReceiver(e.target.value)}
             disabled={sending}
