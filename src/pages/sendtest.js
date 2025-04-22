@@ -23,14 +23,13 @@ const networks = [
 const SendTest = () => {
   const { user } = useAuth();
   const { balance } = useBalance();
-  const { switchNetwork, activeNetwork } = useNetwork();
+  const { switchNetwork } = useNetwork();
   const {
     sendTransaction,
     sending,
     calculateFees,
     gasFee,
     adminFee,
-    totalFee,
     feeLoading,
   } = useSend();
 
@@ -81,6 +80,7 @@ const SendTest = () => {
     <div className="min-h-screen bg-black text-white p-4 flex flex-col items-center justify-center">
       <Card className="w-full max-w-sm">
         <CardContent className="space-y-6 p-6">
+
           {step === 1 && (
             <div className="space-y-4">
               <h2 className="text-xl font-bold text-center">Select Network</h2>
@@ -95,7 +95,7 @@ const SendTest = () => {
                     <img
                       src={net.icon}
                       alt={net.label}
-                      className="w-5 h-5 object-contain rounded-full"
+                      className="networkIcon"
                     />
                     {net.label}
                   </Button>
@@ -114,7 +114,9 @@ const SendTest = () => {
                   onChange={(e) => setTo(e.target.value)}
                   placeholder="0x... address"
                 />
-                <Button variant="ghost"><QrCode size={20} /></Button>
+                <Button variant="ghost">
+                  <QrCode size={20} />
+                </Button>
               </div>
               <Button onClick={() => setStep(3)} className="w-full mt-4">Next</Button>
             </div>
@@ -176,6 +178,7 @@ const SendTest = () => {
               <Button onClick={() => setStep(1)} className="w-full mt-4">Send Another</Button>
             </div>
           )}
+
         </CardContent>
       </Card>
     </div>
