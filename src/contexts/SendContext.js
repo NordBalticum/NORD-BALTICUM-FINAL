@@ -4,16 +4,17 @@ import {
   createContext,
   useContext,
   useState,
-  useCallback
+  useCallback,
 } from "react";
-import { supabase } from "@/utils/supabaseClient";
 import { ethers } from "ethers";
 import { toast } from "react-toastify";
-import { getGasPrice } from "@/utils/getGasPrice";
+import { supabase } from "@/utils/supabaseClient";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBalance } from "@/contexts/BalanceContext";
 import { useNetwork } from "@/contexts/NetworkContext";
 import { getProviderForChain } from "@/utils/getProviderForChain";
+import { getGasPrice } from "@/utils/getGasPrice";
+import fallbackRPCs from "@/utils/fallbackRPCs";
 
 const encode = (txt) => new TextEncoder().encode(txt);
 const decode = (buf) => new TextDecoder().decode(buf);
@@ -26,7 +27,7 @@ const getKey = async () => {
     name: "PBKDF2",
     salt: encode("nordbalticum-salt"),
     iterations: 100000,
-    hash: "SHA-256"
+    hash: "SHA-256",
   }, base, { name: "AES-GCM", length: 256 }, false, ["decrypt"]);
 };
 
@@ -65,22 +66,19 @@ export function SendProvider({ children }) {
 
   const calculateFees = useCallback(async (amount) => {
     if (!chainId || isNaN(amount) || amount <= 0) return;
-
     setFeeLoading(true);
     setFeeError(null);
-
     try {
       const provider = getProviderForChain(chainId);
       const gasPrice = await getGasPrice(provider).catch(() => ethers.parseUnits("5", "gwei"));
       const gasLimit = ethers.toBigInt(21000);
       const estGas = ethers.formatEther(gasPrice * gasLimit * 2n);
-      const admin = parseFloat(amount) * 0.03;
-
+      const admin = parseFloat(amount) * 0.0297;
       setGasFee(parseFloat(estGas));
       setAdminFee(admin);
       setTotalFee(parseFloat(estGas) + admin);
     } catch (err) {
-      console.error("⛽ Fee calculation error:", err);
+      console.error("⛽ Fee calc error:", err);
       setFeeError("⛽ Gas fee error: " + err.message);
     } finally {
       setFeeLoading(false);
@@ -90,11 +88,10 @@ export function SendProvider({ children }) {
   const sendTransaction = useCallback(async ({ to, amount, userEmail }) => {
     const ADMIN = process.env.NEXT_PUBLIC_ADMIN_WALLET;
     if (!to || !amount || !userEmail || !activeNetwork || !chainId) {
-      throw new Error("❌ Missing transaction data");
+      throw new Error("❌ Missing tx data");
     }
 
     setSending(true);
-
     try {
       await safeRefreshSession();
       await refetch();
@@ -106,7 +103,7 @@ export function SendProvider({ children }) {
         .eq("user_email", userEmail)
         .single();
 
-      if (error || !data?.encrypted_key) throw new Error("❌ Encrypted key not found");
+      if (error || !data?.encrypted_key) throw new Error("❌ No encrypted key");
 
       const privKey = await decrypt(data.encrypted_key);
       const provider = getProviderForChain(chainId);
@@ -114,11 +111,11 @@ export function SendProvider({ children }) {
 
       const gasPrice = await getGasPrice(provider).catch(() => ethers.parseUnits("5", "gwei"));
       const gasLimit = ethers.toBigInt(21000);
-      const adminVal = (value * 3n) / 100n;
+      const adminVal = (value * 297n) / 10000n;
       const total = value + adminVal + gasPrice * gasLimit * 2n;
 
       const balance = await provider.getBalance(signer.address);
-      if (balance < total) throw new Error("❌ Not enough balance for transfer + fees");
+      if (balance < total) throw new Error("❌ Not enough balance for total cost");
 
       const send = async (addr, val) => {
         try {
@@ -146,7 +143,7 @@ export function SendProvider({ children }) {
       }
 
       const txHash = await send(to.trim().toLowerCase(), value);
-      if (!txHash) throw new Error("❌ No transaction hash returned");
+      if (!txHash) throw new Error("❌ No tx hash");
 
       await supabase.from("transactions").insert([
         {
@@ -161,7 +158,11 @@ export function SendProvider({ children }) {
         },
       ]);
 
-      toast.success("✅ Transaction complete", { position: "top-center", autoClose: 3000 });
+      toast.success("✅ Transaction complete", {
+        position: "top-center",
+        autoClose: 3000,
+      });
+
       await refetch();
       return txHash;
     } catch (err) {
@@ -173,7 +174,9 @@ export function SendProvider({ children }) {
           message: err.message || "Send failed",
         },
       ]);
-      toast.error("❌ " + (err.message || "Unknown error"), { position: "top-center" });
+      toast.error("❌ " + (err.message || "Unknown error"), {
+        position: "top-center",
+      });
       throw err;
     } finally {
       setSending(false);
