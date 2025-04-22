@@ -1,0 +1,154 @@
+/* sendtest.module.css */
+
+.container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  background: linear-gradient(to bottom right, #0d0d0d, #1a1a1a);
+  color: white;
+  font-family: 'Inter', sans-serif;
+}
+
+.card {
+  width: 100%;
+  max-width: 420px;
+  background-color: #111111;
+  border-radius: 1.5rem;
+  box-shadow: 0 0 24px rgba(255, 255, 255, 0.05);
+  padding: 2rem;
+}
+
+.stepTitle {
+  font-size: 1.5rem;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.networkButton {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  border-radius: 0.75rem;
+  font-weight: 600;
+  font-size: 1rem;
+  width: 100%;
+  border: 1px solid #333;
+  background-color: #1e1e1e;
+  transition: all 0.2s ease-in-out;
+}
+
+.networkButton:hover {
+  background-color: #292929;
+  transform: scale(1.02);
+}
+
+.networkIcon {
+  width: 1.25rem;
+  height: 1.25rem;
+  margin-right: 0.75rem;
+}
+
+.inputField {
+  background-color: #181818;
+  border: 1px solid #333;
+  padding: 0.75rem 1rem;
+  border-radius: 0.75rem;
+  color: white;
+  width: 100%;
+}
+
+.qrButton {
+  background: transparent;
+  border: none;
+  color: #999;
+  cursor: pointer;
+  padding: 0.5rem;
+  transition: color 0.2s;
+}
+
+.qrButton:hover {
+  color: white;
+}
+
+.maxButton {
+  position: absolute;
+  top: 0.5rem;
+  left: 0.5rem;
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  background-color: #292929;
+  color: white;
+  border-radius: 0.5rem;
+  cursor: pointer;
+}
+
+.feeInfo {
+  font-size: 0.875rem;
+  text-align: center;
+  color: #888;
+  margin-top: 0.25rem;
+}
+
+.confirmBox {
+  background-color: #1a1a1a;
+  border-radius: 1rem;
+  padding: 1.5rem;
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.03);
+}
+
+.amountDisplay {
+  font-size: 2rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.usdValue {
+  font-size: 0.875rem;
+  text-align: center;
+  color: #bbb;
+}
+
+.confirmDetails {
+  font-size: 0.875rem;
+  margin-top: 1rem;
+  line-height: 1.5;
+  color: #ccc;
+}
+
+.successText {
+  text-align: center;
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #3aff81;
+}
+
+.txHashBox {
+  word-break: break-word;
+  font-size: 0.75rem;
+  color: #999;
+  text-align: center;
+  margin-top: 0.5rem;
+}
+
+.color-eth {
+  background-color: #3b82f6;
+  color: black;
+}
+
+.color-bnb {
+  background-color: #fcd34d;
+  color: black;
+}
+
+.color-polygon {
+  background-color: #a855f7;
+  color: black;
+}
+
+.color-avax {
+  background-color: #f87171;
+  color: black;
+}
