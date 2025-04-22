@@ -17,7 +17,7 @@ const networks = [
   { label: "Ethereum", value: "eth", color: "color-eth", icon: "/icons/eth.svg" },
   { label: "Polygon", value: "polygon", color: "color-polygon", icon: "/icons/matic.svg" },
   { label: "BNB", value: "bnb", color: "color-bnb", icon: "/icons/bnb.svg" },
-  { label: "Avalanche", value: "avax", color: "color-avax", icon: "/icons/avax.svg" }
+  { label: "Avalanche", value: "avax", color: "color-avax", icon: "/icons/avax.svg" },
 ];
 
 const SendTest = () => {
@@ -74,6 +74,7 @@ const SendTest = () => {
     <div className={styles.container}>
       <Card className={`${styles.card} pt-16`}>
         <CardContent className="space-y-10 p-8">
+
           {/* STEP 1: SELECT NETWORK */}
           {step === 1 && (
             <div className="space-y-8">
@@ -84,7 +85,10 @@ const SendTest = () => {
                   <Select.Icon><ChevronDown size={18} /></Select.Icon>
                 </Select.Trigger>
                 <Select.Portal>
-                  <Select.Content className="z-50 bg-black border border-neutral-700 rounded-xl shadow-2xl animate-fade-in">
+                  <Select.Content
+                    className="z-50 bg-black border border-neutral-700 rounded-xl shadow-2xl animate-fade-in"
+                    position="popper"
+                  >
                     {networks.map(net => (
                       <Select.Item key={net.value} value={net.value} className={styles.selectItem}>
                         <img src={net.icon} alt={net.label} className={styles.selectIcon} />
@@ -186,6 +190,7 @@ const SendTest = () => {
               <Button onClick={() => setStep(1)} className="w-full mt-4">Send Another</Button>
             </div>
           )}
+
         </CardContent>
       </Card>
     </div>
