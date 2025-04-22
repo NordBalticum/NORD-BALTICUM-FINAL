@@ -14,11 +14,18 @@ import * as Select from "@radix-ui/react-select";
 import styles from "@/styles/sendtest.module.css";
 
 const networks = [
-  { label: "Ethereum", value: "eth", color: "color-eth", icon: "/icons/eth.svg" },
-  { label: "Polygon", value: "polygon", color: "color-polygon", icon: "/icons/matic.svg" },
-  { label: "BNB", value: "bnb", color: "color-bnb", icon: "/icons/bnb.svg" },
-  { label: "Avalanche", value: "avax", color: "color-avax", icon: "/icons/avax.svg" },
+  { label: "Ethereum", value: "eth", color: "color-eth", icon: "/icons/eth.svg", min: 0.001 },
+  { label: "Polygon", value: "polygon", color: "color-polygon", icon: "/icons/matic.svg", min: 0.1 },
+  { label: "BNB", value: "bnb", color: "color-bnb", icon: "/icons/bnb.svg", min: 0.01 },
+  { label: "Avalanche", value: "avax", color: "color-avax", icon: "/icons/avax.svg", min: 0.01 },
 ];
+
+const coingeckoIds = {
+  eth: "ethereum",
+  polygon: "matic-network",
+  bnb: "binancecoin",
+  avax: "avalanche-2",
+};
 
 const SendTest = () => {
   const { user } = useAuth();
@@ -32,6 +39,22 @@ const SendTest = () => {
   const [to, setTo] = useState("");
   const [amount, setAmount] = useState("");
   const [txHash, setTxHash] = useState(null);
+  const [lastSentTime, setLastSentTime] = useState(0);
+  const [usdPrices, setUsdPrices] = useState({});
+
+  useEffect(() => {
+    const fetchPrices = async () => {
+      const ids = Object.values(coingeckoIds).join(",");
+      try {
+        const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd`);
+        const data = await res.json();
+        setUsdPrices(data);
+      } catch (err) {
+        console.error("❌ Failed to fetch CoinGecko prices:", err);
+      }
+    };
+    fetchPrices();
+  }, [selectedNetwork]);
 
   useEffect(() => {
     if (step === 3) calculateFees(amount);
@@ -50,9 +73,27 @@ const SendTest = () => {
   };
 
   const handleSend = async () => {
+    const now = Date.now();
+    const min = networks.find(n => n.value === selectedNetwork)?.min || 0;
+    const currentBalance = Number(balance[selectedNetwork] || 0);
+    const parsedAmount = Number(amount);
+
+    if (now - lastSentTime < 30000) {
+      return alert("Please wait a bit before sending again.");
+    }
+
+    if (parsedAmount < min) {
+      return alert(`Minimum amount to send on ${selectedNetwork.toUpperCase()} is ${min}`);
+    }
+
+    if (parsedAmount > currentBalance) {
+      return alert("Insufficient balance.");
+    }
+
     try {
       const hash = await sendTransaction({ to, amount, userEmail: user.email });
       setTxHash(hash);
+      setLastSentTime(now);
       setStep(5);
     } catch (err) {
       console.error("TX Error:", err);
@@ -60,6 +101,9 @@ const SendTest = () => {
   };
 
   const currentColorClass = networks.find(n => n.value === selectedNetwork)?.color || "bg-gray-500";
+  const minAmount = networks.find(n => n.value === selectedNetwork)?.min || 0;
+  const usdRate = usdPrices[coingeckoIds[selectedNetwork]]?.usd || 0;
+  const usdValue = amount && usdRate ? (Number(amount) * usdRate).toFixed(2) : null;
 
   if (!systemReady) {
     return (
@@ -85,10 +129,7 @@ const SendTest = () => {
                   <Select.Icon><ChevronDown size={18} /></Select.Icon>
                 </Select.Trigger>
                 <Select.Portal>
-                  <Select.Content
-                    className="z-50 bg-black border border-neutral-700 rounded-xl shadow-2xl animate-fade-in"
-                    position="popper"
-                  >
+                  <Select.Content className="z-50 bg-black border border-neutral-700 rounded-xl shadow-2xl animate-fade-in" position="popper">
                     {networks.map(net => (
                       <Select.Item key={net.value} value={net.value} className={styles.selectItem}>
                         <img src={net.icon} alt={net.label} className={styles.selectIcon} />
@@ -117,8 +158,8 @@ const SendTest = () => {
                 </Button>
               </div>
               <div className={styles.buttonsRow}>
-                <Button onClick={() => setStep(1)} className={`w-1/2 ${styles[currentColorClass]}`}>Back</Button>
-                <Button onClick={() => setStep(3)} className={`w-1/2 ${styles[currentColorClass]}`}>Next</Button>
+                <Button className={`${styles.btn} ${styles[currentColorClass]}`} onClick={() => setStep(1)}>Back</Button>
+                <Button className={`${styles.btn} ${styles[currentColorClass]}`} onClick={() => setStep(3)} disabled={!to}>Next</Button>
               </div>
             </div>
           )}
@@ -140,11 +181,20 @@ const SendTest = () => {
                 </Button>
               </div>
               <p className="text-sm text-center text-gray-400">
-                ≈ {amount ? `${(Number(amount) * 1.2).toFixed(2)} $ | €` : "€ | $ estimate"}
+                ≈ {usdValue ? `${usdValue} $` : "USD estimate"}
+              </p>
+              <p className="text-xs text-center text-red-400 font-medium">
+                Min. amount: {minAmount} {selectedNetwork.toUpperCase()}
               </p>
               <div className={styles.buttonsRow}>
-                <Button onClick={() => setStep(2)} className={`w-1/2 ${styles[currentColorClass]}`}>Back</Button>
-                <Button onClick={() => setStep(4)} className={`w-1/2 ${styles[currentColorClass]}`}>Next</Button>
+                <Button className={`${styles.btn} ${styles[currentColorClass]}`} onClick={() => setStep(2)}>Back</Button>
+                <Button
+                  className={`${styles.btn} ${styles[currentColorClass]}`}
+                  onClick={() => setStep(4)}
+                  disabled={!amount || Number(amount) < minAmount}
+                >
+                  Next
+                </Button>
               </div>
             </div>
           )}
@@ -156,7 +206,7 @@ const SendTest = () => {
               <div className={styles.confirmBox}>
                 <p className={styles.amountDisplay}>{amount} {selectedNetwork.toUpperCase()}</p>
                 <p className={styles.usdValue}>
-                  ≈ {(Number(amount) * 1.2).toFixed(2)} $ | €
+                  ≈ {usdValue} $
                 </p>
                 <div className={styles.confirmDetails}>
                   <p><b>To:</b> {to}</p>
@@ -168,11 +218,11 @@ const SendTest = () => {
                 </div>
               </div>
               <div className={styles.buttonsRow}>
-                <Button onClick={() => setStep(3)} className={`w-1/2 ${styles[currentColorClass]}`}>Back</Button>
+                <Button className={`${styles.btn} ${styles[currentColorClass]}`} onClick={() => setStep(3)}>Back</Button>
                 <Button
+                  className={`${styles.btn} ${styles[currentColorClass]}`}
                   onClick={handleSend}
                   disabled={sending || feeLoading}
-                  className={`w-1/2 ${styles[currentColorClass]}`}
                 >
                   {sending ? <Loader2 className="animate-spin" /> : "Send"}
                 </Button>
@@ -184,10 +234,8 @@ const SendTest = () => {
           {step === 5 && txHash && (
             <div className="text-center space-y-4">
               <h2 className={styles.successText}>✅ Sent!</h2>
-              <p className={styles.txHashBox}>
-                TX Hash:<br />{txHash}
-              </p>
-              <Button onClick={() => setStep(1)} className="w-full mt-4">Send Another</Button>
+              <p className={styles.txHashBox}>TX Hash:<br />{txHash}</p>
+              <Button className={`${styles.btn} w-full mt-4`} onClick={() => setStep(1)}>Send Another</Button>
             </div>
           )}
 
