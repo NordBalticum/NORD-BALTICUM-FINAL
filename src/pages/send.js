@@ -20,7 +20,7 @@ import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
 import styles from "@/styles/send.module.css";
 import background from "@/styles/background.module.css";
 
-// UI CONFIG — same keys as in contexts
+// NETWORK CONFIG
 const NETWORKS = {
   eth:   { label: "ETH",   min: 0.001,  color: "#0072ff", explorer: "https://etherscan.io/tx/" },
   bnb:   { label: "BNB",   min: 0.0005, color: "#f0b90b", explorer: "https://bscscan.com/tx/" },
@@ -95,10 +95,11 @@ export default function SendPage() {
   }, [ready, user, router]);
 
   const handleSend = () => {
-    if (!cfg) return alert("❌ Unsupported network");
-    if (!isValidAddress(receiver)) return alert("❌ Invalid address");
-    if (val < min) return alert(`❌ Minimum amount is ${min} ${short}`);
-    if (val + totalFee > bal) return alert("❌ Insufficient balance");
+    if (!cfg) return setError("Unsupported network.");
+    if (!isValidAddress(receiver)) return setError("Invalid address.");
+    if (val < min) return setError(`Minimum amount is ${min} ${short}`);
+    if (val + totalFee > bal) return setError("Insufficient balance.");
+    if (!user?.email) return setError("User email not found.");
     setConfirmOpen(true);
   };
 
@@ -111,6 +112,9 @@ export default function SendPage() {
         amount: parseFloat(amount),
         userEmail: user.email,
       });
+
+      if (!hash) throw new Error("Transaction failed or no hash returned.");
+
       setTxHash(hash);
       setReceiver("");
       setAmount("");
