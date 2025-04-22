@@ -146,6 +146,18 @@
   margin-top: 0.75rem;
 }
 
+.logoWrapper {
+  display: flex;
+  justify-content: center;
+  margin-top: -1rem;
+  margin-bottom: 1rem;
+}
+
+.logoImage {
+  height: 40px;
+  opacity: 0.95;
+}
+
 /* Premium Button Styles */
 .btn {
   border-radius: 0.75rem;
