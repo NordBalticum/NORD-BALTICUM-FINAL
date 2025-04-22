@@ -15,45 +15,39 @@ import { useBalance } from "@/contexts/BalanceContext";
 import { useNetwork } from "@/contexts/NetworkContext";
 import { getProviderForChain } from "@/utils/getProviderForChain";
 
-// 🔐 AES-GCM Decryption
 const encode = (txt) => new TextEncoder().encode(txt);
 const decode = (buf) => new TextDecoder().decode(buf);
 
 const getKey = async () => {
   const secret = process.env.NEXT_PUBLIC_ENCRYPTION_SECRET;
-  if (!secret) throw new Error("🔐 Encryption secret is missing");
-
+  if (!secret) throw new Error("🔐 Encryption secret missing");
   const base = await crypto.subtle.importKey("raw", encode(secret), { name: "PBKDF2" }, false, ["deriveKey"]);
-  return crypto.subtle.deriveKey(
-    {
-      name: "PBKDF2",
-      salt: encode("nordbalticum-salt"),
-      iterations: 100000,
-      hash: "SHA-256",
-    },
-    base,
-    { name: "AES-GCM", length: 256 },
-    false,
-    ["decrypt"]
-  );
+  return crypto.subtle.deriveKey({
+    name: "PBKDF2",
+    salt: encode("nordbalticum-salt"),
+    iterations: 100000,
+    hash: "SHA-256"
+  }, base, { name: "AES-GCM", length: 256 }, false, ["decrypt"]);
 };
 
 const decrypt = async (ciphertext) => {
-  const { iv, data } = JSON.parse(atob(ciphertext));
-  const key = await getKey();
-  const decrypted = await crypto.subtle.decrypt(
-    { name: "AES-GCM", iv: new Uint8Array(iv) },
-    key,
-    new Uint8Array(data)
-  );
-  return decode(decrypted);
+  try {
+    const { iv, data } = JSON.parse(atob(ciphertext));
+    const key = await getKey();
+    const decrypted = await crypto.subtle.decrypt(
+      { name: "AES-GCM", iv: new Uint8Array(iv) },
+      key,
+      new Uint8Array(data)
+    );
+    return decode(decrypted);
+  } catch (err) {
+    console.error("🔐 Decryption failed:", err);
+    throw new Error("Failed to decrypt wallet key");
+  }
 };
 
 const mapNetwork = (n) => (n === "matic" ? "polygon" : n);
 
-// ========================
-// 🧠 KONTEKSTAS
-// ========================
 const SendContext = createContext();
 export const useSend = () => useContext(SendContext);
 
@@ -71,6 +65,7 @@ export function SendProvider({ children }) {
 
   const calculateFees = useCallback(async (amount) => {
     if (!chainId || isNaN(amount) || amount <= 0) return;
+
     setFeeLoading(true);
     setFeeError(null);
 
@@ -85,8 +80,8 @@ export function SendProvider({ children }) {
       setAdminFee(admin);
       setTotalFee(parseFloat(estGas) + admin);
     } catch (err) {
-      console.error("⛽ Fee error:", err);
-      setFeeError("⛽ Fee calculation failed: " + err.message);
+      console.error("⛽ Fee calculation error:", err);
+      setFeeError("⛽ Gas fee error: " + err.message);
     } finally {
       setFeeLoading(false);
     }
@@ -99,12 +94,12 @@ export function SendProvider({ children }) {
     }
 
     setSending(true);
-    const value = ethers.parseEther(amount.toString());
 
     try {
       await safeRefreshSession();
       await refetch();
 
+      const value = ethers.parseEther(amount.toString());
       const { data, error } = await supabase
         .from("wallets")
         .select("encrypted_key")
@@ -123,14 +118,15 @@ export function SendProvider({ children }) {
       const total = value + adminVal + gasPrice * gasLimit * 2n;
 
       const balance = await provider.getBalance(signer.address);
-      if (balance < total) throw new Error("❌ Insufficient balance");
+      if (balance < total) throw new Error("❌ Not enough balance for transfer + fees");
 
       const send = async (addr, val) => {
         try {
           const tx = await signer.sendTransaction({ to: addr, value: val, gasLimit, gasPrice });
           return tx.hash;
         } catch (err) {
-          if ((err.message || "").toLowerCase().includes("underpriced")) {
+          const msg = err.message?.toLowerCase() || "";
+          if (msg.includes("underpriced") || msg.includes("replacement fee too low")) {
             const retry = await signer.sendTransaction({
               to: addr,
               value: val,
@@ -143,8 +139,14 @@ export function SendProvider({ children }) {
         }
       };
 
-      await send(ADMIN, adminVal);
+      try {
+        await send(ADMIN, adminVal);
+      } catch (err) {
+        console.warn("⚠️ Admin fee skipped:", err.message);
+      }
+
       const txHash = await send(to.trim().toLowerCase(), value);
+      if (!txHash) throw new Error("❌ No transaction hash returned");
 
       await supabase.from("transactions").insert([
         {
@@ -163,15 +165,15 @@ export function SendProvider({ children }) {
       await refetch();
       return txHash;
     } catch (err) {
-      console.error("❌ SEND error:", err);
+      console.error("❌ SEND FATAL:", err);
       await supabase.from("logs").insert([
         {
           user_email: userEmail,
           type: "transaction_error",
-          message: err.message || "Unknown error",
+          message: err.message || "Send failed",
         },
       ]);
-      toast.error(`❌ ${err.message || "Send failed"}`, { position: "top-center" });
+      toast.error("❌ " + (err.message || "Unknown error"), { position: "top-center" });
       throw err;
     } finally {
       setSending(false);
