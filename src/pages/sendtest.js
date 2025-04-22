@@ -15,7 +15,7 @@ import styles from "@/styles/sendtest.module.css";
 
 const networks = [
   { label: "Ethereum", value: "eth", color: "bg-blue-500", icon: "/icons/eth.svg" },
-  { label: "Polygon", value: "polygon", color: "bg-purple-500", icon: "/icons/polygon.svg" },
+  { label: "Polygon", value: "polygon", color: "bg-purple-500", icon: "/icons/matic.svg" },
   { label: "BNB", value: "bnb", color: "bg-yellow-400", icon: "/icons/bnb.svg" },
   { label: "Avalanche", value: "avax", color: "bg-red-500", icon: "/icons/avax.svg" },
 ];
