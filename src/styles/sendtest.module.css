@@ -1,11 +1,12 @@
-/* sendtest.module.css - FINAL METHAMORPHINE DROP */
+/* sendtest.module.css - FINAL SKY DROP RELEASE */
 
 .container {
   min-height: 100vh;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   padding: 2rem;
+  padding-top: 4rem;
   background: radial-gradient(circle at center, #0d0d20 0%, #000014 100%);
   color: white;
   font-family: 'Inter', sans-serif;
@@ -19,12 +20,12 @@
 
 .card {
   width: 100%;
-  max-width: 420px;
-  background: rgba(17, 17, 17, 0.9);
-  backdrop-filter: blur(12px);
-  border-radius: 1.5rem;
-  box-shadow: 0 0 32px rgba(0, 0, 0, 0.6);
-  padding: 2rem;
+  max-width: 460px;
+  background: rgba(15, 15, 15, 0.92);
+  backdrop-filter: blur(14px);
+  border-radius: 1.75rem;
+  box-shadow: 0 0 40px rgba(0, 0, 0, 0.65);
+  padding: 2.25rem;
   border: 1px solid #2a2a2a;
   animation: floatUp 0.4s ease-out;
 }
@@ -35,10 +36,10 @@
 }
 
 .stepTitle {
-  font-size: 1.5rem;
+  font-size: 1.55rem;
   font-weight: 700;
   text-align: center;
-  margin-bottom: 1rem;
+  margin-bottom: 1.2rem;
   margin-top: 0.5rem;
 }
 
@@ -47,11 +48,12 @@
   border-radius: 1rem;
   padding: 1.5rem;
   border: 1px solid #333;
-  backdrop-filter: blur(4px);
+  backdrop-filter: blur(5px);
+  text-align: center;
 }
 
 .amountDisplay {
-  font-size: 2rem;
+  font-size: 2.2rem;
   font-weight: bold;
   text-align: center;
 }
@@ -66,7 +68,7 @@
 .confirmDetails {
   font-size: 0.875rem;
   margin-top: 1rem;
-  line-height: 1.5;
+  line-height: 1.6;
   color: #ccc;
   text-align: center;
 }
@@ -120,7 +122,76 @@
   border-radius: 50%;
 }
 
-.color-eth { background-color: #3b82f6; color: black; }
-.color-bnb { background-color: #fcd34d; color: black; }
-.color-polygon { background-color: #a855f7; color: black; }
-.color-avax { background-color: #f87171; color: black; }
+.color-eth {
+  background-color: #3b82f6;
+  color: black;
+}
+
+.color-bnb {
+  background-color: #fcd34d;
+  color: black;
+}
+
+.color-polygon {
+  background-color: #a855f7;
+  color: black;
+}
+
+.color-avax {
+  background-color: #f87171;
+  color: black;
+}
+
+@media (max-width: 480px) {
+  .card {
+    max-width: 90%;
+    padding: 1.75rem;
+  }
+
+  .selectTrigger,
+  .selectItem {
+    font-size: 0.95rem;
+  }
+
+  .amountDisplay {
+    font-size: 1.8rem;
+  }
+
+  .stepTitle {
+    font-size: 1.3rem;
+  }
+
+  .usdValue {
+    font-size: 0.8rem;
+  }
+
+  .confirmDetails {
+    font-size: 0.8rem;
+  }
+}
+
+/* Buttons container fix for step navigation */
+.buttonsRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+/* Input addon buttons like QR or Max */
+.inputAddonRight {
+  position: absolute;
+  right: 0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  background: #222;
+  border-radius: 0.5rem;
+  color: white;
+}
+
+.inputWrapper {
+  position: relative;
+  width: 100%;
+}
