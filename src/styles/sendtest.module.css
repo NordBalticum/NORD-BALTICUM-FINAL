@@ -1,4 +1,4 @@
-/* sendtest.module.css - FINAL SKY DROP RELEASE */
+/* sendtest.module.css - FINAL KINGPIN DROP */
 
 .container {
   min-height: 100vh;
@@ -6,8 +6,8 @@
   align-items: flex-start;
   justify-content: center;
   padding: 2rem;
-  padding-top: 4rem;
-  background: radial-gradient(circle at center, #0d0d20 0%, #000014 100%);
+  padding-top: 5vh;
+  background: transparent;
   color: white;
   font-family: 'Inter', sans-serif;
   animation: fadeIn 0.6s ease-in-out;
@@ -20,12 +20,12 @@
 
 .card {
   width: 100%;
-  max-width: 460px;
-  background: rgba(15, 15, 15, 0.92);
+  max-width: 500px;
+  background: rgba(15, 15, 15, 0.95);
   backdrop-filter: blur(14px);
   border-radius: 1.75rem;
   box-shadow: 0 0 40px rgba(0, 0, 0, 0.65);
-  padding: 2.25rem;
+  padding: 2.5rem;
   border: 1px solid #2a2a2a;
   animation: floatUp 0.4s ease-out;
 }
@@ -36,56 +36,11 @@
 }
 
 .stepTitle {
-  font-size: 1.55rem;
+  font-size: 1.6rem;
   font-weight: 700;
   text-align: center;
-  margin-bottom: 1.2rem;
-  margin-top: 0.5rem;
-}
-
-.confirmBox {
-  background-color: #111;
-  border-radius: 1rem;
-  padding: 1.5rem;
-  border: 1px solid #333;
-  backdrop-filter: blur(5px);
-  text-align: center;
-}
-
-.amountDisplay {
-  font-size: 2.2rem;
-  font-weight: bold;
-  text-align: center;
-}
-
-.usdValue {
-  font-size: 0.9rem;
-  text-align: center;
-  color: #bbb;
-  margin-top: 0.25rem;
-}
-
-.confirmDetails {
-  font-size: 0.875rem;
-  margin-top: 1rem;
-  line-height: 1.6;
-  color: #ccc;
-  text-align: center;
-}
-
-.successText {
-  text-align: center;
-  font-size: 1.5rem;
-  font-weight: bold;
-  color: #3aff81;
-}
-
-.txHashBox {
-  word-break: break-word;
-  font-size: 0.75rem;
-  color: #999;
-  text-align: center;
-  margin-top: 0.5rem;
+  margin-bottom: 1.4rem;
+  margin-top: 0.2rem;
 }
 
 .selectTrigger {
@@ -122,30 +77,83 @@
   border-radius: 50%;
 }
 
-.color-eth {
-  background-color: #3b82f6;
-  color: black;
+.inputWrapper {
+  position: relative;
+  width: 100%;
 }
 
-.color-bnb {
-  background-color: #fcd34d;
-  color: black;
+.inputAddonRight {
+  position: absolute;
+  right: 0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 0.25rem 0.6rem;
+  font-size: 0.75rem;
+  background: #222;
+  border-radius: 0.5rem;
+  color: white;
 }
 
-.color-polygon {
-  background-color: #a855f7;
-  color: black;
+.confirmBox {
+  background-color: #111;
+  border-radius: 1.25rem;
+  padding: 1.5rem;
+  border: 1px solid #333;
+  backdrop-filter: blur(6px);
+  text-align: center;
 }
 
-.color-avax {
-  background-color: #f87171;
-  color: black;
+.amountDisplay {
+  font-size: 2.3rem;
+  font-weight: bold;
 }
+
+.usdValue {
+  font-size: 0.95rem;
+  color: #bbb;
+  margin-top: 0.5rem;
+}
+
+.confirmDetails {
+  font-size: 0.9rem;
+  margin-top: 1rem;
+  line-height: 1.6;
+  color: #ccc;
+  text-align: center;
+}
+
+.buttonsRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.successText {
+  text-align: center;
+  font-size: 1.6rem;
+  font-weight: bold;
+  color: #3aff81;
+}
+
+.txHashBox {
+  word-break: break-word;
+  font-size: 0.75rem;
+  color: #999;
+  text-align: center;
+  margin-top: 0.5rem;
+}
+
+/* Network Colors */
+.color-eth { background-color: #3b82f6; color: black; }
+.color-bnb { background-color: #fcd34d; color: black; }
+.color-polygon { background-color: #a855f7; color: black; }
+.color-avax { background-color: #f87171; color: black; }
 
 @media (max-width: 480px) {
   .card {
     max-width: 90%;
-    padding: 1.75rem;
+    padding: 2rem;
   }
 
   .selectTrigger,
@@ -154,44 +162,18 @@
   }
 
   .amountDisplay {
-    font-size: 1.8rem;
+    font-size: 2rem;
   }
 
   .stepTitle {
-    font-size: 1.3rem;
+    font-size: 1.35rem;
   }
 
   .usdValue {
-    font-size: 0.8rem;
+    font-size: 0.85rem;
   }
 
   .confirmDetails {
-    font-size: 0.8rem;
+    font-size: 0.85rem;
   }
-}
-
-/* Buttons container fix for step navigation */
-.buttonsRow {
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-top: 2rem;
-}
-
-/* Input addon buttons like QR or Max */
-.inputAddonRight {
-  position: absolute;
-  right: 0.5rem;
-  top: 50%;
-  transform: translateY(-50%);
-  padding: 0.25rem 0.5rem;
-  font-size: 0.75rem;
-  background: #222;
-  border-radius: 0.5rem;
-  color: white;
-}
-
-.inputWrapper {
-  position: relative;
-  width: 100%;
 }
