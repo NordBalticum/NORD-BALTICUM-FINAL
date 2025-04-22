@@ -1,12 +1,11 @@
-/* sendtest.module.css - FINAL KINGPIN DROP */
+/* sendtest.module.css - ULTIMATE FINAL REWORKED */
 
 .container {
   min-height: 100vh;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: center;
-  padding: 2rem;
-  padding-top: 5vh;
+  padding: 3rem 1.5rem;
   background: transparent;
   color: white;
   font-family: 'Inter', sans-serif;
@@ -15,52 +14,55 @@
 
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 .card {
   width: 100%;
-  max-width: 500px;
-  background: rgba(15, 15, 15, 0.95);
-  backdrop-filter: blur(14px);
-  border-radius: 1.75rem;
-  box-shadow: 0 0 40px rgba(0, 0, 0, 0.65);
-  padding: 2.5rem;
+  max-width: 720px;
+  min-height: 560px;
+  background: rgba(15, 15, 15, 0.96);
+  backdrop-filter: blur(18px);
+  border-radius: 2rem;
+  box-shadow: 0 0 40px rgba(0, 0, 0, 0.75);
+  padding: 3rem;
   border: 1px solid #2a2a2a;
   animation: floatUp 0.4s ease-out;
 }
 
 @keyframes floatUp {
   from { opacity: 0; transform: scale(0.95); }
-  to { opacity: 1; transform: scale(1); }
+  to   { opacity: 1; transform: scale(1); }
 }
 
 .stepTitle {
-  font-size: 1.6rem;
+  font-size: 1.8rem;
   font-weight: 700;
   text-align: center;
-  margin-bottom: 1.4rem;
-  margin-top: 0.2rem;
+  margin-bottom: 1.5rem;
+  margin-top: 0.5rem;
 }
 
 .selectTrigger {
   background-color: #111;
   border: 1px solid #333;
-  padding: 0.75rem 1rem;
-  border-radius: 0.75rem;
+  padding: 1rem 1.25rem;
+  border-radius: 1rem;
   color: white;
   display: flex;
   justify-content: space-between;
   align-items: center;
   width: 100%;
+  font-size: 1rem;
+  font-weight: 500;
 }
 
 .selectItem {
-  padding: 0.5rem 1rem;
+  padding: 0.75rem 1.25rem;
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  border-radius: 0.5rem;
+  gap: 1rem;
+  border-radius: 0.75rem;
   color: white;
   cursor: pointer;
   transition: background 0.2s ease-in-out;
@@ -71,8 +73,8 @@
 }
 
 .selectIcon {
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
   object-fit: contain;
   border-radius: 50%;
 }
@@ -84,11 +86,11 @@
 
 .inputAddonRight {
   position: absolute;
-  right: 0.5rem;
+  right: 0.75rem;
   top: 50%;
   transform: translateY(-50%);
-  padding: 0.25rem 0.6rem;
-  font-size: 0.75rem;
+  padding: 0.3rem 0.75rem;
+  font-size: 0.8rem;
   background: #222;
   border-radius: 0.5rem;
   color: white;
@@ -96,28 +98,28 @@
 
 .confirmBox {
   background-color: #111;
-  border-radius: 1.25rem;
-  padding: 1.5rem;
+  border-radius: 1.5rem;
+  padding: 2rem;
   border: 1px solid #333;
-  backdrop-filter: blur(6px);
+  backdrop-filter: blur(8px);
   text-align: center;
 }
 
 .amountDisplay {
-  font-size: 2.3rem;
+  font-size: 2.5rem;
   font-weight: bold;
 }
 
 .usdValue {
-  font-size: 0.95rem;
+  font-size: 1rem;
   color: #bbb;
-  margin-top: 0.5rem;
+  margin-top: 0.75rem;
 }
 
 .confirmDetails {
-  font-size: 0.9rem;
-  margin-top: 1rem;
-  line-height: 1.6;
+  font-size: 0.95rem;
+  margin-top: 1.25rem;
+  line-height: 1.7;
   color: #ccc;
   text-align: center;
 }
@@ -125,55 +127,77 @@
 .buttonsRow {
   display: flex;
   justify-content: space-between;
-  gap: 1rem;
-  margin-top: 2rem;
+  gap: 1.25rem;
+  margin-top: 2.5rem;
 }
 
 .successText {
   text-align: center;
-  font-size: 1.6rem;
+  font-size: 1.75rem;
   font-weight: bold;
   color: #3aff81;
 }
 
 .txHashBox {
   word-break: break-word;
-  font-size: 0.75rem;
+  font-size: 0.8rem;
   color: #999;
   text-align: center;
-  margin-top: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+/* Premium Button Defaults */
+button {
+  border-radius: 0.75rem;
+  font-weight: 600;
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  transition: all 0.2s ease-in-out;
+  box-shadow: 0 0 0 rgba(0, 0, 0, 0);
+}
+
+button:hover:not(:disabled) {
+  opacity: 0.95;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 /* Network Colors */
-.color-eth { background-color: #3b82f6; color: black; }
-.color-bnb { background-color: #fcd34d; color: black; }
+.color-eth     { background-color: #3b82f6; color: black; }
+.color-bnb     { background-color: #fcd34d; color: black; }
 .color-polygon { background-color: #a855f7; color: black; }
-.color-avax { background-color: #f87171; color: black; }
+.color-avax    { background-color: #f87171; color: black; }
 
-@media (max-width: 480px) {
+@media (max-width: 768px) {
   .card {
-    max-width: 90%;
+    max-width: 94%;
+    min-height: 520px;
     padding: 2rem;
+  }
+
+  .stepTitle {
+    font-size: 1.5rem;
   }
 
   .selectTrigger,
   .selectItem {
-    font-size: 0.95rem;
+    font-size: 1rem;
   }
 
   .amountDisplay {
     font-size: 2rem;
   }
 
-  .stepTitle {
-    font-size: 1.35rem;
-  }
-
   .usdValue {
-    font-size: 0.85rem;
+    font-size: 0.9rem;
   }
 
   .confirmDetails {
-    font-size: 0.85rem;
+    font-size: 0.9rem;
   }
 }
