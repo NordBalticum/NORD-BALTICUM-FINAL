@@ -27,6 +27,12 @@ const coingeckoIds = {
   avax: "avalanche-2",
 };
 
+const Logo = () => (
+  <div className={styles.logoWrapper}>
+    <img src="/icons/logo.svg" alt="Nord Balticum" className={styles.logoImage} />
+  </div>
+);
+
 const SendTest = () => {
   const { user } = useAuth();
   const { balance } = useBalance();
@@ -50,11 +56,11 @@ const SendTest = () => {
     const fetchPrices = async () => {
       const ids = Object.values(coingeckoIds).join(",");
       try {
-        const response = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd`);
-        const data = await response.json();
+        const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd`);
+        const data = await res.json();
         setUsdPrices(data);
-      } catch (error) {
-        console.error("Error fetching USD prices:", error);
+      } catch (err) {
+        console.error("USD fetch failed:", err);
       }
     };
     fetchPrices();
@@ -63,7 +69,7 @@ const SendTest = () => {
   const handleNetworkChange = (value) => {
     setSelectedNetwork(value);
     switchNetwork(value);
-    setTimeout(() => setStep(2), 250);
+    setTimeout(() => setStep(2), 200);
   };
 
   const handleMax = () => {
@@ -78,7 +84,7 @@ const SendTest = () => {
     const currentBalance = Number(balance[selectedNetwork] || 0);
     const parsedAmount = Number(amount);
 
-    if (now - lastSentTime < 30000) return alert("Please wait before sending again.");
+    if (now - lastSentTime < 10000) return alert("Please wait before sending again.");
     if (parsedAmount < min) return alert(`Minimum amount on ${selectedNetwork.toUpperCase()}: ${min}`);
     if (parsedAmount > currentBalance) return alert("Insufficient balance.");
 
@@ -89,7 +95,6 @@ const SendTest = () => {
       setStep(5);
     } catch (err) {
       console.error("TX Error:", err);
-      alert("Transaction failed. Please try again.");
     }
   };
 
@@ -97,6 +102,7 @@ const SendTest = () => {
   const minAmount = networks.find(n => n.value === selectedNetwork)?.min || 0;
   const usdRate = usdPrices[coingeckoIds[selectedNetwork]]?.usd || null;
   const usdEstimate = usdRate && amount ? (Number(amount) * usdRate).toFixed(2) : null;
+  const currentBalance = (balance[selectedNetwork] || 0).toFixed(6);
 
   if (!systemReady) {
     return (
@@ -107,22 +113,15 @@ const SendTest = () => {
     );
   }
 
-  const Logo = () => (
-    <div className="flex justify-center">
-      <img src="/icons/logo.svg" alt="Logo" className="h-10 mb-4" />
-    </div>
-  );
-
   return (
     <div className={styles.container}>
       <Card className={`${styles.card} pt-16`}>
         <CardContent className="space-y-10 p-8">
 
-          {/* STEP 1 */}
           {step === 1 && (
             <div className="space-y-8">
-              <h2 className={styles.stepTitle}>Select Network</h2>
               <Logo />
+              <h2 className={styles.stepTitle}>Select Network</h2>
               <Select.Root value={selectedNetwork} onValueChange={handleNetworkChange}>
                 <Select.Trigger className={styles.selectTrigger}>
                   <Select.Value placeholder="Select network..." />
@@ -142,14 +141,20 @@ const SendTest = () => {
             </div>
           )}
 
-          {/* STEP 2 */}
           {step === 2 && (
             <div className="space-y-8">
-              <h2 className={styles.stepTitle}>Recipient Address</h2>
               <Logo />
+              <h2 className={styles.stepTitle}>Recipient Address</h2>
               <div className={styles.inputWrapper}>
-                <Input value={to} onChange={(e) => setTo(e.target.value)} placeholder="0x... address" className="pr-14" />
-                <Button variant="ghost" className={styles.inputAddonRight}><QrCode size={18} /></Button>
+                <Input
+                  value={to}
+                  onChange={(e) => setTo(e.target.value)}
+                  placeholder="0x... address"
+                  className="pr-14"
+                />
+                <Button variant="ghost" className={styles.inputAddonRight}>
+                  <QrCode size={18} />
+                </Button>
               </div>
               <div className={styles.buttonsRow}>
                 <Button className={`${styles.btn} ${styles[currentColorClass]}`} onClick={() => setStep(1)}>Back</Button>
@@ -158,11 +163,10 @@ const SendTest = () => {
             </div>
           )}
 
-          {/* STEP 3 */}
           {step === 3 && (
             <div className="space-y-8">
-              <h2 className={styles.stepTitle}>Enter Amount</h2>
               <Logo />
+              <h2 className={styles.stepTitle}>Enter Amount</h2>
               <div className={styles.inputWrapper}>
                 <Input
                   type="number"
@@ -177,26 +181,29 @@ const SendTest = () => {
                 {usdEstimate ? `≈ $${usdEstimate}` : "USD estimate"}
               </p>
               <p className="text-xs text-center text-gray-400">
-                Balance: {(balance[selectedNetwork] || 0).toFixed(6)} {selectedNetwork.toUpperCase()}
+                Balance: {currentBalance} {selectedNetwork.toUpperCase()}
               </p>
               <p className="text-xs text-center text-red-400 font-medium">
                 Min. amount: {minAmount} {selectedNetwork.toUpperCase()}
               </p>
               <div className={styles.buttonsRow}>
                 <Button className={`${styles.btn} ${styles[currentColorClass]}`} onClick={() => setStep(2)}>Back</Button>
-                <Button className={`${styles.btn} ${styles[currentColorClass]}`} onClick={() => setStep(4)} disabled={!amount || Number(amount) < minAmount}>Next</Button>
+                <Button className={`${styles.btn} ${styles[currentColorClass]}`} onClick={() => setStep(4)} disabled={!amount || Number(amount) < minAmount}>
+                  Next
+                </Button>
               </div>
             </div>
           )}
 
-          {/* STEP 4 */}
           {step === 4 && (
             <div className="space-y-8">
-              <h2 className={styles.stepTitle}>Confirm Transfer</h2>
               <Logo />
+              <h2 className={styles.stepTitle}>Confirm Transfer</h2>
               <div className={styles.confirmBox}>
                 <p className={styles.amountDisplay}>{amount} {selectedNetwork.toUpperCase()}</p>
-                <p className={styles.usdValue}>{usdEstimate ? `≈ $${usdEstimate}` : "USD estimate"}</p>
+                <p className={styles.usdValue}>
+                  {usdEstimate ? `≈ $${usdEstimate}` : ""}
+                </p>
                 <div className={styles.confirmDetails}>
                   <p><b>To:</b> {to}</p>
                   <p><b>Network:</b> {selectedNetwork}</p>
@@ -212,7 +219,6 @@ const SendTest = () => {
             </div>
           )}
 
-          {/* STEP 5 */}
           {step === 5 && txHash && (
             <div className="text-center space-y-4">
               <h2 className={styles.successText}>✅ Sent!</h2>
