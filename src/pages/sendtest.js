@@ -17,22 +17,14 @@ const networks = [
   { label: "Ethereum", value: "eth", color: "color-eth", icon: "/icons/eth.svg" },
   { label: "Polygon", value: "polygon", color: "color-polygon", icon: "/icons/matic.svg" },
   { label: "BNB", value: "bnb", color: "color-bnb", icon: "/icons/bnb.svg" },
-  { label: "Avalanche", value: "avax", color: "color-avax", icon: "/icons/avax.svg" },
+  { label: "Avalanche", value: "avax", color: "color-avax", icon: "/icons/avax.svg" }
 ];
 
 const SendTest = () => {
   const { user } = useAuth();
   const { balance } = useBalance();
   const { switchNetwork } = useNetwork();
-  const {
-    sendTransaction,
-    sending,
-    calculateFees,
-    gasFee,
-    adminFee,
-    feeLoading,
-  } = useSend();
-
+  const { sendTransaction, sending, calculateFees, gasFee, adminFee, feeLoading } = useSend();
   const systemReady = useSystemReady();
 
   const [step, setStep] = useState(1);
@@ -72,16 +64,16 @@ const SendTest = () => {
   if (!systemReady) {
     return (
       <div className="flex items-center justify-center h-screen text-white">
-        <Loader2 className="animate-spin mr-2" /> Preparing system...
+        <Loader2 className="animate-spin mr-2" />
+        Preparing system...
       </div>
     );
   }
 
   return (
     <div className={styles.container}>
-      <Card className={`${styles.card} pt-12`}>
-        <CardContent className="space-y-8 p-6">
-
+      <Card className={`${styles.card} pt-16`}>
+        <CardContent className="space-y-10 p-8">
           {/* STEP 1: SELECT NETWORK */}
           {step === 1 && (
             <div className="space-y-8">
@@ -91,14 +83,16 @@ const SendTest = () => {
                   <Select.Value placeholder="Select network..." />
                   <Select.Icon><ChevronDown size={18} /></Select.Icon>
                 </Select.Trigger>
-                <Select.Content className="z-50 bg-neutral-900 border border-neutral-700 rounded-xl shadow-xl">
-                  {networks.map(net => (
-                    <Select.Item key={net.value} value={net.value} className={styles.selectItem}>
-                      <img src={net.icon} alt={net.label} className={styles.selectIcon} />
-                      <Select.ItemText>{net.label}</Select.ItemText>
-                    </Select.Item>
-                  ))}
-                </Select.Content>
+                <Select.Portal>
+                  <Select.Content className="z-50 bg-black border border-neutral-700 rounded-xl shadow-2xl animate-fade-in">
+                    {networks.map(net => (
+                      <Select.Item key={net.value} value={net.value} className={styles.selectItem}>
+                        <img src={net.icon} alt={net.label} className={styles.selectIcon} />
+                        <Select.ItemText>{net.label}</Select.ItemText>
+                      </Select.Item>
+                    ))}
+                  </Select.Content>
+                </Select.Portal>
               </Select.Root>
             </div>
           )}
@@ -107,24 +101,20 @@ const SendTest = () => {
           {step === 2 && (
             <div className="space-y-8">
               <h2 className={styles.stepTitle}>Recipient Address</h2>
-              <div className="relative flex items-center">
+              <div className={styles.inputWrapper}>
                 <Input
                   value={to}
                   onChange={(e) => setTo(e.target.value)}
                   placeholder="0x... address"
-                  className="pr-12"
+                  className="pr-14"
                 />
-                <Button variant="ghost" className="absolute right-2">
-                  <QrCode size={20} />
+                <Button variant="ghost" className={styles.inputAddonRight}>
+                  <QrCode size={18} />
                 </Button>
               </div>
               <div className={styles.buttonsRow}>
-                <Button onClick={() => setStep(1)} className={`w-1/2 ${styles[currentColorClass]}`}>
-                  Back
-                </Button>
-                <Button onClick={() => setStep(3)} className={`w-1/2 ${styles[currentColorClass]}`}>
-                  Next
-                </Button>
+                <Button onClick={() => setStep(1)} className={`w-1/2 ${styles[currentColorClass]}`}>Back</Button>
+                <Button onClick={() => setStep(3)} className={`w-1/2 ${styles[currentColorClass]}`}>Next</Button>
               </div>
             </div>
           )}
@@ -133,7 +123,7 @@ const SendTest = () => {
           {step === 3 && (
             <div className="space-y-8">
               <h2 className={styles.stepTitle}>Enter Amount</h2>
-              <div className="relative">
+              <div className={styles.inputWrapper}>
                 <Input
                   type="number"
                   value={amount}
@@ -149,12 +139,8 @@ const SendTest = () => {
                 ≈ {amount ? `${(Number(amount) * 1.2).toFixed(2)} $ | €` : "€ | $ estimate"}
               </p>
               <div className={styles.buttonsRow}>
-                <Button onClick={() => setStep(2)} className={`w-1/2 ${styles[currentColorClass]}`}>
-                  Back
-                </Button>
-                <Button onClick={() => setStep(4)} className={`w-1/2 ${styles[currentColorClass]}`}>
-                  Next
-                </Button>
+                <Button onClick={() => setStep(2)} className={`w-1/2 ${styles[currentColorClass]}`}>Back</Button>
+                <Button onClick={() => setStep(4)} className={`w-1/2 ${styles[currentColorClass]}`}>Next</Button>
               </div>
             </div>
           )}
@@ -165,7 +151,9 @@ const SendTest = () => {
               <h2 className={styles.stepTitle}>Confirm Transfer</h2>
               <div className={styles.confirmBox}>
                 <p className={styles.amountDisplay}>{amount} {selectedNetwork.toUpperCase()}</p>
-                <p className={styles.usdValue}>≈ {(Number(amount) * 1.2).toFixed(2)} $ | €</p>
+                <p className={styles.usdValue}>
+                  ≈ {(Number(amount) * 1.2).toFixed(2)} $ | €
+                </p>
                 <div className={styles.confirmDetails}>
                   <p><b>To:</b> {to}</p>
                   <p><b>Network:</b> {selectedNetwork}</p>
@@ -176,9 +164,7 @@ const SendTest = () => {
                 </div>
               </div>
               <div className={styles.buttonsRow}>
-                <Button onClick={() => setStep(3)} className={`w-1/2 ${styles[currentColorClass]}`}>
-                  Back
-                </Button>
+                <Button onClick={() => setStep(3)} className={`w-1/2 ${styles[currentColorClass]}`}>Back</Button>
                 <Button
                   onClick={handleSend}
                   disabled={sending || feeLoading}
@@ -200,7 +186,6 @@ const SendTest = () => {
               <Button onClick={() => setStep(1)} className="w-full mt-4">Send Another</Button>
             </div>
           )}
-
         </CardContent>
       </Card>
     </div>
