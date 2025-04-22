@@ -43,22 +43,22 @@ const SendTest = () => {
   const [usdPrices, setUsdPrices] = useState({});
 
   useEffect(() => {
+    if (step === 3) calculateFees(amount);
+  }, [step, amount]);
+
+  useEffect(() => {
     const fetchPrices = async () => {
       const ids = Object.values(coingeckoIds).join(",");
       try {
-        const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd`);
-        const data = await res.json();
+        const response = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd`);
+        const data = await response.json();
         setUsdPrices(data);
-      } catch (err) {
-        console.error("❌ Failed to fetch CoinGecko prices:", err);
+      } catch (error) {
+        console.error("Error fetching USD prices:", error);
       }
     };
     fetchPrices();
   }, [selectedNetwork]);
-
-  useEffect(() => {
-    if (step === 3) calculateFees(amount);
-  }, [step, amount]);
 
   const handleNetworkChange = (value) => {
     setSelectedNetwork(value);
@@ -78,17 +78,9 @@ const SendTest = () => {
     const currentBalance = Number(balance[selectedNetwork] || 0);
     const parsedAmount = Number(amount);
 
-    if (now - lastSentTime < 30000) {
-      return alert("Please wait a bit before sending again.");
-    }
-
-    if (parsedAmount < min) {
-      return alert(`Minimum amount to send on ${selectedNetwork.toUpperCase()} is ${min}`);
-    }
-
-    if (parsedAmount > currentBalance) {
-      return alert("Insufficient balance.");
-    }
+    if (now - lastSentTime < 30000) return alert("Please wait before sending again.");
+    if (parsedAmount < min) return alert(`Minimum amount on ${selectedNetwork.toUpperCase()}: ${min}`);
+    if (parsedAmount > currentBalance) return alert("Insufficient balance.");
 
     try {
       const hash = await sendTransaction({ to, amount, userEmail: user.email });
@@ -97,13 +89,14 @@ const SendTest = () => {
       setStep(5);
     } catch (err) {
       console.error("TX Error:", err);
+      alert("Transaction failed. Please try again.");
     }
   };
 
   const currentColorClass = networks.find(n => n.value === selectedNetwork)?.color || "bg-gray-500";
   const minAmount = networks.find(n => n.value === selectedNetwork)?.min || 0;
-  const usdRate = usdPrices[coingeckoIds[selectedNetwork]]?.usd || 0;
-  const usdValue = amount && usdRate ? (Number(amount) * usdRate).toFixed(2) : null;
+  const usdRate = usdPrices[coingeckoIds[selectedNetwork]]?.usd || null;
+  const usdEstimate = usdRate && amount ? (Number(amount) * usdRate).toFixed(2) : null;
 
   if (!systemReady) {
     return (
@@ -114,15 +107,22 @@ const SendTest = () => {
     );
   }
 
+  const Logo = () => (
+    <div className="flex justify-center">
+      <img src="/public/icons/logo.svg" alt="Logo" className="h-10 mb-4" />
+    </div>
+  );
+
   return (
     <div className={styles.container}>
       <Card className={`${styles.card} pt-16`}>
         <CardContent className="space-y-10 p-8">
 
-          {/* STEP 1: SELECT NETWORK */}
+          {/* STEP 1 */}
           {step === 1 && (
             <div className="space-y-8">
               <h2 className={styles.stepTitle}>Select Network</h2>
+              <Logo />
               <Select.Root value={selectedNetwork} onValueChange={handleNetworkChange}>
                 <Select.Trigger className={styles.selectTrigger}>
                   <Select.Value placeholder="Select network..." />
@@ -142,20 +142,14 @@ const SendTest = () => {
             </div>
           )}
 
-          {/* STEP 2: RECIPIENT ADDRESS */}
+          {/* STEP 2 */}
           {step === 2 && (
             <div className="space-y-8">
               <h2 className={styles.stepTitle}>Recipient Address</h2>
+              <Logo />
               <div className={styles.inputWrapper}>
-                <Input
-                  value={to}
-                  onChange={(e) => setTo(e.target.value)}
-                  placeholder="0x... address"
-                  className="pr-14"
-                />
-                <Button variant="ghost" className={styles.inputAddonRight}>
-                  <QrCode size={18} />
-                </Button>
+                <Input value={to} onChange={(e) => setTo(e.target.value)} placeholder="0x... address" className="pr-14" />
+                <Button variant="ghost" className={styles.inputAddonRight}><QrCode size={18} /></Button>
               </div>
               <div className={styles.buttonsRow}>
                 <Button className={`${styles.btn} ${styles[currentColorClass]}`} onClick={() => setStep(1)}>Back</Button>
@@ -164,10 +158,11 @@ const SendTest = () => {
             </div>
           )}
 
-          {/* STEP 3: ENTER AMOUNT */}
+          {/* STEP 3 */}
           {step === 3 && (
             <div className="space-y-8">
               <h2 className={styles.stepTitle}>Enter Amount</h2>
+              <Logo />
               <div className={styles.inputWrapper}>
                 <Input
                   type="number"
@@ -176,61 +171,48 @@ const SendTest = () => {
                   placeholder="Amount"
                   className="text-center text-xl pr-14"
                 />
-                <Button size="sm" onClick={handleMax} className={styles.inputAddonRight}>
-                  Max
-                </Button>
+                <Button size="sm" onClick={handleMax} className={styles.inputAddonRight}>Max</Button>
               </div>
               <p className="text-sm text-center text-gray-400">
-                ≈ {usdValue ? `${usdValue} $` : "USD estimate"}
+                {usdEstimate ? `≈ $${usdEstimate}` : "USD estimate"}
+              </p>
+              <p className="text-xs text-center text-gray-400">
+                Balance: {(balance[selectedNetwork] || 0).toFixed(6)} {selectedNetwork.toUpperCase()}
               </p>
               <p className="text-xs text-center text-red-400 font-medium">
                 Min. amount: {minAmount} {selectedNetwork.toUpperCase()}
               </p>
               <div className={styles.buttonsRow}>
                 <Button className={`${styles.btn} ${styles[currentColorClass]}`} onClick={() => setStep(2)}>Back</Button>
-                <Button
-                  className={`${styles.btn} ${styles[currentColorClass]}`}
-                  onClick={() => setStep(4)}
-                  disabled={!amount || Number(amount) < minAmount}
-                >
-                  Next
-                </Button>
+                <Button className={`${styles.btn} ${styles[currentColorClass]}`} onClick={() => setStep(4)} disabled={!amount || Number(amount) < minAmount}>Next</Button>
               </div>
             </div>
           )}
 
-          {/* STEP 4: CONFIRM TRANSFER */}
+          {/* STEP 4 */}
           {step === 4 && (
             <div className="space-y-8">
               <h2 className={styles.stepTitle}>Confirm Transfer</h2>
+              <Logo />
               <div className={styles.confirmBox}>
                 <p className={styles.amountDisplay}>{amount} {selectedNetwork.toUpperCase()}</p>
-                <p className={styles.usdValue}>
-                  ≈ {usdValue} $
-                </p>
+                <p className={styles.usdValue}>{usdEstimate ? `≈ $${usdEstimate}` : "USD estimate"}</p>
                 <div className={styles.confirmDetails}>
                   <p><b>To:</b> {to}</p>
                   <p><b>Network:</b> {selectedNetwork}</p>
-                  <p><b>Fee:</b> {feeLoading
-                    ? "Calculating..."
-                    : `${(Number(gasFee) + Number(adminFee)).toFixed(6)} ${selectedNetwork.toUpperCase()}`}
-                  </p>
+                  <p><b>Fee:</b> {feeLoading ? "Calculating..." : `${(Number(gasFee) + Number(adminFee)).toFixed(6)} ${selectedNetwork.toUpperCase()}`}</p>
                 </div>
               </div>
               <div className={styles.buttonsRow}>
                 <Button className={`${styles.btn} ${styles[currentColorClass]}`} onClick={() => setStep(3)}>Back</Button>
-                <Button
-                  className={`${styles.btn} ${styles[currentColorClass]}`}
-                  onClick={handleSend}
-                  disabled={sending || feeLoading}
-                >
+                <Button className={`${styles.btn} ${styles[currentColorClass]}`} onClick={handleSend} disabled={sending || feeLoading}>
                   {sending ? <Loader2 className="animate-spin" /> : "Send"}
                 </Button>
               </div>
             </div>
           )}
 
-          {/* STEP 5: SUCCESS */}
+          {/* STEP 5 */}
           {step === 5 && txHash && (
             <div className="text-center space-y-4">
               <h2 className={styles.successText}>✅ Sent!</h2>
