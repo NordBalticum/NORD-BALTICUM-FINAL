@@ -11,7 +11,6 @@ import { Button } from "@/components/ui/Button";
 import { Dialog, DialogContent } from "@/components/ui/Dialog";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Loader2, QrCode } from "lucide-react";
-import dynamic from "next/dynamic";
 import styles from "@/styles/sendtest.module.css";
 
 const networks = [
@@ -62,7 +61,7 @@ const SendTest = () => {
     try {
       const hash = await sendTransaction({ to, amount, userEmail: user.email });
       setTxHash(hash);
-      setStep(4);
+      setStep(5);
     } catch (err) {
       console.error("TX Error:", err);
     }
@@ -80,20 +79,24 @@ const SendTest = () => {
 
   return (
     <div className="min-h-screen bg-black text-white p-4 flex flex-col items-center justify-center">
-      <Card className="w-full max-w-md">
+      <Card className="w-full max-w-sm">
         <CardContent className="space-y-6 p-6">
           {step === 1 && (
             <div className="space-y-4">
               <h2 className="text-xl font-bold text-center">Select Network</h2>
-              <div className="space-y-2">
+              <div className="space-y-2 max-h-[280px] overflow-y-auto pr-1">
                 {networks.map((net) => (
                   <Button
                     key={net.value}
                     variant={selectedNetwork === net.value ? "default" : "outline"}
-                    className="w-full justify-start"
+                    className="w-full flex items-center justify-start gap-3 px-4 py-2"
                     onClick={() => handleNetworkChange(net.value)}
                   >
-                    <img src={net.icon} alt="icon" className="w-5 h-5 mr-2" />
+                    <img
+                      src={net.icon}
+                      alt={net.label}
+                      className="w-5 h-5 object-contain rounded-full"
+                    />
                     {net.label}
                   </Button>
                 ))}
@@ -147,14 +150,12 @@ const SendTest = () => {
                 <p className="text-center text-sm text-gray-400">
                   ≈ ${(Number(amount) * 1.2).toFixed(2)} USD
                 </p>
-                <div className="text-sm mt-4">
+                <div className="text-sm mt-4 space-y-1">
                   <p><b>To:</b> {to}</p>
                   <p><b>Network:</b> {selectedNetwork}</p>
-                  <p>
-                    <b>Fee:</b>{" "}
-                    {feeLoading
-                      ? "Calculating..."
-                      : `${(Number(gasFee) + Number(adminFee)).toFixed(6)} ${selectedNetwork.toUpperCase()}`}
+                  <p><b>Fee:</b> {feeLoading
+                    ? "Calculating..."
+                    : `${(Number(gasFee) + Number(adminFee)).toFixed(6)} ${selectedNetwork.toUpperCase()}`}
                   </p>
                 </div>
               </div>
