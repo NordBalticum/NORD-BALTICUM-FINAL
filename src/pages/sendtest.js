@@ -109,7 +109,7 @@ const SendTest = () => {
 
   const Logo = () => (
     <div className="flex justify-center">
-      <img src="/public/icons/logo.svg" alt="Logo" className="h-10 mb-4" />
+      <img src="/icons/logo.svg" alt="Logo" className="h-10 mb-4" />
     </div>
   );
 
