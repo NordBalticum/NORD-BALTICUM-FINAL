@@ -14,10 +14,13 @@ import { Loader2, QrCode, ChevronDown } from "lucide-react";
 import * as Select from "@radix-ui/react-select";
 import styles from "@/styles/send.module.css";
 
-const QRScanner = dynamic(() => import("@yudiel/react-qr-scanner").then(mod => mod.QRScanner), {
-  ssr: false,
-  loading: () => <Loader2 className="animate-spin text-white" />,
-});
+const QRScanner = dynamic(
+  () => import("@yudiel/react-qr-scanner").then(mod => mod.QRScanner),
+  {
+    ssr: false,
+    loading: () => <Loader2 className="animate-spin text-white" />,
+  }
+);
 
 const networks = [
   { label: "Ethereum", value: "eth", color: "color-eth", icon: "/icons/eth.svg", min: 0.001 },
@@ -69,7 +72,7 @@ const Send = () => {
         const data = await res.json();
         setUsdPrices(data);
       } catch (err) {
-        console.error("❌ USD fetch error:", err);
+        console.error("USD fetch error:", err);
       }
     };
     fetchPrices();
@@ -94,10 +97,10 @@ const Send = () => {
     const currentBalance = Number(balance[selectedNetwork] || 0);
     const cleanTo = to.trim().toLowerCase();
 
-    if (!isValidAddress(cleanTo)) return alert("❌ Invalid address.");
-    if (now - lastSentTime < 10000) return alert("⚠️ Please wait before sending again.");
+    if (!isValidAddress(cleanTo)) return alert("Invalid address.");
+    if (now - lastSentTime < 10000) return alert("Please wait before sending again.");
     if (parsedAmount < min) return alert(`Min: ${min} ${selectedNetwork.toUpperCase()}`);
-    if (parsedAmount > currentBalance) return alert("❌ Insufficient balance.");
+    if (parsedAmount > currentBalance) return alert("Insufficient balance.");
 
     try {
       const hash = await sendTransaction({ to: cleanTo, amount, userEmail: user.email });
@@ -120,7 +123,8 @@ const Send = () => {
   if (!systemReady) {
     return (
       <div className="flex items-center justify-center h-screen text-white">
-        <Loader2 className="animate-spin mr-2" /> Preparing system...
+        <Loader2 className="animate-spin mr-2" />
+        Preparing system...
       </div>
     );
   }
@@ -205,7 +209,7 @@ const Send = () => {
               <h2 className={styles.stepTitle}>Confirm Transfer</h2>
               <div className={styles.confirmBox}>
                 <p className={styles.amountDisplay}>{amount} {selectedNetwork.toUpperCase()}</p>
-                <p className={styles.usdValue}>{usdEstimate ? `≈ $${usdEstimate}` : ""}</p>
+                <p className={styles.usdValue}>{usdEstimate ? `≈ $${usdEstimate}` : "USD estimate"}</p>
                 <div className={styles.confirmDetails}>
                   <p><b>To:</b> {to}</p>
                   <p><b>Network:</b> {selectedNetwork}</p>
