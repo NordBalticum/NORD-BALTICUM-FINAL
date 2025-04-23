@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/Button";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Loader2, QrCode, ChevronDown } from "lucide-react";
 import * as Select from "@radix-ui/react-select";
-import styles from "@/styles/sendtest.module.css";
+import styles from "@/styles/send.module.css";
 
 const networks = [
   { label: "Ethereum", value: "eth", color: "color-eth", icon: "/icons/eth.svg", min: 0.001 },
