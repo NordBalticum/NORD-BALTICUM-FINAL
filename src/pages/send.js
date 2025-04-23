@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 import { useSend } from "@/contexts/SendContext";
 import { useBalance } from "@/contexts/BalanceContext";
@@ -12,6 +13,11 @@ import { Card, CardContent } from "@/components/ui/Card";
 import { Loader2, QrCode, ChevronDown } from "lucide-react";
 import * as Select from "@radix-ui/react-select";
 import styles from "@/styles/send.module.css";
+
+const QRScanner = dynamic(() => import("@yudiel/react-qr-scanner").then(mod => mod.QRScanner), {
+  ssr: false,
+  loading: () => <Loader2 className="animate-spin text-white" />,
+});
 
 const networks = [
   { label: "Ethereum", value: "eth", color: "color-eth", icon: "/icons/eth.svg", min: 0.001 },
@@ -27,11 +33,7 @@ const coingeckoIds = {
   avax: "avalanche-2",
 };
 
-const isValidAddress = (address) => /^0x[a-fA-F0-9]{40}$/.test(address.trim());
-
-const vibrate = (pattern = 50) => {
-  if (typeof window !== "undefined" && navigator?.vibrate) navigator.vibrate(pattern);
-};
+const isValidAddress = (addr) => /^0x[a-fA-F0-9]{40}$/.test(addr.trim());
 
 const Logo = () => (
   <div className={styles.logoWrapper}>
@@ -53,6 +55,7 @@ const Send = () => {
   const [txHash, setTxHash] = useState(null);
   const [lastSentTime, setLastSentTime] = useState(0);
   const [usdPrices, setUsdPrices] = useState({});
+  const [showScanner, setShowScanner] = useState(false);
 
   useEffect(() => {
     if (step === 3) calculateFees(amount);
@@ -75,14 +78,12 @@ const Send = () => {
   const handleNetworkChange = (value) => {
     setSelectedNetwork(value);
     switchNetwork(value);
-    vibrate(30);
     setTimeout(() => setStep(2), 250);
   };
 
   const handleMax = () => {
     if (balance?.[selectedNetwork]) {
       setAmount(balance[selectedNetwork].toString());
-      vibrate(15);
     }
   };
 
@@ -99,13 +100,11 @@ const Send = () => {
     if (parsedAmount > currentBalance) return alert("❌ Insufficient balance.");
 
     try {
-      vibrate([30, 30]);
       const hash = await sendTransaction({ to: cleanTo, amount, userEmail: user.email });
       if (!hash) throw new Error("No transaction hash returned");
       setTxHash(hash);
       setLastSentTime(now);
       setStep(5);
-      vibrate([40, 80]);
     } catch (err) {
       console.error("TX ERROR:", err);
       alert("Transaction failed: " + (err.message || "Unknown error"));
@@ -128,7 +127,7 @@ const Send = () => {
 
   return (
     <div className={styles.container}>
-      <Card className={`${styles.card} pt-16 animate-fade-in`}>
+      <Card className={`${styles.card} pt-16`}>
         <CardContent className="space-y-10 p-8">
           {step === 1 && (
             <div className="space-y-8">
@@ -159,10 +158,22 @@ const Send = () => {
               <h2 className={styles.stepTitle}>Recipient Address</h2>
               <div className={styles.inputWrapper}>
                 <Input value={to} onChange={(e) => setTo(e.target.value)} placeholder="0x... address" className="pr-14" />
-                <Button variant="ghost" className={styles.inputAddonRight} disabled>
+                <Button variant="ghost" className={styles.inputAddonRight} onClick={() => setShowScanner(!showScanner)}>
                   <QrCode size={18} />
                 </Button>
               </div>
+              {showScanner && (
+                <div className="mt-4 rounded-xl overflow-hidden border border-neutral-700">
+                  <QRScanner
+                    onDecode={(val) => {
+                      setTo(val);
+                      setShowScanner(false);
+                    }}
+                    onError={(err) => console.warn("QR error", err)}
+                    constraints={{ facingMode: "environment" }}
+                  />
+                </div>
+              )}
               <div className={styles.buttonsRow}>
                 <Button className={`${styles.btn} ${styles[currentColorClass]}`} onClick={() => setStep(1)}>Back</Button>
                 <Button className={`${styles.btn} ${styles[currentColorClass]}`} onClick={() => setStep(3)} disabled={!to}>Next</Button>
