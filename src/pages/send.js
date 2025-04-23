@@ -14,7 +14,9 @@ import { Loader2, QrCode, ChevronDown } from "lucide-react";
 import * as Select from "@radix-ui/react-select";
 import styles from "@/styles/send.module.css";
 
-const Scanner = dynamic(() => import("@yudiel/react-qr-scanner").then((m) => m.Scanner), { ssr: false });
+const Scanner = typeof window !== "undefined"
+  ? dynamic(() => import("@yudiel/react-qr-scanner").then((m) => m.Scanner), { ssr: false })
+  : () => null;
 
 const networks = [
   { label: "Ethereum", value: "eth", color: "color-eth", icon: "/icons/eth.svg", min: 0.001 },
@@ -133,12 +135,12 @@ const Send = () => {
 
   return (
     <div className={styles.container}>
-      {typeof window !== "undefined" && showScanner && (
+      {showScanner && typeof window !== "undefined" && Scanner && (
         <div className={styles.scannerOverlay}>
           <Scanner
             ref={scannerRef}
             onScan={(result) => {
-              if (result && result[0] && result[0].rawValue) {
+              if (result?.[0]?.rawValue) {
                 setTo(result[0].rawValue);
                 setShowScanner(false);
                 vibrate(20);
@@ -155,7 +157,6 @@ const Send = () => {
 
       <Card className={`${styles.card} pt-16 animate-fade-in`}>
         <CardContent className="space-y-10 p-8">
-          {/* STEP 1: SELECT NETWORK */}
           {step === 1 && (
             <div className="space-y-8">
               <Logo />
@@ -179,7 +180,6 @@ const Send = () => {
             </div>
           )}
 
-          {/* STEP 2: ADDRESS */}
           {step === 2 && (
             <div className="space-y-8">
               <Logo />
@@ -197,7 +197,6 @@ const Send = () => {
             </div>
           )}
 
-          {/* STEP 3: AMOUNT */}
           {step === 3 && (
             <div className="space-y-8">
               <Logo />
@@ -216,7 +215,6 @@ const Send = () => {
             </div>
           )}
 
-          {/* STEP 4: CONFIRM */}
           {step === 4 && (
             <div className="space-y-8">
               <Logo />
@@ -239,7 +237,6 @@ const Send = () => {
             </div>
           )}
 
-          {/* STEP 5: SUCCESS */}
           {step === 5 && txHash && (
             <div className="text-center space-y-4">
               <h2 className={styles.successText}>✅ Sent!</h2>
