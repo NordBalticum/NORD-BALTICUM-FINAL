@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { useSend } from "@/contexts/SendContext";
 import { useBalance } from "@/contexts/BalanceContext";
 import { useNetwork } from "@/contexts/NetworkContext";
@@ -50,6 +50,15 @@ const Send = () => {
   const [lastSentTime, setLastSentTime] = useState(0);
   const [usdPrices, setUsdPrices] = useState({});
 
+  const minAmount = useMemo(() => networks.find(n => n.value === selectedNetwork)?.min || 0, [selectedNetwork]);
+  const currentColorClass = useMemo(() => networks.find(n => n.value === selectedNetwork)?.color || "bg-gray-500", [selectedNetwork]);
+
+  const usdRate = usdPrices[coingeckoIds[selectedNetwork]]?.usd || 0;
+  const usdValue = useMemo(() => {
+    const val = Number(amount);
+    return val && usdRate ? (val * usdRate).toFixed(2) : null;
+  }, [amount, usdRate]);
+
   useEffect(() => {
     const fetchPrices = async () => {
       const ids = Object.values(coingeckoIds).join(",");
@@ -58,7 +67,7 @@ const Send = () => {
         const data = await res.json();
         setUsdPrices(data);
       } catch (err) {
-        console.error("❌ Failed to fetch CoinGecko prices:", err);
+        console.error("❌ USD fetch error:", err);
       }
     };
     fetchPrices();
@@ -66,49 +75,42 @@ const Send = () => {
 
   useEffect(() => {
     if (step === 3) calculateFees(amount);
-  }, [step, amount]);
+  }, [step, amount, calculateFees]);
 
-  const handleNetworkChange = (value) => {
+  const handleNetworkChange = useCallback((value) => {
     setSelectedNetwork(value);
     switchNetwork(value);
     setTimeout(() => setStep(2), 250);
-  };
+  }, [switchNetwork]);
 
-  const handleMax = () => {
+  const handleMax = useCallback(() => {
     if (balance?.[selectedNetwork]) {
-      setAmount(balance[selectedNetwork].toString());
+      setAmount(Number(balance[selectedNetwork]).toFixed(6));
     }
-  };
+  }, [balance, selectedNetwork]);
 
   const handleSend = async () => {
     const now = Date.now();
-    const min = networks.find(n => n.value === selectedNetwork)?.min || 0;
+    const cleanTo = to.trim().toLowerCase();
     const parsedAmount = Number(amount);
     const currentBalance = Number(balance[selectedNetwork] || 0);
-    const cleanTo = to.trim().toLowerCase();
 
-    if (!isValidAddress(cleanTo)) return alert("❌ Invalid address.");
-    if (now - lastSentTime < 10000) return alert("⚠️ Please wait before sending again.");
-    if (parsedAmount < min) return alert(`Min: ${min} ${selectedNetwork.toUpperCase()}`);
-    if (parsedAmount > currentBalance) return alert("❌ Insufficient balance.");
+    if (!isValidAddress(cleanTo)) return window.alert("❌ Invalid address.");
+    if (now - lastSentTime < 10000) return window.alert("⚠️ Please wait before sending again.");
+    if (parsedAmount < minAmount) return window.alert(`Min: ${minAmount} ${selectedNetwork.toUpperCase()}`);
+    if (parsedAmount > currentBalance) return window.alert("❌ Insufficient balance.");
 
     try {
       const hash = await sendTransaction({ to: cleanTo, amount, userEmail: user.email });
-      if (!hash) throw new Error("No transaction hash returned");
+      if (!hash) throw new Error("❌ No transaction hash returned");
       setTxHash(hash);
       setLastSentTime(now);
       setStep(5);
     } catch (err) {
-      console.error("TX ERROR:", err);
-      alert("Transaction failed: " + (err.message || "Unknown error"));
+      console.error("❌ TX ERROR:", err);
+      window.alert("Transaction failed: " + (err.message || "Unknown error"));
     }
   };
-
-  const usdRate = usdPrices[coingeckoIds[selectedNetwork]]?.usd || 0;
-  const usdEstimate = usdRate && amount ? (Number(amount) * usdRate).toFixed(2) : null;
-  const currentBalance = (balance[selectedNetwork] || 0).toFixed(6);
-  const minAmount = networks.find(n => n.value === selectedNetwork)?.min || 0;
-  const currentColorClass = networks.find(n => n.value === selectedNetwork)?.color || "bg-gray-500";
 
   if (!systemReady) {
     return (
@@ -123,20 +125,19 @@ const Send = () => {
     <div className={styles.container}>
       <Card className={`${styles.card} pt-16`}>
         <CardContent className="space-y-10 p-8">
+
+          {/* STEP 1 */}
           {step === 1 && (
             <div className="space-y-8">
               <Logo />
               <h2 className={styles.stepTitle}>Select Network</h2>
-              <Select.Root value={selectedNetwork} onValueChange={handleNetworkChange}>
+              <Select.Root key={selectedNetwork} value={selectedNetwork} onValueChange={handleNetworkChange}>
                 <Select.Trigger className={styles.selectTrigger}>
                   <Select.Value placeholder="Select network..." />
                   <Select.Icon><ChevronDown size={18} /></Select.Icon>
                 </Select.Trigger>
                 <Select.Portal>
-                  <Select.Content
-                    className="z-50 bg-black border border-neutral-700 rounded-xl shadow-2xl animate-fade-in"
-                    position="popper"
-                  >
+                  <Select.Content className="z-50 bg-black border border-neutral-700 rounded-xl shadow-2xl animate-fade-in" position="popper">
                     {networks.map(net => (
                       <Select.Item key={net.value} value={net.value} className={styles.selectItem}>
                         <img src={net.icon} alt={net.label} className={styles.selectIcon} />
@@ -149,6 +150,7 @@ const Send = () => {
             </div>
           )}
 
+          {/* STEP 2 */}
           {step === 2 && (
             <div className="space-y-8">
               <Logo />
@@ -163,6 +165,7 @@ const Send = () => {
             </div>
           )}
 
+          {/* STEP 3 */}
           {step === 3 && (
             <div className="space-y-8">
               <Logo />
@@ -171,7 +174,9 @@ const Send = () => {
                 <Input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="Amount" className="text-center text-xl pr-14" />
                 <Button size="sm" onClick={handleMax} className={styles.inputAddonRight}>Max</Button>
               </div>
-              <p className="text-sm text-center text-gray-400">{usdEstimate ? `≈ $${usdEstimate}` : "USD estimate"}</p>
+              {usdValue && (
+                <p className="text-sm text-center text-gray-400">≈ ${usdValue}</p>
+              )}
               <p className="text-xs text-center text-gray-400">Balance: {currentBalance} {selectedNetwork.toUpperCase()}</p>
               <p className="text-xs text-center text-red-400 font-medium">Min. amount: {minAmount} {selectedNetwork.toUpperCase()}</p>
               <div className={styles.buttonsRow}>
@@ -181,13 +186,14 @@ const Send = () => {
             </div>
           )}
 
+          {/* STEP 4 */}
           {step === 4 && (
             <div className="space-y-8">
               <Logo />
               <h2 className={styles.stepTitle}>Confirm Transfer</h2>
               <div className={styles.confirmBox}>
                 <p className={styles.amountDisplay}>{amount} {selectedNetwork.toUpperCase()}</p>
-                <p className={styles.usdValue}>{usdEstimate ? `≈ $${usdEstimate}` : "USD estimate"}</p>
+                <p className={styles.usdValue}>{usdValue ? `≈ $${usdValue}` : ""}</p>
                 <div className={styles.confirmDetails}>
                   <p><b>To:</b> {to}</p>
                   <p><b>Network:</b> {selectedNetwork}</p>
@@ -203,13 +209,20 @@ const Send = () => {
             </div>
           )}
 
+          {/* STEP 5 */}
           {step === 5 && txHash && (
             <div className="text-center space-y-4">
               <h2 className={styles.successText}>✅ Sent!</h2>
               <p className={styles.txHashBox}>TX Hash:<br />{txHash}</p>
-              <Button className={`${styles.btn} w-full mt-4`} onClick={() => setStep(1)}>Send Another</Button>
+              <Button className={`${styles.btn} w-full mt-4`} onClick={() => {
+                setStep(1);
+                setTxHash(null);
+                setAmount("");
+                setTo("");
+              }}>Send Another</Button>
             </div>
           )}
+
         </CardContent>
       </Card>
     </div>
