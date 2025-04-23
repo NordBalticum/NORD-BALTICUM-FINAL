@@ -14,7 +14,6 @@ import { Loader2, QrCode, ChevronDown } from "lucide-react";
 import * as Select from "@radix-ui/react-select";
 import styles from "@/styles/send.module.css";
 
-// ✅ SSR-safe QR scanner import
 const Scanner = dynamic(() => import("@yudiel/react-qr-scanner").then(m => m.Scanner), { ssr: false });
 
 const networks = [
@@ -183,9 +182,7 @@ const Send = () => {
               </div>
               <div className={styles.buttonsRow}>
                 <Button className={`${styles.btn} ${styles[currentColorClass]}`} onClick={() => setStep(1)}>Back</Button>
-                <Button className={`${styles.btn} ${styles[currentColorClass]}`} onClick={() => setStep(3)} disabled={!to}>
-                  Next
-                </Button>
+                <Button className={`${styles.btn} ${styles[currentColorClass]}`} onClick={() => setStep(3)} disabled={!to}>Next</Button>
               </div>
             </div>
           )}
@@ -196,13 +193,7 @@ const Send = () => {
               <Logo />
               <h2 className={styles.stepTitle}>Enter Amount</h2>
               <div className={styles.inputWrapper}>
-                <Input
-                  type="number"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  placeholder="Amount"
-                  className="text-center text-xl pr-14"
-                />
+                <Input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="Amount" className="text-center text-xl pr-14" />
                 <Button size="sm" onClick={handleMax} className={styles.inputAddonRight}>Max</Button>
               </div>
               <p className="text-sm text-center text-gray-400">{usdEstimate ? `≈ $${usdEstimate}` : "USD estimate"}</p>
@@ -210,9 +201,7 @@ const Send = () => {
               <p className="text-xs text-center text-red-400 font-medium">Min. amount: {minAmount} {selectedNetwork.toUpperCase()}</p>
               <div className={styles.buttonsRow}>
                 <Button className={`${styles.btn} ${styles[currentColorClass]}`} onClick={() => setStep(2)}>Back</Button>
-                <Button className={`${styles.btn} ${styles[currentColorClass]}`} onClick={() => setStep(4)} disabled={!amount || Number(amount) < minAmount}>
-                  Next
-                </Button>
+                <Button className={`${styles.btn} ${styles[currentColorClass]}`} onClick={() => setStep(4)} disabled={!amount || Number(amount) < minAmount}>Next</Button>
               </div>
             </div>
           )}
