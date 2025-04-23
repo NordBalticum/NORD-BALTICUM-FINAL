@@ -83,6 +83,12 @@ const Send = () => {
     }
   }, [balance, selectedNetwork]);
 
+  const handleSelectNetwork = async (value) => {
+    setSelectedNetwork(value);
+    await switchNetwork(value);
+    setStep(2);
+  };
+
   const handleSend = async () => {
     const now = Date.now();
     const cleanTo = to.trim().toLowerCase();
@@ -124,7 +130,7 @@ const Send = () => {
             <div className="space-y-8">
               <Logo />
               <h2 className={styles.stepTitle}>Select Network</h2>
-              <Select.Root value={selectedNetwork} onValueChange={setSelectedNetwork}>
+              <Select.Root value={selectedNetwork} onValueChange={handleSelectNetwork}>
                 <Select.Trigger className={styles.selectTrigger}>
                   <Select.Value placeholder="Select network..." />
                   <Select.Icon><ChevronDown size={18} /></Select.Icon>
@@ -140,11 +146,6 @@ const Send = () => {
                   </Select.Content>
                 </Select.Portal>
               </Select.Root>
-              <div className={styles.buttonsRow}>
-                <Button className={`${styles.btn} ${styles[currentColorClass]}`} onClick={() => switchNetwork(selectedNetwork) && setStep(2)}>
-                  Next
-                </Button>
-              </div>
             </div>
           )}
 
