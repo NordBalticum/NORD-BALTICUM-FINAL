@@ -14,7 +14,7 @@ import { Loader2, QrCode, ChevronDown } from "lucide-react";
 import * as Select from "@radix-ui/react-select";
 import styles from "@/styles/send.module.css";
 
-const QRScanner = dynamic(() => import("@yudiel/react-qr-scanner").then(m => m.QRScanner), {
+const QRScanner = dynamic(() => import("@yudiel/react-qr-scanner").then(mod => mod.QRScanner), {
   ssr: false,
   loading: () => <Loader2 className="animate-spin text-white" />,
 });
@@ -90,8 +90,8 @@ const Send = () => {
   const handleSend = async () => {
     const now = Date.now();
     const min = networks.find(n => n.value === selectedNetwork)?.min || 0;
-    const currentBalance = Number(balance[selectedNetwork] || 0);
     const parsedAmount = Number(amount);
+    const currentBalance = Number(balance[selectedNetwork] || 0);
     const cleanTo = to.trim().toLowerCase();
 
     if (!isValidAddress(cleanTo)) return alert("❌ Invalid address.");
@@ -111,7 +111,7 @@ const Send = () => {
     }
   };
 
-  const usdRate = usdPrices[coingeckoIds[selectedNetwork]]?.usd || 0;
+  const usdRate = usdPrices[coingeckoIds[selectedNetwork]]?.usd || null;
   const usdEstimate = usdRate && amount ? (Number(amount) * usdRate).toFixed(2) : null;
   const currentBalance = (balance[selectedNetwork] || 0).toFixed(6);
   const minAmount = networks.find(n => n.value === selectedNetwork)?.min || 0;
@@ -130,6 +130,8 @@ const Send = () => {
     <div className={styles.container}>
       <Card className={`${styles.card} pt-16`}>
         <CardContent className="space-y-10 p-8">
+
+          {/* STEP 1 */}
           {step === 1 && (
             <div className="space-y-8">
               <Logo />
@@ -153,6 +155,7 @@ const Send = () => {
             </div>
           )}
 
+          {/* STEP 2 */}
           {step === 2 && (
             <div className="space-y-8">
               <Logo />
@@ -182,29 +185,18 @@ const Send = () => {
             </div>
           )}
 
+          {/* STEP 3 */}
           {step === 3 && (
             <div className="space-y-8">
               <Logo />
               <h2 className={styles.stepTitle}>Enter Amount</h2>
               <div className={styles.inputWrapper}>
-                <Input
-                  type="number"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  placeholder="Amount"
-                  className="text-center text-xl pr-14"
-                />
+                <Input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="Amount" className="text-center text-xl pr-14" />
                 <Button size="sm" onClick={handleMax} className={styles.inputAddonRight}>Max</Button>
               </div>
-              <p className="text-sm text-center text-gray-400">
-                {usdEstimate ? `≈ $${usdEstimate}` : "USD estimate"}
-              </p>
-              <p className="text-xs text-center text-gray-400">
-                Balance: {currentBalance} {selectedNetwork.toUpperCase()}
-              </p>
-              <p className="text-xs text-center text-red-400 font-medium">
-                Min. amount: {minAmount} {selectedNetwork.toUpperCase()}
-              </p>
+              <p className="text-sm text-center text-gray-400">{usdEstimate ? `≈ $${usdEstimate}` : "USD estimate"}</p>
+              <p className="text-xs text-center text-gray-400">Balance: {currentBalance} {selectedNetwork.toUpperCase()}</p>
+              <p className="text-xs text-center text-red-400 font-medium">Min. amount: {minAmount} {selectedNetwork.toUpperCase()}</p>
               <div className={styles.buttonsRow}>
                 <Button className={`${styles.btn} ${styles[currentColorClass]}`} onClick={() => setStep(2)}>Back</Button>
                 <Button className={`${styles.btn} ${styles[currentColorClass]}`} onClick={() => setStep(4)} disabled={!amount || Number(amount) < minAmount}>Next</Button>
@@ -212,6 +204,7 @@ const Send = () => {
             </div>
           )}
 
+          {/* STEP 4 */}
           {step === 4 && (
             <div className="space-y-8">
               <Logo />
@@ -234,6 +227,7 @@ const Send = () => {
             </div>
           )}
 
+          {/* STEP 5 */}
           {step === 5 && txHash && (
             <div className="text-center space-y-4">
               <h2 className={styles.successText}>✅ Sent!</h2>
@@ -241,6 +235,7 @@ const Send = () => {
               <Button className={`${styles.btn} w-full mt-4`} onClick={() => setStep(1)}>Send Another</Button>
             </div>
           )}
+
         </CardContent>
       </Card>
     </div>
