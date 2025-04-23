@@ -80,7 +80,7 @@ const Send = () => {
   const handleNetworkChange = useCallback((value) => {
     setSelectedNetwork(value);
     switchNetwork(value);
-    setTimeout(() => setStep(2), 250);
+    setStep(2);
   }, [switchNetwork]);
 
   const handleMax = useCallback(() => {
@@ -95,10 +95,10 @@ const Send = () => {
     const parsedAmount = Number(amount);
     const currentBalance = Number(balance[selectedNetwork] || 0);
 
-    if (!isValidAddress(cleanTo)) return window.alert("❌ Invalid address.");
-    if (now - lastSentTime < 10000) return window.alert("⚠️ Please wait before sending again.");
-    if (parsedAmount < minAmount) return window.alert(`Min: ${minAmount} ${selectedNetwork.toUpperCase()}`);
-    if (parsedAmount > currentBalance) return window.alert("❌ Insufficient balance.");
+    if (!isValidAddress(cleanTo)) return alert("❌ Invalid address.");
+    if (now - lastSentTime < 10000) return alert("⚠️ Please wait before sending again.");
+    if (parsedAmount < minAmount) return alert(`Min: ${minAmount} ${selectedNetwork.toUpperCase()}`);
+    if (parsedAmount > currentBalance) return alert("❌ Insufficient balance.");
 
     try {
       const hash = await sendTransaction({ to: cleanTo, amount, userEmail: user.email });
@@ -108,7 +108,7 @@ const Send = () => {
       setStep(5);
     } catch (err) {
       console.error("❌ TX ERROR:", err);
-      window.alert("Transaction failed: " + (err.message || "Unknown error"));
+      alert("Transaction failed: " + (err.message || "Unknown error"));
     }
   };
 
@@ -126,18 +126,18 @@ const Send = () => {
       <Card className={`${styles.card} pt-16`}>
         <CardContent className="space-y-10 p-8">
 
-          {/* STEP 1 */}
+          {/* STEP 1: Select Network */}
           {step === 1 && (
             <div className="space-y-8">
               <Logo />
               <h2 className={styles.stepTitle}>Select Network</h2>
-              <Select.Root key={selectedNetwork} value={selectedNetwork} onValueChange={handleNetworkChange}>
+              <Select.Root value={selectedNetwork} onValueChange={handleNetworkChange}>
                 <Select.Trigger className={styles.selectTrigger}>
                   <Select.Value placeholder="Select network..." />
                   <Select.Icon><ChevronDown size={18} /></Select.Icon>
                 </Select.Trigger>
                 <Select.Portal>
-                  <Select.Content className="z-50 bg-black border border-neutral-700 rounded-xl shadow-2xl animate-fade-in" position="popper">
+                  <Select.Content className="z-50 bg-black border border-neutral-700 rounded-xl shadow-2xl">
                     {networks.map(net => (
                       <Select.Item key={net.value} value={net.value} className={styles.selectItem}>
                         <img src={net.icon} alt={net.label} className={styles.selectIcon} />
@@ -150,7 +150,7 @@ const Send = () => {
             </div>
           )}
 
-          {/* STEP 2 */}
+          {/* STEP 2: Enter Address */}
           {step === 2 && (
             <div className="space-y-8">
               <Logo />
@@ -165,7 +165,7 @@ const Send = () => {
             </div>
           )}
 
-          {/* STEP 3 */}
+          {/* STEP 3: Enter Amount */}
           {step === 3 && (
             <div className="space-y-8">
               <Logo />
@@ -174,9 +174,7 @@ const Send = () => {
                 <Input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="Amount" className="text-center text-xl pr-14" />
                 <Button size="sm" onClick={handleMax} className={styles.inputAddonRight}>Max</Button>
               </div>
-              {usdValue && (
-                <p className="text-sm text-center text-gray-400">≈ ${usdValue}</p>
-              )}
+              {usdValue && <p className="text-sm text-center text-gray-400">≈ ${usdValue}</p>}
               <p className="text-xs text-center text-gray-400">Balance: {currentBalance} {selectedNetwork.toUpperCase()}</p>
               <p className="text-xs text-center text-red-400 font-medium">Min. amount: {minAmount} {selectedNetwork.toUpperCase()}</p>
               <div className={styles.buttonsRow}>
@@ -186,7 +184,7 @@ const Send = () => {
             </div>
           )}
 
-          {/* STEP 4 */}
+          {/* STEP 4: Confirm */}
           {step === 4 && (
             <div className="space-y-8">
               <Logo />
@@ -209,7 +207,7 @@ const Send = () => {
             </div>
           )}
 
-          {/* STEP 5 */}
+          {/* STEP 5: Done */}
           {step === 5 && txHash && (
             <div className="text-center space-y-4">
               <h2 className={styles.successText}>✅ Sent!</h2>
