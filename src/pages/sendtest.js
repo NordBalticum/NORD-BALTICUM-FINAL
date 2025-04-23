@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 import { useSend } from "@/contexts/SendContext";
 import { useBalance } from "@/contexts/BalanceContext";
 import { useNetwork } from "@/contexts/NetworkContext";
@@ -11,8 +12,9 @@ import { Button } from "@/components/ui/Button";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Loader2, QrCode, ChevronDown } from "lucide-react";
 import * as Select from "@radix-ui/react-select";
-import { Scanner } from "@yudiel/react-qr-scanner";
 import styles from "@/styles/sendtest.module.css";
+
+const Scanner = dynamic(() => import("@yudiel/react-qr-scanner").then(m => m.Scanner), { ssr: false });
 
 const networks = [
   { label: "Ethereum", value: "eth", color: "color-eth", icon: "/icons/eth.svg", min: 0.001 },
@@ -40,14 +42,7 @@ const SendTest = () => {
   const { user } = useAuth();
   const { balance } = useBalance();
   const { switchNetwork } = useNetwork();
-  const {
-    sendTransaction,
-    sending,
-    calculateFees,
-    gasFee,
-    adminFee,
-    feeLoading,
-  } = useSend();
+  const { sendTransaction, sending, calculateFees, gasFee, adminFee, feeLoading } = useSend();
   const systemReady = useSystemReady();
 
   const [step, setStep] = useState(1);
@@ -80,7 +75,7 @@ const SendTest = () => {
   const handleNetworkChange = (value) => {
     setSelectedNetwork(value);
     switchNetwork(value);
-    setTimeout(() => setStep(2), 200);
+    setTimeout(() => setStep(2), 250);
   };
 
   const handleMax = () => {
@@ -92,13 +87,13 @@ const SendTest = () => {
   const handleSend = async () => {
     const now = Date.now();
     const min = networks.find(n => n.value === selectedNetwork)?.min || 0;
-    const currentBalance = Number(balance[selectedNetwork] || 0);
     const parsedAmount = Number(amount);
+    const currentBalance = Number(balance[selectedNetwork] || 0);
     const cleanTo = to.trim().toLowerCase();
 
-    if (!isValidAddress(cleanTo)) return alert("Invalid recipient address.");
+    if (!isValidAddress(cleanTo)) return alert("❌ Invalid address.");
     if (now - lastSentTime < 10000) return alert("Please wait before sending again.");
-    if (parsedAmount < min) return alert(`Minimum amount on ${selectedNetwork.toUpperCase()}: ${min}`);
+    if (parsedAmount < min) return alert(`Min: ${min} ${selectedNetwork.toUpperCase()}`);
     if (parsedAmount > currentBalance) return alert("Insufficient balance.");
 
     try {
@@ -113,11 +108,11 @@ const SendTest = () => {
     }
   };
 
-  const currentColorClass = networks.find(n => n.value === selectedNetwork)?.color || "bg-gray-500";
-  const minAmount = networks.find(n => n.value === selectedNetwork)?.min || 0;
   const usdRate = usdPrices[coingeckoIds[selectedNetwork]]?.usd || null;
   const usdEstimate = usdRate && amount ? (Number(amount) * usdRate).toFixed(2) : null;
   const currentBalance = (balance[selectedNetwork] || 0).toFixed(6);
+  const minAmount = networks.find(n => n.value === selectedNetwork)?.min || 0;
+  const currentColorClass = networks.find(n => n.value === selectedNetwork)?.color || "bg-gray-500";
 
   if (!systemReady) {
     return (
@@ -134,7 +129,7 @@ const SendTest = () => {
         <div className={styles.scannerOverlay}>
           <Scanner
             onScan={(result) => {
-              if (result[0]?.rawValue) {
+              if (result?.[0]?.rawValue) {
                 setTo(result[0].rawValue);
                 setShowScanner(false);
               }
@@ -150,7 +145,6 @@ const SendTest = () => {
 
       <Card className={`${styles.card} pt-16`}>
         <CardContent className="space-y-10 p-8">
-
           {/* STEP 1 */}
           {step === 1 && (
             <div className="space-y-8">
@@ -213,15 +207,9 @@ const SendTest = () => {
                 />
                 <Button size="sm" onClick={handleMax} className={styles.inputAddonRight}>Max</Button>
               </div>
-              <p className="text-sm text-center text-gray-400">
-                {usdEstimate ? `≈ $${usdEstimate}` : "USD estimate"}
-              </p>
-              <p className="text-xs text-center text-gray-400">
-                Balance: {currentBalance} {selectedNetwork.toUpperCase()}
-              </p>
-              <p className="text-xs text-center text-red-400 font-medium">
-                Min. amount: {minAmount} {selectedNetwork.toUpperCase()}
-              </p>
+              <p className="text-sm text-center text-gray-400">{usdEstimate ? `≈ $${usdEstimate}` : "USD estimate"}</p>
+              <p className="text-xs text-center text-gray-400">Balance: {currentBalance} {selectedNetwork.toUpperCase()}</p>
+              <p className="text-xs text-center text-red-400 font-medium">Min. amount: {minAmount} {selectedNetwork.toUpperCase()}</p>
               <div className={styles.buttonsRow}>
                 <Button className={`${styles.btn} ${styles[currentColorClass]}`} onClick={() => setStep(2)}>Back</Button>
                 <Button className={`${styles.btn} ${styles[currentColorClass]}`} onClick={() => setStep(4)} disabled={!amount || Number(amount) < minAmount}>
@@ -238,9 +226,7 @@ const SendTest = () => {
               <h2 className={styles.stepTitle}>Confirm Transfer</h2>
               <div className={styles.confirmBox}>
                 <p className={styles.amountDisplay}>{amount} {selectedNetwork.toUpperCase()}</p>
-                <p className={styles.usdValue}>
-                  {usdEstimate ? `≈ $${usdEstimate}` : ""}
-                </p>
+                <p className={styles.usdValue}>{usdEstimate ? `≈ $${usdEstimate}` : ""}</p>
                 <div className={styles.confirmDetails}>
                   <p><b>To:</b> {to}</p>
                   <p><b>Network:</b> {selectedNetwork}</p>
@@ -260,13 +246,10 @@ const SendTest = () => {
           {step === 5 && txHash && (
             <div className="text-center space-y-4">
               <h2 className={styles.successText}>✅ Sent!</h2>
-              <p className={styles.txHashBox}>
-                TX Hash:<br />{txHash}
-              </p>
+              <p className={styles.txHashBox}>TX Hash:<br />{txHash}</p>
               <Button className={`${styles.btn} w-full mt-4`} onClick={() => setStep(1)}>Send Another</Button>
             </div>
           )}
-
         </CardContent>
       </Card>
     </div>
