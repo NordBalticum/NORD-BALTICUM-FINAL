@@ -58,7 +58,7 @@ const Send = () => {
         const data = await res.json();
         setUsdPrices(data);
       } catch (err) {
-        console.error("❌ USD fetch error:", err);
+        console.error("❌ Failed to fetch CoinGecko prices:", err);
       }
     };
     fetchPrices();
@@ -82,10 +82,10 @@ const Send = () => {
 
   const handleSend = async () => {
     const now = Date.now();
-    const cleanTo = to.trim().toLowerCase();
+    const min = networks.find(n => n.value === selectedNetwork)?.min || 0;
     const parsedAmount = Number(amount);
     const currentBalance = Number(balance[selectedNetwork] || 0);
-    const min = networks.find(n => n.value === selectedNetwork)?.min || 0;
+    const cleanTo = to.trim().toLowerCase();
 
     if (!isValidAddress(cleanTo)) return alert("❌ Invalid address.");
     if (now - lastSentTime < 10000) return alert("⚠️ Please wait before sending again.");
@@ -123,8 +123,6 @@ const Send = () => {
     <div className={styles.container}>
       <Card className={`${styles.card} pt-16`}>
         <CardContent className="space-y-10 p-8">
-
-          {/* STEP 1 */}
           {step === 1 && (
             <div className="space-y-8">
               <Logo />
@@ -151,7 +149,6 @@ const Send = () => {
             </div>
           )}
 
-          {/* STEP 2 */}
           {step === 2 && (
             <div className="space-y-8">
               <Logo />
@@ -166,7 +163,6 @@ const Send = () => {
             </div>
           )}
 
-          {/* STEP 3 */}
           {step === 3 && (
             <div className="space-y-8">
               <Logo />
@@ -175,15 +171,9 @@ const Send = () => {
                 <Input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="Amount" className="text-center text-xl pr-14" />
                 <Button size="sm" onClick={handleMax} className={styles.inputAddonRight}>Max</Button>
               </div>
-              <p className="text-sm text-center text-gray-400">
-                {usdEstimate ? `≈ $${usdEstimate}` : "USD estimate"}
-              </p>
-              <p className="text-xs text-center text-gray-400">
-                Balance: {currentBalance} {selectedNetwork.toUpperCase()}
-              </p>
-              <p className="text-xs text-center text-red-400 font-medium">
-                Min. amount: {minAmount} {selectedNetwork.toUpperCase()}
-              </p>
+              <p className="text-sm text-center text-gray-400">{usdEstimate ? `≈ $${usdEstimate}` : "USD estimate"}</p>
+              <p className="text-xs text-center text-gray-400">Balance: {currentBalance} {selectedNetwork.toUpperCase()}</p>
+              <p className="text-xs text-center text-red-400 font-medium">Min. amount: {minAmount} {selectedNetwork.toUpperCase()}</p>
               <div className={styles.buttonsRow}>
                 <Button className={`${styles.btn} ${styles[currentColorClass]}`} onClick={() => setStep(2)}>Back</Button>
                 <Button className={`${styles.btn} ${styles[currentColorClass]}`} onClick={() => setStep(4)} disabled={!amount || Number(amount) < minAmount}>Next</Button>
@@ -191,7 +181,6 @@ const Send = () => {
             </div>
           )}
 
-          {/* STEP 4 */}
           {step === 4 && (
             <div className="space-y-8">
               <Logo />
@@ -214,7 +203,6 @@ const Send = () => {
             </div>
           )}
 
-          {/* STEP 5 */}
           {step === 5 && txHash && (
             <div className="text-center space-y-4">
               <h2 className={styles.successText}>✅ Sent!</h2>
@@ -222,7 +210,6 @@ const Send = () => {
               <Button className={`${styles.btn} w-full mt-4`} onClick={() => setStep(1)}>Send Another</Button>
             </div>
           )}
-
         </CardContent>
       </Card>
     </div>
