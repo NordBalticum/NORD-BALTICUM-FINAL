@@ -84,8 +84,8 @@ const Send = () => {
   }, [balance, selectedNetwork]);
 
   const handleSelectNetwork = async (value) => {
-    setSelectedNetwork(value);
     await switchNetwork(value);
+    setSelectedNetwork(value);
     setStep(2);
   };
 
