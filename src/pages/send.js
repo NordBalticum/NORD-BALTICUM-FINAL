@@ -52,22 +52,19 @@ const Send = () => {
 
   const minAmount = useMemo(() => networks.find(n => n.value === selectedNetwork)?.min || 0, [selectedNetwork]);
   const currentColorClass = useMemo(() => networks.find(n => n.value === selectedNetwork)?.color || "bg-gray-500", [selectedNetwork]);
-
   const usdRate = usdPrices[coingeckoIds[selectedNetwork]]?.usd || 0;
-  const usdValue = useMemo(() => {
-    const val = Number(amount);
-    return val && usdRate ? (val * usdRate).toFixed(2) : null;
-  }, [amount, usdRate]);
+  const usdValue = useMemo(() => (amount && usdRate ? (Number(amount) * usdRate).toFixed(2) : null), [amount, usdRate]);
+  const currentBalance = useMemo(() => (balance[selectedNetwork] || 0).toFixed(6), [balance, selectedNetwork]);
 
   useEffect(() => {
     const fetchPrices = async () => {
-      const ids = Object.values(coingeckoIds).join(",");
       try {
+        const ids = Object.values(coingeckoIds).join(",");
         const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd`);
         const data = await res.json();
         setUsdPrices(data);
       } catch (err) {
-        console.error("❌ USD fetch error:", err);
+        console.error("USD fetch error:", err);
       }
     };
     fetchPrices();
@@ -83,22 +80,24 @@ const Send = () => {
     }
   }, [balance, selectedNetwork]);
 
-  const handleSelectNetwork = async (value) => {
-    await switchNetwork(value);
-    setSelectedNetwork(value);
+  const handleSelectNetwork = useCallback(async (value) => {
+    if (value !== selectedNetwork) {
+      await switchNetwork(value);
+      setSelectedNetwork(value);
+    }
     setStep(2);
-  };
+  }, [selectedNetwork, switchNetwork]);
 
   const handleSend = async () => {
     const now = Date.now();
     const cleanTo = to.trim().toLowerCase();
     const parsedAmount = Number(amount);
-    const currentBalance = Number(balance[selectedNetwork] || 0);
+    const bal = Number(balance[selectedNetwork] || 0);
 
     if (!isValidAddress(cleanTo)) return alert("❌ Invalid address.");
     if (now - lastSentTime < 10000) return alert("⚠️ Please wait before sending again.");
     if (parsedAmount < minAmount) return alert(`Min: ${minAmount} ${selectedNetwork.toUpperCase()}`);
-    if (parsedAmount > currentBalance) return alert("❌ Insufficient balance.");
+    if (parsedAmount > bal) return alert("❌ Insufficient balance.");
 
     try {
       const hash = await sendTransaction({ to: cleanTo, amount, userEmail: user.email });
@@ -107,8 +106,8 @@ const Send = () => {
       setLastSentTime(now);
       setStep(5);
     } catch (err) {
-      console.error("❌ TX ERROR:", err);
-      alert("Transaction failed: " + (err.message || "Unknown error"));
+      console.error("TX ERROR:", err);
+      alert("❌ " + (err.message || "Transaction failed"));
     }
   };
 
@@ -125,18 +124,20 @@ const Send = () => {
     <div className={styles.container}>
       <Card className={`${styles.card} pt-16`}>
         <CardContent className="space-y-10 p-8">
-          {/* STEP 1 */}
           {step === 1 && (
             <div className="space-y-8">
               <Logo />
               <h2 className={styles.stepTitle}>Select Network</h2>
               <Select.Root value={selectedNetwork} onValueChange={handleSelectNetwork}>
                 <Select.Trigger className={styles.selectTrigger}>
-                  <Select.Value placeholder="Select network..." />
+                  <div className="flex items-center gap-2">
+                    <img src={networks.find(n => n.value === selectedNetwork)?.icon} alt="net" className="w-5 h-5" />
+                    <Select.Value placeholder="Select network..." />
+                  </div>
                   <Select.Icon><ChevronDown size={18} /></Select.Icon>
                 </Select.Trigger>
                 <Select.Portal>
-                  <Select.Content className="z-50 bg-black border border-neutral-700 rounded-xl shadow-2xl animate-fade-in" position="popper">
+                  <Select.Content className="z-50 bg-black border border-neutral-700 rounded-xl shadow-2xl">
                     {networks.map(net => (
                       <Select.Item key={net.value} value={net.value} className={styles.selectItem}>
                         <img src={net.icon} alt={net.label} className={styles.selectIcon} />
@@ -149,7 +150,6 @@ const Send = () => {
             </div>
           )}
 
-          {/* STEP 2 */}
           {step === 2 && (
             <div className="space-y-8">
               <Logo />
@@ -158,13 +158,12 @@ const Send = () => {
                 <Input value={to} onChange={(e) => setTo(e.target.value)} placeholder="0x... address" className="pr-14" />
               </div>
               <div className={styles.buttonsRow}>
-                <Button className={`${styles.btn} ${styles[currentColorClass]}`} onClick={() => setStep(1)}>Back</Button>
-                <Button className={`${styles.btn} ${styles[currentColorClass]}`} onClick={() => setStep(3)} disabled={!to}>Next</Button>
+                <Button onClick={() => setStep(1)} className={`${styles.btn} ${styles[currentColorClass]}`}>Back</Button>
+                <Button onClick={() => setStep(3)} className={`${styles.btn} ${styles[currentColorClass]}`} disabled={!to}>Next</Button>
               </div>
             </div>
           )}
 
-          {/* STEP 3 */}
           {step === 3 && (
             <div className="space-y-8">
               <Logo />
@@ -174,16 +173,15 @@ const Send = () => {
                 <Button size="sm" onClick={handleMax} className={styles.inputAddonRight}>Max</Button>
               </div>
               {usdValue && <p className="text-sm text-center text-gray-400">≈ ${usdValue}</p>}
-              <p className="text-xs text-center text-gray-400">Balance: {balance[selectedNetwork] || 0} {selectedNetwork.toUpperCase()}</p>
+              <p className="text-xs text-center text-gray-400">Balance: {currentBalance} {selectedNetwork.toUpperCase()}</p>
               <p className="text-xs text-center text-red-400 font-medium">Min. amount: {minAmount} {selectedNetwork.toUpperCase()}</p>
               <div className={styles.buttonsRow}>
-                <Button className={`${styles.btn} ${styles[currentColorClass]}`} onClick={() => setStep(2)}>Back</Button>
-                <Button className={`${styles.btn} ${styles[currentColorClass]}`} onClick={() => setStep(4)} disabled={!amount || Number(amount) < minAmount}>Next</Button>
+                <Button onClick={() => setStep(2)} className={`${styles.btn} ${styles[currentColorClass]}`}>Back</Button>
+                <Button onClick={() => setStep(4)} className={`${styles.btn} ${styles[currentColorClass]}`} disabled={!amount || Number(amount) < minAmount}>Next</Button>
               </div>
             </div>
           )}
 
-          {/* STEP 4 */}
           {step === 4 && (
             <div className="space-y-8">
               <Logo />
@@ -198,15 +196,14 @@ const Send = () => {
                 </div>
               </div>
               <div className={styles.buttonsRow}>
-                <Button className={`${styles.btn} ${styles[currentColorClass]}`} onClick={() => setStep(3)}>Back</Button>
-                <Button className={`${styles.btn} ${styles[currentColorClass]}`} onClick={handleSend} disabled={sending || feeLoading}>
+                <Button onClick={() => setStep(3)} className={`${styles.btn} ${styles[currentColorClass]}`}>Back</Button>
+                <Button onClick={handleSend} disabled={sending || feeLoading} className={`${styles.btn} ${styles[currentColorClass]}`}>
                   {sending ? <Loader2 className="animate-spin" /> : "Send"}
                 </Button>
               </div>
             </div>
           )}
 
-          {/* STEP 5 */}
           {step === 5 && txHash && (
             <div className="text-center space-y-4">
               <h2 className={styles.successText}>✅ Sent!</h2>
@@ -216,9 +213,7 @@ const Send = () => {
                 setTxHash(null);
                 setAmount("");
                 setTo("");
-              }}>
-                Send Another
-              </Button>
+              }}>Send Another</Button>
             </div>
           )}
         </CardContent>
