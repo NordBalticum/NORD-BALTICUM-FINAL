@@ -1,247 +1,261 @@
 "use client";
-export const dynamic = "force-dynamic";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
-import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
-import Image from "next/image";
-
-import { useAuth } from "@/contexts/AuthContext";
-import { useNetwork } from "@/contexts/NetworkContext";
+import { useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 import { useSend } from "@/contexts/SendContext";
 import { useBalance } from "@/contexts/BalanceContext";
+import { useNetwork } from "@/contexts/NetworkContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { useSystemReady } from "@/hooks/useSystemReady";
-import { useScale } from "@/hooks/useScale";
+import { Input } from "@/components/ui/Input";
+import { Button } from "@/components/ui/Button";
+import { Card, CardContent } from "@/components/ui/Card";
+import { Loader2, QrCode, ChevronDown } from "lucide-react";
+import * as Select from "@radix-ui/react-select";
+import styles from "@/styles/sendtest.module.css";
 
-import SuccessModal from "@/components/modals/SuccessModal";
-import ErrorModal from "@/components/modals/ErrorModal";
-import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
+// ✅ Safe dynamic import of QR Scanner (NO SSR ISSUES)
+const Scanner = dynamic(
+  () => import("@yudiel/react-qr-scanner").then((mod) => mod.Scanner),
+  { ssr: false }
+);
 
-import styles from "@/styles/send.module.css";
-import background from "@/styles/background.module.css";
+const networks = [
+  { label: "Ethereum", value: "eth", color: "color-eth", icon: "/icons/eth.svg", min: 0.001 },
+  { label: "Polygon", value: "polygon", color: "color-polygon", icon: "/icons/matic.svg", min: 0.1 },
+  { label: "BNB", value: "bnb", color: "color-bnb", icon: "/icons/bnb.svg", min: 0.01 },
+  { label: "Avalanche", value: "avax", color: "color-avax", icon: "/icons/avax.svg", min: 0.01 },
+];
 
-// NETWORK CONFIG
-const NETWORKS = {
-  eth:   { label: "ETH",   min: 0.001,  color: "#0072ff", explorer: "https://etherscan.io/tx/" },
-  bnb:   { label: "BNB",   min: 0.0005, color: "#f0b90b", explorer: "https://bscscan.com/tx/" },
-  tbnb:  { label: "tBNB",  min: 0.0005, color: "#f0b90b", explorer: "https://testnet.bscscan.com/tx/" },
-  matic: { label: "MATIC", min: 0.1,    color: "#8247e5", explorer: "https://polygonscan.com/tx/" },
-  avax:  { label: "AVAX",  min: 0.01,   color: "#e84142", explorer: "https://snowtrace.io/tx/" },
+const coingeckoIds = {
+  eth: "ethereum",
+  polygon: "matic-network",
+  bnb: "binancecoin",
+  avax: "avalanche-2",
 };
 
-const NETWORK_LIST = Object.entries(NETWORKS).map(([symbol, net]) => ({
-  symbol,
-  ...net,
-  logo: `/icons/${symbol.includes("bnb") ? "bnb" : symbol}.svg`,
-}));
+const isValidAddress = (address: string) =>
+  /^0x[a-fA-F0-9]{40}$/.test(address.trim());
 
-export default function SendPage() {
-  const router = useRouter();
+const Logo = () => (
+  <div className={styles.logoWrapper}>
+    <img src="/icons/logo.svg" alt="Nord Balticum" className={styles.logoImage} />
+  </div>
+);
+
+const Send = () => {
   const { user } = useAuth();
-  const { activeNetwork, switchNetwork } = useNetwork();
-  const { balances, prices } = useBalance();
-  const { ready } = useSystemReady();
-  const scale = useScale();
+  const { balance } = useBalance();
+  const { switchNetwork } = useNetwork();
+  const { sendTransaction, sending, calculateFees, gasFee, adminFee, feeLoading } = useSend();
+  const systemReady = useSystemReady();
 
-  const {
-    sendTransaction,
-    sending,
-    gasFee,
-    adminFee,
-    totalFee,
-    feeLoading,
-    feeError,
-    calculateFees,
-  } = useSend();
-
-  const [receiver, setReceiver] = useState("");
+  const [step, setStep] = useState(1);
+  const [selectedNetwork, setSelectedNetwork] = useState("eth");
+  const [to, setTo] = useState("");
   const [amount, setAmount] = useState("");
-  const [confirmOpen, setConfirmOpen] = useState(false);
-  const [successOpen, setSuccessOpen] = useState(false);
-  const [txHash, setTxHash] = useState("");
-  const [error, setError] = useState(null);
-
-  const selectedIndex = useMemo(
-    () => NETWORK_LIST.findIndex((n) => n.symbol === activeNetwork),
-    [activeNetwork]
-  );
-
-  const cfg = NETWORKS[activeNetwork];
-  const { label: short = "", min = 0, color = "#333", explorer = "" } = cfg || {};
-  const val = useMemo(() => parseFloat(amount) || 0, [amount]);
-  const bal = useMemo(() => balances?.[activeNetwork] || 0, [balances, activeNetwork]);
-
-  const eurBal = useMemo(() => {
-    const rate = prices?.[activeNetwork]?.eur ?? 0;
-    return (bal * rate).toFixed(2);
-  }, [prices, activeNetwork, bal]);
-
-  const usdBal = useMemo(() => {
-    const rate = prices?.[activeNetwork]?.usd ?? 0;
-    return (bal * rate).toFixed(2);
-  }, [prices, activeNetwork, bal]);
-
-  const isValidAddress = useCallback(
-    (addr) => /^0x[a-fA-F0-9]{40}$/.test(addr.trim()),
-    []
-  );
+  const [txHash, setTxHash] = useState<string | null>(null);
+  const [lastSentTime, setLastSentTime] = useState(0);
+  const [usdPrices, setUsdPrices] = useState<any>({});
+  const [showScanner, setShowScanner] = useState(false);
 
   useEffect(() => {
-    if (val > 0 && activeNetwork) calculateFees(activeNetwork, val);
-  }, [activeNetwork, val, calculateFees]);
+    if (step === 3) calculateFees(amount);
+  }, [step, amount]);
 
   useEffect(() => {
-    if (ready && !user) router.replace("/");
-  }, [ready, user, router]);
+    const fetchPrices = async () => {
+      const ids = Object.values(coingeckoIds).join(",");
+      try {
+        const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd`);
+        const data = await res.json();
+        setUsdPrices(data);
+      } catch (err) {
+        console.error("❌ Failed to fetch USD price:", err);
+      }
+    };
+    fetchPrices();
+  }, [selectedNetwork]);
 
-  const handleSend = () => {
-    if (!cfg) return setError("Unsupported network.");
-    if (!isValidAddress(receiver)) return setError("Invalid address.");
-    if (val < min) return setError(`Minimum amount is ${min} ${short}`);
-    if (val + totalFee > bal) return setError("Insufficient balance.");
-    if (!user?.email) return setError("User email not found.");
-    setConfirmOpen(true);
+  const handleNetworkChange = (value: string) => {
+    setSelectedNetwork(value);
+    switchNetwork(value);
+    setTimeout(() => setStep(2), 200);
   };
 
-  const onConfirm = async () => {
-    setConfirmOpen(false);
-    setError(null);
+  const handleMax = () => {
+    if (balance?.[selectedNetwork]) {
+      setAmount(balance[selectedNetwork].toString());
+    }
+  };
+
+  const handleSend = async () => {
+    const now = Date.now();
+    const min = networks.find(n => n.value === selectedNetwork)?.min || 0;
+    const currentBalance = Number(balance[selectedNetwork] || 0);
+    const parsedAmount = Number(amount);
+    const cleanTo = to.trim().toLowerCase();
+
+    if (!isValidAddress(cleanTo)) return alert("❌ Invalid recipient address.");
+    if (now - lastSentTime < 10000) return alert("⚠️ Please wait a moment before sending again.");
+    if (parsedAmount < min) return alert(`⚠️ Minimum: ${min} ${selectedNetwork.toUpperCase()}`);
+    if (parsedAmount > currentBalance) return alert("❌ Insufficient balance.");
+
     try {
-      const hash = await sendTransaction({
-        to: receiver.trim().toLowerCase(),
-        amount: parseFloat(amount),
-        userEmail: user.email,
-      });
-
-      if (!hash) throw new Error("Transaction failed or no hash returned.");
-
-      setTxHash(hash);
-      setReceiver("");
-      setAmount("");
-      setSuccessOpen(true);
-      navigator.vibrate?.(100);
-    } catch (e) {
-      setError(e.message || "Transaction failed");
+      const tx = await sendTransaction({ to: cleanTo, amount, userEmail: user.email });
+      if (!tx) throw new Error("No transaction hash returned.");
+      setTxHash(tx);
+      setLastSentTime(now);
+      setStep(5);
+    } catch (err: any) {
+      console.error("❌ Transaction error:", err);
+      alert("Transaction failed: " + (err.message || "Unknown error"));
     }
   };
 
-  const switchNet = (index) => {
-    const net = NETWORK_LIST[index].symbol;
-    if (net !== activeNetwork) {
-      switchNetwork(net);
-      setReceiver("");
-      setAmount("");
-      navigator.vibrate?.(20);
-    }
-  };
+  const usdRate = usdPrices[coingeckoIds[selectedNetwork]]?.usd || null;
+  const usdEstimate = usdRate && amount ? (Number(amount) * usdRate).toFixed(2) : null;
+  const currentBalance = (balance[selectedNetwork] || 0).toFixed(6);
+  const minAmount = networks.find(n => n.value === selectedNetwork)?.min || 0;
+  const currentColorClass = networks.find(n => n.value === selectedNetwork)?.color || "bg-gray-500";
 
-  const buttonStyle = {
-    backgroundColor: color,
-    color: ["bnb", "tbnb"].includes(activeNetwork) ? "#000" : "#fff",
-  };
+  if (!systemReady) {
+    return (
+      <div className="flex items-center justify-center h-screen text-white">
+        <Loader2 className="animate-spin mr-2" />
+        Preparing system...
+      </div>
+    );
+  }
 
   return (
-    <main className={`${styles.main} ${background.gradient}`} style={{ transform: `scale(${scale})` }}>
-      <div className={styles.wrapper}>
-
-        {/* Network Selector */}
-        <div className={styles.selectorContainer}>
-          {NETWORK_LIST.map((net, idx) => (
-            <motion.div
-              key={net.symbol}
-              className={`${styles.card} ${idx === selectedIndex ? styles.selected : ""}`}
-              onClick={() => switchNet(idx)}
-              whileTap={{ scale: 0.96 }}
-            >
-              <Image src={net.logo} alt={net.name} width={44} height={44} />
-              <span>{net.name}</span>
-            </motion.div>
-          ))}
-        </div>
-
-        {/* Balance Info */}
-        <div className={styles.balanceTable}>
-          <p>Your Balance: <strong>{bal.toFixed(6)} {short}</strong></p>
-          <p>≈ €{eurBal} | ≈ ${usdBal}</p>
-        </div>
-
-        {/* Form */}
-        <div className={styles.walletActions}>
-          <input
-            type="text"
-            placeholder="0xRecipientAddress..."
-            value={receiver}
-            onChange={(e) => setReceiver(e.target.value)}
-            disabled={sending}
-            className={styles.inputField}
+    <div className={styles.container}>
+      {showScanner && (
+        <div className={styles.scannerOverlay}>
+          <Scanner
+            onScan={(result) => {
+              if (result?.[0]?.rawValue) {
+                setTo(result[0].rawValue);
+                setShowScanner(false);
+              }
+            }}
+            onError={(err) => {
+              console.error("❌ QR Scanner error:", err);
+              setShowScanner(false);
+            }}
+            constraints={{ facingMode: "environment" }}
           />
-          <input
-            type="number"
-            placeholder="Amount"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            disabled={sending}
-            className={styles.inputField}
-            min="0"
-          />
-
-          <div className={styles.feesInfo}>
-            {feeLoading ? (
-              <p><MiniLoadingSpinner size={14} /> Calculating fees…</p>
-            ) : feeError ? (
-              <p style={{ color: "red" }}>Fee error: {feeError}</p>
-            ) : (
-              <>
-                <p>Total: {(val + totalFee).toFixed(6)} {short}</p>
-                <p>Min: {min} {short}</p>
-              </>
-            )}
-          </div>
-
-          <button
-            onClick={handleSend}
-            disabled={!receiver || sending || feeLoading}
-            className={styles.sendNowButton}
-            style={buttonStyle}
-          >
-            {sending ? <MiniLoadingSpinner size={20} color="#fff" /> : "SEND NOW"}
-          </button>
         </div>
+      )}
 
-        {/* Confirm Modal */}
-        {confirmOpen && (
-          <div className={styles.overlay}>
-            <div className={styles.confirmModal}>
-              <h3>Confirm Transaction</h3>
-              <p><strong>Network:</strong> {short}</p>
-              <p><strong>To:</strong> {receiver}</p>
-              <p><strong>Amount:</strong> {val.toFixed(6)} {short}</p>
-              <p><strong>Gas Fee:</strong> {gasFee.toFixed(6)} {short}</p>
-              <p><strong>Admin Fee:</strong> {adminFee.toFixed(6)} {short}</p>
-              <p><strong>Total:</strong> {(val + totalFee).toFixed(6)} {short}</p>
-              <div className={styles.modalActions}>
-                <button onClick={onConfirm} disabled={sending}>
-                  {sending ? "Processing…" : "Confirm"}
-                </button>
-                <button onClick={() => setConfirmOpen(false)}>Cancel</button>
+      <Card className={`${styles.card} pt-16`}>
+        <CardContent className="space-y-10 p-8">
+          {/* STEP 1 - Select Network */}
+          {step === 1 && (
+            <div className="space-y-8">
+              <Logo />
+              <h2 className={styles.stepTitle}>Select Network</h2>
+              <Select.Root value={selectedNetwork} onValueChange={handleNetworkChange}>
+                <Select.Trigger className={styles.selectTrigger}>
+                  <Select.Value placeholder="Select network..." />
+                  <Select.Icon><ChevronDown size={18} /></Select.Icon>
+                </Select.Trigger>
+                <Select.Portal>
+                  <Select.Content className="z-50 bg-black border border-neutral-700 rounded-xl shadow-2xl animate-fade-in" position="popper">
+                    {networks.map(net => (
+                      <Select.Item key={net.value} value={net.value} className={styles.selectItem}>
+                        <img src={net.icon} alt={net.label} className={styles.selectIcon} />
+                        <Select.ItemText>{net.label}</Select.ItemText>
+                      </Select.Item>
+                    ))}
+                  </Select.Content>
+                </Select.Portal>
+              </Select.Root>
+            </div>
+          )}
+
+          {/* STEP 2 - Address */}
+          {step === 2 && (
+            <div className="space-y-8">
+              <Logo />
+              <h2 className={styles.stepTitle}>Recipient Address</h2>
+              <div className={styles.inputWrapper}>
+                <Input value={to} onChange={(e) => setTo(e.target.value)} placeholder="0x... address" className="pr-14" />
+                <Button variant="ghost" className={styles.inputAddonRight} onClick={() => setShowScanner(true)}>
+                  <QrCode size={18} />
+                </Button>
+              </div>
+              <div className={styles.buttonsRow}>
+                <Button className={`${styles.btn} ${styles[currentColorClass]}`} onClick={() => setStep(1)}>Back</Button>
+                <Button className={`${styles.btn} ${styles[currentColorClass]}`} onClick={() => setStep(3)} disabled={!to}>
+                  Next
+                </Button>
               </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Success Modal */}
-        {successOpen && txHash && (
-          <SuccessModal
-            message="✅ Transaction Sent!"
-            transactionHash={txHash}
-            explorerUrl={`${explorer}${txHash}`}
-            onClose={() => setSuccessOpen(false)}
-          />
-        )}
+          {/* STEP 3 - Amount */}
+          {step === 3 && (
+            <div className="space-y-8">
+              <Logo />
+              <h2 className={styles.stepTitle}>Enter Amount</h2>
+              <div className={styles.inputWrapper}>
+                <Input
+                  type="number"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  placeholder="Amount"
+                  className="text-center text-xl pr-14"
+                />
+                <Button size="sm" onClick={handleMax} className={styles.inputAddonRight}>Max</Button>
+              </div>
+              <p className="text-sm text-center text-gray-400">{usdEstimate ? `≈ $${usdEstimate}` : "USD estimate"}</p>
+              <p className="text-xs text-center text-gray-400">Balance: {currentBalance} {selectedNetwork.toUpperCase()}</p>
+              <p className="text-xs text-center text-red-400 font-medium">Min. amount: {minAmount} {selectedNetwork.toUpperCase()}</p>
+              <div className={styles.buttonsRow}>
+                <Button className={`${styles.btn} ${styles[currentColorClass]}`} onClick={() => setStep(2)}>Back</Button>
+                <Button className={`${styles.btn} ${styles[currentColorClass]}`} onClick={() => setStep(4)} disabled={!amount || Number(amount) < minAmount}>
+                  Next
+                </Button>
+              </div>
+            </div>
+          )}
 
-        {/* Error Modal */}
-        {error && <ErrorModal error={error} onClose={() => setError(null)} />}
-      </div>
-    </main>
+          {/* STEP 4 - Confirm */}
+          {step === 4 && (
+            <div className="space-y-8">
+              <Logo />
+              <h2 className={styles.stepTitle}>Confirm Transfer</h2>
+              <div className={styles.confirmBox}>
+                <p className={styles.amountDisplay}>{amount} {selectedNetwork.toUpperCase()}</p>
+                <p className={styles.usdValue}>{usdEstimate ? `≈ $${usdEstimate}` : ""}</p>
+                <div className={styles.confirmDetails}>
+                  <p><b>To:</b> {to}</p>
+                  <p><b>Network:</b> {selectedNetwork}</p>
+                  <p><b>Fee:</b> {feeLoading ? "Calculating..." : `${(Number(gasFee) + Number(adminFee)).toFixed(6)} ${selectedNetwork.toUpperCase()}`}</p>
+                </div>
+              </div>
+              <div className={styles.buttonsRow}>
+                <Button className={`${styles.btn} ${styles[currentColorClass]}`} onClick={() => setStep(3)}>Back</Button>
+                <Button className={`${styles.btn} ${styles[currentColorClass]}`} onClick={handleSend} disabled={sending || feeLoading}>
+                  {sending ? <Loader2 className="animate-spin" /> : "Send"}
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* STEP 5 - Done */}
+          {step === 5 && txHash && (
+            <div className="text-center space-y-4">
+              <h2 className={styles.successText}>✅ Sent!</h2>
+              <p className={styles.txHashBox}>TX Hash:<br />{txHash}</p>
+              <Button className={`${styles.btn} w-full mt-4`} onClick={() => setStep(1)}>Send Another</Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
   );
-}
+};
+
+export default Send;
