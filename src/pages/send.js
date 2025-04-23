@@ -14,9 +14,7 @@ import { Loader2, QrCode, ChevronDown } from "lucide-react";
 import * as Select from "@radix-ui/react-select";
 import styles from "@/styles/send.module.css";
 
-const Scanner = typeof window !== "undefined"
-  ? dynamic(() => import("@yudiel/react-qr-scanner").then((m) => m.Scanner), { ssr: false })
-  : () => null;
+const Scanner = dynamic(() => import("@yudiel/react-qr-scanner").then(m => m.Scanner), { ssr: false });
 
 const networks = [
   { label: "Ethereum", value: "eth", color: "color-eth", icon: "/icons/eth.svg", min: 0.001 },
@@ -135,7 +133,7 @@ const Send = () => {
 
   return (
     <div className={styles.container}>
-      {showScanner && typeof window !== "undefined" && Scanner && (
+      {showScanner && (
         <div className={styles.scannerOverlay}>
           <Scanner
             ref={scannerRef}
