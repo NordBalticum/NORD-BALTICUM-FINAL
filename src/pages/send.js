@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
-import dynamic from "next/dynamic";
+import { useEffect, useState } from "react";
 import { useSend } from "@/contexts/SendContext";
 import { useBalance } from "@/contexts/BalanceContext";
 import { useNetwork } from "@/contexts/NetworkContext";
@@ -13,8 +12,6 @@ import { Card, CardContent } from "@/components/ui/Card";
 import { Loader2, QrCode, ChevronDown } from "lucide-react";
 import * as Select from "@radix-ui/react-select";
 import styles from "@/styles/send.module.css";
-
-const Scanner = dynamic(() => import("@yudiel/react-qr-scanner").then(m => m.Scanner), { ssr: false });
 
 const networks = [
   { label: "Ethereum", value: "eth", color: "color-eth", icon: "/icons/eth.svg", min: 0.001 },
@@ -56,8 +53,6 @@ const Send = () => {
   const [txHash, setTxHash] = useState(null);
   const [lastSentTime, setLastSentTime] = useState(0);
   const [usdPrices, setUsdPrices] = useState({});
-  const [showScanner, setShowScanner] = useState(false);
-  const scannerRef = useRef(null);
 
   useEffect(() => {
     if (step === 3) calculateFees(amount);
@@ -133,26 +128,6 @@ const Send = () => {
 
   return (
     <div className={styles.container}>
-      {showScanner && (
-        <div className={styles.scannerOverlay}>
-          <Scanner
-            ref={scannerRef}
-            onScan={(result) => {
-              if (result?.[0]?.rawValue) {
-                setTo(result[0].rawValue);
-                setShowScanner(false);
-                vibrate(20);
-              }
-            }}
-            onError={(err) => {
-              console.error("Scanner error:", err);
-              setShowScanner(false);
-            }}
-            constraints={{ facingMode: "environment" }}
-          />
-        </div>
-      )}
-
       <Card className={`${styles.card} pt-16 animate-fade-in`}>
         <CardContent className="space-y-10 p-8">
           {step === 1 && (
@@ -184,7 +159,7 @@ const Send = () => {
               <h2 className={styles.stepTitle}>Recipient Address</h2>
               <div className={styles.inputWrapper}>
                 <Input value={to} onChange={(e) => setTo(e.target.value)} placeholder="0x... address" className="pr-14" />
-                <Button variant="ghost" className={styles.inputAddonRight} onClick={() => setShowScanner(true)}>
+                <Button variant="ghost" className={styles.inputAddonRight} disabled>
                   <QrCode size={18} />
                 </Button>
               </div>
