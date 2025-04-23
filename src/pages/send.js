@@ -12,13 +12,10 @@ import { Button } from "@/components/ui/Button";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Loader2, QrCode, ChevronDown } from "lucide-react";
 import * as Select from "@radix-ui/react-select";
-import styles from "@/styles/send.module.css";
+import styles from "@/styles/sendtest.module.css";
 
-// ✅ Safe dynamic import of QR Scanner (NO SSR ISSUES)
-const Scanner = dynamic(
-  () => import("@yudiel/react-qr-scanner").then((mod) => mod.Scanner),
-  { ssr: false }
-);
+// ✅ SSR-safe QR scanner import
+const Scanner = dynamic(() => import("@yudiel/react-qr-scanner").then(m => m.Scanner), { ssr: false });
 
 const networks = [
   { label: "Ethereum", value: "eth", color: "color-eth", icon: "/icons/eth.svg", min: 0.001 },
@@ -34,8 +31,7 @@ const coingeckoIds = {
   avax: "avalanche-2",
 };
 
-const isValidAddress = (address: string) =>
-  /^0x[a-fA-F0-9]{40}$/.test(address.trim());
+const isValidAddress = (address) => /^0x[a-fA-F0-9]{40}$/.test(address.trim());
 
 const Logo = () => (
   <div className={styles.logoWrapper}>
@@ -54,9 +50,9 @@ const Send = () => {
   const [selectedNetwork, setSelectedNetwork] = useState("eth");
   const [to, setTo] = useState("");
   const [amount, setAmount] = useState("");
-  const [txHash, setTxHash] = useState<string | null>(null);
+  const [txHash, setTxHash] = useState(null);
   const [lastSentTime, setLastSentTime] = useState(0);
-  const [usdPrices, setUsdPrices] = useState<any>({});
+  const [usdPrices, setUsdPrices] = useState({});
   const [showScanner, setShowScanner] = useState(false);
 
   useEffect(() => {
@@ -71,13 +67,13 @@ const Send = () => {
         const data = await res.json();
         setUsdPrices(data);
       } catch (err) {
-        console.error("❌ Failed to fetch USD price:", err);
+        console.error("❌ USD fetch error:", err);
       }
     };
     fetchPrices();
   }, [selectedNetwork]);
 
-  const handleNetworkChange = (value: string) => {
+  const handleNetworkChange = (value) => {
     setSelectedNetwork(value);
     switchNetwork(value);
     setTimeout(() => setStep(2), 200);
@@ -92,22 +88,22 @@ const Send = () => {
   const handleSend = async () => {
     const now = Date.now();
     const min = networks.find(n => n.value === selectedNetwork)?.min || 0;
-    const currentBalance = Number(balance[selectedNetwork] || 0);
     const parsedAmount = Number(amount);
+    const currentBalance = Number(balance[selectedNetwork] || 0);
     const cleanTo = to.trim().toLowerCase();
 
-    if (!isValidAddress(cleanTo)) return alert("❌ Invalid recipient address.");
+    if (!isValidAddress(cleanTo)) return alert("❌ Invalid address.");
     if (now - lastSentTime < 10000) return alert("⚠️ Please wait a moment before sending again.");
     if (parsedAmount < min) return alert(`⚠️ Minimum: ${min} ${selectedNetwork.toUpperCase()}`);
     if (parsedAmount > currentBalance) return alert("❌ Insufficient balance.");
 
     try {
-      const tx = await sendTransaction({ to: cleanTo, amount, userEmail: user.email });
-      if (!tx) throw new Error("No transaction hash returned.");
-      setTxHash(tx);
+      const hash = await sendTransaction({ to: cleanTo, amount, userEmail: user.email });
+      if (!hash) throw new Error("No transaction hash returned");
+      setTxHash(hash);
       setLastSentTime(now);
       setStep(5);
-    } catch (err: any) {
+    } catch (err) {
       console.error("❌ Transaction error:", err);
       alert("Transaction failed: " + (err.message || "Unknown error"));
     }
@@ -140,7 +136,7 @@ const Send = () => {
               }
             }}
             onError={(err) => {
-              console.error("❌ QR Scanner error:", err);
+              console.error("Scanner error:", err);
               setShowScanner(false);
             }}
             constraints={{ facingMode: "environment" }}
@@ -244,7 +240,7 @@ const Send = () => {
             </div>
           )}
 
-          {/* STEP 5 - Done */}
+          {/* STEP 5 - Success */}
           {step === 5 && txHash && (
             <div className="text-center space-y-4">
               <h2 className={styles.successText}>✅ Sent!</h2>
