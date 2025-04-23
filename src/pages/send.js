@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import dynamic from "next/dynamic";
 import { useSend } from "@/contexts/SendContext";
 import { useBalance } from "@/contexts/BalanceContext";
@@ -32,6 +32,10 @@ const coingeckoIds = {
 
 const isValidAddress = (address) => /^0x[a-fA-F0-9]{40}$/.test(address.trim());
 
+const vibrate = (pattern = 50) => {
+  if (typeof window !== "undefined" && navigator?.vibrate) navigator.vibrate(pattern);
+};
+
 const Logo = () => (
   <div className={styles.logoWrapper}>
     <img src="/icons/logo.svg" alt="Nord Balticum" className={styles.logoImage} />
@@ -44,7 +48,6 @@ const Send = () => {
   const { switchNetwork } = useNetwork();
   const { sendTransaction, sending, calculateFees, gasFee, adminFee, feeLoading } = useSend();
   const systemReady = useSystemReady();
-
   const [step, setStep] = useState(1);
   const [selectedNetwork, setSelectedNetwork] = useState("eth");
   const [to, setTo] = useState("");
@@ -53,6 +56,7 @@ const Send = () => {
   const [lastSentTime, setLastSentTime] = useState(0);
   const [usdPrices, setUsdPrices] = useState({});
   const [showScanner, setShowScanner] = useState(false);
+  const scannerRef = useRef(null);
 
   useEffect(() => {
     if (step === 3) calculateFees(amount);
@@ -75,12 +79,14 @@ const Send = () => {
   const handleNetworkChange = (value) => {
     setSelectedNetwork(value);
     switchNetwork(value);
-    setTimeout(() => setStep(2), 200);
+    vibrate(30);
+    setTimeout(() => setStep(2), 250);
   };
 
   const handleMax = () => {
     if (balance?.[selectedNetwork]) {
       setAmount(balance[selectedNetwork].toString());
+      vibrate(15);
     }
   };
 
@@ -92,18 +98,20 @@ const Send = () => {
     const cleanTo = to.trim().toLowerCase();
 
     if (!isValidAddress(cleanTo)) return alert("❌ Invalid address.");
-    if (now - lastSentTime < 10000) return alert("⚠️ Please wait a moment before sending again.");
-    if (parsedAmount < min) return alert(`⚠️ Minimum: ${min} ${selectedNetwork.toUpperCase()}`);
+    if (now - lastSentTime < 10000) return alert("⚠️ Please wait before sending again.");
+    if (parsedAmount < min) return alert(`Min: ${min} ${selectedNetwork.toUpperCase()}`);
     if (parsedAmount > currentBalance) return alert("❌ Insufficient balance.");
 
     try {
+      vibrate([30, 30]);
       const hash = await sendTransaction({ to: cleanTo, amount, userEmail: user.email });
       if (!hash) throw new Error("No transaction hash returned");
       setTxHash(hash);
       setLastSentTime(now);
       setStep(5);
+      vibrate([40, 80]);
     } catch (err) {
-      console.error("❌ Transaction error:", err);
+      console.error("TX ERROR:", err);
       alert("Transaction failed: " + (err.message || "Unknown error"));
     }
   };
@@ -117,8 +125,7 @@ const Send = () => {
   if (!systemReady) {
     return (
       <div className="flex items-center justify-center h-screen text-white">
-        <Loader2 className="animate-spin mr-2" />
-        Preparing system...
+        <Loader2 className="animate-spin mr-2" /> Preparing system...
       </div>
     );
   }
@@ -128,10 +135,12 @@ const Send = () => {
       {showScanner && (
         <div className={styles.scannerOverlay}>
           <Scanner
+            ref={scannerRef}
             onScan={(result) => {
               if (result?.[0]?.rawValue) {
                 setTo(result[0].rawValue);
                 setShowScanner(false);
+                vibrate(20);
               }
             }}
             onError={(err) => {
@@ -143,9 +152,8 @@ const Send = () => {
         </div>
       )}
 
-      <Card className={`${styles.card} pt-16`}>
+      <Card className={`${styles.card} pt-16 animate-fade-in`}>
         <CardContent className="space-y-10 p-8">
-          {/* STEP 1 - Select Network */}
           {step === 1 && (
             <div className="space-y-8">
               <Logo />
@@ -169,7 +177,6 @@ const Send = () => {
             </div>
           )}
 
-          {/* STEP 2 - Address */}
           {step === 2 && (
             <div className="space-y-8">
               <Logo />
@@ -187,7 +194,6 @@ const Send = () => {
             </div>
           )}
 
-          {/* STEP 3 - Amount */}
           {step === 3 && (
             <div className="space-y-8">
               <Logo />
@@ -206,7 +212,6 @@ const Send = () => {
             </div>
           )}
 
-          {/* STEP 4 - Confirm */}
           {step === 4 && (
             <div className="space-y-8">
               <Logo />
@@ -229,7 +234,6 @@ const Send = () => {
             </div>
           )}
 
-          {/* STEP 5 - Success */}
           {step === 5 && txHash && (
             <div className="text-center space-y-4">
               <h2 className={styles.successText}>✅ Sent!</h2>
