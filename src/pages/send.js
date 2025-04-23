@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/Button";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Loader2, QrCode, ChevronDown } from "lucide-react";
 import * as Select from "@radix-ui/react-select";
-import styles from "@/styles/sendtest.module.css";
+import styles from "@/styles/send.module.css";
 
 // ✅ SSR-safe QR scanner import
 const Scanner = dynamic(() => import("@yudiel/react-qr-scanner").then(m => m.Scanner), { ssr: false });
