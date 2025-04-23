@@ -77,12 +77,6 @@ const Send = () => {
     if (step === 3) calculateFees(amount);
   }, [step, amount, calculateFees]);
 
-  const handleNetworkChange = useCallback((value) => {
-    setSelectedNetwork(value);
-    switchNetwork(value);
-    setStep(2);
-  }, [switchNetwork]);
-
   const handleMax = useCallback(() => {
     if (balance?.[selectedNetwork]) {
       setAmount(Number(balance[selectedNetwork]).toFixed(6));
@@ -125,19 +119,18 @@ const Send = () => {
     <div className={styles.container}>
       <Card className={`${styles.card} pt-16`}>
         <CardContent className="space-y-10 p-8">
-
-          {/* STEP 1: Select Network */}
+          {/* STEP 1 */}
           {step === 1 && (
             <div className="space-y-8">
               <Logo />
               <h2 className={styles.stepTitle}>Select Network</h2>
-              <Select.Root value={selectedNetwork} onValueChange={handleNetworkChange}>
+              <Select.Root value={selectedNetwork} onValueChange={setSelectedNetwork}>
                 <Select.Trigger className={styles.selectTrigger}>
                   <Select.Value placeholder="Select network..." />
                   <Select.Icon><ChevronDown size={18} /></Select.Icon>
                 </Select.Trigger>
                 <Select.Portal>
-                  <Select.Content className="z-50 bg-black border border-neutral-700 rounded-xl shadow-2xl">
+                  <Select.Content className="z-50 bg-black border border-neutral-700 rounded-xl shadow-2xl animate-fade-in" position="popper">
                     {networks.map(net => (
                       <Select.Item key={net.value} value={net.value} className={styles.selectItem}>
                         <img src={net.icon} alt={net.label} className={styles.selectIcon} />
@@ -147,10 +140,15 @@ const Send = () => {
                   </Select.Content>
                 </Select.Portal>
               </Select.Root>
+              <div className={styles.buttonsRow}>
+                <Button className={`${styles.btn} ${styles[currentColorClass]}`} onClick={() => switchNetwork(selectedNetwork) && setStep(2)}>
+                  Next
+                </Button>
+              </div>
             </div>
           )}
 
-          {/* STEP 2: Enter Address */}
+          {/* STEP 2 */}
           {step === 2 && (
             <div className="space-y-8">
               <Logo />
@@ -165,7 +163,7 @@ const Send = () => {
             </div>
           )}
 
-          {/* STEP 3: Enter Amount */}
+          {/* STEP 3 */}
           {step === 3 && (
             <div className="space-y-8">
               <Logo />
@@ -175,7 +173,7 @@ const Send = () => {
                 <Button size="sm" onClick={handleMax} className={styles.inputAddonRight}>Max</Button>
               </div>
               {usdValue && <p className="text-sm text-center text-gray-400">≈ ${usdValue}</p>}
-              <p className="text-xs text-center text-gray-400">Balance: {currentBalance} {selectedNetwork.toUpperCase()}</p>
+              <p className="text-xs text-center text-gray-400">Balance: {balance[selectedNetwork] || 0} {selectedNetwork.toUpperCase()}</p>
               <p className="text-xs text-center text-red-400 font-medium">Min. amount: {minAmount} {selectedNetwork.toUpperCase()}</p>
               <div className={styles.buttonsRow}>
                 <Button className={`${styles.btn} ${styles[currentColorClass]}`} onClick={() => setStep(2)}>Back</Button>
@@ -184,7 +182,7 @@ const Send = () => {
             </div>
           )}
 
-          {/* STEP 4: Confirm */}
+          {/* STEP 4 */}
           {step === 4 && (
             <div className="space-y-8">
               <Logo />
@@ -207,7 +205,7 @@ const Send = () => {
             </div>
           )}
 
-          {/* STEP 5: Done */}
+          {/* STEP 5 */}
           {step === 5 && txHash && (
             <div className="text-center space-y-4">
               <h2 className={styles.successText}>✅ Sent!</h2>
@@ -217,10 +215,11 @@ const Send = () => {
                 setTxHash(null);
                 setAmount("");
                 setTo("");
-              }}>Send Another</Button>
+              }}>
+                Send Another
+              </Button>
             </div>
           )}
-
         </CardContent>
       </Card>
     </div>
