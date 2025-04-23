@@ -131,8 +131,8 @@ const Send = () => {
               <Select.Root value={selectedNetwork} onValueChange={handleSelectNetwork}>
                 <Select.Trigger className={styles.selectTrigger}>
                   <div className="flex items-center gap-2">
-                    <img src={networks.find(n => n.value === selectedNetwork)?.icon} alt="net" className="w-5 h-5" />
-                    <Select.Value placeholder="Select network..." />
+                    <img src={networks.find(n => n.value === selectedNetwork)?.icon} alt="icon" className="w-5 h-5" />
+                    <span>{networks.find(n => n.value === selectedNetwork)?.label}</span>
                   </div>
                   <Select.Icon><ChevronDown size={18} /></Select.Icon>
                 </Select.Trigger>
