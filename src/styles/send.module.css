@@ -1,4 +1,4 @@
-/* sendtest.module.css - ULTIMATE FINAL REWORKED */
+/* send.module.css – FINAL CLEANED VERSION */
 
 .container {
   min-height: 100vh;
@@ -55,6 +55,13 @@
   width: 100%;
   font-size: 1rem;
   font-weight: 500;
+  cursor: pointer;
+}
+
+.selectValueWrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
 }
 
 .selectItem {
@@ -163,7 +170,6 @@
   pointer-events: none;
 }
 
-/* Premium Button Styles */
 .btn {
   border-radius: 0.75rem;
   font-weight: 600;
@@ -189,34 +195,6 @@
 .color-polygon { background-color: #a855f7; color: black; }
 .color-avax    { background-color: #f87171; color: black; }
 
-/* Scanner overlay (optional if used) */
-.scannerOverlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.95);
-  z-index: 9999;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 2rem;
-}
-
-.selectTrigger {
-  background-color: #111;
-  border: 1px solid #333;
-  padding: 1rem 1.25rem;
-  border-radius: 1rem;
-  color: white;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
-  font-size: 1rem;
-  font-weight: 500;
-  cursor: pointer; /* <--- svarbiausias fixas */
-}
-
-/* Mobile */
 @media (max-width: 768px) {
   .card {
     max-width: 94%;
