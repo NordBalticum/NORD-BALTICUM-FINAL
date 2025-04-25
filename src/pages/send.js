@@ -18,7 +18,7 @@ const networks = [
   { label: "Polygon", value: "polygon", color: "color-polygon", icon: "/icons/matic.svg", min: 0.1 },
   { label: "BNB", value: "bnb", color: "color-bnb", icon: "/icons/bnb.svg", min: 0.01 },
   { label: "Avalanche", value: "avax", color: "color-avax", icon: "/icons/avax.svg", min: 0.01 },
-  { label: "Testnet BNB", value: "tbnb", color: "color-bnb", icon: "/icons/bnb.svg", min: 0.001 },
+  { label: "Testnet BNB", value: "tbnb", color: "color-bnb", icon: "/icons/bnb.svg", min: 0.001 }
 ];
 
 const coingeckoIds = {
@@ -26,7 +26,7 @@ const coingeckoIds = {
   polygon: "matic-network",
   bnb: "binancecoin",
   avax: "avalanche-2",
-  tbnb: "binancecoin",
+  tbnb: "binancecoin"
 };
 
 const isValidAddress = (addr) => /^0x[a-fA-F0-9]{40}$/.test(addr.trim());
@@ -132,17 +132,17 @@ const Send = () => {
               <h2 className={styles.stepTitle}>Select Active Network</h2>
               <Select.Root value={selectedNetwork} onValueChange={handleSelectNetwork}>
                 <Select.Trigger className={styles.selectTrigger}>
-                  <Select.Value asChild>
-                    <div className="flex items-center gap-2">
-                      <img
-                        src={networks.find(n => n.value === selectedNetwork)?.icon}
-                        alt="net"
-                        className={styles.selectIcon}
-                      />
-                      <span>{networks.find(n => n.value === selectedNetwork)?.label}</span>
-                    </div>
-                  </Select.Value>
-                  <Select.Icon><ChevronDown size={18} /></Select.Icon>
+                  <div className={styles.selectValueWrapper}>
+                    <img
+                      src={networks.find(n => n.value === selectedNetwork)?.icon}
+                      alt="net"
+                      className={styles.selectIcon}
+                    />
+                    <Select.Value placeholder="Select network" />
+                  </div>
+                  <Select.Icon>
+                    <ChevronDown size={18} />
+                  </Select.Icon>
                 </Select.Trigger>
                 <Select.Portal>
                   <Select.Content className="z-50 bg-black border border-neutral-700 rounded-xl shadow-2xl">
