@@ -131,14 +131,12 @@ const Send = () => {
               <Logo />
               <h2 className={styles.stepTitle}>Select Active Network</h2>
               <Select.Root value={selectedNetwork} onValueChange={handleSelectNetwork}>
-                <Select.Trigger asChild>
-                  <button className={styles.selectTrigger}>
-                    <div className="flex items-center gap-2">
-                      <img src={networks.find(n => n.value === selectedNetwork)?.icon} alt="icon" className={styles.selectIcon} />
-                      <span>{networks.find(n => n.value === selectedNetwork)?.label}</span>
-                    </div>
-                    <Select.Icon><ChevronDown size={18} /></Select.Icon>
-                  </button>
+                <Select.Trigger className={styles.selectTrigger}>
+                  <div className="flex items-center gap-2">
+                    <img src={networks.find(n => n.value === selectedNetwork)?.icon} alt="icon" className={styles.selectIcon} />
+                    <span>{networks.find(n => n.value === selectedNetwork)?.label}</span>
+                  </div>
+                  <Select.Icon><ChevronDown size={18} /></Select.Icon>
                 </Select.Trigger>
                 <Select.Portal>
                   <Select.Content className="z-50 bg-black border border-neutral-700 rounded-xl shadow-2xl">
