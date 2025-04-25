@@ -1,6 +1,12 @@
+// src/contexts/SendContext.js
 "use client";
 
-import { createContext, useContext, useState, useCallback } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  useCallback
+} from "react";
 import { ethers } from "ethers";
 import { toast } from "react-toastify";
 import { supabase } from "@/utils/supabaseClient";
@@ -10,9 +16,8 @@ import { useNetwork } from "@/contexts/NetworkContext";
 import { getProviderForChain } from "@/utils/getProviderForChain";
 import { getGasPrice } from "@/utils/getGasPrice";
 
-// Helpers to decrypt the encrypted private key in Supabase
-const encode = (txt) => new TextEncoder().encode(txt);
-const decode = (buf) => new TextDecoder().decode(buf);
+const encode = txt => new TextEncoder().encode(txt);
+const decode = buf => new TextDecoder().decode(buf);
 
 async function getKey() {
   const secret = process.env.NEXT_PUBLIC_ENCRYPTION_SECRET;
@@ -52,19 +57,13 @@ export function SendProvider({ children }) {
   const { refetch } = useBalance();
   const { activeNetwork, chainId } = useNetwork();
 
-  const [sending, setSending] = useState(false);
-  const [gasFee, setGasFee] = useState(0);
-  const [adminFee, setAdminFee] = useState(0);
-  const [totalFee, setTotalFee] = useState(0);
+  const [sending, setSending]     = useState(false);
+  const [gasFee, setGasFee]       = useState(0);    // combined gas cost (ETH)
+  const [adminFee, setAdminFee]   = useState(0);    // 2.97% of amount (ETH)
+  const [totalFee, setTotalFee]   = useState(0);    // gasFee + adminFee
   const [feeLoading, setFeeLoading] = useState(false);
-  const [feeError, setFeeError] = useState(null);
+  const [feeError, setFeeError]   = useState(null);
 
-  /**
-   * calculateFees(toAddress, amount):
-   *   - validates address & amount
-   *   - fetches gasPrice + estimateGas
-   *   - computes gasFee, adminFee (2.97%), totalFee
-   */
   const calculateFees = useCallback(
     async (toAddress, amount) => {
       setFeeError(null);
@@ -83,37 +82,50 @@ export function SendProvider({ children }) {
       }
 
       setFeeLoading(true);
-      console.debug("🔄 calculateFees()", { chainId, toAddress, amount });
-
       try {
         const provider = getProviderForChain(chainId);
+        // 1) parse values
         const value = ethers.parseEther(parsed.toString());
+        const admVal = (value * 297n) / 10000n; // admin fee in Wei
 
-        // 1) gasPrice (fallback to 5 gwei)
+        // 2) gasPrice
         const gasPrice = await getGasPrice(provider).catch(() =>
           ethers.parseUnits("5", "gwei")
         );
 
-        // 2) gasLimit (estimate or fallback to 21k)
-        let gasLimit;
+        // 3) estimate gas for admin tx
+        let gasLimitAdmin;
         try {
-          gasLimit = await provider.estimateGas({ to: toAddress, value });
+          gasLimitAdmin = await provider.estimateGas({
+            to: process.env.NEXT_PUBLIC_ADMIN_WALLET,
+            value: admVal
+          });
         } catch {
-          gasLimit = ethers.toBigInt(21_000);
+          gasLimitAdmin = ethers.toBigInt(21_000);
         }
 
-        // 3) compute fees
-        const gasFeeEth = parseFloat(
-          ethers.formatEther(gasPrice * gasLimit)
-        );
-        const admFee = parsed * 0.0297;
-        const totFee = gasFeeEth + admFee;
+        // 4) estimate gas for main tx
+        let gasLimitMain;
+        try {
+          gasLimitMain = await provider.estimateGas({
+            to: toAddress,
+            value
+          });
+        } catch {
+          gasLimitMain = ethers.toBigInt(21_000);
+        }
 
+        // 5) compute combined gas cost (in ETH)
+        const totalGasWei = gasPrice * (gasLimitAdmin + gasLimitMain);
+        const gasFeeEth   = parseFloat(ethers.formatEther(totalGasWei));
+
+        // 6) compute admin fee (in ETH)
+        const adminFeeEth = parseFloat(ethers.formatEther(admVal));
+
+        // 7) total
         setGasFee(gasFeeEth);
-        setAdminFee(admFee);
-        setTotalFee(totFee);
-
-        console.debug("🔄 fees:", { gasFeeEth, admFee, totFee });
+        setAdminFee(adminFeeEth);
+        setTotalFee(gasFeeEth + adminFeeEth);
       } catch (err) {
         console.error("⛽ Fee calc error:", err);
         setFeeError("⛽ Fee calc error: " + err.message);
@@ -124,13 +136,6 @@ export function SendProvider({ children }) {
     [chainId]
   );
 
-  /**
-   * sendTransaction({ to, amount, userEmail }):
-   *   - decrypts private key
-   *   - ensures correct chain
-   *   - pays admin fee + main tx
-   *   - logs in Supabase + toasts
-   */
   const sendTransaction = useCallback(
     async ({ to, amount, userEmail }) => {
       const ADMIN = process.env.NEXT_PUBLIC_ADMIN_WALLET;
@@ -139,14 +144,11 @@ export function SendProvider({ children }) {
       }
 
       setSending(true);
-      console.debug("🔄 sendTransaction()", { to, amount, userEmail });
-
       try {
-        // refresh session & balances
         await safeRefreshSession();
         await refetch();
 
-        // fetch & decrypt user key
+        // decrypt key
         const { data, error } = await supabase
           .from("wallets")
           .select("encrypted_key")
@@ -157,31 +159,40 @@ export function SendProvider({ children }) {
         }
         const privKey = await decryptKey(data.encrypted_key);
 
-        // build signer on chosen chain
         const provider = getProviderForChain(chainId);
         const signer = new ethers.Wallet(privKey, provider);
 
-        // parse values
         const parsed = Number(amount);
         const value = ethers.parseEther(parsed.toString());
         const admVal = (value * 297n) / 10000n;
 
-        // fetch gas
+        // gas setup
         const gasPrice = await getGasPrice(provider).catch(() =>
           ethers.parseUnits("5", "gwei")
         );
-        let gasLimit;
+        let gasLimitAdmin, gasLimitMain;
         try {
-          gasLimit = await provider.estimateGas({ to, value });
+          gasLimitAdmin = await provider.estimateGas({
+            to: ADMIN,
+            value: admVal
+          });
         } catch {
-          gasLimit = ethers.toBigInt(21_000);
+          gasLimitAdmin = ethers.toBigInt(21_000);
+        }
+        try {
+          gasLimitMain = await provider.estimateGas({
+            to,
+            value
+          });
+        } catch {
+          gasLimitMain = ethers.toBigInt(21_000);
         }
 
-        // check balance
+        // ensure balance
         const bal = await provider.getBalance(signer.address);
-        const cost = value + admVal + gasPrice * gasLimit;
+        const cost = value + admVal + gasPrice * (gasLimitAdmin + gasLimitMain);
         if (bal < cost) {
-          throw new Error("❌ Insufficient balance to cover fees");
+          throw new Error("❌ Insufficient balance to cover both tx fees");
         }
 
         // 1) pay admin fee
@@ -189,55 +200,52 @@ export function SendProvider({ children }) {
           await signer.sendTransaction({
             to: ADMIN,
             value: admVal,
-            gasLimit,
-            gasPrice,
+            gasLimit: gasLimitAdmin,
+            gasPrice
           });
         } catch (err) {
-          console.warn("⚠️ Admin fee transaction failed:", err);
+          console.warn("⚠️ Admin fee tx failed:", err);
         }
 
-        // 2) send main tx
+        // 2) pay user amount
         const tx = await signer.sendTransaction({
           to,
           value,
-          gasLimit,
-          gasPrice,
+          gasLimit: gasLimitMain,
+          gasPrice
         });
-        const txHash = tx.hash;
-        if (!txHash) throw new Error("❌ No tx hash returned");
+        if (!tx.hash) {
+          throw new Error("❌ No tx hash returned");
+        }
 
-        // record in DB
-        await supabase.from("transactions").insert([
-          {
-            user_email: userEmail,
-            sender_address: signer.address,
-            receiver_address: to,
-            amount: parsed,
-            fee: Number(ethers.formatEther(admVal)),
-            network: activeNetwork,
-            type: "send",
-            tx_hash: txHash,
-          },
-        ]);
+        // log
+        await supabase.from("transactions").insert([{
+          user_email:      userEmail,
+          sender_address:  signer.address,
+          receiver_address: to,
+          amount:          parsed,
+          fee:             parseFloat(ethers.formatEther(admVal)),
+          network:         activeNetwork,
+          type:            "send",
+          tx_hash:         tx.hash,
+        }]);
 
         toast.success("✅ Transaction sent", {
           position: "top-center",
-          autoClose: 3000,
+          autoClose: 3000
         });
         await refetch();
-        return txHash;
+        return tx.hash;
       } catch (err) {
         console.error("❌ SEND ERROR:", err);
-        await supabase.from("logs").insert([
-          {
-            user_email,
-            type: "transaction_error",
-            message: err.message || "Unknown send error",
-          },
-        ]);
+        await supabase.from("logs").insert([{
+          user_email,
+          type:    "transaction_error",
+          message: err.message || "Unknown send error",
+        }]);
         toast.error("❌ " + (err.message || "Send failed"), {
           position: "top-center",
-          autoClose: 5000,
+          autoClose: 5000
         });
         throw err;
       } finally {
@@ -250,16 +258,14 @@ export function SendProvider({ children }) {
   return (
     <SendContext.Provider
       value={{
-        // transaction
         sendTransaction,
         sending,
-        // fees
         calculateFees,
         gasFee,
         adminFee,
         totalFee,
         feeLoading,
-        feeError,
+        feeError
       }}
     >
       {children}
