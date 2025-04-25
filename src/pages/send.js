@@ -62,38 +62,34 @@ export default function Send() {
   const [lastSentTime, setLastSentTime] = useState(0);
   const [usdPrices, setUsdPrices] = useState({});
 
-  // 1) minimum sendable
+  // 1) min sendable
   const minAmount = useMemo(
     () => networks.find(n => n.value === selectedNetwork)?.min || 0,
     [selectedNetwork]
   );
-
   // 2) button color
   const currentColorClass = useMemo(
     () => networks.find(n => n.value === selectedNetwork)?.color || "bg-gray-500",
     [selectedNetwork]
   );
-
-  // 3) USD rate & computed USD value
+  // 3) USD value
   const usdRate = usdPrices[coingeckoIds[selectedNetwork]]?.usd || 0;
   const usdValue = useMemo(
     () => amount && usdRate ? (Number(amount) * usdRate).toFixed(2) : null,
     [amount, usdRate]
   );
-
-  // 4) map "polygon" → "matic" for balances key
+  // 4) map polygon→matic key
   const networkKey = useMemo(
-    () => (selectedNetwork === "polygon" ? "matic" : selectedNetwork),
+    () => selectedNetwork === "polygon" ? "matic" : selectedNetwork,
     [selectedNetwork]
   );
-
-  // 5) real on-chain balance or zero
+  // 5) real on-chain balance
   const currentBalance = useMemo(() => {
     const b = balances?.[networkKey];
     return (typeof b === "number" ? b : 0).toFixed(6);
   }, [balances, networkKey]);
 
-  // fetch USD prices once
+  // fetch USD once
   useEffect(() => {
     (async () => {
       try {
@@ -102,26 +98,24 @@ export default function Send() {
           `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd`
         );
         setUsdPrices(await res.json());
-      } catch (err) {
-        console.error("USD fetch error:", err);
-      }
+      } catch {}
     })();
   }, []);
 
-  // recalc fees any time we enter step 3 or 4, or the amount / network changes
+  // recalc fees on step 3 or 4, or whenever amount/network changes
   useEffect(() => {
     if ((step === 3 || step === 4) && Number(amount) > 0) {
       calculateFees(amount);
     }
   }, [step, amount, selectedNetwork, calculateFees]);
 
-  // “Max” → set amount to your actual on-chain balance
+  // Max → set amount to on-chain balance
   const handleMax = useCallback(() => {
     const b = Number(balances?.[networkKey] || 0);
     setAmount(b.toFixed(6));
   }, [balances, networkKey]);
 
-  // select network → switch chain + go to recipient
+  // pick network → chain switch + next step
   const handleSelectNetwork = useCallback(async (value) => {
     setStep(2);
     if (value !== selectedNetwork) {
@@ -130,27 +124,19 @@ export default function Send() {
     }
   }, [selectedNetwork, switchNetwork]);
 
-  // send transaction
+  // do the send
   const handleSend = async () => {
     const now    = Date.now();
     const cleanTo = to.trim().toLowerCase();
     const parsed = Number(amount);
     const bal    = Number(balances?.[networkKey] || 0);
 
-    if (!isValidAddress(cleanTo)) {
-      return alert("❌ Invalid address");
-    }
-    if (now - lastSentTime < 10000) {
-      return alert("⚠️ Please wait before sending again");
-    }
-    if (parsed < minAmount) {
-      return alert(`Min: ${minAmount} ${selectedNetwork.toUpperCase()}`);
-    }
-    if (parsed > bal) {
-      return alert("❌ Insufficient balance");
-    }
+    if (!isValidAddress(cleanTo))      return alert("❌ Invalid address");
+    if (now - lastSentTime < 10000)    return alert("⚠️ Please wait before sending again");
+    if (parsed < minAmount)            return alert(`Min: ${minAmount} ${selectedNetwork.toUpperCase()}`);
+    if (parsed > bal)                  return alert("❌ Insufficient balance");
 
-    // ensure wallet is on the right chain
+    // force switch chain
     await switchNetwork(selectedNetwork);
 
     try {
@@ -163,7 +149,7 @@ export default function Send() {
       setLastSentTime(now);
       setStep(5);
     } catch (err) {
-      console.error("TX ERROR:", err);
+      console.error(err);
     }
   };
 
@@ -181,7 +167,7 @@ export default function Send() {
       <Card className={`${styles.card} pt-16`}>
         <CardContent className="space-y-10 p-8">
 
-          {/* STEP 1: SELECT NETWORK */}
+          {/* STEP 1 */}
           {step === 1 && (
             <div className="space-y-8">
               <Logo />
@@ -189,11 +175,9 @@ export default function Send() {
               <Select.Root value={selectedNetwork} onValueChange={handleSelectNetwork}>
                 <Select.Trigger className={styles.selectTrigger}>
                   <div className={styles.selectValueWrapper}>
-                    <img
-                      src={networks.find(n => n.value === selectedNetwork)?.icon}
-                      alt={selectedNetwork}
-                      className={styles.selectIcon}
-                    />
+                    <img src={networks.find(n=>n.value===selectedNetwork).icon}
+                         alt={selectedNetwork}
+                         className={styles.selectIcon} />
                     <Select.Value placeholder="Select network" />
                   </div>
                   <Select.Icon><ChevronDown size={18} /></Select.Icon>
@@ -201,13 +185,11 @@ export default function Send() {
                 <Select.Portal>
                   <Select.Content
                     className="z-50 bg-black border border-neutral-700 rounded-xl shadow-2xl"
-                    position="popper"
-                    sideOffset={5}
-                  >
+                    position="popper" sideOffset={5}>
                     <Select.Viewport>
                       {networks.map(net => (
                         <Select.Item key={net.value} value={net.value} className={styles.selectItem}>
-                          <img src={net.icon} alt={net.label} className={styles.selectIcon} />
+                          <img src={net.icon} alt={net.label} className={styles.selectIcon}/>
                           <Select.ItemText>{net.label}</Select.ItemText>
                         </Select.Item>
                       ))}
@@ -218,63 +200,79 @@ export default function Send() {
             </div>
           )}
 
-          {/* STEP 2: RECIPIENT */}
+          {/* STEP 2 */}
           {step === 2 && (
             <div className="space-y-8">
               <Logo />
               <h2 className={styles.stepTitle}>Recipient Address</h2>
               <div className={styles.inputWrapper}>
-                <Input
-                  value={to}
-                  onChange={e => setTo(e.target.value)}
-                  placeholder="0x... address"
-                  className="pr-14"
-                />
+                <Input value={to}
+                       onChange={e=>setTo(e.target.value)}
+                       placeholder="0x…"
+                       className="pr-14" />
               </div>
               <div className={styles.buttonsRow}>
-                <Button onClick={() => setStep(1)} className={`${styles.btn} ${styles[currentColorClass]}`}>Back</Button>
-                <Button onClick={() => setStep(3)} className={`${styles.btn} ${styles[currentColorClass]}`} disabled={!to}>Next</Button>
+                <Button onClick={()=>setStep(1)}
+                        className={`${styles.btn} ${styles[currentColorClass]}`}>
+                  Back
+                </Button>
+                <Button onClick={()=>setStep(3)}
+                        disabled={!to}
+                        className={`${styles.btn} ${styles[currentColorClass]}`}>
+                  Next
+                </Button>
               </div>
             </div>
           )}
 
-          {/* STEP 3: ENTER AMOUNT */}
+          {/* STEP 3 */}
           {step === 3 && (
             <div className="space-y-8">
               <Logo />
               <h2 className={styles.stepTitle}>Enter Amount</h2>
               <div className={styles.inputWrapper}>
-                <Input
-                  type="number"
-                  value={amount}
-                  onChange={e => setAmount(e.target.value)}
-                  placeholder="Amount"
-                  className="text-center text-xl pr-14"
-                />
-                <Button size="sm" onClick={handleMax} className={styles.inputAddonRight}>Max</Button>
+                <Input type="number"
+                       value={amount}
+                       onChange={e=>setAmount(e.target.value)}
+                       placeholder="Amount"
+                       className="text-center text-xl pr-14" />
+                <Button size="sm"
+                        onClick={handleMax}
+                        className={styles.inputAddonRight}>
+                  Max
+                </Button>
               </div>
               {usdValue && <p className="text-sm text-center text-gray-400">≈ ${usdValue}</p>}
               <p className="text-xs text-center text-gray-400">
                 Balance: {currentBalance} {selectedNetwork.toUpperCase()}
               </p>
               <p className="text-xs text-center text-red-400 font-medium">
-                Min. amount: {minAmount} {selectedNetwork.toUpperCase()}
+                Min: {minAmount} {selectedNetwork.toUpperCase()}
               </p>
               <div className={styles.buttonsRow}>
-                <Button onClick={() => setStep(2)} className={`${styles.btn} ${styles[currentColorClass]}`}>Back</Button>
-                <Button onClick={() => setStep(4)} className={`${styles.btn} ${styles[currentColorClass]}`} disabled={!amount || Number(amount) < minAmount}>Next</Button>
+                <Button onClick={()=>setStep(2)}
+                        className={`${styles.btn} ${styles[currentColorClass]}`}>
+                  Back
+                </Button>
+                <Button onClick={()=>setStep(4)}
+                        disabled={!amount||Number(amount)<minAmount}
+                        className={`${styles.btn} ${styles[currentColorClass]}`}>
+                  Next
+                </Button>
               </div>
             </div>
           )}
 
-          {/* STEP 4: CONFIRM TRANSFER */}
+          {/* STEP 4 */}
           {step === 4 && (
             <div className="space-y-8">
               <Logo />
               <h2 className={styles.stepTitle}>Confirm Transfer</h2>
               {feeError && <p className="text-sm text-red-500">{feeError}</p>}
               <div className={styles.confirmBox}>
-                <p className={styles.amountDisplay}>{amount} {selectedNetwork.toUpperCase()}</p>
+                <p className={styles.amountDisplay}>
+                  {amount} {selectedNetwork.toUpperCase()}
+                </p>
                 <p className={styles.usdValue}>{usdValue ? `≈ $${usdValue}` : ""}</p>
                 <div className={styles.confirmDetails}>
                   <p><b>To:</b> {to}</p>
@@ -285,28 +283,33 @@ export default function Send() {
                 </div>
               </div>
               <div className={styles.buttonsRow}>
-                <Button onClick={() => setStep(3)} className={`${styles.btn} ${styles[currentColorClass]}`}>Back</Button>
-                <Button onClick={handleSend} disabled={sending || feeLoading} className={`${styles.btn} ${styles[currentColorClass]}`}>
+                <Button onClick={()=>setStep(3)}
+                        className={`${styles.btn} ${styles[currentColorClass]}`}>
+                  Back
+                </Button>
+                <Button onClick={handleSend}
+                        disabled={sending||feeLoading}
+                        className={`${styles.btn} ${styles[currentColorClass]}`}>
                   {sending ? <Loader2 className="animate-spin" /> : "Send"}
                 </Button>
               </div>
             </div>
           )}
 
-          {/* STEP 5: SUCCESS */}
+          {/* STEP 5 */}
           {step === 5 && txHash && (
             <div className="text-center space-y-6">
               <h2 className={styles.successText}>✅ Sent!</h2>
               <p className={styles.txHashBox}>
-                TX Hash:<br />
-                {txHash}
+                TX Hash:<br/>{txHash}
               </p>
-              <Button className={`${styles.btn} w-full mt-4`} onClick={() => {
-                setStep(1);
-                setTxHash(null);
-                setAmount("");
-                setTo("");
-              }}>
+              <Button className={`${styles.btn} w-full mt-4`}
+                      onClick={()=>{
+                        setStep(1);
+                        setTxHash(null);
+                        setAmount("");
+                        setTo("");
+                      }}>
                 Send Another
               </Button>
             </div>
