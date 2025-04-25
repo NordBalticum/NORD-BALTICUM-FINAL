@@ -23,7 +23,7 @@ const networks = [
 
 const coingeckoIds = {
   eth:     "ethereum",
-  polygon: "matic-network",
+  matic: "matic-network",
   bnb:     "binancecoin",
   avax:    "avalanche-2",
   tbnb:    "binancecoin",
