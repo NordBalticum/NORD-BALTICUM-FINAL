@@ -83,12 +83,12 @@ const Send = () => {
   }, [balance, selectedNetwork]);
 
   const handleSelectNetwork = useCallback(async (value) => {
-    setStep(2); // visada pereina į Step 2
-    if (value !== selectedNetwork) {
-      await switchNetwork(value);
-      setSelectedNetwork(value);
-    }
-  }, [selectedNetwork, switchNetwork]);
+  setStep(2); // visada pereina į Step 2
+  setSelectedNetwork(value); // visada atnaujina, nepriklausomai ar tas pats
+  if (value !== selectedNetwork) {
+    await switchNetwork(value);
+  }
+}, [selectedNetwork, switchNetwork]);
 
   const handleSend = async () => {
     const now = Date.now();
