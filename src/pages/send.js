@@ -83,14 +83,14 @@ const Send = () => {
   }, [balance, selectedNetwork]);
 
   const handleSelectNetwork = useCallback(async (value) => {
-  if (value !== selectedNetwork) {
-    await switchNetwork(value);
-    setSelectedNetwork(value);
-  }
-  // Always go to step 2, even if network hasn't changed
-  setStep(2);
-}, [selectedNetwork, switchNetwork]);
-  
+    if (value !== selectedNetwork) {
+      await switchNetwork(value);
+      setSelectedNetwork(value);
+    }
+    // Always move to step 2 even if network hasn't changed
+    setStep(2);
+  }, [selectedNetwork, switchNetwork]);
+
   const handleSend = async () => {
     const now = Date.now();
     const cleanTo = to.trim().toLowerCase();
@@ -134,16 +134,10 @@ const Send = () => {
               <Select.Root value={selectedNetwork} onValueChange={handleSelectNetwork}>
                 <Select.Trigger className={styles.selectTrigger}>
                   <div className={styles.selectValueWrapper}>
-                    <img
-                      src={networks.find(n => n.value === selectedNetwork)?.icon}
-                      alt="net"
-                      className={styles.selectIcon}
-                    />
+                    <img src={networks.find(n => n.value === selectedNetwork)?.icon} alt="net" className={styles.selectIcon} />
                     <Select.Value placeholder="Select network" />
                   </div>
-                  <Select.Icon>
-                    <ChevronDown size={18} />
-                  </Select.Icon>
+                  <Select.Icon><ChevronDown size={18} /></Select.Icon>
                 </Select.Trigger>
                 <Select.Portal>
                   <Select.Content className="z-50 bg-black border border-neutral-700 rounded-xl shadow-2xl" position="popper" sideOffset={5}>
@@ -161,7 +155,6 @@ const Send = () => {
             </div>
           )}
 
-          {/* STEP 2 */}
           {step === 2 && (
             <div className="space-y-8">
               <Logo />
@@ -176,7 +169,6 @@ const Send = () => {
             </div>
           )}
 
-          {/* STEP 3 */}
           {step === 3 && (
             <div className="space-y-8">
               <Logo />
@@ -195,7 +187,6 @@ const Send = () => {
             </div>
           )}
 
-          {/* STEP 4 */}
           {step === 4 && (
             <div className="space-y-8">
               <Logo />
@@ -218,7 +209,6 @@ const Send = () => {
             </div>
           )}
 
-          {/* STEP 5 */}
           {step === 5 && txHash && (
             <div className="text-center space-y-6">
               <h2 className={styles.successText}>✅ Sent!</h2>
