@@ -65,11 +65,11 @@ const Send = () => {
     () => (amount && usdRate ? (Number(amount) * usdRate).toFixed(2) : null),
     [amount, usdRate]
   );
-  // Visada skaičiuojam balansą su fallback į 0
-  const currentBalance = useMemo(
-    () => (Number(balance?.[selectedNetwork] || 0)).toFixed(6),
-    [balance, selectedNetwork]
-  );
+  // TIKRAS balansas arba '0.000000'
+  const currentBalance = useMemo(() => {
+    const b = balance?.[selectedNetwork];
+    return (typeof b === "number" ? b : 0).toFixed(6);
+  }, [balance, selectedNetwork]);
 
   useEffect(() => {
     const fetchPrices = async () => {
@@ -92,15 +92,15 @@ const Send = () => {
   }, [step, amount, calculateFees]);
 
   const handleMax = useCallback(() => {
-    const bal = balance?.[selectedNetwork] || 0;
-    setAmount(Number(bal).toFixed(6));
+    const b = balance?.[selectedNetwork] || 0;
+    setAmount(Number(b).toFixed(6));
   }, [balance, selectedNetwork]);
 
   const handleSelectNetwork = useCallback(
     async (value) => {
       // Visada pereinam į step 2
       setStep(2);
-      // Jei tikrai keičiam tinklą, tai iškviečiam switchNetwork
+      // Jei keičiam, iškviečiam switchNetwork ir atnaujinam state
       if (value !== selectedNetwork) {
         await switchNetwork(value);
         setSelectedNetwork(value);
@@ -257,12 +257,10 @@ const Send = () => {
                 </p>
               )}
               <p className="text-xs text-center text-gray-400">
-                Balance: {currentBalance}{" "}
-                {selectedNetwork.toUpperCase()}
+                Balance: {currentBalance} {selectedNetwork.toUpperCase()}
               </p>
               <p className="text-xs text-center text-red-400 font-medium">
-                Min. amount: {minAmount}{" "}
-                {selectedNetwork.toUpperCase()}
+                Min. amount: {minAmount} {selectedNetwork.toUpperCase()}
               </p>
               <div className={styles.buttonsRow}>
                 <Button
