@@ -56,8 +56,11 @@ const Send = () => {
   const currentColorClass = useMemo(() => networks.find(n => n.value === selectedNetwork)?.color || "bg-gray-500", [selectedNetwork]);
   const usdRate = usdPrices[coingeckoIds[selectedNetwork]]?.usd || 0;
   const usdValue = useMemo(() => amount && usdRate ? (Number(amount) * usdRate).toFixed(2) : null, [amount, usdRate]);
-  const currentBalance = useMemo(() => (balance?.[selectedNetwork] || 0).toFixed(6), [balance, selectedNetwork]);
-
+  const currentBalance = useMemo(() => {
+  const bal = balance?.[selectedNetwork];
+  return bal !== undefined ? Number(bal).toFixed(6) : "Loading...";
+}, [balance, selectedNetwork]);
+  
   useEffect(() => {
   const fetchPrices = async () => {
     try {
