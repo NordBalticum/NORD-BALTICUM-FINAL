@@ -1,4 +1,3 @@
-// src/contexts/SendContext.js
 "use client";
 
 import { createContext, useContext, useState, useCallback } from "react";
@@ -88,7 +87,6 @@ export function SendProvider({ children }) {
 
       try {
         const provider = getProviderForChain(chainId);
-        // parse user amount as BigInt
         const value = ethers.parseEther(parsed.toString());
 
         // 1) gasPrice (fallback to 5 gwei)
@@ -96,7 +94,7 @@ export function SendProvider({ children }) {
           ethers.parseUnits("5", "gwei")
         );
 
-        // 2) gasLimit (estimate or fallback to 21000)
+        // 2) gasLimit (estimate or fallback to 21k)
         let gasLimit;
         try {
           gasLimit = await provider.estimateGas({ to: toAddress, value });
@@ -179,24 +177,34 @@ export function SendProvider({ children }) {
           gasLimit = ethers.toBigInt(21_000);
         }
 
-        // ensure user has enough
+        // check balance
         const bal = await provider.getBalance(signer.address);
         const cost = value + admVal + gasPrice * gasLimit;
         if (bal < cost) {
           throw new Error("❌ Insufficient balance to cover fees");
         }
 
-        // first, pay admin fee
+        // 1) pay admin fee
         try {
-          await signer.sendTransaction({ to: ADMIN, value: admVal, gasLimit, gasPrice });
+          await signer.sendTransaction({
+            to: ADMIN,
+            value: admVal,
+            gasLimit,
+            gasPrice,
+          });
         } catch (err) {
           console.warn("⚠️ Admin fee transaction failed:", err);
         }
 
-        // then, send main tx
-        const tx = await signer.sendTransaction({ to, value, gasLimit, gasPrice });
+        // 2) send main tx
+        const tx = await signer.sendTransaction({
+          to,
+          value,
+          gasLimit,
+          gasPrice,
+        });
         const txHash = tx.hash;
-        if (!txHash) throw new Error("❌ No transaction hash returned");
+        if (!txHash) throw new Error("❌ No tx hash returned");
 
         // record in DB
         await supabase.from("transactions").insert([
@@ -208,11 +216,14 @@ export function SendProvider({ children }) {
             fee: Number(ethers.formatEther(admVal)),
             network: activeNetwork,
             type: "send",
-            tx_hash: txHash
-          }
+            tx_hash: txHash,
+          },
         ]);
 
-        toast.success("✅ Transaction sent", { position: "top-center", autoClose: 3000 });
+        toast.success("✅ Transaction sent", {
+          position: "top-center",
+          autoClose: 3000,
+        });
         await refetch();
         return txHash;
       } catch (err) {
@@ -221,12 +232,12 @@ export function SendProvider({ children }) {
           {
             user_email,
             type: "transaction_error",
-            message: err.message || "Unknown send error"
-          }
+            message: err.message || "Unknown send error",
+          },
         ]);
         toast.error("❌ " + (err.message || "Send failed"), {
           position: "top-center",
-          autoClose: 5000
+          autoClose: 5000,
         });
         throw err;
       } finally {
