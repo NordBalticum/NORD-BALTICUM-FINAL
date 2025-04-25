@@ -85,8 +85,8 @@ const Send = () => {
   const handleSelectNetwork = useCallback(async (value) => {
     if (value !== selectedNetwork) {
       await switchNetwork(value);
-      setSelectedNetwork(value);
     }
+    setSelectedNetwork(value);
     setStep(2);
   }, [selectedNetwork, switchNetwork]);
 
@@ -131,9 +131,9 @@ const Send = () => {
               <Logo />
               <h2 className={styles.stepTitle}>Select Active Network</h2>
               <Select.Root value={selectedNetwork} onValueChange={handleSelectNetwork}>
-                <Select.Trigger className={`${styles.selectTrigger} ${styles.selectLuxury}`}>
+                <Select.Trigger className={styles.selectTrigger}>
                   <div className="flex items-center gap-2">
-                    <img src={networks.find(n => n.value === selectedNetwork)?.icon} alt="icon" className="w-5 h-5" />
+                    <img src={networks.find(n => n.value === selectedNetwork)?.icon} alt="icon" className={styles.selectIcon} />
                     <span>{networks.find(n => n.value === selectedNetwork)?.label}</span>
                   </div>
                   <Select.Icon><ChevronDown size={18} /></Select.Icon>
