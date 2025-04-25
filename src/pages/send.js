@@ -59,19 +59,19 @@ const Send = () => {
   const currentBalance = useMemo(() => (balance?.[selectedNetwork] || 0).toFixed(6), [balance, selectedNetwork]);
 
   useEffect(() => {
-    const fetchPrices = async () => {
-      try {
-        const ids = Object.values(coingeckoIds).join(",");
-        const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd`);
-        const data = await res.json();
-        setUsdPrices(data);
-      } catch (err) {
-        console.error("USD fetch error:", err);
-      }
-    };
-    fetchPrices();
-  }, [selectedNetwork]);
-
+  const fetchPrices = async () => {
+    try {
+      const ids = Object.values(coingeckoIds).join(",");
+      const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd`);
+      const data = await res.json();
+      setUsdPrices(data);
+    } catch (err) {
+      console.error("USD fetch error:", err);
+    }
+  };
+  fetchPrices();
+}, []); // Tik kartą!
+  
   useEffect(() => {
     if (step === 3) calculateFees(amount);
   }, [step, amount, calculateFees]);
