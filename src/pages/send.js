@@ -18,7 +18,7 @@ const networks = [
   { label: "Polygon", value: "polygon", color: "color-polygon", icon: "/icons/matic.svg", min: 0.1 },
   { label: "BNB", value: "bnb", color: "color-bnb", icon: "/icons/bnb.svg", min: 0.01 },
   { label: "Avalanche", value: "avax", color: "color-avax", icon: "/icons/avax.svg", min: 0.01 },
-  { label: "Test BNB", value: "tbnb", color: "color-bnb", icon: "/icons/bnb.svg", min: 0.01 },
+  { label: "Testnet BNB", value: "tbnb", color: "color-bnb", icon: "/icons/bnb.svg", min: 0.001 }
 ];
 
 const coingeckoIds = {
@@ -26,7 +26,7 @@ const coingeckoIds = {
   polygon: "matic-network",
   bnb: "binancecoin",
   avax: "avalanche-2",
-  tbnb: "binancecoin", // testnet same pricing logic
+  tbnb: "binancecoin"
 };
 
 const isValidAddress = (addr) => /^0x[a-fA-F0-9]{40}$/.test(addr.trim());
@@ -55,8 +55,8 @@ const Send = () => {
   const minAmount = useMemo(() => networks.find(n => n.value === selectedNetwork)?.min || 0, [selectedNetwork]);
   const currentColorClass = useMemo(() => networks.find(n => n.value === selectedNetwork)?.color || "bg-gray-500", [selectedNetwork]);
   const usdRate = usdPrices[coingeckoIds[selectedNetwork]]?.usd || 0;
-  const usdValue = useMemo(() => (amount && usdRate ? (Number(amount) * usdRate).toFixed(2) : null), [amount, usdRate]);
-  const currentBalance = useMemo(() => (balance[selectedNetwork] || 0).toFixed(6), [balance, selectedNetwork]);
+  const usdValue = useMemo(() => amount && usdRate ? (Number(amount) * usdRate).toFixed(2) : null, [amount, usdRate]);
+  const currentBalance = useMemo(() => (balance?.[selectedNetwork] || 0).toFixed(6), [balance, selectedNetwork]);
 
   useEffect(() => {
     const fetchPrices = async () => {
@@ -74,7 +74,7 @@ const Send = () => {
 
   useEffect(() => {
     if (step === 3) calculateFees(amount);
-  }, [step, amount]);
+  }, [step, amount, calculateFees]);
 
   const handleMax = useCallback(() => {
     if (balance?.[selectedNetwork]) {
@@ -94,7 +94,7 @@ const Send = () => {
     const now = Date.now();
     const cleanTo = to.trim().toLowerCase();
     const parsedAmount = Number(amount);
-    const bal = Number(balance[selectedNetwork] || 0);
+    const bal = Number(balance?.[selectedNetwork] || 0);
 
     if (!isValidAddress(cleanTo)) return alert("❌ Invalid address.");
     if (now - lastSentTime < 10000) return alert("⚠️ Please wait before sending again.");
@@ -126,7 +126,6 @@ const Send = () => {
     <div className={styles.container}>
       <Card className={`${styles.card} pt-16`}>
         <CardContent className="space-y-10 p-8">
-          {/* STEP 1 */}
           {step === 1 && (
             <div className="space-y-8">
               <Logo />
@@ -153,7 +152,6 @@ const Send = () => {
             </div>
           )}
 
-          {/* STEP 2 */}
           {step === 2 && (
             <div className="space-y-8">
               <Logo />
@@ -168,7 +166,6 @@ const Send = () => {
             </div>
           )}
 
-          {/* STEP 3 */}
           {step === 3 && (
             <div className="space-y-8">
               <Logo />
@@ -187,7 +184,6 @@ const Send = () => {
             </div>
           )}
 
-          {/* STEP 4 */}
           {step === 4 && (
             <div className="space-y-8">
               <Logo />
@@ -210,7 +206,6 @@ const Send = () => {
             </div>
           )}
 
-          {/* STEP 5 */}
           {step === 5 && txHash && (
             <div className="text-center space-y-4">
               <h2 className={styles.successText}>✅ Sent!</h2>
