@@ -1,7 +1,8 @@
+// src/utils/fallbackRPCs.js
 "use client";
 
 /**
- * 🧱 Fallback RPC sąrašas pagal chainId
+ * 🧱 Fallback RPC endpoints by chainId
  */
 export const ethersFallbackProviders = {
   1: [ // Ethereum Mainnet
@@ -9,12 +10,12 @@ export const ethersFallbackProviders = {
     "https://eth-mainnet.public.blastapi.io",
     "https://cloudflare-eth.com"
   ],
-  137: [ // Polygon
+  137: [ // Polygon Mainnet
     "https://polygon-rpc.com",
     "https://rpc.ankr.com/polygon",
     "https://polygon-bor.publicnode.com"
   ],
-  56: [ // Binance Smart Chain
+  56: [ // BSC Mainnet
     "https://bsc-dataseed.binance.org",
     "https://rpc.ankr.com/bsc",
     "https://bsc.publicnode.com"
@@ -24,9 +25,8 @@ export const ethersFallbackProviders = {
     "https://rpc.ankr.com/avalanche",
     "https://avalanche.publicnode.com"
   ],
-  10: [ // Optimism
-    "https://mainnet.optimism.io",
-    "https://optimism.publicnode.com",
-    "https://rpc.ankr.com/optimism"
+  97: [ // BSC Testnet
+    "https://data-seed-prebsc-1-s1.binance.org:8545/",
+    "https://bsc-testnet.public.blastapi.io"
   ],
 };
