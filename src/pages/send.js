@@ -50,6 +50,7 @@ export default function Send() {
     adminFee,
     totalFee,
     feeLoading,
+    feeError
   } = useSend();
   const systemReady = useSystemReady();
 
@@ -94,40 +95,33 @@ export default function Send() {
 
   // fetch USD prices once
   useEffect(() => {
-    const fetchPrices = async () => {
+    (async () => {
       try {
         const ids = Object.values(coingeckoIds).join(",");
         const res = await fetch(
           `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd`
         );
-        const data = await res.json();
-        setUsdPrices(data);
+        setUsdPrices(await res.json());
       } catch (err) {
         console.error("USD fetch error:", err);
       }
-    };
-    fetchPrices();
+    })();
   }, []);
 
-  // calculate fees in Step 3 (Enter Amount)
+  // recalc fees any time we enter step 3 or 4, or the amount / network changes
   useEffect(() => {
-    if (step === 3 && amount) {
+    if ((step === 3 || step === 4) && Number(amount) > 0) {
       calculateFees(amount);
     }
-  }, [step, amount, calculateFees]);
+  }, [step, amount, selectedNetwork, calculateFees]);
 
-  // calculate fees again in Step 4 (Confirm)
-  useEffect(() => {
-    if (step === 4 && amount) {
-      calculateFees(amount);
-    }
-  }, [step, amount, calculateFees]);
-
+  // “Max” → set amount to your actual on-chain balance
   const handleMax = useCallback(() => {
     const b = Number(balances?.[networkKey] || 0);
     setAmount(b.toFixed(6));
   }, [balances, networkKey]);
 
+  // select network → switch chain + go to recipient
   const handleSelectNetwork = useCallback(async (value) => {
     setStep(2);
     if (value !== selectedNetwork) {
@@ -136,6 +130,7 @@ export default function Send() {
     }
   }, [selectedNetwork, switchNetwork]);
 
+  // send transaction
   const handleSend = async () => {
     const now    = Date.now();
     const cleanTo = to.trim().toLowerCase();
@@ -154,6 +149,9 @@ export default function Send() {
     if (parsed > bal) {
       return alert("❌ Insufficient balance");
     }
+
+    // ensure wallet is on the right chain
+    await switchNetwork(selectedNetwork);
 
     try {
       const hash = await sendTransaction({
@@ -188,10 +186,7 @@ export default function Send() {
             <div className="space-y-8">
               <Logo />
               <h2 className={styles.stepTitle}>Select Active Network</h2>
-              <Select.Root
-                value={selectedNetwork}
-                onValueChange={handleSelectNetwork}
-              >
+              <Select.Root value={selectedNetwork} onValueChange={handleSelectNetwork}>
                 <Select.Trigger className={styles.selectTrigger}>
                   <div className={styles.selectValueWrapper}>
                     <img
@@ -211,16 +206,8 @@ export default function Send() {
                   >
                     <Select.Viewport>
                       {networks.map(net => (
-                        <Select.Item
-                          key={net.value}
-                          value={net.value}
-                          className={styles.selectItem}
-                        >
-                          <img
-                            src={net.icon}
-                            alt={net.label}
-                            className={styles.selectIcon}
-                          />
+                        <Select.Item key={net.value} value={net.value} className={styles.selectItem}>
+                          <img src={net.icon} alt={net.label} className={styles.selectIcon} />
                           <Select.ItemText>{net.label}</Select.ItemText>
                         </Select.Item>
                       ))}
@@ -245,12 +232,8 @@ export default function Send() {
                 />
               </div>
               <div className={styles.buttonsRow}>
-                <Button onClick={() => setStep(1)} className={`${styles.btn} ${styles[currentColorClass]}`}>
-                  Back
-                </Button>
-                <Button onClick={() => setStep(3)} className={`${styles.btn} ${styles[currentColorClass]}`} disabled={!to}>
-                  Next
-                </Button>
+                <Button onClick={() => setStep(1)} className={`${styles.btn} ${styles[currentColorClass]}`}>Back</Button>
+                <Button onClick={() => setStep(3)} className={`${styles.btn} ${styles[currentColorClass]}`} disabled={!to}>Next</Button>
               </div>
             </div>
           )}
@@ -268,9 +251,7 @@ export default function Send() {
                   placeholder="Amount"
                   className="text-center text-xl pr-14"
                 />
-                <Button size="sm" onClick={handleMax} className={styles.inputAddonRight}>
-                  Max
-                </Button>
+                <Button size="sm" onClick={handleMax} className={styles.inputAddonRight}>Max</Button>
               </div>
               {usdValue && <p className="text-sm text-center text-gray-400">≈ ${usdValue}</p>}
               <p className="text-xs text-center text-gray-400">
@@ -280,39 +261,31 @@ export default function Send() {
                 Min. amount: {minAmount} {selectedNetwork.toUpperCase()}
               </p>
               <div className={styles.buttonsRow}>
-                <Button onClick={() => setStep(2)} className={`${styles.btn} ${styles[currentColorClass]}`}>
-                  Back
-                </Button>
-                <Button onClick={() => setStep(4)} className={`${styles.btn} ${styles[currentColorClass]}`} disabled={!amount || Number(amount) < minAmount}>
-                  Next
-                </Button>
+                <Button onClick={() => setStep(2)} className={`${styles.btn} ${styles[currentColorClass]}`}>Back</Button>
+                <Button onClick={() => setStep(4)} className={`${styles.btn} ${styles[currentColorClass]}`} disabled={!amount || Number(amount) < minAmount}>Next</Button>
               </div>
             </div>
           )}
 
-          {/* STEP 4: CONFIRM */}
+          {/* STEP 4: CONFIRM TRANSFER */}
           {step === 4 && (
             <div className="space-y-8">
               <Logo />
               <h2 className={styles.stepTitle}>Confirm Transfer</h2>
+              {feeError && <p className="text-sm text-red-500">{feeError}</p>}
               <div className={styles.confirmBox}>
                 <p className={styles.amountDisplay}>{amount} {selectedNetwork.toUpperCase()}</p>
                 <p className={styles.usdValue}>{usdValue ? `≈ $${usdValue}` : ""}</p>
                 <div className={styles.confirmDetails}>
                   <p><b>To:</b> {to}</p>
                   <p><b>Network:</b> {selectedNetwork}</p>
-                  <p><b>Fee:</b>{" "}
-                    {feeLoading
-                      ? "Calculating..."
-                      : `${totalFee.toFixed(6)} ${selectedNetwork.toUpperCase()}`
-                    }
-                  </p>
+                  <p><b>Gas Fee:</b> {feeLoading ? "…" : `${gasFee.toFixed(6)} ${selectedNetwork.toUpperCase()}`}</p>
+                  <p><b>Admin Fee:</b> {feeLoading ? "…" : `${adminFee.toFixed(6)} ${selectedNetwork.toUpperCase()}`}</p>
+                  <p><b>Total Fee:</b> {feeLoading ? "…" : `${totalFee.toFixed(6)} ${selectedNetwork.toUpperCase()}`}</p>
                 </div>
               </div>
               <div className={styles.buttonsRow}>
-                <Button onClick={() => setStep(3)} className={`${styles.btn} ${styles[currentColorClass]}`}>
-                  Back
-                </Button>
+                <Button onClick={() => setStep(3)} className={`${styles.btn} ${styles[currentColorClass]}`}>Back</Button>
                 <Button onClick={handleSend} disabled={sending || feeLoading} className={`${styles.btn} ${styles[currentColorClass]}`}>
                   {sending ? <Loader2 className="animate-spin" /> : "Send"}
                 </Button>
