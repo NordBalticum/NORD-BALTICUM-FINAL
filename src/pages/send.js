@@ -127,30 +127,40 @@ const Send = () => {
       <Card className={`${styles.card} pt-16`}>
         <CardContent className="space-y-10 p-8">
           {step === 1 && (
-            <div className="space-y-8">
-              <Logo />
-              <h2 className={styles.stepTitle}>Select Active Network</h2>
-              <Select.Root value={selectedNetwork} onValueChange={handleSelectNetwork}>
-                <Select.Trigger className={styles.selectTrigger}>
-                  <div className="flex items-center gap-2">
-                    <img src={networks.find(n => n.value === selectedNetwork)?.icon} alt="icon" className={styles.selectIcon} />
-                    <span>{networks.find(n => n.value === selectedNetwork)?.label}</span>
-                  </div>
-                  <Select.Icon><ChevronDown size={18} /></Select.Icon>
-                </Select.Trigger>
-                <Select.Portal>
-                  <Select.Content className="z-50 bg-black border border-neutral-700 rounded-xl shadow-2xl">
-                    {networks.map(net => (
-                      <Select.Item key={net.value} value={net.value} className={styles.selectItem}>
-                        <img src={net.icon} alt={net.label} className={styles.selectIcon} />
-                        <Select.ItemText>{net.label}</Select.ItemText>
-                      </Select.Item>
-                    ))}
-                  </Select.Content>
-                </Select.Portal>
-              </Select.Root>
+  <div className="space-y-8">
+    <Logo />
+    <h2 className={styles.stepTitle}>Select Active Network</h2>
+    <Select.Root value={selectedNetwork} onValueChange={handleSelectNetwork}>
+      <Select.Trigger className={styles.selectTrigger}>
+        <Select.Value>
+          {selectedNetwork && (
+            <div className="flex items-center gap-2">
+              <img
+                src={networks.find(n => n.value === selectedNetwork)?.icon}
+                alt={networks.find(n => n.value === selectedNetwork)?.label}
+                className={styles.selectIcon}
+              />
+              <span>{networks.find(n => n.value === selectedNetwork)?.label}</span>
             </div>
           )}
+        </Select.Value>
+        <Select.Icon>
+          <ChevronDown size={18} />
+        </Select.Icon>
+      </Select.Trigger>
+      <Select.Portal>
+        <Select.Content className="z-50 bg-black border border-neutral-700 rounded-xl shadow-2xl">
+          {networks.map(net => (
+            <Select.Item key={net.value} value={net.value} className={styles.selectItem}>
+              <img src={net.icon} alt={net.label} className={styles.selectIcon} />
+              <Select.ItemText>{net.label}</Select.ItemText>
+            </Select.Item>
+          ))}
+        </Select.Content>
+      </Select.Portal>
+    </Select.Root>
+  </div>
+)}
 
           {step === 2 && (
             <div className="space-y-8">
