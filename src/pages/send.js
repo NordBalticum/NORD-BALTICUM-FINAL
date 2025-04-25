@@ -145,19 +145,22 @@ const Send = () => {
                   </Select.Icon>
                 </Select.Trigger>
                 <Select.Portal>
-                  <Select.Content className="z-50 bg-black border border-neutral-700 rounded-xl shadow-2xl">
-                    {networks.map(net => (
-                      <Select.Item key={net.value} value={net.value} className={styles.selectItem}>
-                        <img src={net.icon} alt={net.label} className={styles.selectIcon} />
-                        <Select.ItemText>{net.label}</Select.ItemText>
-                      </Select.Item>
-                    ))}
+                  <Select.Content className="z-50 bg-black border border-neutral-700 rounded-xl shadow-2xl" position="popper" sideOffset={5}>
+                    <Select.Viewport>
+                      {networks.map(net => (
+                        <Select.Item key={net.value} value={net.value} className={styles.selectItem}>
+                          <img src={net.icon} alt={net.label} className={styles.selectIcon} />
+                          <Select.ItemText>{net.label}</Select.ItemText>
+                        </Select.Item>
+                      ))}
+                    </Select.Viewport>
                   </Select.Content>
                 </Select.Portal>
               </Select.Root>
             </div>
           )}
 
+          {/* STEP 2 */}
           {step === 2 && (
             <div className="space-y-8">
               <Logo />
@@ -172,6 +175,7 @@ const Send = () => {
             </div>
           )}
 
+          {/* STEP 3 */}
           {step === 3 && (
             <div className="space-y-8">
               <Logo />
@@ -190,6 +194,7 @@ const Send = () => {
             </div>
           )}
 
+          {/* STEP 4 */}
           {step === 4 && (
             <div className="space-y-8">
               <Logo />
@@ -212,6 +217,7 @@ const Send = () => {
             </div>
           )}
 
+          {/* STEP 5 */}
           {step === 5 && txHash && (
             <div className="text-center space-y-6">
               <h2 className={styles.successText}>✅ Sent!</h2>
