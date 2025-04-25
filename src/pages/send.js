@@ -58,7 +58,8 @@ const Send = () => {
   const usdValue = useMemo(() => amount && usdRate ? (Number(amount) * usdRate).toFixed(2) : null, [amount, usdRate]);
   const currentBalance = useMemo(() => {
   const bal = balance?.[selectedNetwork];
-  return bal !== undefined ? Number(bal).toFixed(6) : "Loading...";
+  if (bal === undefined || bal === null) return null;
+  return Number(bal).toFixed(6);
 }, [balance, selectedNetwork]);
   
   useEffect(() => {
@@ -182,7 +183,9 @@ const Send = () => {
                 <Button size="sm" onClick={handleMax} className={styles.inputAddonRight}>Max</Button>
               </div>
               {usdValue && <p className="text-sm text-center text-gray-400">≈ ${usdValue}</p>}
-              <p className="text-xs text-center text-gray-400">Balance: {currentBalance} {selectedNetwork.toUpperCase()}</p>
+              <p className="text-xs text-center text-gray-400">
+  Balance: {currentBalance !== null ? `${currentBalance} ${selectedNetwork.toUpperCase()}` : 'Loading...'}
+</p>
               <p className="text-xs text-center text-red-400 font-medium">Min. amount: {minAmount} {selectedNetwork.toUpperCase()}</p>
               <div className={styles.buttonsRow}>
                 <Button onClick={() => setStep(2)} className={`${styles.btn} ${styles[currentColorClass]}`}>Back</Button>
