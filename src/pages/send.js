@@ -37,7 +37,7 @@ const Logo = () => (
   </div>
 );
 
-const Send = () => {
+export default function Send() {
   const { user } = useAuth();
   const { balance } = useBalance();
   const { switchNetwork } = useNetwork();
@@ -52,25 +52,34 @@ const Send = () => {
   const [lastSentTime, setLastSentTime] = useState(0);
   const [usdPrices, setUsdPrices] = useState({});
 
+  // minimum sendable for current network
   const minAmount = useMemo(
-    () => networks.find((n) => n.value === selectedNetwork)?.min || 0,
+    () => networks.find(n => n.value === selectedNetwork)?.min || 0,
     [selectedNetwork]
   );
+  // button color
   const currentColorClass = useMemo(
-    () => networks.find((n) => n.value === selectedNetwork)?.color || "bg-gray-500",
+    () => networks.find(n => n.value === selectedNetwork)?.color || "bg-gray-500",
     [selectedNetwork]
   );
+  // USD rate & value
   const usdRate = usdPrices[coingeckoIds[selectedNetwork]]?.usd || 0;
   const usdValue = useMemo(
-    () => (amount && usdRate ? (Number(amount) * usdRate).toFixed(2) : null),
+    () => amount && usdRate ? (Number(amount) * usdRate).toFixed(2) : null,
     [amount, usdRate]
   );
-  // TIKRAS balansas arba '0.000000'
+  // map 'polygon' to 'matic' key used in BalanceContext
+  const networkKey = useMemo(
+    () => (selectedNetwork === "polygon" ? "matic" : selectedNetwork),
+    [selectedNetwork]
+  );
+  // actual on-chain balance or 0
   const currentBalance = useMemo(() => {
-    const b = balance?.[selectedNetwork];
+    const b = balance?.[networkKey];
     return (typeof b === "number" ? b : 0).toFixed(6);
-  }, [balance, selectedNetwork]);
+  }, [balance, networkKey]);
 
+  // fetch USD prices once
   useEffect(() => {
     const fetchPrices = async () => {
       try {
@@ -87,39 +96,45 @@ const Send = () => {
     fetchPrices();
   }, []);
 
+  // calculate fees when showing confirmation
   useEffect(() => {
     if (step === 3) calculateFees(amount);
   }, [step, amount, calculateFees]);
 
+  // set max to balance
   const handleMax = useCallback(() => {
-    const b = balance?.[selectedNetwork] || 0;
-    setAmount(Number(b).toFixed(6));
-  }, [balance, selectedNetwork]);
+    const b = Number(balance?.[networkKey] || 0);
+    setAmount(b.toFixed(6));
+  }, [balance, networkKey]);
 
-  const handleSelectNetwork = useCallback(
-    async (value) => {
-      // Visada pereinam į step 2
-      setStep(2);
-      // Jei keičiam, iškviečiam switchNetwork ir atnaujinam state
-      if (value !== selectedNetwork) {
-        await switchNetwork(value);
-        setSelectedNetwork(value);
-      }
-    },
-    [selectedNetwork, switchNetwork]
-  );
+  // switch network then move to recipient step
+  const handleSelectNetwork = useCallback(async (value) => {
+    setStep(2);
+    if (value !== selectedNetwork) {
+      await switchNetwork(value);
+      setSelectedNetwork(value);
+    }
+  }, [selectedNetwork, switchNetwork]);
 
+  // send transaction
   const handleSend = async () => {
     const now = Date.now();
     const cleanTo = to.trim().toLowerCase();
-    const parsedAmount = Number(amount);
-    const bal = Number(balance?.[selectedNetwork] || 0);
+    const parsed = Number(amount);
+    const bal = Number(balance?.[networkKey] || 0);
 
-    if (!isValidAddress(cleanTo)) return alert("❌ Invalid address.");
-    if (now - lastSentTime < 10000) return alert("⚠️ Please wait before sending again.");
-    if (parsedAmount < minAmount)
+    if (!isValidAddress(cleanTo)) {
+      return alert("❌ Invalid address");
+    }
+    if (now - lastSentTime < 10000) {
+      return alert("⚠️ Please wait before sending again");
+    }
+    if (parsed < minAmount) {
       return alert(`Min: ${minAmount} ${selectedNetwork.toUpperCase()}`);
-    if (parsedAmount > bal) return alert("❌ Insufficient balance.");
+    }
+    if (parsed > bal) {
+      return alert("❌ Insufficient balance");
+    }
 
     try {
       const hash = await sendTransaction({
@@ -150,21 +165,18 @@ const Send = () => {
     <div className={styles.container}>
       <Card className={`${styles.card} pt-16`}>
         <CardContent className="space-y-10 p-8">
+
+          {/* STEP 1: SELECT NETWORK */}
           {step === 1 && (
             <div className="space-y-8">
               <Logo />
               <h2 className={styles.stepTitle}>Select Active Network</h2>
-              <Select.Root
-                value={selectedNetwork}
-                onValueChange={handleSelectNetwork}
-              >
+              <Select.Root value={selectedNetwork} onValueChange={handleSelectNetwork}>
                 <Select.Trigger className={styles.selectTrigger}>
                   <div className={styles.selectValueWrapper}>
                     <img
-                      src={
-                        networks.find((n) => n.value === selectedNetwork)?.icon
-                      }
-                      alt="net"
+                      src={networks.find(n => n.value === selectedNetwork)?.icon}
+                      alt={selectedNetwork}
                       className={styles.selectIcon}
                     />
                     <Select.Value placeholder="Select network" />
@@ -180,17 +192,9 @@ const Send = () => {
                     sideOffset={5}
                   >
                     <Select.Viewport>
-                      {networks.map((net) => (
-                        <Select.Item
-                          key={net.value}
-                          value={net.value}
-                          className={styles.selectItem}
-                        >
-                          <img
-                            src={net.icon}
-                            alt={net.label}
-                            className={styles.selectIcon}
-                          />
+                      {networks.map(net => (
+                        <Select.Item key={net.value} value={net.value} className={styles.selectItem}>
+                          <img src={net.icon} alt={net.label} className={styles.selectIcon} />
                           <Select.ItemText>{net.label}</Select.ItemText>
                         </Select.Item>
                       ))}
@@ -201,6 +205,7 @@ const Send = () => {
             </div>
           )}
 
+          {/* STEP 2: RECIPIENT */}
           {step === 2 && (
             <div className="space-y-8">
               <Logo />
@@ -231,6 +236,7 @@ const Send = () => {
             </div>
           )}
 
+          {/* STEP 3: ENTER AMOUNT */}
           {step === 3 && (
             <div className="space-y-8">
               <Logo />
@@ -243,18 +249,12 @@ const Send = () => {
                   placeholder="Amount"
                   className="text-center text-xl pr-14"
                 />
-                <Button
-                  size="sm"
-                  onClick={handleMax}
-                  className={styles.inputAddonRight}
-                >
+                <Button size="sm" onClick={handleMax} className={styles.inputAddonRight}>
                   Max
                 </Button>
               </div>
               {usdValue && (
-                <p className="text-sm text-center text-gray-400">
-                  ≈ ${usdValue}
-                </p>
+                <p className="text-sm text-center text-gray-400">≈ ${usdValue}</p>
               )}
               <p className="text-xs text-center text-gray-400">
                 Balance: {currentBalance} {selectedNetwork.toUpperCase()}
@@ -280,6 +280,7 @@ const Send = () => {
             </div>
           )}
 
+          {/* STEP 4: CONFIRM */}
           {step === 4 && (
             <div className="space-y-8">
               <Logo />
@@ -292,19 +293,12 @@ const Send = () => {
                   {usdValue ? `≈ $${usdValue}` : ""}
                 </p>
                 <div className={styles.confirmDetails}>
-                  <p>
-                    <b>To:</b> {to}
-                  </p>
-                  <p>
-                    <b>Network:</b> {selectedNetwork}
-                  </p>
-                  <p>
-                    <b>Fee:</b>{" "}
+                  <p><b>To:</b> {to}</p>
+                  <p><b>Network:</b> {selectedNetwork}</p>
+                  <p><b>Fee:</b>{" "}
                     {feeLoading
                       ? "Calculating..."
-                      : `${(
-                          Number(gasFee) + Number(adminFee)
-                        ).toFixed(6)} ${selectedNetwork.toUpperCase()}`}
+                      : `${(Number(gasFee) + Number(adminFee)).toFixed(6)} ${selectedNetwork.toUpperCase()}`}
                   </p>
                 </div>
               </div>
@@ -326,12 +320,12 @@ const Send = () => {
             </div>
           )}
 
+          {/* STEP 5: SUCCESS */}
           {step === 5 && txHash && (
             <div className="text-center space-y-6">
               <h2 className={styles.successText}>✅ Sent!</h2>
               <p className={styles.txHashBox}>
-                TX Hash:<br />
-                {txHash}
+                TX Hash:<br />{txHash}
               </p>
               <Button
                 className={`${styles.btn} w-full mt-4`}
@@ -346,10 +340,9 @@ const Send = () => {
               </Button>
             </div>
           )}
+
         </CardContent>
       </Card>
     </div>
   );
-};
-
-export default Send;
+}
