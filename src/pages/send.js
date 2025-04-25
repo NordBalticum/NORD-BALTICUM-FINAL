@@ -1,3 +1,4 @@
+// src/pages/send.js
 "use client";
 
 import { useEffect, useState, useMemo, useCallback } from "react";
@@ -72,20 +73,20 @@ export default function Send() {
     [selectedNetwork]
   );
 
-  // 3) USD rate & value
+  // 3) USD rate & computed USD value
   const usdRate = usdPrices[coingeckoIds[selectedNetwork]]?.usd || 0;
   const usdValue = useMemo(
     () => amount && usdRate ? (Number(amount) * usdRate).toFixed(2) : null,
     [amount, usdRate]
   );
 
-  // 4) map polygon→matic for balances key
+  // 4) map "polygon" → "matic" for balances key
   const networkKey = useMemo(
     () => (selectedNetwork === "polygon" ? "matic" : selectedNetwork),
     [selectedNetwork]
   );
 
-  // 5) real on-chain balance
+  // 5) real on-chain balance or zero
   const currentBalance = useMemo(() => {
     const b = balances?.[networkKey];
     return (typeof b === "number" ? b : 0).toFixed(6);
@@ -108,20 +109,25 @@ export default function Send() {
     fetchPrices();
   }, []);
 
-  // calculate fees when entering the **confirm** step (4)
+  // calculate fees in Step 3 (Enter Amount)
   useEffect(() => {
-    if (step === 4) {
+    if (step === 3 && amount) {
       calculateFees(amount);
     }
   }, [step, amount, calculateFees]);
 
-  // “Max” → set amount to your actual on-chain balance
+  // calculate fees again in Step 4 (Confirm)
+  useEffect(() => {
+    if (step === 4 && amount) {
+      calculateFees(amount);
+    }
+  }, [step, amount, calculateFees]);
+
   const handleMax = useCallback(() => {
     const b = Number(balances?.[networkKey] || 0);
     setAmount(b.toFixed(6));
   }, [balances, networkKey]);
 
-  // select network → switch chain + go to recipient
   const handleSelectNetwork = useCallback(async (value) => {
     setStep(2);
     if (value !== selectedNetwork) {
@@ -130,7 +136,6 @@ export default function Send() {
     }
   }, [selectedNetwork, switchNetwork]);
 
-  // send transaction
   const handleSend = async () => {
     const now    = Date.now();
     const cleanTo = to.trim().toLowerCase();
@@ -178,7 +183,7 @@ export default function Send() {
       <Card className={`${styles.card} pt-16`}>
         <CardContent className="space-y-10 p-8">
 
-          {/* STEP 1 */}
+          {/* STEP 1: SELECT NETWORK */}
           {step === 1 && (
             <div className="space-y-8">
               <Logo />
@@ -201,7 +206,8 @@ export default function Send() {
                 <Select.Portal>
                   <Select.Content
                     className="z-50 bg-black border border-neutral-700 rounded-xl shadow-2xl"
-                    position="popper" sideOffset={5}
+                    position="popper"
+                    sideOffset={5}
                   >
                     <Select.Viewport>
                       {networks.map(net => (
@@ -225,7 +231,7 @@ export default function Send() {
             </div>
           )}
 
-          {/* STEP 2 */}
+          {/* STEP 2: RECIPIENT */}
           {step === 2 && (
             <div className="space-y-8">
               <Logo />
@@ -249,7 +255,7 @@ export default function Send() {
             </div>
           )}
 
-          {/* STEP 3 */}
+          {/* STEP 3: ENTER AMOUNT */}
           {step === 3 && (
             <div className="space-y-8">
               <Logo />
@@ -284,18 +290,14 @@ export default function Send() {
             </div>
           )}
 
-          {/* STEP 4 */}
+          {/* STEP 4: CONFIRM */}
           {step === 4 && (
             <div className="space-y-8">
               <Logo />
               <h2 className={styles.stepTitle}>Confirm Transfer</h2>
               <div className={styles.confirmBox}>
-                <p className={styles.amountDisplay}>
-                  {amount} {selectedNetwork.toUpperCase()}
-                </p>
-                <p className={styles.usdValue}>
-                  {usdValue ? `≈ $${usdValue}` : ""}
-                </p>
+                <p className={styles.amountDisplay}>{amount} {selectedNetwork.toUpperCase()}</p>
+                <p className={styles.usdValue}>{usdValue ? `≈ $${usdValue}` : ""}</p>
                 <div className={styles.confirmDetails}>
                   <p><b>To:</b> {to}</p>
                   <p><b>Network:</b> {selectedNetwork}</p>
@@ -318,7 +320,7 @@ export default function Send() {
             </div>
           )}
 
-          {/* STEP 5 */}
+          {/* STEP 5: SUCCESS */}
           {step === 5 && txHash && (
             <div className="text-center space-y-6">
               <h2 className={styles.successText}>✅ Sent!</h2>
