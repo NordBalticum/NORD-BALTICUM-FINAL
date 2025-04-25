@@ -11,7 +11,7 @@ import {
 // Supported keys → on‐chain chainIds
 const NETWORK_CHAIN_IDS = {
   eth: 1,
-  polygon: 137,
+  matic: 137,
   bnb: 56,
   tbnb: 97,
   avax: 43114,
