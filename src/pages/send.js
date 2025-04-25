@@ -53,7 +53,7 @@ const Send = () => {
   const minAmount = useMemo(() => networks.find(n => n.value === selectedNetwork)?.min || 0, [selectedNetwork]);
   const currentColorClass = useMemo(() => networks.find(n => n.value === selectedNetwork)?.color || "bg-gray-500", [selectedNetwork]);
   const usdRate = usdPrices[coingeckoIds[selectedNetwork]]?.usd || 0;
-  const usdValue = useMemo(() => (amount && usdRate ? (Number(amount) * usdRate).toFixed(2) : null), [amount, usdRate]);
+  const usdValue = useMemo(() => amount && usdRate ? (Number(amount) * usdRate).toFixed(2) : null, [amount, usdRate]);
   const currentBalance = useMemo(() => (balance[selectedNetwork] || 0).toFixed(6), [balance, selectedNetwork]);
 
   useEffect(() => {
@@ -124,6 +124,7 @@ const Send = () => {
     <div className={styles.container}>
       <Card className={`${styles.card} pt-16`}>
         <CardContent className="space-y-10 p-8">
+          {/* STEP 1 */}
           {step === 1 && (
             <div className="space-y-8">
               <Logo />
@@ -150,6 +151,7 @@ const Send = () => {
             </div>
           )}
 
+          {/* STEP 2 */}
           {step === 2 && (
             <div className="space-y-8">
               <Logo />
@@ -164,6 +166,7 @@ const Send = () => {
             </div>
           )}
 
+          {/* STEP 3 */}
           {step === 3 && (
             <div className="space-y-8">
               <Logo />
@@ -182,6 +185,7 @@ const Send = () => {
             </div>
           )}
 
+          {/* STEP 4 */}
           {step === 4 && (
             <div className="space-y-8">
               <Logo />
@@ -204,6 +208,7 @@ const Send = () => {
             </div>
           )}
 
+          {/* STEP 5 */}
           {step === 5 && txHash && (
             <div className="text-center space-y-4">
               <h2 className={styles.successText}>✅ Sent!</h2>
