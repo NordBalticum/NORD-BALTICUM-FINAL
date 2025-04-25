@@ -14,11 +14,11 @@ import * as Select from "@radix-ui/react-select";
 import styles from "@/styles/send.module.css";
 
 const networks = [
-  { label: "Ethereum", value: "eth", color: "color-eth", icon: "/icons/eth.svg", min: 0.001 },
-  { label: "Polygon", value: "polygon", color: "color-polygon", icon: "/icons/matic.svg", min: 0.1 },
-  { label: "BNB", value: "bnb", color: "color-bnb", icon: "/icons/bnb.svg", min: 0.01 },
-  { label: "Avalanche", value: "avax", color: "color-avax", icon: "/icons/avax.svg", min: 0.01 },
-  { label: "Testnet BNB", value: "tbnb", color: "color-bnb", icon: "/icons/bnb.svg", min: 0.001 },
+  { label: "Ethereum", value: "eth",     color: "color-eth",     icon: "/icons/eth.svg",   min: 0.001 },
+  { label: "Polygon",  value: "polygon", color: "color-polygon", icon: "/icons/matic.svg", min: 0.1   },
+  { label: "BNB",      value: "bnb",     color: "color-bnb",     icon: "/icons/bnb.svg",   min: 0.01  },
+  { label: "Avalanche",value: "avax",    color: "color-avax",    icon: "/icons/avax.svg",  min: 0.01  },
+  { label: "Testnet BNB", value: "tbnb", color: "color-bnb",     icon: "/icons/bnb.svg",   min: 0.001 },
 ];
 
 const coingeckoIds = {
@@ -29,7 +29,7 @@ const coingeckoIds = {
   tbnb: "binancecoin",
 };
 
-const isValidAddress = (addr) => /^0x[a-fA-F0-9]{40}$/.test(addr.trim());
+const isValidAddress = addr => /^0x[a-fA-F0-9]{40}$/.test(addr.trim());
 
 const Logo = () => (
   <div className={styles.logoWrapper}>
@@ -37,7 +37,7 @@ const Logo = () => (
   </div>
 );
 
-export default function Send() {
+function Send() {
   const { user } = useAuth();
   const { balance } = useBalance();
   const { switchNetwork } = useNetwork();
@@ -52,28 +52,32 @@ export default function Send() {
   const [lastSentTime, setLastSentTime] = useState(0);
   const [usdPrices, setUsdPrices] = useState({});
 
-  // minimum sendable for current network
+  // 1) min sendable for this network
   const minAmount = useMemo(
     () => networks.find(n => n.value === selectedNetwork)?.min || 0,
     [selectedNetwork]
   );
-  // button color
+
+  // 2) button color class
   const currentColorClass = useMemo(
     () => networks.find(n => n.value === selectedNetwork)?.color || "bg-gray-500",
     [selectedNetwork]
   );
-  // USD rate & value
+
+  // 3) USD rate & computed USD value
   const usdRate = usdPrices[coingeckoIds[selectedNetwork]]?.usd || 0;
   const usdValue = useMemo(
     () => amount && usdRate ? (Number(amount) * usdRate).toFixed(2) : null,
     [amount, usdRate]
   );
-  // map 'polygon' to 'matic' key used in BalanceContext
+
+  // 4) map "polygon" → "matic" for balance keys
   const networkKey = useMemo(
     () => (selectedNetwork === "polygon" ? "matic" : selectedNetwork),
     [selectedNetwork]
   );
-  // actual on-chain balance or 0
+
+  // 5) actual on‐chain balance or zero
   const currentBalance = useMemo(() => {
     const b = balance?.[networkKey];
     return (typeof b === "number" ? b : 0).toFixed(6);
@@ -84,9 +88,7 @@ export default function Send() {
     const fetchPrices = async () => {
       try {
         const ids = Object.values(coingeckoIds).join(",");
-        const res = await fetch(
-          `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd`
-        );
+        const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd`);
         const data = await res.json();
         setUsdPrices(data);
       } catch (err) {
@@ -96,18 +98,18 @@ export default function Send() {
     fetchPrices();
   }, []);
 
-  // calculate fees when showing confirmation
+  // calculate fees when entering the "Enter Amount" step
   useEffect(() => {
     if (step === 3) calculateFees(amount);
   }, [step, amount, calculateFees]);
 
-  // set max to balance
+  // on "Max" button
   const handleMax = useCallback(() => {
     const b = Number(balance?.[networkKey] || 0);
     setAmount(b.toFixed(6));
   }, [balance, networkKey]);
 
-  // switch network then move to recipient step
+  // when user selects a network
   const handleSelectNetwork = useCallback(async (value) => {
     setStep(2);
     if (value !== selectedNetwork) {
@@ -116,7 +118,7 @@ export default function Send() {
     }
   }, [selectedNetwork, switchNetwork]);
 
-  // send transaction
+  // send the transaction
   const handleSend = async () => {
     const now = Date.now();
     const cleanTo = to.trim().toLowerCase();
@@ -137,11 +139,7 @@ export default function Send() {
     }
 
     try {
-      const hash = await sendTransaction({
-        to: cleanTo,
-        amount,
-        userEmail: user.email,
-      });
+      const hash = await sendTransaction({ to: cleanTo, amount, userEmail: user.email });
       if (!hash) throw new Error("❌ No transaction hash returned");
       setTxHash(hash);
       setLastSentTime(now);
@@ -152,6 +150,7 @@ export default function Send() {
     }
   };
 
+  // show loader until ready
   if (!systemReady) {
     return (
       <div className="flex items-center justify-center h-screen text-white">
@@ -188,8 +187,7 @@ export default function Send() {
                 <Select.Portal>
                   <Select.Content
                     className="z-50 bg-black border border-neutral-700 rounded-xl shadow-2xl"
-                    position="popper"
-                    sideOffset={5}
+                    position="popper" sideOffset={5}
                   >
                     <Select.Viewport>
                       {networks.map(net => (
@@ -213,23 +211,16 @@ export default function Send() {
               <div className={styles.inputWrapper}>
                 <Input
                   value={to}
-                  onChange={(e) => setTo(e.target.value)}
+                  onChange={e => setTo(e.target.value)}
                   placeholder="0x... address"
                   className="pr-14"
                 />
               </div>
               <div className={styles.buttonsRow}>
-                <Button
-                  onClick={() => setStep(1)}
-                  className={`${styles.btn} ${styles[currentColorClass]}`}
-                >
+                <Button onClick={() => setStep(1)} className={`${styles.btn} ${styles[currentColorClass]}`}>
                   Back
                 </Button>
-                <Button
-                  onClick={() => setStep(3)}
-                  className={`${styles.btn} ${styles[currentColorClass]}`}
-                  disabled={!to}
-                >
+                <Button onClick={() => setStep(3)} className={`${styles.btn} ${styles[currentColorClass]}`} disabled={!to}>
                   Next
                 </Button>
               </div>
@@ -245,7 +236,7 @@ export default function Send() {
                 <Input
                   type="number"
                   value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
+                  onChange={e => setAmount(e.target.value)}
                   placeholder="Amount"
                   className="text-center text-xl pr-14"
                 />
@@ -253,9 +244,7 @@ export default function Send() {
                   Max
                 </Button>
               </div>
-              {usdValue && (
-                <p className="text-sm text-center text-gray-400">≈ ${usdValue}</p>
-              )}
+              {usdValue && <p className="text-sm text-center text-gray-400">≈ ${usdValue}</p>}
               <p className="text-xs text-center text-gray-400">
                 Balance: {currentBalance} {selectedNetwork.toUpperCase()}
               </p>
@@ -263,17 +252,10 @@ export default function Send() {
                 Min. amount: {minAmount} {selectedNetwork.toUpperCase()}
               </p>
               <div className={styles.buttonsRow}>
-                <Button
-                  onClick={() => setStep(2)}
-                  className={`${styles.btn} ${styles[currentColorClass]}`}
-                >
+                <Button onClick={() => setStep(2)} className={`${styles.btn} ${styles[currentColorClass]}`}>
                   Back
                 </Button>
-                <Button
-                  onClick={() => setStep(4)}
-                  className={`${styles.btn} ${styles[currentColorClass]}`}
-                  disabled={!amount || Number(amount) < minAmount}
-                >
+                <Button onClick={() => setStep(4)} className={`${styles.btn} ${styles[currentColorClass]}`} disabled={!amount || Number(amount) < minAmount}>
                   Next
                 </Button>
               </div>
@@ -296,24 +278,18 @@ export default function Send() {
                   <p><b>To:</b> {to}</p>
                   <p><b>Network:</b> {selectedNetwork}</p>
                   <p><b>Fee:</b>{" "}
-                    {feeLoading
-                      ? "Calculating..."
-                      : `${(Number(gasFee) + Number(adminFee)).toFixed(6)} ${selectedNetwork.toUpperCase()}`}
+                    {feeLoading 
+                      ? "Calculating..." 
+                      : `${(Number(gasFee) + Number(adminFee)).toFixed(6)} ${selectedNetwork.toUpperCase()}`
+                    }
                   </p>
                 </div>
               </div>
               <div className={styles.buttonsRow}>
-                <Button
-                  onClick={() => setStep(3)}
-                  className={`${styles.btn} ${styles[currentColorClass]}`}
-                >
+                <Button onClick={() => setStep(3)} className={`${styles.btn} ${styles[currentColorClass]}`}>
                   Back
                 </Button>
-                <Button
-                  onClick={handleSend}
-                  disabled={sending || feeLoading}
-                  className={`${styles.btn} ${styles[currentColorClass]}`}
-                >
+                <Button onClick={handleSend} disabled={sending || feeLoading} className={`${styles.btn} ${styles[currentColorClass]}`}>
                   {sending ? <Loader2 className="animate-spin" /> : "Send"}
                 </Button>
               </div>
@@ -327,15 +303,12 @@ export default function Send() {
               <p className={styles.txHashBox}>
                 TX Hash:<br />{txHash}
               </p>
-              <Button
-                className={`${styles.btn} w-full mt-4`}
-                onClick={() => {
-                  setStep(1);
-                  setTxHash(null);
-                  setAmount("");
-                  setTo("");
-                }}
-              >
+              <Button className={`${styles.btn} w-full mt-4`} onClick={() => {
+                setStep(1);
+                setTxHash(null);
+                setAmount("");
+                setTo("");
+              }}>
                 Send Another
               </Button>
             </div>
@@ -346,3 +319,5 @@ export default function Send() {
     </div>
   );
 }
+
+export default Send;
