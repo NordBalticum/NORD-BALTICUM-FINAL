@@ -1,24 +1,38 @@
-// src/contexts/NetworkContext.js
 "use client";
 
-import { createContext, useContext, useState, useEffect, useCallback } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback
+} from "react";
 
-// Palaikomi tinklai (key sutampa su mūsų konfigūracijomis)
-export const SUPPORTED_NETWORKS = ["eth", "bnb", "tbnb", "matic", "avax"];
+// Supported keys → on‐chain chainIds
+const NETWORK_CHAIN_IDS = {
+  eth: 1,
+  polygon: 137,
+  bnb: 56,
+  tbnb: 97,
+  avax: 43114,
+};
+
+export const SUPPORTED_NETWORKS = Object.keys(NETWORK_CHAIN_IDS);
 const STORAGE_KEY = "activeNetwork";
 
 const NetworkContext = createContext({
-  activeNetwork: "bnb",
+  activeNetwork: "eth",
+  chainId: null,
   switchNetwork: () => {},
 });
 
 export const useNetwork = () => useContext(NetworkContext);
 
 export function NetworkProvider({ children }) {
-  const [activeNetwork, setActiveNetwork] = useState("bnb");
+  const [activeNetwork, setActiveNetwork] = useState("eth");
   const [initialized, setInitialized] = useState(false);
 
-  // Inicializuojame iš localStorage
+  // on load, read from localStorage
   useEffect(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved && SUPPORTED_NETWORKS.includes(saved)) {
@@ -27,22 +41,23 @@ export function NetworkProvider({ children }) {
     setInitialized(true);
   }, []);
 
-  // Išsaugome pasirinkimą localStorage
+  // save changes
   useEffect(() => {
     if (!initialized) return;
-    if (SUPPORTED_NETWORKS.includes(activeNetwork)) {
-      localStorage.setItem(STORAGE_KEY, activeNetwork);
-    }
+    localStorage.setItem(STORAGE_KEY, activeNetwork);
   }, [activeNetwork, initialized]);
 
-  // Tinklo keitimo funkcija
   const switchNetwork = useCallback((networkKey) => {
     if (!SUPPORTED_NETWORKS.includes(networkKey)) return;
-    setActiveNetwork((prev) => (prev !== networkKey ? networkKey : prev));
+    setActiveNetwork(networkKey);
   }, []);
 
+  const chainId = NETWORK_CHAIN_IDS[activeNetwork] || null;
+
   return (
-    <NetworkContext.Provider value={{ activeNetwork, switchNetwork }}>
+    <NetworkContext.Provider
+      value={{ activeNetwork, chainId, switchNetwork }}
+    >
       {children}
     </NetworkContext.Provider>
   );
