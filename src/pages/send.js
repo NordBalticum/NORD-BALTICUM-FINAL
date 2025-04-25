@@ -18,7 +18,7 @@ const networks = [
   { label: "Polygon", value: "polygon", color: "color-polygon", icon: "/icons/matic.svg", min: 0.1 },
   { label: "BNB", value: "bnb", color: "color-bnb", icon: "/icons/bnb.svg", min: 0.01 },
   { label: "Avalanche", value: "avax", color: "color-avax", icon: "/icons/avax.svg", min: 0.01 },
-  { label: "Testnet BNB", value: "tbnb", color: "color-bnb", icon: "/icons/bnb.svg", min: 0.001 }
+  { label: "Testnet BNB", value: "tbnb", color: "color-bnb", icon: "/icons/bnb.svg", min: 0.001 },
 ];
 
 const coingeckoIds = {
@@ -26,7 +26,7 @@ const coingeckoIds = {
   polygon: "matic-network",
   bnb: "binancecoin",
   avax: "avalanche-2",
-  tbnb: "binancecoin"
+  tbnb: "binancecoin",
 };
 
 const isValidAddress = (addr) => /^0x[a-fA-F0-9]{40}$/.test(addr.trim());
@@ -132,7 +132,7 @@ const Send = () => {
               <h2 className={styles.stepTitle}>Select Active Network</h2>
               <Select.Root value={selectedNetwork} onValueChange={handleSelectNetwork}>
                 <Select.Trigger className={styles.selectTrigger}>
-                  <Select.Value>
+                  <Select.Value asChild>
                     <div className="flex items-center gap-2">
                       <img
                         src={networks.find(n => n.value === selectedNetwork)?.icon}
@@ -158,7 +158,6 @@ const Send = () => {
             </div>
           )}
 
-          {/* STEP 2 */}
           {step === 2 && (
             <div className="space-y-8">
               <Logo />
@@ -173,7 +172,6 @@ const Send = () => {
             </div>
           )}
 
-          {/* STEP 3 */}
           {step === 3 && (
             <div className="space-y-8">
               <Logo />
@@ -192,7 +190,6 @@ const Send = () => {
             </div>
           )}
 
-          {/* STEP 4 */}
           {step === 4 && (
             <div className="space-y-8">
               <Logo />
@@ -215,9 +212,8 @@ const Send = () => {
             </div>
           )}
 
-          {/* STEP 5 */}
           {step === 5 && txHash && (
-            <div className="text-center space-y-4">
+            <div className="text-center space-y-6">
               <h2 className={styles.successText}>✅ Sent!</h2>
               <p className={styles.txHashBox}>TX Hash:<br />{txHash}</p>
               <Button className={`${styles.btn} w-full mt-4`} onClick={() => {
