@@ -1,15 +1,10 @@
+// src/contexts/NetworkContext.js
 "use client";
 
-import {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  useCallback
-} from "react";
+import { createContext, useContext, useState, useEffect, useCallback } from "react";
 
-// Supported keys → on‐chain chainIds
-const NETWORK_CHAIN_IDS = {
+// String → skaitinis chainId žemėlapis
+const CHAIN_IDS = {
   eth: 1,
   matic: 137,
   bnb: 56,
@@ -17,47 +12,62 @@ const NETWORK_CHAIN_IDS = {
   avax: 43114,
 };
 
-export const SUPPORTED_NETWORKS = Object.keys(NETWORK_CHAIN_IDS);
+// Galimi raktai
+export const SUPPORTED_NETWORKS = Object.keys(CHAIN_IDS);
 const STORAGE_KEY = "activeNetwork";
 
+// Sukuriame kontekstą su default reikšmėmis
 const NetworkContext = createContext({
   activeNetwork: "eth",
-  chainId: null,
+  chainId: CHAIN_IDS["eth"],
   switchNetwork: () => {},
 });
 
+// Hook’as prie konteksto
 export const useNetwork = () => useContext(NetworkContext);
 
+// Provider’is
 export function NetworkProvider({ children }) {
   const [activeNetwork, setActiveNetwork] = useState("eth");
   const [initialized, setInitialized] = useState(false);
 
-  // on load, read from localStorage
+  // 1) Pasiimame iš localStorage
   useEffect(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved && SUPPORTED_NETWORKS.includes(saved)) {
-      setActiveNetwork(saved);
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved && SUPPORTED_NETWORKS.includes(saved)) {
+        setActiveNetwork(saved);
+      }
+    } catch (e) {
+      console.warn("NetworkContext load error:", e);
     }
     setInitialized(true);
   }, []);
 
-  // save changes
+  // 2) Išsaugome į localStorage (tik po init)
   useEffect(() => {
     if (!initialized) return;
-    localStorage.setItem(STORAGE_KEY, activeNetwork);
-  }, [activeNetwork, initialized]);
+    try {
+      localStorage.setItem(STORAGE_KEY, activeNetwork);
+    } catch (e) {
+      console.warn("NetworkContext save error:", e);
+    }
+  }, [initialized, activeNetwork]);
 
+  // 3) Pakeitimo funkcija
   const switchNetwork = useCallback((networkKey) => {
-    if (!SUPPORTED_NETWORKS.includes(networkKey)) return;
-    setActiveNetwork(networkKey);
+    if (!SUPPORTED_NETWORKS.includes(networkKey)) {
+      console.warn(`Unsupported network: ${networkKey}`);
+      return;
+    }
+    setActiveNetwork((prev) => (prev !== networkKey ? networkKey : prev));
   }, []);
 
-  const chainId = NETWORK_CHAIN_IDS[activeNetwork] || null;
+  // 4) Gauname skaitinį chainId
+  const chainId = CHAIN_IDS[activeNetwork] ?? null;
 
   return (
-    <NetworkContext.Provider
-      value={{ activeNetwork, chainId, switchNetwork }}
-    >
+    <NetworkContext.Provider value={{ activeNetwork, chainId, switchNetwork }}>
       {children}
     </NetworkContext.Provider>
   );
