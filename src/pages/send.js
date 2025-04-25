@@ -18,6 +18,7 @@ const networks = [
   { label: "Polygon", value: "polygon", color: "color-polygon", icon: "/icons/matic.svg", min: 0.1 },
   { label: "BNB", value: "bnb", color: "color-bnb", icon: "/icons/bnb.svg", min: 0.01 },
   { label: "Avalanche", value: "avax", color: "color-avax", icon: "/icons/avax.svg", min: 0.01 },
+  { label: "Test BNB", value: "tbnb", color: "color-bnb", icon: "/icons/bnb.svg", min: 0.01 },
 ];
 
 const coingeckoIds = {
@@ -25,6 +26,7 @@ const coingeckoIds = {
   polygon: "matic-network",
   bnb: "binancecoin",
   avax: "avalanche-2",
+  tbnb: "binancecoin", // testnet same pricing logic
 };
 
 const isValidAddress = (addr) => /^0x[a-fA-F0-9]{40}$/.test(addr.trim());
@@ -53,7 +55,7 @@ const Send = () => {
   const minAmount = useMemo(() => networks.find(n => n.value === selectedNetwork)?.min || 0, [selectedNetwork]);
   const currentColorClass = useMemo(() => networks.find(n => n.value === selectedNetwork)?.color || "bg-gray-500", [selectedNetwork]);
   const usdRate = usdPrices[coingeckoIds[selectedNetwork]]?.usd || 0;
-  const usdValue = useMemo(() => amount && usdRate ? (Number(amount) * usdRate).toFixed(2) : null, [amount, usdRate]);
+  const usdValue = useMemo(() => (amount && usdRate ? (Number(amount) * usdRate).toFixed(2) : null), [amount, usdRate]);
   const currentBalance = useMemo(() => (balance[selectedNetwork] || 0).toFixed(6), [balance, selectedNetwork]);
 
   useEffect(() => {
@@ -72,7 +74,7 @@ const Send = () => {
 
   useEffect(() => {
     if (step === 3) calculateFees(amount);
-  }, [step, amount, calculateFees]);
+  }, [step, amount]);
 
   const handleMax = useCallback(() => {
     if (balance?.[selectedNetwork]) {
