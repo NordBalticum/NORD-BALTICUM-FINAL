@@ -15,7 +15,7 @@ import styles from "@/styles/send.module.css";
 
 const networks = [
   { label: "Ethereum", value: "eth", color: "color-eth",     icon: "/icons/eth.svg",  min: 0.001 },
-  { label: "Polygon",  value: "polygon", color: "color-polygon", icon: "/icons/matic.svg", min: 0.1 },
+  { label: "Matic",  value: "matic", color: "color-polygon", icon: "/icons/matic.svg", min: 0.1 },
   { label: "BNB",      value: "bnb",     color: "color-bnb",   icon: "/icons/bnb.svg",  min: 0.01 },
   { label: "Avalanche",value: "avax",    color: "color-avax",  icon: "/icons/avax.svg", min: 0.01 },
   { label: "Testnet BNB", value: "tbnb", color: "color-bnb",   icon: "/icons/bnb.svg",  min: 0.001 },
