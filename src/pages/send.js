@@ -129,9 +129,9 @@ const Send = () => {
           {step === 1 && (
             <div className="space-y-8">
               <Logo />
-              <h2 className={styles.stepTitle}>Select Network</h2>
+              <h2 className={styles.stepTitle}>Select Active Network</h2>
               <Select.Root value={selectedNetwork} onValueChange={handleSelectNetwork}>
-                <Select.Trigger className={styles.selectTrigger}>
+                <Select.Trigger className={`${styles.selectTrigger} ${styles.selectLuxury}`}>
                   <div className="flex items-center gap-2">
                     <img src={networks.find(n => n.value === selectedNetwork)?.icon} alt="icon" className="w-5 h-5" />
                     <span>{networks.find(n => n.value === selectedNetwork)?.label}</span>
