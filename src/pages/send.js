@@ -83,13 +83,14 @@ const Send = () => {
   }, [balance, selectedNetwork]);
 
   const handleSelectNetwork = useCallback(async (value) => {
-    if (value !== selectedNetwork) {
-      await switchNetwork(value);
-    }
+  if (value !== selectedNetwork) {
+    await switchNetwork(value);
     setSelectedNetwork(value);
-    setStep(2);
-  }, [selectedNetwork, switchNetwork]);
-
+  }
+  // Always go to step 2, even if network hasn't changed
+  setStep(2);
+}, [selectedNetwork, switchNetwork]);
+  
   const handleSend = async () => {
     const now = Date.now();
     const cleanTo = to.trim().toLowerCase();
