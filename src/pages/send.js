@@ -83,12 +83,11 @@ const Send = () => {
   }, [balance, selectedNetwork]);
 
   const handleSelectNetwork = useCallback(async (value) => {
+    setStep(2); // visada pereina į Step 2
     if (value !== selectedNetwork) {
       await switchNetwork(value);
       setSelectedNetwork(value);
     }
-    // Always move to step 2 even if network hasn't changed
-    setStep(2);
   }, [selectedNetwork, switchNetwork]);
 
   const handleSend = async () => {
@@ -137,7 +136,9 @@ const Send = () => {
                     <img src={networks.find(n => n.value === selectedNetwork)?.icon} alt="net" className={styles.selectIcon} />
                     <Select.Value placeholder="Select network" />
                   </div>
-                  <Select.Icon><ChevronDown size={18} /></Select.Icon>
+                  <Select.Icon>
+                    <ChevronDown size={18} />
+                  </Select.Icon>
                 </Select.Trigger>
                 <Select.Portal>
                   <Select.Content className="z-50 bg-black border border-neutral-700 rounded-xl shadow-2xl" position="popper" sideOffset={5}>
@@ -213,12 +214,17 @@ const Send = () => {
             <div className="text-center space-y-6">
               <h2 className={styles.successText}>✅ Sent!</h2>
               <p className={styles.txHashBox}>TX Hash:<br />{txHash}</p>
-              <Button className={`${styles.btn} w-full mt-4`} onClick={() => {
-                setStep(1);
-                setTxHash(null);
-                setAmount("");
-                setTo("");
-              }}>Send Another</Button>
+              <Button
+                className={`${styles.btn} w-full mt-4`}
+                onClick={() => {
+                  setStep(1);
+                  setTxHash(null);
+                  setAmount("");
+                  setTo("");
+                }}
+              >
+                Send Another
+              </Button>
             </div>
           )}
         </CardContent>
