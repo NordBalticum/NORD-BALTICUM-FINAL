@@ -1,28 +1,37 @@
+// src/utils/getProviderForChain.js
 "use client";
 
-import { JsonRpcProvider, FallbackProvider } from "ethers";
+import { ethers } from "ethers";
 import { ethersFallbackProviders } from "@/utils/fallbackRPCs";
 
 /**
- * Grąžina saugų providerį, su fallback mechanizmu
- * @param {number|string} chainId - chainId kaip skaičius (pvz. 1, 137, 56)
- * @returns {JsonRpcProvider|FallbackProvider}
+ * Returns a JsonRpcProvider or FallbackProvider for the given chainId.
+ *
+ * @param {string|number} chainIdOrName – the chain ID (e.g. "1", 56, 97, 137, 43114)
+ * @returns {ethers.JsonRpcProvider|ethers.FallbackProvider}
  */
-export const getProviderForChain = (chainId) => {
-  const id = typeof chainId === "string" ? parseInt(chainId) : chainId;
-  const fallbackURLs = ethersFallbackProviders[id];
+export function getProviderForChain(chainIdOrName) {
+  // Normalize chainId to a number
+  const chainId =
+    typeof chainIdOrName === "string"
+      ? parseInt(chainIdOrName, 10)
+      : chainIdOrName;
 
-  if (!fallbackURLs || fallbackURLs.length === 0) {
-    throw new Error(`❌ No fallback RPCs found for chainId ${id}`);
+  const urls = ethersFallbackProviders[chainId];
+  if (!urls || urls.length === 0) {
+    throw new Error(`❌ No RPC endpoints configured for chainId ${chainId}`);
   }
 
-  if (fallbackURLs.length === 1) {
-    return new JsonRpcProvider(fallbackURLs[0], id);
+  // Build a JsonRpcProvider for each URL
+  const providers = urls.map((url) =>
+    new ethers.JsonRpcProvider(url, chainId)
+  );
+
+  // If only one endpoint, return it directly
+  if (providers.length === 1) {
+    return providers[0];
   }
 
-  const providers = fallbackURLs.map((url) => new JsonRpcProvider(url, id));
-  return new FallbackProvider(providers, {
-    quorum: 1,
-    weight: providers.map(() => 1),
-  });
-};
+  // Otherwise return a FallbackProvider over all URLs (quorum defaults to 1)
+  return new ethers.FallbackProvider(providers);
+}
