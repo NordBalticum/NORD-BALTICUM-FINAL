@@ -201,6 +201,21 @@
   padding: 2rem;
 }
 
+.selectTrigger {
+  background-color: #111;
+  border: 1px solid #333;
+  padding: 1rem 1.25rem;
+  border-radius: 1rem;
+  color: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer; /* <--- svarbiausias fixas */
+}
+
 /* Mobile */
 @media (max-width: 768px) {
   .card {
