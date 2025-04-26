@@ -1,9 +1,10 @@
+// src/components/BalanceCard.js
 "use client";
 
 import React, { useState, useMemo } from "react";
 import Image from "next/image";
 import { useBalance } from "@/contexts/BalanceContext";
-import fallbackRPCs from "@/utils/fallbackRPCs"; // ✅ NAUJAS – fallbackRPCs.js
+import fallbackRPCs from "@/utils/fallbackRPCs"; // ✅ Ultimate fallback RPCs config
 import styles from "./balancecard.module.css";
 
 export default function BalanceCard() {
@@ -11,11 +12,10 @@ export default function BalanceCard() {
   const [showTestnets, setShowTestnets] = useState(false);
 
   const networkList = useMemo(() => {
-    return Object.values(fallbackRPCs)
-      .filter(net => {
-        if (showTestnets) return net.isTestnet;
-        return !net.isTestnet;
-      });
+    return Object.values(fallbackRPCs).filter(net => {
+      if (showTestnets) return net.isTestnet;
+      return !net.isTestnet;
+    });
   }, [showTestnets]);
 
   const fmtCrypto = (n) =>
@@ -51,7 +51,7 @@ export default function BalanceCard() {
   return (
     <div className={styles.cardWrapper}>
 
-      {/* Toggle */}
+      {/* Toggle buttons */}
       <div className={styles.toggleWrapper} role="tablist">
         <button
           role="tab"
@@ -71,9 +71,9 @@ export default function BalanceCard() {
         </button>
       </div>
 
-      {/* List */}
+      {/* Network list */}
       <div className={styles.list}>
-        {networkList.map((net) => {
+        {networkList.map(net => {
           const balance = balances[net.key] ?? 0;
           const price = prices[net.key] ?? { usd: 0, eur: 0 };
           const usd = balance * (price.usd || 0);
@@ -92,7 +92,6 @@ export default function BalanceCard() {
                 />
                 <span className={styles.networkLabel}>{net.label}</span>
               </div>
-
               <div className={styles.networkRight}>
                 <div className={styles.cryptoAmount}>
                   {fmtCrypto(balance)}
@@ -127,7 +126,6 @@ export default function BalanceCard() {
         </div>
 
       </div>
-
     </div>
   );
 }
