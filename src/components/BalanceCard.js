@@ -1,35 +1,69 @@
+// src/components/BalanceCard.js
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Image from "next/image";
 import { useBalance } from "@/contexts/BalanceContext";
-import networks from "@/data/networks";
 import styles from "./balancecard.module.css";
+import networks from "@/data/networks";
 
+// ---- NEWS FETCH HOOK (inside this file for brevity) ----
+function useCryptoNews() {
+  const CACHE_KEY = "nordbalticum_crypto_news";
+  const TTL = 5 * 60 * 1000; // 5m
+  const [articles, setArticles] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const lastFetch = useMemo(() => ({ ts: 0 }), []);
+
+  useEffect(() => {
+    const now = Date.now();
+    const cache = JSON.parse(localStorage.getItem(CACHE_KEY) || "null");
+    if (cache && now - cache.ts < TTL) {
+      setArticles(cache.articles);
+      setLoading(false);
+      return;
+    }
+    const fetchNews = async () => {
+      setLoading(true);
+      try {
+        // your own Next.js proxy at /api/news pulling from a crypto-news API
+        const res = await fetch("/api/news?category=crypto", { cache: "no-store" });
+        const json = await res.json();
+        const top5 = json.articles.slice(0, 5);
+        setArticles(top5);
+        localStorage.setItem(CACHE_KEY, JSON.stringify({ ts: now, articles: top5 }));
+      } catch {
+        // swallow errors
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchNews();
+  }, [lastFetch]);
+
+  return { articles, loading };
+}
+
+// ---- BALANCE CARD COMPONENT ----
 export default function BalanceCard() {
-  const { balances, loading, getUsdBalance, getEurBalance } = useBalance();
+  const { balances, loading: balLoading, getUsdBalance, getEurBalance } = useBalance();
+  const { articles, loading: newsLoading } = useCryptoNews();
   const [showTestnets, setShowTestnets] = useState(false);
 
-  // pick either mainnet or testnets
+  // pick mainnets or testnets
   const items = useMemo(
     () =>
       networks
-        .map(n => (showTestnets && n.testnet ? n.testnet : n))
+        .map((n) => (showTestnets && n.testnet ? n.testnet : n))
         .filter(Boolean),
     [showTestnets]
   );
 
-  // formaters
-  const fmtCrypto = n =>
-    Number(n).toLocaleString(undefined, {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 6,
-    });
-  const fmtFiat = n =>
-    Number(n).toLocaleString(undefined, {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    });
+  // formatters
+  const fmtCrypto = (n) =>
+    Number(n).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 });
+  const fmtFiat = (n) =>
+    Number(n).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
   // totals
   const { totalUsd, totalEur } = useMemo(() => {
@@ -40,44 +74,42 @@ export default function BalanceCard() {
 
   return (
     <div className={styles.cardWrapper}>
-      {/* tabs */}
+      {/* ─── Tabs ────────────────────────────────────── */}
       <div role="tablist" className={styles.toggleWrapper}>
-        <button
-          role="tab"
-          aria-selected={!showTestnets}
-          onClick={() => setShowTestnets(false)}
-          className={`${styles.toggleButton} ${!showTestnets ? styles.active : ""}`}
-        >
-          Mainnets
-        </button>
-        <button
-          role="tab"
-          aria-selected={showTestnets}
-          onClick={() => setShowTestnets(true)}
-          className={`${styles.toggleButton} ${showTestnets ? styles.active : ""}`}
-        >
-          Testnets
-        </button>
+        {["Mainnets", "Testnets"].map((label, i) => {
+          const sel = i === 1;
+          return (
+            <button
+              key={label}
+              role="tab"
+              aria-selected={showTestnets === sel}
+              onClick={() => setShowTestnets(sel)}
+              className={`${styles.toggleButton} ${showTestnets === sel ? styles.active : ""}`}
+            >
+              {label}
+            </button>
+          );
+        })}
       </div>
 
-      {/* list */}
+      {/* ─── Balances List ───────────────────────────── */}
       <div className={styles.list}>
-        {items.map(net => {
+        {items.map((net) => {
           const bal = balances[net.value] ?? 0;
           const usd = getUsdBalance(net.value);
           const eur = getEurBalance(net.value);
           return (
             <div key={net.value} className={styles.listItem}>
               <div className={styles.networkInfo}>
-                <Image src={net.icon} alt={net.label} width={32} height={32} unoptimized />
+                <Image src={net.icon} alt={`${net.label} icon`} width={32} height={32} unoptimized />
                 <span className={styles.networkLabel}>{net.label}</span>
               </div>
               <div className={styles.amountInfo}>
                 <div className={styles.cryptoAmount}>{fmtCrypto(bal)}</div>
                 <div className={styles.fiatAmount}>
-                  {loading ? (
+                  {balLoading ? (
                     <span className={styles.shimmerTextSmall} />
-                  ) : (Number(usd) || Number(eur)) ? (
+                  ) : Number(usd) || Number(eur) ? (
                     <>≈ ${fmtFiat(usd)} | €{fmtFiat(eur)}</>
                   ) : (
                     <>–</>
@@ -88,7 +120,7 @@ export default function BalanceCard() {
           );
         })}
 
-        {/* total row */}
+        {/* ─── Total Row ────────────────────────────────── */}
         <div className={`${styles.listItem} ${styles.totalRow}`}>
           <div className={styles.networkInfo}>
             <span className={styles.networkLabel}>Total</span>
@@ -96,7 +128,7 @@ export default function BalanceCard() {
           <div className={styles.amountInfo}>
             <div className={styles.cryptoAmount} />
             <div className={styles.fiatAmount}>
-              {loading ? (
+              {balLoading ? (
                 <span className={styles.shimmerTextSmall} />
               ) : (
                 <>≈ ${fmtFiat(totalUsd)} | €{fmtFiat(totalEur)}</>
@@ -104,6 +136,25 @@ export default function BalanceCard() {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* ─── Crypto News Pane ────────────────────────── */}
+      <div className={styles.newsSection}>
+        <h3 className={styles.newsTitle}>Latest Crypto News</h3>
+        {newsLoading ? (
+          <div className={styles.newsLoading}>Loading news…</div>
+        ) : (
+          <ul className={styles.newsList}>
+            {articles.map((a, i) => (
+              <li key={i} className={styles.newsItem}>
+                <a href={a.url} target="_blank" rel="noopener">
+                  {a.title}
+                </a>
+                <small>{new Date(a.publishedAt).toLocaleDateString()}</small>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
     </div>
   );
