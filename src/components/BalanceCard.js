@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useBalance } from "@/contexts/BalanceContext";
 import networks from "@/data/networks";
-import styles from "@/styles/balancecard.module.css";
+import styles from "./balancecard.module.css";
 
 export default function BalanceCard() {
   const { balances, prices, loading } = useBalance();
