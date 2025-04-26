@@ -23,6 +23,7 @@ export default [
       label: "Sepolia",
       value: "sepolia",
       chainId: 11155111,
+      icon: "/icons/eth.svg",            // ← same icon
       rpcUrls: [
         withAnkr("eth_sepolia"),
         "https://sepolia.publicnode.com",
@@ -43,6 +44,7 @@ export default [
       label: "Mumbai",
       value: "mumbai",
       chainId: 80001,
+      icon: "/icons/matic.svg",          // ← same icon
       rpcUrls: [
         withAnkr("polygon_mumbai"),
         "https://rpc-mumbai.maticvigil.com",
@@ -63,6 +65,7 @@ export default [
       label: "BNB Testnet",
       value: "tbnb",
       chainId: 97,
+      icon: "/icons/bnb.svg",            // ← same icon
       rpcUrls: [
         withAnkr("bsc_testnet"),
         "https://bsc-testnet.publicnode.com",
@@ -83,6 +86,7 @@ export default [
       label: "Fuji",
       value: "fuji",
       chainId: 43113,
+      icon: "/icons/avax.svg",           // ← same icon
       rpcUrls: [
         withAnkr("avalanche_fuji"),
         "https://avalanche-fuji.publicnode.com",
@@ -103,6 +107,7 @@ export default [
       label: "Optimism Goerli",
       value: "optimism-goerli",
       chainId: 420,
+      icon: "/icons/optimism.svg",      // ← same icon
       rpcUrls: [
         withAnkr("optimism_goerli"),
         "https://optimism-goerli.publicnode.com",
@@ -123,6 +128,7 @@ export default [
       label: "Arbitrum Goerli",
       value: "arbitrum-goerli",
       chainId: 421613,
+      icon: "/icons/arbitrum.svg",      // ← same icon
       rpcUrls: [
         withAnkr("arbitrum_goerli"),
         "https://goerli-rollup.arbitrum.io/rpc",
@@ -143,6 +149,7 @@ export default [
       label: "Base Goerli",
       value: "base-goerli",
       chainId: 84531,
+      icon: "/icons/base.svg",           // ← same icon
       rpcUrls: [
         withAnkr("base_goerli"),
         "https://goerli.base.org",
@@ -163,6 +170,7 @@ export default [
       label: "zkSync Testnet",
       value: "zksync-testnet",
       chainId: 280,
+      icon: "/icons/zksync.svg",         // ← same icon
       rpcUrls: [
         withAnkr("zksync_testnet"),
         "https://testnet.era.zksync.dev",
@@ -183,6 +191,7 @@ export default [
       label: "Linea Testnet",
       value: "linea-testnet",
       chainId: 59140,
+      icon: "/icons/linea.svg",          // ← same icon
       rpcUrls: [
         withAnkr("linea_goerli"),
         "https://rpc.goerli.linea.build",
@@ -203,6 +212,7 @@ export default [
       label: "Scroll Testnet",
       value: "scroll-testnet",
       chainId: 534353,
+      icon: "/icons/scroll.svg",         // ← same icon
       rpcUrls: [
         withAnkr("scroll_testnet"),
         "https://scroll-testnet.public.blastapi.io",
@@ -223,6 +233,7 @@ export default [
       label: "Mantle Testnet",
       value: "mantle-testnet",
       chainId: 5001,
+      icon: "/icons/mantle.svg",         // ← same icon
       rpcUrls: [
         withAnkr("mantle_testnet"),
         "https://rpc.testnet.mantle.xyz",
@@ -243,6 +254,7 @@ export default [
       label: "Alfajores",
       value: "alfajores",
       chainId: 44787,
+      icon: "/icons/celo.svg",           // ← same icon
       rpcUrls: [
         withAnkr("celo_alfajores"),
         "https://alfajores-forno.celo-testnet.org",
@@ -263,6 +275,7 @@ export default [
       label: "Chiado",
       value: "chiado",
       chainId: 10200,
+      icon: "/icons/gnosis.svg",         // ← same icon
       rpcUrls: [
         withAnkr("gnosis_chiado"),
         "https://rpc.chiadochain.net",
