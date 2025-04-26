@@ -1,10 +1,12 @@
 "use client";
 
-import React, { useMemo, Suspense } from "react";
+import React, { useEffect, useMemo, Suspense } from "react";
 import dynamic from "next/dynamic";
 import { motion } from "framer-motion";
 
-import { useSystemReady } from "@/hooks/useSystemReady";           // ✅ Ultimate system+session+device
+import { useSystemReady } from "@/hooks/useSystemReady";           // ✅ Ultimate system ready (dom + auth + wallet + network + device)
+import { useSessionWatcher } from "@/utils/sessionWatcher";         // ✅ Session watcher (timeout/logout)
+import { startSilentBalanceRefetch } from "@/utils/startSilentBalanceRefetch"; // ✅ Balance silent refetch
 import { useAuth } from "@/contexts/AuthContext";
 import { useBalance } from "@/contexts/BalanceContext";
 import { useNetwork } from "@/contexts/NetworkContext";
@@ -18,10 +20,20 @@ const LivePriceTable = dynamic(() => import("@/components/LivePriceTable"), { ss
 export default function Dashboard() {
   const { ready, loading, isMobile, scale } = useSystemReady();
   const { user, wallet } = useAuth();
-  const { balancesReady, lastUpdated } = useBalance();
+  const { balancesReady, lastUpdated, refetch } = useBalance();
   const { activeNetwork } = useNetwork();
 
   const address = wallet?.wallet?.address ?? "";
+
+  // ✅ Paleidžiam session watcher kai komponentas pasileidžia
+  useSessionWatcher();
+
+  // ✅ Paleidžiam silent balance refetch kai ready ir window yra
+  useEffect(() => {
+    if (ready && typeof window !== "undefined") {
+      startSilentBalanceRefetch(refetch);
+    }
+  }, [ready, refetch]);
 
   const truncatedAddress = useMemo(() => (
     address ? `${address.slice(0, 6)}…${address.slice(-4)}` : "--"
