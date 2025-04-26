@@ -4,14 +4,15 @@
 import { useState, useEffect, useMemo } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNetwork } from "@/contexts/NetworkContext";
-import { useDeviceInfo } from "@/hooks/useDeviceInfo"; // 🔥 NAUJAS device hook
+import { useDeviceInfo } from "@/hooks/useDeviceInfo";
+import { useSessionWatcher } from "@/hooks/sessionWatcher"; // 🔥 Naujas Watcher import
 
 export function useSystemReady() {
   const [domReady, setDomReady] = useState(false);
 
   const { user, wallet, authLoading, walletLoading } = useAuth();
   const { activeNetwork, chainId } = useNetwork();
-  const deviceInfo = useDeviceInfo(); // 🔥 Naujas way sužinoti isMobile
+  const deviceInfo = useDeviceInfo();
 
   // Detect DOM Ready
   useEffect(() => {
@@ -45,6 +46,9 @@ export function useSystemReady() {
   const systemReady = useMemo(() => {
     return domReady && authReady && networkReady;
   }, [domReady, authReady, networkReady]);
+
+  // 🧠 Start sessionWatcher only when system ready
+  useSessionWatcher();
 
   return {
     ready: systemReady,
