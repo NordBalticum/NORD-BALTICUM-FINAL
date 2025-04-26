@@ -124,13 +124,15 @@ export function BalanceProvider({ children }) {
       setBalancesReady(true);
     }
   }, [fetchBalances, fetchPrices]);
-
-  useEffect(() => {
-    if (!authLoading && !walletLoading && wallet?.wallet?.address) {
-      fetchAll();
-    }
-  }, [authLoading, walletLoading, wallet, fetchAll]);
-
+  
+useEffect(() => {
+  if (!authLoading && !walletLoading && wallet?.wallet?.address) {
+    fetchAll()
+      .then(() => setBalancesReady(true))
+      .catch(() => setBalancesReady(true)); // vis tiek balancesReady true
+  }
+}, [authLoading, walletLoading, wallet, fetchAll]);
+  
   useEffect(() => {
     const interval = setInterval(fetchAll, 30_000);
 
