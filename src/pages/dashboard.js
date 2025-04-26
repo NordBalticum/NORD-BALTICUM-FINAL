@@ -1,15 +1,19 @@
 // src/app/dashboard.js
 "use client";
 
+import { useState, useMemo } from "react";
 import dynamic from "next/dynamic";
 import { motion } from "framer-motion";
-import { useSystemReady } from "@/hooks/useSystemReady";
-import { useAuth } from "@/contexts/AuthContext";
-import BalanceCard from "@/components/BalanceCard";
-import styles from "@/styles/dashboard.module.css";
-import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
 
-// chartą deferinam, kad nebūtų SSR bloko
+import { useSystemReady } from "@/hooks/useSystemReady";
+import { useAuth }        from "@/contexts/AuthContext";
+import { useBalance }     from "@/contexts/BalanceContext";
+import networks           from "@/data/networks";
+
+import BalanceCard        from "@/components/BalanceCard";
+import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
+import styles             from "@/styles/dashboard.module.css";
+
 const LivePriceTable = dynamic(
   () => import("@/components/LivePriceTable"),
   { ssr: false }
@@ -17,10 +21,11 @@ const LivePriceTable = dynamic(
 
 export default function Dashboard() {
   const { wallet } = useAuth();
-  const { ready, loading: systemLoading, isMobile } = useSystemReady();
+  const { ready, loading: sysLoading, isMobile } = useSystemReady();
+  const { getUsdBalance, getEurBalance, loading: balLoading } = useBalance();
 
-  // rodome spinnerį tik tol, kol visi core moduliai (auth, wallet, balances+prices) nepasiruošę
-  if (systemLoading || !ready || !wallet?.wallet?.address) {
+  // block only until auth + wallet + balances/prices
+  if (sysLoading || !ready || !wallet?.wallet?.address) {
     return (
       <main className={styles.container}>
         <div className={styles.dashboardWrapper}>
@@ -40,18 +45,39 @@ export default function Dashboard() {
     );
   }
 
-  // kai viskas paruošta, atvaizduojam chartą ir balansų kortelę
+  // compute totals across **mainnets** (value from networks[].value)
+  const { totalUsd, totalEur } = useMemo(() => {
+    const usd = networks.reduce(
+      (sum, n) => sum + parseFloat(getUsdBalance(n.value)), 
+      0
+    );
+    const eur = networks.reduce(
+      (sum, n) => sum + parseFloat(getEurBalance(n.value)), 
+      0
+    );
+    return { totalUsd: usd, totalEur: eur };
+  }, [getUsdBalance, getEurBalance]);
+
   return (
     <main className={styles.container}>
       <div className={styles.dashboardWrapper}>
         <div className={styles.dashboardRow}>
-          {/* ~70% pločio desktop, mobilėje full */}
+          {/* Chart ~70% on desktop, full width on mobile */}
           <div className={styles.chartSection}>
             <LivePriceTable />
           </div>
-          {/* ~30% pločio desktop, mobilėje full */}
+
+          {/* Balances ~30% on desktop, full width on mobile */}
           <div className={styles.balanceSection}>
             <BalanceCard />
+            {/* Totals under the card */}
+            <div className={styles.totals}>
+              {balLoading ? (
+                <span className={styles.shimmerTextSmall} />
+              ) : (
+                <>Total ≈ ${totalUsd.toFixed(2)} | €{totalEur.toFixed(2)}</>
+              )}
+            </div>
           </div>
         </div>
       </div>
