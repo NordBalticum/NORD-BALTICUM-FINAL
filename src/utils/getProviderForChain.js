@@ -1,35 +1,34 @@
-// src/utils/getProviderForChain.js
 "use client";
 
 import { ethers } from "ethers";
-import { ethersFallbackProviders } from "./fallbackRPCs";
-
-/**  
- * Draugiški pavadinimai → numeriniai chainId  
- */
-const CHAIN_NAME_TO_ID = {
-  eth: 1, sepolia: 11155111,
-  matic: 137, mumbai: 80001,
-  bnb: 56, tbnb: 97,
-  avax: 43114, fuji: 43113,
-  optimism: 10, optimismgoerli: 420,
-  arbitrum: 42161, arbitrumgoerli: 421613,
-  base: 8453, basegoerli: 84531,
-  zksync: 324, zksynctest: 280,
-  linea: 59144, lineatest: 59140,
-  scroll: 534352, scrolltest: 534353,
-  mantle: 5000, mantletest: 5001,
-  celo: 42220, alfajores: 44787,
-  gnosis: 100, chiado: 10200,
-};
+import { ethersFallbackProviders } from "@/utils/fallbackRPCs";
+import networks from "@/data/networks";
 
 const providerCache = new Map();
 
 /**
+ * Randa chainId pagal "value" iš networks.js
+ */
+function getChainIdFromName(name) {
+  const lower = name.trim().toLowerCase();
+
+  // Patikrinam mainnet'us
+  for (const net of networks) {
+    if (net.value === lower) {
+      return net.chainId;
+    }
+    // Patikrinam testnet'us
+    if (net.testnet && net.testnet.value === lower) {
+      return net.testnet.chainId;
+    }
+  }
+  return null;
+}
+
+/**
  * Grąžina vieną veikiantį JsonRpcProvider arba FallbackProvider
- * be jokio CORS bloko (naudojame tik Ankr RPC su tavo API raktu).
  *
- * @param {string|number} chainIdOrName – pvz. "137", 56 arba "matic"
+ * @param {string|number} chainIdOrName – pvz. "137", 56 arba "polygon"
  * @returns {ethers.JsonRpcProvider|ethers.FallbackProvider}
  */
 export function getProviderForChain(chainIdOrName) {
@@ -37,34 +36,34 @@ export function getProviderForChain(chainIdOrName) {
   let chainId = typeof chainIdOrName === "string"
     ? Number(chainIdOrName.trim())
     : chainIdOrName;
+
   if (typeof chainIdOrName === "string" && isNaN(chainId)) {
-    const key = chainIdOrName.trim().toLowerCase();
-    if (CHAIN_NAME_TO_ID[key] != null) {
-      chainId = CHAIN_NAME_TO_ID[key];
+    const found = getChainIdFromName(chainIdOrName);
+    if (found != null) {
+      chainId = found;
     }
   }
+
   if (typeof chainId !== "number" || isNaN(chainId)) {
     throw new Error(`Invalid chainIdOrName "${chainIdOrName}"`);
   }
 
-  // 2) jeigu jau buvo sukurtas – grąžinam cache’ą
+  // 2) tikrinam cache
   if (providerCache.has(chainId)) {
     return providerCache.get(chainId);
   }
 
-  // 3) paimame tik Ankr RPC URL’us iš fallbackRPCs
+  // 3) paimame RPC URL’us
   const urls = ethersFallbackProviders[chainId];
   if (!urls?.length) {
     throw new Error(`❌ No RPC endpoints for chainId ${chainId}`);
   }
 
-  // 4) sudedam provider’į
+  // 4) sudedam providerį
   let provider;
   if (urls.length === 1) {
-    // vienas Ankr URL
     provider = new ethers.JsonRpcProvider(urls[0], chainId);
   } else {
-    // keli Ankr URL’ai – FallbackProvider su quorum=1
     const backends = urls.map(u => new ethers.JsonRpcProvider(u, chainId));
     const configs = backends.map(p => ({
       provider: p,
@@ -75,12 +74,12 @@ export function getProviderForChain(chainIdOrName) {
     provider = new ethers.FallbackProvider(configs, { quorum: 1 });
   }
 
-  // 5) iškart patikriname ryšį
+  // 5) automatinis tinklo patikrinimas
   provider.getNetwork()
     .then(net => console.debug(`🔗 Connected to chainId ${net.chainId}`))
     .catch(err => console.warn(`⚠️ Cannot detect network ${chainId}:`, err));
 
-  // 6) stebime galimus network switch’us
+  // 6) stebim tinklo pasikeitimus
   provider.on("network", (newNet, oldNet) => {
     if (oldNet) {
       console.debug(`🔄 Network switch: ${oldNet.chainId} → ${newNet.chainId}`);
