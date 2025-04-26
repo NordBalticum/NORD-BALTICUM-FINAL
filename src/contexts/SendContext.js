@@ -11,7 +11,7 @@ import { useNetwork } from "@/contexts/NetworkContext";
 import { getProviderForChain } from "@/utils/getProviderForChain";
 import { getGasPrice } from "@/utils/getGasPrice";
 
-// Helpers to derive & decrypt the AES-GCM key
+// Helpers for AES-GCM decryption of the private key
 const encode = (txt) => new TextEncoder().encode(txt);
 const decode = (buf) => new TextDecoder().decode(buf);
 
@@ -19,18 +19,15 @@ async function getKey() {
   const secret = process.env.NEXT_PUBLIC_ENCRYPTION_SECRET;
   if (!secret) throw new Error("🔐 Encryption secret missing");
   const base = await crypto.subtle.importKey(
-    "raw",
-    encode(secret),
-    { name: "PBKDF2" },
-    false,
-    ["deriveKey"]
+    "raw", encode(secret),
+    { name: "PBKDF2" }, false, ["deriveKey"]
   );
   return crypto.subtle.deriveKey(
     {
       name: "PBKDF2",
       salt: encode("nordbalticum-salt"),
       iterations: 100_000,
-      hash: "SHA-256",
+      hash: "SHA-256"
     },
     base,
     { name: "AES-GCM", length: 256 },
@@ -50,37 +47,36 @@ async function decryptKey(ciphertext) {
   return decode(decrypted);
 }
 
-// Context setup
 const SendContext = createContext();
 export const useSend = () => useContext(SendContext);
 
 export function SendProvider({ children }) {
   const { safeRefreshSession } = useAuth();
-  const { refetch }           = useBalance();
+  const { refetch }            = useBalance();
   const { activeNetwork, chainId } = useNetwork();
 
   const [sending,    setSending]    = useState(false);
-  const [gasFee,     setGasFee]     = useState(0); // combined gas cost (ETH)
-  const [adminFee,   setAdminFee]   = useState(0); // 2.97% of amount (ETH)
-  const [totalFee,   setTotalFee]   = useState(0); // gasFee + adminFee
+  const [gasFee,     setGasFee]     = useState(0);
+  const [adminFee,   setAdminFee]   = useState(0);
+  const [totalFee,   setTotalFee]   = useState(0);
   const [feeLoading, setFeeLoading] = useState(false);
   const [feeError,   setFeeError]   = useState(null);
 
   /**
    * calculateFees(to, amount):
-   *  - validuoja adresą ir sumą
-   *  - suskaičiuoja adminFee (2.97%)
-   *  - suskaičiuoja gasPrice + abi gasLimits
-   *  - sudeda viską į totalFee
+   *  - validates inputs
+   *  - computes 2.97% adminFee
+   *  - estimates gas for both admin & main tx
+   *  - sums gasFee + adminFee → totalFee
    */
   const calculateFees = useCallback(
-    async (toAddress, amount) => {
+    async (to, amount) => {
       setFeeError(null);
       if (!chainId) {
         setFeeError("❌ Network not selected");
         return;
       }
-      if (!ethers.isAddress(toAddress)) {
+      if (!ethers.isAddress(to)) {
         setFeeError("❌ Invalid recipient address");
         return;
       }
@@ -94,26 +90,24 @@ export function SendProvider({ children }) {
       try {
         const provider = getProviderForChain(chainId);
 
-        // paruošiame vertes
+        // 1) parse values
         const weiValue = ethers.parseEther(parsed.toString());
         const weiAdmin = (weiValue * 297n) / 10000n; // 2.97%
 
-        // 1) gasPrice (fallback 5 gwei)
+        // 2) gasPrice
         const gasPrice = await getGasPrice(provider).catch(() =>
           ethers.parseUnits("5", "gwei")
         );
 
-        // 2) gas limit admin
+        // 3) estimate gas limits
         const gasLimitAdmin = await provider
           .estimateGas({ to: process.env.NEXT_PUBLIC_ADMIN_WALLET, value: weiAdmin })
-          .catch(() => ethers.toBigInt(21000));
+          .catch(() => ethers.toBigInt(21_000));
+        const gasLimitMain  = await provider
+          .estimateGas({ to, value: weiValue })
+          .catch(() => ethers.toBigInt(21_000));
 
-        // 3) gas limit main
-        const gasLimitMain = await provider
-          .estimateGas({ to: toAddress, value: weiValue })
-          .catch(() => ethers.toBigInt(21000));
-
-        // 4) suskaičiuojame gasFee + adminFee
+        // 4) compute fees
         const totalGasWei = gasPrice * (gasLimitAdmin + gasLimitMain);
         const gasFeeEth   = parseFloat(ethers.formatEther(totalGasWei));
         const adminFeeEth = parseFloat(ethers.formatEther(weiAdmin));
@@ -133,10 +127,10 @@ export function SendProvider({ children }) {
 
   /**
    * sendTransaction({ to, amount, userEmail }):
-   *  - decryptina private key
-   *  - patikrina balansą visoms transakcijoms (admin + main)
-   *  - siunčia adminFee tx, po to pagrindinę
-   *  - įrašo į Supabase, rodo toast’us
+   *  - decrypts user’s private key
+   *  - ensures on correct chain and sufficient balance
+   *  - sends adminFee tx, then main tx
+   *  - logs to Supabase & shows toast
    */
   const sendTransaction = useCallback(
     async ({ to, amount, userEmail }) => {
@@ -144,14 +138,14 @@ export function SendProvider({ children }) {
       if (!to || !amount || !userEmail || !activeNetwork || !chainId) {
         throw new Error("❌ Missing transaction data");
       }
-
       setSending(true);
+
       try {
-        // atnaujinam sesiją + balansus
+        // refresh session & balances
         await safeRefreshSession();
         await refetch();
 
-        // iš DB traukiam encrypted key
+        // fetch & decrypt key
         const { data, error } = await supabase
           .from("wallets")
           .select("encrypted_key")
@@ -160,11 +154,12 @@ export function SendProvider({ children }) {
         if (error || !data?.encrypted_key) {
           throw new Error("❌ Unable to load encrypted key");
         }
-        const privKey  = await decryptKey(data.encrypted_key);
+        const privKey = await decryptKey(data.encrypted_key);
+
         const provider = getProviderForChain(chainId);
         const signer   = new ethers.Wallet(privKey, provider);
 
-        // parse’inam
+        // parse
         const parsed   = Number(amount);
         const weiValue = ethers.parseEther(parsed.toString());
         const weiAdmin = (weiValue * 297n) / 10000n;
@@ -174,22 +169,22 @@ export function SendProvider({ children }) {
           ethers.parseUnits("5", "gwei")
         );
 
-        // gas limit’ai
+        // gas limits
         const gasLimitAdmin = await provider
           .estimateGas({ to: ADMIN, value: weiAdmin })
-          .catch(() => ethers.toBigInt(21000));
-        const gasLimitMain = await provider
+          .catch(() => ethers.toBigInt(21_000));
+        const gasLimitMain  = await provider
           .estimateGas({ to, value: weiValue })
-          .catch(() => ethers.toBigInt(21000));
+          .catch(() => ethers.toBigInt(21_000));
 
-        // patikrinam balansą: value + admin + gas
+        // ensure sufficient balance
         const bal  = await provider.getBalance(signer.address);
         const cost = weiValue + weiAdmin + gasPrice * (gasLimitAdmin + gasLimitMain);
         if (bal < cost) {
           throw new Error("❌ Insufficient balance to cover both tx fees");
         }
 
-        // 1) admin fee
+        // 1) pay admin fee
         try {
           await signer.sendTransaction({
             to: ADMIN,
@@ -201,7 +196,7 @@ export function SendProvider({ children }) {
           console.warn("⚠️ Admin fee tx failed:", err);
         }
 
-        // 2) main tx
+        // 2) send main payment
         const tx = await signer.sendTransaction({
           to,
           value: weiValue,
@@ -210,7 +205,7 @@ export function SendProvider({ children }) {
         });
         if (!tx.hash) throw new Error("❌ No tx hash returned");
 
-        // loginam DB
+        // record in DB
         await supabase.from("transactions").insert([{
           user_email:       userEmail,
           sender_address:   signer.address,
@@ -222,14 +217,12 @@ export function SendProvider({ children }) {
           tx_hash:          tx.hash,
         }]);
 
-        toast.success("✅ Transaction sent", {
-          position: "top-center",
-          autoClose: 3000,
-        });
+        toast.success("✅ Transaction sent", { position: "top-center", autoClose: 3000 });
         await refetch();
         return tx.hash;
       } catch (err) {
         console.error("❌ SEND ERROR:", err);
+        // log error
         await supabase.from("logs").insert([{
           user_email: userEmail,
           type:       "transaction_error",
@@ -248,18 +241,16 @@ export function SendProvider({ children }) {
   );
 
   return (
-    <SendContext.Provider
-      value={{
-        sendTransaction,
-        sending,
-        calculateFees,
-        gasFee,
-        adminFee,
-        totalFee,
-        feeLoading,
-        feeError,
-      }}
-    >
+    <SendContext.Provider value={{
+      sendTransaction,
+      sending,
+      calculateFees,
+      gasFee,
+      adminFee,
+      totalFee,
+      feeLoading,
+      feeError,
+    }}>
       {children}
     </SendContext.Provider>
   );
