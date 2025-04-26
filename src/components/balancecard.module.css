@@ -1,77 +1,85 @@
-/* src/styles/balancecard.module.css */
-
+/* BalanceCard.module.css */
 .cardWrapper {
-  background: rgba(0,0,0,0.3);
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+  background: rgba(0,0,0,0.25);
+  backdrop-filter: blur(12px) saturate(150%);
   border-radius: 16px;
   padding: 16px;
-  backdrop-filter: blur(12px) saturate(140%);
-  box-shadow: 0 0 24px rgba(255,255,255,0.05);
+  box-shadow: 0 0 20px rgba(0,0,0,0.5);
 }
 
+/* Toggle */
 .toggleWrapper {
   display: flex;
-  margin-bottom: 12px;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 16px;
 }
-
 .toggleButton {
   flex: 1;
-  background: #222;
-  color: #bbb;
+  padding: 8px;
   border: none;
-  padding: 8px 0;
-  font-size: 0.9rem;
+  border-radius: 12px;
+  background: #222;
+  color: #ccc;
   cursor: pointer;
-  transition: background 0.2s, color 0.2s;
+  transition: 0.2s;
 }
-.toggleButton:hover {
-  background: #333;
-}
+.toggleButton:hover { background: #333; }
 .toggleButton.active {
   background: #555;
   color: #fff;
 }
 
+/* List */
 .list {
   display: grid;
   grid-template-columns: 1fr;
   gap: 12px;
 }
-
-/* two columns on desktop */
 @media (min-width: 768px) {
+  .cardWrapper { max-width: 900px; }
   .list {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
   }
 }
 
+/* Item */
 .listItem {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
+  padding: 12px;
+  background: rgba(255,255,255,0.05);
+  border-radius: 12px;
 }
-
 .networkInfo {
   display: flex;
   align-items: center;
   gap: 8px;
 }
-
+.networkIcon {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+}
 .networkLabel {
-  font-size: 0.9rem;
+  font-weight: 600;
   color: #fff;
 }
-
 .amountInfo {
   text-align: right;
 }
-
 .cryptoAmount {
   font-family: var(--font-crypto);
   font-size: 1rem;
   color: #fff;
 }
-
 .fiatAmount {
-  font-size: 0.8rem;
-  color: #ddd;
+  font-size: 0.875rem;
+  color: #aaa;
+  margin-top: 2px;
 }
