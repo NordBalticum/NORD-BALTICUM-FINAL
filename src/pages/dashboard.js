@@ -4,12 +4,11 @@ import React, { useMemo, Suspense } from "react";
 import dynamic from "next/dynamic";
 import { motion } from "framer-motion";
 
-import { useSystemReady } from "@/hooks/useSystemReady";    // ✅ PAGRINDAS
-import { useSessionWatcher } from "@/utils/sessionWatcher";  // ✅ Watcheris
+import { useSystemReady } from "@/hooks/useSystemReady";    // ✅ Tikras System Ready (apima Session Watcher)
 import { useSilentBalanceRefetch } from "@/hooks/useSilentBalanceRefetch";
-
 import { useAuth } from "@/contexts/AuthContext";
 import { useBalance } from "@/contexts/BalanceContext";
+import { useNetwork } from "@/contexts/NetworkContext";      // ✅ + NETWORK info
 
 import BalanceCard from "@/components/BalanceCard";
 import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
@@ -18,12 +17,12 @@ import styles from "@/styles/dashboard.module.css";
 const LivePriceTable = dynamic(() => import("@/components/LivePriceTable"), { ssr: false });
 
 export default function Dashboard() {
-  const { ready, loading, isMobile, scale } = useSystemReady(); // ✅ Tikras ready iš SystemReady
-  useSessionWatcher();                                          // ✅ Naujas Watcheris
-  useSilentBalanceRefetch();                                    // ✅ Tylus balanso refetchas
+  const { ready, loading, isMobile, scale } = useSystemReady();
+  useSilentBalanceRefetch();
 
   const { user, wallet } = useAuth();
   const { balancesReady, lastUpdated } = useBalance();
+  const { activeNetwork } = useNetwork();                    // ✅ dabar gaunam ir network info
 
   const address = wallet?.wallet?.address ?? "";
 
@@ -40,6 +39,10 @@ export default function Dashboard() {
       second: "2-digit",
     });
   }, [lastUpdated]);
+
+  const networkLabel = useMemo(() => {
+    return activeNetwork?.label ?? "Unknown Network";
+  }, [activeNetwork]);
 
   const isFullyLoading = useMemo(() => (
     loading || !balancesReady || !address
@@ -75,6 +78,7 @@ export default function Dashboard() {
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5 }}
       >
+
         {/* Top Greeting */}
         <motion.div
           className={styles.greetingWrapper}
@@ -86,11 +90,11 @@ export default function Dashboard() {
             Hello, {user?.email?.split("@")[0] ?? "User"}!
           </h2>
           <p className={styles.walletInfo}>
-            {truncatedAddress}
+            {truncatedAddress} · {networkLabel}
           </p>
         </motion.div>
 
-        {/* Main Dashboard Content */}
+        {/* Main Dashboard Row */}
         <div className={styles.dashboardRow}>
 
           {/* Left Side: Balances */}
@@ -106,7 +110,7 @@ export default function Dashboard() {
             </div>
           </motion.div>
 
-          {/* Right Side: Live Price Table */}
+          {/* Right Side: Live Prices */}
           <motion.div
             className={styles.chartSection}
             initial={{ opacity: 0, y: 20 }}
@@ -119,6 +123,7 @@ export default function Dashboard() {
           </motion.div>
 
         </div>
+
       </motion.div>
     </main>
   );
