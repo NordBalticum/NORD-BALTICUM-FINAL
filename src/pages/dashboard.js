@@ -5,7 +5,6 @@ import dynamic from "next/dynamic";
 import { motion } from "framer-motion";
 
 import { useSystemReady } from "@/hooks/useSystemReady";           // ✅ Ultimate system+session+device
-import { silentBalanceRefetch } from "@/utils/silentBalanceRefetch"; // ✅ Silent balance refetch as util
 import { useAuth } from "@/contexts/AuthContext";
 import { useBalance } from "@/contexts/BalanceContext";
 import { useNetwork } from "@/contexts/NetworkContext";
@@ -17,19 +16,12 @@ import styles from "@/styles/dashboard.module.css";
 const LivePriceTable = dynamic(() => import("@/components/LivePriceTable"), { ssr: false });
 
 export default function Dashboard() {
-  const { ready, loading, isMobile, scale } = useSystemReady(); // 🧠 Sistema ready + device info
+  const { ready, loading, isMobile, scale } = useSystemReady();
   const { user, wallet } = useAuth();
-  const { balancesReady, lastUpdated, refetch } = useBalance();
+  const { balancesReady, lastUpdated } = useBalance();
   const { activeNetwork } = useNetwork();
 
   const address = wallet?.wallet?.address ?? "";
-
-  // 🧠 Paleidžiam silent refetch balansų (1 kartą kai component mount ir ready=true)
-  useMemo(() => {
-    if (ready && typeof window !== "undefined") {
-      startSilentBalanceRefetch(refetch);
-    }
-  }, [ready, refetch]);
 
   const truncatedAddress = useMemo(() => (
     address ? `${address.slice(0, 6)}…${address.slice(-4)}` : "--"
