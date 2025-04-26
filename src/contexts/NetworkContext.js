@@ -3,31 +3,54 @@
 
 import { createContext, useContext, useState, useEffect, useCallback } from "react";
 
-// our string keys ↔ numeric chainIds
-const CHAIN_IDS = {
-  eth:   1,
-  matic: 137,
-  bnb:   56,
-  tbnb:  97,
-  avax:  43114,
+// ↔ numeric chain IDs for all your mainnets & testnets
+const CHAIN_NAME_TO_ID = {
+  eth:             1,
+  sepolia:        11155111,
+  matic:          137,
+  mumbai:         80001,
+  bnb:             56,
+  tbnb:            97,
+  avax:           43114,
+  fuji:           43113,
+  optimism:        10,
+  optimismgoerli:  420,
+  arbitrum:      42161,
+  arbitrumgoerli:421613,
+  base:           8453,
+  basegoerli:    84531,
+  zksync:         324,
+  zksynctest:     280,
+  linea:        59144,
+  lineatest:    59140,
+  scroll:      534352,
+  scrolltest:  534353,
+  mantle:        5000,
+  mantletest:    5001,
+  celo:         42220,
+  alfajores:    44787,
+  gnosis:        100,
+  chiado:      10200,
 };
 
-export const SUPPORTED_NETWORKS = Object.keys(CHAIN_IDS);
+// list of all valid friendly network keys
+export const SUPPORTED_NETWORKS = Object.keys(CHAIN_NAME_TO_ID);
+
 const STORAGE_KEY = "activeNetwork";
 
 const NetworkContext = createContext({
-  activeNetwork: "eth",
-  chainId:        CHAIN_IDS["eth"],
+  activeNetwork: SUPPORTED_NETWORKS[0],
+  chainId:        CHAIN_NAME_TO_ID[SUPPORTED_NETWORKS[0]],
   switchNetwork:  () => {},
 });
 
 export const useNetwork = () => useContext(NetworkContext);
 
 export function NetworkProvider({ children }) {
-  const [activeNetwork, setActiveNetwork] = useState("eth");
+  const [activeNetwork, setActiveNetwork] = useState(SUPPORTED_NETWORKS[0]);
   const [initialized,   setInitialized]   = useState(false);
 
-  // load saved network
+  // on mount, read from localStorage
   useEffect(() => {
     if (typeof window === "undefined") {
       setInitialized(true);
@@ -39,7 +62,7 @@ export function NetworkProvider({ children }) {
         setActiveNetwork(saved);
       }
     } catch (e) {
-      console.warn("NetworkContext load:", e);
+      console.warn("NetworkContext load failed:", e);
     } finally {
       setInitialized(true);
     }
@@ -51,19 +74,21 @@ export function NetworkProvider({ children }) {
     try {
       localStorage.setItem(STORAGE_KEY, activeNetwork);
     } catch (e) {
-      console.warn("NetworkContext save:", e);
+      console.warn("NetworkContext save failed:", e);
     }
   }, [initialized, activeNetwork]);
 
-  const switchNetwork = useCallback((net) => {
-    if (!SUPPORTED_NETWORKS.includes(net)) {
-      console.warn(`unsupported network "${net}"`);
+  // switch by friendly key (e.g. "mumbai", "optimism")
+  const switchNetwork = useCallback((netKey) => {
+    if (!SUPPORTED_NETWORKS.includes(netKey)) {
+      console.warn(`NetworkContext: unsupported network "${netKey}"`);
       return;
     }
-    setActiveNetwork((prev) => (prev !== net ? net : prev));
+    setActiveNetwork((prev) => (prev !== netKey ? netKey : prev));
   }, []);
 
-  const chainId = CHAIN_IDS[activeNetwork] ?? null;
+  // numeric chainId for ethers
+  const chainId = CHAIN_NAME_TO_ID[activeNetwork] ?? null;
 
   return (
     <NetworkContext.Provider value={{ activeNetwork, chainId, switchNetwork }}>
