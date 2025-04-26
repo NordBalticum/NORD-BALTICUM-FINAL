@@ -16,23 +16,22 @@ import BalanceCard from "@/components/BalanceCard";
 import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
 import styles from "@/styles/dashboard.module.css";
 
-// Dynamic import for LivePriceTable
 const LivePriceTable = dynamic(() => import("@/components/LivePriceTable"), { ssr: false });
 
 export default function Dashboard() {
   const { ready } = useSystemReady();
-  const { isMobile } = useDeviceInfo(); // 🔥 Ultimate mobile detection
-  useSessionManager();                  // 🔥 Session auto-refresh
-  useSilentBalanceRefetch();            // 🔥 Silent background refetch
+  const { isMobile, scale } = useDeviceInfo(); // ✨ Ultimate device info + scale
+  useSessionManager();
+  useSilentBalanceRefetch();
 
   const { user, wallet } = useAuth();
   const { balancesReady, lastUpdated } = useBalance();
 
-  const address = wallet?.wallet?.address ?? null;
+  const address = wallet?.wallet?.address ?? "";
 
-  const truncatedAddress = useMemo(() => {
-    return address ? `${address.slice(0, 6)}…${address.slice(-4)}` : "--";
-  }, [address]);
+  const truncatedAddress = useMemo(() => (
+    address ? `${address.slice(0, 6)}…${address.slice(-4)}` : "--"
+  ), [address]);
 
   const updatedAt = useMemo(() => {
     if (!lastUpdated) return "--:--:--";
@@ -55,6 +54,7 @@ export default function Dashboard() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.4, ease: "easeOut" }}
+            style={{ scale }}
           >
             <MiniLoadingSpinner />
             <p className={styles.loadingSub}>
@@ -68,12 +68,18 @@ export default function Dashboard() {
 
   return (
     <main className={styles.container}>
-      <div className={styles.dashboardWrapper}>
-
+      <motion.div
+        className={styles.dashboardWrapper}
+        style={{ scale }} // 🔥 Dynamic scale applied
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5 }}
+      >
+        
         {/* Top Greeting */}
         <motion.div
           className={styles.greetingWrapper}
-          initial={{ opacity: 0, y: -10 }}
+          initial={{ opacity: 0, y: -8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15 }}
         >
@@ -85,10 +91,10 @@ export default function Dashboard() {
           </p>
         </motion.div>
 
-        {/* Main Content Row */}
+        {/* Main Dashboard Row */}
         <div className={styles.dashboardRow}>
 
-          {/* Left - Balance Card */}
+          {/* Left - Balances */}
           <motion.div
             className={styles.balanceSection}
             initial={{ opacity: 0, y: 10 }}
@@ -101,7 +107,7 @@ export default function Dashboard() {
             </div>
           </motion.div>
 
-          {/* Right - Live Price Table */}
+          {/* Right - Live Prices */}
           <motion.div
             className={styles.chartSection}
             initial={{ opacity: 0, y: 10 }}
@@ -115,7 +121,7 @@ export default function Dashboard() {
 
         </div>
 
-      </div>
+      </motion.div>
     </main>
   );
 }
