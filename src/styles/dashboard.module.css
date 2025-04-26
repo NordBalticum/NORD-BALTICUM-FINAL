@@ -1,7 +1,5 @@
-/* src/styles/dashboard.module.css */
-
 /*────────────────────────────────────────────────────────────────────────────
-  Layout & Container
+  Container & Layout
 ────────────────────────────────────────────────────────────────────────────*/
 .container {
   width: 100%;
@@ -15,7 +13,7 @@
   overflow-x: hidden;
 }
 
-/* Optional overlay on wide viewports */
+/* Optional light overlay on large screens */
 @media (min-width: 1024px) {
   .container::before {
     content: "";
@@ -26,27 +24,73 @@
   }
 }
 
-/* Centered wrapper */
+/* Centered page wrapper */
 .dashboardWrapper {
   width: 100%;
   max-width: var(--max-content-width);
   margin: 0 auto;
-}
-
-.fullscreenCenter {
-  display: grid;
-  place-items: center;
-  gap: var(--spacing-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xl);
 }
 
 /*────────────────────────────────────────────────────────────────────────────
-  Responsive grid for chart + balances
+  Top Bar (user info + refresh button)
+────────────────────────────────────────────────────────────────────────────*/
+.topBar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.greeting {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.25rem;
+}
+
+.walletInfo {
+  font-size: 0.95rem;
+  color: var(--text-sub);
+}
+
+.refreshButton {
+  background: var(--button-bg);
+  color: var(--button-text);
+  border: none;
+  padding: var(--spacing-xs);
+  border-radius: var(--button-radius);
+  cursor: pointer;
+  transition: background var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.refreshButton:hover {
+  background: var(--button-hover);
+}
+
+.refreshButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.spin {
+  animation: spinAnim 1.2s linear infinite;
+}
+
+/*────────────────────────────────────────────────────────────────────────────
+  Main Content Row (chart + balances)
 ────────────────────────────────────────────────────────────────────────────*/
 .dashboardRow {
   display: grid;
   grid-template-columns: 1fr;
   gap: var(--spacing-lg);
 }
+
 @media (min-width: 768px) {
   .dashboardRow {
     grid-template-columns: 2fr 1fr;
@@ -54,7 +98,7 @@
 }
 
 /*────────────────────────────────────────────────────────────────────────────
-  Panel base styles (chart & balance)
+  Panels (ChartSection + BalanceSection)
 ────────────────────────────────────────────────────────────────────────────*/
 .chartSection,
 .balanceSection {
@@ -63,42 +107,55 @@
   border-radius: var(--panel-radius);
   box-shadow: var(--panel-shadow);
   padding: var(--spacing-md);
+  overflow: hidden;
   transition: transform var(--transition), box-shadow var(--transition);
-  animation: fadeUp 0.5s var(--transition) both;
+  animation: fadeUp 0.5s ease-out both;
 }
 
-/* slight delay for balance panel */
+/* slight delay on balance panel */
 .balanceSection {
-  animation-delay: 0.1s;
+  animation-delay: 0.2s;
   display: flex;
   flex-direction: column;
   gap: var(--spacing-md);
 }
 
-/* hover “lift” effect */
-.chartSection:hover,
-.balanceSection:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6);
+/* Hover effect (only Desktop) */
+@media (hover: hover) {
+  .chartSection:hover,
+  .balanceSection:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+  }
 }
 
 /*────────────────────────────────────────────────────────────────────────────
-  Loading / spinner / subtext
+  Loading states
 ────────────────────────────────────────────────────────────────────────────*/
+.fullscreenCenter {
+  display: grid;
+  place-items: center;
+  gap: var(--spacing-md);
+}
+
 .loadingSub {
   margin-top: var(--spacing-sm);
-  color: var(--text-sub);
   font-size: 0.9rem;
-  text-align: center;
-}
-
-.spinner {
-  display: inline-block;
-  animation: spinAnim 1s linear infinite;
+  color: var(--text-sub);
 }
 
 /*────────────────────────────────────────────────────────────────────────────
-  Fade-up keyframes
+  Footer info (Last updated)
+────────────────────────────────────────────────────────────────────────────*/
+.footerInfo {
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--text-sub);
+  margin-top: var(--spacing-sm);
+}
+
+/*────────────────────────────────────────────────────────────────────────────
+  Animations
 ────────────────────────────────────────────────────────────────────────────*/
 @keyframes fadeUp {
   from {
@@ -111,9 +168,6 @@
   }
 }
 
-/*────────────────────────────────────────────────────────────────────────────
-  Spinner keyframes
-────────────────────────────────────────────────────────────────────────────*/
 @keyframes spinAnim {
   to {
     transform: rotate(360deg);
@@ -121,21 +175,11 @@
 }
 
 /*────────────────────────────────────────────────────────────────────────────
-  Totals footer (if you need)
+  Shimmer loading
 ────────────────────────────────────────────────────────────────────────────*/
-.footerInfo {
-  text-align: center;
-  font-size: 0.875rem;
-  color: var(--text-sub);
-  margin-top: var(--spacing-sm);
-}
-
-/*────────────────────────────────────────────────────────────────────────────
-  Shimmer placeholder
-────────────────────────────────────────────────────────────────────────────*/
-.shimmerSmall {
+.shimmerTextSmall {
   display: inline-block;
-  width: 4ch;
+  width: 6ch;
   height: 1em;
   background: linear-gradient(
     90deg,
@@ -144,10 +188,10 @@
     var(--shimmer-light) 63%
   );
   background-size: 400% 100%;
-  animation: shimmer 1.4s var(--transition) infinite;
+  animation: shimmerAnim 1.4s ease infinite;
 }
 
-@keyframes shimmer {
+@keyframes shimmerAnim {
   0% {
     background-position: -400% 0;
   }
@@ -157,7 +201,7 @@
 }
 
 /*────────────────────────────────────────────────────────────────────────────
-  Scrollbar styling for panels
+  Scrollbar for panels
 ────────────────────────────────────────────────────────────────────────────*/
 .chartSection::-webkit-scrollbar,
 .balanceSection::-webkit-scrollbar {
