@@ -1,21 +1,18 @@
-// src/contexts/BalanceContext.js
 "use client";
 
 import {
   createContext, useContext,
   useState, useEffect,
-  useCallback, useMemo, useRef,
+  useCallback, useMemo,
 } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { ethers } from "ethers";
-import debounce from "lodash.debounce";
-import networks from "@/data/networks";
-import { getProviderForChain } from "@/utils/getProviderForChain";
 
-// patikslinti slug’ai
+import networks from "@/data/networks"; // your 26-chain list
+
 const TOKEN_IDS = {
   eth:              "ethereum",
-  matic:            "polygon-pos",
+  matic:            "polygon-pos",      // ← correct slug!
   bnb:              "binancecoin",
   avax:             "avalanche-2",
   optimism:         "optimism",
@@ -57,83 +54,88 @@ export function BalanceProvider({ children }) {
   const [balances, setBalances] = useState({});
   const [prices,   setPrices]   = useState(FALLBACK_PRICES);
   const [loading,  setLoading]  = useState(true);
-  const lastBalances = useRef({});
-  const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
-  const load = k => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : null; } catch { return null; } };
 
-  // providers
+  // load / save helpers
+  const save = (k,v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch{} };
+  const load = k => { try { const v=localStorage.getItem(k); return v?JSON.parse(v):null; } catch {return null;} };
+
+  // build one ethers provider per network, picking the first working RPC URL
   const providers = useMemo(() => {
     const m = {};
     for (const net of networks) {
-      m[net.value] = getProviderForChain(net.chainId);
-      if (net.testnet) m[net.testnet.value] = getProviderForChain(net.testnet.chainId);
+      const allUrls = [...(net.rpcUrls||[]), ...(net.testnet?.rpcUrls||[])];
+      // try each url until one connects
+      for (const url of allUrls) {
+        try {
+          const p = new ethers.JsonRpcProvider(url);
+          m[ net.value ] = p;
+          if (net.testnet) m[ net.testnet.value ] = p;
+          break;
+        } catch {}
+      }
     }
     return m;
   }, []);
 
   // CoinGecko query
-  const coingeckoQuery = useMemo(
+  const coingeckoIds = useMemo(
     () => Array.from(new Set(Object.values(TOKEN_IDS))).join(","),
     []
   );
 
-  // on-chain balances
   const fetchBalances = useCallback(async () => {
-    if (!wallet?.wallet?.address) return;
-    const addr = wallet.wallet.address;
+    const addr = wallet?.wallet?.address;
+    if (!addr) return;
     const entries = await Promise.all(
       Object.entries(providers).map(async ([key, prov]) => {
         try {
-          const raw = await prov.getBalance(addr);
-          return [key, parseFloat(ethers.formatEther(raw))];
+          const v = await prov.getBalance(addr);
+          return [key, parseFloat(ethers.formatEther(v))];
         } catch {
-          return [key, lastBalances.current[key] ?? 0];
+          return [key, balances[key] ?? 0];
         }
       })
     );
     const nb = Object.fromEntries(entries);
     setBalances(nb);
-    lastBalances.current = nb;
     save(BALANCE_KEY, nb);
-  }, [wallet, providers]);
+  }, [wallet, providers, balances]);
 
-  // fiat prices
   const fetchPrices = useCallback(async () => {
     try {
-      const resp = await fetch(
-        `https://api.coingecko.com/api/v3/simple/price?ids=${coingeckoQuery}&vs_currencies=usd,eur`,
+      const res = await fetch(
+        `https://api.coingecko.com/api/v3/simple/price?ids=${coingeckoIds}&vs_currencies=usd,eur`,
         { cache: "no-store" }
       );
-      const json = await resp.json();
+      const j = await res.json();
       const pd = {};
       for (const [sym, id] of Object.entries(TOKEN_IDS)) {
         pd[sym] = {
-          usd: json[id]?.usd  ?? FALLBACK_PRICES[sym].usd,
-          eur: json[id]?.eur  ?? FALLBACK_PRICES[sym].eur,
+          usd: j[id]?.usd ?? FALLBACK_PRICES[sym].usd,
+          eur: j[id]?.eur ?? FALLBACK_PRICES[sym].eur,
         };
       }
       setPrices(pd);
       save(PRICE_KEY, pd);
     } catch (e) {
-      console.error("❌ CoinGecko fetch failed:", e);
+      console.error("CoinGecko error:", e);
     }
-  }, [coingeckoQuery]);
+  }, [coingeckoIds]);
 
-  // run both
   const fetchAll = useCallback(async () => {
     setLoading(true);
-    await Promise.all([fetchBalances(), fetchPrices()]);
+    await Promise.all([ fetchBalances(), fetchPrices() ]);
     setLoading(false);
   }, [fetchBalances, fetchPrices]);
 
-  // hydrate cache
+  // hydrate on mount
   useEffect(() => {
     const cb = load(BALANCE_KEY), cp = load(PRICE_KEY);
-    if (cb) { setBalances(cb); lastBalances.current = cb; }
+    if (cb) setBalances(cb);
     if (cp) setPrices(cp);
   }, []);
 
-  // initial & poll
+  // initial & polling
   useEffect(() => {
     if (!authLoading && !walletLoading) fetchAll();
   }, [authLoading, walletLoading, fetchAll]);
@@ -143,15 +145,14 @@ export function BalanceProvider({ children }) {
     return () => clearInterval(iv);
   }, [fetchAll]);
 
-  // usd/eur helpers
-  const getUsdBalance = useCallback(net => {
-    const b = balances[net] ?? 0, p = prices[net]?.usd ?? 0;
-    return (b * p).toFixed(2);
-  }, [balances, prices]);
-  const getEurBalance = useCallback(net => {
-    const b = balances[net] ?? 0, p = prices[net]?.eur ?? 0;
-    return (b * p).toFixed(2);
-  }, [balances, prices]);
+  const getUsdBalance = useCallback(
+    net => ((balances[net] ?? 0) * (prices[net]?.usd ?? 0)).toFixed(2),
+    [balances, prices]
+  );
+  const getEurBalance = useCallback(
+    net => ((balances[net] ?? 0) * (prices[net]?.eur ?? 0)).toFixed(2),
+    [balances, prices]
+  );
 
   return (
     <BalanceContext.Provider value={{
