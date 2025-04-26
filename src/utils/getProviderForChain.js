@@ -5,41 +5,46 @@ import { ethers } from "ethers";
 import { ethersFallbackProviders } from "@/utils/fallbackRPCs";
 
 /**
- * Returns a JsonRpcProvider or FallbackProvider for the given chainId.
+ * Grąžina JsonRpcProvider arba FallbackProvider pagal chainId.
+ * Ateityje tiesiog papildyk `ethersFallbackProviders[NEW_CHAIN_ID] = [url1, url2, ...]`
  *
- * @param {string|number} chainIdOrName – the chain ID (e.g. "1", 56, "137", etc)
+ * @param {string|number} chainIdOrName – grandinės ID arba string versija
  * @returns {ethers.JsonRpcProvider|ethers.FallbackProvider}
  */
 export function getProviderForChain(chainIdOrName) {
-  // Normalize chainId to a number
+  // 1) Normalizuojame į skaičių
   const chainId =
     typeof chainIdOrName === "string"
       ? parseInt(chainIdOrName, 10)
       : chainIdOrName;
 
-  // Look up our array of RPC URLs
+  if (typeof chainId !== "number" || isNaN(chainId)) {
+    throw new Error(`❌ Invalid chainId: ${chainIdOrName}`);
+  }
+
+  // 2) Traukiam visus URL'us iš konfigūracijos
   const urls = ethersFallbackProviders[chainId];
-  if (!urls || urls.length === 0) {
+  if (!Array.isArray(urls) || urls.length === 0) {
     throw new Error(`❌ No RPC endpoints configured for chainId ${chainId}`);
   }
 
-  // Build a JsonRpcProvider for each URL
-  const providers = urls.map((url) =>
-    new ethers.JsonRpcProvider(url, chainId)
-  );
+  // 3) Kuriam JsonRpcProvider kiekvienam URL
+  const providers = urls.map((url) => new ethers.JsonRpcProvider(url, chainId));
 
-  // If there's only one, just use it
+  // 4) Jei vienas URL – grąžinam jį tiesiogiai
   if (providers.length === 1) {
     return providers[0];
   }
 
-  // Otherwise wrap them in a FallbackProvider with the correct config objects
-  const configs = providers.map((provider, priority) => ({
+  // 5) Kitais atvejais – FallbackProvider su prioritetais
+  //    priority = 0 pirmam, 1 antram, ...; weight = 1 visiems; stallTimeout = 200ms
+  const fallbackConfigs = providers.map((provider, index) => ({
     provider,
-    priority,
+    priority: index,
     weight: 1,
     stallTimeout: 200
   }));
-  // quorum = 1 means only one healthy provider needs to respond
-  return new ethers.FallbackProvider(configs, /* quorum */ 1);
+
+  // 6) quorum = 1 → pakanka vieno gyvo provider'io atsakymo
+  return new ethers.FallbackProvider(fallbackConfigs, /* quorum */ 1);
 }
