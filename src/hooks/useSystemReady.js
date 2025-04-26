@@ -5,7 +5,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNetwork } from "@/contexts/NetworkContext";
 import { useDeviceInfo } from "@/hooks/useDeviceInfo";
-import { useSessionWatcher } from "@/hooks/sessionWatcher"; // 🔥 Naujas Watcher import
+import { useSessionWatcher } from "@/utils/sessionWatcher"; // 🔥 Naujas Watcher import
 
 export function useSystemReady() {
   const [domReady, setDomReady] = useState(false);
