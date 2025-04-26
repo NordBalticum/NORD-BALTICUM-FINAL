@@ -14,7 +14,7 @@ import { detectIsMobile } from "@/utils/detectIsMobile";
 export function useSystemReady() {
   // 🎯 Context & hooks
   const { user, wallet, authLoading, walletLoading, safeRefreshSession, signOut } = useAuth();
-  const { activeNetwork } = useNetwork();
+  const { activeNetwork, chainId } = useNetwork();
   const { balances, prices, refetch } = useBalance();
 
   // 🎯 Internal state
@@ -32,7 +32,7 @@ export function useSystemReady() {
   const isClient = typeof window !== "undefined";
   const isMobile = useMemo(() => detectIsMobile(), []);
 
-  // ─── 1) DOM ready ────────────────────────────────────────────────────────
+  // ─── 1) DOM ready check ──────────────────────────────────────
   useEffect(() => {
     if (!isClient) return;
     const markReady = () => setIsDomReady(true);
@@ -51,7 +51,7 @@ export function useSystemReady() {
     }
   }, [isClient]);
 
-  // ─── 2) Load fallbacks from localStorage ─────────────────────────────────
+  // ─── 2) Load fallback balances/prices ─────────────────────────
   useEffect(() => {
     if (!isClient) return;
     try {
@@ -70,7 +70,7 @@ export function useSystemReady() {
     }
   }, [isClient]);
 
-  // ─── 3) Compute readiness booleans ──────────────────────────────────────
+  // ─── 3) Compute minimal ready ─────────────────────────────────
   const minimalReady = useMemo(() => {
     return (
       isClient &&
@@ -78,11 +78,13 @@ export function useSystemReady() {
       !!user?.email &&
       !!wallet?.wallet?.address &&
       !!activeNetwork &&
+      !!chainId &&
       !authLoading &&
       !walletLoading
     );
-  }, [isClient, isDomReady, user, wallet, activeNetwork, authLoading, walletLoading]);
+  }, [isClient, isDomReady, user, wallet, activeNetwork, chainId, authLoading, walletLoading]);
 
+  // ─── 4) Check balances/prices availability ───────────────────
   const hasBalancesReady = useMemo(() => {
     const live = balances && Object.keys(balances).length > 0;
     const cached = fallbackBalances && Object.keys(fallbackBalances).length > 0;
@@ -98,7 +100,7 @@ export function useSystemReady() {
   const ready = minimalReady && hasBalancesReady && hasPricesReady;
   const loading = !ready;
 
-  // ─── 4) Compute session health score ────────────────────────────────────
+  // ─── 5) Session Score Calculation ────────────────────────────
   useEffect(() => {
     if (!minimalReady) return;
     const score =
@@ -110,7 +112,7 @@ export function useSystemReady() {
     setSessionScore(Math.max(0, score));
   }, [minimalReady, authLoading, walletLoading, user, wallet]);
 
-  // ─── 5) Manual refresh on user events ──────────────────────────────────
+  // ─── 6) Manual Refresh Triggers ───────────────────────────────
   useEffect(() => {
     if (!minimalReady) return;
 
@@ -161,10 +163,9 @@ export function useSystemReady() {
     };
   }, [minimalReady, safeRefreshSession, refetch, signOut, isMobile]);
 
-  // ─── 6) Auto‑refresh interval (every 30s, heavy‑duty every 5min) ───────
+  // ─── 7) Auto Light Polling (every 30s) and Reset (5min) ───────
   useEffect(() => {
     if (!minimalReady) return;
-    // lightweight poll
     const lightPoll = setInterval(async () => {
       if (Date.now() - lastRefreshTime.current >= 30_000) {
         await safeRefreshSession();
@@ -172,7 +173,7 @@ export function useSystemReady() {
         lastRefreshTime.current = Date.now();
       }
     }, 30_000);
-    // heavy‑duty reset
+
     const heavyReset = setInterval(() => {
       failureCount.current = 0;
     }, 5 * 60 * 1000);
@@ -183,7 +184,7 @@ export function useSystemReady() {
     };
   }, [minimalReady, safeRefreshSession, refetch]);
 
-  // ─── 7) Offline notification ──────────────────────────────────────────
+  // ─── 8) Offline detection ────────────────────────────────────
   useEffect(() => {
     if (!isClient) return;
     const notify = () => toast.warning("⚠️ You are offline. Using cached data.");
@@ -191,7 +192,7 @@ export function useSystemReady() {
     return () => window.removeEventListener("offline", notify);
   }, [isClient]);
 
-  // ─── 8) SessionWatcher background monitor ──────────────────────────────
+  // ─── 9) Start Background Session Watcher ─────────────────────
   useEffect(() => {
     if (!minimalReady) return;
 
@@ -217,7 +218,7 @@ export function useSystemReady() {
     return () => sessionWatcher.current?.stop();
   }, [minimalReady, user, wallet, safeRefreshSession, refetch, signOut]);
 
-  // ─── Final return ───────────────────────────────────────────────────────
+  // ─── Return final state ──────────────────────────────────────
   return {
     ready,
     loading,
