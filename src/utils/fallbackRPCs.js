@@ -3,28 +3,24 @@
 
 import networks from "@/data/networks";
 
-/**
- * Build a map: chainId → rpcUrls[]
- * entirely from your single source of truth (data/networks.js).
- */
-export const ethersFallbackProviders: Record<number, string[]> = {};
+const ANKR_KEY = process.env.NEXT_PUBLIC_ANKR_KEY;
+if (!ANKR_KEY) {
+  console.warn("⚠️ NEXT_PUBLIC_ANKR_KEY not set — you may hit rate limits.");
+}
 
-// Loop through every network & its optional testnet
+// Build up chainId → [ rpcUrl ] map:
+export const ethersFallbackProviders = {};
+
 for (const net of networks) {
-  // mainnet
-  if (Array.isArray(net.rpcUrls) && net.rpcUrls.length) {
-    // clone array so we never accidentally mutate the original
-    ethersFallbackProviders[net.chainId] = [...net.rpcUrls];
-  }
+  // mainnet URL with optional ?apikey=
+  const main = `https://rpc.ankr.com/${net.value}` +
+               (ANKR_KEY ? `?apikey=${ANKR_KEY}` : "");
+  ethersFallbackProviders[ net.chainId ] = [ main ];
 
-  // testnet (if present)
-  if (
-    net.testnet &&
-    Array.isArray(net.testnet.rpcUrls) &&
-    net.testnet.rpcUrls.length
-  ) {
-    ethersFallbackProviders[net.testnet.chainId] = [
-      ...net.testnet.rpcUrls,
-    ];
+  // testnet, if defined
+  if (net.testnet) {
+    const test = `https://rpc.ankr.com/${net.testnet.value}` +
+                 (ANKR_KEY ? `?apikey=${ANKR_KEY}` : "");
+    ethersFallbackProviders[ net.testnet.chainId ] = [ test ];
   }
 }
