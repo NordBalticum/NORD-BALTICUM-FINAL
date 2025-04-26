@@ -1,52 +1,42 @@
-// src/utils/getProviderForChain.js
 "use client";
 
 import { ethers } from "ethers";
-import { ethersFallbackProviders } from "@/utils/fallbackRPCs";
+import { ethersFallbackProviders } from "./fallbackRPCs";
 
 /**
- * Returns an ethers Provider (JsonRpcProvider or FallbackProvider)
- * for the given chainId.
+ * Returns a JsonRpcProvider or FallbackProvider for the given chainId.
  *
- * - If there's only one URL configured → returns a JsonRpcProvider.
- * - If multiple URLs → returns a FallbackProvider with quorum=1.
- * - Throws if no URLs are configured.
- *
- * @param {string|number} chainIdOrName  Chain ID (e.g. "1", 137, 56, 97, 43114)
+ * @param {string|number} chainIdOrName – the chain ID (e.g. "1", 56, 137, 43114)
  * @returns {ethers.JsonRpcProvider|ethers.FallbackProvider}
  */
 export function getProviderForChain(chainIdOrName) {
-  // Normalize to number
+  // 1) normalize to number
   const chainId =
     typeof chainIdOrName === "string"
       ? parseInt(chainIdOrName, 10)
       : chainIdOrName;
 
-  // Lookup RPC URLs from your fallbackRPCs map
+  // 2) lookup your RPC URLs
   const urls = ethersFallbackProviders[chainId];
-  if (!urls || urls.length === 0) {
+  if (!urls?.length) {
     throw new Error(`❌ No RPC endpoints configured for chainId ${chainId}`);
   }
 
-  // Build a JsonRpcProvider for each URL
-  const providers = urls.map((url) => new ethers.JsonRpcProvider(url, chainId));
-
-  // If there's only one endpoint, use it directly
-  if (providers.length === 1) {
-    return providers[0];
+  // 3) if only one URL, return a simple JsonRpcProvider
+  if (urls.length === 1) {
+    return new ethers.JsonRpcProvider(urls[0], chainId);
   }
 
-  // Otherwise wrap in a FallbackProvider:
-  // - priority: lower number = higher priority
-  // - weight:  all 1 for equal weighting
-  // - stallTimeout: switch if no response in 200ms
-  const configs = providers.map((provider, idx) => ({
+  // 4) otherwise build a proper FallbackProvider
+  const providers = urls.map((url) => new ethers.JsonRpcProvider(url, chainId));
+  const configs = providers.map((provider) => ({
     provider,
-    priority: idx,
+    priority: 1,
     weight: 1,
-    stallTimeout: 200,
+    stallTimeout: 200
   }));
 
-  // quorum = 1 means only one healthy provider needs to respond
-  return new ethers.FallbackProvider(configs, /* quorum */ 1);
+  // **do not pass a second param**—that used to be quorum in v5,
+  // but in v6 it’s a `network` config object and will break things.
+  return new ethers.FallbackProvider(configs);
 }
