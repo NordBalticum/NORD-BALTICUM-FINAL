@@ -1,3 +1,4 @@
+/* === FONDO STILIUS === */
 .container {
   position: fixed;
   top: 50%;
@@ -5,7 +6,7 @@
   width: 100vw;
   height: 100vh;
   transform: translate(-50%, -50%);
-  background: radial-gradient(circle at center, #0a122a 15%, #1b2370 65%, #2b37ff 100%) no-repeat center center fixed; /* <<< REALUS BACKGROUND */
+  background: radial-gradient(circle at center, #0a122a 15%, #1b2370 65%, #2b37ff 100%) no-repeat center center fixed;
   background-size: cover;
   filter: brightness(93%);
   user-select: none;
@@ -15,9 +16,7 @@
   overflow: hidden;
 }
 
-/* ✅ Fondas 100% dabar sutampa su theme.css */
-
-/* === WRAPPER === */
+/* === PAGRINDINIS WRAPPER === */
 .dashboardWrapper {
   position: relative;
   width: 100%;
@@ -32,7 +31,7 @@
   animation: fadeIn 0.8s ease forwards;
 }
 
-/* === CHART SECTION === */
+/* === LIVE CHARTS WRAPPER === */
 .chartSection {
   width: 100%;
   max-width: 960px;
@@ -53,22 +52,35 @@
   padding: 8px 12px 12px;
 }
 
-.selector {
-  padding: 8px 12px;
-  font-size: 0.9rem;
-  font-family: var(--font-crypto);
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 12px;
-  color: white;
+/* === MAINNET / TESTNET TOGGLE === */
+.toggleWrapper {
+  display: flex;
+  justify-content: center;
+  margin: 20px 0;
+  gap: 10px;
+}
+
+.toggleButton {
+  background: #222;
+  color: #bbb;
+  border: none;
+  border-radius: 20px;
+  padding: 6px 16px;
+  font-size: 12px;
   cursor: pointer;
-  transition: 0.3s ease;
+  transition: background 0.2s, color 0.2s;
 }
 
-.selector:hover {
-  background: rgba(255, 255, 255, 0.12);
+.toggleButton:hover {
+  background: #333;
 }
 
+.active {
+  background: #555;
+  color: white;
+}
+
+/* === BALANCE LIST === */
 .assetList {
   width: 100%;
   display: flex;
@@ -153,6 +165,7 @@
   font-family: var(--font-crypto);
 }
 
+/* === LOADER EFFECTS === */
 .shimmerCard {
   width: 100%;
   height: 160px;
@@ -182,6 +195,7 @@
   margin-top: 4px;
 }
 
+/* === ANIMACIJOS === */
 @keyframes shimmer {
   0% {
     background-position: -400% 0;
@@ -191,7 +205,6 @@
   }
 }
 
-/* === ANIMACIJOS === */
 @keyframes fadeInDown {
   from { opacity: 0; transform: translateY(-24px); }
   to { opacity: 1; transform: translateY(0); }
@@ -250,13 +263,14 @@
   }
 }
 
+/* === LOADING SPINNER WRAPPERS === */
 .loaderWrapper {
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 200px; /* ✅ Tik tiek kiek reikia spinneriui */
+  min-height: 200px;
   width: 100%;
-  background: transparent; /* ✅ Jokio background */
+  background: transparent;
 }
 
 .fullscreenCenter {
