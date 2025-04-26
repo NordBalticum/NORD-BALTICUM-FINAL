@@ -19,7 +19,7 @@ import { getProviderForChain } from "@/utils/getProviderForChain";
 // token → CoinGecko ID for price lookup
 const TOKEN_IDS = {
   eth:            "ethereum",
-  polygon:        "matic-network",
+  polygon:        "polygon-pos",
   bnb:            "binancecoin",
   avax:           "avalanche-2",
   optimism:       "optimism",
@@ -33,7 +33,7 @@ const TOKEN_IDS = {
   gnosis:         "xdai",
   // Testnets map to their mainnet ID
   sepolia:        "ethereum",
-  mumbai:         "matic-network",
+  mumbai:         "polygon-pos",
   bnbt:           "binancecoin",
   fuji:           "avalanche-2",
   "optimism-goerli": "optimism",
