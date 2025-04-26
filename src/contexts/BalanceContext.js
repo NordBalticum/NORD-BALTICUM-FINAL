@@ -20,7 +20,7 @@ import { getProviderForChain } from "@/utils/getProviderForChain";
 // ── CoinGecko IDs (must match your networks[].value) ───────────────────────
 const TOKEN_IDS = {
   eth:              "ethereum",
-  matic:            "polygon-pos",
+  matic:            "matic-network",
   bnb:              "binancecoin",
   avax:             "avalanche-2",
   optimism:         "optimism",
@@ -34,7 +34,7 @@ const TOKEN_IDS = {
   gnosis:           "xdai",
   // Testnets map to mainnet token IDs:
   sepolia:          "ethereum",
-  mumbai:           "polygon-pos",
+  mumbai:           "matic-network",
   tbnb:             "binancecoin",
   fuji:             "avalanche-2",
   "optimism-goerli":"optimism",
