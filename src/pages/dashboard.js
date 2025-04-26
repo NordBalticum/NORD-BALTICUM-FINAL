@@ -34,8 +34,9 @@ export default function Dashboard() {
     return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
   }, [lastUpdated]);
 
-  // Kol NE ready arba balances NE ready, rodom loader
-  if (!ready || !wallet?.wallet?.address || !balancesReady) {
+  const showLoading = !ready || !wallet?.wallet?.address || !balancesReady;
+
+  if (showLoading) {
     return (
       <main className={styles.container}>
         <div className={styles.dashboardWrapper}>
@@ -55,12 +56,11 @@ export default function Dashboard() {
     );
   }
 
-  // Kai sistema pilnai paruošta
   return (
     <main className={styles.container}>
       <div className={styles.dashboardWrapper}>
 
-        {/* Greeting */}
+        {/* Greeting Block */}
         <motion.div
           className={styles.greetingWrapper}
           initial={{ opacity: 0, y: -10 }}
@@ -75,10 +75,10 @@ export default function Dashboard() {
           </p>
         </motion.div>
 
-        {/* Main Row */}
+        {/* Main Content Row */}
         <div className={styles.dashboardRow}>
 
-          {/* Left: BalanceCard */}
+          {/* Left - Balances */}
           <motion.div
             className={styles.balanceSection}
             initial={{ opacity: 0, y: 20 }}
@@ -91,7 +91,7 @@ export default function Dashboard() {
             </div>
           </motion.div>
 
-          {/* Right: LivePriceTable */}
+          {/* Right - Live Price Table */}
           <motion.div
             className={styles.chartSection}
             initial={{ opacity: 0, y: 20 }}
