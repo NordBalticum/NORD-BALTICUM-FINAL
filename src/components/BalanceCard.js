@@ -3,14 +3,15 @@
 import React, { useState, useMemo } from "react";
 import Image from "next/image";
 import { useBalance } from "@/contexts/BalanceContext";
+import MiniLoadingSpinner from "@/components/MiniLoadingSpinner"; // ✅
 import networks from "@/data/networks";
 import styles from "./balancecard.module.css";
 
 export default function BalanceCard() {
-  const { balances, prices, loading, refreshing } = useBalance();
+  const { balances, prices, loading, refreshing, balancesReady } = useBalance();
   const [showTestnets, setShowTestnets] = useState(false);
 
-  const isLoading = loading || refreshing;
+  const isLoading = !balancesReady || loading || refreshing;
 
   const availableNetworks = useMemo(() => {
     return networks
@@ -46,7 +47,7 @@ export default function BalanceCard() {
   return (
     <div className={styles.cardWrapper}>
       
-      {/* Toggle Mainnets / Testnets */}
+      {/* Toggle buttons */}
       <div className={styles.toggleWrapper} role="tablist">
         <button
           role="tab"
@@ -66,14 +67,13 @@ export default function BalanceCard() {
         </button>
       </div>
 
-      {/* Balance list */}
+      {/* List of balances */}
       <div className={styles.list}>
         {availableNetworks.map((net) => {
           const balance = balances[net.value] ?? 0;
           const price = prices[net.value] ?? { usd: 0, eur: 0 };
           const usd = balance * (price.usd || 0);
           const eur = balance * (price.eur || 0);
-          const showPrice = usd > 0 || eur > 0;
 
           return (
             <div key={net.value} className={styles.listItem}>
@@ -85,28 +85,22 @@ export default function BalanceCard() {
                   height={32}
                   unoptimized
                 />
-                <span className={styles.networkLabel}>
-                  {net.label}
-                </span>
+                <span className={styles.networkLabel}>{net.label}</span>
               </div>
 
               <div className={styles.amountInfo}>
                 <div className={styles.cryptoAmount}>
-                  {fmtCrypto(balance)}
+                  {isLoading ? <MiniLoadingSpinner size={14} /> : fmtCrypto(balance)}
                 </div>
                 <div className={styles.fiatAmount}>
-                  {isLoading && !showPrice ? (
-                    <span className={styles.shimmerSmall} />
-                  ) : (
-                    <>≈ ${fmtFiat(usd)} | €{fmtFiat(eur)}</>
-                  )}
+                  {isLoading ? <MiniLoadingSpinner size={12} /> : <>≈ ${fmtFiat(usd)} | €{fmtFiat(eur)}</>}
                 </div>
               </div>
             </div>
           );
         })}
 
-        {/* TOTAL row */}
+        {/* Total */}
         <div className={`${styles.listItem} ${styles.totalRow}`}>
           <div className={styles.networkInfo}>
             <span className={styles.networkLabel}>Total</span>
@@ -115,7 +109,7 @@ export default function BalanceCard() {
             <div className={styles.cryptoAmount}></div>
             <div className={styles.fiatAmount}>
               {isLoading ? (
-                <span className={styles.shimmerSmall} />
+                <MiniLoadingSpinner size={14} />
               ) : (
                 <>≈ ${fmtFiat(totalUsd)} | €{fmtFiat(totalEur)}</>
               )}
