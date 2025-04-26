@@ -3,17 +3,19 @@
 import React, { useState, useMemo } from "react";
 import Image from "next/image";
 import { useBalance } from "@/contexts/BalanceContext";
-import networks from "@/data/networks";
+import fallbackRPCs from "@/utils/fallbackRPCs"; // ✅ NAUJAS – fallbackRPCs.js
 import styles from "./balancecard.module.css";
 
 export default function BalanceCard() {
   const { balances, prices, balancesReady } = useBalance();
   const [showTestnets, setShowTestnets] = useState(false);
 
-  const availableNetworks = useMemo(() => {
-    return networks
-      .map(net => (showTestnets && net.testnet ? net.testnet : net))
-      .filter(Boolean);
+  const networkList = useMemo(() => {
+    return Object.values(fallbackRPCs)
+      .filter(net => {
+        if (showTestnets) return net.isTestnet;
+        return !net.isTestnet;
+      });
   }, [showTestnets]);
 
   const fmtCrypto = (n) =>
@@ -29,14 +31,14 @@ export default function BalanceCard() {
     });
 
   const { totalUsd, totalEur } = useMemo(() => {
-    return availableNetworks.reduce((acc, net) => {
-      const bal = balances[net.value] ?? 0;
-      const price = prices[net.value] ?? { usd: 0, eur: 0 };
+    return networkList.reduce((acc, net) => {
+      const bal = balances[net.key] ?? 0;
+      const price = prices[net.key] ?? { usd: 0, eur: 0 };
       acc.totalUsd += bal * (price.usd || 0);
       acc.totalEur += bal * (price.eur || 0);
       return acc;
     }, { totalUsd: 0, totalEur: 0 });
-  }, [availableNetworks, balances, prices]);
+  }, [networkList, balances, prices]);
 
   if (!balancesReady) {
     return (
@@ -71,15 +73,15 @@ export default function BalanceCard() {
 
       {/* List */}
       <div className={styles.list}>
-        {availableNetworks.map((net) => {
-          const balance = balances[net.value] ?? 0;
-          const price = prices[net.value] ?? { usd: 0, eur: 0 };
+        {networkList.map((net) => {
+          const balance = balances[net.key] ?? 0;
+          const price = prices[net.key] ?? { usd: 0, eur: 0 };
           const usd = balance * (price.usd || 0);
           const eur = balance * (price.eur || 0);
           const hasPrice = price.usd > 0 || price.eur > 0;
 
           return (
-            <div key={net.value} className={styles.listItem}>
+            <div key={net.key} className={styles.listItem}>
               <div className={styles.networkLeft}>
                 <Image
                   src={net.icon}
