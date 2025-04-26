@@ -1,4 +1,3 @@
-// src/app/dashboard.js
 "use client";
 
 import { useState, useMemo } from "react";
@@ -28,14 +27,13 @@ export default function Dashboard() {
     fallbackPrices,
     latencyMs,
     sessionScore,
+    ready, // 🧠 <- čia svarbiausia
     loading: systemLoading,
     isMobile,
   } = useSystemReady();
   const { activeNetwork } = useNetwork();
 
   const [showTestnets, setShowTestnets] = useState(false);
-
-  const walletReady = !!wallet?.wallet?.address;
 
   const allBalances = Object.keys(balances || {}).length > 0
     ? balances
@@ -56,7 +54,7 @@ export default function Dashboard() {
       <div className={styles.dashboardWrapper}>
         <LivePriceTable />
 
-        {!walletReady || systemLoading ? (
+        {systemLoading || !ready ? (
           <motion.div
             className={styles.fullscreenCenter}
             initial={{ opacity: 0 }}
@@ -89,7 +87,7 @@ export default function Dashboard() {
               <AnimatePresence>
                 {filteredNetworks.map((net, index) => {
                   const balance = allBalances[net.value] || 0;
-                  const price = prices?.[net.value];
+                  const price = allPrices?.[net.value];
                   const valueUsd = price ? (balance * price.usd).toFixed(2) : "–";
                   const valueEur = price ? (balance * price.eur).toFixed(2) : "–";
 
