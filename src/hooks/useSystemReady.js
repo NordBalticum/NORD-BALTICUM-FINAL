@@ -5,19 +5,20 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useNetwork } from "@/contexts/NetworkContext";
 
 export function useSystemReady() {
-  const [isDomReady, setIsDomReady] = useState(false);
-  
+  const [domReady, setDomReady] = useState(false);
+
   const { user, wallet, authLoading, walletLoading } = useAuth();
   const { activeNetwork, chainId } = useNetwork();
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    if (document.readyState === "complete") {
-      setIsDomReady(true);
-    } else {
-      const onLoad = () => setIsDomReady(true);
-      window.addEventListener("load", onLoad);
-      return () => window.removeEventListener("load", onLoad);
+    if (typeof window !== "undefined") {
+      if (document.readyState === "complete") {
+        setDomReady(true);
+      } else {
+        const onLoad = () => setDomReady(true);
+        window.addEventListener("load", onLoad);
+        return () => window.removeEventListener("load", onLoad);
+      }
     }
   }, []);
 
@@ -28,29 +29,27 @@ export function useSystemReady() {
     return false;
   }, []);
 
-  const ready = useMemo(() => {
+  const basicReady = useMemo(() => {
     return (
-      isDomReady &&
+      domReady &&
       !authLoading &&
       !walletLoading &&
       !!user?.email &&
-      !!wallet?.wallet?.address &&
+      !!wallet?.wallet?.address
+    );
+  }, [domReady, authLoading, walletLoading, user, wallet]);
+
+  const fullReady = useMemo(() => {
+    return (
+      basicReady &&
       !!activeNetwork &&
       !!chainId
     );
-  }, [
-    isDomReady,
-    authLoading,
-    walletLoading,
-    user,
-    wallet,
-    activeNetwork,
-    chainId,
-  ]);
+  }, [basicReady, activeNetwork, chainId]);
 
   return {
-    ready,
-    loading: !ready,
+    ready: fullReady,
+    loading: !fullReady,
     isMobile,
   };
 }
