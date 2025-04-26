@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { FiRefreshCw } from "react-icons/fi";
 
 import { useSystemReady } from "@/hooks/useSystemReady";
+import { useSessionManager } from "@/hooks/useSessionManager";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBalance } from "@/contexts/BalanceContext";
 
@@ -13,16 +14,18 @@ import BalanceCard from "@/components/BalanceCard";
 import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
 import styles from "@/styles/dashboard.module.css";
 
-// Lazy-load LivePriceTable
+// Lazy load LivePriceTable
 const LivePriceTable = dynamic(() => import("@/components/LivePriceTable"), { ssr: false });
 
 export default function Dashboard() {
   const { ready, isMobile } = useSystemReady();
+  useSessionManager(); // AUTOMATIC session refresh
+  
   const { user, wallet } = useAuth();
   const { loading: balLoading, refreshing, userTriggeredRefresh, refetch, lastUpdated } = useBalance();
 
   const address = wallet?.wallet?.address ?? "";
-  
+
   const truncatedAddress = useMemo(() => (
     address ? `${address.slice(0, 6)}…${address.slice(-4)}` : ""
   ), [address]);
@@ -37,7 +40,6 @@ export default function Dashboard() {
     });
   }, [lastUpdated]);
 
-  // Show loading screen ONLY before ready
   if (!ready || !wallet?.wallet?.address) {
     return (
       <main className={styles.container}>
@@ -58,55 +60,44 @@ export default function Dashboard() {
     );
   }
 
-  // Final main dashboard rendering
   return (
     <main className={styles.container}>
       <div className={styles.dashboardWrapper}>
 
-        {/* Top Bar */}
-        <div className={styles.topBar}>
-          <div>
-            <h2 className={styles.greeting}>
-              Hello, {user?.email?.split("@")[0] ?? "User"}!
-            </h2>
-            <p className={styles.walletInfo}>
-              {truncatedAddress}
-            </p>
-          </div>
+        {/* Greeting */}
+        <motion.div
+          className={styles.greetingWrapper}
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+        >
+          <h2 className={styles.greeting}>
+            Hello, {user?.email?.split("@")[0] ?? "User"}!
+          </h2>
+          <p className={styles.walletInfo}>
+            {truncatedAddress}
+          </p>
           <button
             className={styles.refreshButton}
             onClick={refetch}
             disabled={balLoading}
             aria-label="Refresh balances"
           >
-            <FiRefreshCw className={(balLoading || userTriggeredRefresh) ? styles.spin : undefined} />
+            <FiRefreshCw className={(balLoading || userTriggeredRefresh || refreshing) ? styles.spin : undefined} />
           </button>
-        </div>
+        </motion.div>
 
-        {/* Main Grid Row */}
+        {/* Main Grid */}
         <div className={styles.dashboardRow}>
-          
-          {/* Live Chart */}
-          <motion.div
-            className={styles.chartSection}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-          >
-            <Suspense fallback={<MiniLoadingSpinner />}>
-              <LivePriceTable />
-            </Suspense>
-          </motion.div>
 
-          {/* Balance Card */}
+          {/* Left - BalanceCard */}
           <motion.div
             className={styles.balanceSection}
-            initial={{ opacity: 0, y: 10 }}
+            initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
           >
             <BalanceCard />
-
             <div className={styles.footerInfo}>
               {balLoading ? (
                 <span className={styles.shimmerSmall} />
@@ -114,6 +105,18 @@ export default function Dashboard() {
                 <>Last updated: {updatedAt}</>
               )}
             </div>
+          </motion.div>
+
+          {/* Right - LivePriceTable */}
+          <motion.div
+            className={styles.chartSection}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6 }}
+          >
+            <Suspense fallback={<MiniLoadingSpinner />}>
+              <LivePriceTable />
+            </Suspense>
           </motion.div>
 
         </div>
