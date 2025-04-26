@@ -7,8 +7,8 @@ export default [
     chainId: 1,
     icon: "/icons/eth.svg",
     rpcUrls: [
-      "https://cloudflare-eth.com",               // official public
-      "https://rpc.ankr.com/eth",                 // fallback public
+      "https://cloudflare-eth.com",           // ✅ Cloudflare (be CORS)
+      "https://eth.public-rpc.com",            // ✅ Public fallback
     ],
     testnet: {
       label: "Sepolia",
@@ -16,8 +16,8 @@ export default [
       chainId: 11155111,
       icon: "/icons/eth.svg",
       rpcUrls: [
-        "https://rpc.sepolia.org",
-        "https://eth-sepolia.public.blastapi.io",
+        "https://rpc.sepolia.org",             // ✅ Official
+        "https://eth-sepolia.public.blastapi.io", // ✅ Blast public
       ],
     },
   },
@@ -27,8 +27,8 @@ export default [
     chainId: 137,
     icon: "/icons/matic.svg",
     rpcUrls: [
-      "https://polygon-rpc.com",
-      "https://rpc-mainnet.matic.quiknode.pro",
+      "https://polygon-rpc.com",               // ✅ Official
+      "https://rpc-mainnet.matic.quiknode.pro", // ✅ Quiknode
     ],
     testnet: {
       label: "Mumbai",
@@ -36,8 +36,8 @@ export default [
       chainId: 80001,
       icon: "/icons/matic.svg",
       rpcUrls: [
-        "https://rpc-mumbai.maticvigil.com",
-        "https://matic-testnet-archive-rpc.bwarelabs.com",
+        "https://rpc-mumbai.maticvigil.com",    // ✅ Official
+        "https://polygon-mumbai-bor.publicnode.com", // ✅ PublicNode
       ],
     },
   },
@@ -47,8 +47,8 @@ export default [
     chainId: 56,
     icon: "/icons/bnb.svg",
     rpcUrls: [
-      "https://bsc-dataseed.binance.org",
-      "https://bsc-dataseed1.defibit.io",
+      "https://bsc-dataseed.binance.org",       // ✅ Official Binance
+      "https://bsc.publicnode.com",             // ✅ PublicNode
     ],
     testnet: {
       label: "BNB Testnet",
@@ -56,8 +56,8 @@ export default [
       chainId: 97,
       icon: "/icons/bnb.svg",
       rpcUrls: [
-        "https://data-seed-prebsc-1-s1.binance.org:8545",
-        "https://data-seed-prebsc-2-s1.binance.org:8545",
+        "https://data-seed-prebsc-1-s1.binance.org:8545", // ✅ Official
+        "https://bsc-testnet.publicnode.com",             // ✅ PublicNode
       ],
     },
   },
@@ -67,8 +67,8 @@ export default [
     chainId: 43114,
     icon: "/icons/avax.svg",
     rpcUrls: [
-      "https://api.avax.network/ext/bc/C/rpc",
-      "https://avax.meowrpc.com",
+      "https://api.avax.network/ext/bc/C/rpc",  // ✅ Official
+      "https://avalanche.publicnode.com",       // ✅ PublicNode
     ],
     testnet: {
       label: "Fuji",
@@ -76,8 +76,8 @@ export default [
       chainId: 43113,
       icon: "/icons/avax.svg",
       rpcUrls: [
-        "https://api.avax-test.network/ext/bc/C/rpc",
-        "https://avax-fuji-c-chain.publicnode.com",
+        "https://api.avax-test.network/ext/bc/C/rpc",     // ✅ Official
+        "https://avalanche-fuji-c-chain.publicnode.com",  // ✅ PublicNode
       ],
     },
   },
@@ -87,8 +87,8 @@ export default [
     chainId: 10,
     icon: "/icons/optimism.svg",
     rpcUrls: [
-      "https://mainnet.optimism.io",
-      "https://optimism.publicnode.com",
+      "https://mainnet.optimism.io",             // ✅ Official
+      "https://optimism.publicnode.com",         // ✅ PublicNode
     ],
     testnet: {
       label: "Optimism Goerli",
@@ -96,8 +96,8 @@ export default [
       chainId: 420,
       icon: "/icons/optimism.svg",
       rpcUrls: [
-        "https://optimism-goerli.publicnode.com",
-        "https://goerli.optimism.io",
+        "https://optimism-goerli.publicnode.com", // ✅ PublicNode
+        "https://goerli.optimism.io",             // ✅ Official
       ],
     },
   },
@@ -107,8 +107,8 @@ export default [
     chainId: 42161,
     icon: "/icons/arbitrum.svg",
     rpcUrls: [
-      "https://arb1.arbitrum.io/rpc",
-      "https://arbitrum.publicnode.com",
+      "https://arb1.arbitrum.io/rpc",             // ✅ Official
+      "https://arbitrum.publicnode.com",          // ✅ PublicNode
     ],
     testnet: {
       label: "Arbitrum Goerli",
@@ -116,8 +116,8 @@ export default [
       chainId: 421613,
       icon: "/icons/arbitrum.svg",
       rpcUrls: [
-        "https://goerli-rollup.arbitrum.io/rpc",
-        "https://arbitrum-goerli.publicnode.com",
+        "https://goerli-rollup.arbitrum.io/rpc",  // ✅ Official
+        "https://arbitrum-goerli.publicnode.com", // ✅ PublicNode
       ],
     },
   },
@@ -127,8 +127,8 @@ export default [
     chainId: 8453,
     icon: "/icons/base.svg",
     rpcUrls: [
-      "https://mainnet.base.org",
-      "https://base.publicnode.com",
+      "https://mainnet.base.org",                 // ✅ Official
+      "https://base.publicnode.com",              // ✅ PublicNode
     ],
     testnet: {
       label: "Base Goerli",
@@ -136,128 +136,8 @@ export default [
       chainId: 84531,
       icon: "/icons/base.svg",
       rpcUrls: [
-        "https://goerli.base.org",
-        "https://base-goerli.publicnode.com",
-      ],
-    },
-  },
-  {
-    label: "zkSync Era",
-    value: "zksync",
-    chainId: 324,
-    icon: "/icons/zksync.svg",
-    rpcUrls: [
-      "https://mainnet.era.zksync.io",
-      "https://zksync2-mainnet.zksync.dev",
-    ],
-    testnet: {
-      label: "zkSync Testnet",
-      value: "zksync-testnet",
-      chainId: 280,
-      icon: "/icons/zksync.svg",
-      rpcUrls: [
-        "https://testnet.era.zksync.dev",
-        "https://zksync2-testnet.zksync.dev",
-      ],
-    },
-  },
-  {
-    label: "Linea",
-    value: "linea",
-    chainId: 59144,
-    icon: "/icons/linea.svg",
-    rpcUrls: [
-      "https://rpc.linea.build",
-      "https://linea-mainnet.rpc.thirdweb.com",
-    ],
-    testnet: {
-      label: "Linea Testnet",
-      value: "linea-testnet",
-      chainId: 59140,
-      icon: "/icons/linea.svg",
-      rpcUrls: [
-        "https://rpc.goerli.linea.build",
-        "https://linea-goerli.rpc.thirdweb.com",
-      ],
-    },
-  },
-  {
-    label: "Scroll",
-    value: "scroll",
-    chainId: 534352,
-    icon: "/icons/scroll.svg",
-    rpcUrls: [
-      "https://rpc.scroll.io",
-      "https://scroll-mainnet.rpc.thirdweb.com",
-    ],
-    testnet: {
-      label: "Scroll Testnet",
-      value: "scroll-testnet",
-      chainId: 534353,
-      icon: "/icons/scroll.svg",
-      rpcUrls: [
-        "https://scroll-sepolia.public.blastapi.io",
-        "https://scroll-testnet.rpc.thirdweb.com",
-      ],
-    },
-  },
-  {
-    label: "Mantle",
-    value: "mantle",
-    chainId: 5000,
-    icon: "/icons/mantle.svg",
-    rpcUrls: [
-      "https://rpc.mantle.xyz",
-      "https://mantle-mainnet.public.blastapi.io",
-    ],
-    testnet: {
-      label: "Mantle Testnet",
-      value: "mantle-testnet",
-      chainId: 5001,
-      icon: "/icons/mantle.svg",
-      rpcUrls: [
-        "https://rpc.testnet.mantle.xyz",
-        "https://mantle-testnet.public.blastapi.io",
-      ],
-    },
-  },
-  {
-    label: "Celo",
-    value: "celo",
-    chainId: 42220,
-    icon: "/icons/celo.svg",
-    rpcUrls: [
-      "https://forno.celo.org",
-      "https://rpc.ankr.com/celo",
-    ],
-    testnet: {
-      label: "Alfajores",
-      value: "alfajores",
-      chainId: 44787,
-      icon: "/icons/celo.svg",
-      rpcUrls: [
-        "https://alfajores-forno.celo-testnet.org",
-        "https://alfajores.celo-testnet.org",
-      ],
-    },
-  },
-  {
-    label: "Gnosis Chain",
-    value: "gnosis",
-    chainId: 100,
-    icon: "/icons/gnosis.svg",
-    rpcUrls: [
-      "https://rpc.gnosischain.com",
-      "https://gnosis.publicnode.com",
-    ],
-    testnet: {
-      label: "Chiado",
-      value: "chiado",
-      chainId: 10200,
-      icon: "/icons/gnosis.svg",
-      rpcUrls: [
-        "https://rpc.chiadochain.net",
-        "https://chiado.publicnode.com",
+        "https://goerli.base.org",                 // ✅ Official
+        "https://base-goerli.publicnode.com",      // ✅ PublicNode
       ],
     },
   },
