@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { FiRefreshCw } from "react-icons/fi";
 
 import { useSystemReady } from "@/hooks/useSystemReady";
+import { useSessionManager } from "@/hooks/useSessionManager"; // ✅ PRIDĖTAS!
 import { useAuth } from "@/contexts/AuthContext";
 import { useBalance } from "@/contexts/BalanceContext";
 
@@ -13,12 +14,15 @@ import BalanceCard from "@/components/BalanceCard";
 import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
 import styles from "@/styles/dashboard.module.css";
 
+// Lazy-load LivePriceTable without SSR
 const LivePriceTable = dynamic(() => import("@/components/LivePriceTable"), {
   ssr: false,
 });
 
 export default function Dashboard() {
-  const { ready } = useSystemReady(); // ⬅️ TIK ready destructurinam
+  const { ready } = useSystemReady();
+  useSessionManager(); // ✅ Paleidžiam automatiškai kai komponentas kraunasi!
+
   const { user, wallet } = useAuth();
   const { loading: balLoading, refetch, lastUpdated } = useBalance();
 
@@ -33,7 +37,7 @@ export default function Dashboard() {
     return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
   }, [lastUpdated]);
 
-  // Corrected local isMobile detection
+  // Local isMobile detection
   const isMobile = useMemo(() => {
     if (typeof window !== "undefined") {
       return /Mobi|Android|iPhone/i.test(navigator.userAgent);
