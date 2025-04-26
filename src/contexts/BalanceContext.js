@@ -1,21 +1,16 @@
-// src/contexts/BalanceContext.js
 "use client";
 
 import React, {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  useCallback,
-  useMemo,
-  useRef,
+  createContext, useContext,
+  useState, useEffect,
+  useCallback, useMemo, useRef,
 } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { JsonRpcProvider, FallbackProvider, ethers } from "ethers";
+import { JsonRpcProvider, ethers } from "ethers";
 import debounce from "lodash.debounce";
-import networks from "@/data/networks"; // your 26-chain list
+import networks from "@/data/networks"; // your 26 networks list
 
-// ── CoinGecko slugs for each network (main & testnets) ──────────
+// ── CoinGecko slugs for mainnets & testnets ───────────────────────
 const TOKEN_IDS = {
   eth:               "ethereum",
   matic:             "polygon-pos",
@@ -45,14 +40,14 @@ const TOKEN_IDS = {
   chiado:            "xdai",
 };
 
-// fallback = zero‐prices if Coingecko fails
+// zero‐prices fallback
 const FALLBACK_PRICES = Object.fromEntries(
   Object.keys(TOKEN_IDS).map(k => [k, { usd: 0, eur: 0 }])
 );
 
 const BALANCE_KEY = "nordbalticum_balances";
 const PRICE_KEY   = "nordbalticum_prices";
-const PRICE_TTL   = 30_000; // ms
+const PRICE_TTL   = 30_000; // 30 seconds
 
 const BalanceContext = createContext(null);
 export const useBalance = () => useContext(BalanceContext);
@@ -72,51 +67,56 @@ export function BalanceProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const lastPriceFetch = useRef(0);
 
-  // 1) Build a FallbackProvider for each network & testnet
+  // build one JsonRpcProvider per chain/testnet, using only CORS-friendly URLs
   const providers = useMemo(() => {
     const map = {};
-    networks.forEach((n) => {
-      const main = n.rpcUrls.map(u => new JsonRpcProvider(u));
-      map[n.value] = new FallbackProvider(main);
+    networks.forEach(n => {
+      // always put PUBLIC first so CORS-friendly node is tried first
+      const urls = [
+        ...n.rpcUrls.filter(u => u.startsWith("https://") && !u.includes("ankr.com")),
+        ...n.rpcUrls.filter(u => u.includes("ankr.com"))
+      ];
+      map[n.value] = new JsonRpcProvider(urls[0]);
       if (n.testnet) {
-        const test = n.testnet.rpcUrls.map(u => new JsonRpcProvider(u));
-        map[n.testnet.value] = new FallbackProvider(test);
+        const tu = [
+          ...n.testnet.rpcUrls.filter(u => u.startsWith("https://") && !u.includes("ankr.com")),
+          ...n.testnet.rpcUrls.filter(u => u.includes("ankr.com"))
+        ];
+        map[n.testnet.value] = new JsonRpcProvider(tu[0]);
       }
     });
     return map;
   }, []);
 
-  // 2) Build deduped Coingecko IDs string
+  // dedupe CoinGecko IDs
   const cgIds = useMemo(
     () => Array.from(new Set(Object.values(TOKEN_IDS))).join(","),
     []
   );
 
-  // 3a) Fetch on-chain balances
+  // fetch on-chain balances
   const fetchBalances = useCallback(async () => {
     const addr = wallet?.wallet?.address;
     if (!addr) return;
     const out = {};
-    await Promise.all(
-      Object.entries(providers).map(async ([key, prov]) => {
-        try {
-          const raw = await prov.getBalance(addr);
-          out[key] = parseFloat(ethers.formatEther(raw));
-        } catch {
-          out[key] = balances[key] ?? 0;
-        }
-      })
-    );
+    await Promise.all(Object.entries(providers).map(async ([key, prov]) => {
+      try {
+        const raw = await prov.getBalance(addr);
+        out[key] = parseFloat(ethers.formatEther(raw));
+      } catch {
+        // fallback to last known or zero
+        out[key] = balances[key] ?? 0;
+      }
+    }));
     setBalances(out);
     localStorage.setItem(BALANCE_KEY, JSON.stringify(out));
   }, [wallet, providers, balances]);
 
-  // 3b) Fetch fiat prices (with TTL)
+  // fetch fiat prices via your proxy (/api/prices)
   const fetchPrices = useCallback(async () => {
     const now = Date.now();
     if (now - lastPriceFetch.current < PRICE_TTL) return;
     try {
-      // Use your Next.js proxy at /api/prices?ids=... to avoid CORS
       const res = await fetch(`/api/prices?ids=${cgIds}`, { cache: "no-store" });
       const json = await res.json();
       const pd = {};
@@ -130,23 +130,23 @@ export function BalanceProvider({ children }) {
       localStorage.setItem(PRICE_KEY, JSON.stringify(pd));
       lastPriceFetch.current = now;
     } catch {
-      // keep existing prices if fetch fails
+      // keep existing if proxy fails
     }
   }, [cgIds]);
 
-  // 4) Parallel fetch
+  // run both in parallel
   const fetchAll = useCallback(async () => {
     setLoading(true);
     await Promise.all([fetchBalances(), fetchPrices()]);
     setLoading(false);
   }, [fetchBalances, fetchPrices]);
 
-  // 5) Initial + auth/wallet ready trigger
+  // on wallet ready
   useEffect(() => {
     if (!authLoading && !walletLoading) fetchAll();
   }, [authLoading, walletLoading, fetchAll]);
 
-  // 6) Background polling + on-visible
+  // poll every 30s & on visibility
   useEffect(() => {
     const iv = setInterval(fetchAll, 30_000);
     const onVis = debounce(() => {
@@ -160,27 +160,25 @@ export function BalanceProvider({ children }) {
     };
   }, [fetchAll]);
 
-  // 7) Helpers
+  // USD/EUR helpers
   const getUsdBalance = useCallback(
-    (net) => ((balances[net] ?? 0) * (prices[net]?.usd ?? 0)).toFixed(2),
+    net => ((balances[net] ?? 0) * (prices[net]?.usd ?? 0)).toFixed(2),
     [balances, prices]
   );
   const getEurBalance = useCallback(
-    (net) => ((balances[net] ?? 0) * (prices[net]?.eur ?? 0)).toFixed(2),
+    net => ((balances[net] ?? 0) * (prices[net]?.eur ?? 0)).toFixed(2),
     [balances, prices]
   );
 
   return (
-    <BalanceContext.Provider
-      value={{
-        balances,
-        prices,
-        loading,
-        getUsdBalance,
-        getEurBalance,
-        refetch: fetchAll,
-      }}
-    >
+    <BalanceContext.Provider value={{
+      balances,
+      prices,
+      loading,
+      getUsdBalance,
+      getEurBalance,
+      refetch: fetchAll,
+    }}>
       {children}
     </BalanceContext.Provider>
   );
