@@ -1,5 +1,3 @@
-// sessionWatcher.js
-
 "use client";
 
 import { useEffect, useRef } from "react";
@@ -10,9 +8,10 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useBalance } from "@/contexts/BalanceContext";
 import { useSystemReady } from "@/hooks/useSystemReady";
 
-const SESSION_REFRESH_INTERVAL = 30_000; // kas 30s
-const MAX_FAILURES = 3; // kiek klaidų leidžiam prieš logout
-const DEBOUNCE_DELAY = 300; // ms debounce viskam
+const BASE_REFRESH_INTERVAL = 30_000; // 30s
+const MAX_FAILURES = 3;                // Max klaidos prieš logout
+const DEBOUNCE_DELAY = 300;             // Debounce events
+const MAX_BACKOFF = 300_000;            // Max 5 min timeout
 
 export function useSessionWatcher() {
   const { ready } = useSystemReady();
@@ -20,11 +19,20 @@ export function useSessionWatcher() {
   const { refetch } = useBalance();
 
   const failureCount = useRef(0);
+  const backoffMultiplier = useRef(1);
   const lastRefresh = useRef(Date.now());
   const timers = useRef([]);
 
   useEffect(() => {
     if (!ready) return;
+
+    const resetBackoff = () => {
+      backoffMultiplier.current = 1;
+    };
+
+    const increaseBackoff = () => {
+      backoffMultiplier.current = Math.min(backoffMultiplier.current * 2, MAX_BACKOFF / BASE_REFRESH_INTERVAL);
+    };
 
     const safeRun = async (source) => {
       try {
@@ -32,7 +40,8 @@ export function useSessionWatcher() {
         await refetch();
         failureCount.current = 0;
         lastRefresh.current = Date.now();
-        console.log(`[SessionWatcher] ✅ Refreshed by ${source}`);
+        resetBackoff();
+        console.log(`[SessionWatcher] ✅ Session refreshed by ${source}`);
       } catch (err) {
         failureCount.current++;
         console.error(`[SessionWatcher] ❌ Refresh failed (${source}):`, err?.message || err);
@@ -40,8 +49,25 @@ export function useSessionWatcher() {
           console.error("[SessionWatcher] ❌ Too many failures. Signing out...");
           toast.error("⚠️ Session expired. Logging out...");
           signOut(true);
+        } else {
+          increaseBackoff();
+          console.warn(`[SessionWatcher] 🔁 Retrying in ${BASE_REFRESH_INTERVAL * backoffMultiplier.current / 1000}s...`);
+          clearInterval(intervalId.current);
+          setupInterval(); // restartinam su didesniu timeoutu
         }
       }
+    };
+
+    const intervalId = useRef(null);
+
+    const setupInterval = () => {
+      clearInterval(intervalId.current);
+      intervalId.current = setInterval(() => {
+        if (Date.now() - lastRefresh.current > BASE_REFRESH_INTERVAL * backoffMultiplier.current) {
+          safeRun("interval");
+        }
+      }, BASE_REFRESH_INTERVAL * backoffMultiplier.current);
+      timers.current.push(intervalId.current);
     };
 
     const onVisibilityChange = debounce(() => {
@@ -58,14 +84,7 @@ export function useSessionWatcher() {
       safeRun("online");
     }, DEBOUNCE_DELAY);
 
-    const interval = setInterval(() => {
-      if (Date.now() - lastRefresh.current > SESSION_REFRESH_INTERVAL) {
-        safeRun("interval");
-      }
-    }, SESSION_REFRESH_INTERVAL);
-
-    timers.current.push(interval);
-
+    setupInterval();
     document.addEventListener("visibilitychange", onVisibilityChange);
     window.addEventListener("focus", onFocus);
     window.addEventListener("online", onOnline);
@@ -75,14 +94,12 @@ export function useSessionWatcher() {
     timers.current.push(onOnline);
 
     return () => {
-      clearInterval(interval);
+      clearInterval(intervalId.current);
       timers.current.forEach(clearTimeout);
       timers.current = [];
-
       onVisibilityChange.cancel();
       onFocus.cancel();
       onOnline.cancel();
-
       document.removeEventListener("visibilitychange", onVisibilityChange);
       window.removeEventListener("focus", onFocus);
       window.removeEventListener("online", onOnline);
