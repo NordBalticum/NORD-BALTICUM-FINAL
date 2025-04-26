@@ -9,6 +9,7 @@ export function useSilentBalanceRefetch() {
   const { ready } = useSystemReady();
   const { refetch } = useBalance();
   const retryQueue = useRef([]);
+  const retryCount = useRef(0);
 
   useEffect(() => {
     if (!ready) return;
@@ -17,25 +18,40 @@ export function useSilentBalanceRefetch() {
       try {
         await refetch();
         console.log(`[SilentBalanceRefetch] Refetched via ${source}`);
+        retryCount.current = 0; // Reset retry count on success
+        retryQueue.current.forEach(clearTimeout);
+        retryQueue.current = [];
       } catch (err) {
         console.error(`[SilentBalanceRefetch] Refetch error: ${err?.message || err}`);
-        queueRetry();
+        scheduleRetry();
       }
     };
 
-    const queueRetry = () => {
-      if (retryQueue.current.length >= 5) return; // Max 5 retry attempts queued
-      const delay = (retryQueue.current.length + 1) * 3000; // 3s, 6s, 9s, 12s, 15s
-      console.warn(`[SilentBalanceRefetch] Retrying in ${delay / 1000}s`);
+    const scheduleRetry = () => {
+      if (retryCount.current >= 6) {
+        console.error("[SilentBalanceRefetch] ❌ Max retries reached. No further retries.");
+        return;
+      }
+
+      const delay = Math.min(2 ** retryCount.current * 3000, 60000); 
+      // 3s -> 6s -> 12s -> 24s -> 48s -> 60s max (stabilized)
+
+      console.warn(`[SilentBalanceRefetch] Retrying in ${Math.round(delay / 1000)}s`);
+      
       const id = setTimeout(async () => {
         try {
           await refetch();
           console.log("[SilentBalanceRefetch] Retry successful ✅");
-          retryQueue.current = []; // Clear all retries after success
+          retryCount.current = 0;
+          retryQueue.current.forEach(clearTimeout);
+          retryQueue.current = [];
         } catch (err) {
           console.error("[SilentBalanceRefetch] Retry failed ❌:", err?.message || err);
+          retryCount.current++;
+          scheduleRetry();
         }
       }, delay);
+
       retryQueue.current.push(id);
     };
 
