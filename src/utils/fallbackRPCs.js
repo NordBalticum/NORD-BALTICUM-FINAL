@@ -1,4 +1,5 @@
-// src/utils/fallbackRPCs.js
+"use client";
+
 import { JsonRpcProvider, FallbackProvider } from "ethers";
 
 export const fallbackRPCs = {
@@ -165,11 +166,11 @@ export const fallbackRPCs = {
   },
 };
 
-export function getFallbackProvider(chain) {
-  const net = fallbackRPCs[chain];
+export function getFallbackProvider(chainKey) {
+  const net = fallbackRPCs[chainKey];
   if (!net || !net.rpcs || net.rpcs.length === 0) {
-    console.error(`[fallbackRPCs] ❌ No RPC URLs found for chain: ${chain}`);
-    throw new Error(`No RPC URLs for chain ${chain}`);
+    console.error(`[fallbackRPCs] ❌ No RPC URLs found for chain: ${chainKey}`);
+    throw new Error(`No fallback RPCs found for chain "${chainKey}".`);
   }
   const providers = net.rpcs.map(url => new JsonRpcProvider(url));
   return new FallbackProvider(providers);
