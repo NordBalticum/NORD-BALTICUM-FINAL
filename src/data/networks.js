@@ -112,7 +112,7 @@ export default [
       chainId: 420,
       icon: "/icons/optimism.svg",
       rpcUrls: [
-        "https://optimism-goerli.publicnode.com",
+        "https://optimism-goerli.public.blastapi.io",
         "https://1rpc.io/optimism-goerli",
         // maybeAnkr("optimism_goerli")
       ].filter(Boolean),
@@ -156,7 +156,7 @@ export default [
       chainId: 84531,
       icon: "/icons/base.svg",
       rpcUrls: [
-        "https://goerli.base.org",
+        "https://base-goerli.public.blastapi.io",
         "https://1rpc.io/base-goerli",
         // maybeAnkr("base_goerli")
       ].filter(Boolean),
