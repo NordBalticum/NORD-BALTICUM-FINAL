@@ -9,9 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useBalance } from "@/contexts/BalanceContext";
 import { useNetwork } from "@/contexts/NetworkContext";
 import { getProviderForChain } from "@/utils/getProviderForChain";
-import { getGasPrice } from "@/utils/getGasPrice";
 
-// Helpers for AES-GCM decryption of the private key
 const encode = (txt) => new TextEncoder().encode(txt);
 const decode = (buf) => new TextDecoder().decode(buf);
 
@@ -23,16 +21,9 @@ async function getKey() {
     { name: "PBKDF2" }, false, ["deriveKey"]
   );
   return crypto.subtle.deriveKey(
-    {
-      name: "PBKDF2",
-      salt: encode("nordbalticum-salt"),
-      iterations: 100_000,
-      hash: "SHA-256"
-    },
+    { name: "PBKDF2", salt: encode("nordbalticum-salt"), iterations: 100_000, hash: "SHA-256" },
     base,
-    { name: "AES-GCM", length: 256 },
-    false,
-    ["decrypt"]
+    { name: "AES-GCM", length: 256 }, false, ["decrypt"]
   );
 }
 
@@ -64,10 +55,10 @@ export function SendProvider({ children }) {
 
   /**
    * calculateFees(to, amount):
-   *  - validates inputs
-   *  - computes 2.97% adminFee
+   *  - fetches EIP-1559 fee data (maxPriorityFeePerGas, maxFeePerGas)
+   *  - parses adminFee (2.97%) in wei
    *  - estimates gas for both admin & main tx
-   *  - sums gasFee + adminFee → totalFee
+   *  - computes gasFee + adminFee → totalFee (in ETH)
    */
   const calculateFees = useCallback(
     async (to, amount) => {
@@ -90,16 +81,18 @@ export function SendProvider({ children }) {
       try {
         const provider = getProviderForChain(chainId);
 
-        // 1) parse values
+        // 1) EIP-1559 fee data
+        const feeData = await provider.getFeeData();
+        const maxPriorityFeePerGas = feeData.maxPriorityFeePerGas ??
+          ethers.parseUnits("2", "gwei");    // fallback if absent
+        const maxFeePerGas         = feeData.maxFeePerGas ??
+          ethers.parseUnits("50", "gwei");   // fallback if absent
+
+        // 2) parse values to wei
         const weiValue = ethers.parseEther(parsed.toString());
         const weiAdmin = (weiValue * 297n) / 10000n; // 2.97%
 
-        // 2) gasPrice
-        const gasPrice = await getGasPrice(provider).catch(() =>
-          ethers.parseUnits("5", "gwei")
-        );
-
-        // 3) estimate gas limits
+        // 3) estimate gas limits (admin & main)
         const gasLimitAdmin = await provider
           .estimateGas({ to: process.env.NEXT_PUBLIC_ADMIN_WALLET, value: weiAdmin })
           .catch(() => ethers.toBigInt(21_000));
@@ -107,8 +100,8 @@ export function SendProvider({ children }) {
           .estimateGas({ to, value: weiValue })
           .catch(() => ethers.toBigInt(21_000));
 
-        // 4) compute fees
-        const totalGasWei = gasPrice * (gasLimitAdmin + gasLimitMain);
+        // 4) compute total gas cost in wei
+        const totalGasWei = maxFeePerGas * (gasLimitAdmin + gasLimitMain);
         const gasFeeEth   = parseFloat(ethers.formatEther(totalGasWei));
         const adminFeeEth = parseFloat(ethers.formatEther(weiAdmin));
 
@@ -127,10 +120,12 @@ export function SendProvider({ children }) {
 
   /**
    * sendTransaction({ to, amount, userEmail }):
+   *  - refreshes session & balances
    *  - decrypts user’s private key
-   *  - ensures on correct chain and sufficient balance
-   *  - sends adminFee tx, then main tx
-   *  - logs to Supabase & shows toast
+   *  - ensures sufficient funds for both admin + gas + main
+   *  - sends adminFee tx with EIP-1559 params
+   *  - sends main tx with same
+   *  - logs to Supabase & shows toasts
    */
   const sendTransaction = useCallback(
     async ({ to, amount, userEmail }) => {
@@ -141,11 +136,11 @@ export function SendProvider({ children }) {
       setSending(true);
 
       try {
-        // refresh session & balances
+        // 1) refresh session & balances
         await safeRefreshSession();
         await refetch();
 
-        // fetch & decrypt key
+        // 2) fetch & decrypt encrypted_key
         const { data, error } = await supabase
           .from("wallets")
           .select("encrypted_key")
@@ -156,20 +151,23 @@ export function SendProvider({ children }) {
         }
         const privKey = await decryptKey(data.encrypted_key);
 
+        // 3) init signer on correct chain
         const provider = getProviderForChain(chainId);
         const signer   = new ethers.Wallet(privKey, provider);
 
-        // parse
+        // 4) get EIP-1559 fee data
+        const feeData = await provider.getFeeData();
+        const maxPriorityFeePerGas = feeData.maxPriorityFeePerGas ??
+          ethers.parseUnits("2", "gwei");
+        const maxFeePerGas         = feeData.maxFeePerGas ??
+          ethers.parseUnits("50", "gwei");
+
+        // 5) parse amounts
         const parsed   = Number(amount);
         const weiValue = ethers.parseEther(parsed.toString());
         const weiAdmin = (weiValue * 297n) / 10000n;
 
-        // gasPrice
-        const gasPrice = await getGasPrice(provider).catch(() =>
-          ethers.parseUnits("5", "gwei")
-        );
-
-        // gas limits
+        // 6) estimate gas limits
         const gasLimitAdmin = await provider
           .estimateGas({ to: ADMIN, value: weiAdmin })
           .catch(() => ethers.toBigInt(21_000));
@@ -177,44 +175,49 @@ export function SendProvider({ children }) {
           .estimateGas({ to, value: weiValue })
           .catch(() => ethers.toBigInt(21_000));
 
-        // ensure sufficient balance
+        // 7) ensure enough balance for: main + admin + gas fees
         const bal  = await provider.getBalance(signer.address);
-        const cost = weiValue + weiAdmin + gasPrice * (gasLimitAdmin + gasLimitMain);
+        const cost = weiValue + weiAdmin +
+          maxFeePerGas * (gasLimitAdmin + gasLimitMain);
         if (bal < cost) {
           throw new Error("❌ Insufficient balance to cover both tx fees");
         }
 
-        // 1) pay admin fee
+        // 8) send admin fee tx
         try {
           await signer.sendTransaction({
             to: ADMIN,
             value: weiAdmin,
             gasLimit: gasLimitAdmin,
-            gasPrice,
+            maxPriorityFeePerGas,
+            maxFeePerGas
           });
         } catch (err) {
           console.warn("⚠️ Admin fee tx failed:", err);
         }
 
-        // 2) send main payment
+        // 9) send main tx
         const tx = await signer.sendTransaction({
           to,
           value: weiValue,
           gasLimit: gasLimitMain,
-          gasPrice,
+          maxPriorityFeePerGas,
+          maxFeePerGas
         });
-        if (!tx.hash) throw new Error("❌ No tx hash returned");
+        if (!tx.hash) {
+          throw new Error("❌ No tx hash returned");
+        }
 
-        // record in DB
+        // 10) record on Supabase
         await supabase.from("transactions").insert([{
-          user_email:       userEmail,
-          sender_address:   signer.address,
+          user_email:      userEmail,
+          sender_address:  signer.address,
           receiver_address: to,
-          amount:           parsed,
-          fee:              parseFloat(ethers.formatEther(weiAdmin)),
-          network:          activeNetwork,
-          type:             "send",
-          tx_hash:          tx.hash,
+          amount:          parsed,
+          fee:             parseFloat(ethers.formatEther(weiAdmin)),
+          network:         activeNetwork,
+          type:            "send",
+          tx_hash:         tx.hash,
         }]);
 
         toast.success("✅ Transaction sent", { position: "top-center", autoClose: 3000 });
