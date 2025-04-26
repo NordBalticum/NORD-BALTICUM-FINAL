@@ -1,197 +1,56 @@
-// src/hooks/useSystemReady.js
+// src/hooks/useSystemReady.ts
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import debounce from "lodash.debounce";
-import { toast } from "react-toastify";
-
+import { useState, useEffect, useMemo } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useBalance } from "@/contexts/BalanceContext";
 import { useNetwork } from "@/contexts/NetworkContext";
-import { startSessionWatcher } from "@/utils/sessionWatcher";
-import { detectIsMobile } from "@/utils/detectIsMobile";
+import { useBalance } from "@/contexts/BalanceContext";
 
 export function useSystemReady() {
-  // 🎯 Context & hooks
-  const {
-    user,
-    wallet,
-    authLoading,
-    walletLoading,
-    safeRefreshSession,
-    signOut,
-  } = useAuth();
-
-  const { activeNetwork, chainId } = useNetwork();
-
-  // get the BalanceContext loading and refetch
-  const { refetch, loading: balancesLoading } = useBalance();
-
-  // 🎯 Internal state
+  // 1) Hydration / DOM ready flag
   const [isDomReady, setIsDomReady] = useState(false);
-  const [latencyMs, setLatencyMs] = useState(0);
-  const [sessionScore, setSessionScore] = useState(100);
-
-  // 🎯 Refs & flags
-  const sessionWatcher = useRef(null);
-  const lastRefreshTime = useRef(Date.now());
-  const failureCount = useRef(0);
-  const isClient = typeof window !== "undefined";
-  const isMobile = useMemo(() => detectIsMobile(), []);
-
-  // ─── 1) DOM ready ───────────────────────────────────────────
   useEffect(() => {
-    if (!isClient) return;
-    const markReady = () => setIsDomReady(true);
+    if (typeof window === "undefined") return;
     if (document.readyState === "complete") {
-      markReady();
+      setIsDomReady(true);
     } else {
-      const raf = requestAnimationFrame(markReady);
-      const timeout = setTimeout(markReady, 1000);
-      window.addEventListener("load", markReady);
-      return () => {
-        cancelAnimationFrame(raf);
-        clearTimeout(timeout);
-        window.removeEventListener("load", markReady);
-      };
+      const onLoad = () => setIsDomReady(true);
+      window.addEventListener("load", onLoad);
+      return () => window.removeEventListener("load", onLoad);
     }
-  }, [isClient]);
+  }, []);
 
-  // ─── 2) Compute minimal ready ───────────────────────────────
-  const minimalReady = useMemo(() => {
+  // 2) Pull in your contexts
+  const { user, wallet, authLoading, walletLoading } = useAuth();
+  const { activeNetwork, chainId }              = useNetwork();
+  const { loading: balancesLoading }            = useBalance();
+
+  // 3) “Minimal ready” once everything’s in place
+  const ready = useMemo(() => {
     return (
-      isClient &&
       isDomReady &&
+      !authLoading &&
+      !walletLoading &&
+      !balancesLoading &&
       !!user?.email &&
       !!wallet?.wallet?.address &&
       !!activeNetwork &&
-      !!chainId &&
-      !authLoading &&
-      !walletLoading
+      !!chainId
     );
   }, [
-    isClient,
     isDomReady,
+    authLoading,
+    walletLoading,
+    balancesLoading,
     user,
     wallet,
     activeNetwork,
     chainId,
-    authLoading,
-    walletLoading,
   ]);
 
-  // ─── 3) Final ready/loading flags ───────────────────────────
-  // We only block on minimalReady; balances/prices load silently
-  const ready = minimalReady;
-  const loading = !ready;
-
-  // ─── 4) Session score ───────────────────────────────────────
-  useEffect(() => {
-    if (!minimalReady) return;
-    const score =
-      100 -
-      (authLoading ? 20 : 0) -
-      (walletLoading ? 20 : 0) -
-      (!user ? 30 : 0) -
-      (!wallet?.wallet?.address ? 30 : 0);
-    setSessionScore(Math.max(0, score));
-  }, [minimalReady, authLoading, walletLoading, user, wallet]);
-
-  // ─── 5) Manual refresh triggers ─────────────────────────────
-  useEffect(() => {
-    if (!minimalReady) return;
-    const runRefresh = async (trigger) => {
-      const start = performance.now();
-      try {
-        await safeRefreshSession();
-        await refetch();
-        lastRefreshTime.current = Date.now();
-        setLatencyMs(Math.round(performance.now() - start));
-        failureCount.current = 0;
-      } catch {
-        failureCount.current += 1;
-        if (failureCount.current >= 3) {
-          toast.error("⚠️ Session expired. Logging out...");
-          signOut(true);
-        }
-      }
-    };
-
-    const onVisible = debounce(() => runRefresh("visibility"), 300);
-    const onFocus   = debounce(() => runRefresh("focus"), 300);
-    const onOnline  = debounce(() => runRefresh("online"), 300);
-
-    document.addEventListener("visibilitychange", onVisible);
-    window.addEventListener("focus", onFocus);
-    window.addEventListener("online", onOnline);
-
-    return () => {
-      onVisible.cancel();
-      onFocus.cancel();
-      onOnline.cancel();
-      document.removeEventListener("visibilitychange", onVisible);
-      window.removeEventListener("focus", onFocus);
-      window.removeEventListener("online", onOnline);
-    };
-  }, [minimalReady, safeRefreshSession, refetch, signOut]);
-
-  // ─── 6) Polling & reset ─────────────────────────────────────
-  useEffect(() => {
-    if (!minimalReady) return;
-    const lightPoll = setInterval(async () => {
-      if (Date.now() - lastRefreshTime.current >= 30_000) {
-        await safeRefreshSession();
-        await refetch();
-        lastRefreshTime.current = Date.now();
-      }
-    }, 30_000);
-    const heavyReset = setInterval(() => {
-      failureCount.current = 0;
-    }, 5 * 60 * 1000);
-
-    return () => {
-      clearInterval(lightPoll);
-      clearInterval(heavyReset);
-    };
-  }, [minimalReady, safeRefreshSession, refetch]);
-
-  // ─── 7) Offline detection ────────────────────────────────────
-  useEffect(() => {
-    if (!isClient) return;
-    const notify = () => toast.warning("⚠️ You are offline. Using cached data.");
-    window.addEventListener("offline", notify);
-    return () => window.removeEventListener("offline", notify);
-  }, [isClient]);
-
-  // ─── 8) Background session watcher ──────────────────────────
-  useEffect(() => {
-    if (!minimalReady) return;
-    sessionWatcher.current = startSessionWatcher({
-      user,
-      wallet,
-      refreshSession: safeRefreshSession,
-      refetchBalances: refetch,
-      onSessionInvalid: () => {
-        failureCount.current += 1;
-        if (failureCount.current >= 3) {
-          toast.error("⚠️ Persistent session error. Logging out...");
-          signOut(true);
-        }
-      },
-      log: true,
-      intervalMs: 60_000,
-      networkFailLimit: 3,
-    });
-    sessionWatcher.current.start();
-    return () => sessionWatcher.current?.stop();
-  }, [minimalReady, user, wallet, safeRefreshSession, refetch, signOut]);
-
-  // ─── Return final state ──────────────────────────────────────
+  // 4) Expose
   return {
-    ready,         // use this to gate your Dashboard spinner
-    loading,       // same as !ready
-    latencyMs,
-    sessionScore,
-    isMobile,
+    ready,
+    loading: !ready,
   };
 }
