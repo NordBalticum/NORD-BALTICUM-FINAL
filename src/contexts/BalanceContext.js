@@ -1,4 +1,3 @@
-// src/contexts/BalanceContext.js
 "use client";
 
 import {
@@ -14,15 +13,13 @@ import { useAuth } from "@/contexts/AuthContext";
 import { ethers } from "ethers";
 import debounce from "lodash.debounce";
 
-// – your dynamic network list & chainId map
-import { SUPPORTED_NETWORKS } from "@/contexts/NetworkContext";
-// – resilient multi‐RPC provider factory
+import networks from "@/data/networks"; // mūsų bendras network sąrašas
 import { getProviderForChain } from "@/utils/getProviderForChain";
 
-// token → CoinGecko ID for price lookups; extend as needed
+// token → CoinGecko ID for price lookup
 const TOKEN_IDS = {
   eth:            "ethereum",
-  matic:          "matic-network",
+  polygon:        "matic-network",
   bnb:            "binancecoin",
   avax:           "avalanche-2",
   optimism:       "optimism",
@@ -34,28 +31,24 @@ const TOKEN_IDS = {
   mantle:         "mantle",
   celo:           "celo",
   gnosis:         "xdai",
-  // testnets reuse mainnet IDs
+  // Testnets map to their mainnet ID
   sepolia:        "ethereum",
   mumbai:         "matic-network",
-  tbnb:           "binancecoin",
+  bnbt:           "binancecoin",
   fuji:           "avalanche-2",
-  optimismgoerli: "optimism",
-  arbitrumgoerli: "arbitrum-one",
-  basegoerli:     "base",
-  zksynctest:     "zksync",
-  lineatest:      "linea",
-  scrolltest:     "scroll",
-  mantletest:     "mantle",
+  "optimism-goerli": "optimism",
+  "arbitrum-goerli": "arbitrum-one",
+  "base-goerli": "base",
+  "zksync-testnet": "zksync",
+  "linea-testnet": "linea",
+  "scroll-testnet": "scroll",
+  "mantle-testnet": "mantle",
   alfajores:      "celo",
   chiado:         "xdai",
 };
 
-// fallback prices if CoinGecko fails
 const FALLBACK_PRICES = Object.fromEntries(
-  Object.keys(TOKEN_IDS).map(sym => [
-    sym,
-    { usd: 0, eur: 0 } // you can seed with realistic defaults
-  ])
+  Object.keys(TOKEN_IDS).map(sym => [sym, { usd: 0, eur: 0 }])
 );
 
 const BALANCE_KEY = "nordbalticum_balances";
@@ -67,15 +60,14 @@ export const useBalance = () => useContext(BalanceContext);
 export function BalanceProvider({ children }) {
   const { wallet, authLoading, walletLoading } = useAuth();
 
-  const [balances,   setBalances]   = useState({});
-  const [prices,     setPrices]     = useState(FALLBACK_PRICES);
-  const [loading,    setLoading]    = useState(true);
-  const [error,      setError]      = useState(null);
+  const [balances, setBalances] = useState({});
+  const [prices, setPrices] = useState(FALLBACK_PRICES);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [lastUpdated, setLastUpdated] = useState(null);
 
   const lastBalances = useRef({});
 
-  // Persist/load helpers
   const save = (key, data) => {
     try { localStorage.setItem(key, JSON.stringify(data)); } catch {}
   };
@@ -84,26 +76,27 @@ export function BalanceProvider({ children }) {
     catch { return null; }
   };
 
-  // build one fallback‐backed provider per network
+  // Dynamic providers build
   const providers = useMemo(() => {
     const m = {};
-    for (const net of SUPPORTED_NETWORKS) {
+    for (const net of networks) {
       try {
-        m[net] = getProviderForChain(net);
-      } catch {
-        // ignore misconfigs
+        m[net.value] = getProviderForChain(net.chainId);
+        if (net.testnet) {
+          m[net.testnet.value] = getProviderForChain(net.testnet.chainId);
+        }
+      } catch (err) {
+        console.error(`⚠️ Error building provider for ${net.label}:`, err);
       }
     }
     return m;
   }, []);
 
-  // coin-gecko query string
   const coingeckoQuery = useMemo(
     () => Array.from(new Set(Object.values(TOKEN_IDS))).join(","),
     []
   );
 
-  // core fetcher
   const fetchBalancesAndPrices = useCallback(async () => {
     const addr = wallet?.wallet?.address;
     if (!addr) return;
@@ -112,7 +105,7 @@ export function BalanceProvider({ children }) {
     setError(null);
 
     try {
-      // 1) balances
+      // 1) Balances
       const entries = await Promise.all(
         Object.entries(providers).map(async ([net, provider]) => {
           try {
@@ -128,7 +121,7 @@ export function BalanceProvider({ children }) {
       lastBalances.current = newB;
       save(BALANCE_KEY, newB);
 
-      // 2) prices
+      // 2) Prices
       let priceData = {};
       try {
         const resp = await fetch(
@@ -157,7 +150,6 @@ export function BalanceProvider({ children }) {
     }
   }, [wallet, providers, coingeckoQuery]);
 
-  // hydrate from cache
   useEffect(() => {
     const cb = load(BALANCE_KEY);
     const cp = load(PRICE_KEY);
@@ -166,25 +158,22 @@ export function BalanceProvider({ children }) {
     if (cb) lastBalances.current = cb;
   }, []);
 
-  // initial fetch once wallet is ready
   useEffect(() => {
     if (authLoading || walletLoading) return;
     fetchBalancesAndPrices();
   }, [authLoading, walletLoading, wallet, fetchBalancesAndPrices]);
 
-  // poll every 30s
   useEffect(() => {
     if (!wallet?.wallet?.address) return;
     const iv = setInterval(fetchBalancesAndPrices, 30_000);
     return () => clearInterval(iv);
   }, [wallet, fetchBalancesAndPrices]);
 
-  // refresh on focus/online
   useEffect(() => {
     const onVisible = debounce(() => {
       if (document.visibilityState === "visible") fetchBalancesAndPrices();
     }, 500);
-    const onOnline  = debounce(fetchBalancesAndPrices, 500);
+    const onOnline = debounce(fetchBalancesAndPrices, 500);
 
     document.addEventListener("visibilitychange", onVisible);
     window.addEventListener("online", onOnline);
@@ -196,7 +185,6 @@ export function BalanceProvider({ children }) {
     };
   }, [fetchBalancesAndPrices]);
 
-  // formatting helpers
   const getUsdBalance = useCallback(
     net => {
       const b = balances[net] ?? lastBalances.current[net] ?? 0;
