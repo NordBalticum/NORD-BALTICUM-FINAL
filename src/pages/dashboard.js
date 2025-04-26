@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useMemo, Suspense } from "react";
+import React, { useEffect, useMemo, Suspense } from "react";
 import dynamic from "next/dynamic";
 import { motion } from "framer-motion";
 
-import { useSystemReady } from "@/hooks/useSystemReady"; // ✅ Tikra sistema ready
-import { useSessionWatcher } from "@/utils/sessionWatcher"; // ✅ Session stebėjimas
+import { useSystemReady } from "@/hooks/useSystemReady"; // ✅ Tikra sistema ready (su session stebėjimu viduje)
+import { startSilentBalanceRefetch } from "@/utils/startSilentBalanceRefetch"; // ✅ Silent balance update
 import { useAuth } from "@/contexts/AuthContext";
 import { useBalance } from "@/contexts/BalanceContext";
 import { useNetwork } from "@/contexts/NetworkContext";
@@ -17,14 +17,18 @@ import styles from "@/styles/dashboard.module.css";
 const LivePriceTable = dynamic(() => import("@/components/LivePriceTable"), { ssr: false });
 
 export default function Dashboard() {
-  const { ready, loading, isMobile, scale } = useSystemReady();
+  const { ready, loading, isMobile, scale } = useSystemReady(); // ✅ Viduje jau kviečia useSessionWatcher
   const { user, wallet } = useAuth();
-  const { balancesReady, lastUpdated } = useBalance();
+  const { balancesReady, lastUpdated, refetch } = useBalance();
   const { activeNetwork } = useNetwork();
 
   const address = wallet?.wallet?.address ?? "";
 
-  useSessionWatcher(); // ✅ Tik session stebėjimas, jokių silent fetch
+  useEffect(() => {
+    if (ready && typeof window !== "undefined") {
+      startSilentBalanceRefetch(refetch); // ✅ Tichus balansų refetch
+    }
+  }, [ready, refetch]);
 
   const truncatedAddress = useMemo(() => (
     address ? `${address.slice(0, 6)}…${address.slice(-4)}` : "--"
@@ -116,7 +120,6 @@ export default function Dashboard() {
             </Suspense>
           </motion.div>
         </div>
-
       </motion.div>
     </main>
   );
