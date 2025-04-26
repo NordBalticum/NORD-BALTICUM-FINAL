@@ -1,5 +1,4 @@
-"use client";
-
+// src/utils/fallbackRPCs.js
 import { JsonRpcProvider, FallbackProvider } from "ethers";
 
 export const fallbackRPCs = {
@@ -10,9 +9,9 @@ export const fallbackRPCs = {
     chainId: 1,
     isTestnet: false,
     rpcs: [
-      "https://eth.llamarpc.com",
       "https://rpc.ankr.com/eth",
-      "https://rpc.ethernode.io",
+      "https://eth.drpc.org",
+      "https://ethereum.publicnode.com",
     ],
   },
   matic: {
@@ -22,9 +21,9 @@ export const fallbackRPCs = {
     chainId: 137,
     isTestnet: false,
     rpcs: [
-      "https://polygon.llamarpc.com",
       "https://rpc.ankr.com/polygon",
       "https://polygon-bor.publicnode.com",
+      "https://polygon.drpc.org",
     ],
   },
   bnb: {
@@ -34,9 +33,9 @@ export const fallbackRPCs = {
     chainId: 56,
     isTestnet: false,
     rpcs: [
-      "https://bsc.publicnode.com",
       "https://rpc.ankr.com/bsc",
       "https://bsc-dataseed.bnbchain.org",
+      "https://bsc.publicnode.com",
     ],
   },
   avax: {
@@ -46,9 +45,9 @@ export const fallbackRPCs = {
     chainId: 43114,
     isTestnet: false,
     rpcs: [
-      "https://api.avax.network/ext/bc/C/rpc",
       "https://rpc.ankr.com/avalanche",
-      "https://avax.public-rpc.com",
+      "https://api.avax.network/ext/bc/C/rpc",
+      "https://avax.drpc.org",
     ],
   },
   optimism: {
@@ -58,9 +57,9 @@ export const fallbackRPCs = {
     chainId: 10,
     isTestnet: false,
     rpcs: [
-      "https://optimism.publicnode.com",
       "https://rpc.ankr.com/optimism",
-      "https://optimism-mainnet.public.blastapi.io",
+      "https://optimism.drpc.org",
+      "https://optimism.publicnode.com",
     ],
   },
   arbitrum: {
@@ -70,8 +69,8 @@ export const fallbackRPCs = {
     chainId: 42161,
     isTestnet: false,
     rpcs: [
-      "https://arb1.arbitrum.io/rpc",
       "https://rpc.ankr.com/arbitrum",
+      "https://arbitrum.drpc.org",
       "https://arbitrum-one.publicnode.com",
     ],
   },
@@ -82,9 +81,9 @@ export const fallbackRPCs = {
     chainId: 8453,
     isTestnet: false,
     rpcs: [
-      "https://mainnet.base.org",
       "https://developer-access-mainnet.base.org",
-      "https://base.llamarpc.com",
+      "https://mainnet.base.org",
+      "https://base.drpc.org",
     ],
   },
   sepolia: {
@@ -94,8 +93,9 @@ export const fallbackRPCs = {
     chainId: 11155111,
     isTestnet: true,
     rpcs: [
+      "https://rpc.sepolia.org",
+      "https://sepolia.drpc.org",
       "https://ethereum-sepolia.publicnode.com",
-      "https://rpc.sepolia.dev",
     ],
   },
   mumbai: {
@@ -105,8 +105,9 @@ export const fallbackRPCs = {
     chainId: 80001,
     isTestnet: true,
     rpcs: [
-      "https://polygon-mumbai.publicnode.com",
-      "https://rpc-mumbai.matic.today",
+      "https://rpc-mumbai.maticvigil.com",
+      "https://rpc.ankr.com/polygon_mumbai",
+      "https://polygon-mumbai-bor.publicnode.com",
     ],
   },
   tbnb: {
@@ -116,8 +117,9 @@ export const fallbackRPCs = {
     chainId: 97,
     isTestnet: true,
     rpcs: [
-      "https://bsc-testnet.publicnode.com",
       "https://data-seed-prebsc-1-s1.binance.org:8545/",
+      "https://bsc-testnet.publicnode.com",
+      "https://rpc.ankr.com/bsc_testnet_chapel",
     ],
   },
   fuji: {
@@ -127,8 +129,9 @@ export const fallbackRPCs = {
     chainId: 43113,
     isTestnet: true,
     rpcs: [
-      "https://avalanche-fuji-c-chain.publicnode.com",
       "https://api.avax-test.network/ext/bc/C/rpc",
+      "https://avalanche-fuji-c-chain.publicnode.com",
+      "https://avalanche-fuji.drpc.org",
     ],
   },
   "optimism-goerli": {
@@ -138,8 +141,9 @@ export const fallbackRPCs = {
     chainId: 420,
     isTestnet: true,
     rpcs: [
-      "https://optimism-goerli.publicnode.com",
       "https://goerli.optimism.io",
+      "https://optimism-goerli.publicnode.com",
+      "https://optimism-goerli.drpc.org",
     ],
   },
   "arbitrum-goerli": {
@@ -149,8 +153,9 @@ export const fallbackRPCs = {
     chainId: 421613,
     isTestnet: true,
     rpcs: [
-      "https://arbitrum-goerli.publicnode.com",
       "https://goerli-rollup.arbitrum.io/rpc",
+      "https://arbitrum-goerli.publicnode.com",
+      "https://arbitrum-goerli.drpc.org",
     ],
   },
   "base-goerli": {
@@ -160,17 +165,18 @@ export const fallbackRPCs = {
     chainId: 84531,
     isTestnet: true,
     rpcs: [
-      "https://base-goerli.publicnode.com",
       "https://goerli.base.org",
+      "https://base-goerli.drpc.org",
+      "https://base-goerli.publicnode.com",
     ],
   },
 };
 
-export function getFallbackProvider(chainKey) {
-  const net = fallbackRPCs[chainKey];
+export function getFallbackProvider(chain) {
+  const net = fallbackRPCs[chain];
   if (!net || !net.rpcs || net.rpcs.length === 0) {
-    console.error(`[fallbackRPCs] ❌ No RPC URLs found for chain: ${chainKey}`);
-    throw new Error(`No fallback RPCs found for chain "${chainKey}".`);
+    console.error(`[fallbackRPCs] ❌ No RPC URLs found for chain: ${chain}`);
+    throw new Error(`No RPC URLs for chain ${chain}`);
   }
   const providers = net.rpcs.map(url => new JsonRpcProvider(url));
   return new FallbackProvider(providers);
