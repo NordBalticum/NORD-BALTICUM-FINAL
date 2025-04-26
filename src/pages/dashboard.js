@@ -13,7 +13,7 @@ import BalanceCard from "@/components/BalanceCard";
 import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
 import styles from "@/styles/dashboard.module.css";
 
-// Lazy-load LivePriceTable without SSR
+// Lazy-load LivePriceTable
 const LivePriceTable = dynamic(() => import("@/components/LivePriceTable"), { ssr: false });
 
 export default function Dashboard() {
@@ -22,7 +22,7 @@ export default function Dashboard() {
   const { loading: balLoading, refetch, lastUpdated } = useBalance();
 
   const address = wallet?.wallet?.address ?? "";
-
+  
   const truncatedAddress = useMemo(() => (
     address ? `${address.slice(0, 6)}…${address.slice(-4)}` : ""
   ), [address]);
@@ -37,6 +37,7 @@ export default function Dashboard() {
     });
   }, [lastUpdated]);
 
+  // Show loading screen ONLY before ready
   if (!ready || !wallet?.wallet?.address) {
     return (
       <main className={styles.container}>
@@ -57,6 +58,7 @@ export default function Dashboard() {
     );
   }
 
+  // Final main dashboard rendering
   return (
     <main className={styles.container}>
       <div className={styles.dashboardWrapper}>
@@ -77,17 +79,17 @@ export default function Dashboard() {
             disabled={balLoading}
             aria-label="Refresh balances"
           >
-            <FiRefreshCw className={balLoading ? styles.spin : undefined} />
+            <FiRefreshCw className={balLoading ? styles.spin : ""} />
           </button>
         </div>
 
-        {/* Main Dashboard Row */}
+        {/* Main Grid Row */}
         <div className={styles.dashboardRow}>
-
-          {/* Left Column: Live Chart */}
+          
+          {/* Live Chart */}
           <motion.div
             className={styles.chartSection}
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
           >
@@ -96,14 +98,15 @@ export default function Dashboard() {
             </Suspense>
           </motion.div>
 
-          {/* Right Column: BalanceCard */}
+          {/* Balance Card */}
           <motion.div
             className={styles.balanceSection}
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
           >
             <BalanceCard />
+
             <div className={styles.footerInfo}>
               {balLoading ? (
                 <span className={styles.shimmerSmall} />
