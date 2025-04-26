@@ -1,4 +1,3 @@
-// src/components/BalanceCard.js
 "use client";
 
 import { useState, useMemo } from "react";
@@ -8,7 +7,13 @@ import networks from "@/data/networks";
 import styles from "./balancecard.module.css";
 
 export default function BalanceCard() {
-  const { balances, loading, getUsdBalance, getEurBalance } = useBalance();
+  const {
+    balances,
+    loading,
+    getUsdBalance,
+    getEurBalance,
+  } = useBalance();
+
   const [showTestnets, setShowTestnets] = useState(false);
 
   const items = useMemo(
@@ -37,15 +42,19 @@ export default function BalanceCard() {
 
       <div className={styles.list}>
         {items.map(net => {
-          const bal = balances[net.value] ?? 0;
-          const usd = getUsdBalance(net.value);
-          const eur = getEurBalance(net.value);
+          const bal      = balances[net.value] ?? 0;
+          const usdValue = getUsdBalance(net.value);
+          const eurValue = getEurBalance(net.value);
+
           return (
             <div key={net.value} className={styles.listItem}>
               <div className={styles.networkInfo}>
                 <Image
-                  src={net.icon} alt={net.label}
-                  width={32} height={32} unoptimized
+                  src={net.icon}
+                  alt={net.label}
+                  width={32}
+                  height={32}
+                  unoptimized
                 />
                 <span className={styles.networkLabel}>{net.label}</span>
               </div>
@@ -56,7 +65,7 @@ export default function BalanceCard() {
                 <div className={styles.fiatAmount}>
                   {loading
                     ? <span className={styles.shimmerTextSmall} />
-                    : `≈ $${usd} | €${eur}`}
+                    : `≈ $${usdValue} | €${eurValue}`}
                 </div>
               </div>
             </div>
