@@ -3,7 +3,6 @@
 import React, { useMemo, Suspense } from "react";
 import dynamic from "next/dynamic";
 import { motion } from "framer-motion";
-import { FiRefreshCw } from "react-icons/fi";
 
 import { useSystemReady } from "@/hooks/useSystemReady";
 import { useSessionManager } from "@/hooks/useSessionManager";
@@ -14,15 +13,14 @@ import BalanceCard from "@/components/BalanceCard";
 import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
 import styles from "@/styles/dashboard.module.css";
 
-// Lazy load LivePriceTable
 const LivePriceTable = dynamic(() => import("@/components/LivePriceTable"), { ssr: false });
 
 export default function Dashboard() {
   const { ready, isMobile } = useSystemReady();
-  useSessionManager(); // AUTOMATIC session refresh
+  useSessionManager();
   
   const { user, wallet } = useAuth();
-  const { loading: balLoading, refreshing, userTriggeredRefresh, refetch, lastUpdated } = useBalance();
+  const { balancesReady, lastUpdated } = useBalance();
 
   const address = wallet?.wallet?.address ?? "";
 
@@ -31,16 +29,13 @@ export default function Dashboard() {
   ), [address]);
 
   const updatedAt = useMemo(() => {
-    if (!lastUpdated) return "";
+    if (!lastUpdated) return "--";
     const d = new Date(lastUpdated);
-    return d.toLocaleTimeString([], {
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-    });
+    return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
   }, [lastUpdated]);
 
-  if (!ready || !wallet?.wallet?.address) {
+  // Kol NE ready + NE balances paruošti → rodom pilną spinnerį
+  if (!ready || !wallet?.wallet?.address || !balancesReady) {
     return (
       <main className={styles.container}>
         <div className={styles.dashboardWrapper}>
@@ -60,6 +55,7 @@ export default function Dashboard() {
     );
   }
 
+  // Final dashboard
   return (
     <main className={styles.container}>
       <div className={styles.dashboardWrapper}>
@@ -77,20 +73,12 @@ export default function Dashboard() {
           <p className={styles.walletInfo}>
             {truncatedAddress}
           </p>
-          <button
-            className={styles.refreshButton}
-            onClick={refetch}
-            disabled={balLoading}
-            aria-label="Refresh balances"
-          >
-            <FiRefreshCw className={(balLoading || userTriggeredRefresh || refreshing) ? styles.spin : undefined} />
-          </button>
         </motion.div>
 
-        {/* Main Grid */}
+        {/* Main Dashboard */}
         <div className={styles.dashboardRow}>
 
-          {/* Left - BalanceCard */}
+          {/* Left side - BalanceCard */}
           <motion.div
             className={styles.balanceSection}
             initial={{ opacity: 0, y: 20 }}
@@ -99,15 +87,11 @@ export default function Dashboard() {
           >
             <BalanceCard />
             <div className={styles.footerInfo}>
-              {balLoading ? (
-                <span className={styles.shimmerSmall} />
-              ) : (
-                <>Last updated: {updatedAt}</>
-              )}
+              <>Last updated: {updatedAt}</>
             </div>
           </motion.div>
 
-          {/* Right - LivePriceTable */}
+          {/* Right side - LivePriceTable */}
           <motion.div
             className={styles.chartSection}
             initial={{ opacity: 0, y: 20 }}
