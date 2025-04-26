@@ -4,9 +4,9 @@ import React, { useEffect, useMemo, Suspense } from "react";
 import dynamic from "next/dynamic";
 import { motion } from "framer-motion";
 
-import { useSystemReady } from "@/hooks/useSystemReady";           // ✅ Ultimate system ready (dom + auth + wallet + network + device)
-import { useSessionWatcher } from "@/utils/sessionWatcher";         // ✅ Session watcher (timeout/logout)
-import { startSilentBalanceRefetch } from "@/utils/startSilentBalanceRefetch"; // ✅ Balance silent refetch
+import { useSystemReady } from "@/hooks/useSystemReady"; // ✅ Tikra sistema ready
+import { useSessionWatcher } from "@/utils/sessionWatcher"; // ✅ Session stebėjimas
+import { startSilentBalanceRefetch } from "@/utils/startSilentBalanceRefetch"; // ✅ Silent balance update
 import { useAuth } from "@/contexts/AuthContext";
 import { useBalance } from "@/contexts/BalanceContext";
 import { useNetwork } from "@/contexts/NetworkContext";
@@ -25,13 +25,11 @@ export default function Dashboard() {
 
   const address = wallet?.wallet?.address ?? "";
 
-  // ✅ Paleidžiam session watcher kai komponentas pasileidžia
-  useSessionWatcher();
+  useSessionWatcher(); // ✅ Startinam session stebėjimą iškart
 
-  // ✅ Paleidžiam silent balance refetch kai ready ir window yra
   useEffect(() => {
     if (ready && typeof window !== "undefined") {
-      startSilentBalanceRefetch(refetch);
+      startSilentBalanceRefetch(refetch); // ✅ Pradėti tichų balansų update
     }
   }, [ready, refetch]);
 
@@ -42,11 +40,7 @@ export default function Dashboard() {
   const updatedAt = useMemo(() => {
     if (!lastUpdated) return "--:--:--";
     const d = new Date(lastUpdated);
-    return d.toLocaleTimeString([], {
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-    });
+    return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
   }, [lastUpdated]);
 
   const networkLabel = useMemo(() => (
@@ -87,8 +81,7 @@ export default function Dashboard() {
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5 }}
       >
-
-        {/* Top Greeting */}
+        {/* Greeting */}
         <motion.div
           className={styles.greetingWrapper}
           initial={{ opacity: 0, y: -10 }}
@@ -103,10 +96,9 @@ export default function Dashboard() {
           </p>
         </motion.div>
 
-        {/* Main Dashboard Row */}
+        {/* Dashboard Content */}
         <div className={styles.dashboardRow}>
-
-          {/* Left Side: Balances */}
+          {/* Left: Balance */}
           <motion.div
             className={styles.balanceSection}
             initial={{ opacity: 0, y: 20 }}
@@ -119,7 +111,7 @@ export default function Dashboard() {
             </div>
           </motion.div>
 
-          {/* Right Side: Live Prices */}
+          {/* Right: Prices */}
           <motion.div
             className={styles.chartSection}
             initial={{ opacity: 0, y: 20 }}
@@ -130,7 +122,6 @@ export default function Dashboard() {
               <LivePriceTable />
             </Suspense>
           </motion.div>
-
         </div>
 
       </motion.div>
