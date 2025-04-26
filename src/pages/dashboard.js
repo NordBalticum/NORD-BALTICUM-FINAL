@@ -13,19 +13,20 @@ import BalanceCard from "@/components/BalanceCard";
 import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
 import styles from "@/styles/dashboard.module.css";
 
+// Dynamic import for LivePriceTable (no SSR crash risk)
 const LivePriceTable = dynamic(() => import("@/components/LivePriceTable"), { ssr: false });
 
 export default function Dashboard() {
   const { ready, isMobile } = useSystemReady();
-  useSessionManager();
-
+  useSessionManager(); // 🔥 Auto-refresh auth session
+  
   const { user, wallet } = useAuth();
   const { balancesReady, lastUpdated } = useBalance();
 
   const address = wallet?.wallet?.address ?? "";
 
   const truncatedAddress = useMemo(() => (
-    address ? `${address.slice(0, 6)}…${address.slice(-4)}` : ""
+    address ? `${address.slice(0, 6)}…${address.slice(-4)}` : "--"
   ), [address]);
 
   const updatedAt = useMemo(() => {
@@ -34,9 +35,10 @@ export default function Dashboard() {
     return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
   }, [lastUpdated]);
 
-  const showLoading = !ready || !wallet?.wallet?.address || !balancesReady;
+  // Ar rodyti loaderį?
+  const isLoading = !ready || !wallet?.wallet?.address || !balancesReady;
 
-  if (showLoading) {
+  if (isLoading) {
     return (
       <main className={styles.container}>
         <div className={styles.dashboardWrapper}>
@@ -48,7 +50,7 @@ export default function Dashboard() {
           >
             <MiniLoadingSpinner />
             <p className={styles.loadingSub}>
-              {isMobile ? "Mobile Mode" : "Desktop Mode"}
+              {isMobile ? "Loading Mobile..." : "Loading Desktop..."}
             </p>
           </motion.div>
         </div>
@@ -60,12 +62,12 @@ export default function Dashboard() {
     <main className={styles.container}>
       <div className={styles.dashboardWrapper}>
 
-        {/* Greeting Block */}
+        {/* Top Greeting */}
         <motion.div
           className={styles.greetingWrapper}
-          initial={{ opacity: 0, y: -10 }}
+          initial={{ opacity: 0, y: -8 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
+          transition={{ delay: 0.15 }}
         >
           <h2 className={styles.greeting}>
             Hello, {user?.email?.split("@")[0] ?? "User"}!
@@ -75,15 +77,15 @@ export default function Dashboard() {
           </p>
         </motion.div>
 
-        {/* Main Content Row */}
+        {/* Main Dashboard Row */}
         <div className={styles.dashboardRow}>
 
           {/* Left - Balances */}
           <motion.div
             className={styles.balanceSection}
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
+            transition={{ delay: 0.3 }}
           >
             <BalanceCard />
             <div className={styles.footerInfo}>
@@ -91,12 +93,12 @@ export default function Dashboard() {
             </div>
           </motion.div>
 
-          {/* Right - Live Price Table */}
+          {/* Right - Live Prices */}
           <motion.div
             className={styles.chartSection}
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.6 }}
+            transition={{ delay: 0.5 }}
           >
             <Suspense fallback={<MiniLoadingSpinner />}>
               <LivePriceTable />
