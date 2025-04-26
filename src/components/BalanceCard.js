@@ -3,15 +3,12 @@
 import React, { useState, useMemo } from "react";
 import Image from "next/image";
 import { useBalance } from "@/contexts/BalanceContext";
-import MiniLoadingSpinner from "@/components/MiniLoadingSpinner"; // ✅
 import networks from "@/data/networks";
 import styles from "./balancecard.module.css";
 
 export default function BalanceCard() {
-  const { balances, prices, loading, refreshing, balancesReady } = useBalance();
+  const { balances, prices, balancesReady } = useBalance();
   const [showTestnets, setShowTestnets] = useState(false);
-
-  const isLoading = !balancesReady || loading || refreshing;
 
   const availableNetworks = useMemo(() => {
     return networks
@@ -44,11 +41,22 @@ export default function BalanceCard() {
     );
   }, [availableNetworks, balances, prices]);
 
+  if (!balancesReady) {
+    // Jei balance'ai dar neužkrauti, grąžinam tuščią vietą, NE loading
+    return (
+      <div className={styles.cardWrapper}>
+        <div className={styles.loadingState}>
+          Loading balances...
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={styles.cardWrapper}>
-      
-      {/* Toggle buttons */}
-      <div className={styles.toggleWrapper} role="tablist">
+
+      {/* Toggle Mainnets / Testnets */}
+      <div role="tablist" className={styles.toggleWrapper}>
         <button
           role="tab"
           aria-selected={!showTestnets}
@@ -67,7 +75,7 @@ export default function BalanceCard() {
         </button>
       </div>
 
-      {/* List of balances */}
+      {/* List */}
       <div className={styles.list}>
         {availableNetworks.map((net) => {
           const balance = balances[net.value] ?? 0;
@@ -90,17 +98,21 @@ export default function BalanceCard() {
 
               <div className={styles.amountInfo}>
                 <div className={styles.cryptoAmount}>
-                  {isLoading ? <MiniLoadingSpinner size={14} /> : fmtCrypto(balance)}
+                  {fmtCrypto(balance)}
                 </div>
                 <div className={styles.fiatAmount}>
-                  {isLoading ? <MiniLoadingSpinner size={12} /> : <>≈ ${fmtFiat(usd)} | €{fmtFiat(eur)}</>}
+                  {usd || eur ? (
+                    <>≈ ${fmtFiat(usd)} | €{fmtFiat(eur)}</>
+                  ) : (
+                    <>–</> // Jeigu nėra kainos, rodom tiesiog minusą
+                  )}
                 </div>
               </div>
             </div>
           );
         })}
 
-        {/* Total */}
+        {/* TOTAL */}
         <div className={`${styles.listItem} ${styles.totalRow}`}>
           <div className={styles.networkInfo}>
             <span className={styles.networkLabel}>Total</span>
@@ -108,10 +120,10 @@ export default function BalanceCard() {
           <div className={styles.amountInfo}>
             <div className={styles.cryptoAmount}></div>
             <div className={styles.fiatAmount}>
-              {isLoading ? (
-                <MiniLoadingSpinner size={14} />
-              ) : (
+              {totalUsd || totalEur ? (
                 <>≈ ${fmtFiat(totalUsd)} | €{fmtFiat(totalEur)}</>
+              ) : (
+                <>–</>
               )}
             </div>
           </div>
