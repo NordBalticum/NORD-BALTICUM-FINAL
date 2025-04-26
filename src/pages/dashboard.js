@@ -20,7 +20,7 @@ const LivePriceTable = dynamic(() => import("@/components/LivePriceTable"), { ss
 
 export default function Dashboard() {
   const { ready } = useSystemReady();
-  const { isMobile, scale } = useDeviceInfo(); // ✨ Ultimate device info + scale
+  const { isMobile, scale } = useDeviceInfo();
   useSessionManager();
   useSilentBalanceRefetch();
 
@@ -36,14 +36,12 @@ export default function Dashboard() {
   const updatedAt = useMemo(() => {
     if (!lastUpdated) return "--:--:--";
     const d = new Date(lastUpdated);
-    return d.toLocaleTimeString([], {
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit"
-    });
+    return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
   }, [lastUpdated]);
 
-  const isLoading = !ready || !balancesReady || !address;
+  const isLoading = useMemo(() => (
+    !ready || !balancesReady || !address
+  ), [ready, balancesReady, address]);
 
   if (isLoading) {
     return (
@@ -70,16 +68,16 @@ export default function Dashboard() {
     <main className={styles.container}>
       <motion.div
         className={styles.dashboardWrapper}
-        style={{ scale }} // 🔥 Dynamic scale applied
+        style={{ scale }}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5 }}
       >
-        
-        {/* Top Greeting */}
+
+        {/* Greeting */}
         <motion.div
           className={styles.greetingWrapper}
-          initial={{ opacity: 0, y: -8 }}
+          initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15 }}
         >
@@ -91,13 +89,13 @@ export default function Dashboard() {
           </p>
         </motion.div>
 
-        {/* Main Dashboard Row */}
+        {/* Main content */}
         <div className={styles.dashboardRow}>
 
-          {/* Left - Balances */}
+          {/* Left: Balances */}
           <motion.div
             className={styles.balanceSection}
-            initial={{ opacity: 0, y: 10 }}
+            initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
           >
@@ -107,10 +105,10 @@ export default function Dashboard() {
             </div>
           </motion.div>
 
-          {/* Right - Live Prices */}
+          {/* Right: Live Prices */}
           <motion.div
             className={styles.chartSection}
-            initial={{ opacity: 0, y: 10 }}
+            initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5 }}
           >
