@@ -44,7 +44,7 @@ const TOKEN_IDS = {
 };
 
 const FALLBACK_PRICES = Object.fromEntries(
-  Object.keys(TOKEN_IDS).map((k) => [k, { usd: 0, eur: 0 }])
+  Object.keys(TOKEN_IDS).map(k => [k, { usd: 0, eur: 0 }])
 );
 
 const PRICE_TTL = 30_000;
@@ -62,20 +62,15 @@ export function BalanceProvider({ children }) {
   const [lastUpdated, setLastUpdated] = useState(null);
 
   const lastPriceFetch = useRef(0);
-  const badRpcTracker = useRef({}); // 🛡️ Neveikiantys RPC trackeris
 
   const providers = useMemo(() => {
     const map = {};
     for (const net of networks) {
-      map[net.value] = new FallbackProvider(
-        net.rpcUrls.map(url => new JsonRpcProvider(url)),
-        1
-      );
+      const rpcProviders = net.rpcUrls.map(url => new JsonRpcProvider(url));
+      map[net.value] = new FallbackProvider(rpcProviders, 1);
       if (net.testnet) {
-        map[net.testnet.value] = new FallbackProvider(
-          net.testnet.rpcUrls.map(url => new JsonRpcProvider(url)),
-          1
-        );
+        const testnetProviders = net.testnet.rpcUrls.map(url => new JsonRpcProvider(url));
+        map[net.testnet.value] = new FallbackProvider(testnetProviders, 1);
       }
     }
     return map;
@@ -89,35 +84,26 @@ export function BalanceProvider({ children }) {
     const addr = wallet?.wallet?.address;
     if (!addr) return {};
 
-    const out = { ...balances }; // 🔥 Iš karto turim fallback
+    const out = {};
     await Promise.all(
       Object.entries(providers).map(async ([key, provider]) => {
-        if (badRpcTracker.current[key]?.blocked) {
-          return; // Skip blogą tinklą
-        }
         try {
           const raw = await provider.getBalance(addr, "latest");
           out[key] = parseFloat(ethers.formatEther(raw));
-          badRpcTracker.current[key] = { fails: 0, blocked: false };
         } catch (err) {
-          console.warn(`[BalanceContext] RPC fail for ${key}:`, err?.message || err);
-          // Įskaičiuojam fail'ą
-          const current = badRpcTracker.current[key] || { fails: 0, blocked: false };
-          current.fails += 1;
-          if (current.fails >= 3) {
-            current.blocked = true;
-            console.error(`[BalanceContext] RPC ${key} blocked after 3 fails 🚫`);
-          }
-          badRpcTracker.current[key] = current;
+          console.warn(`[BalanceContext] Failed fetching ${key}:`, err?.message || err);
+          out[key] = 0; // fallback į 0 jeigu error
         }
       })
     );
     return out;
-  }, [wallet, providers, balances]);
+  }, [wallet, providers]);
 
   const fetchPrices = useCallback(async () => {
     const now = Date.now();
-    if (now - lastPriceFetch.current < PRICE_TTL) return prices;
+    if (now - lastPriceFetch.current < PRICE_TTL) {
+      return prices;
+    }
 
     try {
       const res = await fetch(`/api/prices?ids=${coingeckoIds}`, { cache: "no-store" });
@@ -133,47 +119,54 @@ export function BalanceProvider({ children }) {
 
       lastPriceFetch.current = now;
       return out;
-    } catch {
+    } catch (err) {
+      console.warn("[BalanceContext] Failed fetching prices:", err?.message || err);
       return prices;
     }
   }, [coingeckoIds, prices]);
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
-    const [newBalances, newPrices] = await Promise.all([
-      fetchBalances(),
-      fetchPrices(),
-    ]);
-    setBalances(newBalances);
-    setPrices(newPrices);
-    setLastUpdated(Date.now());
-    setLoading(false);
+    try {
+      const [newBalances, newPrices] = await Promise.all([
+        fetchBalances(),
+        fetchPrices(),
+      ]);
+      setBalances(newBalances);
+      setPrices(newPrices);
+      setLastUpdated(Date.now());
+    } catch (err) {
+      console.error("[BalanceContext] fetchAll error:", err?.message || err);
+    } finally {
+      setLoading(false);
+      setBalancesReady(true);
+    }
   }, [fetchBalances, fetchPrices]);
 
   useEffect(() => {
     if (!authLoading && !walletLoading && wallet?.wallet?.address) {
-      fetchAll().then(() => {
-        setBalancesReady(true);
-      });
+      fetchAll();
     }
   }, [authLoading, walletLoading, wallet, fetchAll]);
 
   useEffect(() => {
-  const interval = setInterval(fetchAll, 30_000);
-  const onVisible = debounce(() => {
-    if (document.visibilityState === "visible") fetchAll();
-  }, 300);
+    const interval = setInterval(fetchAll, 30_000);
+    const onVisible = debounce(() => {
+      if (document.visibilityState === "visible") {
+        fetchAll();
+      }
+    }, 300);
 
-  document.addEventListener("visibilitychange", onVisible);
-  return () => {
-    clearInterval(interval);
-    onVisible.cancel();
-    document.removeEventListener("visibilitychange", onVisible);
-  };
-}, [fetchAll]);
-  
-  const getUsdBalance = (key) => (balances[key] || 0) * (prices[key]?.usd || 0);
-  const getEurBalance = (key) => (balances[key] || 0) * (prices[key]?.eur || 0);
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      clearInterval(interval);
+      onVisible.cancel();
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, [fetchAll]);
+
+  const getUsdBalance = key => (balances[key] || 0) * (prices[key]?.usd || 0);
+  const getEurBalance = key => (balances[key] || 0) * (prices[key]?.eur || 0);
 
   return (
     <BalanceContext.Provider
