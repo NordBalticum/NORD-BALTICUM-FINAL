@@ -1,19 +1,14 @@
-// src/app/dashboard.js
 "use client";
 
-import { useState } from "react";
 import dynamic from "next/dynamic";
-import Image from "next/image";
 import { motion } from "framer-motion";
-
 import { useSystemReady } from "@/hooks/useSystemReady";
-import { useAuth }        from "@/contexts/AuthContext";
-import BalanceCard        from "@/components/BalanceCard";
-
+import { useAuth } from "@/contexts/AuthContext";
+import BalanceCard from "@/components/BalanceCard";
 import styles from "@/styles/dashboard.module.css";
 import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
 
-// defer-load the live price table (no SSR)
+// defer‐load the chart (no SSR)
 const LivePriceTable = dynamic(() => import("@/components/LivePriceTable"), {
   ssr: false,
 });
@@ -22,7 +17,7 @@ export default function Dashboard() {
   const { wallet } = useAuth();
   const { ready, loading: systemLoading, isMobile } = useSystemReady();
 
-  // only block UI until our core system is up (auth, wallet, balances+prices)
+  // block UI only until core systems (auth + wallet + balances/prices) are up
   if (systemLoading || !ready || !wallet?.wallet?.address) {
     return (
       <main className={styles.container}>
@@ -43,17 +38,14 @@ export default function Dashboard() {
     );
   }
 
-  // once ready, render everything–all fetches in BalanceCard happen silently
+  // everything’s ready → render chart + balances side-by-side
   return (
     <main className={styles.container}>
       <div className={styles.dashboardWrapper}>
         <div className={styles.dashboardRow}>
-          {/* 70% width on desktop, full on mobile */}
           <div className={styles.chartSection}>
             <LivePriceTable />
           </div>
-
-          {/* 30% width on desktop, full on mobile */}
           <div className={styles.balanceSection}>
             <BalanceCard />
           </div>
