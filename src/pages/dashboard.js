@@ -1,27 +1,41 @@
 // src/app/dashboard.js
 "use client";
 
+import { useState, useMemo, Suspense } from "react";
 import dynamic from "next/dynamic";
 import { motion } from "framer-motion";
+import { FiRefreshCw } from "react-icons/fi";
 
 import { useSystemReady } from "@/hooks/useSystemReady";
 import { useAuth }        from "@/contexts/AuthContext";
+import { useBalance }     from "@/contexts/BalanceContext";
 
 import BalanceCard        from "@/components/BalanceCard";
 import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
 import styles             from "@/styles/dashboard.module.css";
 
-// defer-load the live chart, skip SSR
+// defer‐load the live chart, skip SSR
 const LivePriceTable = dynamic(
   () => import("@/components/LivePriceTable"),
   { ssr: false }
 );
 
 export default function Dashboard() {
-  const { wallet }          = useAuth();
-  const { ready, loading, isMobile } = useSystemReady();
+  const { user, wallet }       = useAuth();
+  const { ready, loading, isMobile, sessionScore } = useSystemReady();
+  const {
+    loading: balLoading,
+    refetch,
+    lastUpdated,
+  } = useBalance();
 
-  // block UI until auth + wallet + balances/prices are all ready
+  // truncate wallet address for display
+  const address = wallet?.wallet?.address || "";
+  const truncated = address
+    ? `${address.slice(0, 6)}…${address.slice(-4)}`
+    : "";
+
+  // spinner until auth + wallet + balances/prices are ready
   if (loading || !ready || !wallet?.wallet?.address) {
     return (
       <main className={styles.container}>
@@ -42,19 +56,68 @@ export default function Dashboard() {
     );
   }
 
-  // once everything is ready, render chart + balances
+  // nicely format the last updated time
+  const updatedAt = useMemo(() => {
+    if (!lastUpdated) return "";
+    const d = new Date(lastUpdated);
+    return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+  }, [lastUpdated]);
+
   return (
     <main className={styles.container}>
       <div className={styles.dashboardWrapper}>
+
+        {/* Top bar: greeting, address, session score, refresh */}
+        <div className={styles.topBar}>
+          <div>
+            <h2 className={styles.greeting}>
+              Hello, {user?.email?.split("@")[0] || "User"}!
+            </h2>
+            <p className={styles.walletInfo}>
+              {truncated} • Session: {sessionScore}%
+            </p>
+          </div>
+          <button
+            className={styles.refreshButton}
+            onClick={refetch}
+            disabled={balLoading}
+            aria-label="Refresh balances"
+          >
+            <FiRefreshCw className={balLoading ? styles.spin : ""} />
+          </button>
+        </div>
+
         <div className={styles.dashboardRow}>
-          {/* ~70% on desktop, full on mobile */}
-          <div className={styles.chartSection}>
-            <LivePriceTable />
-          </div>
-          {/* ~30% on desktop, full on mobile */}
-          <div className={styles.balanceSection}>
+          {/* Chart section (~70% desktop, full mobile) */}
+          <motion.div
+            className={styles.chartSection}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            <Suspense fallback={<MiniLoadingSpinner />}>
+              <LivePriceTable />
+            </Suspense>
+          </motion.div>
+
+          {/* Balances section (~30% desktop, full mobile) */}
+          <motion.div
+            className={styles.balanceSection}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+          >
             <BalanceCard />
-          </div>
+
+            {/* footer info */}
+            <div className={styles.footerInfo}>
+              {balLoading ? (
+                <span className={styles.shimmerTextSmall} />
+              ) : (
+                <>Last updated: {updatedAt}</>
+              )}
+            </div>
+          </motion.div>
         </div>
       </div>
     </main>
