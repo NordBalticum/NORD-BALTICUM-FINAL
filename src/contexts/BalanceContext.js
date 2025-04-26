@@ -32,9 +32,17 @@ export function BalanceProvider({ children }) {
 
   const [balances, setBalances] = useState({});
   const [prices, setPrices] = useState(FALLBACK_PRICES);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false); // ⬅️ papildomas silent refresh indikatorius
+  const [loading, setLoading] = useState(true);      // Tik pirmas inicialinis kraunasi
+const [refreshing, setRefreshing] = useState(false); // Silent background
+const [userTriggeredRefresh, setUserTriggeredRefresh] = useState(false); // 🔥 Naujas
 
+// Kai nori useris refreshint rankiniu būdu:
+const refetch = useCallback(async () => {
+  setUserTriggeredRefresh(true);
+  await fetchAll(false);
+  setUserTriggeredRefresh(false);
+}, [fetchAll]);
+  
   const lastPriceFetch = useRef(0);
 
   const providers = useMemo(() => {
