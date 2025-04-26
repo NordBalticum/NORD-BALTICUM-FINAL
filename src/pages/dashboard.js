@@ -19,7 +19,7 @@ const LivePriceTable = dynamic(() => import("@/components/LivePriceTable"), { ss
 export default function Dashboard() {
   const { ready, isMobile } = useSystemReady();
   const { user, wallet } = useAuth();
-  const { loading: balLoading, refreshing, refetch, lastUpdated } = useBalance();
+  const { loading: balLoading, refreshing, userTriggeredRefresh, refetch, lastUpdated } = useBalance();
 
   const address = wallet?.wallet?.address ?? "";
   
