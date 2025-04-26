@@ -14,26 +14,26 @@ import * as Select from "@radix-ui/react-select";
 import styles from "@/styles/send.module.css";
 
 const networks = [
-  { label: "Ethereum", value: "eth",   color: "color-eth",     icon: "/icons/eth.svg",  min: 0.001 },
-  { label: "Matic",    value: "matic", color: "color-polygon", icon: "/icons/matic.svg", min: 0.1   },
-  { label: "BNB",      value: "bnb",   color: "color-bnb",     icon: "/icons/bnb.svg",   min: 0.01  },
-  { label: "Avalanche",value: "avax",  color: "color-avax",    icon: "/icons/avax.svg",  min: 0.01  },
-  { label: "Testnet BNB", value: "tbnb", color: "color-bnb",   icon: "/icons/bnb.svg",   min: 0.001 },
+  { label: "Ethereum",     value: "eth",    color: "color-eth",     icon: "/icons/eth.svg",    min: 0.001 },
+  { label: "Matic",        value: "matic",  color: "color-polygon", icon: "/icons/matic.svg",  min: 0.1   },
+  { label: "BNB",          value: "bnb",    color: "color-bnb",     icon: "/icons/bnb.svg",    min: 0.01  },
+  { label: "Avalanche",    value: "avax",   color: "color-avax",    icon: "/icons/avax.svg",   min: 0.01  },
+  { label: "Testnet BNB",  value: "tbnb",   color: "color-bnb",     icon: "/icons/bnb.svg",    min: 0.001 },
 ];
 
 const coingeckoIds = {
-  eth:    "ethereum",
-  matic:  "matic-network",
-  bnb:    "binancecoin",
-  avax:   "avalanche-2",
-  tbnb:   "binancecoin",
+  eth:   "ethereum",
+  matic: "matic-network",
+  bnb:   "binancecoin",
+  avax:  "avalanche-2",
+  tbnb:  "binancecoin",
 };
 
 const isValidAddress = addr => /^0x[a-fA-F0-9]{40}$/.test(addr.trim());
 
 const Logo = () => (
   <div className={styles.logoWrapper}>
-    <img src="/icons/logo.svg" alt="Nord Balticum" className={styles.logoImage} />
+    <img src="/icons/logo.svg" alt="Nord Balticum" className={styles.logoImage}/>
   </div>
 );
 
@@ -59,34 +59,31 @@ export default function Send() {
   const [lastSentTime, setLastSentTime] = useState(0);
   const [usdPrices, setUsdPrices]     = useState({});
 
-  // 1) Minimum sendable
+  // 1) min sendable
   const minAmount = useMemo(
     () => networks.find(n => n.value === selectedNetwork)?.min || 0,
     [selectedNetwork]
   );
-  // 2) Mygtuko spalva
+  // 2) button color
   const btnColor = useMemo(
     () => networks.find(n => n.value === selectedNetwork)?.color || "bg-gray-500",
     [selectedNetwork]
   );
-  // 3) USD kursas ir vertė
+  // 3) USD val and rate
   const usdRate = usdPrices[coingeckoIds[selectedNetwork]]?.usd || 0;
   const usdValue = useMemo(
     () => amount && usdRate ? (Number(amount) * usdRate).toFixed(2) : null,
     [amount, usdRate]
   );
-  // 4) Balansų raktas („polygon“ → „matic“)
-  const networkKey = useMemo(
-    () => (selectedNetwork === "polygon" ? "matic" : selectedNetwork),
-    [selectedNetwork]
-  );
-  // 5) Faktinis on‐chain balansas
+  // 4) on-chain balance key (we use same as value)
+  const networkKey = selectedNetwork;
+  // 5) real balance
   const currentBalance = useMemo(() => {
     const b = balances?.[networkKey];
     return (typeof b === "number" ? b : 0).toFixed(6);
   }, [balances, networkKey]);
 
-  // Pasiūlō USD kainas vieną kartą
+  // fetch USD prices once
   useEffect(() => {
     (async () => {
       try {
@@ -99,7 +96,7 @@ export default function Send() {
     })();
   }, []);
 
-  // Perskaičiuojam fees kai pereinam į Step 3 ar 4 ir kai keičiasi adresas/amount
+  // recalc fees on step 3 & 4 or when to/amount change
   useEffect(() => {
     if ((step === 3 || step === 4) && isValidAddress(to) && Number(amount) > 0) {
       console.debug("🔄 ActiveNetwork, chainId:", activeNetwork, chainId);
@@ -107,13 +104,13 @@ export default function Send() {
     }
   }, [step, to, amount, calculateFees, activeNetwork, chainId]);
 
-  // MAX mygtukas
+  // “Max” button → set to full balance
   const handleMax = useCallback(() => {
     const b = Number(balances?.[networkKey] || 0);
     setAmount(b.toFixed(6));
   }, [balances, networkKey]);
 
-  // Tinklo pasirinkimo handler'is – vieną kartą perjungiame ir žingsnis į 2
+  // 1️⃣ pasirinkus tinklą – persetinam context + einam prie žingsnio 2
   const handleSelectNetwork = useCallback((value) => {
     if (value !== selectedNetwork) {
       switchNetwork(value);
@@ -122,20 +119,20 @@ export default function Send() {
     setStep(2);
   }, [selectedNetwork, switchNetwork]);
 
-  // Pagrindinis siuntimo handler'is – BE papildomo switchNetwork
+  // Siunčiame be papildomo switchNetwork – naudokim kontekstinį chainId
   const handleSend = async () => {
     const now    = Date.now();
     const toAddr = to.trim().toLowerCase();
     const val    = Number(amount);
     const bal    = Number(balances?.[networkKey] || 0);
 
-    if (!isValidAddress(toAddr))   return alert("❌ Invalid address");
-    if (now - lastSentTime < 10000) return alert("⚠️ Please wait before retrying");
+    if (!isValidAddress(toAddr))   return alert("❌ Netinkamas adresas");
+    if (now - lastSentTime < 10000) return alert("⚠️ Palauk prieš pakartodamas");
     if (val < minAmount)           return alert(`Min: ${minAmount} ${selectedNetwork.toUpperCase()}`);
-    if (val > bal)                 return alert("❌ Insufficient balance");
+    if (val > bal)                 return alert("❌ Nepakankamas balansas");
 
     try {
-      console.debug("🔄 Calling sendTransaction with chainId:", chainId);
+      console.debug("🔄 Sending on chainId:", chainId);
       const hash = await sendTransaction({
         to: toAddr,
         amount,
@@ -145,14 +142,14 @@ export default function Send() {
       setLastSentTime(now);
       setStep(5);
     } catch (err) {
-      console.error(err);
+      console.error("❌ send error:", err);
     }
   };
 
   if (!systemReady) {
     return (
       <div className="flex items-center justify-center h-screen text-white">
-        <Loader2 className="animate-spin mr-2" /> Preparing…
+        <Loader2 className="animate-spin mr-2"/> Preparing…
       </div>
     );
   }
@@ -161,36 +158,27 @@ export default function Send() {
     <div className={styles.container}>
       <Card className={`${styles.card} pt-16`}>
         <CardContent className="space-y-10 p-8">
-
-          {/* STEP 1: pasirinkti tinklą */}
+          {/* STEP 1 – Network */}
           {step === 1 && (
             <div className="space-y-8">
               <Logo />
               <h2 className={styles.stepTitle}>Select Active Network</h2>
               <Select.Root value={selectedNetwork} onValueChange={handleSelectNetwork}>
                 <Select.Trigger className={styles.selectTrigger}>
-                  <div className={styles.selectValueWrapper}>
-                    <img
-                      src={networks.find(n => n.value === selectedNetwork).icon}
-                      alt={selectedNetwork}
-                      className={styles.selectIcon}
-                    />
-                    <Select.Value placeholder="Select network" />
-                  </div>
-                  <Select.Icon>
-                    <ChevronDown size={18} />
-                  </Select.Icon>
+                  <img
+                    src={networks.find(n => n.value === selectedNetwork).icon}
+                    alt={selectedNetwork}
+                    className={styles.selectIcon}
+                  />
+                  <Select.Value placeholder="Select network"/>
+                  <Select.Icon><ChevronDown size={18}/></Select.Icon>
                 </Select.Trigger>
                 <Select.Portal>
-                  <Select.Content
-                    className="z-50 bg-black border border-neutral-700 rounded-xl shadow-2xl"
-                    position="popper"
-                    sideOffset={5}
-                  >
+                  <Select.Content className="z-50 bg-black border border-neutral-700 rounded-xl shadow-2xl" position="popper">
                     <Select.Viewport>
                       {networks.map(net => (
                         <Select.Item key={net.value} value={net.value} className={styles.selectItem}>
-                          <img src={net.icon} alt={net.label} className={styles.selectIcon} />
+                          <img src={net.icon} alt={net.label} className={styles.selectIcon}/>
                           <Select.ItemText>{net.label}</Select.ItemText>
                         </Select.Item>
                       ))}
@@ -201,7 +189,7 @@ export default function Send() {
             </div>
           )}
 
-          {/* STEP 2: adresas */}
+          {/* STEP 2 – Address */}
           {step === 2 && (
             <div className="space-y-8">
               <Logo />
@@ -216,18 +204,14 @@ export default function Send() {
               </div>
               <div className={styles.buttonsRow}>
                 <Button onClick={() => setStep(1)} className={`${styles.btn} ${styles[btnColor]}`}>Back</Button>
-                <Button
-                  onClick={() => setStep(3)}
-                  disabled={!isValidAddress(to)}
-                  className={`${styles.btn} ${styles[btnColor]}`}
-                >
+                <Button onClick={() => setStep(3)} disabled={!isValidAddress(to)} className={`${styles.btn} ${styles[btnColor]}`}>
                   Next
                 </Button>
               </div>
             </div>
           )}
 
-          {/* STEP 3: suma */}
+          {/* STEP 3 – Amount */}
           {step === 3 && (
             <div className="space-y-8">
               <Logo />
@@ -251,63 +235,43 @@ export default function Send() {
               </p>
               <div className={styles.buttonsRow}>
                 <Button onClick={() => setStep(2)} className={`${styles.btn} ${styles[btnColor]}`}>Back</Button>
-                <Button
-                  onClick={() => setStep(4)}
-                  disabled={!amount || Number(amount) < minAmount}
-                  className={`${styles.btn} ${styles[btnColor]}`}
-                >
-                  Next
-                </Button>
+                <Button onClick={() => setStep(4)} disabled={!amount||Number(amount)<minAmount} className={`${styles.btn} ${styles[btnColor]}`}>Next</Button>
               </div>
             </div>
           )}
 
-          {/* STEP 4: patvirtinimas */}
+          {/* STEP 4 – Confirm */}
           {step === 4 && (
             <div className="space-y-8">
               <Logo />
               <h2 className={styles.stepTitle}>Confirm Transfer</h2>
               {feeError && <p className="text-sm text-red-500">{feeError}</p>}
               <div className={styles.confirmBox}>
-                <p className={styles.amountDisplay}>
-                  {amount} {selectedNetwork.toUpperCase()}
-                </p>
-                <p className={styles.usdValue}>{usdValue ? `≈ $${usdValue}` : ""}</p>
+                <p className={styles.amountDisplay}>{amount} {selectedNetwork.toUpperCase()}</p>
+                <p className={styles.usdValue}>{usdValue?`≈ $${usdValue}`:""}</p>
                 <div className={styles.confirmDetails}>
                   <p><b>To:</b> {to}</p>
                   <p><b>Network:</b> {selectedNetwork}</p>
-                  <p><b>Total Fee:</b> {feeLoading ? "Calculating…" : `${totalFee.toFixed(6)} ${selectedNetwork.toUpperCase()}`}</p>
+                  <p><b>Total Fee:</b> {feeLoading?"Calculating…":`${totalFee.toFixed(6)} ${selectedNetwork.toUpperCase()}`}</p>
                 </div>
               </div>
               <div className={styles.buttonsRow}>
                 <Button onClick={() => setStep(3)} className={`${styles.btn} ${styles[btnColor]}`}>Back</Button>
-                <Button
-                  onClick={handleSend}
-                  disabled={sending || feeLoading}
-                  className={`${styles.btn} ${styles[btnColor]}`}
-                >
-                  {sending ? <Loader2 className="animate-spin" /> : "Send"}
+                <Button onClick={handleSend} disabled={sending||feeLoading} className={`${styles.btn} ${styles[btnColor]}`}>
+                  {sending?<Loader2 className="animate-spin"/>:"Send"}
                 </Button>
               </div>
             </div>
           )}
 
-          {/* STEP 5: sėkmė */}
-          {step === 5 && txHash && (
+          {/* STEP 5 – Success */}
+          {step===5 && txHash && (
             <div className="text-center space-y-6">
               <h2 className={styles.successText}>✅ Transaction Sent!</h2>
               <p className={styles.txHashBox}>TX Hash:<br/>{txHash}</p>
-              <Button
-                className={`${styles.btn} w-full mt-4`}
-                onClick={() => {
-                  setStep(1);
-                  setTxHash(null);
-                  setAmount("");
-                  setTo("");
-                }}
-              >
-                Send Another
-              </Button>
+              <Button className={`${styles.btn} w-full mt-4`} onClick={()=>{
+                setStep(1); setTxHash(null); setAmount(""); setTo("");
+              }}>Send Another</Button>
             </div>
           )}
 
