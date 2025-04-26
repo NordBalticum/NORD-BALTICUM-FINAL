@@ -7,17 +7,16 @@ import networks from "@/data/networks";
 import styles from "./balancecard.module.css";
 
 export default function BalanceCard() {
-  const { balances, prices, loading } = useBalance(); // Tik balances + prices
+  const { balances, prices, loading, refreshing } = useBalance();
   const [showTestnets, setShowTestnets] = useState(false);
 
-  // Filtruojam tinklus
+  // Renkam tinklelius pagal Mainnet/Testnet
   const items = useMemo(() => {
     return networks
       .map((net) => (showTestnets && net.testnet ? net.testnet : net))
       .filter(Boolean);
   }, [showTestnets]);
 
-  // Skaičių formatteriai
   const fmtCrypto = (n) =>
     Number(n || 0).toLocaleString(undefined, {
       minimumFractionDigits: 2,
@@ -30,24 +29,25 @@ export default function BalanceCard() {
       maximumFractionDigits: 2,
     });
 
-  // Skaičiuojam total iš balances + prices
+  // Skaičiuojam TOTAL sumas
   const { totalUsd, totalEur } = useMemo(() => {
-    return items.reduce(
-      (acc, net) => {
-        const bal = balances[net.value] ?? 0;
-        const price = prices[net.value] ?? { usd: 0, eur: 0 };
-        acc.totalUsd += bal * (price.usd || 0);
-        acc.totalEur += bal * (price.eur || 0);
-        return acc;
-      },
-      { totalUsd: 0, totalEur: 0 }
-    );
+    let totalUsd = 0;
+    let totalEur = 0;
+    for (const net of items) {
+      const bal = balances[net.value] ?? 0;
+      const price = prices[net.value] ?? { usd: 0, eur: 0 };
+      totalUsd += bal * (price.usd || 0);
+      totalEur += bal * (price.eur || 0);
+    }
+    return { totalUsd, totalEur };
   }, [items, balances, prices]);
+
+  const isLoadingBalances = loading || refreshing; // 🔥 atskirtas tikras loading
 
   return (
     <div className={styles.cardWrapper}>
-      
-      {/* Toggle */}
+
+      {/* Tinklelio pasirinkimas */}
       <div role="tablist" className={styles.toggleWrapper}>
         <button
           role="tab"
@@ -67,13 +67,14 @@ export default function BalanceCard() {
         </button>
       </div>
 
-      {/* List */}
+      {/* Balansų sąrašas */}
       <div className={styles.list}>
         {items.map((net) => {
           const balance = balances[net.value] ?? 0;
           const price = prices[net.value] ?? { usd: 0, eur: 0 };
           const usd = balance * (price.usd || 0);
           const eur = balance * (price.eur || 0);
+          const hasPrice = price.usd || price.eur;
 
           return (
             <div key={net.value} className={styles.listItem}>
@@ -93,10 +94,10 @@ export default function BalanceCard() {
                   {fmtCrypto(balance)}
                 </div>
                 <div className={styles.fiatAmount}>
-                  {(usd || eur) ? (
-                    <>≈ ${fmtFiat(usd)} | €{fmtFiat(eur)}</>
-                  ) : (
+                  {isLoadingBalances && !hasPrice ? (
                     <span className={styles.shimmerSmall} />
+                  ) : (
+                    <>≈ ${fmtFiat(usd)} | €{fmtFiat(eur)}</>
                   )}
                 </div>
               </div>
@@ -104,24 +105,25 @@ export default function BalanceCard() {
           );
         })}
 
-        {/* Total Row */}
+        {/* Total suma */}
         <div className={`${styles.listItem} ${styles.totalRow}`}>
           <div className={styles.networkInfo}>
             <span className={styles.networkLabel}>Total</span>
           </div>
           <div className={styles.amountInfo}>
-            <div className={styles.cryptoAmount} />
+            <div className={styles.cryptoAmount}></div>
             <div className={styles.fiatAmount}>
-              {(totalUsd || totalEur) ? (
-                <>≈ ${fmtFiat(totalUsd)} | €{fmtFiat(totalEur)}</>
-              ) : (
+              {isLoadingBalances ? (
                 <span className={styles.shimmerSmall} />
+              ) : (
+                <>≈ ${fmtFiat(totalUsd)} | €{fmtFiat(totalEur)}</>
               )}
             </div>
           </div>
         </div>
 
       </div>
+
     </div>
   );
 }
