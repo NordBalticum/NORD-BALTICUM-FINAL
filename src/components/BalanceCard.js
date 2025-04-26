@@ -31,10 +31,10 @@ export default function BalanceCard() {
   const { totalUsd, totalEur } = useMemo(() => {
     return availableNetworks.reduce(
       (acc, net) => {
-        const bal = balances[net.value] ?? 0;
+        const balance = balances[net.value] ?? 0;
         const price = prices[net.value] ?? { usd: 0, eur: 0 };
-        acc.totalUsd += bal * (price.usd || 0);
-        acc.totalEur += bal * (price.eur || 0);
+        acc.totalUsd += balance * (price.usd || 0);
+        acc.totalEur += balance * (price.eur || 0);
         return acc;
       },
       { totalUsd: 0, totalEur: 0 }
@@ -42,7 +42,6 @@ export default function BalanceCard() {
   }, [availableNetworks, balances, prices]);
 
   if (!balancesReady) {
-    // Jei balance'ai dar neužkrauti, grąžinam tuščią vietą, NE loading
     return (
       <div className={styles.cardWrapper}>
         <div className={styles.loadingState}>
@@ -54,9 +53,9 @@ export default function BalanceCard() {
 
   return (
     <div className={styles.cardWrapper}>
-
-      {/* Toggle Mainnets / Testnets */}
-      <div role="tablist" className={styles.toggleWrapper}>
+      
+      {/* Toggle */}
+      <div className={styles.toggleWrapper} role="tablist">
         <button
           role="tab"
           aria-selected={!showTestnets}
@@ -75,13 +74,14 @@ export default function BalanceCard() {
         </button>
       </div>
 
-      {/* List */}
+      {/* Balance List */}
       <div className={styles.list}>
         {availableNetworks.map((net) => {
           const balance = balances[net.value] ?? 0;
           const price = prices[net.value] ?? { usd: 0, eur: 0 };
           const usd = balance * (price.usd || 0);
           const eur = balance * (price.eur || 0);
+          const hasPrice = price.usd > 0 || price.eur > 0;
 
           return (
             <div key={net.value} className={styles.listItem}>
@@ -101,10 +101,10 @@ export default function BalanceCard() {
                   {fmtCrypto(balance)}
                 </div>
                 <div className={styles.fiatAmount}>
-                  {usd || eur ? (
+                  {hasPrice ? (
                     <>≈ ${fmtFiat(usd)} | €{fmtFiat(eur)}</>
                   ) : (
-                    <>–</> // Jeigu nėra kainos, rodom tiesiog minusą
+                    <>–</>
                   )}
                 </div>
               </div>
@@ -120,7 +120,7 @@ export default function BalanceCard() {
           <div className={styles.amountInfo}>
             <div className={styles.cryptoAmount}></div>
             <div className={styles.fiatAmount}>
-              {totalUsd || totalEur ? (
+              {(totalUsd || totalEur) ? (
                 <>≈ ${fmtFiat(totalUsd)} | €{fmtFiat(totalEur)}</>
               ) : (
                 <>–</>
