@@ -5,7 +5,7 @@ import dynamic from "next/dynamic";
 import { motion } from "framer-motion";
 
 import { useSystemReady } from "@/hooks/useSystemReady";           // ✅ Ultimate system+session+device
-import { startSilentBalanceRefetch } from "@/utils/startSilentBalanceRefetch"; // ✅ Silent balance refetch as util
+import { startSilentBalanceRefetch } from "@/utils/silentBalanceRefetch"; // ✅ Silent balance refetch as util
 import { useAuth } from "@/contexts/AuthContext";
 import { useBalance } from "@/contexts/BalanceContext";
 import { useNetwork } from "@/contexts/NetworkContext";
