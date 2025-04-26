@@ -4,11 +4,11 @@ import React, { useMemo, Suspense } from "react";
 import dynamic from "next/dynamic";
 import { motion } from "framer-motion";
 
-import { useSystemReady } from "@/hooks/useSystemReady";    // ✅ Tikras System Ready (apima Session Watcher)
-import { useSilentBalanceRefetch } from "@/hooks/useSilentBalanceRefetch";
+import { useSystemReady } from "@/hooks/useSystemReady";           // ✅ Ultimate system+session+device
+import { startSilentBalanceRefetch } from "@/utils/startSilentBalanceRefetch"; // ✅ Silent balance refetch as util
 import { useAuth } from "@/contexts/AuthContext";
 import { useBalance } from "@/contexts/BalanceContext";
-import { useNetwork } from "@/contexts/NetworkContext";      // ✅ + NETWORK info
+import { useNetwork } from "@/contexts/NetworkContext";
 
 import BalanceCard from "@/components/BalanceCard";
 import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
@@ -17,14 +17,19 @@ import styles from "@/styles/dashboard.module.css";
 const LivePriceTable = dynamic(() => import("@/components/LivePriceTable"), { ssr: false });
 
 export default function Dashboard() {
-  const { ready, loading, isMobile, scale } = useSystemReady();
-  useSilentBalanceRefetch();
-
+  const { ready, loading, isMobile, scale } = useSystemReady(); // 🧠 Sistema ready + device info
   const { user, wallet } = useAuth();
-  const { balancesReady, lastUpdated } = useBalance();
-  const { activeNetwork } = useNetwork();                    // ✅ dabar gaunam ir network info
+  const { balancesReady, lastUpdated, refetch } = useBalance();
+  const { activeNetwork } = useNetwork();
 
   const address = wallet?.wallet?.address ?? "";
+
+  // 🧠 Paleidžiam silent refetch balansų (1 kartą kai component mount ir ready=true)
+  useMemo(() => {
+    if (ready && typeof window !== "undefined") {
+      startSilentBalanceRefetch(refetch);
+    }
+  }, [ready, refetch]);
 
   const truncatedAddress = useMemo(() => (
     address ? `${address.slice(0, 6)}…${address.slice(-4)}` : "--"
@@ -40,9 +45,9 @@ export default function Dashboard() {
     });
   }, [lastUpdated]);
 
-  const networkLabel = useMemo(() => {
-    return activeNetwork?.label ?? "Unknown Network";
-  }, [activeNetwork]);
+  const networkLabel = useMemo(() => (
+    activeNetwork?.label ?? "Unknown Network"
+  ), [activeNetwork]);
 
   const isFullyLoading = useMemo(() => (
     loading || !balancesReady || !address
