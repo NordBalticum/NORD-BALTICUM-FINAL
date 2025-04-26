@@ -1,66 +1,79 @@
 /* BalanceCard.module.css */
+
+/* ─── Card Container ───────────────────────────────────────── */
 .cardWrapper {
   width: 100%;
-  max-width: 600px;
+  max-width: 900px;
   margin: 0 auto;
-  background: rgba(0,0,0,0.25);
+  background: rgba(0, 0, 0, 0.3);
   backdrop-filter: blur(12px) saturate(150%);
   border-radius: 16px;
-  padding: 16px;
-  box-shadow: 0 0 20px rgba(0,0,0,0.5);
+  padding: 24px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
 }
 
-/* Toggle */
+/* ─── Toggle Tabs ──────────────────────────────────────────── */
 .toggleWrapper {
   display: flex;
-  justify-content: center;
   gap: 12px;
-  margin-bottom: 16px;
 }
 .toggleButton {
   flex: 1;
-  padding: 8px;
+  padding: 10px 0;
   border: none;
   border-radius: 12px;
   background: #222;
-  color: #ccc;
+  color: #aaa;
+  font-weight: 500;
   cursor: pointer;
-  transition: 0.2s;
+  transition: background 0.2s, color 0.2s;
 }
-.toggleButton:hover { background: #333; }
+.toggleButton:hover {
+  background: #333;
+}
 .toggleButton.active {
   background: #555;
   color: #fff;
 }
 
-/* List */
+/* ─── Balances List ────────────────────────────────────────── */
 .list {
   display: grid;
   grid-template-columns: 1fr;
   gap: 12px;
 }
 @media (min-width: 768px) {
-  .cardWrapper { max-width: 900px; }
   .list {
     grid-template-columns: repeat(2, 1fr);
     gap: 16px;
   }
 }
 
-/* Item */
+/* ─── Individual Item ──────────────────────────────────────── */
 .listItem {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px;
-  background: rgba(255,255,255,0.05);
+  padding: 14px 16px;
+  background: rgba(255, 255, 255, 0.08);
   border-radius: 12px;
+  transition: background 0.2s;
 }
+.listItem:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+/* network icon + label */
 .networkInfo {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
 }
+.networkInfo img,
 .networkIcon {
   width: 32px;
   height: 32px;
@@ -68,18 +81,129 @@
 }
 .networkLabel {
   font-weight: 600;
-  color: #fff;
+  font-size: 1rem;
 }
+
+/* amount section */
 .amountInfo {
   text-align: right;
+  min-width: 100px;
 }
 .cryptoAmount {
-  font-family: var(--font-crypto);
+  font-family: var(--font-mono, monospace);
   font-size: 1rem;
   color: #fff;
 }
 .fiatAmount {
   font-size: 0.875rem;
-  color: #aaa;
+  color: #ccc;
   margin-top: 2px;
+}
+
+/* ─── Shimmer Placeholder ─────────────────────────────────── */
+@keyframes shimmer {
+  0% {
+    background-position: -200px 0;
+  }
+  100% {
+    background-position: 200px 0;
+  }
+}
+.shimmerTextSmall {
+  display: inline-block;
+  width: 80px;
+  height: 10px;
+  border-radius: 4px;
+  background: #444;
+  background-image: linear-gradient(
+    90deg,
+    #444 0px,
+    #555 40px,
+    #444 80px
+  );
+  background-size: 200px 100%;
+  animation: shimmer 1.2s infinite linear;
+}
+
+/* ─── Total Row ───────────────────────────────────────────── */
+.totalRow {
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  margin-top: 8px;
+  padding-top: 12px;
+}
+.totalRow .networkLabel {
+  font-size: 1rem;
+  font-weight: 700;
+}
+.totalRow .fiatAmount {
+  font-size: 1rem;
+  color: #fff;
+}
+
+/* ─── Crypto News Pane ────────────────────────────────────── */
+.newsSection {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+.newsTitle {
+  margin: 0 0 12px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #fff;
+}
+.newsLoading {
+  font-size: 0.9rem;
+  color: #ccc;
+}
+.newsList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 200px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.newsItem {
+  /* each item: title + date */
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.newsItem a {
+  color: #aad;
+  text-decoration: none;
+  font-size: 0.95rem;
+  transition: color 0.2s;
+}
+.newsItem a:hover {
+  color: #fff;
+}
+.newsItem small {
+  color: #888;
+  font-size: 0.75rem;
+}
+
+/* scrollbar styling for newsList */
+.newsList::-webkit-scrollbar {
+  width: 6px;
+}
+.newsList::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.2);
+  border-radius: 3px;
+}
+
+/* ─── Responsive Adjustments ──────────────────────────────── */
+@media (max-width: 480px) {
+  .cardWrapper {
+    padding: 16px;
+  }
+  .cryptoAmount {
+    font-size: 0.9rem;
+  }
+  .fiatAmount {
+    font-size: 0.75rem;
+  }
 }
