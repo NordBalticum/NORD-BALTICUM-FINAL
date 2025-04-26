@@ -17,47 +17,37 @@ export default function BalanceCard() {
 
   const [showTestnets, setShowTestnets] = useState(false);
 
-  // build the list of networks to show
   const items = useMemo(
     () =>
       networks
-        .map((n) => (showTestnets && n.testnet ? n.testnet : n))
+        .map(n => (showTestnets && n.testnet ? n.testnet : n))
         .filter(Boolean),
     [showTestnets]
   );
 
   return (
     <div className={styles.cardWrapper}>
-      {/* Mainnet / Testnet toggle */}
       <div className={styles.toggleWrapper}>
         <button
-          className={`${styles.toggleButton} ${
-            !showTestnets ? styles.active : ""
-          }`}
+          className={`${styles.toggleButton} ${!showTestnets && styles.active}`}
           onClick={() => setShowTestnets(false)}
         >
           Mainnets
         </button>
         <button
-          className={`${styles.toggleButton} ${
-            showTestnets ? styles.active : ""
-          }`}
+          className={`${styles.toggleButton} ${showTestnets && styles.active}`}
           onClick={() => setShowTestnets(true)}
         >
           Testnets
         </button>
       </div>
 
-      {/* Always show the list—prices load in background */}
       <div className={styles.list}>
-        {items.map((net) => {
+        {items.map(net => {
           const bal = balances[net.value] ?? 0;
-          // use helpers that know about TTL and caching:
-          const usdValue = getUsdBalance(net.value);
-          const eurValue = getEurBalance(net.value);
-
-          const showFiat =
-            !balancesLoading && (Number(usdValue) || Number(eurValue));
+          const usd = getUsdBalance(net.value);
+          const eur = getEurBalance(net.value);
+          const showFiat = !balancesLoading && (Number(usd) || Number(eur));
 
           return (
             <div key={net.value} className={styles.listItem}>
@@ -71,7 +61,6 @@ export default function BalanceCard() {
                 />
                 <span className={styles.networkLabel}>{net.label}</span>
               </div>
-
               <div className={styles.amountInfo}>
                 <div className={styles.cryptoAmount}>
                   {bal.toFixed(6)}
@@ -80,7 +69,7 @@ export default function BalanceCard() {
                   {balancesLoading ? (
                     <span className={styles.shimmerTextSmall} />
                   ) : showFiat ? (
-                    <>≈ ${usdValue} | €{eurValue}</>
+                    <>≈ ${usd} | €{eur}</>
                   ) : (
                     <>–</>
                   )}
