@@ -7,13 +7,12 @@ import networks from "@/data/networks";
 import styles from "./balancecard.module.css";
 
 export default function BalanceCard() {
-  const { balances, prices, balancesReady, loading } = useBalance();
+  const { balances, prices, balancesReady } = useBalance();
   const [showTestnets, setShowTestnets] = useState(false);
 
-  // Available networks (depending on toggle)
   const availableNetworks = useMemo(() => {
     return networks
-      .map((net) => (showTestnets && net.testnet ? net.testnet : net))
+      .map(net => (showTestnets && net.testnet ? net.testnet : net))
       .filter(Boolean);
   }, [showTestnets]);
 
@@ -30,33 +29,27 @@ export default function BalanceCard() {
     });
 
   const { totalUsd, totalEur } = useMemo(() => {
-    return availableNetworks.reduce(
-      (acc, net) => {
-        const balance = balances[net.value] ?? 0;
-        const price = prices[net.value] ?? { usd: 0, eur: 0 };
-        acc.totalUsd += balance * (price.usd || 0);
-        acc.totalEur += balance * (price.eur || 0);
-        return acc;
-      },
-      { totalUsd: 0, totalEur: 0 }
-    );
+    return availableNetworks.reduce((acc, net) => {
+      const bal = balances[net.value] ?? 0;
+      const price = prices[net.value] ?? { usd: 0, eur: 0 };
+      acc.totalUsd += bal * (price.usd || 0);
+      acc.totalEur += bal * (price.eur || 0);
+      return acc;
+    }, { totalUsd: 0, totalEur: 0 });
   }, [availableNetworks, balances, prices]);
 
-  if (!balancesReady && loading) {
-    // Show a cleaner loading state without shimmer
+  if (!balancesReady) {
     return (
       <div className={styles.cardWrapper}>
-        <div className={styles.loadingState}>
-          Loading balances...
-        </div>
+        <div className={styles.loadingState}>Loading balances...</div>
       </div>
     );
   }
 
   return (
     <div className={styles.cardWrapper}>
-      
-      {/* Toggle Mainnets/Testnets */}
+
+      {/* Toggle */}
       <div className={styles.toggleWrapper} role="tablist">
         <button
           role="tab"
@@ -76,7 +69,7 @@ export default function BalanceCard() {
         </button>
       </div>
 
-      {/* List of Balances */}
+      {/* List */}
       <div className={styles.list}>
         {availableNetworks.map((net) => {
           const balance = balances[net.value] ?? 0;
@@ -87,7 +80,7 @@ export default function BalanceCard() {
 
           return (
             <div key={net.value} className={styles.listItem}>
-              <div className={styles.networkInfo}>
+              <div className={styles.networkLeft}>
                 <Image
                   src={net.icon}
                   alt={net.label}
@@ -98,7 +91,7 @@ export default function BalanceCard() {
                 <span className={styles.networkLabel}>{net.label}</span>
               </div>
 
-              <div className={styles.amountInfo}>
+              <div className={styles.networkRight}>
                 <div className={styles.cryptoAmount}>
                   {fmtCrypto(balance)}
                 </div>
@@ -116,10 +109,10 @@ export default function BalanceCard() {
 
         {/* TOTAL */}
         <div className={`${styles.listItem} ${styles.totalRow}`}>
-          <div className={styles.networkInfo}>
+          <div className={styles.networkLeft}>
             <span className={styles.networkLabel}>Total</span>
           </div>
-          <div className={styles.amountInfo}>
+          <div className={styles.networkRight}>
             <div className={styles.cryptoAmount}></div>
             <div className={styles.fiatAmount}>
               {(totalUsd || totalEur) ? (
