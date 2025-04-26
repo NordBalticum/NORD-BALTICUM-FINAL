@@ -12,6 +12,7 @@
   box-shadow: var(--panel-shadow);
   backdrop-filter: var(--panel-blur);
   animation: fadeIn 0.6s ease-out both;
+  width: 100%;
 }
 
 /*────────────────────────────────────────────────────────────────────────────
@@ -22,6 +23,7 @@
   justify-content: center;
   gap: var(--spacing-sm);
   margin-bottom: var(--spacing-md);
+  flex-wrap: wrap;
 }
 
 .toggleButton {
@@ -83,6 +85,7 @@
   gap: var(--spacing-sm);
 }
 
+/* Network Label */
 .networkLabel {
   font-size: 1rem;
   font-weight: 500;
@@ -96,6 +99,7 @@
   display: flex;
   flex-direction: column;
   align-items: flex-end;
+  text-align: right;
   gap: 2px;
 }
 
@@ -104,6 +108,7 @@
   font-size: 1.15rem;
   font-weight: 600;
   color: var(--text-main);
+  word-break: break-word;
 }
 
 /* Fiat Amount */
@@ -141,4 +146,36 @@
 @keyframes shimmerMove {
   0% { background-position: -400% 0; }
   100% { background-position: 400% 0; }
+}
+
+/*────────────────────────────────────────────────────────────────────────────
+  RESPONSIVE UPGRADE 📱
+────────────────────────────────────────────────────────────────────────────*/
+@media (max-width: 768px) {
+  .listItem {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-sm);
+  }
+
+  .amountInfo {
+    align-items: flex-start;
+    text-align: left;
+  }
+
+  .toggleWrapper {
+    flex-wrap: wrap;
+  }
+
+  .cryptoAmount {
+    font-size: 1.05rem;
+  }
+
+  .fiatAmount {
+    font-size: 0.8rem;
+  }
+
+  .networkLabel {
+    font-size: 0.95rem;
+  }
 }
