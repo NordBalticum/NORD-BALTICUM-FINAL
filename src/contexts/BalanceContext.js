@@ -14,7 +14,7 @@ import { JsonRpcProvider, FallbackProvider, ethers } from "ethers";
 import debounce from "lodash.debounce";
 import networks from "@/data/networks";
 
-const TOKEN_IDS = { /* kaip tavo sąrašas */ };
+const TOKEN_IDS = { /* tavo token ID'ai čia */ };
 
 const FALLBACK_PRICES = Object.fromEntries(
   Object.keys(TOKEN_IDS).map(k => [k, { usd: 0, eur: 0 }])
@@ -32,15 +32,9 @@ export function BalanceProvider({ children }) {
 
   const [balances, setBalances] = useState({});
   const [prices, setPrices] = useState(FALLBACK_PRICES);
-  const [loading, setLoading] = useState(true);      // Tik pirmas inicialinis kraunasi
-const [refreshing, setRefreshing] = useState(false); // Silent background
-const [userTriggeredRefresh, setUserTriggeredRefresh] = useState(false); // 🔥 Naujas
+  const [loading, setLoading] = useState(true);      // Pirmas pilnas load
+  const [refreshing, setRefreshing] = useState(false); // Silent background
 
-// Kai nori useris refreshint rankiniu būdu:
-const refetch = async () => {
-  await fetchAll(true); // User nori refresh, rodom spinner
-};
-  
   const lastPriceFetch = useRef(0);
 
   const providers = useMemo(() => {
@@ -66,7 +60,6 @@ const refetch = async () => {
   const fetchBalances = useCallback(async () => {
     const addr = wallet?.wallet?.address;
     if (!addr) return {};
-
     const out = {};
 
     await Promise.all(
@@ -106,51 +99,51 @@ const refetch = async () => {
     }
   }, [coingeckoIds, prices]);
 
-  const fetchAll = useCallback(async (isUserTriggered = false) => {
-  if (isUserTriggered) setLoading(true); // ⬅️ Tik jei pats user
-  try {
-    await Promise.all([fetchBalances(), fetchPrices()]);
-  } finally {
-    if (isUserTriggered) setLoading(false);
-  }
-}, [fetchBalances, fetchPrices]);
-  
-    const [newBalances, newPrices] = await Promise.all([
-      fetchBalances(),
-      fetchPrices(),
-    ]);
-
-    setBalances(newBalances);
-    setPrices(newPrices);
-
-    if (!isSilent) {
-      setLoading(false);
+  const fetchAll = useCallback(async (userTriggered = false) => {
+    if (userTriggered) {
+      setLoading(true);  // rodom full spinner
     } else {
-      setRefreshing(false);
+      setRefreshing(true); // tik tylesnis refresh
+    }
+    try {
+      const [newBalances, newPrices] = await Promise.all([
+        fetchBalances(),
+        fetchPrices(),
+      ]);
+      setBalances(newBalances);
+      setPrices(newPrices);
+    } finally {
+      if (userTriggered) {
+        setLoading(false);
+      } else {
+        setRefreshing(false);
+      }
     }
   }, [fetchBalances, fetchPrices]);
 
   useEffect(() => {
-  if (!authLoading && !walletLoading && wallet?.wallet?.address) {
-    fetchAll(true); // ⬅️ Pradinis inicialinis load
-  }
-  // ⚡ NEĮRAŠYK `fetchAll` į priklausomybes čia! Tik authLoading, walletLoading.
-}, [authLoading, walletLoading, wallet]);
+    if (!authLoading && !walletLoading && wallet?.wallet?.address) {
+      fetchAll(true); // Tik kartą: pradinis pilnas load
+    }
+  }, [authLoading, walletLoading, wallet, fetchAll]);
 
   useEffect(() => {
     const interval = setInterval(() => {
-      fetchAll(true);
+      fetchAll(false); // background silent
     }, 30_000);
 
-    const onVis = debounce(() => {
-      if (document.visibilityState === "visible") fetchAll(true);
+    const onVisible = debounce(() => {
+      if (document.visibilityState === "visible") {
+        fetchAll(false);
+      }
     }, 300);
 
-    document.addEventListener("visibilitychange", onVis);
+    document.addEventListener("visibilitychange", onVisible);
+
     return () => {
       clearInterval(interval);
-      onVis.cancel();
-      document.removeEventListener("visibilitychange", onVis);
+      onVisible.cancel();
+      document.removeEventListener("visibilitychange", onVisible);
     };
   }, [fetchAll]);
 
@@ -163,10 +156,10 @@ const refetch = async () => {
         balances,
         prices,
         loading,
-        refreshing, // ⬅️ naujas statusas
+        refreshing,
         getUsdBalance,
         getEurBalance,
-        refetch: () => fetchAll(false),
+        refetch: () => fetchAll(true), // kai user pats nori refresh
       }}
     >
       {children}
