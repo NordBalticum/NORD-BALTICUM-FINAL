@@ -1,4 +1,3 @@
-// src/contexts/BalanceContext.js
 "use client";
 
 import React, {
@@ -15,7 +14,7 @@ import { JsonRpcProvider, FallbackProvider, ethers } from "ethers";
 import debounce from "lodash.debounce";
 import networks from "@/data/networks";
 
-// ── CoinGecko slugs for each network (mainnets & testnets) ──────────
+// ── CoinGecko slugs for each network ───────────────────────
 const TOKEN_IDS = {
   eth: "ethereum",
   matic: "polygon-pos",
@@ -45,7 +44,7 @@ const TOKEN_IDS = {
   chiado: "xdai",
 };
 
-// zero‐prices fallback
+// fallback prices
 const FALLBACK_PRICES = Object.fromEntries(
   Object.keys(TOKEN_IDS).map((k) => [k, { usd: 0, eur: 0 }])
 );
@@ -60,7 +59,6 @@ export const useBalance = () => useContext(BalanceContext);
 export function BalanceProvider({ children }) {
   const { wallet, authLoading, walletLoading } = useAuth();
 
-  // ── 1) State with localStorage hydration ─────────────────────
   const [balances, setBalances] = useState(() => {
     try {
       return JSON.parse(localStorage.getItem(BALANCE_KEY)) || {};
@@ -68,6 +66,7 @@ export function BalanceProvider({ children }) {
       return {};
     }
   });
+
   const [prices, setPrices] = useState(() => {
     try {
       return JSON.parse(localStorage.getItem(PRICE_KEY)) || FALLBACK_PRICES;
@@ -75,39 +74,39 @@ export function BalanceProvider({ children }) {
       return FALLBACK_PRICES;
     }
   });
+
   const [loading, setLoading] = useState(true);
   const lastPriceFetch = useRef(0);
 
-  // ── 2) Build a FallbackProvider per chain & testnet ──────────
+  // ── Setup providers per network ───────────────────────────────
   const providers = useMemo(() => {
     const map = {};
     networks.forEach((n) => {
-      // take both rpcUrls from networks.js (public,1RPC)
-      const mainProviders = n.rpcUrls.map((url) => new JsonRpcProvider(url));
-      map[n.value] = new FallbackProvider(mainProviders, 1);
+      const main = n.rpcUrls.map((url) => new JsonRpcProvider(url));
+      map[n.value] = new FallbackProvider(main, 1);
       if (n.testnet) {
-        const testProviders = n.testnet.rpcUrls.map((url) => new JsonRpcProvider(url));
-        map[n.testnet.value] = new FallbackProvider(testProviders, 1);
+        const test = n.testnet.rpcUrls.map((url) => new JsonRpcProvider(url));
+        map[n.testnet.value] = new FallbackProvider(test, 1);
       }
     });
     return map;
   }, []);
 
-  // ── 3) Dedupe CoinGecko IDs ─────────────────────────────────
+  // ── Prepare CoinGecko IDs ─────────────────────────────────────
   const coingeckoIds = useMemo(
     () => Array.from(new Set(Object.values(TOKEN_IDS))).join(","),
     []
   );
 
-  // ── 4a) Fetch on-chain balances ──────────────────────────────
+  // ── Fetch balances ───────────────────────────────────────────
   const fetchBalances = useCallback(async () => {
     const addr = wallet?.wallet?.address;
     if (!addr) return;
     const out = {};
     await Promise.all(
-      Object.entries(providers).map(async ([key, prov]) => {
+      Object.entries(providers).map(async ([key, provider]) => {
         try {
-          const raw = await prov.getBalance(addr);
+          const raw = await provider.getBalance(addr);
           out[key] = parseFloat(ethers.formatEther(raw));
         } catch {
           out[key] = balances[key] ?? 0;
@@ -118,41 +117,43 @@ export function BalanceProvider({ children }) {
     localStorage.setItem(BALANCE_KEY, JSON.stringify(out));
   }, [wallet, providers, balances]);
 
-  // ── 4b) Fetch fiat prices (with TTL) via `/api/prices` proxy ──
+  // ── Fetch prices ─────────────────────────────────────────────
   const fetchPrices = useCallback(async () => {
     const now = Date.now();
     if (now - lastPriceFetch.current < PRICE_TTL) return;
     try {
       const res = await fetch(`/api/prices?ids=${coingeckoIds}`, { cache: "no-store" });
       const data = await res.json();
-      const pd = {};
+      const out = {};
       Object.entries(TOKEN_IDS).forEach(([sym, id]) => {
-        pd[sym] = {
-          usd: data[id]?.usd ?? FALLBACK_PRICES[sym].usd,
-          eur: data[id]?.eur ?? FALLBACK_PRICES[sym].eur,
+        out[sym] = {
+          usd: data[id]?.usd ?? 0,
+          eur: data[id]?.eur ?? 0,
         };
       });
-      setPrices(pd);
-      localStorage.setItem(PRICE_KEY, JSON.stringify(pd));
+      setPrices(out);
+      localStorage.setItem(PRICE_KEY, JSON.stringify(out));
       lastPriceFetch.current = now;
     } catch {
-      // keep previous prices on error
+      // ignore errors, keep old prices
     }
   }, [coingeckoIds]);
 
-  // ── 5) Run both in parallel ─────────────────────────────────
+  // ── Fetch all ─────────────────────────────────────────────────
   const fetchAll = useCallback(async () => {
     setLoading(true);
     await Promise.all([fetchBalances(), fetchPrices()]);
     setLoading(false);
   }, [fetchBalances, fetchPrices]);
 
-  // ── 6) Initial trigger after auth+wallet ready ──────────────
+  // ── Load when ready ───────────────────────────────────────────
   useEffect(() => {
-    if (!authLoading && !walletLoading) fetchAll();
+    if (!authLoading && !walletLoading) {
+      fetchAll();
+    }
   }, [authLoading, walletLoading, fetchAll]);
 
-  // ── 7) Poll every 30s & on tab visibility ───────────────────
+  // ── Auto refresh every 30s & on visibility ───────────────────
   useEffect(() => {
     const iv = setInterval(fetchAll, 30_000);
     const onVis = debounce(() => {
@@ -166,16 +167,18 @@ export function BalanceProvider({ children }) {
     };
   }, [fetchAll]);
 
-  // ── 8) Helpers to get USD/EUR values ────────────────────────
+  // ── Balance value getters ────────────────────────────────────
   const getUsdBalance = (networkKey) => {
-  const val = balances[networkKey]?.usd;
-  return val ? parseFloat(val) : 0;
-};
+    const bal = balances[networkKey] || 0;
+    const price = prices[networkKey]?.usd || 0;
+    return bal * price;
+  };
 
-const getEurBalance = (networkKey) => {
-  const val = balances[networkKey]?.eur;
-  return val ? parseFloat(val) : 0;
-};
+  const getEurBalance = (networkKey) => {
+    const bal = balances[networkKey] || 0;
+    const price = prices[networkKey]?.eur || 0;
+    return bal * price;
+  };
 
   return (
     <BalanceContext.Provider
