@@ -14,198 +14,172 @@ import { useAuth } from "@/contexts/AuthContext";
 import { ethers } from "ethers";
 import debounce from "lodash.debounce";
 
-// ========================
-// 🛠️ CONFIGURATION
-// ========================
+// – your dynamic network list & chainId map
+import { SUPPORTED_NETWORKS } from "@/contexts/NetworkContext";
+// – resilient multi‐RPC provider factory
+import { getProviderForChain } from "@/utils/getProviderForChain";
 
-// RPC endpoints for each network, with fallback support
-export const RPC = {
-  eth: {
-    urls: ["https://rpc.ankr.com/eth", "https://eth.llamarpc.com"],
-    chainId: 1,
-    name: "eth",
-  },
-  bnb: {
-    urls: ["https://bsc-dataseed.binance.org/", "https://bsc.publicnode.com"],
-    chainId: 56,
-    name: "bnb",
-  },
-  tbnb: {
-    urls: [
-      "https://data-seed-prebsc-1-s1.binance.org:8545/",
-      "https://bsc-testnet.public.blastapi.io",
-    ],
-    chainId: 97,
-    name: "tbnb",
-  },
-  matic: {
-    urls: ["https://polygon-bor.publicnode.com", "https://1rpc.io/matic"],
-    chainId: 137,
-    name: "matic",
-  },
-  avax: {
-    urls: ["https://rpc.ankr.com/avalanche", "https://avalanche.drpc.org"],
-    chainId: 43114,
-    name: "avax",
-  },
+// token → CoinGecko ID for price lookups; extend as needed
+const TOKEN_IDS = {
+  eth:            "ethereum",
+  matic:          "matic-network",
+  bnb:            "binancecoin",
+  avax:           "avalanche-2",
+  optimism:       "optimism",
+  arbitrum:       "arbitrum-one",
+  base:           "base",
+  zksync:         "zksync",
+  linea:          "linea",
+  scroll:         "scroll",
+  mantle:         "mantle",
+  celo:           "celo",
+  gnosis:         "xdai",
+  // testnets reuse mainnet IDs
+  sepolia:        "ethereum",
+  mumbai:         "matic-network",
+  tbnb:           "binancecoin",
+  fuji:           "avalanche-2",
+  optimismgoerli: "optimism",
+  arbitrumgoerli: "arbitrum-one",
+  basegoerli:     "base",
+  zksynctest:     "zksync",
+  lineatest:      "linea",
+  scrolltest:     "scroll",
+  mantletest:     "mantle",
+  alfajores:      "celo",
+  chiado:         "xdai",
 };
 
-// CoinGecko token IDs for price lookup
-export const TOKEN_IDS = {
-  eth: "ethereum",
-  bnb: "binancecoin",
-  tbnb: "binancecoin",
-  matic: "polygon",
-  avax: "avalanche-2",
-};
+// fallback prices if CoinGecko fails
+const FALLBACK_PRICES = Object.fromEntries(
+  Object.keys(TOKEN_IDS).map(sym => [
+    sym,
+    { usd: 0, eur: 0 } // you can seed with realistic defaults
+  ])
+);
 
-// Fallback prices if CoinGecko fails
-const FALLBACK_PRICES = {
-  eth: { eur: 2900, usd: 3100 },
-  bnb: { eur: 450, usd: 480 },
-  tbnb: { eur: 450, usd: 480 },
-  matic: { eur: 1.5, usd: 1.6 },
-  avax: { eur: 30, usd: 32 },
-};
-
-// LocalStorage keys
 const BALANCE_KEY = "nordbalticum_balances";
 const PRICE_KEY   = "nordbalticum_prices";
-
-// ========================
-// 📦 CONTEXT & HOOK
-// ========================
 
 const BalanceContext = createContext(null);
 export const useBalance = () => useContext(BalanceContext);
 
-// ========================
-// ⚙️ PROVIDER
-// ========================
-
 export function BalanceProvider({ children }) {
   const { wallet, authLoading, walletLoading } = useAuth();
 
-  // State
-  const [balances, setBalances]   = useState({});
-  const [prices, setPrices]       = useState(FALLBACK_PRICES);
-  const [loading, setLoading]     = useState(true);
-  const [error, setError]         = useState(null);
+  const [balances,   setBalances]   = useState({});
+  const [prices,     setPrices]     = useState(FALLBACK_PRICES);
+  const [loading,    setLoading]    = useState(true);
+  const [error,      setError]      = useState(null);
   const [lastUpdated, setLastUpdated] = useState(null);
 
-  // Refs
-  const intervalRef = useRef(null);
   const lastBalances = useRef({});
 
   // Persist/load helpers
-  const saveToLocal = (key, data) => {
+  const save = (key, data) => {
     try { localStorage.setItem(key, JSON.stringify(data)); } catch {}
   };
-  const loadFromLocal = (key) => {
-    try { const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : null; }
+  const load = (key) => {
+    try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : null; }
     catch { return null; }
   };
 
-  // Memoized providers per network
+  // build one fallback‐backed provider per network
   const providers = useMemo(() => {
-    const map = {};
-    for (const [net, cfg] of Object.entries(RPC)) {
-      map[net] = new ethers.FallbackProvider(
-        cfg.urls.map((url) =>
-          new ethers.JsonRpcProvider(url, { chainId: cfg.chainId, name: cfg.name })
-        )
-      );
+    const m = {};
+    for (const net of SUPPORTED_NETWORKS) {
+      try {
+        m[net] = getProviderForChain(net);
+      } catch {
+        // ignore misconfigs
+      }
     }
-    return map;
+    return m;
   }, []);
 
-  // Precomputed CoinGecko ID string
-  const coingeckoIds = useMemo(
+  // coin-gecko query string
+  const coingeckoQuery = useMemo(
     () => Array.from(new Set(Object.values(TOKEN_IDS))).join(","),
     []
   );
 
-  // Fetch balances & prices
+  // core fetcher
   const fetchBalancesAndPrices = useCallback(async () => {
-    if (!wallet?.wallet?.address) return;
+    const addr = wallet?.wallet?.address;
+    if (!addr) return;
 
     setLoading(true);
     setError(null);
 
     try {
-      const address = wallet.wallet.address;
-
-      // 1) Balances: parallel over networks
-      const balanceEntries = await Promise.all(
+      // 1) balances
+      const entries = await Promise.all(
         Object.entries(providers).map(async ([net, provider]) => {
           try {
-            const raw = await provider.getBalance(address);
+            const raw = await provider.getBalance(addr);
             return [net, parseFloat(ethers.formatEther(raw))];
-          } catch (err) {
-            console.warn(`Failed balance ${net}:`, err.message);
-            return [net, lastBalances.current[net] || 0];
+          } catch {
+            return [net, lastBalances.current[net] ?? 0];
           }
         })
       );
-      const newBalances = Object.fromEntries(balanceEntries);
-      setBalances(newBalances);
-      saveToLocal(BALANCE_KEY, newBalances);
-      lastBalances.current = newBalances;
+      const newB = Object.fromEntries(entries);
+      setBalances(newB);
+      lastBalances.current = newB;
+      save(BALANCE_KEY, newB);
 
-      // 2) Prices via CoinGecko
+      // 2) prices
       let priceData = {};
       try {
-        const res = await fetch(
-          `https://api.coingecko.com/api/v3/simple/price?ids=${coingeckoIds}&vs_currencies=eur,usd`,
+        const resp = await fetch(
+          `https://api.coingecko.com/api/v3/simple/price?ids=${coingeckoQuery}&vs_currencies=usd,eur`,
           { cache: "no-store" }
         );
-        if (!res.ok) throw new Error("Coingecko response not ok");
-        const json = await res.json();
+        const json = await resp.json();
         for (const [sym, id] of Object.entries(TOKEN_IDS)) {
           priceData[sym] = {
-            eur: json[id]?.eur ?? FALLBACK_PRICES[sym].eur,
             usd: json[id]?.usd ?? FALLBACK_PRICES[sym].usd,
+            eur: json[id]?.eur ?? FALLBACK_PRICES[sym].eur,
           };
         }
-      } catch (err) {
-        console.warn("Price fetch failed:", err.message);
+      } catch {
         priceData = FALLBACK_PRICES;
       }
       setPrices(priceData);
-      saveToLocal(PRICE_KEY, priceData);
+      save(PRICE_KEY, priceData);
 
       setLastUpdated(new Date());
     } catch (err) {
-      console.error("fetchBalancesAndPrices error:", err);
+      console.error("Balance fetch failed", err);
       setError(err.message);
     } finally {
       setLoading(false);
     }
-  }, [wallet, providers, coingeckoIds]);
+  }, [wallet, providers, coingeckoQuery]);
 
-  // Initial load from cache
+  // hydrate from cache
   useEffect(() => {
-    const cachedBalances = loadFromLocal(BALANCE_KEY);
-    const cachedPrices   = loadFromLocal(PRICE_KEY);
-    if (cachedBalances) setBalances(cachedBalances);
-    if (cachedPrices)   setPrices(cachedPrices);
-    lastBalances.current = cachedBalances || {};
+    const cb = load(BALANCE_KEY);
+    const cp = load(PRICE_KEY);
+    if (cb) setBalances(cb);
+    if (cp) setPrices(cp);
+    if (cb) lastBalances.current = cb;
   }, []);
 
-  // Fetch once wallet is ready
+  // initial fetch once wallet is ready
   useEffect(() => {
-    if (authLoading || walletLoading || !wallet?.wallet?.address) return;
+    if (authLoading || walletLoading) return;
     fetchBalancesAndPrices();
   }, [authLoading, walletLoading, wallet, fetchBalancesAndPrices]);
 
-  // Poll every 30s
+  // poll every 30s
   useEffect(() => {
     if (!wallet?.wallet?.address) return;
-    intervalRef.current = setInterval(fetchBalancesAndPrices, 30_000);
-    return () => clearInterval(intervalRef.current);
+    const iv = setInterval(fetchBalancesAndPrices, 30_000);
+    return () => clearInterval(iv);
   }, [wallet, fetchBalancesAndPrices]);
 
-  // Refresh on tab visibility or network reconnect
+  // refresh on focus/online
   useEffect(() => {
     const onVisible = debounce(() => {
       if (document.visibilityState === "visible") fetchBalancesAndPrices();
@@ -222,37 +196,33 @@ export function BalanceProvider({ children }) {
     };
   }, [fetchBalancesAndPrices]);
 
-  // Helper: format converted balances
+  // formatting helpers
   const getUsdBalance = useCallback(
-    (net) => {
-      const bal = balances[net] ?? lastBalances.current[net] ?? 0;
-      const price = prices[net]?.usd ?? FALLBACK_PRICES[net].usd;
-      return (bal * price).toFixed(2);
-    },
-    [balances, prices]
+    net => {
+      const b = balances[net] ?? lastBalances.current[net] ?? 0;
+      const p = prices[net]?.usd ?? 0;
+      return (b * p).toFixed(2);
+    }, [balances, prices]
   );
   const getEurBalance = useCallback(
-    (net) => {
-      const bal = balances[net] ?? lastBalances.current[net] ?? 0;
-      const price = prices[net]?.eur ?? FALLBACK_PRICES[net].eur;
-      return (bal * price).toFixed(2);
-    },
-    [balances, prices]
+    net => {
+      const b = balances[net] ?? lastBalances.current[net] ?? 0;
+      const p = prices[net]?.eur ?? 0;
+      return (b * p).toFixed(2);
+    }, [balances, prices]
   );
 
   return (
-    <BalanceContext.Provider
-      value={{
-        balances,
-        prices,
-        loading,
-        error,
-        lastUpdated,
-        getUsdBalance,
-        getEurBalance,
-        refetch: fetchBalancesAndPrices,
-      }}
-    >
+    <BalanceContext.Provider value={{
+      balances,
+      prices,
+      loading,
+      error,
+      lastUpdated,
+      getUsdBalance,
+      getEurBalance,
+      refetch: fetchBalancesAndPrices,
+    }}>
       {children}
     </BalanceContext.Provider>
   );
