@@ -19,7 +19,7 @@ const LivePriceTable = dynamic(() => import("@/components/LivePriceTable"), { ss
 export default function Dashboard() {
   const { ready, isMobile } = useSystemReady();
   const { user, wallet } = useAuth();
-  const { loading: balLoading, refetch, lastUpdated } = useBalance();
+  const { loading: balLoading, refreshing, refetch, lastUpdated } = useBalance();
 
   const address = wallet?.wallet?.address ?? "";
   
@@ -79,7 +79,7 @@ export default function Dashboard() {
             disabled={balLoading}
             aria-label="Refresh balances"
           >
-            <FiRefreshCw className={balLoading ? styles.spin : ""} />
+            <FiRefreshCw className={(balLoading || refreshing) ? styles.spin : undefined} />
           </button>
         </div>
 
