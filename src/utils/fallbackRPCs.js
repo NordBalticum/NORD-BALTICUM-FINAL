@@ -18,7 +18,7 @@ export const ethersFallbackProviders = {
   ],
   137: [ // Polygon Mainnet (matic)
     "https://polygon-rpc.com",
-    "https://rpc.ankr.com/polygon",
+    "https://rpc.ankr.com/polygon/00940a4dee2134e7daf2c8353848d8b589047754a616e34648dac039440c9f98",
     "https://polygon-bor.publicnode.com"
   ],
   43114: [ // Avalanche C-Chain
