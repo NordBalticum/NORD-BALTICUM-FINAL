@@ -6,36 +6,40 @@ import { ethersFallbackProviders } from "@/utils/fallbackRPCs";
 
 /**
  * Returns a JsonRpcProvider or FallbackProvider for the given chainId.
- * Wraps each RPC URL in the proper config so ethers.FallbackProvider
- * knows these are providers, not a "network" descriptor.
  *
- * @param {string|number} chainIdOrName – the chain ID (e.g. "1", 56, 97, 137, 43114)
+ * @param {string|number} chainIdOrName – the chain ID (e.g. "1", 56, "137", etc)
  * @returns {ethers.JsonRpcProvider|ethers.FallbackProvider}
  */
 export function getProviderForChain(chainIdOrName) {
-  // Normalize to number
+  // Normalize chainId to a number
   const chainId =
     typeof chainIdOrName === "string"
       ? parseInt(chainIdOrName, 10)
       : chainIdOrName;
 
-  // Look up our configured RPC endpoints
+  // Look up our array of RPC URLs
   const urls = ethersFallbackProviders[chainId];
   if (!urls || urls.length === 0) {
     throw new Error(`❌ No RPC endpoints configured for chainId ${chainId}`);
   }
 
-  // Create a JsonRpcProvider for each URL
-  const providers = urls.map((url) => new ethers.JsonRpcProvider(url, chainId));
+  // Build a JsonRpcProvider for each URL
+  const providers = urls.map((url) =>
+    new ethers.JsonRpcProvider(url, chainId)
+  );
 
-  // Single‐endpoint → return it directly
+  // If there's only one, just use it
   if (providers.length === 1) {
     return providers[0];
   }
 
-  // Multi‐endpoint → wrap each provider in a config object
-  const fallbackConfigs = providers.map((provider) => ({ provider }));
-
-  // FallbackProvider now sees an array of { provider } and works correctly
-  return new ethers.FallbackProvider(fallbackConfigs);
+  // Otherwise wrap them in a FallbackProvider with the correct config objects
+  const configs = providers.map((provider, priority) => ({
+    provider,
+    priority,
+    weight: 1,
+    stallTimeout: 200
+  }));
+  // quorum = 1 means only one healthy provider needs to respond
+  return new ethers.FallbackProvider(configs, /* quorum */ 1);
 }
