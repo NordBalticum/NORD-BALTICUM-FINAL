@@ -1,6 +1,8 @@
 /* balancecard.module.css */
 
-/* Main card wrapper */
+/*────────────────────────────────────────────────────────────────────────────
+  Card Container
+────────────────────────────────────────────────────────────────────────────*/
 .cardWrapper {
   display: flex;
   flex-direction: column;
@@ -9,103 +11,115 @@
   padding: var(--spacing-md);
   box-shadow: var(--panel-shadow);
   backdrop-filter: var(--panel-blur);
-  animation: fadeIn 0.5s ease both;
+  animation: fadeIn 0.6s ease-out both;
 }
 
-/* Toggle buttons wrapper */
+/*────────────────────────────────────────────────────────────────────────────
+  Toggle (Mainnets / Testnets)
+────────────────────────────────────────────────────────────────────────────*/
 .toggleWrapper {
   display: flex;
   justify-content: center;
-  margin-bottom: var(--spacing-md);
   gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
 }
 
-/* Toggle buttons */
 .toggleButton {
-  padding: 8px 16px;
-  border-radius: var(--btn-radius);
-  border: 1px solid var(--border-color);
-  background: transparent;
-  color: var(--text-sub);
+  padding: 8px 20px;
   font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-sub);
+  background: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: var(--btn-radius);
   cursor: pointer;
-  transition: background 0.3s, color 0.3s, border 0.3s;
+  transition: all 0.3s ease;
 }
 
 .toggleButton:hover {
   background: var(--btn-hover-bg);
-  border-color: var(--accent-color);
   color: var(--text-main);
+  border-color: var(--accent-color);
 }
 
-/* Active toggle */
 .active {
   background: var(--accent-color);
   color: #fff;
   border-color: var(--accent-color);
 }
 
-/* List of balances */
+/*────────────────────────────────────────────────────────────────────────────
+  List of Balances
+────────────────────────────────────────────────────────────────────────────*/
 .list {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-md);
 }
 
-/* Single list item */
+/*────────────────────────────────────────────────────────────────────────────
+  Single List Item
+────────────────────────────────────────────────────────────────────────────*/
 .listItem {
   display: flex;
-  align-items: center;
   justify-content: space-between;
+  align-items: center;
   padding: var(--spacing-sm) 0;
   border-bottom: 1px solid var(--border-light);
 }
 
-/* Total row */
 .totalRow {
   margin-top: var(--spacing-lg);
   font-weight: bold;
   color: var(--text-main);
 }
 
-/* Left (network) info */
+/*────────────────────────────────────────────────────────────────────────────
+  Left Part: Network Info
+────────────────────────────────────────────────────────────────────────────*/
 .networkInfo {
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
 }
 
-/* Network label */
 .networkLabel {
   font-size: 1rem;
-  color: var(--text-main);
-}
-
-/* Right (amount) info */
-.amountInfo {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-}
-
-/* Crypto balance */
-.cryptoAmount {
-  font-size: 1.1rem;
   font-weight: 500;
   color: var(--text-main);
 }
 
-/* Fiat balance */
+/*────────────────────────────────────────────────────────────────────────────
+  Right Part: Amount Info
+────────────────────────────────────────────────────────────────────────────*/
+.amountInfo {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+/* Crypto Amount */
+.cryptoAmount {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+/* Fiat Amount */
 .fiatAmount {
   font-size: 0.85rem;
   color: var(--text-sub);
 }
 
-/* Shimmer loading placeholder */
+/*────────────────────────────────────────────────────────────────────────────
+  Shimmer Loader
+────────────────────────────────────────────────────────────────────────────*/
 .shimmerSmall {
   display: inline-block;
+  width: 5ch;
   height: 1em;
-  width: 6ch;
+  border-radius: 4px;
   background: linear-gradient(
     90deg,
     var(--shimmer-light) 25%,
@@ -113,18 +127,18 @@
     var(--shimmer-light) 63%
   );
   background-size: 400% 100%;
-  animation: shimmer 1.4s ease infinite;
-  border-radius: 4px;
+  animation: shimmerMove 1.4s ease infinite;
 }
 
-/* Fade-in animation */
+/*────────────────────────────────────────────────────────────────────────────
+  Animations
+────────────────────────────────────────────────────────────────────────────*/
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to   { opacity: 1; transform: translateY(0); }
+  0% { opacity: 0; transform: translateY(20px); }
+  100% { opacity: 1; transform: translateY(0); }
 }
 
-/* Shimmer animation */
-@keyframes shimmer {
+@keyframes shimmerMove {
   0% { background-position: -400% 0; }
   100% { background-position: 400% 0; }
 }
