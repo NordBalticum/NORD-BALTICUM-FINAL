@@ -1,3 +1,4 @@
+// src/app/dashboard.js
 "use client";
 
 import dynamic from "next/dynamic";
@@ -8,16 +9,17 @@ import BalanceCard from "@/components/BalanceCard";
 import styles from "@/styles/dashboard.module.css";
 import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
 
-// defer‐load the chart (no SSR)
-const LivePriceTable = dynamic(() => import("@/components/LivePriceTable"), {
-  ssr: false,
-});
+// chartą deferinam, kad nebūtų SSR bloko
+const LivePriceTable = dynamic(
+  () => import("@/components/LivePriceTable"),
+  { ssr: false }
+);
 
 export default function Dashboard() {
   const { wallet } = useAuth();
   const { ready, loading: systemLoading, isMobile } = useSystemReady();
 
-  // block UI only until core systems (auth + wallet + balances/prices) are up
+  // rodome spinnerį tik tol, kol visi core moduliai (auth, wallet, balances+prices) nepasiruošę
   if (systemLoading || !ready || !wallet?.wallet?.address) {
     return (
       <main className={styles.container}>
@@ -38,14 +40,16 @@ export default function Dashboard() {
     );
   }
 
-  // everything’s ready → render chart + balances side-by-side
+  // kai viskas paruošta, atvaizduojam chartą ir balansų kortelę
   return (
     <main className={styles.container}>
       <div className={styles.dashboardWrapper}>
         <div className={styles.dashboardRow}>
+          {/* ~70% pločio desktop, mobilėje full */}
           <div className={styles.chartSection}>
             <LivePriceTable />
           </div>
+          {/* ~30% pločio desktop, mobilėje full */}
           <div className={styles.balanceSection}>
             <BalanceCard />
           </div>
