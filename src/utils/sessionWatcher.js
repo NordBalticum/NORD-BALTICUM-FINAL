@@ -9,9 +9,9 @@ import { useBalance } from "@/contexts/BalanceContext";
 import { useSystemReady } from "@/hooks/useSystemReady";
 
 const BASE_REFRESH_INTERVAL = 30_000; // 30s
-const MAX_FAILURES = 3;                // Max klaidos prieš logout
-const DEBOUNCE_DELAY = 300;             // Debounce events
-const MAX_BACKOFF = 300_000;            // Max 5 min timeout
+const MAX_FAILURES = 3;
+const DEBOUNCE_DELAY = 300;
+const MAX_BACKOFF = 300_000; // 5min
 
 export function useSessionWatcher() {
   const { ready } = useSystemReady();
@@ -21,7 +21,7 @@ export function useSessionWatcher() {
   const failureCount = useRef(0);
   const backoffMultiplier = useRef(1);
   const lastRefresh = useRef(Date.now());
-  const timers = useRef([]);
+  const intervalId = useRef(null);
 
   useEffect(() => {
     if (!ready) return;
@@ -52,22 +52,18 @@ export function useSessionWatcher() {
         } else {
           increaseBackoff();
           console.warn(`[SessionWatcher] 🔁 Retrying in ${BASE_REFRESH_INTERVAL * backoffMultiplier.current / 1000}s...`);
-          clearInterval(intervalId.current);
-          setupInterval(); // restartinam su didesniu timeoutu
+          setupInterval(); // restart with backoff
         }
       }
     };
 
-    const intervalId = useRef(null);
-
     const setupInterval = () => {
-      clearInterval(intervalId.current);
+      if (intervalId.current) clearInterval(intervalId.current);
       intervalId.current = setInterval(() => {
         if (Date.now() - lastRefresh.current > BASE_REFRESH_INTERVAL * backoffMultiplier.current) {
           safeRun("interval");
         }
       }, BASE_REFRESH_INTERVAL * backoffMultiplier.current);
-      timers.current.push(intervalId.current);
     };
 
     const onVisibilityChange = debounce(() => {
@@ -89,14 +85,8 @@ export function useSessionWatcher() {
     window.addEventListener("focus", onFocus);
     window.addEventListener("online", onOnline);
 
-    timers.current.push(onVisibilityChange);
-    timers.current.push(onFocus);
-    timers.current.push(onOnline);
-
     return () => {
-      clearInterval(intervalId.current);
-      timers.current.forEach(clearTimeout);
-      timers.current = [];
+      if (intervalId.current) clearInterval(intervalId.current);
       onVisibilityChange.cancel();
       onFocus.cancel();
       onOnline.cancel();
