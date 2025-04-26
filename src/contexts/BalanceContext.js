@@ -47,11 +47,9 @@ const FALLBACK_PRICES = Object.fromEntries(
   Object.keys(TOKEN_IDS).map((k) => [k, { usd: 0, eur: 0 }])
 );
 
-const BALANCE_KEY = "nordbalticum_balances";
-const PRICE_KEY = "nordbalticum_prices";
-const PRICE_TTL = 30_000; // 30 sec
-
+const PRICE_TTL = 30_000; // 30 seconds
 const BalanceContext = createContext(null);
+
 export const useBalance = () => useContext(BalanceContext);
 
 export function BalanceProvider({ children }) {
@@ -59,7 +57,8 @@ export function BalanceProvider({ children }) {
 
   const [balances, setBalances] = useState({});
   const [prices, setPrices] = useState(FALLBACK_PRICES);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true);       // Realus full loading
+  const [balancesReady, setBalancesReady] = useState(false); // Ar jau pilnai balance'ai pakrauti
   const [lastUpdated, setLastUpdated] = useState(null);
 
   const lastPriceFetch = useRef(0);
@@ -68,11 +67,13 @@ export function BalanceProvider({ children }) {
     const map = {};
     for (const net of networks) {
       map[net.value] = new FallbackProvider(
-        net.rpcUrls.map((url) => new JsonRpcProvider(url)), 1
+        net.rpcUrls.map((url) => new JsonRpcProvider(url)),
+        1
       );
       if (net.testnet) {
         map[net.testnet.value] = new FallbackProvider(
-          net.testnet.rpcUrls.map((url) => new JsonRpcProvider(url)), 1
+          net.testnet.rpcUrls.map((url) => new JsonRpcProvider(url)),
+          1
         );
       }
     }
@@ -93,7 +94,7 @@ export function BalanceProvider({ children }) {
         try {
           const raw = await provider.getBalance(addr, "latest");
           out[key] = parseFloat(ethers.formatEther(raw));
-        } catch (err) {
+        } catch {
           out[key] = balances[key] ?? 0;
         }
       })
@@ -109,12 +110,14 @@ export function BalanceProvider({ children }) {
       const res = await fetch(`/api/prices?ids=${coingeckoIds}`, { cache: "no-store" });
       const data = await res.json();
       const out = {};
+
       for (const [sym, id] of Object.entries(TOKEN_IDS)) {
         out[sym] = {
           usd: data[id]?.usd ?? 0,
           eur: data[id]?.eur ?? 0,
         };
       }
+
       lastPriceFetch.current = now;
       return out;
     } catch {
@@ -134,22 +137,27 @@ export function BalanceProvider({ children }) {
     setLoading(false);
   }, [fetchBalances, fetchPrices]);
 
+  // Pradinis inicialinis load
   useEffect(() => {
     if (!authLoading && !walletLoading && wallet?.wallet?.address) {
-      fetchAll();
+      fetchAll().then(() => {
+        setBalancesReady(true);
+      });
     }
   }, [authLoading, walletLoading, wallet, fetchAll]);
 
+  // Background silent polling kas 30 sek
   useEffect(() => {
     const interval = setInterval(fetchAll, 30_000);
-    const onVisible = debounce(() => {
+    const onVis = debounce(() => {
       if (document.visibilityState === "visible") fetchAll();
     }, 300);
-    document.addEventListener("visibilitychange", onVisible);
+
+    document.addEventListener("visibilitychange", onVis);
     return () => {
       clearInterval(interval);
-      onVisible.cancel();
-      document.removeEventListener("visibilitychange", onVisible);
+      onVis.cancel();
+      document.removeEventListener("visibilitychange", onVis);
     };
   }, [fetchAll]);
 
@@ -162,6 +170,7 @@ export function BalanceProvider({ children }) {
         balances,
         prices,
         loading,
+        balancesReady,
         lastUpdated,
         getUsdBalance,
         getEurBalance,
