@@ -1,209 +1,130 @@
-/* BalanceCard.module.css */
+/* balancecard.module.css */
 
-/* ─── Card Container ───────────────────────────────────────── */
+/* Main card wrapper */
 .cardWrapper {
-  width: 100%;
-  max-width: 900px;
-  margin: 0 auto;
-  background: rgba(0, 0, 0, 0.3);
-  backdrop-filter: blur(12px) saturate(150%);
-  border-radius: 16px;
-  padding: 24px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
-  color: #fff;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  background: var(--panel-bg);
+  border-radius: var(--panel-radius);
+  padding: var(--spacing-md);
+  box-shadow: var(--panel-shadow);
+  backdrop-filter: var(--panel-blur);
+  animation: fadeIn 0.5s ease both;
 }
 
-/* ─── Toggle Tabs ──────────────────────────────────────────── */
+/* Toggle buttons wrapper */
 .toggleWrapper {
   display: flex;
-  gap: 12px;
+  justify-content: center;
+  margin-bottom: var(--spacing-md);
+  gap: var(--spacing-sm);
 }
+
+/* Toggle buttons */
 .toggleButton {
-  flex: 1;
-  padding: 10px 0;
-  border: none;
-  border-radius: 12px;
-  background: #222;
-  color: #aaa;
-  font-weight: 500;
+  padding: 8px 16px;
+  border-radius: var(--btn-radius);
+  border: 1px solid var(--border-color);
+  background: transparent;
+  color: var(--text-sub);
+  font-size: 0.9rem;
   cursor: pointer;
-  transition: background 0.2s, color 0.2s;
+  transition: background 0.3s, color 0.3s, border 0.3s;
 }
+
 .toggleButton:hover {
-  background: #333;
+  background: var(--btn-hover-bg);
+  border-color: var(--accent-color);
+  color: var(--text-main);
 }
-.toggleButton.active {
-  background: #555;
+
+/* Active toggle */
+.active {
+  background: var(--accent-color);
   color: #fff;
+  border-color: var(--accent-color);
 }
 
-/* ─── Balances List ────────────────────────────────────────── */
+/* List of balances */
 .list {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 12px;
-}
-@media (min-width: 768px) {
-  .list {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 16px;
-  }
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
 }
 
-/* ─── Individual Item ──────────────────────────────────────── */
+/* Single list item */
 .listItem {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 16px;
-  background: rgba(255, 255, 255, 0.08);
-  border-radius: 12px;
-  transition: background 0.2s;
-}
-.listItem:hover {
-  background: rgba(255, 255, 255, 0.12);
+  padding: var(--spacing-sm) 0;
+  border-bottom: 1px solid var(--border-light);
 }
 
-/* network icon + label */
+/* Total row */
+.totalRow {
+  margin-top: var(--spacing-lg);
+  font-weight: bold;
+  color: var(--text-main);
+}
+
+/* Left (network) info */
 .networkInfo {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--spacing-sm);
 }
-.networkInfo img,
-.networkIcon {
-  width: 32px;
-  height: 32px;
-  object-fit: contain;
-}
+
+/* Network label */
 .networkLabel {
-  font-weight: 600;
   font-size: 1rem;
+  color: var(--text-main);
 }
 
-/* amount section */
+/* Right (amount) info */
 .amountInfo {
-  text-align: right;
-  min-width: 100px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
 }
+
+/* Crypto balance */
 .cryptoAmount {
-  font-family: var(--font-mono, monospace);
-  font-size: 1rem;
-  color: #fff;
-}
-.fiatAmount {
-  font-size: 0.875rem;
-  color: #ccc;
-  margin-top: 2px;
-}
-
-/* ─── Shimmer Placeholder ─────────────────────────────────── */
-@keyframes shimmer {
-  0% {
-    background-position: -200px 0;
-  }
-  100% {
-    background-position: 200px 0;
-  }
-}
-.shimmerTextSmall {
-  display: inline-block;
-  width: 80px;
-  height: 10px;
-  border-radius: 4px;
-  background: #444;
-  background-image: linear-gradient(
-    90deg,
-    #444 0px,
-    #555 40px,
-    #444 80px
-  );
-  background-size: 200px 100%;
-  animation: shimmer 1.2s infinite linear;
-}
-
-/* ─── Total Row ───────────────────────────────────────────── */
-.totalRow {
-  border-top: 1px solid rgba(255, 255, 255, 0.2);
-  margin-top: 8px;
-  padding-top: 12px;
-}
-.totalRow .networkLabel {
-  font-size: 1rem;
-  font-weight: 700;
-}
-.totalRow .fiatAmount {
-  font-size: 1rem;
-  color: #fff;
-}
-
-/* ─── Crypto News Pane ────────────────────────────────────── */
-.newsSection {
-  margin-top: 16px;
-  padding-top: 16px;
-  border-top: 1px solid rgba(255, 255, 255, 0.2);
-}
-.newsTitle {
-  margin: 0 0 12px;
   font-size: 1.1rem;
-  font-weight: 600;
-  color: #fff;
-}
-.newsLoading {
-  font-size: 0.9rem;
-  color: #ccc;
-}
-.newsList {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  max-height: 200px;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.newsItem {
-  /* each item: title + date */
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-.newsItem a {
-  color: #aad;
-  text-decoration: none;
-  font-size: 0.95rem;
-  transition: color 0.2s;
-}
-.newsItem a:hover {
-  color: #fff;
-}
-.newsItem small {
-  color: #888;
-  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-main);
 }
 
-/* scrollbar styling for newsList */
-.newsList::-webkit-scrollbar {
-  width: 6px;
-}
-.newsList::-webkit-scrollbar-thumb {
-  background: rgba(255,255,255,0.2);
-  border-radius: 3px;
+/* Fiat balance */
+.fiatAmount {
+  font-size: 0.85rem;
+  color: var(--text-sub);
 }
 
-/* ─── Responsive Adjustments ──────────────────────────────── */
-@media (max-width: 480px) {
-  .cardWrapper {
-    padding: 16px;
-  }
-  .cryptoAmount {
-    font-size: 0.9rem;
-  }
-  .fiatAmount {
-    font-size: 0.75rem;
-  }
+/* Shimmer loading placeholder */
+.shimmerSmall {
+  display: inline-block;
+  height: 1em;
+  width: 6ch;
+  background: linear-gradient(
+    90deg,
+    var(--shimmer-light) 25%,
+    var(--shimmer-mid) 37%,
+    var(--shimmer-light) 63%
+  );
+  background-size: 400% 100%;
+  animation: shimmer 1.4s ease infinite;
+  border-radius: 4px;
+}
+
+/* Fade-in animation */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Shimmer animation */
+@keyframes shimmer {
+  0% { background-position: -400% 0; }
+  100% { background-position: 400% 0; }
 }
