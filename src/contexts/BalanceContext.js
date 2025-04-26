@@ -159,18 +159,19 @@ export function BalanceProvider({ children }) {
   }, [authLoading, walletLoading, wallet, fetchAll]);
 
   useEffect(() => {
-    const interval = setInterval(fetchAll, 30_000);
-    const onVisible = debounce(() => {
-      if (document.visibilityState === "visible") fetchAll();
-    }, 300);
-    document.addEventListener("visibilitychange", onVis);
-    return () => {
-      clearInterval(interval);
-      onVisible.cancel();
-      document.removeEventListener("visibilitychange", onVis);
-    };
-  }, [fetchAll]);
+  const interval = setInterval(fetchAll, 30_000);
+  const onVisible = debounce(() => {
+    if (document.visibilityState === "visible") fetchAll();
+  }, 300);
 
+  document.addEventListener("visibilitychange", onVisible);
+  return () => {
+    clearInterval(interval);
+    onVisible.cancel();
+    document.removeEventListener("visibilitychange", onVisible);
+  };
+}, [fetchAll]);
+  
   const getUsdBalance = (key) => (balances[key] || 0) * (prices[key]?.usd || 0);
   const getEurBalance = (key) => (balances[key] || 0) * (prices[key]?.eur || 0);
 
