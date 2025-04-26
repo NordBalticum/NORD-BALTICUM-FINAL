@@ -9,14 +9,13 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { ethers } from "ethers";
 import debounce from "lodash.debounce";
-
 import networks from "@/data/networks";
 import { getProviderForChain } from "@/utils/getProviderForChain";
 
-// ── CoinGecko slugs ───────────────────────────────────────────
+// patikslinti slug’ai
 const TOKEN_IDS = {
   eth:              "ethereum",
-  matic:            "polygon-pos",       // corrected!
+  matic:            "polygon-pos",
   bnb:              "binancecoin",
   avax:             "avalanche-2",
   optimism:         "optimism",
@@ -28,7 +27,6 @@ const TOKEN_IDS = {
   mantle:           "mantle",
   celo:             "celo",
   gnosis:           "xdai",
-  // testnets → mainnet slugs
   sepolia:          "ethereum",
   mumbai:           "polygon-pos",
   tbnb:             "binancecoin",
@@ -56,49 +54,38 @@ export const useBalance = () => useContext(BalanceContext);
 
 export function BalanceProvider({ children }) {
   const { wallet, authLoading, walletLoading } = useAuth();
-
   const [balances, setBalances] = useState({});
   const [prices,   setPrices]   = useState(FALLBACK_PRICES);
   const [loading,  setLoading]  = useState(true);
-  const [error,    setError]    = useState(null);
+  const lastBalances = useRef({});
+  const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
+  const load = k => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : null; } catch { return null; } };
 
-  const lastBalances   = useRef({});
-  const lastFetchTime  = useRef(0);
-
-  // localStorage helpers
-  const save = (k,v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch{} };
-  const load = k => {
-    try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : null; }
-    catch { return null; }
-  };
-
-  // 1) providers for each chain
+  // providers
   const providers = useMemo(() => {
     const m = {};
     for (const net of networks) {
       m[net.value] = getProviderForChain(net.chainId);
-      if (net.testnet) {
-        m[net.testnet.value] = getProviderForChain(net.testnet.chainId);
-      }
+      if (net.testnet) m[net.testnet.value] = getProviderForChain(net.testnet.chainId);
     }
     return m;
   }, []);
 
-  // 2) unique list for CG
+  // CoinGecko query
   const coingeckoQuery = useMemo(
     () => Array.from(new Set(Object.values(TOKEN_IDS))).join(","),
     []
   );
 
-  // 3a) on‐chain balances
+  // on-chain balances
   const fetchBalances = useCallback(async () => {
-    const addr = wallet?.wallet?.address;
-    if (!addr) return;
+    if (!wallet?.wallet?.address) return;
+    const addr = wallet.wallet.address;
     const entries = await Promise.all(
       Object.entries(providers).map(async ([key, prov]) => {
         try {
-          const v = await prov.getBalance(addr);
-          return [key, parseFloat(ethers.formatEther(v))];
+          const raw = await prov.getBalance(addr);
+          return [key, parseFloat(ethers.formatEther(raw))];
         } catch {
           return [key, lastBalances.current[key] ?? 0];
         }
@@ -110,84 +97,59 @@ export function BalanceProvider({ children }) {
     save(BALANCE_KEY, nb);
   }, [wallet, providers]);
 
-  // 3b) CG prices
+  // fiat prices
   const fetchPrices = useCallback(async () => {
     try {
       const resp = await fetch(
         `https://api.coingecko.com/api/v3/simple/price?ids=${coingeckoQuery}&vs_currencies=usd,eur`,
         { cache: "no-store" }
       );
-      const j = await resp.json();
+      const json = await resp.json();
       const pd = {};
       for (const [sym, id] of Object.entries(TOKEN_IDS)) {
         pd[sym] = {
-          usd: j[id]?.usd ?? FALLBACK_PRICES[sym].usd,
-          eur: j[id]?.eur ?? FALLBACK_PRICES[sym].eur,
+          usd: json[id]?.usd  ?? FALLBACK_PRICES[sym].usd,
+          eur: json[id]?.eur  ?? FALLBACK_PRICES[sym].eur,
         };
       }
       setPrices(pd);
       save(PRICE_KEY, pd);
     } catch (e) {
-      console.error("CoinGecko fetch failed:", e);
+      console.error("❌ CoinGecko fetch failed:", e);
     }
   }, [coingeckoQuery]);
 
-  // 4) run both
+  // run both
   const fetchAll = useCallback(async () => {
     setLoading(true);
-    setError(null);
-    try {
-      await Promise.all([fetchBalances(), fetchPrices()]);
-    } catch (e) {
-      setError(e.message);
-    } finally {
-      setLoading(false);
-      lastFetchTime.current = Date.now();
-    }
+    await Promise.all([fetchBalances(), fetchPrices()]);
+    setLoading(false);
   }, [fetchBalances, fetchPrices]);
 
-  // 5) hydrate cache
+  // hydrate cache
   useEffect(() => {
     const cb = load(BALANCE_KEY), cp = load(PRICE_KEY);
     if (cb) { setBalances(cb); lastBalances.current = cb; }
     if (cp) setPrices(cp);
   }, []);
 
-  // 6) initial fetch
+  // initial & poll
   useEffect(() => {
     if (!authLoading && !walletLoading) fetchAll();
   }, [authLoading, walletLoading, fetchAll]);
 
-  // 7) poll every 30s
   useEffect(() => {
-    if (!wallet?.wallet?.address) return;
     const iv = setInterval(fetchAll, 30_000);
     return () => clearInterval(iv);
-  }, [wallet, fetchAll]);
-
-  // 8) refetch on focus/online
-  useEffect(() => {
-    const onVis = debounce(() => { if (document.visibilityState==="visible") fetchAll(); }, 500);
-    const onOnl = debounce(fetchAll, 500);
-    document.addEventListener("visibilitychange", onVis);
-    window.addEventListener("online", onOnl);
-    return () => {
-      onVis.cancel(); onOnl.cancel();
-      document.removeEventListener("visibilitychange", onVis);
-      window.removeEventListener("online", onOnl);
-    };
   }, [fetchAll]);
 
-  // 9) helpers
-  const getUsdBalance = useCallback((net) => {
-    const b = balances[net] ?? lastBalances.current[net] ?? 0;
-    const p = prices[net]?.usd ?? 0;
+  // usd/eur helpers
+  const getUsdBalance = useCallback(net => {
+    const b = balances[net] ?? 0, p = prices[net]?.usd ?? 0;
     return (b * p).toFixed(2);
   }, [balances, prices]);
-
-  const getEurBalance = useCallback((net) => {
-    const b = balances[net] ?? lastBalances.current[net] ?? 0;
-    const p = prices[net]?.eur ?? 0;
+  const getEurBalance = useCallback(net => {
+    const b = balances[net] ?? 0, p = prices[net]?.eur ?? 0;
     return (b * p).toFixed(2);
   }, [balances, prices]);
 
@@ -196,7 +158,6 @@ export function BalanceProvider({ children }) {
       balances,
       prices,
       loading,
-      error,
       getUsdBalance,
       getEurBalance,
       refetch: fetchAll,
