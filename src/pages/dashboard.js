@@ -18,7 +18,7 @@ const LivePriceTable = dynamic(() => import("@/components/LivePriceTable"), { ss
 export default function Dashboard() {
   const { ready, isMobile } = useSystemReady();
   useSessionManager();
-  
+
   const { user, wallet } = useAuth();
   const { balancesReady, lastUpdated } = useBalance();
 
@@ -29,12 +29,12 @@ export default function Dashboard() {
   ), [address]);
 
   const updatedAt = useMemo(() => {
-    if (!lastUpdated) return "--";
+    if (!lastUpdated) return "--:--:--";
     const d = new Date(lastUpdated);
     return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
   }, [lastUpdated]);
 
-  // Kol NE ready + NE balances paruošti → rodom pilną spinnerį
+  // Kol NE ready arba balances NE ready, rodom loader
   if (!ready || !wallet?.wallet?.address || !balancesReady) {
     return (
       <main className={styles.container}>
@@ -55,7 +55,7 @@ export default function Dashboard() {
     );
   }
 
-  // Final dashboard
+  // Kai sistema pilnai paruošta
   return (
     <main className={styles.container}>
       <div className={styles.dashboardWrapper}>
@@ -75,10 +75,10 @@ export default function Dashboard() {
           </p>
         </motion.div>
 
-        {/* Main Dashboard */}
+        {/* Main Row */}
         <div className={styles.dashboardRow}>
 
-          {/* Left side - BalanceCard */}
+          {/* Left: BalanceCard */}
           <motion.div
             className={styles.balanceSection}
             initial={{ opacity: 0, y: 20 }}
@@ -87,11 +87,11 @@ export default function Dashboard() {
           >
             <BalanceCard />
             <div className={styles.footerInfo}>
-              <>Last updated: {updatedAt}</>
+              Last updated: {updatedAt}
             </div>
           </motion.div>
 
-          {/* Right side - LivePriceTable */}
+          {/* Right: LivePriceTable */}
           <motion.div
             className={styles.chartSection}
             initial={{ opacity: 0, y: 20 }}
