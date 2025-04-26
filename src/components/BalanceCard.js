@@ -7,9 +7,10 @@ import networks from "@/data/networks";
 import styles from "./balancecard.module.css";
 
 export default function BalanceCard() {
-  const { balances, prices, balancesReady } = useBalance();
+  const { balances, prices, balancesReady, loading } = useBalance();
   const [showTestnets, setShowTestnets] = useState(false);
 
+  // Available networks (depending on toggle)
   const availableNetworks = useMemo(() => {
     return networks
       .map((net) => (showTestnets && net.testnet ? net.testnet : net))
@@ -41,7 +42,8 @@ export default function BalanceCard() {
     );
   }, [availableNetworks, balances, prices]);
 
-  if (!balancesReady) {
+  if (!balancesReady && loading) {
+    // Show a cleaner loading state without shimmer
     return (
       <div className={styles.cardWrapper}>
         <div className={styles.loadingState}>
@@ -54,7 +56,7 @@ export default function BalanceCard() {
   return (
     <div className={styles.cardWrapper}>
       
-      {/* Toggle */}
+      {/* Toggle Mainnets/Testnets */}
       <div className={styles.toggleWrapper} role="tablist">
         <button
           role="tab"
@@ -74,7 +76,7 @@ export default function BalanceCard() {
         </button>
       </div>
 
-      {/* Balance List */}
+      {/* List of Balances */}
       <div className={styles.list}>
         {availableNetworks.map((net) => {
           const balance = balances[net.value] ?? 0;
