@@ -167,14 +167,15 @@ export function BalanceProvider({ children }) {
   }, [fetchAll]);
 
   // ── 8) Helpers to get USD/EUR values ────────────────────────
-  const getUsdBalance = useCallback(
-    (net) => ((balances[net] ?? 0) * (prices[net]?.usd ?? 0)).toFixed(2),
-    [balances, prices]
-  );
-  const getEurBalance = useCallback(
-    (net) => ((balances[net] ?? 0) * (prices[net]?.eur ?? 0)).toFixed(2),
-    [balances, prices]
-  );
+  const getUsdBalance = (networkKey) => {
+  const val = balances[networkKey]?.usd;
+  return val ? parseFloat(val) : 0;
+};
+
+const getEurBalance = (networkKey) => {
+  const val = balances[networkKey]?.eur;
+  return val ? parseFloat(val) : 0;
+};
 
   return (
     <BalanceContext.Provider
