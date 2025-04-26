@@ -10,22 +10,27 @@ export default function BalanceCard() {
   const { balances, loading, getUsdBalance, getEurBalance } = useBalance();
   const [showTestnets, setShowTestnets] = useState(false);
 
+  // Prepare visible networks (mainnets or testnets)
   const items = useMemo(() => {
     return networks
       .map((net) => (showTestnets && net.testnet ? net.testnet : net))
       .filter(Boolean);
   }, [showTestnets]);
 
-  const fmtCrypto = (n) => Number(n || 0).toLocaleString(undefined, {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 6,
-  });
+  // Formatters
+  const fmtCrypto = (n) =>
+    Number(n || 0).toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 6,
+    });
 
-  const fmtFiat = (n) => Number(n || 0).toLocaleString(undefined, {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
+  const fmtFiat = (n) =>
+    Number(n || 0).toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
 
+  // Calculate total balances
   const { totalUsd, totalEur } = useMemo(() => {
     return items.reduce(
       (acc, net) => {
@@ -39,8 +44,7 @@ export default function BalanceCard() {
 
   return (
     <div className={styles.cardWrapper}>
-      
-      {/* Toggle: Mainnets / Testnets */}
+      {/* Toggle buttons */}
       <div role="tablist" className={styles.toggleWrapper}>
         <button
           role="tab"
@@ -60,7 +64,7 @@ export default function BalanceCard() {
         </button>
       </div>
 
-      {/* Balances List */}
+      {/* List of networks */}
       <div className={styles.list}>
         {items.map((net) => {
           const balance = balances[net.value] ?? 0;
@@ -79,7 +83,6 @@ export default function BalanceCard() {
                 />
                 <span className={styles.networkLabel}>{net.label}</span>
               </div>
-
               <div className={styles.amountInfo}>
                 <div className={styles.cryptoAmount}>
                   {fmtCrypto(balance)}
@@ -98,13 +101,13 @@ export default function BalanceCard() {
           );
         })}
 
-        {/* TOTAL Row */}
+        {/* Total */}
         <div className={`${styles.listItem} ${styles.totalRow}`}>
           <div className={styles.networkInfo}>
             <span className={styles.networkLabel}>Total</span>
           </div>
           <div className={styles.amountInfo}>
-            <div className={styles.cryptoAmount}></div>
+            <div className={styles.cryptoAmount} />
             <div className={styles.fiatAmount}>
               {loading ? (
                 <span className={styles.shimmerSmall} />
