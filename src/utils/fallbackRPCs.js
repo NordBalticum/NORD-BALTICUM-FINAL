@@ -16,8 +16,8 @@ export const fallbackRPCs = {
   },
   matic: {
     key: "matic",
-    label: "Polygon",
-    icon: "/icons/polygon.svg",
+    label: "Matic",
+    icon: "/icons/matic.svg",
     chainId: 137,
     isTestnet: false,
     rpcs: [
@@ -101,7 +101,7 @@ export const fallbackRPCs = {
   mumbai: {
     key: "mumbai",
     label: "Mumbai",
-    icon: "/icons/polygon.svg",
+    icon: "/icons/matic.svg",
     chainId: 80001,
     isTestnet: true,
     rpcs: [
