@@ -13,13 +13,12 @@ import BalanceCard from "@/components/BalanceCard";
 import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
 import styles from "@/styles/dashboard.module.css";
 
-// Lazy-load LivePriceTable without SSR
 const LivePriceTable = dynamic(() => import("@/components/LivePriceTable"), {
   ssr: false,
 });
 
 export default function Dashboard() {
-  const { ready, isMobile } = useSystemReady();
+  const { ready } = useSystemReady(); // ⬅️ TIK ready destructurinam
   const { user, wallet } = useAuth();
   const { loading: balLoading, refetch, lastUpdated } = useBalance();
 
@@ -33,6 +32,14 @@ export default function Dashboard() {
     const d = new Date(lastUpdated);
     return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
   }, [lastUpdated]);
+
+  // Corrected local isMobile detection
+  const isMobile = useMemo(() => {
+    if (typeof window !== "undefined") {
+      return /Mobi|Android|iPhone/i.test(navigator.userAgent);
+    }
+    return false;
+  }, []);
 
   if (!ready || !wallet?.wallet?.address) {
     return (
