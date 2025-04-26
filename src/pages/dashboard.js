@@ -13,10 +13,11 @@ import BalanceCard from "@/components/BalanceCard";
 import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
 import styles from "@/styles/dashboard.module.css";
 
+// Lazy-load LivePriceTable without SSR
 const LivePriceTable = dynamic(() => import("@/components/LivePriceTable"), { ssr: false });
 
 export default function Dashboard() {
-  const { ready, isMobile } = useSystemReady(); // ✅
+  const { ready, isMobile } = useSystemReady(); 
   const { user, wallet } = useAuth();
   const { loading: balLoading, refetch, lastUpdated } = useBalance();
 
@@ -28,7 +29,11 @@ export default function Dashboard() {
   const updatedAt = useMemo(() => {
     if (!lastUpdated) return "";
     const date = new Date(lastUpdated);
-    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+    return date.toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    });
   }, [lastUpdated]);
 
   if (!ready || !wallet?.wallet?.address) {
@@ -59,7 +64,7 @@ export default function Dashboard() {
         <div className={styles.topBar}>
           <div>
             <h2 className={styles.greeting}>
-              Hello, {user?.email?.split("@")[0] || "User"}!
+              Hello, {user?.email?.split("@")[0] ?? "User"}!
             </h2>
             <p className={styles.walletInfo}>
               {truncatedAddress}
@@ -75,10 +80,10 @@ export default function Dashboard() {
           </button>
         </div>
 
-        {/* Dashboard Main Row */}
+        {/* Main Dashboard */}
         <div className={styles.dashboardRow}>
           
-          {/* Live Chart Section */}
+          {/* Left Side: Live Chart */}
           <motion.div
             className={styles.chartSection}
             initial={{ opacity: 0, y: 20 }}
@@ -90,7 +95,7 @@ export default function Dashboard() {
             </Suspense>
           </motion.div>
 
-          {/* Balance Section */}
+          {/* Right Side: BalanceCard */}
           <motion.div
             className={styles.balanceSection}
             initial={{ opacity: 0, y: 20 }}
@@ -108,6 +113,7 @@ export default function Dashboard() {
           </motion.div>
 
         </div>
+
       </div>
     </main>
   );
