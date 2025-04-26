@@ -47,7 +47,7 @@ const FALLBACK_PRICES = Object.fromEntries(
   Object.keys(TOKEN_IDS).map((k) => [k, { usd: 0, eur: 0 }])
 );
 
-const PRICE_TTL = 30_000; // 30 seconds
+const PRICE_TTL = 30_000;
 const BalanceContext = createContext(null);
 
 export const useBalance = () => useContext(BalanceContext);
@@ -57,22 +57,23 @@ export function BalanceProvider({ children }) {
 
   const [balances, setBalances] = useState({});
   const [prices, setPrices] = useState(FALLBACK_PRICES);
-  const [loading, setLoading] = useState(true);       // Realus full loading
-  const [balancesReady, setBalancesReady] = useState(false); // Ar jau pilnai balance'ai pakrauti
+  const [loading, setLoading] = useState(true);
+  const [balancesReady, setBalancesReady] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(null);
 
   const lastPriceFetch = useRef(0);
+  const badRpcTracker = useRef({}); // 🛡️ Neveikiantys RPC trackeris
 
   const providers = useMemo(() => {
     const map = {};
     for (const net of networks) {
       map[net.value] = new FallbackProvider(
-        net.rpcUrls.map((url) => new JsonRpcProvider(url)),
+        net.rpcUrls.map(url => new JsonRpcProvider(url)),
         1
       );
       if (net.testnet) {
         map[net.testnet.value] = new FallbackProvider(
-          net.testnet.rpcUrls.map((url) => new JsonRpcProvider(url)),
+          net.testnet.rpcUrls.map(url => new JsonRpcProvider(url)),
           1
         );
       }
@@ -88,14 +89,26 @@ export function BalanceProvider({ children }) {
     const addr = wallet?.wallet?.address;
     if (!addr) return {};
 
-    const out = {};
+    const out = { ...balances }; // 🔥 Iš karto turim fallback
     await Promise.all(
       Object.entries(providers).map(async ([key, provider]) => {
+        if (badRpcTracker.current[key]?.blocked) {
+          return; // Skip blogą tinklą
+        }
         try {
           const raw = await provider.getBalance(addr, "latest");
           out[key] = parseFloat(ethers.formatEther(raw));
-        } catch {
-          out[key] = balances[key] ?? 0;
+          badRpcTracker.current[key] = { fails: 0, blocked: false };
+        } catch (err) {
+          console.warn(`[BalanceContext] RPC fail for ${key}:`, err?.message || err);
+          // Įskaičiuojam fail'ą
+          const current = badRpcTracker.current[key] || { fails: 0, blocked: false };
+          current.fails += 1;
+          if (current.fails >= 3) {
+            current.blocked = true;
+            console.error(`[BalanceContext] RPC ${key} blocked after 3 fails 🚫`);
+          }
+          badRpcTracker.current[key] = current;
         }
       })
     );
@@ -137,7 +150,6 @@ export function BalanceProvider({ children }) {
     setLoading(false);
   }, [fetchBalances, fetchPrices]);
 
-  // Pradinis inicialinis load
   useEffect(() => {
     if (!authLoading && !walletLoading && wallet?.wallet?.address) {
       fetchAll().then(() => {
@@ -146,17 +158,15 @@ export function BalanceProvider({ children }) {
     }
   }, [authLoading, walletLoading, wallet, fetchAll]);
 
-  // Background silent polling kas 30 sek
   useEffect(() => {
     const interval = setInterval(fetchAll, 30_000);
-    const onVis = debounce(() => {
+    const onVisible = debounce(() => {
       if (document.visibilityState === "visible") fetchAll();
     }, 300);
-
     document.addEventListener("visibilitychange", onVis);
     return () => {
       clearInterval(interval);
-      onVis.cancel();
+      onVisible.cancel();
       document.removeEventListener("visibilitychange", onVis);
     };
   }, [fetchAll]);
