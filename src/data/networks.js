@@ -1,8 +1,12 @@
 // src/data/networks.js
+"use client";
+
 const ANKR = "https://rpc.ankr.com";
 const ANKR_KEY = process.env.NEXT_PUBLIC_ANKR_KEY || "";
 const withAnkr = (path) =>
-  ANKR_KEY ? `${ANKR}/${path}/${ANKR_KEY}` : `${ANKR}/${path}`;
+  ANKR_KEY
+    ? `${ANKR}/${path}?apikey=${ANKR_KEY}`
+    : `${ANKR}/${path}`;
 
 export default [
   {
