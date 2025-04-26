@@ -17,19 +17,20 @@ import styles from "@/styles/dashboard.module.css";
 const LivePriceTable = dynamic(() => import("@/components/LivePriceTable"), { ssr: false });
 
 export default function Dashboard() {
-  const { ready, isMobile } = useSystemReady(); 
+  const { ready, isMobile } = useSystemReady();
   const { user, wallet } = useAuth();
   const { loading: balLoading, refetch, lastUpdated } = useBalance();
 
   const address = wallet?.wallet?.address ?? "";
+
   const truncatedAddress = useMemo(() => (
     address ? `${address.slice(0, 6)}…${address.slice(-4)}` : ""
   ), [address]);
 
   const updatedAt = useMemo(() => {
     if (!lastUpdated) return "";
-    const date = new Date(lastUpdated);
-    return date.toLocaleTimeString([], {
+    const d = new Date(lastUpdated);
+    return d.toLocaleTimeString([], {
       hour: "2-digit",
       minute: "2-digit",
       second: "2-digit",
@@ -80,10 +81,10 @@ export default function Dashboard() {
           </button>
         </div>
 
-        {/* Main Dashboard */}
+        {/* Main Dashboard Row */}
         <div className={styles.dashboardRow}>
-          
-          {/* Left Side: Live Chart */}
+
+          {/* Left Column: Live Chart */}
           <motion.div
             className={styles.chartSection}
             initial={{ opacity: 0, y: 20 }}
@@ -95,7 +96,7 @@ export default function Dashboard() {
             </Suspense>
           </motion.div>
 
-          {/* Right Side: BalanceCard */}
+          {/* Right Column: BalanceCard */}
           <motion.div
             className={styles.balanceSection}
             initial={{ opacity: 0, y: 20 }}
