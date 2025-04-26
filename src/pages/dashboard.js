@@ -79,7 +79,7 @@ export default function Dashboard() {
             disabled={balLoading}
             aria-label="Refresh balances"
           >
-            <FiRefreshCw className={(balLoading || refreshing) ? styles.spin : undefined} />
+            <FiRefreshCw className={(balLoading || userTriggeredRefresh) ? styles.spin : undefined} />
           </button>
         </div>
 
