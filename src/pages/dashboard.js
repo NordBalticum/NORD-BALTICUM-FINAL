@@ -6,6 +6,9 @@ import { motion } from "framer-motion";
 
 import { useSystemReady } from "@/hooks/useSystemReady";
 import { useSessionManager } from "@/hooks/useSessionManager";
+import { useSilentBalanceRefetch } from "@/hooks/useSilentBalanceRefetch";
+import { useDeviceInfo } from "@/hooks/useDeviceInfo";
+
 import { useAuth } from "@/contexts/AuthContext";
 import { useBalance } from "@/contexts/BalanceContext";
 
@@ -13,30 +16,35 @@ import BalanceCard from "@/components/BalanceCard";
 import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
 import styles from "@/styles/dashboard.module.css";
 
-// Dynamic import for LivePriceTable (no SSR crash risk)
+// Dynamic import for LivePriceTable
 const LivePriceTable = dynamic(() => import("@/components/LivePriceTable"), { ssr: false });
 
 export default function Dashboard() {
-  const { ready, isMobile } = useSystemReady();
-  useSessionManager(); // 🔥 Auto-refresh auth session
-  
+  const { ready } = useSystemReady();
+  const { isMobile } = useDeviceInfo(); // 🔥 Ultimate mobile detection
+  useSessionManager();                  // 🔥 Session auto-refresh
+  useSilentBalanceRefetch();            // 🔥 Silent background refetch
+
   const { user, wallet } = useAuth();
   const { balancesReady, lastUpdated } = useBalance();
 
-  const address = wallet?.wallet?.address ?? "";
+  const address = wallet?.wallet?.address ?? null;
 
-  const truncatedAddress = useMemo(() => (
-    address ? `${address.slice(0, 6)}…${address.slice(-4)}` : "--"
-  ), [address]);
+  const truncatedAddress = useMemo(() => {
+    return address ? `${address.slice(0, 6)}…${address.slice(-4)}` : "--";
+  }, [address]);
 
   const updatedAt = useMemo(() => {
     if (!lastUpdated) return "--:--:--";
     const d = new Date(lastUpdated);
-    return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+    return d.toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit"
+    });
   }, [lastUpdated]);
 
-  // Ar rodyti loaderį?
-  const isLoading = !ready || !wallet?.wallet?.address || !balancesReady;
+  const isLoading = !ready || !balancesReady || !address;
 
   if (isLoading) {
     return (
@@ -65,7 +73,7 @@ export default function Dashboard() {
         {/* Top Greeting */}
         <motion.div
           className={styles.greetingWrapper}
-          initial={{ opacity: 0, y: -8 }}
+          initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15 }}
         >
@@ -77,10 +85,10 @@ export default function Dashboard() {
           </p>
         </motion.div>
 
-        {/* Main Dashboard Row */}
+        {/* Main Content Row */}
         <div className={styles.dashboardRow}>
 
-          {/* Left - Balances */}
+          {/* Left - Balance Card */}
           <motion.div
             className={styles.balanceSection}
             initial={{ opacity: 0, y: 10 }}
@@ -93,7 +101,7 @@ export default function Dashboard() {
             </div>
           </motion.div>
 
-          {/* Right - Live Prices */}
+          {/* Right - Live Price Table */}
           <motion.div
             className={styles.chartSection}
             initial={{ opacity: 0, y: 10 }}
