@@ -12,42 +12,41 @@ export default function BalanceCard() {
 
   const items = useMemo(() => {
     return networks
-      .map((n) => (showTestnets && n.testnet ? n.testnet : n))
+      .map((net) => (showTestnets && net.testnet ? net.testnet : net))
       .filter(Boolean);
   }, [showTestnets]);
 
-  const fmtCrypto = (n) =>
-    Number(n || 0).toLocaleString(undefined, {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 6,
-    });
+  const fmtCrypto = (n) => Number(n || 0).toLocaleString(undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 6,
+  });
 
-  const fmtFiat = (n) =>
-    Number(n || 0).toLocaleString(undefined, {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    });
+  const fmtFiat = (n) => Number(n || 0).toLocaleString(undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 
   const { totalUsd, totalEur } = useMemo(() => {
-    let u = 0;
-    let e = 0;
-    items.forEach((net) => {
-      u += Number(getUsdBalance(net.value)) || 0;
-      e += Number(getEurBalance(net.value)) || 0;
-    });
-    return { totalUsd: u, totalEur: e };
+    return items.reduce(
+      (acc, net) => {
+        acc.totalUsd += Number(getUsdBalance(net.value)) || 0;
+        acc.totalEur += Number(getEurBalance(net.value)) || 0;
+        return acc;
+      },
+      { totalUsd: 0, totalEur: 0 }
+    );
   }, [items, getUsdBalance, getEurBalance]);
 
   return (
     <div className={styles.cardWrapper}>
+      
+      {/* Toggle: Mainnets / Testnets */}
       <div role="tablist" className={styles.toggleWrapper}>
         <button
           role="tab"
           aria-selected={!showTestnets}
           onClick={() => setShowTestnets(false)}
-          className={`${styles.toggleButton} ${
-            !showTestnets ? styles.active : ""
-          }`}
+          className={`${styles.toggleButton} ${!showTestnets ? styles.active : ""}`}
         >
           Mainnets
         </button>
@@ -55,14 +54,13 @@ export default function BalanceCard() {
           role="tab"
           aria-selected={showTestnets}
           onClick={() => setShowTestnets(true)}
-          className={`${styles.toggleButton} ${
-            showTestnets ? styles.active : ""
-          }`}
+          className={`${styles.toggleButton} ${showTestnets ? styles.active : ""}`}
         >
           Testnets
         </button>
       </div>
 
+      {/* Balances List */}
       <div className={styles.list}>
         {items.map((net) => {
           const balance = balances[net.value] ?? 0;
@@ -100,13 +98,13 @@ export default function BalanceCard() {
           );
         })}
 
-        {/* TOTAL */}
+        {/* TOTAL Row */}
         <div className={`${styles.listItem} ${styles.totalRow}`}>
           <div className={styles.networkInfo}>
             <span className={styles.networkLabel}>Total</span>
           </div>
           <div className={styles.amountInfo}>
-            <div className={styles.cryptoAmount} />
+            <div className={styles.cryptoAmount}></div>
             <div className={styles.fiatAmount}>
               {loading ? (
                 <span className={styles.shimmerSmall} />
@@ -116,6 +114,7 @@ export default function BalanceCard() {
             </div>
           </div>
         </div>
+
       </div>
     </div>
   );
