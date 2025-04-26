@@ -1,11 +1,11 @@
 // src/data/networks.js
 "use client";
 
-const ANKR = "https://rpc.ankr.com";
-const ANKR_KEY = process.env.NEXT_PUBLIC_ANKR_KEY || "";
+const ANKR        = "https://rpc.ankr.com";
+const ANKR_KEY    = process.env.NEXT_PUBLIC_ANKR_KEY || "";
 
 /**
- * Only include Ankr URL if you have an API key.
+ * Only include an Ankr URL if you have an API key.
  */
 const maybeAnkr = (path) =>
   ANKR_KEY ? `${ANKR}/${path}?apikey=${ANKR_KEY}` : null;
@@ -25,7 +25,7 @@ const PUBLIC = {
   optimism:          "https://mainnet.optimism.io",
   "optimism-goerli": "https://optimism-goerli.publicnode.com",
   arbitrum:          "https://arb1.arbitrum.io/rpc",
-  "arbitrum-goerli": "https://goerli-rollup.arbitrum.io/rpc",
+  "arbitrum-goerli":"https://goerli-rollup.arbitrum.io/rpc",
   base:              "https://base-mainnet.public.blastapi.io",
   "base-goerli":     "https://goerli.base.org",
   zksync:            "https://mainnet.era.zksync.io",
@@ -49,13 +49,19 @@ export default [
     chainId: 1,
     icon: "/icons/eth.svg",
     min: 0.001,
-    rpcUrls: [ maybeAnkr("eth"), PUBLIC.eth ].filter(Boolean),
+    rpcUrls: [
+      maybeAnkr("eth"),
+      PUBLIC.eth
+    ].filter(Boolean),
     testnet: {
       label: "Sepolia",
       value: "sepolia",
       chainId: 11155111,
       icon: "/icons/eth.svg",
-      rpcUrls: [ maybeAnkr("eth_sepolia"), PUBLIC.sepolia ].filter(Boolean),
+      rpcUrls: [
+        maybeAnkr("eth_sepolia"),
+        PUBLIC.sepolia
+      ].filter(Boolean),
     },
   },
   {
@@ -64,13 +70,19 @@ export default [
     chainId: 137,
     icon: "/icons/matic.svg",
     min: 0.1,
-    rpcUrls: [ maybeAnkr("polygon"), PUBLIC.polygon ].filter(Boolean),
+    rpcUrls: [
+      maybeAnkr("polygon"),
+      PUBLIC.polygon
+    ].filter(Boolean),
     testnet: {
       label: "Mumbai",
       value: "mumbai",
       chainId: 80001,
       icon: "/icons/matic.svg",
-      rpcUrls: [ maybeAnkr("polygon_mumbai"), PUBLIC.mumbai ].filter(Boolean),
+      rpcUrls: [
+        maybeAnkr("polygon_mumbai"),
+        PUBLIC.mumbai
+      ].filter(Boolean),
     },
   },
   {
@@ -79,13 +91,19 @@ export default [
     chainId: 56,
     icon: "/icons/bnb.svg",
     min: 0.01,
-    rpcUrls: [ maybeAnkr("bsc"), PUBLIC.bnb ].filter(Boolean),
+    rpcUrls: [
+      maybeAnkr("bsc"),
+      PUBLIC.bnb
+    ].filter(Boolean),
     testnet: {
       label: "BNB Testnet",
       value: "tbnb",
       chainId: 97,
       icon: "/icons/bnb.svg",
-      rpcUrls: [ maybeAnkr("bsc_testnet"), PUBLIC.tbnb ].filter(Boolean),
+      rpcUrls: [
+        maybeAnkr("bsc_testnet"),
+        PUBLIC.tbnb
+      ].filter(Boolean),
     },
   },
   {
@@ -94,13 +112,19 @@ export default [
     chainId: 43114,
     icon: "/icons/avax.svg",
     min: 0.01,
-    rpcUrls: [ maybeAnkr("avalanche"), PUBLIC.avalanche ].filter(Boolean),
+    rpcUrls: [
+      maybeAnkr("avalanche"),
+      PUBLIC.avalanche
+    ].filter(Boolean),
     testnet: {
       label: "Fuji",
       value: "fuji",
       chainId: 43113,
       icon: "/icons/avax.svg",
-      rpcUrls: [ maybeAnkr("avalanche_fuji"), PUBLIC.fuji ].filter(Boolean),
+      rpcUrls: [
+        maybeAnkr("avalanche_fuji"),
+        PUBLIC.fuji
+      ].filter(Boolean),
     },
   },
   {
@@ -109,13 +133,19 @@ export default [
     chainId: 10,
     icon: "/icons/optimism.svg",
     min: 0.001,
-    rpcUrls: [ maybeAnkr("optimism"), PUBLIC.optimism ].filter(Boolean),
+    rpcUrls: [
+      maybeAnkr("optimism"),
+      PUBLIC.optimism
+    ].filter(Boolean),
     testnet: {
       label: "Optimism Goerli",
       value: "optimism-goerli",
       chainId: 420,
       icon: "/icons/optimism.svg",
-      rpcUrls: [ maybeAnkr("optimism_goerli"), PUBLIC["optimism-goerli"] ].filter(Boolean),
+      rpcUrls: [
+        maybeAnkr("optimism_goerli"),
+        PUBLIC["optimism-goerli"]
+      ].filter(Boolean),
     },
   },
   {
@@ -124,13 +154,19 @@ export default [
     chainId: 42161,
     icon: "/icons/arbitrum.svg",
     min: 0.001,
-    rpcUrls: [ maybeAnkr("arbitrum"), PUBLIC.arbitrum ].filter(Boolean),
+    rpcUrls: [
+      maybeAnkr("arbitrum"),
+      PUBLIC.arbitrum
+    ].filter(Boolean),
     testnet: {
       label: "Arbitrum Goerli",
       value: "arbitrum-goerli",
       chainId: 421613,
       icon: "/icons/arbitrum.svg",
-      rpcUrls: [ maybeAnkr("arbitrum_goerli"), PUBLIC["arbitrum-goerli"] ].filter(Boolean),
+      rpcUrls: [
+        maybeAnkr("arbitrum_goerli"),
+        PUBLIC["arbitrum-goerli"]
+      ].filter(Boolean),
     },
   },
   {
@@ -139,13 +175,19 @@ export default [
     chainId: 8453,
     icon: "/icons/base.svg",
     min: 0.001,
-    rpcUrls: [ maybeAnkr("base"), PUBLIC.base ].filter(Boolean),
+    rpcUrls: [
+      maybeAnkr("base"),
+      PUBLIC.base
+    ].filter(Boolean),
     testnet: {
       label: "Base Goerli",
       value: "base-goerli",
       chainId: 84531,
       icon: "/icons/base.svg",
-      rpcUrls: [ maybeAnkr("base_goerli"), PUBLIC["base-goerli"] ].filter(Boolean),
+      rpcUrls: [
+        maybeAnkr("base_goerli"),
+        PUBLIC["base-goerli"]
+      ].filter(Boolean),
     },
   },
   {
@@ -154,13 +196,19 @@ export default [
     chainId: 324,
     icon: "/icons/zksync.svg",
     min: 0.001,
-    rpcUrls: [ maybeAnkr("zksync"), PUBLIC.zksync ].filter(Boolean),
+    rpcUrls: [
+      maybeAnkr("zksync"),
+      PUBLIC.zksync
+    ].filter(Boolean),
     testnet: {
       label: "zkSync Testnet",
       value: "zksync-testnet",
       chainId: 280,
       icon: "/icons/zksync.svg",
-      rpcUrls: [ maybeAnkr("zksync_testnet"), PUBLIC["zksync-testnet"] ].filter(Boolean),
+      rpcUrls: [
+        maybeAnkr("zksync_testnet"),
+        PUBLIC["zksync-testnet"]
+      ].filter(Boolean),
     },
   },
   {
@@ -169,13 +217,19 @@ export default [
     chainId: 59144,
     icon: "/icons/linea.svg",
     min: 0.001,
-    rpcUrls: [ maybeAnkr("linea"), PUBLIC.linea ].filter(Boolean),
+    rpcUrls: [
+      maybeAnkr("linea"),
+      PUBLIC.linea
+    ].filter(Boolean),
     testnet: {
       label: "Linea Testnet",
       value: "linea-testnet",
       chainId: 59140,
       icon: "/icons/linea.svg",
-      rpcUrls: [ maybeAnkr("linea_goerli"), PUBLIC["linea-testnet"] ].filter(Boolean),
+      rpcUrls: [
+        maybeAnkr("linea_goerli"),
+        PUBLIC["linea-testnet"]
+      ].filter(Boolean),
     },
   },
   {
@@ -184,13 +238,19 @@ export default [
     chainId: 534352,
     icon: "/icons/scroll.svg",
     min: 0.001,
-    rpcUrls: [ maybeAnkr("scroll"), PUBLIC.scroll ].filter(Boolean),
+    rpcUrls: [
+      maybeAnkr("scroll"),
+      PUBLIC.scroll
+    ].filter(Boolean),
     testnet: {
       label: "Scroll Testnet",
       value: "scroll-testnet",
       chainId: 534353,
       icon: "/icons/scroll.svg",
-      rpcUrls: [ maybeAnkr("scroll_testnet"), PUBLIC["scroll-testnet"] ].filter(Boolean),
+      rpcUrls: [
+        maybeAnkr("scroll_testnet"),
+        PUBLIC["scroll-testnet"]
+      ].filter(Boolean),
     },
   },
   {
@@ -199,13 +259,19 @@ export default [
     chainId: 5000,
     icon: "/icons/mantle.svg",
     min: 0.001,
-    rpcUrls: [ maybeAnkr("mantle"), PUBLIC.mantle ].filter(Boolean),
+    rpcUrls: [
+      maybeAnkr("mantle"),
+      PUBLIC.mantle
+    ].filter(Boolean),
     testnet: {
       label: "Mantle Testnet",
       value: "mantle-testnet",
       chainId: 5001,
       icon: "/icons/mantle.svg",
-      rpcUrls: [ maybeAnkr("mantle_testnet"), PUBLIC["mantle-testnet"] ].filter(Boolean),
+      rpcUrls: [
+        maybeAnkr("mantle_testnet"),
+        PUBLIC["mantle-testnet"]
+      ].filter(Boolean),
     },
   },
   {
@@ -214,13 +280,19 @@ export default [
     chainId: 42220,
     icon: "/icons/celo.svg",
     min: 0.001,
-    rpcUrls: [ maybeAnkr("celo"), PUBLIC.celo ].filter(Boolean),
+    rpcUrls: [
+      maybeAnkr("celo"),
+      PUBLIC.celo
+    ].filter(Boolean),
     testnet: {
       label: "Alfajores",
       value: "alfajores",
       chainId: 44787,
       icon: "/icons/celo.svg",
-      rpcUrls: [ maybeAnkr("celo_alfajores"), PUBLIC.alfajores ].filter(Boolean),
+      rpcUrls: [
+        maybeAnkr("celo_alfajores"),
+        PUBLIC.alfajores
+      ].filter(Boolean),
     },
   },
   {
@@ -229,13 +301,19 @@ export default [
     chainId: 100,
     icon: "/icons/gnosis.svg",
     min: 0.001,
-    rpcUrls: [ maybeAnkr("xdai"), PUBLIC.xdai ].filter(Boolean),
+    rpcUrls: [
+      maybeAnkr("xdai"),
+      PUBLIC.xdai
+    ].filter(Boolean),
     testnet: {
       label: "Chiado",
       value: "chiado",
       chainId: 10200,
       icon: "/icons/gnosis.svg",
-      rpcUrls: [ maybeAnkr("gnosis_chiado"), PUBLIC.chiado ].filter(Boolean),
+      rpcUrls: [
+        maybeAnkr("gnosis_chiado"),
+        PUBLIC.chiado
+      ].filter(Boolean),
     },
   },
 ];
