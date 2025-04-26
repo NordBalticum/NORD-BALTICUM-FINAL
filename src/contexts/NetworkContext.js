@@ -3,7 +3,7 @@
 
 import { createContext, useContext, useState, useEffect, useCallback } from "react";
 
-// Mapping from our string keys to numeric chain IDs
+// our string keys ↔ numeric chainIds
 const CHAIN_IDS = {
   eth:   1,
   matic: 137,
@@ -27,7 +27,7 @@ export function NetworkProvider({ children }) {
   const [activeNetwork, setActiveNetwork] = useState("eth");
   const [initialized,   setInitialized]   = useState(false);
 
-  // 1) On mount, load saved network from localStorage (if in browser)
+  // load saved network
   useEffect(() => {
     if (typeof window === "undefined") {
       setInitialized(true);
@@ -38,33 +38,31 @@ export function NetworkProvider({ children }) {
       if (saved && SUPPORTED_NETWORKS.includes(saved)) {
         setActiveNetwork(saved);
       }
-    } catch (err) {
-      console.warn("NetworkContext load error:", err);
+    } catch (e) {
+      console.warn("NetworkContext load:", e);
     } finally {
       setInitialized(true);
     }
   }, []);
 
-  // 2) Whenever activeNetwork changes (post-init), save it
+  // persist changes
   useEffect(() => {
     if (!initialized || typeof window === "undefined") return;
     try {
       localStorage.setItem(STORAGE_KEY, activeNetwork);
-    } catch (err) {
-      console.warn("NetworkContext save error:", err);
+    } catch (e) {
+      console.warn("NetworkContext save:", e);
     }
   }, [initialized, activeNetwork]);
 
-  // 3) Switch network, but only if supported
-  const switchNetwork = useCallback((networkKey) => {
-    if (!SUPPORTED_NETWORKS.includes(networkKey)) {
-      console.warn(`NetworkContext: unsupported network "${networkKey}"`);
+  const switchNetwork = useCallback((net) => {
+    if (!SUPPORTED_NETWORKS.includes(net)) {
+      console.warn(`unsupported network "${net}"`);
       return;
     }
-    setActiveNetwork((prev) => (prev !== networkKey ? networkKey : prev));
+    setActiveNetwork((prev) => (prev !== net ? net : prev));
   }, []);
 
-  // 4) Derive numeric chainId
   const chainId = CHAIN_IDS[activeNetwork] ?? null;
 
   return (
