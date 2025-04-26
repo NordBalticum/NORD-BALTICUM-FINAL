@@ -108,13 +108,15 @@ const refetch = useCallback(async () => {
     }
   }, [coingeckoIds, prices]);
 
-  const fetchAll = useCallback(async (isSilent = false) => {
-    if (!isSilent) {
-      setLoading(true);
-    } else {
-      setRefreshing(true);
-    }
-
+  const fetchAll = useCallback(async (isUserTriggered = false) => {
+  if (isUserTriggered) setLoading(true); // ⬅️ Tik jei pats user
+  try {
+    await Promise.all([fetchBalances(), fetchPrices()]);
+  } finally {
+    if (isUserTriggered) setLoading(false);
+  }
+}, [fetchBalances, fetchPrices]);
+  
     const [newBalances, newPrices] = await Promise.all([
       fetchBalances(),
       fetchPrices(),
@@ -131,10 +133,11 @@ const refetch = useCallback(async () => {
   }, [fetchBalances, fetchPrices]);
 
   useEffect(() => {
-    if (!authLoading && !walletLoading) {
-      fetchAll(false);
-    }
-  }, [authLoading, walletLoading, fetchAll]);
+  if (!authLoading && !walletLoading && wallet?.wallet?.address) {
+    fetchAll(true); // ⬅️ Pradinis inicialinis load
+  }
+  // ⚡ NEĮRAŠYK `fetchAll` į priklausomybes čia! Tik authLoading, walletLoading.
+}, [authLoading, walletLoading, wallet]);
 
   useEffect(() => {
     const interval = setInterval(() => {
