@@ -14,7 +14,7 @@ import { JsonRpcProvider, FallbackProvider, ethers } from "ethers";
 import debounce from "lodash.debounce";
 import networks from "@/data/networks";
 
-// ── CoinGecko IDs ───────────────────────────────────────────
+// ── CoinGecko IDs
 const TOKEN_IDS = {
   eth: "ethereum",
   matic: "polygon-pos",
@@ -44,19 +44,19 @@ const TOKEN_IDS = {
   chiado: "xdai",
 };
 
-// ── Fallback prices ─────────────────────────────────────────
+// ── Constants
 const FALLBACK_PRICES = Object.fromEntries(
-  Object.keys(TOKEN_IDS).map(k => [k, { usd: 0, eur: 0 }])
+  Object.keys(TOKEN_IDS).map((k) => [k, { usd: 0, eur: 0 }])
 );
-
 const BALANCE_KEY = "nordbalticum_balances";
 const PRICE_KEY = "nordbalticum_prices";
-const PRICE_TTL = 30_000; // 30 seconds
+const PRICE_TTL = 30_000; // 30 seconds cache
 
+// ── Context setup
 const BalanceContext = createContext(null);
-
 export const useBalance = () => useContext(BalanceContext);
 
+// ── Provider
 export function BalanceProvider({ children }) {
   const { wallet, authLoading, walletLoading } = useAuth();
 
@@ -81,17 +81,15 @@ export function BalanceProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const lastPriceFetch = useRef(0);
 
-  // ── Providers map ───────────────────────────────────────────
+  // ── Build providers
   const providers = useMemo(() => {
     const map = {};
     for (const net of networks) {
-      map[net.value] = new FallbackProvider(
-        net.rpcUrls.map(url => new JsonRpcProvider(url)), 1
-      );
+      const mains = net.rpcUrls.map((url) => new JsonRpcProvider(url));
+      map[net.value] = new FallbackProvider(mains, 1);
       if (net.testnet) {
-        map[net.testnet.value] = new FallbackProvider(
-          net.testnet.rpcUrls.map(url => new JsonRpcProvider(url)), 1
-        );
+        const tests = net.testnet.rpcUrls.map((url) => new JsonRpcProvider(url));
+        map[net.testnet.value] = new FallbackProvider(tests, 1);
       }
     }
     return map;
@@ -102,7 +100,7 @@ export function BalanceProvider({ children }) {
     []
   );
 
-  // ── Fetch on-chain balances ─────────────────────────────────
+  // ── Fetch balances
   const fetchBalances = useCallback(async () => {
     const addr = wallet?.wallet?.address;
     if (!addr) return;
@@ -111,11 +109,14 @@ export function BalanceProvider({ children }) {
     await Promise.all(
       Object.entries(providers).map(async ([key, provider]) => {
         try {
-          const raw = await provider.getBalance(addr, "latest"); // 🔥 Correct usage!
-          out[key] = parseFloat(ethers.formatEther(raw));
+          const balance = await Promise.race([
+            provider.getBalance(addr),
+            new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 7000)),
+          ]);
+          out[key] = parseFloat(ethers.formatEther(balance));
         } catch (err) {
           console.warn(`[BalanceContext] Failed to fetch balance for ${key}:`, err?.message || err);
-          out[key] = balances[key] ?? 0;
+          out[key] = balances[key] ?? 0; // fallback
         }
       })
     );
@@ -126,7 +127,7 @@ export function BalanceProvider({ children }) {
     }
   }, [wallet, providers, balances]);
 
-  // ── Fetch fiat prices ───────────────────────────────────────
+  // ── Fetch prices
   const fetchPrices = useCallback(async () => {
     const now = Date.now();
     if (now - lastPriceFetch.current < PRICE_TTL) return;
@@ -152,21 +153,21 @@ export function BalanceProvider({ children }) {
     }
   }, [coingeckoIds]);
 
-  // ── Parallel fetch all ──────────────────────────────────────
+  // ── Combined fetch
   const fetchAll = useCallback(async () => {
     setLoading(true);
     await Promise.all([fetchBalances(), fetchPrices()]);
     setLoading(false);
   }, [fetchBalances, fetchPrices]);
 
-  // ── Initial load after wallet ready ─────────────────────────
+  // ── Initial load
   useEffect(() => {
     if (!authLoading && !walletLoading) {
       fetchAll();
     }
   }, [authLoading, walletLoading, fetchAll]);
 
-  // ── Auto-refresh balances every 30s and on tab focus ────────
+  // ── Poll every 30s
   useEffect(() => {
     const interval = setInterval(fetchAll, 30_000);
     const onVisible = debounce(() => {
@@ -180,7 +181,7 @@ export function BalanceProvider({ children }) {
     };
   }, [fetchAll]);
 
-  // ── Balance to fiat converters ──────────────────────────────
+  // ── Fiat value getters
   const getUsdBalance = (networkKey) => {
     const bal = balances[networkKey] || 0;
     const price = prices[networkKey]?.usd || 0;
@@ -193,7 +194,7 @@ export function BalanceProvider({ children }) {
     return bal * price;
   };
 
-  // ── Provide context ─────────────────────────────────────────
+  // ── Return context
   return (
     <BalanceContext.Provider
       value={{
