@@ -1,92 +1,64 @@
+/* src/styles/balancecard.module.css */
+
 .cardWrapper {
-  background: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(20px) saturate(150%);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0,0,0,0.3);
   border-radius: 16px;
   padding: 16px;
-  max-width: 480px;
-  margin: 0 auto;
-  user-select: none;
+  backdrop-filter: blur(12px) saturate(140%);
+  box-shadow: 0 0 24px rgba(255,255,255,0.05);
 }
 
 .toggleWrapper {
   display: flex;
-  justify-content: center;
-  gap: 8px;
   margin-bottom: 12px;
 }
 
 .toggleButton {
-  padding: 6px 14px;
-  font-size: 0.85rem;
-  font-family: var(--font-crypto);
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 12px;
-  color: #ccc;
+  flex: 1;
+  background: #222;
+  color: #bbb;
+  border: none;
+  padding: 8px 0;
+  font-size: 0.9rem;
   cursor: pointer;
-  transition: background 0.3s, color 0.3s;
+  transition: background 0.2s, color 0.2s;
 }
-
 .toggleButton:hover {
-  background: rgba(255, 255, 255, 0.12);
+  background: #333;
 }
-
-.active {
-  background: rgba(255, 255, 255, 0.2);
+.toggleButton.active {
+  background: #555;
   color: #fff;
 }
 
-.loading {
-  text-align: center;
-  padding: 24px 0;
-  color: #aaa;
-  font-family: var(--font-crypto);
+.list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
 }
 
-.list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+/* two columns on desktop */
+@media (min-width: 768px) {
+  .list {
+    grid-template-columns: 1fr 1fr;
+  }
 }
 
 .listItem {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: rgba(0, 0, 0, 0.3);
-  border-radius: 14px;
-  padding: 12px 16px;
-  transition: transform 0.2s, box-shadow 0.2s;
-  cursor: pointer;
-}
-
-.listItem:hover {
-  transform: scale(1.02);
-  box-shadow: 0 0 24px rgba(255, 255, 255, 0.1);
 }
 
 .networkInfo {
   display: flex;
   align-items: center;
-  gap: 10px;
-}
-
-.networkIcon {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: #fff;
-  padding: 4px;
-  object-fit: contain;
-  box-shadow: 0 0 6px rgba(255, 255, 255, 0.3);
+  gap: 8px;
 }
 
 .networkLabel {
-  font-family: var(--font-crypto);
-  font-weight: 600;
+  font-size: 0.9rem;
   color: #fff;
-  font-size: 0.95rem;
 }
 
 .amountInfo {
@@ -96,33 +68,10 @@
 .cryptoAmount {
   font-family: var(--font-crypto);
   font-size: 1rem;
-  font-weight: 600;
   color: #fff;
 }
 
 .fiatAmount {
-  font-family: var(--font-crypto);
   font-size: 0.8rem;
-  color: #ccc;
-  margin-top: 2px;
-}
-
-/* Responsive */
-@media (max-width: 600px) {
-  .cardWrapper {
-    padding: 12px;
-  }
-  .networkIcon {
-    width: 28px;
-    height: 28px;
-  }
-  .networkLabel {
-    font-size: 0.85rem;
-  }
-  .cryptoAmount {
-    font-size: 0.9rem;
-  }
-  .fiatAmount {
-    font-size: 0.75rem;
-  }
+  color: #ddd;
 }
