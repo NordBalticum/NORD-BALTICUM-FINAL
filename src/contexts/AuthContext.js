@@ -23,36 +23,277 @@ import debounce from "lodash.debounce";
  * RPC configurations with fallbacks for each supported network.
  */
 export const RPC = {
+  // Ethereum Mainnet
   eth: {
-    urls: ["https://ethereum.publicnode.com", "https://eth.llamarpc.com"],
+    urls: [
+      "https://ethereum.publicnode.com",
+      "https://rpc.ankr.com/eth",
+      "https://cloudflare-eth.com",
+    ],
     chainId: 1,
     name: "eth",
   },
+  // Ethereum Sepolia
+  sepolia: {
+    urls: [
+      "https://rpc.sepolia.org",
+      "https://rpc.ankr.com/eth_sepolia",
+      "https://sepolia.publicnode.com",
+    ],
+    chainId: 11155111,
+    name: "sepolia",
+  },
+
+  // Polygon Mainnet
+  matic: {
+    urls: [
+      "https://polygon-rpc.com",
+      "https://rpc.ankr.com/polygon",
+      "https://polygon-bor.publicnode.com",
+    ],
+    chainId: 137,
+    name: "matic",
+  },
+  // Polygon Mumbai
+  mumbai: {
+    urls: [
+      "https://matic-mumbai.chainstacklabs.com",
+      "https://rpc.ankr.com/polygon_mumbai",
+      "https://rpc-mumbai.maticvigil.com",
+    ],
+    chainId: 80001,
+    name: "mumbai",
+  },
+
+  // BNB Chain Mainnet
   bnb: {
-    urls: ["https://bsc-dataseed.binance.org/", "https://bsc.publicnode.com"],
+    urls: [
+      "https://bsc-dataseed.binance.org/",
+      "https://rpc.ankr.com/bsc",
+      "https://bsc.publicnode.com",
+    ],
     chainId: 56,
     name: "bnb",
   },
+  // BNB Chain Testnet
   tbnb: {
     urls: [
       "https://data-seed-prebsc-1-s1.binance.org:8545/",
-      "https://bsc-testnet.public.blastapi.io",
+      "https://rpc.ankr.com/bsc_testnet",
+      "https://bsc-testnet.publicnode.com",
     ],
     chainId: 97,
     name: "tbnb",
   },
-  matic: {
-    urls: ["https://polygon-bor.publicnode.com", "https://1rpc.io/matic"],
-    chainId: 137,
-    name: "matic",
-  },
+
+  // Avalanche C-Chain Mainnet
   avax: {
     urls: [
-      "https://avalanche-c-chain.publicnode.com",
-      "https://avalanche.drpc.org",
+      "https://api.avax.network/ext/bc/C/rpc",
+      "https://rpc.ankr.com/avalanche",
+      "https://avalanche.publicnode.com",
     ],
     chainId: 43114,
     name: "avax",
+  },
+  // Avalanche Fuji Testnet
+  fuji: {
+    urls: [
+      "https://api.avax-test.network/ext/bc/C/rpc",
+      "https://rpc.ankr.com/avalanche_fuji",
+      "https://avalanche-fuji.publicnode.com",
+    ],
+    chainId: 43113,
+    name: "fuji",
+  },
+
+  // Optimism Mainnet
+  optimism: {
+    urls: [
+      "https://mainnet.optimism.io",
+      "https://rpc.ankr.com/optimism",
+      "https://optimism.publicnode.com",
+    ],
+    chainId: 10,
+    name: "optimism",
+  },
+  // Optimism Goerli
+  optimismgoerli: {
+    urls: [
+      "https://goerli.optimism.io",
+      "https://rpc.ankr.com/optimism_goerli",
+      "https://optimism-goerli.publicnode.com",
+    ],
+    chainId: 420,
+    name: "optimismgoerli",
+  },
+
+  // Arbitrum One
+  arbitrum: {
+    urls: [
+      "https://arb1.arbitrum.io/rpc",
+      "https://rpc.ankr.com/arbitrum",
+      "https://arbitrum.publicnode.com",
+    ],
+    chainId: 42161,
+    name: "arbitrum",
+  },
+  // Arbitrum Goerli
+  arbitrumgoerli: {
+    urls: [
+      "https://goerli-rollup.arbitrum.io/rpc",
+      "https://rpc.ankr.com/arbitrum_goerli",
+      "https://arbitrum-goerli.publicnode.com",
+    ],
+    chainId: 421613,
+    name: "arbitrumgoerli",
+  },
+
+  // Base Mainnet
+  base: {
+    urls: [
+      "https://base-mainnet.public.blastapi.io",
+      "https://rpc.ankr.com/base",
+      "https://base.publicnode.com",
+    ],
+    chainId: 8453,
+    name: "base",
+  },
+  // Base Goerli
+  basegoerli: {
+    urls: [
+      "https://goerli.base.org",
+      "https://rpc.ankr.com/base_goerli",
+      "https://base-goerli.publicnode.com",
+    ],
+    chainId: 84531,
+    name: "basegoerli",
+  },
+
+  // zkSync Era Mainnet
+  zksync: {
+    urls: [
+      "https://mainnet.era.zksync.io",
+      "https://rpc.ankr.com/zksync",
+      "https://zksync.publicnode.com",
+    ],
+    chainId: 324,
+    name: "zksync",
+  },
+  // zkSync Era Testnet
+  zksynctest: {
+    urls: [
+      "https://testnet.era.zksync.dev",
+      "https://rpc.ankr.com/zksync_testnet",
+      "https://zksync-testnet.publicnode.com",
+    ],
+    chainId: 280,
+    name: "zksynctest",
+  },
+
+  // Linea Mainnet
+  linea: {
+    urls: [
+      "https://rpc.linea.build",
+      "https://rpc.ankr.com/linea",
+      "https://linea.publicnode.com",
+    ],
+    chainId: 59144,
+    name: "linea",
+  },
+  // Linea Testnet
+  lineatest: {
+    urls: [
+      "https://rpc.goerli.linea.build",
+      "https://rpc.ankr.com/linea_goerli",
+      "https://linea-goerli.publicnode.com",
+    ],
+    chainId: 59140,
+    name: "lineatest",
+  },
+
+  // Scroll Mainnet
+  scroll: {
+    urls: [
+      "https://scroll.io/l2",
+      "https://rpc.ankr.com/scroll",
+      "https://scroll.publicnode.com",
+    ],
+    chainId: 534352,
+    name: "scroll",
+  },
+  // Scroll Testnet
+  scrolltest: {
+    urls: [
+      "https://scroll-testnet.public.blastapi.io",
+      "https://rpc.ankr.com/scroll_testnet",
+      "https://scroll-testnet.publicnode.com",
+    ],
+    chainId: 534353,
+    name: "scrolltest",
+  },
+
+  // Mantle Mainnet
+  mantle: {
+    urls: [
+      "https://rpc.mantle.xyz",
+      "https://rpc.ankr.com/mantle",
+      "https://mantle.publicnode.com",
+    ],
+    chainId: 5000,
+    name: "mantle",
+  },
+  // Mantle Testnet
+  mantletest: {
+    urls: [
+      "https://rpc.testnet.mantle.xyz",
+      "https://rpc.ankr.com/mantle_testnet",
+      "https://mantle-testnet.publicnode.com",
+    ],
+    chainId: 5001,
+    name: "mantletest",
+  },
+
+  // Celo Mainnet
+  celo: {
+    urls: [
+      "https://forno.celo.org",
+      "https://rpc.ankr.com/celo",
+      "https://celo.publicnode.com",
+    ],
+    chainId: 42220,
+    name: "celo",
+  },
+  // Celo Alfajores
+  alfajores: {
+    urls: [
+      "https://alfajores-forno.celo-testnet.org",
+      "https://rpc.ankr.com/celo_alfajores",
+      "https://alfajores.publicnode.com",
+    ],
+    chainId: 44787,
+    name: "alfajores",
+  },
+
+  // Gnosis Chain Mainnet (xDAI)
+  gnosis: {
+    urls: [
+      "https://rpc.gnosischain.com",
+      "https://rpc.ankr.com/xdai",
+      "https://gnosis.publicnode.com",
+    ],
+    chainId: 100,
+    name: "gnosis",
+  },
+  // Gnosis Chiado Testnet
+  chiado: {
+    urls: [
+      "https://rpc.chiadochain.net",
+      "https://rpc.ankr.com/gnosis_chiado",
+      "https://chiado.publicnode.com",
+    ],
+    chainId: 10200,
+    name: "chiado",
   },
 };
 
