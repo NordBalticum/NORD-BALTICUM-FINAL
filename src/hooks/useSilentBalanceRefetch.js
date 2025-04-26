@@ -42,14 +42,14 @@ export function useSilentBalanceRefetch() {
 
     const getNetworkSpeed = () => {
       if (navigator.connection?.effectiveType) {
-        return navigator.connection.effectiveType;
+        return navigator.connection.effectiveType; // 4g, 3g, 2g, slow-2g
       }
       return "unknown";
     };
 
     const getDelay = () => {
-      const base = 3000;
-      const exponential = Math.min(2 ** retryCount.current * base, 60000);
+      const baseDelay = 3000;
+      const exponential = Math.min(2 ** retryCount.current * baseDelay, 60000); // max 60s
       if (lastOnlineSpeed.current.includes("2g") || lastOnlineSpeed.current.includes("slow")) {
         return exponential * 1.5;
       }
@@ -63,22 +63,14 @@ export function useSilentBalanceRefetch() {
       }
 
       const delay = getDelay();
-      console.warn(`[SilentBalanceRefetch] 🔁 Retrying in ${Math.round(delay / 1000)}s`);
+      console.warn(`[SilentBalanceRefetch] 🔁 Retrying in ${Math.round(delay / 1000)}s...`);
 
-      const id = setTimeout(async () => {
-        if (isOffline.current) return;
-        try {
-          await refetch();
-          console.log("[SilentBalanceRefetch] Retry successful ✅");
-          resetRetries();
-        } catch (err) {
-          console.error("[SilentBalanceRefetch] Retry failed ❌:", err?.message || err);
-          retryCount.current++;
-          scheduleRetry();
-        }
+      const id = setTimeout(() => {
+        if (!isOffline.current) run("retry");
       }, delay);
 
       retryQueue.current.push(id);
+      retryCount.current++;
     };
 
     const onVisibilityChange = debounce(() => {
@@ -86,12 +78,14 @@ export function useSilentBalanceRefetch() {
     }, 300);
 
     const onFocus = debounce(() => run("focus"), 300);
+
     const onOnline = debounce(() => {
       console.log("[SilentBalanceRefetch] 📶 Back online");
       isOffline.current = false;
       lastOnlineSpeed.current = getNetworkSpeed();
       run("online");
     }, 300);
+
     const onOffline = debounce(() => {
       console.warn("[SilentBalanceRefetch] 🔌 Offline detected");
       isOffline.current = true;
@@ -101,23 +95,20 @@ export function useSilentBalanceRefetch() {
       if (document.visibilityState === "visible") run("wake-up");
     }, 300);
 
-    // 🔥 Heartbeat ping every 2 minutes
     heartbeatTimer.current = setInterval(() => {
       if (!isOffline.current) {
         console.log("[SilentBalanceRefetch] 💓 Heartbeat refetch");
         run("heartbeat");
       }
-    }, 120_000);
+    }, 120_000); // kas 2 minutes
 
-    // Normal silent balance refetch interval
     const interval = setInterval(() => {
       if (!isOffline.current) {
         lastOnlineSpeed.current = getNetworkSpeed();
         run("interval");
       }
-    }, 30_000);
+    }, 30_000); // kas 30 sekundžių
 
-    // Listeners
     document.addEventListener("visibilitychange", onVisibilityChange);
     window.addEventListener("focus", onFocus);
     window.addEventListener("online", onOnline);
