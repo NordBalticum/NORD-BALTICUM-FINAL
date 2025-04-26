@@ -4,8 +4,7 @@ import React, { useMemo, Suspense } from "react";
 import dynamic from "next/dynamic";
 import { motion } from "framer-motion";
 
-import { useSystemReady } from "@/hooks/useSystemReady";
-import { useSessionManager } from "@/hooks/useSessionManager";
+import { useSessionManager } from "@/hooks/useSessionManager"; // ✅ Tik šitas
 import { useSilentBalanceRefetch } from "@/hooks/useSilentBalanceRefetch";
 import { useDeviceInfo } from "@/hooks/useDeviceInfo";
 
@@ -19,9 +18,8 @@ import styles from "@/styles/dashboard.module.css";
 const LivePriceTable = dynamic(() => import("@/components/LivePriceTable"), { ssr: false });
 
 export default function Dashboard() {
-  const { ready } = useSystemReady();
+  const { ready: sessionReady } = useSessionManager(); // 🧠 SESSION READY
   const { isMobile, scale } = useDeviceInfo();
-  useSessionManager();
   useSilentBalanceRefetch();
 
   const { user, wallet } = useAuth();
@@ -36,12 +34,16 @@ export default function Dashboard() {
   const updatedAt = useMemo(() => {
     if (!lastUpdated) return "--:--:--";
     const d = new Date(lastUpdated);
-    return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+    return d.toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit"
+    });
   }, [lastUpdated]);
 
   const isLoading = useMemo(() => (
-    !ready || !balancesReady || !address
-  ), [ready, balancesReady, address]);
+    !sessionReady || !balancesReady || !address
+  ), [sessionReady, balancesReady, address]);
 
   if (isLoading) {
     return (
