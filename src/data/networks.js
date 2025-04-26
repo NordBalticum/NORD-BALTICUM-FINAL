@@ -36,7 +36,7 @@ export default [
       chainId: 80001,
       icon: "/icons/matic.svg",
       rpcUrls: [
-        "https://rpc-mumbai.maticvigil.com",    // ✅ Official
+        "https://polygon-mumbai.blastapi.io",    // ✅ Official
         "https://polygon-mumbai-bor.publicnode.com", // ✅ PublicNode
       ],
     },
@@ -96,7 +96,7 @@ export default [
       chainId: 420,
       icon: "/icons/optimism.svg",
       rpcUrls: [
-        "https://optimism-goerli.publicnode.com", // ✅ PublicNode
+        "https://optimism-goerli.blastapi.io", // ✅ PublicNode
         "https://goerli.optimism.io",             // ✅ Official
       ],
     },
@@ -116,7 +116,7 @@ export default [
       chainId: 421613,
       icon: "/icons/arbitrum.svg",
       rpcUrls: [
-        "https://goerli-rollup.arbitrum.io/rpc",  // ✅ Official
+        "https://arbitrum-goerli.blastapi.io",  // ✅ Official
         "https://arbitrum-goerli.publicnode.com", // ✅ PublicNode
       ],
     },
@@ -136,7 +136,7 @@ export default [
       chainId: 84531,
       icon: "/icons/base.svg",
       rpcUrls: [
-        "https://goerli.base.org",                 // ✅ Official
+        "	https://base-goerli.blastapi.io",                 // ✅ Official
         "https://base-goerli.publicnode.com",      // ✅ PublicNode
       ],
     },
