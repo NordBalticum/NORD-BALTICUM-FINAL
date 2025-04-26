@@ -19,7 +19,7 @@ export function useSystemReady() {
       isTablet: false,
       isDesktop: !isMobile,
       scale: isMobile ? 0.95 : 1,
-      connectionType: navigator.connection?.effectiveType || "unknown",
+      connectionType: typeof navigator !== "undefined" ? (navigator.connection?.effectiveType || "unknown") : "unknown",
     };
   }, []);
 
@@ -51,9 +51,6 @@ export function useSystemReady() {
   const systemReady = useMemo(() => {
     return domReady && authReady && networkReady;
   }, [domReady, authReady, networkReady]);
-
-- // ❌ ŠITĄ IŠTRINAM:
-- // useSessionWatcher(); 
 
   return {
     ready: systemReady,
