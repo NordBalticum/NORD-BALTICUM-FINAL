@@ -1,5 +1,5 @@
 /*────────────────────────────────────────────────────────────────────────────
-  Container & Layout
+  Layout & Container
 ────────────────────────────────────────────────────────────────────────────*/
 .container {
   width: 100%;
@@ -13,7 +13,7 @@
   overflow-x: hidden;
 }
 
-/* Optional light overlay on large screens */
+/* Optional light overlay on big screens */
 @media (min-width: 1024px) {
   .container::before {
     content: "";
@@ -24,7 +24,7 @@
   }
 }
 
-/* Centered page wrapper */
+/* Centered wrapper */
 .dashboardWrapper {
   width: 100%;
   max-width: var(--max-content-width);
@@ -35,7 +35,7 @@
 }
 
 /*────────────────────────────────────────────────────────────────────────────
-  Top Bar (user info + refresh button)
+  Top Bar (user + refresh)
 ────────────────────────────────────────────────────────────────────────────*/
 .topBar {
   display: flex;
@@ -63,7 +63,7 @@
   padding: var(--spacing-xs);
   border-radius: var(--button-radius);
   cursor: pointer;
-  transition: background var(--transition);
+  transition: background 0.3s, transform 0.3s;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -71,19 +71,20 @@
 
 .refreshButton:hover {
   background: var(--button-hover);
+  transform: scale(1.05);
 }
 
 .refreshButton:disabled {
-  opacity: 0.5;
+  opacity: 0.6;
   cursor: not-allowed;
 }
 
 .spin {
-  animation: spinAnim 1.2s linear infinite;
+  animation: spinAnim 1s linear infinite;
 }
 
 /*────────────────────────────────────────────────────────────────────────────
-  Main Content Row (chart + balances)
+  Main Dashboard Row
 ────────────────────────────────────────────────────────────────────────────*/
 .dashboardRow {
   display: grid;
@@ -98,21 +99,23 @@
 }
 
 /*────────────────────────────────────────────────────────────────────────────
-  Panels (ChartSection + BalanceSection)
+  Chart & Balance Panels
 ────────────────────────────────────────────────────────────────────────────*/
 .chartSection,
 .balanceSection {
   background: var(--panel-bg);
-  backdrop-filter: var(--panel-blur);
   border-radius: var(--panel-radius);
   box-shadow: var(--panel-shadow);
+  backdrop-filter: var(--panel-blur);
   padding: var(--spacing-md);
-  overflow: hidden;
-  transition: transform var(--transition), box-shadow var(--transition);
-  animation: fadeUp 0.5s ease-out both;
+  transition: transform 0.3s, box-shadow 0.3s;
+  animation: fadeInUp 0.5s ease-out both;
 }
 
-/* slight delay on balance panel */
+.chartSection {
+  animation-delay: 0s;
+}
+
 .balanceSection {
   animation-delay: 0.2s;
   display: flex;
@@ -120,17 +123,16 @@
   gap: var(--spacing-md);
 }
 
-/* Hover effect (only Desktop) */
 @media (hover: hover) {
   .chartSection:hover,
   .balanceSection:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+    transform: translateY(-6px);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
   }
 }
 
 /*────────────────────────────────────────────────────────────────────────────
-  Loading states
+  Loading (Mini Spinner)
 ────────────────────────────────────────────────────────────────────────────*/
 .fullscreenCenter {
   display: grid;
@@ -145,7 +147,7 @@
 }
 
 /*────────────────────────────────────────────────────────────────────────────
-  Footer info (Last updated)
+  Footer (Last updated)
 ────────────────────────────────────────────────────────────────────────────*/
 .footerInfo {
   text-align: center;
@@ -157,10 +159,10 @@
 /*────────────────────────────────────────────────────────────────────────────
   Animations
 ────────────────────────────────────────────────────────────────────────────*/
-@keyframes fadeUp {
+@keyframes fadeInUp {
   from {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(30px);
   }
   to {
     opacity: 1;
@@ -175,9 +177,9 @@
 }
 
 /*────────────────────────────────────────────────────────────────────────────
-  Shimmer loading
+  Shimmer for small loading placeholders
 ────────────────────────────────────────────────────────────────────────────*/
-.shimmerTextSmall {
+.shimmerSmall, .shimmerTextSmall {
   display: inline-block;
   width: 6ch;
   height: 1em;
@@ -189,19 +191,16 @@
   );
   background-size: 400% 100%;
   animation: shimmerAnim 1.4s ease infinite;
+  border-radius: 4px;
 }
 
 @keyframes shimmerAnim {
-  0% {
-    background-position: -400% 0;
-  }
-  100% {
-    background-position: 400% 0;
-  }
+  0% { background-position: -400% 0; }
+  100% { background-position: 400% 0; }
 }
 
 /*────────────────────────────────────────────────────────────────────────────
-  Scrollbar for panels
+  Scrollbar
 ────────────────────────────────────────────────────────────────────────────*/
 .chartSection::-webkit-scrollbar,
 .balanceSection::-webkit-scrollbar {
