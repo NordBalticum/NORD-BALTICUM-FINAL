@@ -5,39 +5,48 @@ import { ethers } from "ethers";
 import { ethersFallbackProviders } from "@/utils/fallbackRPCs";
 
 /**
- * Returns a JsonRpcProvider or FallbackProvider for the given chainId.
+ * Returns an ethers Provider (JsonRpcProvider or FallbackProvider)
+ * for the given chainId.
  *
- * @param {string|number} chainIdOrName – the chain ID (e.g. "1", 56, 137, 43114)
+ * - If there's only one URL configured → returns a JsonRpcProvider.
+ * - If multiple URLs → returns a FallbackProvider with quorum=1.
+ * - Throws if no URLs are configured.
+ *
+ * @param {string|number} chainIdOrName  Chain ID (e.g. "1", 137, 56, 97, 43114)
  * @returns {ethers.JsonRpcProvider|ethers.FallbackProvider}
  */
 export function getProviderForChain(chainIdOrName) {
-  // 1) normalize
+  // Normalize to number
   const chainId =
     typeof chainIdOrName === "string"
       ? parseInt(chainIdOrName, 10)
       : chainIdOrName;
 
-  // 2) look up your RPC URLs
+  // Lookup RPC URLs from your fallbackRPCs map
   const urls = ethersFallbackProviders[chainId];
-  if (!urls?.length) {
+  if (!urls || urls.length === 0) {
     throw new Error(`❌ No RPC endpoints configured for chainId ${chainId}`);
   }
 
-  // 3) construct an ethers provider for each URL
+  // Build a JsonRpcProvider for each URL
   const providers = urls.map((url) => new ethers.JsonRpcProvider(url, chainId));
 
-  // 4) if only one, return it directly
+  // If there's only one endpoint, use it directly
   if (providers.length === 1) {
     return providers[0];
   }
 
-  // 5) wrap in a FallbackProvider – **do not** pass a second param here,
-  //    because ethers v6 will interpret it as “network” config (not quorum).
-  const configs = providers.map((provider, priority) => ({
+  // Otherwise wrap in a FallbackProvider:
+  // - priority: lower number = higher priority
+  // - weight:  all 1 for equal weighting
+  // - stallTimeout: switch if no response in 200ms
+  const configs = providers.map((provider, idx) => ({
     provider,
-    priority,
+    priority: idx,
     weight: 1,
-    stallTimeout: 200
+    stallTimeout: 200,
   }));
-  return new ethers.FallbackProvider(configs);
+
+  // quorum = 1 means only one healthy provider needs to respond
+  return new ethers.FallbackProvider(configs, /* quorum */ 1);
 }
