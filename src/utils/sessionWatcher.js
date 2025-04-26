@@ -1,4 +1,3 @@
-// src/utils/sessionWatcher.js
 "use client";
 
 import debounce from "lodash.debounce";
@@ -7,18 +6,6 @@ import { detectIsMobile } from "@/utils/detectIsMobile";
 /**
  * startSessionWatcher:
  * Monitors user session validity via periodic API pings and browser events.
- *
- * @param {Object} options
- * @param {Object} options.user            - Supabase user object
- * @param {Object} options.wallet          - Decrypted wallet info ({ wallet, signers })
- * @param {Function} options.refreshSession - safeRefreshSession from AuthContext
- * @param {Function} options.refetchBalances - refetch from BalanceContext
- * @param {Function} options.onSessionInvalid - called when session should be invalidated
- * @param {boolean} [options.log=true]      - enable console logs
- * @param {number}  [options.intervalMs=60000] - periodic check interval (ms)
- * @param {number}  [options.networkFailLimit=3] - consecutive failure limit
- *
- * @returns {{ start: Function, stop: Function }}
  */
 export function startSessionWatcher({
   user,
@@ -47,17 +34,15 @@ export function startSessionWatcher({
 
   const isReady = () => !!user?.email && !!wallet?.wallet?.address;
 
-  // Core session check
   const performCheck = async (trigger = "manual", attempt = 1) => {
     if (!isReady()) {
-      logEvent(`Skipped [${trigger}] — session not ready.`, "warn");
+      logEvent(`Skipped [${trigger}] – session not ready.`, "warn");
       return;
     }
 
     const controller = new AbortController();
-
     try {
-      const start = performance.now();
+      const startTime = performance.now();
       const res = await fetch("/api/check-session", {
         method: "GET",
         cache: "no-store",
@@ -71,15 +56,15 @@ export function startSessionWatcher({
       const { valid } = await res.json();
       if (!valid) {
         if (attempt < 3) {
-          logEvent(`Invalid session (attempt ${attempt}) — retrying...`, "warn");
+          logEvent(`Invalid session (attempt ${attempt}) – retrying...`, "warn");
           return setTimeout(() => performCheck(trigger, attempt + 1), 700);
         }
-        logEvent("Session invalid according to API.", "warn");
+        logEvent("Session invalid according to API", "warn");
         onSessionInvalid?.();
       } else {
         failCount = 0;
         lastOkTime = Date.now();
-        const latency = Math.round(performance.now() - start);
+        const latency = Math.round(performance.now() - startTime);
         logEvent(`✅ Session OK [${trigger}] (${latency}ms)`);
         refreshSession?.().catch(() => {});
         refetchBalances?.().catch(() => {});
@@ -91,7 +76,7 @@ export function startSessionWatcher({
         failCount++;
         logEvent(`Error [${trigger}]: ${err.message} (${failCount}/${networkFailLimit})`, "error");
         if (failCount >= networkFailLimit) {
-          logEvent("Fail limit reached — invalidating session.", "error");
+          logEvent("Fail limit reached – invalidating session", "error");
           onSessionInvalid?.();
         }
       }
@@ -100,29 +85,28 @@ export function startSessionWatcher({
 
   const debouncedCheck = debounce((trigger) => performCheck(trigger), 300);
 
-  // Event listeners
   const onVisibilityChange = () => {
     const current = document.visibilityState;
     if (current === "visible" && lastVisibility !== "visible") {
-      logEvent("Tab visible — checking session");
+      logEvent("Tab visible – checking session");
       debouncedCheck("visibility");
     }
     lastVisibility = current;
   };
 
   const onFocus = () => {
-    logEvent("Window focus — checking session");
+    logEvent("Window focus – checking session");
     debouncedCheck("focus");
   };
 
   const onOnline = () => {
-    logEvent("Network online — checking session");
+    logEvent("Network online – checking session");
     debouncedCheck("online");
   };
 
   const onWake = () => {
-    logEvent("Pageshow/device resume — checking session");
-    debouncedCheck("resume");
+    logEvent("Pageshow/device resume – checking session");
+    debouncedCheck("pageshow");
   };
 
   const addListeners = () => {
@@ -132,7 +116,7 @@ export function startSessionWatcher({
     window.addEventListener("pageshow", onWake);
     if (isMobile) {
       document.addEventListener("resume", onWake);
-      logEvent("📱 Mobile resume listeners enabled");
+      logEvent("📱 Mobile enhancements enabled");
     }
   };
 
@@ -150,4 +134,21 @@ export function startSessionWatcher({
     if (intervalId) return;
     addListeners();
     intervalId = setInterval(() => {
-      if
+      if (Date.now() - lastOkTime > 10 * 60 * 1000) {
+        failCount = 0;
+      }
+      performCheck("interval");
+    }, intervalMs);
+    logEvent("SessionWatcher started");
+  };
+
+  const stop = () => {
+    clearInterval(intervalId);
+    intervalId = null;
+    removeListeners();
+    debouncedCheck.cancel();
+    logEvent("SessionWatcher stopped");
+  };
+
+  return { start, stop };
+}
