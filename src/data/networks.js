@@ -39,7 +39,7 @@ export default [
   },
 
   {
-    label: "Polygon",
+    label: "Matic",
     value: "matic",
     chainId: 137,
     icon: "/icons/matic.svg",
