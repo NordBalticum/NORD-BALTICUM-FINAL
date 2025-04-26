@@ -10,6 +10,10 @@ import debounce from "lodash.debounce";
 import { useAuth } from "@/contexts/AuthContext";
 import networks from "@/data/networks";
 
+const BalanceContext = createContext(null);
+export const useBalance = () => useContext(BalanceContext);
+
+// 7+7 networks
 const TOKEN_IDS = {
   eth: "ethereum",
   matic: "polygon-pos",
@@ -31,14 +35,63 @@ const FALLBACK_PRICES = Object.fromEntries(
   Object.keys(TOKEN_IDS).map(key => [key, { usd: 0, eur: 0 }])
 );
 
-const BalanceContext = createContext(null);
-export const useBalance = () => useContext(BalanceContext);
+const PRICE_TTL = 30_000; // 30s
 
-const PRICE_TTL = 30_000; // 30s silent refresh
+const RPCS = {
+  eth: [
+    "https://eth.llamarpc.com",
+    "https://rpc.ankr.com/eth",
+  ],
+  matic: [
+    "https://polygon.llamarpc.com",
+    "https://rpc.ankr.com/polygon",
+  ],
+  bnb: [
+    "https://bsc.publicnode.com",
+    "https://rpc.ankr.com/bsc",
+  ],
+  avax: [
+    "https://api.avax.network/ext/bc/C/rpc",
+    "https://rpc.ankr.com/avalanche",
+  ],
+  optimism: [
+    "https://optimism.publicnode.com",
+    "https://rpc.ankr.com/optimism",
+  ],
+  arbitrum: [
+    "https://arb1.arbitrum.io/rpc",
+    "https://rpc.ankr.com/arbitrum",
+  ],
+  base: [
+    "https://mainnet.base.org",
+    "https://developer-access-mainnet.base.org",
+  ],
+  sepolia: [
+    "https://ethereum-sepolia.publicnode.com",
+  ],
+  mumbai: [
+    "https://polygon-mumbai.publicnode.com",
+  ],
+  tbnb: [
+    "https://bsc-testnet.publicnode.com",
+  ],
+  fuji: [
+    "https://avalanche-fuji-c-chain.publicnode.com",
+  ],
+  "optimism-goerli": [
+    "https://optimism-goerli.publicnode.com",
+  ],
+  "arbitrum-goerli": [
+    "https://arbitrum-goerli.publicnode.com",
+  ],
+  "base-goerli": [
+    "https://base-goerli.publicnode.com",
+  ],
+};
 
 export function BalanceProvider({ children }) {
   const { wallet, authLoading, walletLoading } = useAuth();
-  
+
   const [balances, setBalances] = useState({});
   const [prices, setPrices] = useState(FALLBACK_PRICES);
   const [loading, setLoading] = useState(true);
@@ -52,16 +105,13 @@ export function BalanceProvider({ children }) {
   const retryCount = useRef(0);
 
   const providers = useMemo(() => {
-    const map = {};
-    for (const net of networks) {
-      if (net.rpcUrls?.length > 0) {
-        map[net.value] = new FallbackProvider(net.rpcUrls.map(url => new JsonRpcProvider(url)));
-      }
-      if (net.testnet?.rpcUrls?.length > 0) {
-        map[net.testnet.value] = new FallbackProvider(net.testnet.rpcUrls.map(url => new JsonRpcProvider(url)));
-      }
+    const out = {};
+    for (const [key, urls] of Object.entries(RPCS)) {
+      out[key] = new FallbackProvider(
+        urls.map(url => new JsonRpcProvider(url))
+      );
     }
-    return map;
+    return out;
   }, []);
 
   const coingeckoIds = useMemo(() => {
@@ -115,7 +165,7 @@ export function BalanceProvider({ children }) {
       return;
     }
 
-    const delay = Math.min(2 ** retryCount.current * 3000, 60000); 
+    const delay = Math.min(2 ** retryCount.current * 3000, 60000);
     console.warn(`[BalanceContext] 🔁 Silent retry in ${Math.round(delay / 1000)}s...`);
 
     const id = setTimeout(() => {
