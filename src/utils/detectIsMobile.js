@@ -5,7 +5,15 @@ let cachedResult = null;
 
 export function detectIsMobile() {
   if (cachedResult !== null) return cachedResult;
-  if (typeof window === "undefined") return false;
+  if (typeof window === "undefined") {
+    return {
+      isMobile: false,
+      isTablet: false,
+      isDesktop: true,
+      scale: 1,
+      connectionType: "unknown",
+    };
+  }
 
   try {
     const ua = (navigator.userAgent || "").toLowerCase().replace(/\u0000/g, "");
@@ -65,14 +73,32 @@ export function detectIsMobile() {
 
     const isDefinitelyMobile = looksLikeMobile && width > 0 && height > 0;
 
+    const isTablet = isTabletUA || isTabletMediaQuery;
+    const isDesktop = !isDefinitelyMobile && !isTablet;
+
+    const connectionType = navigator.connection?.effectiveType || "unknown";
+
     if (isDefinitelyMobile) {
       window.__DEBUG_MOBILE__ = true;
     }
 
-    cachedResult = isDefinitelyMobile;
+    cachedResult = {
+      isMobile: !!isDefinitelyMobile,
+      isTablet: !!isTablet,
+      isDesktop: !!isDesktop,
+      scale: window.devicePixelRatio || 1,
+      connectionType,
+    };
+
     return cachedResult;
   } catch (err) {
     console.warn("detectIsMobile() failed:", err);
-    return false;
+    return {
+      isMobile: false,
+      isTablet: false,
+      isDesktop: true,
+      scale: 1,
+      connectionType: "unknown",
+    };
   }
 }
