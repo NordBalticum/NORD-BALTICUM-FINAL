@@ -5,7 +5,7 @@ import { useState, useMemo } from "react";
 import Image from "next/image";
 import { useBalance } from "@/contexts/BalanceContext";
 import networks from "@/data/networks";
-import styles from "./BalanceCard.module.css";
+import styles from "./balancecard.module.css";
 
 export default function BalanceCard() {
   const {
