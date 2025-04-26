@@ -5,8 +5,7 @@ import dynamic from "next/dynamic";
 import { motion } from "framer-motion";
 import { FiRefreshCw } from "react-icons/fi";
 
-import { useSystemReady } from "@/hooks/useSystemReady";
-import { useSessionManager } from "@/hooks/useSessionManager"; // ✅ PRIDĖTAS!
+import { useSystemReady } from "@/hooks/useSystemReady"; // ✅ TIK SYSTEM READY
 import { useAuth } from "@/contexts/AuthContext";
 import { useBalance } from "@/contexts/BalanceContext";
 
@@ -14,15 +13,10 @@ import BalanceCard from "@/components/BalanceCard";
 import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
 import styles from "@/styles/dashboard.module.css";
 
-// Lazy-load LivePriceTable without SSR
-const LivePriceTable = dynamic(() => import("@/components/LivePriceTable"), {
-  ssr: false,
-});
+const LivePriceTable = dynamic(() => import("@/components/LivePriceTable"), { ssr: false });
 
 export default function Dashboard() {
-  const { ready } = useSystemReady();
-  useSessionManager(); // ✅ Paleidžiam automatiškai kai komponentas kraunasi!
-
+  const { ready, isMobile } = useSystemReady(); // iš karto ir ready ir isMobile
   const { user, wallet } = useAuth();
   const { loading: balLoading, refetch, lastUpdated } = useBalance();
 
@@ -36,14 +30,6 @@ export default function Dashboard() {
     const d = new Date(lastUpdated);
     return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
   }, [lastUpdated]);
-
-  // Local isMobile detection
-  const isMobile = useMemo(() => {
-    if (typeof window !== "undefined") {
-      return /Mobi|Android|iPhone/i.test(navigator.userAgent);
-    }
-    return false;
-  }, []);
 
   if (!ready || !wallet?.wallet?.address) {
     return (
@@ -68,7 +54,6 @@ export default function Dashboard() {
   return (
     <main className={styles.container}>
       <div className={styles.dashboardWrapper}>
-
         {/* Top bar */}
         <div className={styles.topBar}>
           <div>
@@ -120,7 +105,6 @@ export default function Dashboard() {
             </div>
           </motion.div>
         </div>
-
       </div>
     </main>
   );
