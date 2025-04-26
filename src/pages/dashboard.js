@@ -4,8 +4,10 @@ import React, { useMemo, Suspense } from "react";
 import dynamic from "next/dynamic";
 import { motion } from "framer-motion";
 
-import { useSessionManager } from "@/hooks/useSessionManager";
+import { useSystemReady } from "@/hooks/useSystemReady";    // ✅ PAGRINDAS
+import { useSessionWatcher } from "@/utils/sessionWatcher";  // ✅ Watcheris
 import { useSilentBalanceRefetch } from "@/hooks/useSilentBalanceRefetch";
+
 import { useAuth } from "@/contexts/AuthContext";
 import { useBalance } from "@/contexts/BalanceContext";
 
@@ -16,8 +18,9 @@ import styles from "@/styles/dashboard.module.css";
 const LivePriceTable = dynamic(() => import("@/components/LivePriceTable"), { ssr: false });
 
 export default function Dashboard() {
-  const { ready, loading, isMobile, scale } = useSessionManager(); // ✅ Ultimate session+device+scale
-  useSilentBalanceRefetch();
+  const { ready, loading, isMobile, scale } = useSystemReady(); // ✅ Tikras ready iš SystemReady
+  useSessionWatcher();                                          // ✅ Naujas Watcheris
+  useSilentBalanceRefetch();                                    // ✅ Tylus balanso refetchas
 
   const { user, wallet } = useAuth();
   const { balancesReady, lastUpdated } = useBalance();
@@ -72,7 +75,6 @@ export default function Dashboard() {
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5 }}
       >
-
         {/* Top Greeting */}
         <motion.div
           className={styles.greetingWrapper}
@@ -88,7 +90,7 @@ export default function Dashboard() {
           </p>
         </motion.div>
 
-        {/* Main Dashboard Row */}
+        {/* Main Dashboard Content */}
         <div className={styles.dashboardRow}>
 
           {/* Left Side: Balances */}
@@ -104,7 +106,7 @@ export default function Dashboard() {
             </div>
           </motion.div>
 
-          {/* Right Side: Live Prices */}
+          {/* Right Side: Live Price Table */}
           <motion.div
             className={styles.chartSection}
             initial={{ opacity: 0, y: 20 }}
@@ -117,7 +119,6 @@ export default function Dashboard() {
           </motion.div>
 
         </div>
-
       </motion.div>
     </main>
   );
