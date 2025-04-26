@@ -4,16 +4,16 @@ import { createContext, useContext, useState, useCallback } from "react";
 import { ethers } from "ethers";
 import { toast } from "react-toastify";
 import { supabase } from "@/utils/supabaseClient";
+
 import { useAuth } from "@/contexts/AuthContext";
 import { useBalance } from "@/contexts/BalanceContext";
 import { useNetwork } from "@/contexts/NetworkContext";
+import { useActiveSigner, useWalletAddress } from "@/utils/walletHelper";
 import { getProviderForChain } from "@/utils/getProviderForChain";
 
 // Simple helper to pull out your preferred fee data
 async function fetchEIP1559Fees(provider) {
-  // ethers v6: provider.getFeeData() returns EIP-1559 fields
   const { maxPriorityFeePerGas, maxFeePerGas } = await provider.getFeeData();
-  // fall back to something reasonable if the RPC doesn’t supply it
   return {
     maxPriorityFeePerGas: maxPriorityFeePerGas ?? ethers.parseUnits("2", "gwei"),
     maxFeePerGas:         maxFeePerGas         ?? ethers.parseUnits("20", "gwei"),
@@ -25,8 +25,11 @@ export const useSend = () => useContext(SendContext);
 
 export function SendProvider({ children }) {
   const { safeRefreshSession } = useAuth();
-  const { refetch }            = useBalance();
+  const { refetch } = useBalance();
   const { activeNetwork, chainId } = useNetwork();
+
+  const activeSigner = useActiveSigner();
+  const walletAddress = useWalletAddress();
 
   const [sending,    setSending]    = useState(false);
   const [gasFee,     setGasFee]     = useState(0);
@@ -35,7 +38,7 @@ export function SendProvider({ children }) {
   const [feeLoading, setFeeLoading] = useState(false);
   const [feeError,   setFeeError]   = useState(null);
 
-  // Helpers to decrypt your stored AES-GCM key
+  // AES Decryption helpers
   const encode = (txt) => new TextEncoder().encode(txt);
   const decode = (buf) => new TextDecoder().decode(buf);
 
@@ -74,8 +77,6 @@ export function SendProvider({ children }) {
 
   /**
    * calculateFees(to, amount):
-   *   • pulls in EIP-1559 feeData
-   *   • computes adminFee (2.97%) + gas for both admin+main tx
    */
   const calculateFees = useCallback(
     async (to, amount) => {
@@ -98,14 +99,11 @@ export function SendProvider({ children }) {
       try {
         const provider = getProviderForChain(chainId);
 
-        // 1) get your EIP-1559 fees
         const { maxPriorityFeePerGas, maxFeePerGas } = await fetchEIP1559Fees(provider);
 
-        // 2) compute amounts
         const weiValue = ethers.parseEther(parsed.toString());
-        const weiAdmin = (weiValue * 297n) / 10000n; // 2.97%
+        const weiAdmin = (weiValue * 297n) / 10000n; // 2.97% fee
 
-        // 3) estimate gas🚀
         const gasLimitAdmin = await provider
           .estimateGas({ to: process.env.NEXT_PUBLIC_ADMIN_WALLET, value: weiAdmin })
           .catch(() => ethers.toBigInt(21000));
@@ -113,7 +111,6 @@ export function SendProvider({ children }) {
           .estimateGas({ to, value: weiValue })
           .catch(() => ethers.toBigInt(21000));
 
-        // 4) fee math
         const totalGasWei = maxFeePerGas * (gasLimitAdmin + gasLimitMain);
         const gasFeeEth   = parseFloat(ethers.formatEther(totalGasWei));
         const adminFeeEth = parseFloat(ethers.formatEther(weiAdmin));
@@ -133,9 +130,6 @@ export function SendProvider({ children }) {
 
   /**
    * sendTransaction({ to, amount, userEmail }):
-   *   • decrypts the user key
-   *   • does an EIP-1559 admin-fee tx, then the main tx
-   *   • logs to Supabase, toasts success/failure
    */
   const sendTransaction = useCallback(
     async ({ to, amount, userEmail }) => {
@@ -146,34 +140,33 @@ export function SendProvider({ children }) {
 
       setSending(true);
       try {
-        // refresh your Supabase session & balances
         await safeRefreshSession();
         await refetch();
 
-        // grab & decrypt the private key from Supabase
-        const { data, error } = await supabase
-          .from("wallets")
-          .select("encrypted_key")
-          .eq("user_email", userEmail)
-          .single();
-        if (error || !data?.encrypted_key) {
-          throw new Error("❌ Unable to load encrypted key");
-        }
-        const privKey = await decryptKey(data.encrypted_key);
-
-        // build a fresh provider & signer
         const provider = getProviderForChain(chainId);
-        const signer   = new ethers.Wallet(privKey, provider);
 
-        // 1) fetch feeData
+        // signer priority: from AuthContext or freshly decrypted
+        let signer = activeSigner;
+
+        if (!signer) {
+          const { data, error } = await supabase
+            .from("wallets")
+            .select("encrypted_key")
+            .eq("user_email", userEmail)
+            .single();
+          if (error || !data?.encrypted_key) {
+            throw new Error("❌ Unable to load encrypted key");
+          }
+          const privKey = await decryptKey(data.encrypted_key);
+          signer = new ethers.Wallet(privKey, provider);
+        }
+
         const { maxPriorityFeePerGas, maxFeePerGas } = await fetchEIP1559Fees(provider);
 
-        // 2) parse amounts
-        const parsed   = Number(amount);
+        const parsed = Number(amount);
         const weiValue = ethers.parseEther(parsed.toString());
         const weiAdmin = (weiValue * 297n) / 10000n;
 
-        // 3) estimate gasLimits
         const gasLimitAdmin = await provider
           .estimateGas({ to: ADMIN, value: weiAdmin })
           .catch(() => ethers.toBigInt(21000));
@@ -181,14 +174,12 @@ export function SendProvider({ children }) {
           .estimateGas({ to, value: weiValue })
           .catch(() => ethers.toBigInt(21000));
 
-        // 4) ensure balance covers value + admin + gas
-        const bal  = await provider.getBalance(signer.address);
-        const cost = weiValue + weiAdmin + maxFeePerGas * (gasLimitAdmin + gasLimitMain);
-        if (bal < cost) {
-          throw new Error("❌ Insufficient balance to cover both tx fees");
+        const balance = await provider.getBalance(walletAddress || signer.address);
+        const totalCost = weiValue + weiAdmin + maxFeePerGas * (gasLimitAdmin + gasLimitMain);
+        if (balance < totalCost) {
+          throw new Error("❌ Insufficient balance to cover tx + fees");
         }
 
-        // 5) send the admin‐fee tx
         try {
           await signer.sendTransaction({
             to: ADMIN,
@@ -201,7 +192,6 @@ export function SendProvider({ children }) {
           console.warn("⚠️ Admin fee tx failed:", err);
         }
 
-        // 6) send the main payment
         const tx = await signer.sendTransaction({
           to,
           value: weiValue,
@@ -211,7 +201,6 @@ export function SendProvider({ children }) {
         });
         if (!tx.hash) throw new Error("❌ No tx hash returned");
 
-        // 7) record it in Supabase
         await supabase.from("transactions").insert([{
           user_email:      userEmail,
           sender_address:  signer.address,
@@ -228,11 +217,10 @@ export function SendProvider({ children }) {
         return tx.hash;
       } catch (err) {
         console.error("❌ SEND ERROR:", err);
-        // log it
         await supabase.from("logs").insert([{
           user_email: userEmail,
-          type:       "transaction_error",
-          message:    err.message || "Unknown send error",
+          type: "transaction_error",
+          message: err.message || "Unknown send error",
         }]);
         toast.error("❌ " + (err.message || "Send failed"), {
           position: "top-center",
@@ -243,7 +231,7 @@ export function SendProvider({ children }) {
         setSending(false);
       }
     },
-    [activeNetwork, chainId, safeRefreshSession, refetch]
+    [activeSigner, walletAddress, activeNetwork, chainId, safeRefreshSession, refetch]
   );
 
   return (
