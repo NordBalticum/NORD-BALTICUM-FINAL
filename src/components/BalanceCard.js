@@ -10,35 +10,31 @@ export default function BalanceCard() {
   const { balances, loading, getUsdBalance, getEurBalance } = useBalance();
   const [showTestnets, setShowTestnets] = useState(false);
 
-  const items = useMemo(
-    () =>
-      networks
-        .map((n) => (showTestnets && n.testnet ? n.testnet : n))
-        .filter((n) => Boolean(n)),
-    [showTestnets]
-  );
+  const items = useMemo(() => {
+    return networks
+      .map((n) => (showTestnets && n.testnet ? n.testnet : n))
+      .filter(Boolean);
+  }, [showTestnets]);
 
   const fmtCrypto = (n) =>
-    Number(n).toLocaleString(undefined, {
+    Number(n || 0).toLocaleString(undefined, {
       minimumFractionDigits: 2,
       maximumFractionDigits: 6,
     });
 
   const fmtFiat = (n) =>
-    Number(n).toLocaleString(undefined, {
+    Number(n || 0).toLocaleString(undefined, {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     });
 
   const { totalUsd, totalEur } = useMemo(() => {
-    const u = items.reduce(
-      (sum, net) => sum + (Number(getUsdBalance(net.value)) || 0),
-      0
-    );
-    const e = items.reduce(
-      (sum, net) => sum + (Number(getEurBalance(net.value)) || 0),
-      0
-    );
+    let u = 0;
+    let e = 0;
+    items.forEach((net) => {
+      u += Number(getUsdBalance(net.value)) || 0;
+      e += Number(getEurBalance(net.value)) || 0;
+    });
     return { totalUsd: u, totalEur: e };
   }, [items, getUsdBalance, getEurBalance]);
 
@@ -69,7 +65,7 @@ export default function BalanceCard() {
 
       <div className={styles.list}>
         {items.map((net) => {
-          const bal = balances[net.value] ?? 0;
+          const balance = balances[net.value] ?? 0;
           const usd = Number(getUsdBalance(net.value)) || 0;
           const eur = Number(getEurBalance(net.value)) || 0;
 
@@ -88,7 +84,7 @@ export default function BalanceCard() {
 
               <div className={styles.amountInfo}>
                 <div className={styles.cryptoAmount}>
-                  {fmtCrypto(bal)}
+                  {fmtCrypto(balance)}
                 </div>
                 <div className={styles.fiatAmount}>
                   {loading ? (
@@ -104,6 +100,7 @@ export default function BalanceCard() {
           );
         })}
 
+        {/* TOTAL */}
         <div className={`${styles.listItem} ${styles.totalRow}`}>
           <div className={styles.networkInfo}>
             <span className={styles.networkLabel}>Total</span>
