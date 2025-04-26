@@ -1,3 +1,4 @@
+// src/utils/getProviderForChain.js
 "use client";
 
 import { ethers } from "ethers";
@@ -37,8 +38,9 @@ export function getProviderForChain(chainIdOrName) {
     priority:    1,
     weight:      1,
     stallTimeout: 200,
+    // **do not** put `quorum` here; ethers v6 ignores it
   }));
 
-  //    Here’s the **key**: pass { quorum: 1 } so we only need one good reply.
-  return new ethers.FallbackProvider(configs, { quorum: 1 });
+  //    **Key fix**: don’t pass a second param
+  return new ethers.FallbackProvider(configs);
 }
