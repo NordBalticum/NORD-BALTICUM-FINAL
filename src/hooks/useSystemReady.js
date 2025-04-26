@@ -6,7 +6,7 @@ import debounce from "lodash.debounce";
 import { toast } from "react-toastify";
 
 import { useAuth } from "@/contexts/AuthContext";
-import { useBalance } from "@/contexts/BalanceContext";      // ← importuojam
+import { useBalance } from "@/contexts/BalanceContext";
 import { useNetwork } from "@/contexts/NetworkContext";
 import { startSessionWatcher } from "@/utils/sessionWatcher";
 import { detectIsMobile } from "@/utils/detectIsMobile";
@@ -21,11 +21,11 @@ export function useSystemReady() {
     safeRefreshSession,
     signOut,
   } = useAuth();
+
   const { activeNetwork, chainId } = useNetwork();
-  const {
-    refetch,
-    loading: balancesLoading,   // ← gaunam BalanceContext loading
-  } = useBalance();
+
+  // get the BalanceContext loading and refetch
+  const { refetch, loading: balancesLoading } = useBalance();
 
   // 🎯 Internal state
   const [isDomReady, setIsDomReady] = useState(false);
@@ -81,9 +81,8 @@ export function useSystemReady() {
   ]);
 
   // ─── 3) Final ready/loading flags ───────────────────────────
-  //   – minimalReady: auth+wallet+DOM ok
-  //   – balancesLoading: kainos/balansai kraunasi fone
-  const ready = minimalReady;                  
+  // We only block on minimalReady; balances/prices load silently
+  const ready = minimalReady;
   const loading = !ready;
 
   // ─── 4) Session score ───────────────────────────────────────
@@ -109,7 +108,7 @@ export function useSystemReady() {
         lastRefreshTime.current = Date.now();
         setLatencyMs(Math.round(performance.now() - start));
         failureCount.current = 0;
-      } catch (err) {
+      } catch {
         failureCount.current += 1;
         if (failureCount.current >= 3) {
           toast.error("⚠️ Session expired. Logging out...");
@@ -117,17 +116,20 @@ export function useSystemReady() {
         }
       }
     };
+
     const onVisible = debounce(() => runRefresh("visibility"), 300);
-    const onFocus = debounce(() => runRefresh("focus"), 300);
-    const onOnline = debounce(() => runRefresh("online"), 300);
-    window.addEventListener("visibilitychange", onVisible);
+    const onFocus   = debounce(() => runRefresh("focus"), 300);
+    const onOnline  = debounce(() => runRefresh("online"), 300);
+
+    document.addEventListener("visibilitychange", onVisible);
     window.addEventListener("focus", onFocus);
     window.addEventListener("online", onOnline);
+
     return () => {
       onVisible.cancel();
       onFocus.cancel();
       onOnline.cancel();
-      window.removeEventListener("visibilitychange", onVisible);
+      document.removeEventListener("visibilitychange", onVisible);
       window.removeEventListener("focus", onFocus);
       window.removeEventListener("online", onOnline);
     };
@@ -146,6 +148,7 @@ export function useSystemReady() {
     const heavyReset = setInterval(() => {
       failureCount.current = 0;
     }, 5 * 60 * 1000);
+
     return () => {
       clearInterval(lightPoll);
       clearInterval(heavyReset);
@@ -176,7 +179,7 @@ export function useSystemReady() {
         }
       },
       log: true,
-      intervalMs: 60000,
+      intervalMs: 60_000,
       networkFailLimit: 3,
     });
     sessionWatcher.current.start();
@@ -185,8 +188,8 @@ export function useSystemReady() {
 
   // ─── Return final state ──────────────────────────────────────
   return {
-    ready,         // spinner until this is true
-    loading,
+    ready,         // use this to gate your Dashboard spinner
+    loading,       // same as !ready
     latencyMs,
     sessionScore,
     isMobile,
