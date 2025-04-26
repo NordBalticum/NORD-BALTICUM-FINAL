@@ -1,4 +1,3 @@
-// src/components/BalanceCard.js
 "use client";
 
 import { useState, useMemo } from "react";
@@ -17,7 +16,7 @@ export default function BalanceCard() {
 
   const [showTestnets, setShowTestnets] = useState(false);
 
-  // build once per toggle change
+  // build the list of networks to show
   const items = useMemo(
     () =>
       networks
@@ -26,21 +25,42 @@ export default function BalanceCard() {
     [showTestnets]
   );
 
-  // helper to format numbers nicely
+  // formatting helpers
   const formatCrypto = (n) =>
-    Number(n).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 });
-  const formatFiat = (s) =>
-    Number(s).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    Number(n).toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 6,
+    });
+  const formatFiat = (n) =>
+    Number(n).toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+
+  // compute totals
+  const { totalUsd, totalEur } = useMemo(() => {
+    const usd = items.reduce(
+      (sum, net) => sum + parseFloat(getUsdBalance(net.value)),
+      0
+    );
+    const eur = items.reduce(
+      (sum, net) => sum + parseFloat(getEurBalance(net.value)),
+      0
+    );
+    return { totalUsd: usd, totalEur: eur };
+  }, [items, getUsdBalance, getEurBalance]);
 
   return (
     <div className={styles.cardWrapper}>
       {/* Mainnet / Testnet toggle */}
-      <div className={styles.toggleWrapper}>
+      <div role="tablist" className={styles.toggleWrapper}>
         <button
           role="tab"
           aria-selected={!showTestnets}
           onClick={() => setShowTestnets(false)}
-          className={`${styles.toggleButton} ${!showTestnets ? styles.active : ""}`}
+          className={`${styles.toggleButton} ${
+            !showTestnets ? styles.active : ""
+          }`}
         >
           Mainnets
         </button>
@@ -48,13 +68,15 @@ export default function BalanceCard() {
           role="tab"
           aria-selected={showTestnets}
           onClick={() => setShowTestnets(true)}
-          className={`${styles.toggleButton} ${showTestnets ? styles.active : ""}`}
+          className={`${styles.toggleButton} ${
+            showTestnets ? styles.active : ""
+          }`}
         >
           Testnets
         </button>
       </div>
 
-      {/* Always render list; prices & balances load silently */}
+      {/* Asset list */}
       <div className={styles.list}>
         {items.map((net) => {
           const bal = balances[net.value] ?? 0;
@@ -66,7 +88,7 @@ export default function BalanceCard() {
               <div className={styles.networkInfo}>
                 <Image
                   src={net.icon}
-                  alt={net.label}
+                  alt={`${net.label} icon`}
                   width={32}
                   height={32}
                   unoptimized
@@ -80,23 +102,37 @@ export default function BalanceCard() {
                   {formatCrypto(bal)}
                 </div>
 
-                {/* Fiat loading vs values */}
+                {/* Fiat value or shimmer */}
                 <div className={styles.fiatAmount}>
                   {isLoading ? (
                     <span className={styles.shimmerTextSmall} />
+                  ) : Number(usd) || Number(eur) ? (
+                    <>≈ ${formatFiat(usd)} | €{formatFiat(eur)}</>
                   ) : (
-                    // if both zero, show “–”
-                    (Number(usd) || Number(eur)) ? (
-                      <>≈ ${formatFiat(usd)} | €{formatFiat(eur)}</>
-                    ) : (
-                      <>–</>
-                    )
+                    <>–</>
                   )}
                 </div>
               </div>
             </div>
           );
         })}
+
+        {/* Total row */}
+        <div className={`${styles.listItem} ${styles.totalRow}`}>
+          <div className={styles.networkInfo}>
+            <span className={styles.networkLabel}>Total</span>
+          </div>
+          <div className={styles.amountInfo}>
+            <div className={styles.cryptoAmount}> </div>
+            <div className={styles.fiatAmount}>
+              {isLoading ? (
+                <span className={styles.shimmerTextSmall} />
+              ) : (
+                <>≈ ${formatFiat(totalUsd)} | €{formatFiat(totalEur)}</>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
