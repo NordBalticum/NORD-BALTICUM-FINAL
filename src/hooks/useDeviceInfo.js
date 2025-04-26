@@ -29,7 +29,8 @@ export function useDeviceInfo() {
         const ua = (navigator.userAgent || "").toLowerCase();
         const uaData = navigator.userAgentData;
         const platform = navigator.platform?.toLowerCase?.() || "";
-
+        const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        const portrait = window.matchMedia("(orientation: portrait)").matches;
         const isTouch = "ontouchstart" in window || navigator.maxTouchPoints > 0;
 
         const isSamsungUltra = /samsung/.test(ua) &&
@@ -42,7 +43,6 @@ export function useDeviceInfo() {
         const isDesktopUA = /macintosh|windows nt|linux x86_64/.test(ua) || /mac|win|linux/.test(platform);
 
         const isNarrow = width <= 920;
-        const isPortrait = window.matchMedia("(orientation: portrait)").matches;
 
         const isFoldable = window.matchMedia("(min-device-width: 672px) and (max-device-width: 920px) and (max-device-height: 1800px)").matches;
 
@@ -67,7 +67,34 @@ export function useDeviceInfo() {
 
         const isLandscape = width > height;
 
-        const scale = Math.min(window.innerWidth / 430, 1); // like your useScale (430px design)
+        // Advanced Ferrari Scale
+        let scale = 1.0;
+        const effW = Math.min(width, screen.width || width);
+
+        const breakpoints = [
+          { max: 360, scale: 0.45 },
+          { max: 460, scale: 0.50 },
+          { max: 576, scale: 0.55 },
+          { max: 768, scale: 0.65 },
+          { max: 992, scale: 0.75 },
+          { max: 1200, scale: 0.80 },
+          { max: Infinity, scale: 0.90 },
+        ];
+
+        for (const bp of breakpoints) {
+          if (effW <= bp.max) {
+            scale = reduced ? bp.scale * 0.9 : bp.scale;
+            break;
+          }
+        }
+
+        scale *= effW < 768 ? 0.75 : 1.0; // mobile factor
+
+        if (dpr >= 2 && effW < 500) scale -= 0.015; // HDPI adjustment
+        if (portrait && effW < 768) scale -= 0.01; // Portrait adjustment
+
+        scale = Math.max(0.45, Math.min(0.9, scale));
+        scale = parseFloat(scale.toFixed(4));
 
         setInfo({
           isMobile,
@@ -86,7 +113,7 @@ export function useDeviceInfo() {
       }
     };
 
-    const debouncedDetect = debounce(detect, 200);
+    const debouncedDetect = debounce(detect, 150);
 
     detect();
     window.addEventListener("resize", debouncedDetect);
