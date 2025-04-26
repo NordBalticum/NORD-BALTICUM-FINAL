@@ -1,0 +1,91 @@
+/* src/styles/balancecard.module.css */
+
+.cardWrapper {
+  background: #0e0e0e;
+  border: 1px solid #222;
+  border-radius: 16px;
+  padding: 20px;
+  width: 100%;
+  max-width: 500px;
+  margin: 0 auto;
+  color: white;
+}
+
+.toggleWrapper {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+  gap: 8px;
+}
+
+.toggleButton {
+  background: #222;
+  border: none;
+  border-radius: 20px;
+  padding: 6px 16px;
+  font-size: 12px;
+  cursor: pointer;
+  color: #bbb;
+  transition: background 0.2s, color 0.2s;
+}
+
+.toggleButton:hover {
+  background: #333;
+}
+
+.active {
+  background: #555;
+  color: white;
+}
+
+.loading {
+  text-align: center;
+  padding: 30px 0;
+  font-size: 14px;
+  color: #888;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.listItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #1a1a1a;
+  padding: 12px 16px;
+  border-radius: 12px;
+}
+
+.networkInfo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.networkIcon {
+  width: 24px;
+  height: 24px;
+}
+
+.networkLabel {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.amountInfo {
+  text-align: right;
+}
+
+.cryptoAmount {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.usdAmount {
+  font-size: 12px;
+  color: #aaa;
+}
