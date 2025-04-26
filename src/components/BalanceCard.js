@@ -7,17 +7,17 @@ import networks from "@/data/networks";
 import styles from "./balancecard.module.css";
 
 export default function BalanceCard() {
-  const { balances, loading, getUsdBalance, getEurBalance } = useBalance();
+  const { balances, prices, loading } = useBalance(); // Tik balances + prices
   const [showTestnets, setShowTestnets] = useState(false);
 
-  // Prepare visible networks (mainnets or testnets)
+  // Filtruojam tinklus
   const items = useMemo(() => {
     return networks
       .map((net) => (showTestnets && net.testnet ? net.testnet : net))
       .filter(Boolean);
   }, [showTestnets]);
 
-  // Formatters
+  // Skaičių formatteriai
   const fmtCrypto = (n) =>
     Number(n || 0).toLocaleString(undefined, {
       minimumFractionDigits: 2,
@@ -30,21 +30,24 @@ export default function BalanceCard() {
       maximumFractionDigits: 2,
     });
 
-  // Calculate total balances
+  // Skaičiuojam total iš balances + prices
   const { totalUsd, totalEur } = useMemo(() => {
     return items.reduce(
       (acc, net) => {
-        acc.totalUsd += Number(getUsdBalance(net.value)) || 0;
-        acc.totalEur += Number(getEurBalance(net.value)) || 0;
+        const bal = balances[net.value] ?? 0;
+        const price = prices[net.value] ?? { usd: 0, eur: 0 };
+        acc.totalUsd += bal * (price.usd || 0);
+        acc.totalEur += bal * (price.eur || 0);
         return acc;
       },
       { totalUsd: 0, totalEur: 0 }
     );
-  }, [items, getUsdBalance, getEurBalance]);
+  }, [items, balances, prices]);
 
   return (
     <div className={styles.cardWrapper}>
-      {/* Toggle buttons */}
+      
+      {/* Toggle */}
       <div role="tablist" className={styles.toggleWrapper}>
         <button
           role="tab"
@@ -64,12 +67,13 @@ export default function BalanceCard() {
         </button>
       </div>
 
-      {/* List of networks */}
+      {/* List */}
       <div className={styles.list}>
         {items.map((net) => {
           const balance = balances[net.value] ?? 0;
-          const usd = Number(getUsdBalance(net.value)) || 0;
-          const eur = Number(getEurBalance(net.value)) || 0;
+          const price = prices[net.value] ?? { usd: 0, eur: 0 };
+          const usd = balance * (price.usd || 0);
+          const eur = balance * (price.eur || 0);
 
           return (
             <div key={net.value} className={styles.listItem}>
@@ -83,17 +87,16 @@ export default function BalanceCard() {
                 />
                 <span className={styles.networkLabel}>{net.label}</span>
               </div>
+
               <div className={styles.amountInfo}>
                 <div className={styles.cryptoAmount}>
                   {fmtCrypto(balance)}
                 </div>
                 <div className={styles.fiatAmount}>
-                  {loading ? (
-                    <span className={styles.shimmerSmall} />
-                  ) : (usd || eur) ? (
+                  {(usd || eur) ? (
                     <>≈ ${fmtFiat(usd)} | €{fmtFiat(eur)}</>
                   ) : (
-                    <>–</>
+                    <span className={styles.shimmerSmall} />
                   )}
                 </div>
               </div>
@@ -101,7 +104,7 @@ export default function BalanceCard() {
           );
         })}
 
-        {/* Total */}
+        {/* Total Row */}
         <div className={`${styles.listItem} ${styles.totalRow}`}>
           <div className={styles.networkInfo}>
             <span className={styles.networkLabel}>Total</span>
@@ -109,10 +112,10 @@ export default function BalanceCard() {
           <div className={styles.amountInfo}>
             <div className={styles.cryptoAmount} />
             <div className={styles.fiatAmount}>
-              {loading ? (
-                <span className={styles.shimmerSmall} />
-              ) : (
+              {(totalUsd || totalEur) ? (
                 <>≈ ${fmtFiat(totalUsd)} | €{fmtFiat(totalEur)}</>
+              ) : (
+                <span className={styles.shimmerSmall} />
               )}
             </div>
           </div>
