@@ -1,3 +1,4 @@
+// src/contexts/BalanceContext.js
 "use client";
 
 import React, {
@@ -8,12 +9,11 @@ import { ethers, JsonRpcProvider, FallbackProvider } from "ethers";
 import debounce from "lodash.debounce";
 
 import { useAuth } from "@/contexts/AuthContext";
-import networks from "@/data/networks";
 
 const BalanceContext = createContext(null);
 export const useBalance = () => useContext(BalanceContext);
 
-// 7+7 networks
+// Token IDs mapping
 const TOKEN_IDS = {
   eth: "ethereum",
   matic: "polygon-pos",
@@ -31,12 +31,12 @@ const TOKEN_IDS = {
   "base-goerli": "base",
 };
 
+// Fallback default prices
 const FALLBACK_PRICES = Object.fromEntries(
   Object.keys(TOKEN_IDS).map(key => [key, { usd: 0, eur: 0 }])
 );
 
-const PRICE_TTL = 30_000; // 30s
-
+// Fallback RPCs
 const RPCS = {
   eth: [
     "https://eth.llamarpc.com",
@@ -89,6 +89,8 @@ const RPCS = {
   ],
 };
 
+const PRICE_TTL = 30_000; // 30 seconds price TTL
+
 export function BalanceProvider({ children }) {
   const { wallet, authLoading, walletLoading } = useAuth();
 
@@ -100,10 +102,10 @@ export function BalanceProvider({ children }) {
 
   const lastPriceFetch = useRef(0);
   const silentLoading = useRef(false);
-
   const retryQueue = useRef([]);
   const retryCount = useRef(0);
 
+  // Providers per network
   const providers = useMemo(() => {
     const out = {};
     for (const [key, urls] of Object.entries(RPCS)) {
@@ -165,7 +167,7 @@ export function BalanceProvider({ children }) {
       return;
     }
 
-    const delay = Math.min(2 ** retryCount.current * 3000, 60000);
+    const delay = Math.min(2 ** retryCount.current * 3000, 60000); // Exponential backoff
     console.warn(`[BalanceContext] 🔁 Silent retry in ${Math.round(delay / 1000)}s...`);
 
     const id = setTimeout(() => {
