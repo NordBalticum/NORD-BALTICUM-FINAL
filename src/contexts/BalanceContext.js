@@ -20,7 +20,7 @@ import { getProviderForChain } from "@/utils/getProviderForChain";
 // ── CoinGecko IDs (must match your networks[].value) ───────────────────────
 const TOKEN_IDS = {
   eth:               "ethereum",
-  matic:             "polygon-pos",    // Polygon’s on-chain ID
+  matic:             "matic-network",
   bnb:               "binancecoin",
   avax:              "avalanche-2",
   optimism:          "optimism",
@@ -32,9 +32,9 @@ const TOKEN_IDS = {
   mantle:            "mantle",
   celo:              "celo",
   gnosis:            "xdai",
-  // Testnets → map to their mainnet token IDs
+  // map testnets back to their mainnet token
   sepolia:           "ethereum",
-  mumbai:            "polygon-pos",
+  mumbai:            "matic-network",
   tbnb:              "binancecoin",
   fuji:              "avalanche-2",
   "optimism-goerli": "optimism",
@@ -48,26 +48,16 @@ const TOKEN_IDS = {
   chiado:            "xdai",
 };
 
-// fallback if CoinGecko fails
+// fallback if CoinGecko is unreachable
 const FALLBACK_PRICES = Object.fromEntries(
-  Object.keys(TOKEN_IDS).map((sym) => [sym, { usd: 0, eur: 0 }])
+  Object.keys(TOKEN_IDS).map(sym => [sym, { usd: 0, eur: 0 }])
 );
 
 const BALANCE_KEY = "nordbalticum_balances";
 const PRICE_KEY   = "nordbalticum_prices";
 
-// your Pro-tier CoinGecko key (optional)
+// optional Pro API key header
 const CG_KEY = process.env.NEXT_PUBLIC_COINGECKO_KEY;
-
-// helper to fetch prices with optional Pro key
-async function fetchPrices(ids) {
-  const url = `https://api.coingecko.com/api/v3/simple/price`
-            + `?ids=${ids}&vs_currencies=usd,eur`;
-  const headers = CG_KEY ? { "x_cg_pro_api_key": CG_KEY } : {};
-  const res = await fetch(url, { cache: "no-store", headers });
-  if (!res.ok) throw new Error(`CoinGecko ${res.status}`);
-  return res.json();
-}
 
 const BalanceContext = createContext(null);
 export const useBalance = () => useContext(BalanceContext);
@@ -75,19 +65,19 @@ export const useBalance = () => useContext(BalanceContext);
 export function BalanceProvider({ children }) {
   const { wallet, authLoading, walletLoading } = useAuth();
 
-  const [balances,   setBalances]   = useState({});
-  const [prices,     setPrices]     = useState(FALLBACK_PRICES);
-  const [loading,    setLoading]    = useState(true);
-  const [error,      setError]      = useState(null);
-  const [lastUpdated,setLastUpdated]= useState(null);
+  const [balances,    setBalances]    = useState({});
+  const [prices,      setPrices]      = useState(FALLBACK_PRICES);
+  const [loading,     setLoading]     = useState(true);
+  const [error,       setError]       = useState(null);
+  const [lastUpdated, setLastUpdated] = useState(null);
 
   const lastBalances = useRef({});
 
   // simple localStorage caching
   const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
-  const load =  (k) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : null; } catch { return null; } };
+  const load = k => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : null; } catch { return null; } };
 
-  // 1 provider per network (main + test)
+  // 1) build one ethers provider per network value
   const providers = useMemo(() => {
     const map = {};
     for (const net of networks) {
@@ -103,12 +93,13 @@ export function BalanceProvider({ children }) {
     return map;
   }, []);
 
-  // unique comma-list of CG IDs
+  // comma-separated list of unique CoinGecko IDs
   const coingeckoQuery = useMemo(
     () => Array.from(new Set(Object.values(TOKEN_IDS))).join(","),
     []
   );
 
+  // fetch balances + prices
   const fetchBalancesAndPrices = useCallback(async () => {
     const addr = wallet?.wallet?.address;
     if (!addr) return;
@@ -117,8 +108,8 @@ export function BalanceProvider({ children }) {
     setError(null);
 
     try {
-      // ── on-chain balances ────────────────────────────────────────
-      const entries = await Promise.all(
+      // ── on-chain balances ───────────────────────────────────────
+      const balanceEntries = await Promise.all(
         Object.entries(providers).map(async ([net, prov]) => {
           try {
             const raw = await prov.getBalance(addr);
@@ -128,15 +119,21 @@ export function BalanceProvider({ children }) {
           }
         })
       );
-      const newBalances = Object.fromEntries(entries);
+      const newBalances = Object.fromEntries(balanceEntries);
       setBalances(newBalances);
       lastBalances.current = newBalances;
       save(BALANCE_KEY, newBalances);
 
-      // ── off-chain prices ─────────────────────────────────────────
+      // ── CoinGecko prices ───────────────────────────────────────
       let priceData = {};
       try {
-        const json = await fetchPrices(coingeckoQuery);
+        const url = `https://api.coingecko.com/api/v3/simple/price` +
+                    `?ids=${coingeckoQuery}&vs_currencies=usd,eur`;
+        const resp = await fetch(url, {
+          cache: "no-store",
+          headers: CG_KEY ? { "x_cg_pro_api_key": CG_KEY } : {},
+        });
+        const json = await resp.json();
         for (const [sym, id] of Object.entries(TOKEN_IDS)) {
           priceData[sym] = {
             usd: json[id]?.usd ?? FALLBACK_PRICES[sym].usd,
@@ -159,15 +156,14 @@ export function BalanceProvider({ children }) {
     }
   }, [wallet, providers, coingeckoQuery]);
 
-  // hydrate from localStorage on mount
+  // hydrate from cache on mount
   useEffect(() => {
-    const b = load(BALANCE_KEY);
-    const p = load(PRICE_KEY);
-    if (b) { setBalances(b); lastBalances.current = b; }
-    if (p) setPrices(p);
+    const cb = load(BALANCE_KEY), cp = load(PRICE_KEY);
+    if (cb) { setBalances(cb); lastBalances.current = cb; }
+    if (cp) setPrices(cp);
   }, []);
 
-  // initial fetch when wallet ready
+  // initial fetch once auth+wallet ready
   useEffect(() => {
     if (authLoading || walletLoading) return;
     fetchBalancesAndPrices();
@@ -180,7 +176,7 @@ export function BalanceProvider({ children }) {
     return () => clearInterval(id);
   }, [wallet, fetchBalancesAndPrices]);
 
-  // refresh on visibility/online
+  // refresh on focus or reconnect
   useEffect(() => {
     const onVis = debounce(() => {
       if (document.visibilityState === "visible") fetchBalancesAndPrices();
@@ -197,7 +193,7 @@ export function BalanceProvider({ children }) {
 
   // helpers
   const getUsdBalance = useCallback(
-    (net) => {
+    net => {
       const b = balances[net] ?? lastBalances.current[net] ?? 0;
       const p = prices[net]?.usd ?? 0;
       return (b * p).toFixed(2);
@@ -205,7 +201,7 @@ export function BalanceProvider({ children }) {
     [balances, prices]
   );
   const getEurBalance = useCallback(
-    (net) => {
+    net => {
       const b = balances[net] ?? lastBalances.current[net] ?? 0;
       const p = prices[net]?.eur ?? 0;
       return (b * p).toFixed(2);
