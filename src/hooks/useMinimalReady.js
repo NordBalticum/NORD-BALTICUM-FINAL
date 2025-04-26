@@ -5,7 +5,6 @@ import debounce from "lodash.debounce";
 import { toast } from "react-toastify";
 
 import { useAuth } from "@/contexts/AuthContext";
-import { startSessionWatcher } from "@/utils/sessionWatcher";
 import { detectIsMobile } from "@/utils/detectIsMobile";
 
 export function useMinimalReady() {
@@ -23,24 +22,21 @@ export function useMinimalReady() {
   const [sessionScore, setSessionScore] = useState(100);
 
   const isClient = typeof window !== "undefined";
-  const sessionWatcher = useRef(null);
-  const refreshInterval = useRef(null);
   const lastRefreshTime = useRef(Date.now());
   const failureCount = useRef(0);
-
+  const refreshInterval = useRef(null);
   const isMobile = useMemo(() => detectIsMobile(), []);
 
+  // Detect DOM ready
   useEffect(() => {
     if (!isClient) return;
     const markReady = () => setIsDomReady(true);
-
     if (document.readyState === "complete") {
       markReady();
     } else {
       const raf = requestAnimationFrame(markReady);
       const timeout = setTimeout(markReady, 1000);
       window.addEventListener("load", markReady);
-
       return () => {
         cancelAnimationFrame(raf);
         clearTimeout(timeout);
@@ -49,34 +45,34 @@ export function useMinimalReady() {
     }
   }, [isClient]);
 
-  const minimalReady = useMemo(
-    () =>
+  const minimalReady = useMemo(() => {
+    return (
       isClient &&
       isDomReady &&
       !!user?.email &&
       !!wallet?.wallet?.address &&
       !authLoading &&
-      !walletLoading,
-    [isClient, isDomReady, user, wallet, authLoading, walletLoading]
-  );
+      !walletLoading
+    );
+  }, [isClient, isDomReady, user, wallet, authLoading, walletLoading]);
 
   const loading = !minimalReady;
 
+  // Update session score
   useEffect(() => {
-    if (!isClient || !minimalReady) return;
-
+    if (!minimalReady) return;
     const score =
       100 -
       (authLoading ? 20 : 0) -
       (walletLoading ? 20 : 0) -
       (!user ? 30 : 0) -
       (!wallet?.wallet?.address ? 30 : 0);
-
     setSessionScore(Math.max(0, score));
   }, [minimalReady, authLoading, walletLoading, user, wallet]);
 
+  // Safe refresh session manually
   useEffect(() => {
-    if (!isClient || !minimalReady) return;
+    if (!minimalReady) return;
 
     const refresh = async (trigger) => {
       const start = performance.now();
@@ -85,10 +81,10 @@ export function useMinimalReady() {
         lastRefreshTime.current = Date.now();
         setLatencyMs(Math.round(performance.now() - start));
         failureCount.current = 0;
-        console.log(`✅ MinimalRefresh [${trigger}] (${latencyMs}ms)`);
+        console.log(`✅ Refreshed [${trigger}] (${latencyMs}ms)`);
       } catch (err) {
         failureCount.current += 1;
-        console.error(`❌ MinimalRefresh failed [${trigger}] (${failureCount.current}/3):`, err?.message || err);
+        console.error(`❌ Refresh failed [${trigger}] (${failureCount.current}/3):`, err?.message || err);
         if (failureCount.current >= 3) {
           toast.error("⚠️ Session expired. Logging out...");
           if (typeof signOut === "function") {
@@ -99,82 +95,60 @@ export function useMinimalReady() {
     };
 
     const onVisible = debounce(() => refresh("visibility"), 300);
-    const onFocus = debounce(() => refresh("focus"), 300);
-    const onOnline = debounce(() => refresh("network-online"), 300);
+    const onFocus   = debounce(() => refresh("focus"), 300);
+    const onOnline  = debounce(() => refresh("online"), 300);
 
     document.addEventListener("visibilitychange", onVisible);
     window.addEventListener("focus", onFocus);
     window.addEventListener("online", onOnline);
 
     if (isMobile) {
-      const onWake = () => setTimeout(() => refresh("mobile-resume"), 800);
-      document.addEventListener("resume", onWake);
+      const onWake = debounce(() => refresh("pageshow"), 300);
       window.addEventListener("pageshow", onWake);
-
+      document.addEventListener("resume", onWake);
       return () => {
-        document.removeEventListener("resume", onWake);
-        window.removeEventListener("pageshow", onWake);
+        onVisible.cancel();
+        onFocus.cancel();
+        onOnline.cancel();
+        onWake.cancel();
         document.removeEventListener("visibilitychange", onVisible);
         window.removeEventListener("focus", onFocus);
         window.removeEventListener("online", onOnline);
+        window.removeEventListener("pageshow", onWake);
+        document.removeEventListener("resume", onWake);
       };
     }
 
     return () => {
+      onVisible.cancel();
+      onFocus.cancel();
+      onOnline.cancel();
       document.removeEventListener("visibilitychange", onVisible);
       window.removeEventListener("focus", onFocus);
       window.removeEventListener("online", onOnline);
     };
   }, [minimalReady, safeRefreshSession, isMobile, signOut]);
 
+  // Polling every 30s
   useEffect(() => {
-    if (!isClient || !minimalReady) return;
-
+    if (!minimalReady) return;
     refreshInterval.current = setInterval(() => {
       if (Date.now() - lastRefreshTime.current >= 5 * 60 * 1000) {
-        console.log("⏳ Auto MinimalRefresh (5min)");
+        console.log("⏳ Auto refresh after 5 min");
         safeRefreshSession?.();
         lastRefreshTime.current = Date.now();
       }
-    }, 30000);
-
+    }, 30_000);
     return () => clearInterval(refreshInterval.current);
   }, [minimalReady, safeRefreshSession]);
 
+  // Offline detection
   useEffect(() => {
     if (!isClient) return;
-
-    const notifyOffline = () => toast.warning("⚠️ You are offline. Using cached session.");
-    window.addEventListener("offline", notifyOffline);
-    return () => window.removeEventListener("offline", notifyOffline);
+    const onOffline = () => toast.warning("⚠️ You are offline. Cached data in use.");
+    window.addEventListener("offline", onOffline);
+    return () => window.removeEventListener("offline", onOffline);
   }, []);
-
-  useEffect(() => {
-    if (!isClient || !minimalReady) return;
-
-    sessionWatcher.current = startSessionWatcher({
-      onSessionInvalid: () => {
-        failureCount.current += 1;
-        console.warn("⚠️ Session may be invalid. Failure count:", failureCount.current);
-        if (failureCount.current >= 3) {
-          toast.error("⚠️ Session invalid. Logging out...");
-          if (typeof signOut === "function") {
-            signOut(true);
-          }
-        }
-      },
-      user,
-      wallet,
-      refreshSession: safeRefreshSession,
-      refetchBalances: null,
-      log: true,
-      intervalMs: 60000,
-      networkFailLimit: 3,
-    });
-
-    sessionWatcher.current.start();
-    return () => sessionWatcher.current?.stop?.();
-  }, [minimalReady, user, wallet, safeRefreshSession, signOut]);
 
   return {
     ready: minimalReady,
