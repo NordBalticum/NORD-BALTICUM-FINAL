@@ -10,7 +10,7 @@ import React, {
   useRef,
 } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { JsonRpcProvider, FallbackProvider, ethers } from "ethers";
+import { JsonRpcProvider, FallbackProvider } from "ethers";
 import debounce from "lodash.debounce";
 import networks from "@/data/networks";
 
@@ -44,10 +44,10 @@ const TOKEN_IDS = {
 };
 
 const FALLBACK_PRICES = Object.fromEntries(
-  Object.keys(TOKEN_IDS).map(k => [k, { usd: 0, eur: 0 }])
+  Object.keys(TOKEN_IDS).map((k) => [k, { usd: 0, eur: 0 }])
 );
 
-const PRICE_TTL = 30_000;
+const PRICE_TTL = 30_000; // 30 seconds
 const BalanceContext = createContext(null);
 
 export const useBalance = () => useContext(BalanceContext);
@@ -63,21 +63,26 @@ export function BalanceProvider({ children }) {
 
   const lastPriceFetch = useRef(0);
 
+  // Generate FallbackProvider from networks.js
   const providers = useMemo(() => {
     const map = {};
     for (const net of networks) {
-      const rpcProviders = net.rpcUrls.map(url => new JsonRpcProvider(url));
-      map[net.value] = new FallbackProvider(rpcProviders, 1);
+      map[net.value] = new FallbackProvider(
+        net.rpcUrls.map(url => new JsonRpcProvider(url)),
+        1
+      );
       if (net.testnet) {
-        const testnetProviders = net.testnet.rpcUrls.map(url => new JsonRpcProvider(url));
-        map[net.testnet.value] = new FallbackProvider(testnetProviders, 1);
+        map[net.testnet.value] = new FallbackProvider(
+          net.testnet.rpcUrls.map(url => new JsonRpcProvider(url)),
+          1
+        );
       }
     }
     return map;
   }, []);
 
   const coingeckoIds = useMemo(() => {
-    return Array.from(new Set(Object.values(TOKEN_IDS))).join(",");
+    return [...new Set(Object.values(TOKEN_IDS))].join(",");
   }, []);
 
   const fetchBalances = useCallback(async () => {
@@ -88,11 +93,11 @@ export function BalanceProvider({ children }) {
     await Promise.all(
       Object.entries(providers).map(async ([key, provider]) => {
         try {
-          const raw = await provider.getBalance(addr, "latest");
-          out[key] = parseFloat(ethers.formatEther(raw));
+          const balance = await provider.getBalance(addr, "latest");
+          out[key] = parseFloat(balance.toString()) / 1e18; // saugesnis float
         } catch (err) {
-          console.warn(`[BalanceContext] Failed fetching ${key}:`, err?.message || err);
-          out[key] = 0; // fallback į 0 jeigu error
+          console.warn(`[BalanceContext] Failed to fetch balance for ${key}:`, err?.message);
+          out[key] = 0;
         }
       })
     );
@@ -101,9 +106,7 @@ export function BalanceProvider({ children }) {
 
   const fetchPrices = useCallback(async () => {
     const now = Date.now();
-    if (now - lastPriceFetch.current < PRICE_TTL) {
-      return prices;
-    }
+    if (now - lastPriceFetch.current < PRICE_TTL) return prices;
 
     try {
       const res = await fetch(`/api/prices?ids=${coingeckoIds}`, { cache: "no-store" });
@@ -120,7 +123,7 @@ export function BalanceProvider({ children }) {
       lastPriceFetch.current = now;
       return out;
     } catch (err) {
-      console.warn("[BalanceContext] Failed fetching prices:", err?.message || err);
+      console.warn("[BalanceContext] Failed to fetch prices:", err?.message);
       return prices;
     }
   }, [coingeckoIds, prices]);
@@ -135,20 +138,22 @@ export function BalanceProvider({ children }) {
       setBalances(newBalances);
       setPrices(newPrices);
       setLastUpdated(Date.now());
+      setBalancesReady(true);
     } catch (err) {
-      console.error("[BalanceContext] fetchAll error:", err?.message || err);
+      console.error("[BalanceContext] fetchAll failed:", err?.message);
     } finally {
       setLoading(false);
-      setBalancesReady(true);
     }
   }, [fetchBalances, fetchPrices]);
 
+  // Initial load
   useEffect(() => {
     if (!authLoading && !walletLoading && wallet?.wallet?.address) {
       fetchAll();
     }
   }, [authLoading, walletLoading, wallet, fetchAll]);
 
+  // Auto background refresh every 30s
   useEffect(() => {
     const interval = setInterval(fetchAll, 30_000);
     const onVisible = debounce(() => {
@@ -165,8 +170,8 @@ export function BalanceProvider({ children }) {
     };
   }, [fetchAll]);
 
-  const getUsdBalance = key => (balances[key] || 0) * (prices[key]?.usd || 0);
-  const getEurBalance = key => (balances[key] || 0) * (prices[key]?.eur || 0);
+  const getUsdBalance = (key) => (balances[key] ?? 0) * (prices[key]?.usd ?? 0);
+  const getEurBalance = (key) => (balances[key] ?? 0) * (prices[key]?.eur ?? 0);
 
   return (
     <BalanceContext.Provider
