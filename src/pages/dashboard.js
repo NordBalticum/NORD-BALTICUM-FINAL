@@ -4,10 +4,8 @@ import React, { useMemo, Suspense } from "react";
 import dynamic from "next/dynamic";
 import { motion } from "framer-motion";
 
-import { useSessionManager } from "@/hooks/useSessionManager"; // ✅ Tik šitas
+import { useSessionManager } from "@/hooks/useSessionManager";
 import { useSilentBalanceRefetch } from "@/hooks/useSilentBalanceRefetch";
-import { useDeviceInfo } from "@/hooks/useDeviceInfo";
-
 import { useAuth } from "@/contexts/AuthContext";
 import { useBalance } from "@/contexts/BalanceContext";
 
@@ -18,8 +16,7 @@ import styles from "@/styles/dashboard.module.css";
 const LivePriceTable = dynamic(() => import("@/components/LivePriceTable"), { ssr: false });
 
 export default function Dashboard() {
-  const { ready: sessionReady } = useSessionManager(); // 🧠 SESSION READY
-  const { isMobile, scale } = useDeviceInfo();
+  const { ready, loading, isMobile, scale } = useSessionManager(); // ✅ Ultimate session+device+scale
   useSilentBalanceRefetch();
 
   const { user, wallet } = useAuth();
@@ -37,15 +34,15 @@ export default function Dashboard() {
     return d.toLocaleTimeString([], {
       hour: "2-digit",
       minute: "2-digit",
-      second: "2-digit"
+      second: "2-digit",
     });
   }, [lastUpdated]);
 
-  const isLoading = useMemo(() => (
-    !sessionReady || !balancesReady || !address
-  ), [sessionReady, balancesReady, address]);
+  const isFullyLoading = useMemo(() => (
+    loading || !balancesReady || !address
+  ), [loading, balancesReady, address]);
 
-  if (isLoading) {
+  if (isFullyLoading) {
     return (
       <main className={styles.container}>
         <div className={styles.dashboardWrapper}>
@@ -76,12 +73,12 @@ export default function Dashboard() {
         transition={{ duration: 0.5 }}
       >
 
-        {/* Greeting */}
+        {/* Top Greeting */}
         <motion.div
           className={styles.greetingWrapper}
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15 }}
+          transition={{ delay: 0.2 }}
         >
           <h2 className={styles.greeting}>
             Hello, {user?.email?.split("@")[0] ?? "User"}!
@@ -91,15 +88,15 @@ export default function Dashboard() {
           </p>
         </motion.div>
 
-        {/* Main content */}
+        {/* Main Dashboard Row */}
         <div className={styles.dashboardRow}>
 
-          {/* Left: Balances */}
+          {/* Left Side: Balances */}
           <motion.div
             className={styles.balanceSection}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
+            transition={{ delay: 0.35 }}
           >
             <BalanceCard />
             <div className={styles.footerInfo}>
@@ -107,7 +104,7 @@ export default function Dashboard() {
             </div>
           </motion.div>
 
-          {/* Right: Live Prices */}
+          {/* Right Side: Live Prices */}
           <motion.div
             className={styles.chartSection}
             initial={{ opacity: 0, y: 20 }}
