@@ -1,8 +1,26 @@
+/* === FONDO STILIUS === */
+.container {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: 100vw;
+  height: 100vh;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle at center, #0a122a 15%, #1b2370 65%, #2b37ff 100%) no-repeat center center fixed;
+  background-size: cover;
+  filter: brightness(93%);
+  user-select: none;
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  z-index: 1;
+  overflow: hidden;
+}
+
 /* === PAGRINDINIS WRAPPER === */
 .dashboardWrapper {
   position: relative;
   width: 100%;
-  max-width: 1400px;           /* ↑ bump up max width on desktop */
+  max-width: 1400px;           /* ↑ bumped up on large screens */
   margin: 0 auto;
   padding: 24px clamp(16px, 4vw, 48px) 96px;
   display: flex;
@@ -22,6 +40,72 @@
   }
 }
 
+/* === DASHBOARD ROW LAYOUT === */
+.dashboardRow {
+  display: flex;
+  width: 100%;
+  gap: 24px;
+  flex-direction: column; /* stack on mobile by default */
+}
+
+.chartSection {
+  flex: 7; /* ~70% width on desktop */
+}
+
+.balanceSection {
+  flex: 3; /* ~30% width on desktop */
+}
+
+@media (max-width: 768px) {
+  .dashboardRow {
+    gap: 16px;
+  }
+  .chartSection,
+  .balanceSection {
+    flex: unset;
+    width: 100%;
+  }
+}
+
+/* === LIVE CHARTS WRAPPER === */
+.chartSection {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 20px;
+  backdrop-filter: blur(18px) saturate(140%);
+  box-shadow: 0 0 28px rgba(255, 255, 255, 0.05);
+  overflow: hidden;
+  padding: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* === MAINNET / TESTNET TOGGLE === */
+.toggleWrapper {
+  display: flex;
+  justify-content: center;
+  margin: 20px 0;
+  gap: 10px;
+}
+
+.toggleButton {
+  background: #222;
+  color: #bbb;
+  border: none;
+  border-radius: 20px;
+  padding: 6px 16px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.toggleButton:hover {
+  background: #333;
+}
+
+.active {
+  background: #555;
+  color: #fff;
+}
+
 /* === BALANCE / ASSET LIST === */
 .assetList {
   width: 100%;
@@ -31,7 +115,7 @@
   animation: fadeInUp 0.7s ease;
 }
 
-/* on wider screens, allow two-column layout to fill more real estate */
+/* two-column grid on wider desktops */
 @media (min-width: 992px) {
   .assetList {
     display: grid;
@@ -49,10 +133,10 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  transition: 0.3s ease;
+  cursor: pointer;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
   backdrop-filter: blur(22px) saturate(160%);
   box-shadow: 0 0 28px rgba(255, 255, 255, 0.05);
-  cursor: pointer;
 }
 
 .assetItem:hover {
@@ -64,14 +148,12 @@
 .assetLogo {
   width: 42px;
   height: 42px;
-  /* no white background or extra padding—let your SVG show through */
-  background: transparent;
+  background: transparent;    /* let SVG fill in */
   padding: 0;
-  border-radius: 6px; /* optional subtle rounding */
+  border-radius: 6px;         /* subtle rounding */
   object-fit: contain;
 }
 
-/* shrink logos slightly on mobile */
 @media (max-width: 768px) {
   .assetLogo {
     width: 32px;
@@ -79,7 +161,7 @@
   }
 }
 
-/* rest unchanged... */
+/* === ASSET TEXT === */
 .assetLeft {
   display: flex;
   align-items: center;
@@ -93,30 +175,62 @@
 .assetSymbol {
   font-weight: 700;
   font-size: 1.1rem;
-  color: white;
+  color: #fff;
   font-family: var(--font-crypto);
 }
 .assetName {
   font-size: 0.9rem;
   opacity: 0.7;
-  color: white;
+  color: #fff;
   font-family: var(--font-crypto);
 }
 .assetRight {
-  text-align: right;
   display: flex;
   flex-direction: column;
   gap: 4px;
+  text-align: right;
 }
 .assetAmount {
   font-weight: 600;
   font-size: 1rem;
-  color: white;
+  color: #fff;
   font-family: var(--font-crypto);
 }
 .assetEur {
   font-size: 0.85rem;
   opacity: 0.7;
-  color: white;
+  color: #fff;
   font-family: var(--font-crypto);
 }
+
+/* === LOADER WRAPPERS === */
+.fullscreenCenter {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: transparent;
+}
+.loadingSub {
+  margin-top: 12px;
+  color: #ccc;
+  font-size: 0.9rem;
+}
+
+/* === SHIMMER PLACEHOLDERS (if still used) === */
+.shimmerCard { /* … your existing shimmer if needed … */ }
+.shimmerText { /* … */ }
+.shimmerTextSmall { /* … */ }
+
+/* === ANIMATIONS === */
+@keyframes fadeIn {
+  0% { opacity: 0; transform: translateY(12px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeInUp {
+  0% { opacity: 0; transform: translateY(24px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+/* note: other responsive tweaks already handled above */
