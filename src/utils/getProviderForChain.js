@@ -5,46 +5,39 @@ import { ethers } from "ethers";
 import { ethersFallbackProviders } from "@/utils/fallbackRPCs";
 
 /**
- * Grąžina JsonRpcProvider arba FallbackProvider pagal chainId.
- * Ateityje tiesiog papildyk `ethersFallbackProviders[NEW_CHAIN_ID] = [url1, url2, ...]`
+ * Returns a JsonRpcProvider or FallbackProvider for the given chainId.
  *
- * @param {string|number} chainIdOrName – grandinės ID arba string versija
+ * @param {string|number} chainIdOrName – the chain ID (e.g. "1", 56, 137, 43114)
  * @returns {ethers.JsonRpcProvider|ethers.FallbackProvider}
  */
 export function getProviderForChain(chainIdOrName) {
-  // 1) Normalizuojame į skaičių
+  // 1) normalize
   const chainId =
     typeof chainIdOrName === "string"
       ? parseInt(chainIdOrName, 10)
       : chainIdOrName;
 
-  if (typeof chainId !== "number" || isNaN(chainId)) {
-    throw new Error(`❌ Invalid chainId: ${chainIdOrName}`);
-  }
-
-  // 2) Traukiam visus URL'us iš konfigūracijos
+  // 2) look up your RPC URLs
   const urls = ethersFallbackProviders[chainId];
-  if (!Array.isArray(urls) || urls.length === 0) {
+  if (!urls?.length) {
     throw new Error(`❌ No RPC endpoints configured for chainId ${chainId}`);
   }
 
-  // 3) Kuriam JsonRpcProvider kiekvienam URL
+  // 3) construct an ethers provider for each URL
   const providers = urls.map((url) => new ethers.JsonRpcProvider(url, chainId));
 
-  // 4) Jei vienas URL – grąžinam jį tiesiogiai
+  // 4) if only one, return it directly
   if (providers.length === 1) {
     return providers[0];
   }
 
-  // 5) Kitais atvejais – FallbackProvider su prioritetais
-  //    priority = 0 pirmam, 1 antram, ...; weight = 1 visiems; stallTimeout = 200ms
-  const fallbackConfigs = providers.map((provider, index) => ({
+  // 5) wrap in a FallbackProvider – **do not** pass a second param here,
+  //    because ethers v6 will interpret it as “network” config (not quorum).
+  const configs = providers.map((provider, priority) => ({
     provider,
-    priority: index,
+    priority,
     weight: 1,
     stallTimeout: 200
   }));
-
-  // 6) quorum = 1 → pakanka vieno gyvo provider'io atsakymo
-  return new ethers.FallbackProvider(fallbackConfigs, /* quorum */ 1);
+  return new ethers.FallbackProvider(configs);
 }
