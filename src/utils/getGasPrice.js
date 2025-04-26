@@ -4,40 +4,48 @@
 import { ethers } from "ethers";
 
 /**
- * Gaunam dujų kainą bet kokiam provider‘iui, su pasirinktiniais greičio režimais.
- * - Jei provider turi getFeeData(), panaudosime maxFeePerGas EIP-1559 grandims.
- * - Jei ne – grįšime į legacy getGasPrice().
- * - Jei viskas sugriūva arba gauname falsy rezultatą, defaultinam į 5 Gwei.
+ * Fetches a gas price suitable for any EVM network (1559 or legacy).
  *
- * @param {ethers.JsonRpcProvider | ethers.FallbackProvider} provider
- * @param {"slow"|"average"|"fast"} speed  – pasirinkimas: slow=0.9×, average=1×, fast=1.2×
- * @returns {Promise<bigint>}  – grąžina dujų kainą Wei (BigInt)
+ * - If the provider supports EIP-1559 (getFeeData), we use maxFeePerGas (or gasPrice fallback).
+ * - Otherwise we call the legacy getGasPrice().
+ * - We apply a speed multiplier: slow = 0.9×, average = 1×, fast = 1.2×.
+ * - On any failure or missing data, defaults to 5 Gwei.
+ *
+ * @param {ethers.JsonRpcProvider|ethers.FallbackProvider} provider
+ * @param {"slow"|"average"|"fast"} speed
+ * @returns {Promise<bigint>} gas price in Wei
  */
 export async function getGasPrice(provider, speed = "average") {
   try {
-    // 1) surenkam bazinę kainą
+    // 1) Base fee retrieval
     let baseFee;
-    if (provider.getFeeData) {
+    if (typeof provider.getFeeData === "function") {
+      // EIP-1559 enabled
       const feeData = await provider.getFeeData();
-      // preferuojam EIP-1559, fallback į legacy gasPrice
+      // prefer maxFeePerGas, otherwise gasPrice if some older node
       baseFee = feeData.maxFeePerGas ?? feeData.gasPrice;
     } else {
+      // Legacy networks
       baseFee = await provider.getGasPrice();
     }
 
+    // 2) Validate
     if (!baseFee || typeof baseFee !== "bigint") {
-      console.warn("⚠️ Gas price not found, using fallback 5 Gwei.");
+      console.warn("⚠️ Gas price not found or invalid, falling back to 5 Gwei.");
       baseFee = ethers.parseUnits("5", "gwei");
     }
 
-    // 2) pritaikom greičio multiplier’į (0.9× arba 1.2×)
+    // 3) Apply speed multiplier
     let adjusted;
-    if (speed === "slow") {
-      adjusted = baseFee * 9n / 10n;
-    } else if (speed === "fast") {
-      adjusted = baseFee * 12n / 10n;
-    } else {
-      adjusted = baseFee;
+    switch (speed) {
+      case "slow":
+        adjusted = (baseFee * 9n) / 10n;   // 0.9×
+        break;
+      case "fast":
+        adjusted = (baseFee * 12n) / 10n;  // 1.2×
+        break;
+      default:
+        adjusted = baseFee;                // 1×
     }
 
     console.debug(
@@ -47,8 +55,7 @@ export async function getGasPrice(provider, speed = "average") {
     );
     return adjusted;
   } catch (err) {
-    console.error("❌ Failed to get gas price:", err?.message || err);
-    // 3) klaidos atveju grįžtam prie safe fallback
+    console.error("❌ getGasPrice error:", err?.message || err);
     return ethers.parseUnits("5", "gwei");
   }
 }
