@@ -37,11 +37,9 @@ const [refreshing, setRefreshing] = useState(false); // Silent background
 const [userTriggeredRefresh, setUserTriggeredRefresh] = useState(false); // 🔥 Naujas
 
 // Kai nori useris refreshint rankiniu būdu:
-const refetch = useCallback(async () => {
-  setUserTriggeredRefresh(true);
-  await fetchAll(false);
-  setUserTriggeredRefresh(false);
-}, [fetchAll]);
+const refetch = async () => {
+  await fetchAll(true); // User nori refresh, rodom spinner
+};
   
   const lastPriceFetch = useRef(0);
 
