@@ -1,4 +1,3 @@
-// src/components/BalanceCard.js
 "use client";
 
 import React, { useState, useMemo } from "react";
@@ -24,6 +23,7 @@ export default function BalanceCard() {
       minimumFractionDigits: 2,
       maximumFractionDigits: 6,
     });
+
   const fmtFiat = (n) =>
     Number(n).toLocaleString(undefined, {
       minimumFractionDigits: 2,
@@ -32,11 +32,11 @@ export default function BalanceCard() {
 
   const { totalUsd, totalEur } = useMemo(() => {
     const u = items.reduce(
-      (sum, net) => sum + parseFloat(getUsdBalance(net.value)),
+      (sum, net) => sum + (Number(getUsdBalance(net.value)) || 0),
       0
     );
     const e = items.reduce(
-      (sum, net) => sum + parseFloat(getEurBalance(net.value)),
+      (sum, net) => sum + (Number(getEurBalance(net.value)) || 0),
       0
     );
     return { totalUsd: u, totalEur: e };
@@ -70,8 +70,8 @@ export default function BalanceCard() {
       <div className={styles.list}>
         {items.map((net) => {
           const bal = balances[net.value] ?? 0;
-          const usd = getUsdBalance(net.value);
-          const eur = getEurBalance(net.value);
+          const usd = Number(getUsdBalance(net.value)) || 0;
+          const eur = Number(getEurBalance(net.value)) || 0;
 
           return (
             <div key={net.value} className={styles.listItem}>
@@ -93,7 +93,7 @@ export default function BalanceCard() {
                 <div className={styles.fiatAmount}>
                   {loading ? (
                     <span className={styles.shimmerSmall} />
-                  ) : Number(usd) || Number(eur) ? (
+                  ) : (usd || eur) ? (
                     <>≈ ${fmtFiat(usd)} | €{fmtFiat(eur)}</>
                   ) : (
                     <>–</>
