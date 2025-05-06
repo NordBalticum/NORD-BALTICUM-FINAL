@@ -1,25 +1,13 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect, useCallback, useMemo } from "react";
-import networks from "@/data/networks";
+import fallbackRPCs from "@/utils/fallbackRPCs";
 
 const STORAGE_KEY = "activeNetwork";
+const DEFAULT_NETWORK = "eth";
 
-const NETWORK_KEYS = [];
-const NETWORK_ID_MAP = {};
-
-for (const net of networks) {
-  if (net?.value && net?.chainId) {
-    NETWORK_KEYS.push(net.value);
-    NETWORK_ID_MAP[net.value] = net.chainId;
-  }
-  if (net?.testnet?.value && net?.testnet?.chainId) {
-    NETWORK_KEYS.push(net.testnet.value);
-    NETWORK_ID_MAP[net.testnet.value] = net.testnet.chainId;
-  }
-}
-
-const DEFAULT_NETWORK = NETWORK_KEYS[0] ?? "eth";
+const NETWORK_KEYS = Object.keys(fallbackRPCs);
+const NETWORK_ID_MAP = Object.fromEntries(NETWORK_KEYS.map(k => [k, fallbackRPCs[k].chainId]));
 
 const NetworkContext = createContext({
   activeNetwork: DEFAULT_NETWORK,
@@ -33,7 +21,6 @@ export function NetworkProvider({ children }) {
   const [activeNetwork, setActiveNetwork] = useState(DEFAULT_NETWORK);
   const [hydrated, setHydrated] = useState(false);
 
-  // Load saved network
   useEffect(() => {
     if (typeof window === "undefined") return;
     try {
@@ -48,7 +35,6 @@ export function NetworkProvider({ children }) {
     }
   }, []);
 
-  // Save on change
   useEffect(() => {
     if (!hydrated || typeof window === "undefined") return;
     try {
@@ -60,7 +46,7 @@ export function NetworkProvider({ children }) {
 
   const switchNetwork = useCallback((netKey) => {
     if (!NETWORK_KEYS.includes(netKey)) {
-      console.warn(`[NetworkContext] Invalid network key attempted: ${netKey}`);
+      console.warn(`[NetworkContext] ❌ Invalid network attempted: ${netKey}`);
       return;
     }
     setActiveNetwork(netKey);
