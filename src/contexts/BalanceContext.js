@@ -1,4 +1,3 @@
-// src/contexts/BalanceContext.js
 "use client";
 
 import React, {
@@ -13,7 +12,12 @@ import { useAuth } from "@/contexts/AuthContext";
 const BalanceContext = createContext(null);
 export const useBalance = () => useContext(BalanceContext);
 
-// Token IDs mapping
+// 4 mainnets + 4 testnets hardcoded
+const DEFAULT_NETWORKS = [
+  "eth", "matic", "bnb", "avax",
+  "sepolia", "mumbai", "tbnb", "fuji"
+];
+
 const TOKEN_IDS = {
   eth: "ethereum",
   matic: "polygon-pos",
@@ -31,69 +35,44 @@ const TOKEN_IDS = {
   "base-goerli": "base",
 };
 
-// Fallback default prices
 const FALLBACK_PRICES = Object.fromEntries(
   Object.keys(TOKEN_IDS).map(key => [key, { usd: 0, eur: 0 }])
 );
 
-// Fallback RPCs
 const RPCS = {
-  eth: [
-    "https://eth.llamarpc.com",
-    "https://rpc.ankr.com/eth",
-  ],
-  matic: [
-    "https://polygon.llamarpc.com",
-    "https://rpc.ankr.com/polygon",
-  ],
-  bnb: [
-    "https://bsc.publicnode.com",
-    "https://rpc.ankr.com/bsc",
-  ],
-  avax: [
-    "https://api.avax.network/ext/bc/C/rpc",
-    "https://rpc.ankr.com/avalanche",
-  ],
-  optimism: [
-    "https://optimism.publicnode.com",
-    "https://rpc.ankr.com/optimism",
-  ],
-  arbitrum: [
-    "https://arb1.arbitrum.io/rpc",
-    "https://rpc.ankr.com/arbitrum",
-  ],
-  base: [
-    "https://mainnet.base.org",
-    "https://developer-access-mainnet.base.org",
-  ],
-  sepolia: [
-    "https://ethereum-sepolia.publicnode.com",
-  ],
-  mumbai: [
-    "https://polygon-mumbai.publicnode.com",
-  ],
-  tbnb: [
-    "https://bsc-testnet.publicnode.com",
-  ],
-  fuji: [
-    "https://avalanche-fuji-c-chain.publicnode.com",
-  ],
-  "optimism-goerli": [
-    "https://optimism-goerli.publicnode.com",
-  ],
-  "arbitrum-goerli": [
-    "https://arbitrum-goerli.publicnode.com",
-  ],
-  "base-goerli": [
-    "https://base-goerli.publicnode.com",
-  ],
+  eth: ["https://eth.llamarpc.com", "https://rpc.ankr.com/eth"],
+  matic: ["https://polygon.llamarpc.com", "https://rpc.ankr.com/polygon"],
+  bnb: ["https://bsc.publicnode.com", "https://rpc.ankr.com/bsc"],
+  avax: ["https://api.avax.network/ext/bc/C/rpc", "https://rpc.ankr.com/avalanche"],
+  optimism: ["https://optimism.publicnode.com", "https://rpc.ankr.com/optimism"],
+  arbitrum: ["https://arb1.arbitrum.io/rpc", "https://rpc.ankr.com/arbitrum"],
+  base: ["https://mainnet.base.org", "https://developer-access-mainnet.base.org"],
+  sepolia: ["https://ethereum-sepolia.publicnode.com"],
+  mumbai: ["https://polygon-mumbai.publicnode.com"],
+  tbnb: ["https://bsc-testnet.publicnode.com"],
+  fuji: ["https://avalanche-fuji-c-chain.publicnode.com"],
+  "optimism-goerli": ["https://optimism-goerli.publicnode.com"],
+  "arbitrum-goerli": ["https://arbitrum-goerli.publicnode.com"],
+  "base-goerli": ["https://base-goerli.publicnode.com"],
 };
 
-const PRICE_TTL = 30_000; // 30 seconds price TTL
+const PRICE_TTL = 30000;
+
+const format = (val, decimals = 5) => {
+  if (typeof val !== "number" || isNaN(val)) return "0.00000";
+  return Number(val).toFixed(decimals);
+};
+
+function getEnabledNetworks() {
+  try {
+    const local = JSON.parse(localStorage.getItem("enabledNetworks"));
+    if (Array.isArray(local)) return [...new Set([...DEFAULT_NETWORKS, ...local])];
+  } catch {}
+  return DEFAULT_NETWORKS;
+}
 
 export function BalanceProvider({ children }) {
   const { wallet, authLoading, walletLoading } = useAuth();
-
   const [balances, setBalances] = useState({});
   const [prices, setPrices] = useState(FALLBACK_PRICES);
   const [loading, setLoading] = useState(true);
@@ -105,16 +84,18 @@ export function BalanceProvider({ children }) {
   const retryQueue = useRef([]);
   const retryCount = useRef(0);
 
-  // Providers per network
+  const enabledNetworks = useMemo(() => getEnabledNetworks(), []);
+
   const providers = useMemo(() => {
     const out = {};
-    for (const [key, urls] of Object.entries(RPCS)) {
-      out[key] = new FallbackProvider(
-        urls.map(url => new JsonRpcProvider(url))
-      );
+    for (const key of enabledNetworks) {
+      const urls = RPCS[key];
+      if (urls?.length) {
+        out[key] = new FallbackProvider(urls.map(url => new JsonRpcProvider(url)));
+      }
     }
     return out;
-  }, []);
+  }, [enabledNetworks]);
 
   const coingeckoIds = useMemo(() => {
     return Array.from(new Set(Object.values(TOKEN_IDS))).join(",");
@@ -123,15 +104,13 @@ export function BalanceProvider({ children }) {
   const fetchBalances = useCallback(async () => {
     const addr = wallet?.wallet?.address;
     if (!addr) return {};
-
     const out = {};
     await Promise.allSettled(
       Object.entries(providers).map(async ([key, provider]) => {
         try {
           const raw = await provider.getBalance(addr, "latest");
           out[key] = parseFloat(ethers.formatEther(raw));
-        } catch (err) {
-          console.warn(`[BalanceContext] ❌ Failed balance fetch (${key}):`, err?.message || err);
+        } catch {
           out[key] = 0;
         }
       })
@@ -142,7 +121,6 @@ export function BalanceProvider({ children }) {
   const fetchPrices = useCallback(async () => {
     const now = Date.now();
     if (now - lastPriceFetch.current < PRICE_TTL) return prices;
-
     try {
       const res = await fetch(`/api/prices?ids=${coingeckoIds}`, { cache: "no-store" });
       const data = await res.json();
@@ -155,25 +133,15 @@ export function BalanceProvider({ children }) {
       }
       lastPriceFetch.current = now;
       return out;
-    } catch (err) {
-      console.warn("[BalanceContext] ❌ Failed price fetch:", err?.message || err);
+    } catch {
       return prices;
     }
   }, [coingeckoIds, prices]);
 
   const silentRetry = useCallback(() => {
-    if (retryCount.current >= 6) {
-      console.error("[BalanceContext] ❌ Max silent retries reached.");
-      return;
-    }
-
-    const delay = Math.min(2 ** retryCount.current * 3000, 60000); // Exponential backoff
-    console.warn(`[BalanceContext] 🔁 Silent retry in ${Math.round(delay / 1000)}s...`);
-
-    const id = setTimeout(() => {
-      fetchAll(true);
-    }, delay);
-
+    if (retryCount.current >= 6) return;
+    const delay = Math.min(2 ** retryCount.current * 3000, 60000);
+    const id = setTimeout(() => fetchAll(true), delay);
     retryQueue.current.push(id);
     retryCount.current++;
   }, []);
@@ -182,18 +150,14 @@ export function BalanceProvider({ children }) {
     if (!silent) setLoading(true);
     silentLoading.current = true;
     try {
-      const [newBalances, newPrices] = await Promise.all([
-        fetchBalances(),
-        fetchPrices(),
-      ]);
+      const [newBalances, newPrices] = await Promise.all([fetchBalances(), fetchPrices()]);
       setBalances(newBalances);
       setPrices(newPrices);
       setLastUpdated(Date.now());
       retryCount.current = 0;
       retryQueue.current.forEach(clearTimeout);
       retryQueue.current = [];
-    } catch (err) {
-      console.error("[BalanceContext] ❌ fetchAll error:", err?.message || err);
+    } catch {
       silentRetry();
     } finally {
       if (!silent) setLoading(false);
@@ -203,26 +167,19 @@ export function BalanceProvider({ children }) {
   }, [fetchBalances, fetchPrices, silentRetry]);
 
   useEffect(() => {
-    if (!authLoading && !walletLoading && wallet?.wallet?.address) {
-      fetchAll();
-    }
+    if (!authLoading && !walletLoading && wallet?.wallet?.address) fetchAll();
   }, [authLoading, walletLoading, wallet, fetchAll]);
 
   useEffect(() => {
     const interval = setInterval(() => {
-      if (!silentLoading.current) {
-        fetchAll(true);
-      }
-    }, 30_000);
+      if (!silentLoading.current) fetchAll(true);
+    }, 30000);
 
     const onVisible = debounce(() => {
-      if (document.visibilityState === "visible" && !silentLoading.current) {
-        fetchAll(true);
-      }
+      if (document.visibilityState === "visible" && !silentLoading.current) fetchAll(true);
     }, 300);
 
     document.addEventListener("visibilitychange", onVisible);
-
     return () => {
       clearInterval(interval);
       retryQueue.current.forEach(clearTimeout);
@@ -232,8 +189,9 @@ export function BalanceProvider({ children }) {
     };
   }, [fetchAll]);
 
-  const getUsdBalance = key => (balances[key] || 0) * (prices[key]?.usd || 0);
-  const getEurBalance = key => (balances[key] || 0) * (prices[key]?.eur || 0);
+  const getUsdBalance = key => format((balances[key] || 0) * (prices[key]?.usd || 0), 2);
+  const getEurBalance = key => format((balances[key] || 0) * (prices[key]?.eur || 0), 2);
+  const getFormattedBalance = key => format(balances[key] || 0);
 
   return (
     <BalanceContext.Provider
@@ -245,6 +203,7 @@ export function BalanceProvider({ children }) {
         lastUpdated,
         getUsdBalance,
         getEurBalance,
+        getFormattedBalance,
         refetch: () => fetchAll(true),
       }}
     >
