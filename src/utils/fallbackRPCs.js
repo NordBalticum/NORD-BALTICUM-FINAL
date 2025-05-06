@@ -86,6 +86,83 @@ export const fallbackRPCs = {
       "https://base.drpc.org",
     ],
   },
+  scroll: {
+    key: "scroll",
+    label: "Scroll",
+    icon: "/icons/scroll.svg",
+    chainId: 534352,
+    isTestnet: false,
+    rpcs: [
+      "https://rpc.scroll.io",
+      "https://scroll.drpc.org",
+    ],
+  },
+  linea: {
+    key: "linea",
+    label: "Linea",
+    icon: "/icons/linea.svg",
+    chainId: 59144,
+    isTestnet: false,
+    rpcs: [
+      "https://rpc.linea.build",
+      "https://linea-mainnet.infura.io/v3",
+    ],
+  },
+  zksync: {
+    key: "zksync",
+    label: "zkSync Era",
+    icon: "/icons/zksync.svg",
+    chainId: 324,
+    isTestnet: false,
+    rpcs: [
+      "https://mainnet.era.zksync.io",
+      "https://zksync2-mainnet.zksync.io",
+    ],
+  },
+  mantle: {
+    key: "mantle",
+    label: "Mantle",
+    icon: "/icons/mantle.svg",
+    chainId: 5000,
+    isTestnet: false,
+    rpcs: [
+      "https://rpc.mantle.xyz",
+      "https://mantle.drpc.org",
+    ],
+  },
+  celo: {
+    key: "celo",
+    label: "Celo",
+    icon: "/icons/celo.svg",
+    chainId: 42220,
+    isTestnet: false,
+    rpcs: [
+      "https://forno.celo.org",
+      "https://rpc.ankr.com/celo",
+    ],
+  },
+  moonbeam: {
+    key: "moonbeam",
+    label: "Moonbeam",
+    icon: "/icons/moonbeam.svg",
+    chainId: 1284,
+    isTestnet: false,
+    rpcs: [
+      "https://rpc.api.moonbeam.network",
+      "https://moonbeam.public.blastapi.io",
+    ],
+  },
+  aurora: {
+    key: "aurora",
+    label: "Aurora",
+    icon: "/icons/aurora.svg",
+    chainId: 1313161554,
+    isTestnet: false,
+    rpcs: [
+      "https://mainnet.aurora.dev",
+      "https://aurora-mainnet.drpc.org",
+    ],
+  },
   sepolia: {
     key: "sepolia",
     label: "Sepolia",
