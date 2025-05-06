@@ -1,0 +1,70 @@
+.wrapper {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 3vh 4vw;
+  display: flex;
+  flex-direction: column;
+  gap: 3rem;
+  color: var(--foreground);
+}
+
+.header {
+  font-size: 2rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.searchInput {
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  border-radius: 0.75rem;
+  border: 1px solid var(--border-color);
+  background-color: var(--background-soft);
+  color: var(--foreground);
+  outline: none;
+  transition: border-color 0.2s;
+}
+.searchInput:focus {
+  border-color: var(--accent);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 1.5rem;
+}
+
+.card {
+  background: var(--background);
+  border: 1px solid var(--border-color);
+  border-radius: 1rem;
+  padding: 1rem;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.2s ease;
+}
+
+.card:hover {
+  border-color: var(--accent);
+  box-shadow: 0 0 12px rgba(0, 255, 180, 0.2);
+}
+
+.enabled {
+  background: linear-gradient(135deg, #00ffaa33, #00ffaa11);
+  border-color: var(--accent);
+}
+
+.label {
+  font-size: 1rem;
+  font-weight: 500;
+  text-transform: lowercase;
+}
+
+.icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent);
+}
