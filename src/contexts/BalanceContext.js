@@ -8,53 +8,40 @@ import { ethers, JsonRpcProvider, FallbackProvider } from "ethers";
 import debounce from "lodash.debounce";
 
 import { useAuth } from "@/contexts/AuthContext";
+import fallbackRPCs from "@/utils/fallbackRPCs";
 
 const BalanceContext = createContext(null);
 export const useBalance = () => useContext(BalanceContext);
 
-// 4 mainnets + 4 testnets hardcoded
 const DEFAULT_NETWORKS = [
   "eth", "matic", "bnb", "avax",
   "sepolia", "mumbai", "tbnb", "fuji"
 ];
 
-const TOKEN_IDS = {
-  eth: "ethereum",
-  matic: "polygon-pos",
-  bnb: "binancecoin",
-  avax: "avalanche-2",
-  optimism: "optimism",
-  arbitrum: "arbitrum-one",
-  base: "base",
-  sepolia: "ethereum",
-  mumbai: "polygon-pos",
-  tbnb: "binancecoin",
-  fuji: "avalanche-2",
-  "optimism-goerli": "optimism",
-  "arbitrum-goerli": "arbitrum-one",
-  "base-goerli": "base",
-};
+const TOKEN_IDS = Object.fromEntries(
+  Object.entries(fallbackRPCs).map(([key, { label }]) => {
+    const id = label.toLowerCase().includes("eth") ? "ethereum"
+      : label.toLowerCase().includes("matic") ? "polygon-pos"
+      : label.toLowerCase().includes("bnb") ? "binancecoin"
+      : label.toLowerCase().includes("avax") ? "avalanche-2"
+      : label.toLowerCase().includes("optimism") ? "optimism"
+      : label.toLowerCase().includes("arbitrum") ? "arbitrum-one"
+      : label.toLowerCase().includes("base") ? "base"
+      : label.toLowerCase().includes("zksync") ? "zksync"
+      : label.toLowerCase().includes("scroll") ? "scroll"
+      : label.toLowerCase().includes("linea") ? "linea"
+      : label.toLowerCase().includes("mantle") ? "mantle"
+      : label.toLowerCase().includes("celo") ? "celo"
+      : label.toLowerCase().includes("moonbeam") ? "moonbeam"
+      : label.toLowerCase().includes("aurora") ? "aurora"
+      : "ethereum";
+    return [key, id];
+  })
+);
 
 const FALLBACK_PRICES = Object.fromEntries(
   Object.keys(TOKEN_IDS).map(key => [key, { usd: 0, eur: 0 }])
 );
-
-const RPCS = {
-  eth: ["https://eth.llamarpc.com", "https://rpc.ankr.com/eth"],
-  matic: ["https://polygon.llamarpc.com", "https://rpc.ankr.com/polygon"],
-  bnb: ["https://bsc.publicnode.com", "https://rpc.ankr.com/bsc"],
-  avax: ["https://api.avax.network/ext/bc/C/rpc", "https://rpc.ankr.com/avalanche"],
-  optimism: ["https://optimism.publicnode.com", "https://rpc.ankr.com/optimism"],
-  arbitrum: ["https://arb1.arbitrum.io/rpc", "https://rpc.ankr.com/arbitrum"],
-  base: ["https://mainnet.base.org", "https://developer-access-mainnet.base.org"],
-  sepolia: ["https://ethereum-sepolia.publicnode.com"],
-  mumbai: ["https://polygon-mumbai.publicnode.com"],
-  tbnb: ["https://bsc-testnet.publicnode.com"],
-  fuji: ["https://avalanche-fuji-c-chain.publicnode.com"],
-  "optimism-goerli": ["https://optimism-goerli.publicnode.com"],
-  "arbitrum-goerli": ["https://arbitrum-goerli.publicnode.com"],
-  "base-goerli": ["https://base-goerli.publicnode.com"],
-};
 
 const PRICE_TTL = 30000;
 
@@ -89,9 +76,9 @@ export function BalanceProvider({ children }) {
   const providers = useMemo(() => {
     const out = {};
     for (const key of enabledNetworks) {
-      const urls = RPCS[key];
-      if (urls?.length) {
-        out[key] = new FallbackProvider(urls.map(url => new JsonRpcProvider(url)));
+      const net = fallbackRPCs[key];
+      if (net?.rpcs?.length) {
+        out[key] = new FallbackProvider(net.rpcs.map(url => new JsonRpcProvider(url)));
       }
     }
     return out;
@@ -110,7 +97,8 @@ export function BalanceProvider({ children }) {
         try {
           const raw = await provider.getBalance(addr, "latest");
           out[key] = parseFloat(ethers.formatEther(raw));
-        } catch {
+        } catch (err) {
+          console.warn(`[Balance] ❌ ${key} fetch failed:`, err?.message);
           out[key] = 0;
         }
       })
@@ -133,7 +121,8 @@ export function BalanceProvider({ children }) {
       }
       lastPriceFetch.current = now;
       return out;
-    } catch {
+    } catch (err) {
+      console.warn("[Balance] ❌ price fetch failed:", err?.message);
       return prices;
     }
   }, [coingeckoIds, prices]);
@@ -157,7 +146,8 @@ export function BalanceProvider({ children }) {
       retryCount.current = 0;
       retryQueue.current.forEach(clearTimeout);
       retryQueue.current = [];
-    } catch {
+    } catch (err) {
+      console.error("[Balance] ❌ fetchAll error:", err?.message);
       silentRetry();
     } finally {
       if (!silent) setLoading(false);
