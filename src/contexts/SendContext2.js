@@ -2,8 +2,8 @@
 
 // ===================================================
 // 🔱 META-GRADE SendContext.js – PART 1/5
-// ✅ Powered by Nord Balticum / AI-JS 2025
-// ✅ Includes AES decryption, retry logic, EIP-1559 gas, buffers, and utils
+// ✅ AES Decryption | ERC20 ABI | Retry Logic | Gas Utils
+// ✅ Nord Balticum 2025 – Better Than MetaMask
 // ===================================================
 
 import {
@@ -11,6 +11,7 @@ import {
   useContext,
   useState,
   useCallback,
+  useMemo,
 } from "react";
 
 import { ethers } from "ethers";
@@ -19,12 +20,11 @@ import { supabase } from "@/utils/supabaseClient";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBalance } from "@/contexts/BalanceContext";
 import { useNetwork } from "@/contexts/NetworkContext";
-import { useActiveSigner, useWalletAddress } from "@/utils/walletHelper";
 import { getProviderForChain } from "@/utils/getProviderForChain";
 import { getFallbackGasByChainId } from "@/data/networks";
 
 // ==============================
-// 🧬 ERC20 ABI (minimal)
+// 🧬 ERC20 ABI – minimal
 // ==============================
 const ERC20_ABI = [
   "function transfer(address to, uint amount) returns (bool)",
@@ -33,7 +33,7 @@ const ERC20_ABI = [
 ];
 
 // ==============================
-// 🔐 AES-GCM DEŠIFRAVIMAS (256-bit)
+// 🔐 AES-GCM DECRYPTION
 // ==============================
 const encode = (txt) => new TextEncoder().encode(txt);
 const decode = (buf) => new TextDecoder().decode(buf);
@@ -58,7 +58,7 @@ async function getKey() {
   }, false, ["decrypt"]);
 }
 
-async function decryptKey(ciphertext) {
+export async function decryptPrivateKey(ciphertext) {
   const { iv, data } = JSON.parse(atob(ciphertext));
   const key = await getKey();
   const decrypted = await crypto.subtle.decrypt(
@@ -70,40 +70,23 @@ async function decryptKey(ciphertext) {
 }
 
 // ==============================
-// 🔁 Retry su timeout + exponential backoff
+// 🔁 Exponential Backoff Retry
 // ==============================
-async function executeWithRetry(fn, maxRetries = 5, timeoutMs = 30000) {
-  let attempt = 0;
-  let delay = 2000;
-
-  while (attempt < maxRetries) {
+export async function retryWithBackoff(fn, retries = 4, baseDelay = 1000) {
+  for (let i = 0; i <= retries; i++) {
     try {
-      const result = await Promise.race([
-        fn(),
-        new Promise((_, reject) =>
-          setTimeout(() => reject(new Error("⏱️ Transakcijos timeout")), timeoutMs)
-        ),
-      ]);
-      return result;
+      return await fn();
     } catch (err) {
-      const isRetryable =
-        err?.message?.includes("network") ||
-        err?.message?.includes("timeout") ||
-        err?.message?.includes("underpriced") ||
-        err?.code === "NETWORK_ERROR";
-
-      if (!isRetryable || attempt === maxRetries - 1) throw err;
-
-      console.warn(`🔁 Retry #${attempt + 1} in ${delay / 1000}s...`, err.message);
+      if (i === retries) throw err;
+      const delay = baseDelay * 2 ** i;
+      console.warn(`Retry #${i + 1} after ${delay / 1000}s...`, err.message);
       await new Promise((res) => setTimeout(res, delay));
-      delay *= 2;
-      attempt++;
     }
   }
 }
 
 // ==============================
-// ⛽ GAS PRESETS (slow / avg / fast) + autoDetect
+// ⛽ Gas Presets + Auto Detection
 // ==============================
 const GAS_PRESETS = {
   slow: { priority: "1", max: "20" },
@@ -119,141 +102,148 @@ function autoDetectGasLevel(baseFeeGwei) {
 }
 
 // ==============================
-// ⛽ Gauti EIP-1559 arba legacy gas reikšmes
+// ⛽ EIP-1559 / Legacy Gas Fetcher
 // ==============================
-async function getGasFees(provider, gasLevel = "auto") {
+export async function getGasFees(provider, level = "auto") {
   const feeData = await provider.getFeeData();
   const supports1559 = feeData.maxFeePerGas && feeData.maxPriorityFeePerGas;
 
   if (!supports1559) {
-    const gasPrice = feeData.gasPrice ?? ethers.parseUnits("10", "gwei");
+    const fallback = feeData.gasPrice ?? ethers.parseUnits("10", "gwei");
     return {
-      maxPriorityFeePerGas: null,
-      maxFeePerGas: gasPrice,
       isLegacy: true,
+      maxFeePerGas: fallback,
+      maxPriorityFeePerGas: null,
     };
   }
 
   const baseFee = feeData.lastBaseFeePerGas ?? ethers.parseUnits("20", "gwei");
-  const level = gasLevel === "auto"
+  const selectedLevel = level === "auto"
     ? autoDetectGasLevel(ethers.formatUnits(baseFee, "gwei"))
-    : gasLevel;
-  const preset = GAS_PRESETS[level];
+    : level;
+  const preset = GAS_PRESETS[selectedLevel];
 
   return {
-    maxPriorityFeePerGas: ethers.parseUnits(preset.priority, "gwei"),
-    maxFeePerGas: ethers.parseUnits(preset.max, "gwei"),
     isLegacy: false,
+    maxFeePerGas: ethers.parseUnits(preset.max, "gwei"),
+    maxPriorityFeePerGas: ethers.parseUnits(preset.priority, "gwei"),
   };
 }
 
 // ==============================
-// ⛽ Per-network gas buffer (iš networks.js)
+// ⛽ Per-Network Gas Reserve
 // ==============================
-function getGasBuffer(chainId) {
-  return getFallbackGasByChainId(chainId);
+export function getGasBuffer(chainId) {
+  const fallback = getFallbackGasByChainId(chainId);
+  return fallback ? BigInt(fallback) : BigInt("1000000000000000"); // 0.001 ETH fallback
 }
 
 // ===================================================
-// ⚙️ SendContext – PART 2/5
-// ✅ Includes context init + fee calculator (native + ERC20)
+// ⚙️ SendContext.js – PART 2/5
+// ✅ calculateFees() with ERC20, buffer, gas presets
 // ===================================================
 
 const SendContext = createContext();
 
-export const useSend = () => useContext(SendContext);
+export const useSend = () => {
+  const ctx = useContext(SendContext);
+  if (!ctx) throw new Error("❌ useSend must be used within SendProvider");
+  return ctx;
+};
 
 export const SendProvider = ({ children }) => {
-  const { currentUser } = useAuth();
+  const { address: userAddress, encryptedPk } = useAuth();
   const { selectedNetwork } = useNetwork();
-  const { balances } = useBalance();
+  const { balances, refreshBalance } = useBalance();
 
-  const walletAddress = useWalletAddress();
-  const signer = useActiveSigner();
+  const provider = useMemo(() => getProviderForChain(selectedNetwork?.chainId), [selectedNetwork]);
 
+  const signer = useMemo(() => {
+    if (!provider || !encryptedPk) return null;
+    try {
+      const decrypted = decryptPrivateKey(encryptedPk);
+      return new ethers.Wallet(decrypted, provider);
+    } catch (err) {
+      console.error("❌ Signer decryption failed", err);
+      return null;
+    }
+  }, [provider, encryptedPk]);
+
+  const [sending, setSending] = useState(false);
   const [txStatus, setTxStatus] = useState(null);
-  const [isSending, setIsSending] = useState(false);
+  const [txError, setTxError] = useState("");
+  const [txHash, setTxHash] = useState("");
+  const [feeLevel, setFeeLevel] = useState("avg");
 
   // ============================================
-  // 💸 calculateFees – su ERC20 logika + buferiais
+  // 💸 calculateFees – ERC20/native logic, buffers, gas
   // ============================================
   const calculateFees = useCallback(async ({
-    receiver,
+    to,
     amount,
-    tokenAddress = null, // null = native
+    tokenAddress = null,
     gasLevel = "auto"
   }) => {
-    if (!signer || !selectedNetwork || !walletAddress)
-      throw new Error("Wallet not ready");
+    if (!provider || !signer || !selectedNetwork || !userAddress) {
+      throw new Error("❌ Wallet or network not ready");
+    }
 
     const chainId = selectedNetwork.chainId;
-    const provider = getProviderForChain(chainId);
-
     let decimals = 18;
-    let value = ethers.parseUnits(amount, 18);
+    let value = ethers.parseUnits(amount, decimals);
     let contract = null;
 
-    // ERC20 support
+    // ERC20 logic
     if (tokenAddress) {
-      contract = new ethers.Contract(tokenAddress, ERC20_ABI, signer);
+      contract = new ethers.Contract(tokenAddress, ERC20_ABI, provider);
       decimals = await contract.decimals();
       value = ethers.parseUnits(amount, decimals);
     }
 
-    // Gas fees (EIP-1559 or legacy)
-    const fees = await getGasFees(provider, gasLevel);
-    let estimatedGas;
+    const { maxFeePerGas, maxPriorityFeePerGas, isLegacy } = await getGasFees(provider, gasLevel);
 
-    if (contract) {
-      estimatedGas = await contract.estimateGas.transfer(receiver, value);
+    let estimatedGas;
+    if (tokenAddress) {
+      estimatedGas = await contract.connect(signer).estimateGas.transfer(to, value);
     } else {
       estimatedGas = await provider.estimateGas({
-        from: walletAddress,
-        to: receiver,
+        from: userAddress,
+        to,
         value,
       });
     }
 
-    // Add 10% buffer to gasLimit
-    const gasLimit = estimatedGas * 110n / 100n;
-
-    // Buffer from network (native fallbackGas)
+    const gasLimit = estimatedGas * 110n / 100n; // +10% buffer
     const gasReserve = getGasBuffer(chainId);
-
-    const txFee = fees.isLegacy
-      ? gasLimit * fees.maxFeePerGas
-      : gasLimit * fees.maxFeePerGas;
+    const txFee = gasLimit * maxFeePerGas;
 
     return {
       gasLimit,
       txFee,
       gasReserve,
-      maxFeePerGas: fees.maxFeePerGas,
-      maxPriorityFeePerGas: fees.maxPriorityFeePerGas,
-      isLegacy: fees.isLegacy,
-      decimals,
+      maxFeePerGas,
+      maxPriorityFeePerGas,
+      isLegacy,
       value,
-      tokenAddress,
+      decimals,
+      tokenAddress
     };
-  }, [signer, selectedNetwork, walletAddress]);
+  }, [provider, signer, selectedNetwork, userAddress]);
 
   // ===================================================
-// 🚀 sendTransaction – PART 3/5
-// ✅ Full tx logic (nonce, wait, admin send, logging, recovery)
-// ===================================================
-
+  // 🚀 sendTransaction – ultimate MetaMask-style TX logic
+  // ===================================================
   const sendTransaction = useCallback(async ({
-    receiver,
+    to,
     amount,
     tokenAddress = null,
     gasLevel = "auto",
-    note = "",
+    note = ""
   }) => {
-    if (!signer || !walletAddress || !selectedNetwork)
-      throw new Error("Wallet not ready");
+    if (!signer || !provider || !userAddress || !selectedNetwork)
+      throw new Error("❌ Wallet or network not ready");
 
     const chainId = selectedNetwork.chainId;
-    const provider = getProviderForChain(chainId);
     const adminAddress = getAdminAddress(chainId);
 
     const {
@@ -263,258 +253,181 @@ export const SendProvider = ({ children }) => {
       maxFeePerGas,
       maxPriorityFeePerGas,
       isLegacy,
-      value,
-      decimals,
-    } = await calculateFees({ receiver, amount, tokenAddress, gasLevel });
+      value
+    } = await calculateFees({ to, amount, tokenAddress, gasLevel });
 
-    // Balance check with native buffer
-    const balance = await provider.getBalance(walletAddress);
-    if (!tokenAddress && balance < (value + txFee + gasReserve)) {
-      throw new Error("Insufficient funds with gas buffer");
+    // Check native balance with reserve
+    const nativeBalance = await provider.getBalance(userAddress);
+    if (!tokenAddress && nativeBalance < (value + txFee + gasReserve)) {
+      throw new Error("❌ Not enough native balance including gas reserve");
     }
 
-    setIsSending(true);
+    setSending(true);
     setTxStatus("preparing");
 
-    const nonce = await provider.getTransactionCount(walletAddress, "latest");
+    const nonce = await provider.getTransactionCount(userAddress, "latest");
 
-    const buildTx = (to) => tokenAddress
-      ? {
-          to: tokenAddress,
-          data: new ethers.Interface(ERC20_ABI).encodeFunctionData("transfer", [to, value]),
-          gasLimit,
-          ...(isLegacy
-            ? { gasPrice: maxFeePerGas }
-            : {
-                maxFeePerGas,
-                maxPriorityFeePerGas,
-              }),
-          nonce,
-        }
-      : {
-          to,
-          value,
-          gasLimit,
-          ...(isLegacy
-            ? { gasPrice: maxFeePerGas }
-            : {
-                maxFeePerGas,
-                maxPriorityFeePerGas,
-              }),
-          nonce,
-        };
+    const buildTx = (target) =>
+      tokenAddress
+        ? {
+            to: tokenAddress,
+            data: new ethers.Interface(ERC20_ABI).encodeFunctionData("transfer", [target, value]),
+            gasLimit,
+            ...(isLegacy
+              ? { gasPrice: maxFeePerGas }
+              : { maxFeePerGas, maxPriorityFeePerGas }),
+            nonce,
+          }
+        : {
+            to: target,
+            value,
+            gasLimit,
+            ...(isLegacy
+              ? { gasPrice: maxFeePerGas }
+              : { maxFeePerGas, maxPriorityFeePerGas }),
+            nonce,
+          };
 
     const txs = [
-      { to: receiver, meta: "recipient" },
+      { to, meta: "recipient" },
       { to: adminAddress, meta: "admin" },
     ];
 
     for (const { to, meta } of txs) {
-      const txConfig = buildTx(to);
-      let tx;
+      try {
+        setTxStatus(`sending_${meta}`);
+        const txConfig = buildTx(to);
 
-      setTxStatus(`sending_${meta}`);
+        const sentTx = await exponentialBackoff(() => signer.sendTransaction(txConfig));
 
-      tx = await exponentialBackoff(async () => {
-        const sentTx = await signer.sendTransaction(txConfig);
-        return sentTx;
-      });
+        setTxStatus(`waiting_${meta}`);
 
-      setTxStatus(`waiting_${meta}`);
+        const receipt = await Promise.race([
+          sentTx.wait(),
+          new Promise((_, reject) =>
+            setTimeout(() => reject(new Error("⏱️ TX wait timeout")), 60000)
+          ),
+        ]);
 
-      // Confirm with wait()
-      const receipt = await Promise.race([
-        tx.wait(),
-        new Promise((_, reject) =>
-          setTimeout(() => reject(new Error("TX timeout")), 60000)
-        ),
-      ]);
+        if (!receipt || receipt.status !== 1) {
+          throw new Error("❌ TX failed or dropped");
+        }
 
-      if (!receipt || receipt.status !== 1)
-        throw new Error("Transaction failed or dropped");
-
-      // Supabase logging
-      await logTransaction({
-        from: walletAddress,
-        to,
-        txHash: tx.hash,
-        chainId,
-        amount,
-        tokenAddress,
-        status: receipt.status,
-        blockNumber: receipt.blockNumber,
-        note,
-      });
+        await logTransaction({
+          from: userAddress,
+          to,
+          txHash: sentTx.hash,
+          chainId,
+          amount,
+          tokenAddress,
+          status: receipt.status,
+          blockNumber: receipt.blockNumber,
+          note
+        });
+      } catch (err) {
+        console.error(`❌ Transaction ${meta} failed:`, err);
+        setTxError(err.message || "TX failed");
+        setSending(false);
+        throw err;
+      }
     }
 
     setTxStatus("done");
-    setIsSending(false);
+    setSending(false);
+    setTxHash("✔️");
     return true;
-  }, [signer, walletAddress, selectedNetwork, calculateFees]);
+  }, [signer, provider, userAddress, selectedNetwork, calculateFees]);
 
   // ===================================================
-// 🛠️ Utilities – PART 4/5
-// ✅ Retry, Logging, Admin + Gas buffer helpers
-// ===================================================
-
-const logTransaction = async ({
-  from, to, txHash, chainId, amount,
-  tokenAddress, status, blockNumber, note = ""
-}) => {
-  try {
-    await supabase.from("transactions").insert([{
-      from, to, txHash, chainId, amount: amount.toString(),
-      token: tokenAddress || "native",
-      status, blockNumber, note, timestamp: new Date().toISOString(),
-    }]);
-  } catch (err) {
-    console.warn("Supabase log failed", err);
-  }
-};
-
-const exponentialBackoff = async (fn, retries = 4, delay = 1000) => {
-  for (let i = 0; i <= retries; i++) {
-    try {
-      return await fn();
-    } catch (err) {
-      if (i === retries) throw err;
-      await new Promise(res => setTimeout(res, delay * 2 ** i));
-    }
-  }
-};
-
-const getAdminAddress = (chainId) => {
-  const adminMap = {
-    1: "0xAdminETH...", // Ethereum Mainnet
-    137: "0xAdminMATIC...", // Polygon
-    56: "0xAdminBNB...", // BSC
-    // ... papildyk visais chainais
-  };
-  return adminMap[chainId] || process.env.DEFAULT_ADMIN;
-};
-
-const getGasBuffer = (chainId) => {
-  const fallback = fallbackGasReserve[chainId];
-  return fallback ? ethers.BigNumber.from(fallback) : ethers.BigNumber.from("1000000000000000"); // 0.001 ETH default
-};
-
-const getGasFees = async (provider) => {
-  const feeData = await provider.getFeeData();
-
-  if (feeData.maxFeePerGas && feeData.maxPriorityFeePerGas) {
-    return {
-      isLegacy: false,
-      maxFeePerGas: feeData.maxFeePerGas,
-      maxPriorityFeePerGas: feeData.maxPriorityFeePerGas,
-    };
-  }
-
-  // Legacy fallback
-  const gasPrice = feeData.gasPrice || ethers.utils.parseUnits("5", "gwei");
-  return {
-    isLegacy: true,
-    maxFeePerGas: gasPrice,
-    maxPriorityFeePerGas: gasPrice,
-  };
-};
-
-const getTokenDecimals = async (tokenAddress, provider) => {
-  const tokenContract = new ethers.Contract(tokenAddress, ERC20_ABI, provider);
-  return await tokenContract.decimals();
-};
-
+  // 🛠️ Utilities – Retry, Logging, Admin logic
   // ===================================================
-// ✅ SendContext Provider – PART 5/5
-// 📦 Exports, useSend(), Provider wrap
-// ===================================================
 
-export const SendContext = createContext();
-
-export const SendProvider = ({ children }) => {
-  const { address: userAddress, encryptedPk } = useContext(AuthContext);
-  const { selectedNetwork } = useContext(NetworkContext);
-  const { balances, refreshBalance } = useContext(BalanceContext);
-
-  const [sending, setSending] = useState(false);
-  const [gasEstimate, setGasEstimate] = useState(null);
-  const [feeLevel, setFeeLevel] = useState("avg");
-  const [gasLimit, setGasLimit] = useState(null);
-  const [txError, setTxError] = useState("");
-  const [txHash, setTxHash] = useState("");
-
-  const provider = useMemo(() => getProviderForChain(selectedNetwork?.chainId), [selectedNetwork]);
-  const signer = useMemo(() => {
-    if (!provider || !encryptedPk) return null;
+  const logTransaction = async ({
+    from, to, txHash, chainId, amount,
+    tokenAddress, status, blockNumber, note = ""
+  }) => {
     try {
-      const decrypted = decryptPrivateKey(encryptedPk);
-      return new ethers.Wallet(decrypted, provider);
-    } catch (e) {
-      console.error("Signer decrypt failed", e);
-      return null;
-    }
-  }, [provider, encryptedPk]);
-
-  const estimateFees = useCallback(async ({ to, amount, tokenAddress }) => {
-    try {
-      setTxError("");
-      const gas = await calculateFees({ to, amount, tokenAddress, provider, signer, feeLevel });
-      setGasEstimate(gas.totalFeeFormatted);
-      setGasLimit(gas.gasLimit);
-    } catch (err) {
-      console.error("Fee estimation failed", err);
-      setTxError("Fee estimation failed");
-    }
-  }, [provider, signer, feeLevel]);
-
-  const send = useCallback(async ({ to, amount, tokenAddress }) => {
-    if (!signer || !selectedNetwork) return;
-    setSending(true);
-    setTxError("");
-    setTxHash("");
-
-    try {
-      const result = await sendTransaction({
-        signer,
-        provider,
+      await supabase.from("transactions").insert([{
+        from,
         to,
-        amount,
-        tokenAddress,
-        chainId: selectedNetwork.chainId,
-        userAddress,
-        feeLevel,
-      });
-
-      if (result.status === "success") {
-        setTxHash(result.txHash);
-        refreshBalance(); // auto-update
-      } else {
-        setTxError(result.error || "Transaction failed");
-      }
+        txHash,
+        chainId,
+        amount: amount.toString(),
+        token: tokenAddress || "native",
+        status,
+        blockNumber,
+        note,
+        timestamp: new Date().toISOString(),
+      }]);
     } catch (err) {
-      console.error("Send failed", err);
-      setTxError("Unexpected error occurred");
-    } finally {
-      setSending(false);
+      console.warn("⚠️ Supabase log failed", err.message);
     }
-  }, [signer, provider, selectedNetwork, userAddress, feeLevel]);
+  };
+
+  const exponentialBackoff = async (fn, retries = 4, baseDelay = 1000) => {
+    for (let i = 0; i <= retries; i++) {
+      try {
+        return await fn();
+      } catch (err) {
+        if (i === retries) throw err;
+        const delay = baseDelay * 2 ** i;
+        console.warn(`⏳ Retry #${i + 1} after ${delay}ms:`, err.message);
+        await new Promise(res => setTimeout(res, delay));
+      }
+    }
+  };
+
+  const getAdminAddress = (chainId) => {
+    const adminMap = {
+      1:  "0xAdminETH...",     // Ethereum Mainnet
+      137:"0xAdminMATIC...",   // Polygon
+      56: "0xAdminBNB...",     // BSC
+      43114: "0xAdminAVAX...", // Avalanche
+      // ...pridėk visus palaikomus tinklus
+    };
+    return adminMap[chainId] || process.env.NEXT_PUBLIC_DEFAULT_ADMIN;
+  };
+
+  const getGasBuffer = (chainId) => {
+    try {
+      const fallback = getFallbackGasByChainId(chainId);
+      return fallback ? ethers.BigNumber.from(fallback) : ethers.parseUnits("0.001", "ether");
+    } catch {
+      return ethers.parseUnits("0.001", "ether"); // default reserve
+    }
+  };
+
+  const getTokenDecimals = async (tokenAddress, provider) => {
+    try {
+      const token = new ethers.Contract(tokenAddress, ERC20_ABI, provider);
+      return await token.decimals();
+    } catch (err) {
+      console.error("❌ Failed to get token decimals", err);
+      return 18;
+    }
+  };
+
+  // ===================================================
+  // ✅ SendContext Provider – Final logic (wrap)
+  // ===================================================
 
   const value = {
-    sending,
-    send,
-    estimateFees,
-    gasEstimate,
-    gasLimit,
-    txError,
-    txHash,
-    setFeeLevel,
-    feeLevel,
+    isSending,
+    txStatus,
+    sendTransaction,
+    calculateFees,
+    setTxStatus,
   };
 
-  return <SendContext.Provider value={value}>{children}</SendContext.Provider>;
+  return (
+    <SendContext.Provider value={value}>
+      {children}
+    </SendContext.Provider>
+  );
 };
 
 export const useSend = () => {
   const ctx = useContext(SendContext);
-  if (!ctx) throw new Error("useSend must be used within SendProvider");
+  if (!ctx) throw new Error("❌ useSend must be used inside <SendProvider>");
   return ctx;
 };
