@@ -68,8 +68,14 @@ async function executeWithRetry(fn, maxRetries = 5) {
     try {
       return await fn();
     } catch (err) {
-      const isRetryable = err?.message?.includes("network") || err?.message?.includes("timeout");
+      const isRetryable =
+        err?.message?.includes("network") ||
+        err?.message?.includes("timeout") ||
+        err?.message?.includes("replacement transaction underpriced") ||
+        err?.code === "NETWORK_ERROR";
+
       if (!isRetryable || attempt === maxRetries - 1) throw err;
+
       console.warn(`🔁 Retry #${attempt + 1} in ${delay / 1000}s...`, err.message);
       await new Promise((res) => setTimeout(res, delay));
       delay *= 2;
@@ -121,39 +127,20 @@ function getGasBuffer(chainId) {
 }
 
 // ==========================================
-// 🔥 Toliau: getGasFees ir konteksto pradžia...
+// 🔍 Tikrinimas ar TX buvo dropped ar replaced
 // ==========================================
+async function isDroppedOrReplaced(provider, txHash) {
+  const receipt = await provider.getTransactionReceipt(txHash);
+  return !receipt || !receipt.blockNumber;
+}
 
 // ==========================================
-// 📈 GAS FEE GAUTIMAS SU AUTO LEVEL DETEKCIJA
+// 🧠 Gauti nonce su fallback kaip MetaMask
 // ==========================================
-async function getGasFees(provider, level = "avg") {
-  const feeData = await provider.getFeeData();
-
-  if (level === "auto") {
-    const baseFee = feeData.lastBaseFeePerGas || ethers.parseUnits("20", "gwei");
-    const baseGwei = Number(ethers.formatUnits(baseFee, "gwei"));
-    level = autoDetectGasLevel(baseGwei);
-  }
-
-  const preset = GAS_PRESETS[level] || GAS_PRESETS.avg;
-
-  try {
-    const ethPriority = await provider.send("eth_maxPriorityFeePerGas", []);
-    const maxPriorityFeePerGas = ethPriority
-      ? ethers.BigNumber.from(ethPriority)
-      : ethers.parseUnits(preset.priority, "gwei");
-
-    const maxFeePerGas = feeData.maxFeePerGas ?? ethers.parseUnits(preset.max, "gwei");
-
-    return { maxPriorityFeePerGas, maxFeePerGas };
-  } catch (err) {
-    console.warn("⚠️ getGasFees fallback mode:", err.message);
-    return {
-      maxPriorityFeePerGas: ethers.parseUnits(preset.priority, "gwei"),
-      maxFeePerGas: ethers.parseUnits(preset.max, "gwei"),
-    };
-  }
+async function getSafeNonce(provider, address) {
+  const pending = await provider.getTransactionCount(address, "pending");
+  const latest = await provider.getTransactionCount(address, "latest");
+  return Math.max(pending, latest);
 }
 
 // ==========================================
@@ -177,7 +164,7 @@ export function SendProvider({ children }) {
   const [feeError, setFeeError] = useState(null);
 
   // ==========================================
-  // 💸 GAS + ADMIN FEE SKAIČIAVIMAS (AUTO)
+  // 💸 GAS + ADMIN FEE SKAIČIAVIMAS (AUTO + Buffer)
   // ==========================================
   const calculateFees = useCallback(async (to, amount, gasLevel = "auto") => {
     setFeeError(null);
@@ -197,11 +184,13 @@ export function SendProvider({ children }) {
       const weiValue = ethers.parseEther(parsed.toString());
       const weiAdmin = (weiValue * 297n) / 10000n;
 
-      const [gasLimitAdmin, gasLimitMain] = await Promise.all([
+      const [rawGasAdmin, rawGasMain] = await Promise.all([
         provider.estimateGas({ to: process.env.NEXT_PUBLIC_ADMIN_WALLET, value: weiAdmin }).catch(() => 21000n),
         provider.estimateGas({ to, value: weiValue }).catch(() => 21000n),
       ]);
 
+      const gasLimitAdmin = rawGasAdmin * 11n / 10n; // +10%
+      const gasLimitMain = rawGasMain * 11n / 10n;   // +10%
       const gasTotal = maxFeePerGas * (gasLimitAdmin + gasLimitMain);
       const reserve = getGasBuffer(chainId);
 
@@ -215,29 +204,6 @@ export function SendProvider({ children }) {
       setFeeLoading(false);
     }
   }, [chainId]);
-
-  // ==========================================
-  // 🔁 Retry su exponential backoff (iki 5 kartų)
-  // ==========================================
-  async function executeWithRetry(fn, maxRetries = 5) {
-    let attempt = 0;
-    let delay = 2000;
-
-    while (attempt < maxRetries) {
-      try {
-        return await fn(); // Bando funkciją
-      } catch (err) {
-        if (attempt === maxRetries - 1) throw err;
-        const isRetryable = err?.message?.includes("network") || err?.message?.includes("timeout");
-        if (!isRetryable) throw err;
-
-        console.warn(`🔁 Retry #${attempt + 1} in ${delay / 1000}s...`, err.message);
-        await new Promise((res) => setTimeout(res, delay));
-        delay *= 2;
-        attempt++;
-      }
-    }
-  }
 
   // ==========================================
   // ✈️ VYKDOMA TRANSAKCIJA (ADMIN + RECIPIENT)
@@ -283,11 +249,13 @@ export function SendProvider({ children }) {
           signer = new ethers.Wallet(privKey, provider);
         }
 
-        const [gasLimitAdmin, gasLimitMain] = await Promise.all([
+        const [rawGasAdmin, rawGasMain] = await Promise.all([
           provider.estimateGas({ to: ADMIN, value: weiAdmin }).catch(() => 21000n),
           provider.estimateGas({ to: recipient, value: weiValue }).catch(() => 21000n),
         ]);
 
+        const gasLimitAdmin = rawGasAdmin * 11n / 10n;
+        const gasLimitMain = rawGasMain * 11n / 10n;
         const gasTotal = maxFeePerGas * (gasLimitAdmin + gasLimitMain);
         const reserve = getGasBuffer(chainId);
 
@@ -298,17 +266,21 @@ export function SendProvider({ children }) {
           throw new Error("❌ Nepakanka lėšų (įskaitant mokesčius)");
         }
 
+        const nonce = await getSafeNonce(provider, signer.address);
+
         // 1️⃣ Admin fee
         try {
-          await executeWithRetry(() =>
+          const txAdmin = await executeWithRetry(() =>
             signer.sendTransaction({
               to: ADMIN,
               value: weiAdmin,
               gasLimit: gasLimitAdmin,
               maxPriorityFeePerGas,
               maxFeePerGas,
+              nonce,
             })
           );
+          await txAdmin.wait();
         } catch (err) {
           console.warn("⚠️ Admin fee klaida:", err.message);
         }
@@ -321,11 +293,28 @@ export function SendProvider({ children }) {
             gasLimit: gasLimitMain,
             maxPriorityFeePerGas,
             maxFeePerGas,
+            nonce: nonce + 1,
           })
         );
 
-        if (!tx?.hash) throw new Error("❌ Transakcija nesugeneravo hash");
+        const receipt = await tx.wait();
 
+        if (!tx?.hash || receipt?.status !== 1) {
+          const dropped = await isDroppedOrReplaced(provider, tx?.hash);
+          const errorMsg = dropped
+            ? "❌ Transakcija buvo dropped ar replaced"
+            : "❌ Transakcija nesėkminga";
+
+          await supabase.from("logs").insert([{
+            user_email: userEmail,
+            type: "transaction_error",
+            message: errorMsg,
+          }]);
+
+          throw new Error(errorMsg);
+        }
+
+        // 📦 Supabase – transakcijos log'as
         await supabase.from("transactions").insert([{
           user_email: userEmail,
           sender_address: signer.address,
@@ -337,20 +326,28 @@ export function SendProvider({ children }) {
           tx_hash: tx.hash,
         }]);
 
-        toast.success("✅ Pavedimas sėkmingas!", { position: "top-center", autoClose: 3000 });
+        toast.success("✅ Pavedimas sėkmingas!", {
+          position: "top-center",
+          autoClose: 3000,
+        });
+
         await refetch();
         return tx.hash;
+
       } catch (err) {
         console.error("❌ Pavedimo klaida:", err);
+
         await supabase.from("logs").insert([{
           user_email: userEmail,
           type: "transaction_error",
           message: err.message || "Nežinoma siuntimo klaida",
         }]);
+
         toast.error("❌ " + (err.message || "Siuntimas nepavyko"), {
           position: "top-center",
           autoClose: 5000,
         });
+
         throw err;
       } finally {
         setSending(false);
@@ -388,3 +385,19 @@ export function SendProvider({ children }) {
     </SendContext.Provider>
   );
 }
+
+// ==========================================
+// 🛡️ Send konteksto eksportas su saugikliu
+// ==========================================
+export const useSend = () => {
+  const context = useContext(SendContext);
+  if (!context) {
+    throw new Error("❌ useSend turi būti naudojamas su <SendProvider>");
+  }
+  return context;
+};
+
+// ==========================================
+// ✅ EXPORTAS – pilnai integruojamas provideris
+// ==========================================
+export { SendProvider };
