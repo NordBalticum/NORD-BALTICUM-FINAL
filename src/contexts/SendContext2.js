@@ -1,10 +1,10 @@
 "use client";
 
-// ===================================================
-// 🔱 META-GRADE SendContext.js – PART 1/5
-// ✅ AES Decryption | ERC20 ABI | Retry Logic | Gas Utils
-// ✅ Nord Balticum 2025 – Better Than MetaMask
-// ===================================================
+// ==========================================================
+// 🔱 Nord Balticum — FINAL LOCKED SendContext.js v1.0
+// ✅ AES-GCM | ERC20 | Fallback RPC | 2x TX | Retry | Fee 2.97%
+// ✅ MetaMask-grade EVM+ERC20 support across 30+ chains
+// ==========================================================
 
 import {
   createContext,
@@ -23,18 +23,18 @@ import { useNetwork } from "@/contexts/NetworkContext";
 import { getProviderForChain } from "@/utils/getProviderForChain";
 import { getFallbackGasByChainId } from "@/data/networks";
 
-// ==============================
+// =======================================
 // 🧬 ERC20 ABI – minimal
-// ==============================
+// =======================================
 const ERC20_ABI = [
   "function transfer(address to, uint amount) returns (bool)",
   "function decimals() view returns (uint8)",
-  "function balanceOf(address account) view returns (uint)"
+  "function balanceOf(address account) view returns (uint)",
 ];
 
-// ==============================
-// 🔐 AES-GCM DECRYPTION
-// ==============================
+// =======================================
+// 🔐 AES-GCM dešifravimas (naudojamas privKey)
+// =======================================
 const encode = (txt) => new TextEncoder().encode(txt);
 const decode = (buf) => new TextDecoder().decode(buf);
 
@@ -58,7 +58,7 @@ async function getKey() {
   }, false, ["decrypt"]);
 }
 
-export async function decryptPrivateKey(ciphertext) {
+async function decryptPrivateKey(ciphertext) {
   const { iv, data } = JSON.parse(atob(ciphertext));
   const key = await getKey();
   const decrypted = await crypto.subtle.decrypt(
@@ -69,25 +69,30 @@ export async function decryptPrivateKey(ciphertext) {
   return decode(decrypted);
 }
 
-// ==============================
-// 🔁 Exponential Backoff Retry
-// ==============================
-export async function retryWithBackoff(fn, retries = 4, baseDelay = 1000) {
+// =======================================
+// 🔁 Exponential backoff + timeout (anti-DDOS / retry)
+// =======================================
+async function retryWithBackoff(fn, retries = 4, baseDelay = 1000) {
   for (let i = 0; i <= retries; i++) {
     try {
-      return await fn();
+      return await Promise.race([
+        fn(),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error("⏱️ Timeout exceeded")), 30000)
+        )
+      ]);
     } catch (err) {
       if (i === retries) throw err;
       const delay = baseDelay * 2 ** i;
-      console.warn(`Retry #${i + 1} after ${delay / 1000}s...`, err.message);
+      console.warn(`🔁 Retry ${i + 1}/${retries} in ${delay}ms`, err.message);
       await new Promise((res) => setTimeout(res, delay));
     }
   }
 }
 
-// ==============================
-// ⛽ Gas Presets + Auto Detection
-// ==============================
+// =======================================
+// ⛽ Gas tier presets (MetaMask-like) + auto-detect
+// =======================================
 const GAS_PRESETS = {
   slow: { priority: "1", max: "20" },
   avg:  { priority: "2", max: "30" },
@@ -101,27 +106,27 @@ function autoDetectGasLevel(baseFeeGwei) {
   return "fast";
 }
 
-// ==============================
-// ⛽ EIP-1559 / Legacy Gas Fetcher
-// ==============================
-export async function getGasFees(provider, level = "auto") {
+// =======================================
+// ⛽ Gauti gas fees (EIP-1559 + legacy)
+// =======================================
+async function getGasFees(provider, gasLevel = "auto") {
   const feeData = await provider.getFeeData();
   const supports1559 = feeData.maxFeePerGas && feeData.maxPriorityFeePerGas;
 
   if (!supports1559) {
-    const fallback = feeData.gasPrice ?? ethers.parseUnits("10", "gwei");
+    const gasPrice = feeData.gasPrice ?? ethers.parseUnits("10", "gwei");
     return {
       isLegacy: true,
-      maxFeePerGas: fallback,
+      maxFeePerGas: gasPrice,
       maxPriorityFeePerGas: null,
     };
   }
 
   const baseFee = feeData.lastBaseFeePerGas ?? ethers.parseUnits("20", "gwei");
-  const selectedLevel = level === "auto"
+  const level = gasLevel === "auto"
     ? autoDetectGasLevel(ethers.formatUnits(baseFee, "gwei"))
-    : level;
-  const preset = GAS_PRESETS[selectedLevel];
+    : gasLevel;
+  const preset = GAS_PRESETS[level];
 
   return {
     isLegacy: false,
@@ -130,44 +135,29 @@ export async function getGasFees(provider, level = "auto") {
   };
 }
 
-// ==============================
-// ⛽ Per-Network Gas Reserve
-// ==============================
-export function getGasBuffer(chainId) {
+// =======================================
+// ⛽ Per-network fallback GAS rezervas
+// =======================================
+function getGasBuffer(chainId) {
   const fallback = getFallbackGasByChainId(chainId);
-  return fallback ? BigInt(fallback) : BigInt("1000000000000000"); // 0.001 ETH fallback
+  return fallback ? BigInt(fallback) : ethers.parseUnits("0.001", "ether");
 }
 
-// ===================================================
-// ⚙️ SendContext.js – PART 2/5
-// ✅ calculateFees() with ERC20, buffer, gas presets
-// ===================================================
-
+// =======================================
+// 🌐 Konteksto pradžia
+// =======================================
 const SendContext = createContext();
 
 export const useSend = () => {
   const ctx = useContext(SendContext);
-  if (!ctx) throw new Error("❌ useSend must be used within SendProvider");
+  if (!ctx) throw new Error("❌ useSend turi būti naudojamas su <SendProvider>");
   return ctx;
 };
 
 export const SendProvider = ({ children }) => {
   const { address: userAddress, encryptedPk } = useAuth();
   const { selectedNetwork } = useNetwork();
-  const { balances, refreshBalance } = useBalance();
-
-  const provider = useMemo(() => getProviderForChain(selectedNetwork?.chainId), [selectedNetwork]);
-
-  const signer = useMemo(() => {
-    if (!provider || !encryptedPk) return null;
-    try {
-      const decrypted = decryptPrivateKey(encryptedPk);
-      return new ethers.Wallet(decrypted, provider);
-    } catch (err) {
-      console.error("❌ Signer decryption failed", err);
-      return null;
-    }
-  }, [provider, encryptedPk]);
+  const { refreshBalance } = useBalance();
 
   const [sending, setSending] = useState(false);
   const [txStatus, setTxStatus] = useState(null);
@@ -175,91 +165,128 @@ export const SendProvider = ({ children }) => {
   const [txHash, setTxHash] = useState("");
   const [feeLevel, setFeeLevel] = useState("avg");
 
-  // ============================================
-  // 💸 calculateFees – ERC20/native logic, buffers, gas
-  // ============================================
+  const provider = useMemo(
+    () => selectedNetwork ? getProviderForChain(selectedNetwork.chainId) : null,
+    [selectedNetwork]
+  );
+
+  const [signer, setSigner] = useState(null);
+
+  useEffect(() => {
+    const loadSigner = async () => {
+      if (!provider || !encryptedPk) return setSigner(null);
+      try {
+        const rawKey = await decryptPrivateKey(encryptedPk);
+        const wallet = new ethers.Wallet(rawKey, provider);
+        setSigner(wallet);
+      } catch (err) {
+        console.error("❌ Nepavyko dešifruoti rakto:", err.message);
+        setSigner(null);
+      }
+    };
+    loadSigner();
+  }, [provider, encryptedPk]);
+
+  // =======================================
+  // 💸 calculateFees – gas + 2.97% + buffer
+  // =======================================
   const calculateFees = useCallback(async ({
-    to,
+    receiver,
     amount,
     tokenAddress = null,
-    gasLevel = "auto"
+    gasLevel = feeLevel,
   }) => {
-    if (!provider || !signer || !selectedNetwork || !userAddress) {
-      throw new Error("❌ Wallet or network not ready");
-    }
+    if (!provider || !signer || !selectedNetwork || !userAddress)
+      throw new Error("❌ Trūksta tinklo ar paskyros");
+
+    if (!ethers.isAddress(receiver)) throw new Error("❌ Neteisingas gavėjo adresas");
+    if (!amount || isNaN(Number(amount)) || Number(amount) <= 0)
+      throw new Error("❌ Netinkama suma");
 
     const chainId = selectedNetwork.chainId;
+    const fees = await getGasFees(provider, gasLevel);
+    const gasReserve = getGasBuffer(chainId);
+
     let decimals = 18;
-    let value = ethers.parseUnits(amount, decimals);
+    let value = ethers.parseUnits(amount, 18);
     let contract = null;
 
-    // ERC20 logic
     if (tokenAddress) {
       contract = new ethers.Contract(tokenAddress, ERC20_ABI, provider);
       decimals = await contract.decimals();
       value = ethers.parseUnits(amount, decimals);
     }
 
-    const { maxFeePerGas, maxPriorityFeePerGas, isLegacy } = await getGasFees(provider, gasLevel);
+    const gasEstimateTx = contract
+      ? await contract.connect(signer).estimateGas.transfer(receiver, value).catch(() => 60000n)
+      : await provider.estimateGas({
+          from: userAddress,
+          to: receiver,
+          value,
+        }).catch(() => 21000n);
 
-    let estimatedGas;
-    if (tokenAddress) {
-      estimatedGas = await contract.connect(signer).estimateGas.transfer(to, value);
-    } else {
-      estimatedGas = await provider.estimateGas({
-        from: userAddress,
-        to,
-        value,
-      });
-    }
-
-    const gasLimit = estimatedGas * 110n / 100n; // +10% buffer
-    const gasReserve = getGasBuffer(chainId);
-    const txFee = gasLimit * maxFeePerGas;
+    const gasLimit = gasEstimateTx * 110n / 100n;
+    const oneTxFee = gasLimit * fees.maxFeePerGas;
+    const totalGasFee = oneTxFee * 2n; // admin + recipient
+    const adminFee = (value * 297n) / 10000n;
+    const totalFee = tokenAddress
+      ? totalGasFee
+      : value + adminFee + totalGasFee + gasReserve;
 
     return {
       gasLimit,
-      txFee,
-      gasReserve,
-      maxFeePerGas,
-      maxPriorityFeePerGas,
-      isLegacy,
+      maxFeePerGas: fees.maxFeePerGas,
+      maxPriorityFeePerGas: fees.maxPriorityFeePerGas,
+      isLegacy: fees.isLegacy,
+      totalGasFee,
+      adminFee,
+      totalFee,
       value,
       decimals,
-      tokenAddress
     };
-  }, [provider, signer, selectedNetwork, userAddress]);
+  }, [provider, signer, selectedNetwork, userAddress, feeLevel]);
 
-  // ===================================================
-  // 🚀 sendTransaction – ultimate MetaMask-style TX logic
-  // ===================================================
+  // =======================================
+  // ✈️ sendTransaction – admin + recipient TX
+  // =======================================
   const sendTransaction = useCallback(async ({
-    to,
+    receiver,
     amount,
     tokenAddress = null,
-    gasLevel = "auto",
-    note = ""
+    note = "",
   }) => {
     if (!signer || !provider || !userAddress || !selectedNetwork)
-      throw new Error("❌ Wallet or network not ready");
+      throw new Error("❌ Siuntimo sistema neparuošta");
 
     const chainId = selectedNetwork.chainId;
     const adminAddress = getAdminAddress(chainId);
 
     const {
       gasLimit,
-      txFee,
-      gasReserve,
       maxFeePerGas,
       maxPriorityFeePerGas,
       isLegacy,
-      value
-    } = await calculateFees({ to, amount, tokenAddress, gasLevel });
+      totalGasFee,
+      adminFee,
+      totalFee,
+      value,
+      decimals,
+    } = await calculateFees({ receiver, amount, tokenAddress });
 
-    // Check native balance with reserve
+    // ✅ Balansų tikrinimas
     const nativeBalance = await provider.getBalance(userAddress);
-    if (!tokenAddress && nativeBalance < (value + txFee + gasReserve)) {
-      throw new Error("❌ Not enough native balance including gas reserve");
+
+    if (!tokenAddress && nativeBalance < totalFee)
+      throw new Error("❌ Nepakanka lėšų (suma + mokesčiai)");
+
+    if (tokenAddress) {
+      const token = new ethers.Contract(tokenAddress, ERC20_ABI, provider);
+      const bal = await token.balanceOf(userAddress);
+      if (bal < (value + adminFee))
+        throw new Error("❌ Nepakanka ERC20 balanso (suma + 2.97%)");
+
+      if (nativeBalance < totalGasFee)
+        throw new Error("❌ Nepakanka native lėšų gas mokesčiams");
     }
 
     setSending(true);
@@ -267,66 +294,67 @@ export const SendProvider = ({ children }) => {
 
     const nonce = await provider.getTransactionCount(userAddress, "latest");
 
-    const buildTx = (target) =>
+    const buildTx = (to, val, currentNonce) =>
       tokenAddress
         ? {
             to: tokenAddress,
-            data: new ethers.Interface(ERC20_ABI).encodeFunctionData("transfer", [target, value]),
+            data: new ethers.Interface(ERC20_ABI).encodeFunctionData("transfer", [to, val]),
             gasLimit,
+            nonce: currentNonce,
             ...(isLegacy
               ? { gasPrice: maxFeePerGas }
               : { maxFeePerGas, maxPriorityFeePerGas }),
-            nonce,
           }
         : {
-            to: target,
-            value,
+            to,
+            value: val,
             gasLimit,
+            nonce: currentNonce,
             ...(isLegacy
               ? { gasPrice: maxFeePerGas }
               : { maxFeePerGas, maxPriorityFeePerGas }),
-            nonce,
           };
 
     const txs = [
-      { to, meta: "recipient" },
-      { to: adminAddress, meta: "admin" },
+      { to: receiver, amount: value, meta: "recipient", nonce: nonce },
+      { to: adminAddress, amount: adminFee, meta: "admin", nonce: nonce + 1 },
     ];
 
-    for (const { to, meta } of txs) {
+    for (const { to, amount, meta, nonce } of txs) {
       try {
         setTxStatus(`sending_${meta}`);
-        const txConfig = buildTx(to);
-
-        const sentTx = await exponentialBackoff(() => signer.sendTransaction(txConfig));
+        const tx = await retryWithBackoff(() =>
+          signer.sendTransaction(buildTx(to, amount, nonce))
+        );
 
         setTxStatus(`waiting_${meta}`);
-
         const receipt = await Promise.race([
-          sentTx.wait(),
+          tx.wait(),
           new Promise((_, reject) =>
-            setTimeout(() => reject(new Error("⏱️ TX wait timeout")), 60000)
+            setTimeout(() => reject(new Error("⏱️ TX timeout")), 60000)
           ),
         ]);
 
-        if (!receipt || receipt.status !== 1) {
-          throw new Error("❌ TX failed or dropped");
-        }
+        if (!receipt || receipt.status !== 1)
+          throw new Error(`❌ ${meta} transakcija atmesta arba dropped`);
 
         await logTransaction({
           from: userAddress,
           to,
-          txHash: sentTx.hash,
+          txHash: tx.hash,
           chainId,
-          amount,
+          amount: ethers.formatUnits(amount, decimals),
           tokenAddress,
           status: receipt.status,
           blockNumber: receipt.blockNumber,
-          note
+          note,
         });
+
+        if (meta === "recipient") setTxHash(tx.hash);
       } catch (err) {
-        console.error(`❌ Transaction ${meta} failed:`, err);
-        setTxError(err.message || "TX failed");
+        console.error(`❌ Klaida siunčiant ${meta}:`, err.message);
+        setTxError(err.message || "Transakcija nepavyko");
+        setTxStatus("error");
         setSending(false);
         throw err;
       }
@@ -334,17 +362,24 @@ export const SendProvider = ({ children }) => {
 
     setTxStatus("done");
     setSending(false);
-    setTxHash("✔️");
+    toast.success("✅ Pavedimas sėkmingas");
+    refreshBalance();
     return true;
-  }, [signer, provider, userAddress, selectedNetwork, calculateFees]);
+  }, [signer, provider, userAddress, selectedNetwork, calculateFees, refreshBalance]);
 
-  // ===================================================
-  // 🛠️ Utilities – Retry, Logging, Admin logic
-  // ===================================================
-
+  // =======================================
+  // 🧾 logTransaction – įrašymas į supabase
+  // =======================================
   const logTransaction = async ({
-    from, to, txHash, chainId, amount,
-    tokenAddress, status, blockNumber, note = ""
+    from,
+    to,
+    txHash,
+    chainId,
+    amount,
+    tokenAddress,
+    status,
+    blockNumber,
+    note = ""
   }) => {
     try {
       await supabase.from("transactions").insert([{
@@ -352,71 +387,30 @@ export const SendProvider = ({ children }) => {
         to,
         txHash,
         chainId,
-        amount: amount.toString(),
+        amount,
         token: tokenAddress || "native",
         status,
         blockNumber,
         note,
-        timestamp: new Date().toISOString(),
+        timestamp: new Date().toISOString()
       }]);
     } catch (err) {
-      console.warn("⚠️ Supabase log failed", err.message);
+      console.warn("⚠️ Nepavyko įrašyti į supabase:", err.message);
     }
   };
 
-  const exponentialBackoff = async (fn, retries = 4, baseDelay = 1000) => {
-    for (let i = 0; i <= retries; i++) {
-      try {
-        return await fn();
-      } catch (err) {
-        if (i === retries) throw err;
-        const delay = baseDelay * 2 ** i;
-        console.warn(`⏳ Retry #${i + 1} after ${delay}ms:`, err.message);
-        await new Promise(res => setTimeout(res, delay));
-      }
-    }
-  };
-
-  const getAdminAddress = (chainId) => {
-    const adminMap = {
-      1:  "0xAdminETH...",     // Ethereum Mainnet
-      137:"0xAdminMATIC...",   // Polygon
-      56: "0xAdminBNB...",     // BSC
-      43114: "0xAdminAVAX...", // Avalanche
-      // ...pridėk visus palaikomus tinklus
-    };
-    return adminMap[chainId] || process.env.NEXT_PUBLIC_DEFAULT_ADMIN;
-  };
-
-  const getGasBuffer = (chainId) => {
-    try {
-      const fallback = getFallbackGasByChainId(chainId);
-      return fallback ? ethers.BigNumber.from(fallback) : ethers.parseUnits("0.001", "ether");
-    } catch {
-      return ethers.parseUnits("0.001", "ether"); // default reserve
-    }
-  };
-
-  const getTokenDecimals = async (tokenAddress, provider) => {
-    try {
-      const token = new ethers.Contract(tokenAddress, ERC20_ABI, provider);
-      return await token.decimals();
-    } catch (err) {
-      console.error("❌ Failed to get token decimals", err);
-      return 18;
-    }
-  };
-
-  // ===================================================
-  // ✅ SendContext Provider – Final logic (wrap)
-  // ===================================================
-
+  // =======================================
+  // 🎯 Konteksto reikšmės
+  // =======================================
   const value = {
-    isSending,
+    sending,
     txStatus,
-    sendTransaction,
+    txHash,
+    txError,
+    feeLevel,
+    setFeeLevel,
     calculateFees,
-    setTxStatus,
+    sendTransaction,
   };
 
   return (
@@ -426,8 +420,19 @@ export const SendProvider = ({ children }) => {
   );
 };
 
+// =======================================
+// 🛡️ useSend saugiklis
+// =======================================
 export const useSend = () => {
   const ctx = useContext(SendContext);
-  if (!ctx) throw new Error("❌ useSend must be used inside <SendProvider>");
+  if (!ctx) throw new Error("❌ useSend turi būti naudojamas su <SendProvider>");
   return ctx;
+};
+
+// =======================================
+// ✅ Eksportai
+// =======================================
+export {
+  SendProvider,
+  useSend,
 };
