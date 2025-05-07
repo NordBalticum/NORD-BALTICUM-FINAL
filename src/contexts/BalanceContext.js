@@ -2,7 +2,7 @@
 "use client";
 
 // ==========================================
-// 💎 BALANCE CONTEXT – FINAL META-GRADE v1
+// 💎 BALANCE CONTEXT – META-GRADE FINAL v2.5
 // ==========================================
 
 import React, {
@@ -14,63 +14,69 @@ import { ethers, JsonRpcProvider, FallbackProvider } from "ethers";
 import debounce from "lodash.debounce";
 
 import { useAuth } from "@/contexts/AuthContext";
-import fallbackRPCs from "@/utils/fallbackRPCs";
+import networks from "@/data/networks";
 
 // ==========================================
-// 🌐 Pagrindiniai parametrai
+// 🧠 Konteksto kūrimas
 // ==========================================
-const DEFAULT_NETWORKS = [
-  "eth", "bnb", "matic", "avax",
-  "sepolia", "tbnb", "mumbai", "fuji"
-];
-
-// 🎯 Token ID priskyrimas kainoms gauti
-const TOKEN_IDS = Object.fromEntries(
-  Object.entries(fallbackRPCs).map(([key, { label }]) => {
-    const name = label.toLowerCase();
-    const id =
-      name.includes("eth") ? "ethereum" :
-      name.includes("matic") ? "polygon" :
-      name.includes("bnb") ? "binancecoin" :
-      name.includes("avax") ? "avalanche-2" :
-      name.includes("optimism") ? "optimism" :
-      name.includes("arbitrum") ? "arbitrum" :
-      name.includes("base") ? "base" :
-      name.includes("zksync") ? "zksync" :
-      name.includes("scroll") ? "scroll" :
-      name.includes("linea") ? "linea" :
-      name.includes("mantle") ? "mantle" :
-      name.includes("celo") ? "celo" :
-      name.includes("moonbeam") ? "moonbeam" :
-      name.includes("aurora") ? "aurora" :
-      "ethereum"; // fallback
-    return [key, id];
-  })
-);
-
-// 💰 Tušti fallback'ai kainoms
-const FALLBACK_PRICES = Object.fromEntries(
-  Object.keys(TOKEN_IDS).map(key => [key, { usd: 0, eur: 0 }])
-);
-
-// ⏱️ Kainų cache laikas
-const PRICE_TTL = 30_000;
-
-// 💱 Pagalbinė funkcija skaičiams formatuoti
-const format = (v, d = 5) => (typeof v !== "number" || isNaN(v)) ? "0.00000" : Number(v).toFixed(d);
-
-// 📌 Tik galiojantys tinklai pagal fallbackRPCs
-function getValidNetworks(localEnabled) {
-  return [...new Set([...DEFAULT_NETWORKS, ...(Array.isArray(localEnabled) ? localEnabled : [])])]
-    .filter(key => fallbackRPCs[key]);
-}
-
-// 📦 Sukuriame kontekstą
 const BalanceContext = createContext(null);
 export const useBalance = () => useContext(BalanceContext);
 
 // ==========================================
-// 🚀 Pagrindinis komponentas: BalanceProvider
+// ⏱️ Konstantos ir helperiai
+// ==========================================
+const PRICE_TTL = 30000;
+
+const format = (v, d = 5) =>
+  typeof v !== "number" || isNaN(v) ? "0.00000" : Number(v).toFixed(d);
+
+// ==========================================
+// 🎯 Token ID mapping iš networks.js
+// ==========================================
+const COINGECKO_IDS = {
+  eth: "ethereum", sepolia: "ethereum", matic: "polygon", mumbai: "polygon",
+  bnb: "binancecoin", tbnb: "binancecoin", avax: "avalanche-2", fuji: "avalanche-2",
+  optimism: "optimism", "optimism-goerli": "optimism", arbitrum: "arbitrum", "arbitrum-goerli": "arbitrum",
+  base: "base", "base-goerli": "base", scroll: "scroll", linea: "linea", zksync: "zksync",
+  mantle: "mantle", "mantle-testnet": "mantle", celo: "celo", moonbeam: "moonbeam", aurora: "aurora-near",
+  fantom: "fantom", "fantom-testnet": "fantom", gnosis: "xdai", core: "coredao-org", dogechain: "dogechain",
+  zkfair: "zkfair", flare: "flare-networks", kava: "kava", metis: "metis-token", okx: "okb",
+  cronos: "cronos", brise: "bitrise-token", boba: "boba-network", astar: "astar", velas: "velas",
+  fuse: "fuse-network-token", canto: "canto", evmos: "evmos", rsk: "rootstock", telos: "telos",
+  rei: "rei-network", shardeum: "shardeum", tenet: "tenet", klaytn: "klay-token", btt: "bittorrent",
+  palm: "palm", metachain: "metachain", energyweb: "energy-web-token", cortex: "cortex",
+  harmony: "harmony", callisto: "callisto-network", okc: "okex-chain", theta: "theta-token",
+  wan: "wanchain", findora: "findora", ubiq: "ubiq", meter: "meter", oasis: "oasis-network",
+  kardia: "kardiachain", tomo: "tomochain", elysium: "elysium", energi: "energi", luxy: "luxy",
+  exosama: "exosama", sapphire: "oasis-network", clover: "clover-finance", fusion: "fusion", dfk: "defi-kingdoms",
+  "theta-testnet": "theta-token"
+};
+
+const COINCAP_IDS = {
+  eth: "ethereum", sepolia: "ethereum", matic: "polygon", mumbai: "polygon",
+  bnb: "binance-coin", tbnb: "binance-coin", avax: "avalanche", fuji: "avalanche",
+  optimism: "optimism", "optimism-goerli": "optimism", arbitrum: "arbitrum", "arbitrum-goerli": "arbitrum",
+  base: "base", "base-goerli": "base", scroll: "scroll", linea: "linea", zksync: "zksync",
+  mantle: "mantle", "mantle-testnet": "mantle", celo: "celo", moonbeam: "moonbeam", aurora: "aurora",
+  fantom: "fantom", "fantom-testnet": "fantom", gnosis: "xdai", core: "coredao", dogechain: "dogechain",
+  zkfair: "zkfair", flare: "flare", kava: "kava", metis: "metis-token", okx: "okb",
+  cronos: "cronos", brise: "bitrise-token", boba: "boba-token", astar: "astar", velas: "velas",
+  fuse: "fuse", canto: "canto", evmos: "evmos", rsk: "rootstock", telos: "telos",
+  rei: "rei-network", shardeum: "shardeum", tenet: "tenet", klaytn: "klay-token", btt: "bittorrent",
+  palm: "palm", metachain: "metachain", energyweb: "energy-web-token", cortex: "cortex",
+  harmony: "harmony", callisto: "callisto-network", okc: "okex-chain", theta: "theta",
+  wan: "wanchain", findora: "findora", ubiq: "ubiq", meter: "meter", oasis: "oasis-network",
+  kardia: "kardiachain", tomo: "tomochain", elysium: "elysium", energi: "energi", luxy: "luxy",
+  exosama: "exosama", sapphire: "oasis-network", clover: "clover-finance", fusion: "fusion", dfk: "defi-kingdoms",
+  "theta-testnet": "theta"
+};
+
+const FALLBACK_PRICES = Object.fromEntries(
+  Object.keys(COINGECKO_IDS).map(key => [key, { usd: 0, eur: 0 }])
+);
+
+// ==========================================
+// 🚀 BalanceProvider komponentas
 // ==========================================
 export function BalanceProvider({ children }) {
   const { wallet, authLoading, walletLoading } = useAuth();
@@ -86,41 +92,27 @@ export function BalanceProvider({ children }) {
   const retryQueue = useRef([]);
   const retryCount = useRef(0);
 
-  // 🧠 LocalStorage tinklų parinkimas
-  const enabledNetworks = useMemo(() => {
-    try {
-      const stored = JSON.parse(localStorage.getItem("enabledNetworks"));
-      return getValidNetworks(stored);
-    } catch {
-      return DEFAULT_NETWORKS;
-    }
-  }, []);
-
-  // 🌐 Kiekvienam tinklui sugeneruojame FallbackProvider su keliais RPC
+  // ==========================================
+  // 🌐 Sugeneruojame visų tinklų FallbackProviders iš networks.js
+  // ==========================================
   const providers = useMemo(() => {
-    const result = {};
-    for (const key of enabledNetworks) {
-      const net = fallbackRPCs[key];
-      if (net?.rpcs?.length) {
+    const map = {};
+    networks.forEach(({ value, rpcUrls }) => {
+      if (value && Array.isArray(rpcUrls) && rpcUrls.length > 0) {
         try {
-          result[key] = new FallbackProvider(
-            net.rpcs.map(url => new JsonRpcProvider(url))
+          map[value] = new FallbackProvider(
+            rpcUrls.map(url => new JsonRpcProvider(url))
           );
         } catch (err) {
-          console.warn(`[Balance] ❌ Provider setup error for ${key}:`, err);
+          console.warn(`[Balance] ❌ Provider error for ${value}:`, err);
         }
       }
-    }
-    return result;
-  }, [enabledNetworks]);
-
-  // 📊 CoinGecko tokenų ID sąrašas
-  const coingeckoIds = useMemo(() => {
-    return [...new Set(Object.values(TOKEN_IDS))].join(",");
+    });
+    return map;
   }, []);
 
-  // ==========================================
-  // 💸 Balansų užklausa per fallback providerius
+// ==========================================
+  // 💸 ETH balansų užklausa per visus tinklus
   // ==========================================
   const fetchBalances = useCallback(async () => {
     const address = wallet?.wallet?.address;
@@ -132,7 +124,7 @@ export function BalanceProvider({ children }) {
           const bal = await provider.getBalance(address, "latest");
           results[key] = parseFloat(ethers.formatEther(bal));
         } catch (err) {
-          console.warn(`[Balance] ❌ Failed on ${key}:`, err?.message);
+          console.warn(`[Balance] ❌ Balance fetch fail on ${key}:`, err?.message);
           results[key] = 0;
         }
       })
@@ -141,7 +133,7 @@ export function BalanceProvider({ children }) {
   }, [wallet, providers]);
 
   // ==========================================
-  // 📈 Kainų užklausa per CoinGecko ir fallback į CoinCap
+  // 📈 Kainų užklausa iš CoinGecko + CoinCap fallback
   // ==========================================
   const fetchPrices = useCallback(async () => {
     const now = Date.now();
@@ -149,13 +141,13 @@ export function BalanceProvider({ children }) {
 
     try {
       const res = await fetch(
-        `https://api.coingecko.com/api/v3/simple/price?ids=${coingeckoIds}&vs_currencies=usd,eur`,
+        `https://api.coingecko.com/api/v3/simple/price?ids=${Object.values(COINGECKO_IDS).join(",")}&vs_currencies=usd,eur`,
         { cache: "no-store" }
       );
       const data = await res.json();
       const out = {};
-      for (const [sym, id] of Object.entries(TOKEN_IDS)) {
-        out[sym] = {
+      for (const [key, id] of Object.entries(COINGECKO_IDS)) {
+        out[key] = {
           usd: data[id]?.usd ?? 0,
           eur: data[id]?.eur ?? 0,
         };
@@ -163,18 +155,16 @@ export function BalanceProvider({ children }) {
       lastPriceFetch.current = now;
       return out;
     } catch (err) {
-      console.warn("[Balance] ❌ CoinGecko error:", err?.message);
+      console.warn("[Balance] ❌ CoinGecko error, falling back to CoinCap:", err?.message);
       try {
         const res = await fetch("https://api.coincap.io/v2/assets", {
           headers: { accept: "application/json" },
         });
         const { data } = await res.json();
-        const lookup = Object.fromEntries(
-          data.map(item => [item.id, Number(item.priceUsd) || 0])
-        );
+        const lookup = Object.fromEntries(data.map(item => [item.id, Number(item.priceUsd) || 0]));
         const out = {};
-        for (const [sym, id] of Object.entries(TOKEN_IDS)) {
-          out[sym] = {
+        for (const [key, id] of Object.entries(COINCAP_IDS)) {
+          out[key] = {
             usd: lookup[id] ?? 0,
             eur: 0,
           };
@@ -186,10 +176,10 @@ export function BalanceProvider({ children }) {
         return prices;
       }
     }
-  }, [coingeckoIds, prices]);
+  }, [prices]);
 
   // ==========================================
-  // 🔁 Pagrindinė duomenų užklausos funkcija su retry valdymu
+  // 🔁 fetchAll + retry su exponential backoff
   // ==========================================
   const fetchAll = useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
@@ -215,7 +205,6 @@ export function BalanceProvider({ children }) {
     }
   }, [fetchBalances, fetchPrices]);
 
-  // 🔁 Retry mechanizmas su exponential backoff
   const silentRetry = useCallback(() => {
     if (retryCount.current >= 6) return;
     const delay = Math.min(2 ** retryCount.current * 3000, 60000);
@@ -225,8 +214,8 @@ export function BalanceProvider({ children }) {
     console.warn(`[Balance] 🔁 Retry #${retryCount.current} in ${delay / 1000}s`);
   }, [fetchAll]);
 
-  // ==========================================
-  // 🎯 Automatinis fetch kai wallet pasiruošęs
+// ==========================================
+  // ⏱️ Automatinis balansų atnaujinimas
   // ==========================================
   useEffect(() => {
     if (!authLoading && !walletLoading && wallet?.wallet?.address) {
@@ -234,9 +223,7 @@ export function BalanceProvider({ children }) {
     }
   }, [authLoading, walletLoading, wallet, fetchAll]);
 
-  // ==========================================
   // 🔁 Periodinis fetch kas 30s + matomumo detektorius
-  // ==========================================
   useEffect(() => {
     const interval = setInterval(() => {
       if (!silentLoading.current) fetchAll(true);
@@ -249,7 +236,6 @@ export function BalanceProvider({ children }) {
     }, 300);
 
     document.addEventListener("visibilitychange", onVisible);
-
     return () => {
       clearInterval(interval);
       retryQueue.current.forEach(clearTimeout);
@@ -260,7 +246,7 @@ export function BalanceProvider({ children }) {
   }, [fetchAll]);
 
   // ==========================================
-  // 💲 Helperiai: USD, EUR ir natūralus balansas
+  // 💲 Balanso skaičiavimo helperiai
   // ==========================================
   const getUsdBalance = (key) =>
     format((balances[key] || 0) * (prices[key]?.usd || 0), 2);
@@ -272,7 +258,7 @@ export function BalanceProvider({ children }) {
     format(balances[key] || 0);
 
   // ==========================================
-  // 🧠 Return: konteksto tiekimas vaikams
+  // ✅ BalanceContext eksportas
   // ==========================================
   return (
     <BalanceContext.Provider
