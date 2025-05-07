@@ -1,12 +1,18 @@
 {
+  // 🏗️ Build etapas – prieš Next.js build'ą paleidžia testus
+  "buildCommand": "npm run test:send && next build",
+
+  // ⚙️ ENV kintamieji naudojami build metu
   "build": {
     "env": {
       "NODE_ENV": "production"
     }
   },
+
+  // 🚫 Draudžia cache'inti CSS failus (kad dizainas būtų visada naujas)
   "headers": [
     {
-      "source": "/(.*).css",
+      "source": "/(.*)\\.css",
       "headers": [
         {
           "key": "Cache-Control",
