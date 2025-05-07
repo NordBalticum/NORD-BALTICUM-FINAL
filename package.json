@@ -7,9 +7,7 @@
     "build": "next build",
     "start": "next start",
     "test": "vitest run",
-    "test:ui": "vitest --ui",
-    "test:watch": "vitest watch",
-    "test:send": "cross-env NODE_ENV=test node scripts/runSendTests.js"
+    "test:send": "node src/scripts/runSendTests.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.49.3",
