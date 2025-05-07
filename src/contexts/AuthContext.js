@@ -316,6 +316,20 @@ export const AuthProvider = ({ children }) => {
   }, [isClient]);
 
   // =======================================
+  // 💾 Wallet address + sukūrimo data į localStorage
+  // =======================================
+  useEffect(() => {
+    if (!wallet?.wallet?.address) return;
+
+    try {
+      localStorage.setItem("walletAddress", wallet.wallet.address);
+      localStorage.setItem("walletCreatedAt", Date.now().toString());
+    } catch (err) {
+      console.warn("⚠️ Nepavyko įrašyti wallet info į localStorage:", err);
+    }
+  }, [wallet?.wallet?.address]);
+  
+  // =======================================
   // 🪝 Wallet įkėlimas kai turim user email
   // =======================================
   useEffect(() => {
@@ -365,26 +379,38 @@ export const AuthProvider = ({ children }) => {
     };
   }, [signOut, isClient]);
 
-  // =======================================
-  // 🧠 Return AuthContext visai aplikacijai
-  // =======================================
-  return (
-    <AuthContext.Provider
-      value={{
-        user,
-        session,
-        wallet,
-        authLoading,
-        walletLoading,
-        safeRefreshSession,
-        signInWithMagicLink,
-        signInWithGoogle,
-        signOut,
-        importWalletFromPrivateKey,
-        isValidPrivateKey,
-      }}
-    >
-      {!authLoading && children}
-    </AuthContext.Provider>
-  );
-};
+// =======================================
+// 🧠 Return AuthContext visai aplikacijai
+// =======================================
+return (
+  <AuthContext.Provider
+    value={{
+      user,
+      session,
+      wallet,
+      authLoading,
+      walletLoading,
+      safeRefreshSession,
+      signInWithMagicLink,
+      signInWithGoogle,
+      signOut,
+      importWalletFromPrivateKey,
+      isValidPrivateKey,
+
+      // ✅ Pridėti patogūs helperiai visai sistemai
+      getSignerForChain: (chainId) => wallet?.signers?.[chainId] || null,
+      getAddressForChain: (chainId) => wallet?.signers?.[chainId]?.address || null,
+      getPrimaryAddress: () => wallet?.wallet?.address || null,
+      getWalletCreatedAt: () => {
+        try {
+          const timestamp = localStorage.getItem("walletCreatedAt");
+          return timestamp ? new Date(parseInt(timestamp, 10)) : null;
+        } catch {
+          return null;
+        }
+      },
+    }}
+  >
+    {!authLoading && children}
+  </AuthContext.Provider>
+);
