@@ -1,7 +1,7 @@
 "use client";
 
 // =======================================
-// 📦 Reikalingi importai
+// 📦 IMPORTAI IR SISTEMINĖ BAZĖ
 // =======================================
 import {
   createContext,
@@ -19,22 +19,22 @@ import debounce from "lodash.debounce";
 import { toast } from "react-toastify";
 
 // =======================================
-// 🔐 AES šifravimo konstantos ir funkcijos
+// 🔐 AES-GCM ŠIFRAVIMO SISTEMA
 // =======================================
 
-// Apsaugos raktas iš .env
+// Apsaugos slaptas raktas iš .env failo
 const ENCRYPTION_SECRET = process.env.NEXT_PUBLIC_ENCRYPTION_SECRET;
 if (!ENCRYPTION_SECRET && typeof window !== "undefined") {
   console.error("❌ Trūksta NEXT_PUBLIC_ENCRYPTION_SECRET .env faile");
 }
 
-// Teksto kodavimas/atkoduojimas į Uint8Array
+// Pagalbinės funkcijos: tekstas <-> baitai
 const encode = (str) => new TextEncoder().encode(str);
 const decode = (buf) => new TextDecoder().decode(buf);
 
-// Sugeneruoja AES raktą naudojant PBKDF2 algoritmą
+// Sugeneruoja AES raktą naudojant PBKDF2
 const getKey = async () => {
-  if (typeof window === "undefined") throw new Error("❌ getKey() veikia tik naršyklėje");
+  if (typeof window === "undefined") throw new Error("❌ AES key veikia tik naršyklėje");
   const baseKey = await window.crypto.subtle.importKey(
     "raw",
     encode(ENCRYPTION_SECRET),
@@ -56,16 +56,19 @@ const getKey = async () => {
   );
 };
 
-// Užšifruoja tekstą (privatų raktą) naudodamas AES-GCM
+// Užšifruoja tekstą (privatų raktą)
 export const encrypt = async (text) => {
   const iv = window.crypto.getRandomValues(new Uint8Array(12));
   const key = await getKey();
   const data = encode(text);
   const encrypted = await window.crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, data);
-  return btoa(JSON.stringify({ iv: Array.from(iv), data: Array.from(new Uint8Array(encrypted)) }));
+  return btoa(JSON.stringify({
+    iv: Array.from(iv),
+    data: Array.from(new Uint8Array(encrypted)),
+  }));
 };
 
-// Iššifruoja užkoduotą AES tekstą
+// Iššifruoja privatų raktą
 export const decrypt = async (ciphertext) => {
   const { iv, data } = JSON.parse(atob(ciphertext));
   const key = await getKey();
@@ -77,65 +80,62 @@ export const decrypt = async (ciphertext) => {
   return decode(decrypted);
 };
 
-// Tikrina ar privatus raktas validus pagal 0x + 64 simboliai
-export const isValidPrivateKey = (key) => /^0x[a-fA-F0-9]{64}$/.test(key.trim());
+// PrivKey formatas tikrinamas (0x + 64 hex simboliai)
+export const isValidPrivateKey = (key) =>
+  /^0x[a-fA-F0-9]{64}$/.test(key.trim());
 
 // =======================================
-// 🌍 Konteksto kūrimas
+// 🌐 AUTENTIFIKACIJOS KONTEKSTAS
 // =======================================
-
 export const AuthContext = createContext(null);
 export const useAuth = () => useContext(AuthContext);
 
 // =======================================
-// 🔧 Pagrindinis AuthProvider komponentas
+// 🧠 PAGRINDINIS AuthProvider
 // =======================================
-
 export const AuthProvider = ({ children }) => {
   const router = useRouter();
   const isClient = typeof window !== "undefined";
 
-  // ✅ Reikalingos būsenos
-  const [user, setUser] = useState(null); // Supabase user
-  const [wallet, setWallet] = useState(null); // Lokalus ethers wallet
-  const [session, setSession] = useState(null); // Supabase sesija
-  const [authLoading, setAuthLoading] = useState(true); // Ar užkraunamas auth
-  const [walletLoading, setWalletLoading] = useState(true); // Ar užkraunamas wallet
+  // Pagrindinės būsenos
+  const [user, setUser] = useState(null);           // Supabase user info
+  const [wallet, setWallet] = useState(null);       // Wallet + signeriai
+  const [session, setSession] = useState(null);     // Supabase sesija
+  const [authLoading, setAuthLoading] = useState(true);
+  const [walletLoading, setWalletLoading] = useState(true);
 
-  const lastSessionRefresh = useRef(Date.now()); // Naudojama refresh timeout'ui
-  const inactivityTimer = useRef(null); // Inaktyvumo laikmatis (auto logout)
+  const lastSessionRefresh = useRef(Date.now());    // Refresho laikmatis
+  const inactivityTimer = useRef(null);             // Auto logout laikmatis
 
-  // =============================
-  // 🔧 Inicijuojam wallet'ą ir signerius per fallbackRPCs
-  // =============================
+  // =======================================
+  // 🧱 SETUP Wallet iš privKey + RPCs
+  // =======================================
   const setupWallet = useCallback((privateKey) => {
-    // Pagrindinis wallet objektas
     const base = new ethers.Wallet(privateKey);
     const signers = {};
 
-    // Pereinam per visus fallbackRPCs (pvz., eth, bnb, matic, ir t.t.)
+    // Kiekvienam tinklui sukurti signerį
     for (const key in fallbackRPCs) {
       const net = fallbackRPCs[key];
-      if (!net?.rpcs?.[0]) continue;
+      if (!net?.rpcs?.length) continue;
 
       try {
         const provider = new ethers.JsonRpcProvider(net.rpcs[0], net.chainId);
         signers[key] = new ethers.Wallet(privateKey, provider);
       } catch (err) {
-        console.warn(`⚠️ RPC nepavyko ${net.label}:`, err);
+        console.warn(`⚠️ ${net.label} provider nepavyko:`, err.message);
       }
     }
 
-    // Išsaugom wallet būseną
     setWallet({ wallet: base, signers });
   }, []);
 
-  // =============================
-  // ✨ Sukuriam naują wallet ir išsaugom Supabase
-  // =============================
+  // =======================================
+  // ✨ Sukuriam ir įrašom naują wallet
+  // =======================================
   const createAndStoreWallet = useCallback(async (email) => {
-    const newWallet = ethers.Wallet.createRandom();
-    const encryptedKey = await encrypt(newWallet.privateKey);
+    const newWallet = ethers.Wallet.createRandom(); // Generuoja naują wallet
+    const encryptedKey = await encrypt(newWallet.privateKey); // Užšifruojam privKey
 
     const { error } = await supabase.from("wallets").upsert({
       user_email: email,
@@ -146,13 +146,13 @@ export const AuthProvider = ({ children }) => {
 
     if (error) throw error;
 
-    setupWallet(newWallet.privateKey);
+    setupWallet(newWallet.privateKey); // Inicijuojam signer'ius
     toast.success("✅ Naujas wallet sukurtas!", { position: "top-center", autoClose: 3000 });
   }, [setupWallet]);
 
-  // =============================
-  // 💾 Įkeliam egzistuojantį wallet arba sukuriam naują
-  // =============================
+  // =======================================
+  // 💾 Įkeliam esamą wallet arba sukuriam naują
+  // =======================================
   const loadOrCreateWallet = useCallback(async (email) => {
     try {
       setWalletLoading(true);
@@ -172,25 +172,26 @@ export const AuthProvider = ({ children }) => {
         await createAndStoreWallet(email);
       }
     } catch (err) {
-      console.error("❌ Nepavyko užkrauti ar sukurti wallet:", err);
-      toast.error("❌ Wallet klaida", { position: "top-center", autoClose: 3000 });
+      console.error("❌ Wallet klaida:", err.message);
+      toast.error("❌ Wallet nepavyko", { position: "top-center", autoClose: 3000 });
       setWallet(null);
     } finally {
       setWalletLoading(false);
     }
   }, [createAndStoreWallet, setupWallet]);
 
-  // =============================
-  // 🔓 Importuojam wallet per privKey
-  // =============================
+  // =======================================
+  // 🔓 Importas iš privKey
+  // =======================================
   const importWalletFromPrivateKey = useCallback(async (email, privateKey) => {
     if (!isValidPrivateKey(privateKey)) {
-      toast.error("❌ Neteisingas private key formatas", { position: "top-center", autoClose: 3000 });
+      toast.error("❌ Neteisingas privatus raktas", { position: "top-center", autoClose: 3000 });
       return;
     }
 
     try {
       setWalletLoading(true);
+
       const address = new ethers.Wallet(privateKey).address;
       const encryptedKey = await encrypt(privateKey);
 
@@ -206,23 +207,22 @@ export const AuthProvider = ({ children }) => {
       setupWallet(privateKey);
       toast.success("✅ Wallet importuotas!", { position: "top-center", autoClose: 3000 });
     } catch (err) {
-      console.error("❌ Importo klaida:", err);
-      toast.error("❌ Wallet import nepavyko", { position: "top-center", autoClose: 3000 });
+      console.error("❌ Importo klaida:", err.message);
+      toast.error("❌ Importo nepavyko", { position: "top-center", autoClose: 3000 });
     } finally {
       setWalletLoading(false);
     }
   }, [setupWallet]);
 
-  // =============================
-  // 🔁 Saugiai atnaujinam Supabase sesiją (kas 60s max)
-  // =============================
+  // =======================================
+  // 🔁 Refreshinam sesiją kas 60s
+  // =======================================
   const safeRefreshSession = useCallback(async () => {
     if (Date.now() - lastSessionRefresh.current < 60_000) return;
     lastSessionRefresh.current = Date.now();
 
     try {
       const { data: { session: newSession } } = await supabase.auth.refreshSession();
-
       if (newSession) {
         setSession(newSession);
         setUser(newSession.user);
@@ -232,16 +232,16 @@ export const AuthProvider = ({ children }) => {
         setWallet(null);
       }
     } catch (err) {
-      console.error("❌ Supabase sesijos atnaujinimo klaida:", err);
+      console.error("❌ Sesijos refresh klaida:", err.message);
       setSession(null);
       setUser(null);
       setWallet(null);
     }
   }, []);
 
-  // =============================
+  // =======================================
   // 🔑 Prisijungimas su MagicLink
-  // =============================
+  // =======================================
   const signInWithMagicLink = useCallback(async (email) => {
     const redirectTo = (isClient ? window.location.origin : "https://nordbalticum.com") + "/dashboard";
 
@@ -259,9 +259,9 @@ export const AuthProvider = ({ children }) => {
     }
   }, [isClient]);
 
-  // =============================
+  // =======================================
   // 🔐 Prisijungimas su Google OAuth
-  // =============================
+  // =======================================
   const signInWithGoogle = useCallback(async () => {
     const redirectTo = (isClient ? window.location.origin : "https://nordbalticum.com") + "/dashboard";
 
@@ -276,23 +276,24 @@ export const AuthProvider = ({ children }) => {
     }
   }, [isClient]);
 
-  // =============================
-  // 🚪 Atsijungimas – su localStorage cleanup ir redirect
-  // =============================
+  // =======================================
+  // 🚪 Atsijungimas – su redirect ir localStorage išvalymu
+  // =======================================
   const signOut = useCallback(async (showToast = false, redirectPath = "/") => {
     try {
       await supabase.auth.signOut();
     } catch (err) {
-      console.error("❌ Sign out klaida:", err);
+      console.error("❌ Atsijungimo klaida:", err.message);
     }
 
-    // Valom visas būsenas
     setUser(null);
     setSession(null);
     setWallet(null);
 
     if (isClient) {
-      ["userPrivateKey", "activeNetwork", "sessionData"].forEach(k => localStorage.removeItem(k));
+      ["userPrivateKey", "activeNetwork", "sessionData"].forEach(k =>
+        localStorage.removeItem(k)
+      );
     }
 
     router.replace(redirectPath);
@@ -302,9 +303,9 @@ export const AuthProvider = ({ children }) => {
     }
   }, [router, isClient]);
 
-  // =============================
-  // 🧠 useEffect: Pirmas kartas – Supabase sesijos įkėlimas
-  // =============================
+  // =======================================
+  // 🧠 Pirmas useEffect – inicializuojam sesiją
+  // =======================================
   useEffect(() => {
     if (!isClient) return;
 
@@ -316,13 +317,12 @@ export const AuthProvider = ({ children }) => {
           setUser(initSession.user);
         }
       } catch (err) {
-        console.error("❌ Sesijos pradinio įkėlimo klaida:", err);
+        console.error("❌ Sesijos pradinė klaida:", err.message);
       } finally {
         setAuthLoading(false);
       }
     })();
 
-    // 🔄 Real-time prisijungimo būsena
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_, newSession) => {
       if (newSession) {
         setSession(newSession);
@@ -337,17 +337,17 @@ export const AuthProvider = ({ children }) => {
     return () => subscription.unsubscribe();
   }, [isClient]);
 
-  // =============================
-  // 🔃 useEffect: Įkėlus user'į – automatiškai kraunam wallet
-  // =============================
+  // =======================================
+  // 🪝 useEffect: kraunam wallet jei turim userį
+  // =======================================
   useEffect(() => {
     if (!isClient || authLoading || !user?.email) return;
     loadOrCreateWallet(user.email);
   }, [authLoading, user?.email, isClient, loadOrCreateWallet]);
 
-  // =============================
-  // 👁️ useEffect: Kai user grįžta į tabą arba fokusuoja – atnaujink sesiją
-  // =============================
+  // =======================================
+  // 👁️ useEffect: tabo fokusavimas – atnaujina sesiją
+  // =======================================
   useEffect(() => {
     if (!isClient) return;
 
@@ -367,16 +367,16 @@ export const AuthProvider = ({ children }) => {
     };
   }, [safeRefreshSession, isClient]);
 
-  // =============================
-  // ⏱️ useEffect: Auto logout po 15 min inaktyvumo
-  // =============================
+  // =======================================
+  // ⏱️ Inaktyvumo logout (15 min timeout)
+  // =======================================
   useEffect(() => {
     if (!isClient) return;
 
     const events = ["mousemove", "keydown", "click", "touchstart"];
     const resetTimer = () => {
       clearTimeout(inactivityTimer.current);
-      inactivityTimer.current = setTimeout(() => signOut(true), 15 * 60 * 1000); // 15 min
+      inactivityTimer.current = setTimeout(() => signOut(true), 15 * 60 * 1000); // 15min
     };
 
     events.forEach(evt => window.addEventListener(evt, resetTimer));
@@ -387,26 +387,26 @@ export const AuthProvider = ({ children }) => {
     };
   }, [signOut, isClient]);
 
-  // =============================
+  // =======================================
   // 🎯 Returninam Context Provider visiems vaikams
-  // =============================
+  // =======================================
   return (
     <AuthContext.Provider
       value={{
-        user, // Supabase user objektas
-        session, // Sesijos duomenys
-        wallet, // Wallet objektas su signeriais
-        authLoading, // Ar kraunasi auth
-        walletLoading, // Ar kraunasi wallet
-        safeRefreshSession, // Saugus sesijos atnaujinimas
-        signInWithMagicLink, // Prisijungimas per email
-        signInWithGoogle, // Prisijungimas per Google OAuth
-        signOut, // Atsijungimas
-        importWalletFromPrivateKey, // Importas iš privKey
-        isValidPrivateKey, // PrivKey validatorius
+        user,                 // Supabase user objektas
+        session,              // Dabartinė sesija
+        wallet,               // Wallet objektas su signeriais (visi networkai)
+        authLoading,          // Ar authetifikacija vis dar kraunasi
+        walletLoading,        // Ar wallet dar generuojamas ar atkuriamas
+        safeRefreshSession,   // Saugus sesijos atnaujinimas (kas 60s)
+        signInWithMagicLink,  // Prisijungimas per Magic Link
+        signInWithGoogle,     // Prisijungimas per Google OAuth
+        signOut,              // Atsijungimo logika
+        importWalletFromPrivateKey, // Importavimas iš rankinio privKey
+        isValidPrivateKey,    // Validacijos helperis
       }}
     >
-      {/* 👁️ Vaikų komponentai rodomi tik kai auth baigė krautis */}
+      {/* 👁️ Atvaizduojam children tik kai auth pilnai užsikrovęs */}
       {!authLoading && children}
     </AuthContext.Provider>
   );
