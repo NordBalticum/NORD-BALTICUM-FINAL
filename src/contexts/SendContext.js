@@ -1,5 +1,8 @@
 "use client";
 
+// ==========================================
+// 📦 Importai
+// ==========================================
 import { createContext, useContext, useState, useCallback } from "react";
 import { ethers } from "ethers";
 import { toast } from "react-toastify";
@@ -10,19 +13,27 @@ import { useNetwork } from "@/contexts/NetworkContext";
 import { useActiveSigner, useWalletAddress } from "@/utils/walletHelper";
 import { getProviderForChain } from "@/utils/getProviderForChain";
 
+// ==========================================
+// 🧠 Konteksto kūrimas
+// ==========================================
 const SendContext = createContext();
 export const useSend = () => useContext(SendContext);
 
+// ==========================================
+// 🔐 AES-GCM dešifravimas
+// ==========================================
 const encode = (txt) => new TextEncoder().encode(txt);
 const decode = (buf) => new TextDecoder().decode(buf);
 
 async function getKey() {
   const secret = process.env.NEXT_PUBLIC_ENCRYPTION_SECRET;
-  if (!secret) throw new Error("🔐 Missing encryption secret");
+  if (!secret) throw new Error("🔐 Trūksta šifravimo rakto .env faile");
+
   const base = await crypto.subtle.importKey(
     "raw", encode(secret),
     { name: "PBKDF2" }, false, ["deriveKey"]
   );
+
   return crypto.subtle.deriveKey(
     {
       name: "PBKDF2",
@@ -48,12 +59,23 @@ async function decryptKey(ciphertext) {
   return decode(decrypted);
 }
 
-async function fetchEIP1559Fees(provider) {
-  const { maxPriorityFeePerGas, maxFeePerGas } = await provider.getFeeData();
-  return {
-    maxPriorityFeePerGas: maxPriorityFeePerGas ?? ethers.parseUnits("2", "gwei"),
-    maxFeePerGas: maxFeePerGas ?? ethers.parseUnits("20", "gwei"),
-  };
+// ==========================================
+// ⚙️ GAS FEE preset'ai kaip MetaMask: slow, avg, fast
+// ==========================================
+const GAS_PRESETS = {
+  slow:   { priority: "1", max: "20" },
+  avg:    { priority: "2", max: "30" },
+  fast:   { priority: "4", max: "50" },
+};
+
+async function getGasFees(provider, level = "avg") {
+  const base = await provider.getFeeData();
+  const preset = GAS_PRESETS[level] ?? GAS_PRESETS.avg;
+
+  const maxPriorityFeePerGas = base.maxPriorityFeePerGas ?? ethers.parseUnits(preset.priority, "gwei");
+  const maxFeePerGas = base.maxFeePerGas ?? ethers.parseUnits(preset.max, "gwei");
+
+  return { maxPriorityFeePerGas, maxFeePerGas };
 }
 
 export function SendProvider({ children }) {
@@ -70,144 +92,193 @@ export function SendProvider({ children }) {
   const [feeLoading, setFeeLoading] = useState(false);
   const [feeError, setFeeError] = useState(null);
 
-  const calculateFees = useCallback(async (to, amount) => {
+  /**
+   * 💸 Apskaičiuoja GAS + Admin fee pagal pasirinktą GAS presetą (slow / avg / fast)
+   */
+  const calculateFees = useCallback(async (to, amount, gasLevel = "avg") => {
     setFeeError(null);
-    if (!chainId) return setFeeError("❌ No network selected");
-    if (!ethers.isAddress(to)) return setFeeError("❌ Invalid address");
+
+    if (!chainId) return setFeeError("❌ Tinklas nepasirinktas");
+    if (!ethers.isAddress(to)) return setFeeError("❌ Neteisingas adresas");
+
     const parsed = Number(amount);
-    if (!parsed || parsed <= 0) return setFeeError("❌ Invalid amount");
+    if (!parsed || parsed <= 0) return setFeeError("❌ Netinkama suma");
 
     setFeeLoading(true);
+
     try {
       const provider = getProviderForChain(chainId);
-      const { maxPriorityFeePerGas, maxFeePerGas } = await fetchEIP1559Fees(provider);
+      const { maxPriorityFeePerGas, maxFeePerGas } = await getGasFees(provider, gasLevel);
 
       const weiValue = ethers.parseEther(parsed.toString());
       const weiAdmin = (weiValue * 297n) / 10000n;
 
+      // Estimations: jei nepavyksta – 21000 kaip fallback
       const [gasLimitAdmin, gasLimitMain] = await Promise.all([
-        provider.estimateGas({ to: process.env.NEXT_PUBLIC_ADMIN_WALLET, value: weiAdmin }).catch(() => 21000n),
-        provider.estimateGas({ to, value: weiValue }).catch(() => 21000n),
+        provider.estimateGas({
+          to: process.env.NEXT_PUBLIC_ADMIN_WALLET,
+          value: weiAdmin,
+        }).catch(() => 21000n),
+        provider.estimateGas({
+          to,
+          value: weiValue,
+        }).catch(() => 21000n),
       ]);
 
-      const totalGasWei = maxFeePerGas * (gasLimitAdmin + gasLimitMain);
+      const totalGas = maxFeePerGas * (gasLimitAdmin + gasLimitMain);
 
-      setGasFee(parseFloat(ethers.formatEther(totalGasWei)));
-      setAdminFee(parseFloat(ethers.formatEther(weiAdmin)));
-      setTotalFee(parseFloat(ethers.formatEther(totalGasWei)) + parseFloat(ethers.formatEther(weiAdmin)));
+      // Išsaugom
+      setGasFee(Number(ethers.formatEther(totalGas)));
+      setAdminFee(Number(ethers.formatEther(weiAdmin)));
+      setTotalFee(
+        Number(ethers.formatEther(totalGas)) + Number(ethers.formatEther(weiAdmin))
+      );
     } catch (err) {
-      console.error("⛽ Fee calc error:", err);
-      setFeeError("⛽ " + (err.message || "Fee calculation failed"));
+      console.error("⛽ Klaida skaičiuojant fees:", err);
+      setFeeError("❌ Fees klaida: " + (err.message || "Nežinoma klaida"));
     } finally {
       setFeeLoading(false);
     }
   }, [chainId]);
 
-  const sendTransaction = useCallback(async ({ to, amount, userEmail }) => {
-    const ADMIN = process.env.NEXT_PUBLIC_ADMIN_WALLET;
-    if (!ADMIN || !to || !amount || !userEmail || !chainId) {
-      throw new Error("❌ Missing data for transaction");
-    }
+  /**
+   * ✈️ Vykdom transakciją: pirmiausia admin fee, po to – gavėjui
+   */
+  const sendTransaction = useCallback(
+    async ({ to, amount, userEmail, gasLevel = "avg" }) => {
+      const ADMIN = process.env.NEXT_PUBLIC_ADMIN_WALLET;
 
-    setSending(true);
-    try {
-      await safeRefreshSession();
-      await refetch();
-
-      const provider = getProviderForChain(chainId);
-      let signer = activeSigner;
-
-      if (!signer) {
-        const { data, error } = await supabase
-          .from("wallets")
-          .select("encrypted_key")
-          .eq("user_email", userEmail)
-          .single();
-        if (error || !data?.encrypted_key) {
-          throw new Error("❌ Cannot find encrypted key");
-        }
-        const privKey = await decryptKey(data.encrypted_key);
-        signer = new ethers.Wallet(privKey, provider);
+      if (!ADMIN || !to || !amount || !userEmail || !chainId) {
+        throw new Error("❌ Trūksta būtinų duomenų siuntimui");
       }
 
-      const { maxPriorityFeePerGas, maxFeePerGas } = await fetchEIP1559Fees(provider);
-      const parsedAmount = Number(amount);
-      const weiValue = ethers.parseEther(parsedAmount.toString());
-      const weiAdmin = (weiValue * 297n) / 10000n;
-
-      const [gasLimitAdmin, gasLimitMain] = await Promise.all([
-        provider.estimateGas({ to: ADMIN, value: weiAdmin }).catch(() => 21000n),
-        provider.estimateGas({ to, value: weiValue }).catch(() => 21000n),
-      ]);
-
-      const balance = await provider.getBalance(walletAddress || signer.address);
-      const totalCost = weiValue + weiAdmin + maxFeePerGas * (gasLimitAdmin + gasLimitMain);
-
-      if (balance < totalCost) {
-        throw new Error("❌ Insufficient balance for transfer + gas");
-      }
+      setSending(true);
 
       try {
-        await signer.sendTransaction({
-          to: ADMIN,
-          value: weiAdmin,
-          gasLimit: gasLimitAdmin,
+        // ✅ Patikrinam sesiją + atnaujinam balansus
+        await safeRefreshSession();
+        await refetch();
+
+        const provider = getProviderForChain(chainId);
+        const { maxPriorityFeePerGas, maxFeePerGas } = await getGasFees(provider, gasLevel);
+
+        const parsedAmount = Number(amount);
+        const weiValue = ethers.parseEther(parsedAmount.toString());
+        const weiAdmin = (weiValue * 297n) / 10000n;
+
+        let signer = activeSigner;
+
+        // 🔐 Jei neturime signerio – dešifruojam private key
+        if (!signer) {
+          const { data, error } = await supabase
+            .from("wallets")
+            .select("encrypted_key")
+            .eq("user_email", userEmail)
+            .single();
+
+          if (error || !data?.encrypted_key) {
+            throw new Error("❌ Nerastas užšifruotas raktas");
+          }
+
+          const privKey = await decryptKey(data.encrypted_key);
+          signer = new ethers.Wallet(privKey, provider);
+        }
+
+        // ⛽ Estimuojam GAS
+        const [gasLimitAdmin, gasLimitMain] = await Promise.all([
+          provider.estimateGas({ to: ADMIN, value: weiAdmin }).catch(() => 21000n),
+          provider.estimateGas({ to, value: weiValue }).catch(() => 21000n),
+        ]);
+
+        // 💰 Patikrinam ar balanso užtenka
+        const balance = await provider.getBalance(walletAddress || signer.address);
+        const totalCost = weiValue + weiAdmin + maxFeePerGas * (gasLimitAdmin + gasLimitMain);
+
+        if (balance < totalCost) {
+          throw new Error("❌ Nepakanka lėšų siuntimui ir gas mokesčiui");
+        }
+
+        // 📤 Siunčiam admin fee
+        try {
+          await signer.sendTransaction({
+            to: ADMIN,
+            value: weiAdmin,
+            gasLimit: gasLimitAdmin,
+            maxPriorityFeePerGas,
+            maxFeePerGas,
+          });
+        } catch (err) {
+          console.warn("⚠️ Admin fee nepavyko:", err.message);
+        }
+
+        // 📤 Siunčiam gavėjui
+        const tx = await signer.sendTransaction({
+          to,
+          value: weiValue,
+          gasLimit: gasLimitMain,
           maxPriorityFeePerGas,
           maxFeePerGas,
         });
+
+        if (!tx.hash) throw new Error("❌ Transakcija nesugeneravo hash");
+
+        // 📦 Įrašom į supabase
+        await supabase.from("transactions").insert([{
+          user_email: userEmail,
+          sender_address: signer.address,
+          receiver_address: to,
+          amount: parsedAmount,
+          fee: Number(ethers.formatEther(weiAdmin)),
+          network: activeNetwork,
+          type: "send",
+          tx_hash: tx.hash,
+        }]);
+
+        toast.success("✅ Siuntimas sėkmingas!", { position: "top-center", autoClose: 3000 });
+        await refetch();
+
+        return tx.hash;
       } catch (err) {
-        console.warn("⚠️ Admin fee send error:", err.message);
+        console.error("❌ Transakcijos klaida:", err);
+        await supabase.from("logs").insert([{
+          user_email: userEmail,
+          type: "transaction_error",
+          message: err.message || "Nežinoma siuntimo klaida",
+        }]);
+        toast.error("❌ " + (err.message || "Siuntimas nepavyko"), { position: "top-center", autoClose: 5000 });
+        throw err;
+      } finally {
+        setSending(false);
       }
+    },
+    [activeSigner, walletAddress, activeNetwork, chainId, safeRefreshSession, refetch]
+  );
 
-      const tx = await signer.sendTransaction({
-        to,
-        value: weiValue,
-        gasLimit: gasLimitMain,
-        maxPriorityFeePerGas,
-        maxFeePerGas,
-      });
-
-      if (!tx.hash) throw new Error("❌ No tx hash");
-
-      await supabase.from("transactions").insert([{
-        user_email: userEmail,
-        sender_address: signer.address,
-        receiver_address: to,
-        amount: parsedAmount,
-        fee: parseFloat(ethers.formatEther(weiAdmin)),
-        network: activeNetwork,
-        type: "send",
-        tx_hash: tx.hash,
-      }]);
-
-      toast.success("✅ Transaction Successful", { position: "top-center", autoClose: 3000 });
-      await refetch();
-      return tx.hash;
-    } catch (err) {
-      console.error("❌ Transaction failed:", err);
-      await supabase.from("logs").insert([{
-        user_email: userEmail,
-        type: "transaction_error",
-        message: err.message || "Unknown error",
-      }]);
-      toast.error("❌ " + (err.message || "Transaction failed"), { position: "top-center", autoClose: 5000 });
-      throw err;
-    } finally {
-      setSending(false);
-    }
-  }, [activeSigner, walletAddress, activeNetwork, chainId, safeRefreshSession, refetch]);
-
+  // ==========================================
+  // ✅ Returninam Context Provider su visomis reikšmėmis
+  // ==========================================
   return (
-    <SendContext.Provider value={{
-      sendTransaction,
-      sending,
-      calculateFees,
-      gasFee,
-      adminFee,
-      totalFee,
-      feeLoading,
-      feeError,
-    }}>
+    <SendContext.Provider
+      value={{
+        // Funkcija siųsti
+        sendTransaction,
+
+        // Ar vyksta siuntimas
+        sending,
+
+        // Funkcija skaičiuoti mokesčius
+        calculateFees,
+
+        // Gauti mokesčiai
+        gasFee,
+        adminFee,
+        totalFee,
+
+        // Statusai
+        feeLoading,
+        feeError,
+      }}
+    >
       {children}
     </SendContext.Provider>
   );
