@@ -276,4 +276,172 @@ export const AuthProvider = ({ children }) => {
     }
   }, [isClient]);
 
-  
+  // =======================================
+  // 🚪 Atsijungimas – sesijos ir localStorage išvalymas
+  // =======================================
+  const signOut = useCallback(async (showToast = false, redirectPath = "/") => {
+    try {
+      await supabase.auth.signOut();
+    } catch (err) {
+      console.error("❌ Atsijungimo klaida:", err.message);
+    }
+
+    setUser(null);
+    setSession(null);
+    setWallet(null);
+
+    if (isClient) {
+      ["userPrivateKey", "activeNetwork", "sessionData", "walletAddress", "walletCreatedAt"]
+        .forEach(k => localStorage.removeItem(k));
+    }
+
+    router.replace(redirectPath);
+
+    if (showToast) {
+      toast.info("👋 Atsijungta", { position: "top-center", autoClose: 3000 });
+    }
+  }, [router, isClient]);
+
+  // =======================================
+  // 🧠 useEffect – sesijos inicializavimas iš Supabase
+  // =======================================
+  useEffect(() => {
+    if (!isClient) return;
+
+    (async () => {
+      try {
+        const { data: { session: initSession } } = await supabase.auth.getSession();
+        if (initSession) {
+          setSession(initSession);
+          setUser(initSession.user);
+        }
+      } catch (err) {
+        console.error("❌ Pradinis sesijos užkrovimas nepavyko:", err.message);
+      } finally {
+        setAuthLoading(false);
+      }
+    })();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, newSession) => {
+      if (newSession) {
+        setSession(newSession);
+        setUser(newSession.user);
+      } else {
+        setSession(null);
+        setUser(null);
+        setWallet(null);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [isClient]);
+
+  // =======================================
+  // 💾 Wallet informacijos įrašymas į localStorage
+  // =======================================
+  useEffect(() => {
+    if (!wallet?.wallet?.address) return;
+
+    try {
+      localStorage.setItem("walletAddress", wallet.wallet.address);
+      localStorage.setItem("walletCreatedAt", Date.now().toString());
+    } catch (err) {
+      console.warn("⚠️ Nepavyko įrašyti wallet informacijos į localStorage:", err);
+    }
+  }, [wallet?.wallet?.address]);
+
+  // =======================================
+  // 🪝 Wallet įkėlimas kai turim user email
+  // =======================================
+  useEffect(() => {
+    if (!isClient || authLoading || !user?.email) return;
+    loadOrCreateWallet(user.email);
+  }, [authLoading, user?.email, isClient, loadOrCreateWallet]);
+
+  // =======================================
+  // 👁️ Sesijos atnaujinimas kai grįžta į tabą ar focusuoja
+  // =======================================
+  useEffect(() => {
+    if (!isClient) return;
+
+    const onFocus = debounce(() => safeRefreshSession(), 300);
+    const onVisible = debounce(() => {
+      if (document.visibilityState === "visible") safeRefreshSession();
+    }, 300);
+
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVisible);
+
+    return () => {
+      onFocus.cancel();
+      onVisible.cancel();
+      window.removeEventListener("focus", onFocus);
+      window.removeEventListener("visibilitychange", onVisible);
+    };
+  }, [safeRefreshSession, isClient]);
+
+  // =======================================
+  // ⏱️ Auto logout po 15min inaktyvumo
+  // =======================================
+  useEffect(() => {
+    if (!isClient) return;
+
+    const events = ["mousemove", "keydown", "click", "touchstart"];
+    const resetTimer = () => {
+      clearTimeout(inactivityTimer.current);
+      inactivityTimer.current = setTimeout(() => signOut(true), 15 * 60 * 1000); // 15 min
+    };
+
+    events.forEach(evt => window.addEventListener(evt, resetTimer));
+    resetTimer();
+
+    return () => {
+      events.forEach(evt => window.removeEventListener(evt, resetTimer));
+    };
+  }, [signOut, isClient]);
+
+  // =======================================
+  // 🧠 Return AuthContext visai aplikacijai
+  // =======================================
+  return (
+    <AuthContext.Provider
+      value={{
+        user,
+        session,
+        wallet,
+        authLoading,
+        walletLoading,
+        safeRefreshSession,
+        signInWithMagicLink,
+        signInWithGoogle,
+        signOut,
+        importWalletFromPrivateKey,
+        isValidPrivateKey,
+
+        // ✅ Patogūs helperiai visai sistemai (100% UI/UX coverage)
+        getSignerForChain: (chainId) => wallet?.signers?.[chainId] || null,
+        getAddressForChain: (chainId) => wallet?.signers?.[chainId]?.address || null,
+        getPrimaryAddress: () => wallet?.wallet?.address || null,
+        getWalletCreatedAt: () => {
+          try {
+            const timestamp = localStorage.getItem("walletCreatedAt");
+            return timestamp ? new Date(parseInt(timestamp, 10)) : null;
+          } catch {
+            return null;
+          }
+        },
+        getWalletAddress: () => {
+          try {
+            return localStorage.getItem("walletAddress") || null;
+          } catch {
+            return null;
+          }
+        },
+        getAllSigners: () => wallet?.signers || {},
+      }}
+    >
+      {!authLoading && children}
+    </AuthContext.Provider>
+  );
+};
+};
