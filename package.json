@@ -6,8 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "test": "vitest --dir=tests",
-    "test:watch": "vitest --watch --dir=tests"
+    "test": "vitest run",
+    "test:send": "node scripts/runSendTests.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.49.3",
