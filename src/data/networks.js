@@ -726,3 +726,35 @@ export const getAllChainIds = () => {
     .filter((id) => typeof id === "number");
   return [...main, ...test];
 };
+
+/**
+ * Gauti network objektą pagal value (pvz. "matic", "eth", "bnb")
+ */
+export const getNetworkByValue = (value) => {
+  return networks.find((n) => n.value === value) ||
+    networks.find((n) => n.testnet?.value === value) ||
+    null;
+};
+
+/**
+ * Gauti visus mainnet sąrašus (be testnet)
+ */
+export const getMainnetList = () => {
+  return networks;
+};
+
+/**
+ * Gauti visus testnet sąrašus
+ */
+export const getTestnetList = () => {
+  return networks
+    .filter((n) => n.testnet)
+    .map((n) => n.testnet);
+};
+
+/**
+ * Patikrinti ar chainId yra palaikomas
+ */
+export const isSupportedChain = (chainId) => {
+  return getAllChainIds().includes(chainId);
+};
