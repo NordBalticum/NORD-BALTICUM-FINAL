@@ -326,7 +326,7 @@ const networks = [
     fallbackGas: ethers.parseUnits("0.002", "ether"),
     coingeckoId: "fuse-network-token",
     coincapId: "fuse"
-  }
+  },
   {
     label: "Fantom",
     value: "fantom",
