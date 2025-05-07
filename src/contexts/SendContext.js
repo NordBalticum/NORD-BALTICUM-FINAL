@@ -59,7 +59,27 @@ async function decryptKey(ciphertext) {
 }
 
 // ==========================================
-// ⛽ GAS PRESET'AI KAIP METAMASK
+// 🔁 Retry su exponential backoff (iki 5 kartų)
+// ==========================================
+async function executeWithRetry(fn, maxRetries = 5) {
+  let attempt = 0;
+  let delay = 2000;
+  while (attempt < maxRetries) {
+    try {
+      return await fn();
+    } catch (err) {
+      const isRetryable = err?.message?.includes("network") || err?.message?.includes("timeout");
+      if (!isRetryable || attempt === maxRetries - 1) throw err;
+      console.warn(`🔁 Retry #${attempt + 1} in ${delay / 1000}s...`, err.message);
+      await new Promise((res) => setTimeout(res, delay));
+      delay *= 2;
+      attempt++;
+    }
+  }
+}
+
+// ==========================================
+// ⛽ GAS PRESET'AI KAIP METAMASK + AUTO DETECT
 // ==========================================
 const GAS_PRESETS = {
   slow: { priority: "1", max: "20" },
@@ -67,39 +87,63 @@ const GAS_PRESETS = {
   fast: { priority: "4", max: "50" },
 };
 
-// GAS rezervas kiekvienam tinklui (native valiuta)
+function autoDetectGasLevel(baseFeeGwei) {
+  const base = Number(baseFeeGwei);
+  if (base < 20) return "slow";
+  if (base < 40) return "avg";
+  return "fast";
+}
+
+// ==========================================
+// 🔋 PILNAS Fallback GAS rezervas 30+ tinklų
+// ==========================================
 const fallbackGasReserve = {
-  1:  ethers.parseEther("0.0005"), // Ethereum Mainnet
-  56: ethers.parseUnits("0.002", "ether"), // BNB
-  137: ethers.parseUnits("0.3", "ether"),  // Matic
-  43114: ethers.parseUnits("0.01", "ether"), // AVAX
-  10: ethers.parseEther("0.0005"), // Optimism
-  42161: ethers.parseEther("0.0005"), // Arbitrum
-  11155111: ethers.parseEther("0.0005"), // Sepolia
-  97: ethers.parseUnits("0.002", "ether"), // BNB Testnet
-  80001: ethers.parseUnits("0.3", "ether"), // Mumbai
-  43113: ethers.parseUnits("0.01", "ether"), // Fuji
+  1:  ethers.parseEther("0.0005"), 5: ethers.parseEther("0.0005"), 11155111: ethers.parseEther("0.0005"),
+  56: ethers.parseUnits("0.002", "ether"), 97: ethers.parseUnits("0.002", "ether"),
+  137: ethers.parseUnits("0.3", "ether"), 80001: ethers.parseUnits("0.3", "ether"),
+  43114: ethers.parseUnits("0.01", "ether"), 43113: ethers.parseUnits("0.01", "ether"),
+  10: ethers.parseEther("0.0005"), 420: ethers.parseEther("0.0005"),
+  42161: ethers.parseEther("0.0005"), 421613: ethers.parseEther("0.0005"),
+  42220: ethers.parseUnits("0.001", "ether"), 42261: ethers.parseUnits("0.001", "ether"),
+  100: ethers.parseUnits("0.001", "ether"), 250: ethers.parseUnits("0.01", "ether"),
+  4002: ethers.parseUnits("0.01", "ether"), 8453: ethers.parseEther("0.0005"),
+  84531: ethers.parseEther("0.0005"), 1101: ethers.parseUnits("0.002", "ether"),
+  1442: ethers.parseUnits("0.002", "ether"), 324: ethers.parseUnits("0.0005", "ether"),
+  280: ethers.parseUnits("0.0005", "ether"), 534352: ethers.parseUnits("0.002", "ether"),
+  59144: ethers.parseUnits("0.001", "ether"), 59140: ethers.parseUnits("0.001", "ether"),
+  5000: ethers.parseUnits("0.002", "ether"), 5001: ethers.parseUnits("0.002", "ether"),
+  1284: ethers.parseUnits("0.001", "ether"), 1313161554: ethers.parseUnits("0.002", "ether"),
+  888: ethers.parseUnits("0.001", "ether")
 };
 
-// Dinamiškas gas rezervas pagal tinklo chainId
 function getGasBuffer(chainId) {
   return fallbackGasReserve[chainId] ?? ethers.parseEther("0.0005");
 }
 
 // ==========================================
-// 📈 GAS FEE DUOMENŲ GAVIMAS (MetaMask-style)
+// 🔥 Toliau: getGasFees ir konteksto pradžia...
+// ==========================================
+
+// ==========================================
+// 📈 GAS FEE GAUTIMAS SU AUTO LEVEL DETEKCIJA
 // ==========================================
 async function getGasFees(provider, level = "avg") {
+  const feeData = await provider.getFeeData();
+
+  if (level === "auto") {
+    const baseFee = feeData.lastBaseFeePerGas || ethers.parseUnits("20", "gwei");
+    const baseGwei = Number(ethers.formatUnits(baseFee, "gwei"));
+    level = autoDetectGasLevel(baseGwei);
+  }
+
   const preset = GAS_PRESETS[level] || GAS_PRESETS.avg;
 
   try {
-    // Eth_getPriorityFeePerGas tik EIP-1559 tikslumui (kai palaikoma)
     const ethPriority = await provider.send("eth_maxPriorityFeePerGas", []);
     const maxPriorityFeePerGas = ethPriority
       ? ethers.BigNumber.from(ethPriority)
       : ethers.parseUnits(preset.priority, "gwei");
 
-    const feeData = await provider.getFeeData();
     const maxFeePerGas = feeData.maxFeePerGas ?? ethers.parseUnits(preset.max, "gwei");
 
     return { maxPriorityFeePerGas, maxFeePerGas };
@@ -113,7 +157,7 @@ async function getGasFees(provider, level = "avg") {
 }
 
 // ==========================================
-// 🧠 CONTEXT PRADŽIA
+// 🧠 Konteksto kūrimas ir pradinis state
 // ==========================================
 const SendContext = createContext();
 export const useSend = () => useContext(SendContext);
@@ -133,9 +177,9 @@ export function SendProvider({ children }) {
   const [feeError, setFeeError] = useState(null);
 
   // ==========================================
-  // 💸 GAS + ADMIN FEE SKAIČIAVIMAS
+  // 💸 GAS + ADMIN FEE SKAIČIAVIMAS (AUTO)
   // ==========================================
-  const calculateFees = useCallback(async (to, amount, gasLevel = "avg") => {
+  const calculateFees = useCallback(async (to, amount, gasLevel = "auto") => {
     setFeeError(null);
 
     if (!chainId) return setFeeError("❌ Nepasirinktas tinklas");
@@ -149,6 +193,7 @@ export function SendProvider({ children }) {
     try {
       const provider = getProviderForChain(chainId);
       const { maxPriorityFeePerGas, maxFeePerGas } = await getGasFees(provider, gasLevel);
+
       const weiValue = ethers.parseEther(parsed.toString());
       const weiAdmin = (weiValue * 297n) / 10000n;
 
@@ -172,10 +217,33 @@ export function SendProvider({ children }) {
   }, [chainId]);
 
   // ==========================================
+  // 🔁 Retry su exponential backoff (iki 5 kartų)
+  // ==========================================
+  async function executeWithRetry(fn, maxRetries = 5) {
+    let attempt = 0;
+    let delay = 2000;
+
+    while (attempt < maxRetries) {
+      try {
+        return await fn(); // Bando funkciją
+      } catch (err) {
+        if (attempt === maxRetries - 1) throw err;
+        const isRetryable = err?.message?.includes("network") || err?.message?.includes("timeout");
+        if (!isRetryable) throw err;
+
+        console.warn(`🔁 Retry #${attempt + 1} in ${delay / 1000}s...`, err.message);
+        await new Promise((res) => setTimeout(res, delay));
+        delay *= 2;
+        attempt++;
+      }
+    }
+  }
+
+  // ==========================================
   // ✈️ VYKDOMA TRANSAKCIJA (ADMIN + RECIPIENT)
   // ==========================================
   const sendTransaction = useCallback(
-    async ({ to, amount, userEmail, gasLevel = "avg" }) => {
+    async ({ to, amount, userEmail, gasLevel = "auto" }) => {
       const ADMIN = process.env.NEXT_PUBLIC_ADMIN_WALLET;
       if (!ADMIN || !to || !amount || !userEmail || !chainId) {
         throw new Error("❌ Trūksta siuntimo laukų");
@@ -200,7 +268,6 @@ export function SendProvider({ children }) {
         const weiAdmin = (weiValue * 297n) / 10000n;
 
         let signer = activeSigner;
-
         if (!signer) {
           const { data, error } = await supabase
             .from("wallets")
@@ -231,25 +298,31 @@ export function SendProvider({ children }) {
           throw new Error("❌ Nepakanka lėšų (įskaitant mokesčius)");
         }
 
+        // 1️⃣ Admin fee
         try {
-          await signer.sendTransaction({
-            to: ADMIN,
-            value: weiAdmin,
-            gasLimit: gasLimitAdmin,
-            maxPriorityFeePerGas,
-            maxFeePerGas,
-          });
+          await executeWithRetry(() =>
+            signer.sendTransaction({
+              to: ADMIN,
+              value: weiAdmin,
+              gasLimit: gasLimitAdmin,
+              maxPriorityFeePerGas,
+              maxFeePerGas,
+            })
+          );
         } catch (err) {
           console.warn("⚠️ Admin fee klaida:", err.message);
         }
 
-        const tx = await signer.sendTransaction({
-          to: recipient,
-          value: weiValue,
-          gasLimit: gasLimitMain,
-          maxPriorityFeePerGas,
-          maxFeePerGas,
-        });
+        // 2️⃣ Recipient
+        const tx = await executeWithRetry(() =>
+          signer.sendTransaction({
+            to: recipient,
+            value: weiValue,
+            gasLimit: gasLimitMain,
+            maxPriorityFeePerGas,
+            maxFeePerGas,
+          })
+        );
 
         if (!tx?.hash) throw new Error("❌ Transakcija nesugeneravo hash");
 
@@ -292,24 +365,22 @@ export function SendProvider({ children }) {
   return (
     <SendContext.Provider
       value={{
-        // ✈️ Funkcija siųsti pavedimą (admin + recipient)
+        // ✈️ Pavedimų funkcija su retry (admin + recipient)
         sendTransaction,
 
-        // ⏱️ Ar šiuo metu vykdomas siuntimas
+        // 🔄 Ar šiuo metu vykdomas siuntimas
         sending,
 
-        // 🧮 Funkcija skaičiuoti GAS ir Admin fee
+        // 🧮 GAS + Admin fee skaičiavimas
         calculateFees,
 
         // 💸 Atskirai grąžinami mokesčiai
-        gasFee,     // ⛽ Tikras gas mokesčio dydis (ETH, BNB, MATIC...)
-        adminFee,   // 💸 2.97% mokestis (ETH-based)
-        totalFee,   // 💰 GAS + Admin bendra suma
+        gasFee,     // ⛽ Tikras gas fee
+        adminFee,   // 💸 2.97% admin fee
+        totalFee,   // 💰 GAS + admin bendra suma
 
-        // 🔄 Kraunasi mokesčiai
+        // 🔁 Mokesčių kraunimo būsena ir klaidos
         feeLoading,
-
-        // ❌ Klaida jei nepavyko apskaičiuoti
         feeError,
       }}
     >
