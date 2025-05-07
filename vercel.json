@@ -1,5 +1,6 @@
 {
   "buildCommand": "npm run test:send && next build",
+
   "build": {
     "env": {
       "NODE_ENV": "production"
