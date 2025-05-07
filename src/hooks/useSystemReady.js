@@ -4,14 +4,16 @@
 import { useState, useEffect, useMemo } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNetwork } from "@/contexts/NetworkContext";
-import { detectIsMobile } from "@/utils/detectIsMobile"; // ✅ vietoj useDeviceInfo
+import { detectIsMobile } from "@/utils/detectIsMobile";
 
 export function useSystemReady() {
   const [domReady, setDomReady] = useState(false);
+  const [pollCount, setPollCount] = useState(0);
 
   const { user, wallet, authLoading, walletLoading } = useAuth();
   const { activeNetwork, chainId } = useNetwork();
 
+  // Device detection with extra fallback
   const deviceInfo = useMemo(() => {
     const isMobile = detectIsMobile();
     return {
@@ -19,13 +21,15 @@ export function useSystemReady() {
       isTablet: false,
       isDesktop: !isMobile,
       scale: isMobile ? 0.95 : 1,
-      connectionType: typeof navigator !== "undefined" ? (navigator.connection?.effectiveType || "unknown") : "unknown",
+      connectionType: typeof navigator !== "undefined"
+        ? (navigator.connection?.effectiveType || "unknown")
+        : "unknown",
     };
   }, []);
 
+  // DOM ready check
   useEffect(() => {
     if (typeof window === "undefined") return;
-
     if (document.readyState === "complete") {
       setDomReady(true);
     } else {
@@ -35,6 +39,7 @@ export function useSystemReady() {
     }
   }, []);
 
+  // Auth readiness logic
   const authReady = useMemo(() => {
     return (
       !authLoading &&
@@ -44,13 +49,27 @@ export function useSystemReady() {
     );
   }, [authLoading, walletLoading, user, wallet]);
 
+  // Network readiness logic
   const networkReady = useMemo(() => {
     return !!activeNetwork && !!chainId;
   }, [activeNetwork, chainId]);
 
+  // Retry polling (kas 1s iki 10 kartų, jei neparuoštas)
+  useEffect(() => {
+    if (authReady && networkReady && domReady) return;
+
+    if (pollCount >= 10) return;
+
+    const retry = setTimeout(() => {
+      setPollCount((prev) => prev + 1);
+    }, 1000);
+
+    return () => clearTimeout(retry);
+  }, [authReady, networkReady, domReady, pollCount]);
+
   const systemReady = useMemo(() => {
-    return domReady && authReady && networkReady;
-  }, [domReady, authReady, networkReady]);
+    return authReady && networkReady && domReady;
+  }, [authReady, networkReady, domReady]);
 
   return {
     ready: systemReady,
@@ -60,5 +79,9 @@ export function useSystemReady() {
     isDesktop: deviceInfo.isDesktop,
     scale: deviceInfo.scale,
     connectionType: deviceInfo.connectionType,
+    domReady,
+    authReady,
+    networkReady,
+    retries: pollCount,
   };
 }
