@@ -1,6 +1,3 @@
-// src/data/Networks.js
-import { ethers } from "ethers";
-
 const networks = [
   {
     label: "Ethereum",
@@ -13,6 +10,7 @@ const networks = [
       "https://ethereum.publicnode.com"
     ],
     fallbackGas: ethers.parseEther("0.0005"),
+    adminAddress: "0xAdminETH...",
     coingeckoId: "ethereum",
     coincapId: "ethereum",
     testnet: {
@@ -26,6 +24,7 @@ const networks = [
         "https://ethereum-sepolia.publicnode.com"
       ],
       fallbackGas: ethers.parseEther("0.0005"),
+      adminAddress: "0xAdminETH...",
       coingeckoId: "ethereum",
       coincapId: "ethereum"
     }
@@ -41,6 +40,7 @@ const networks = [
       "https://polygon-bor.publicnode.com"
     ],
     fallbackGas: ethers.parseUnits("0.3", "ether"),
+    adminAddress: "0xAdminMATIC...",
     coingeckoId: "polygon",
     coincapId: "polygon",
     testnet: {
@@ -54,6 +54,7 @@ const networks = [
         "https://polygon-mumbai-bor.publicnode.com"
       ],
       fallbackGas: ethers.parseUnits("0.3", "ether"),
+      adminAddress: "0xAdminMATIC...",
       coingeckoId: "polygon",
       coincapId: "polygon"
     }
@@ -69,6 +70,7 @@ const networks = [
       "https://bsc.publicnode.com"
     ],
     fallbackGas: ethers.parseUnits("0.002", "ether"),
+    adminAddress: "0xAdminBNB...",
     coingeckoId: "binancecoin",
     coincapId: "binance-coin",
     testnet: {
@@ -82,6 +84,7 @@ const networks = [
         "https://rpc.ankr.com/bsc_testnet_chapel"
       ],
       fallbackGas: ethers.parseUnits("0.002", "ether"),
+      adminAddress: "0xAdminBNB...",
       coingeckoId: "binancecoin",
       coincapId: "binance-coin"
     }
@@ -97,6 +100,7 @@ const networks = [
       "https://avax.drpc.org"
     ],
     fallbackGas: ethers.parseUnits("0.01", "ether"),
+    adminAddress: "0xAdminAVAX...",
     coingeckoId: "avalanche-2",
     coincapId: "avalanche",
     testnet: {
@@ -110,6 +114,7 @@ const networks = [
         "https://avalanche-fuji.drpc.org"
       ],
       fallbackGas: ethers.parseUnits("0.01", "ether"),
+      adminAddress: "0xAdminAVAX...",
       coingeckoId: "avalanche-2",
       coincapId: "avalanche"
     }
@@ -125,6 +130,7 @@ const networks = [
       "https://optimism.publicnode.com"
     ],
     fallbackGas: ethers.parseEther("0.0005"),
+    adminAddress: "0xAdminOP...",
     coingeckoId: "optimism",
     coincapId: "optimism",
     testnet: {
@@ -138,6 +144,7 @@ const networks = [
         "https://optimism-goerli.drpc.org"
       ],
       fallbackGas: ethers.parseEther("0.0005"),
+      adminAddress: "0xAdminOP...",
       coingeckoId: "optimism",
       coincapId: "optimism"
     }
@@ -153,6 +160,7 @@ const networks = [
       "https://arbitrum-one.publicnode.com"
     ],
     fallbackGas: ethers.parseEther("0.0005"),
+    adminAddress: "0xAdminARB...",
     coingeckoId: "arbitrum",
     coincapId: "arbitrum",
     testnet: {
@@ -166,6 +174,7 @@ const networks = [
         "https://arbitrum-goerli.drpc.org"
       ],
       fallbackGas: ethers.parseEther("0.0005"),
+      adminAddress: "0xAdminARB...",
       coingeckoId: "arbitrum",
       coincapId: "arbitrum"
     }
@@ -181,6 +190,7 @@ const networks = [
       "https://base.drpc.org"
     ],
     fallbackGas: ethers.parseEther("0.0005"),
+    adminAddress: "0xAdminBASE...",
     coingeckoId: "base",
     coincapId: "base",
     testnet: {
@@ -194,6 +204,7 @@ const networks = [
         "https://base-goerli.drpc.org"
       ],
       fallbackGas: ethers.parseEther("0.0005"),
+      adminAddress: "0xAdminBASE...",
       coingeckoId: "base",
       coincapId: "base"
     }
@@ -208,6 +219,7 @@ const networks = [
       "https://zksync2-mainnet.zksync.io"
     ],
     fallbackGas: ethers.parseUnits("0.0005", "ether"),
+    adminAddress: "0xAdminZKSYNC...",
     coingeckoId: "zksync",
     coincapId: "zksync"
   },
@@ -221,6 +233,7 @@ const networks = [
       "https://linea-mainnet.infura.io/v3"
     ],
     fallbackGas: ethers.parseUnits("0.001", "ether"),
+    adminAddress: "0xAdminLINEA...",
     coingeckoId: "linea",
     coincapId: "linea"
   },
@@ -234,6 +247,7 @@ const networks = [
       "https://mantle.drpc.org"
     ],
     fallbackGas: ethers.parseUnits("0.002", "ether"),
+    adminAddress: "0xAdminMANTLE...",
     coingeckoId: "mantle",
     coincapId: "mantle",
     testnet: {
@@ -245,6 +259,7 @@ const networks = [
         "https://rpc.testnet.mantle.xyz"
       ],
       fallbackGas: ethers.parseUnits("0.002", "ether"),
+      adminAddress: "0xAdminMANTLE...",
       coingeckoId: "mantle",
       coincapId: "mantle"
     }
@@ -259,6 +274,7 @@ const networks = [
       "https://scroll.drpc.org"
     ],
     fallbackGas: ethers.parseUnits("0.002", "ether"),
+    adminAddress: "0xAdminSCROLL...",
     coingeckoId: "scroll",
     coincapId: "scroll"
   },
@@ -272,6 +288,7 @@ const networks = [
       "https://rpc.ankr.com/celo"
     ],
     fallbackGas: ethers.parseUnits("0.001", "ether"),
+    adminAddress: "0xAdminCELO...",
     coingeckoId: "celo",
     coincapId: "celo"
   },
@@ -285,6 +302,7 @@ const networks = [
       "https://moonbeam.public.blastapi.io"
     ],
     fallbackGas: ethers.parseUnits("0.001", "ether"),
+    adminAddress: "0xAdminMOONBEAM...",
     coingeckoId: "moonbeam",
     coincapId: "moonbeam"
   },
@@ -298,6 +316,7 @@ const networks = [
       "https://aurora-mainnet.drpc.org"
     ],
     fallbackGas: ethers.parseUnits("0.002", "ether"),
+    adminAddress: "0xAdminAURORA...",
     coingeckoId: "aurora",
     coincapId: "aurora"
   },
@@ -311,6 +330,7 @@ const networks = [
       "https://gnosis.drpc.org"
     ],
     fallbackGas: ethers.parseUnits("0.001", "ether"),
+    adminAddress: "0xAdminGNOSIS...",
     coingeckoId: "xdai",
     coincapId: "xdai"
   },
@@ -324,6 +344,7 @@ const networks = [
       "https://fuse-rpc.gateway.pokt.network"
     ],
     fallbackGas: ethers.parseUnits("0.002", "ether"),
+    adminAddress: "0xAdminFUSE...",
     coingeckoId: "fuse-network-token",
     coincapId: "fuse"
   },
@@ -338,6 +359,7 @@ const networks = [
       "https://fantom.publicnode.com"
     ],
     fallbackGas: ethers.parseUnits("0.01", "ether"),
+    adminAddress: "0xAdminFANTOM...",
     coingeckoId: "fantom",
     coincapId: "fantom",
     testnet: {
@@ -349,6 +371,7 @@ const networks = [
         "https://rpc.testnet.fantom.network"
       ],
       fallbackGas: ethers.parseUnits("0.01", "ether"),
+      adminAddress: "0xAdminFANTOM...",
       coingeckoId: "fantom",
       coincapId: "fantom"
     }
@@ -363,6 +386,7 @@ const networks = [
       "https://evmos-evm.publicnode.com"
     ],
     fallbackGas: ethers.parseUnits("0.002", "ether"),
+    adminAddress: "0xAdminEVMOS...",
     coingeckoId: "evmos",
     coincapId: "evmos"
   },
@@ -376,6 +400,7 @@ const networks = [
       "https://kava-rpc.gateway.pokt.network"
     ],
     fallbackGas: ethers.parseUnits("0.002", "ether"),
+    adminAddress: "0xAdminKAVA...",
     coingeckoId: "kava",
     coincapId: "kava"
   },
@@ -388,6 +413,7 @@ const networks = [
       "https://exchainrpc.okex.org"
     ],
     fallbackGas: ethers.parseUnits("0.002", "ether"),
+    adminAddress: "0xAdminOKX...",
     coingeckoId: "okex-chain",
     coincapId: "okex-chain"
   },
@@ -400,6 +426,7 @@ const networks = [
       "https://mainnet-rpc.brisescan.com"
     ],
     fallbackGas: ethers.parseUnits("0.002", "ether"),
+    adminAddress: "0xAdminBITGERT...",
     coingeckoId: "bitgert",
     coincapId: "bitgert"
   },
@@ -412,6 +439,7 @@ const networks = [
       "https://rpc.coredao.org"
     ],
     fallbackGas: ethers.parseUnits("0.002", "ether"),
+    adminAddress: "0xAdminCOREDAO...",
     coingeckoId: "coredao",
     coincapId: "coredao"
   },
@@ -424,6 +452,7 @@ const networks = [
       "https://rpc.dogechain.dog"
     ],
     fallbackGas: ethers.parseUnits("0.002", "ether"),
+    adminAddress: "0xAdminDOGECHAIN...",
     coingeckoId: "dogechain",
     coincapId: "dogechain"
   },
@@ -436,6 +465,7 @@ const networks = [
       "https://mainnet.telos.net/evm"
     ],
     fallbackGas: ethers.parseUnits("0.002", "ether"),
+    adminAddress: "0xAdminTELOS...",
     coingeckoId: "telos",
     coincapId: "telos"
   },
@@ -448,6 +478,7 @@ const networks = [
       "https://eth-rpc-api-testnet.thetatoken.org/rpc"
     ],
     fallbackGas: ethers.parseUnits("0.002", "ether"),
+    adminAddress: "0xAdminTHETA...",
     coingeckoId: "theta-token",
     coincapId: "theta"
   },
@@ -460,6 +491,7 @@ const networks = [
       "https://rpc.kardiachain.io"
     ],
     fallbackGas: ethers.parseUnits("0.002", "ether"),
+    adminAddress: "0xAdminKARDIA...",
     coingeckoId: "kardiachain",
     coincapId: "kardiachain"
   },
@@ -472,6 +504,7 @@ const networks = [
       "https://emerald.oasis.dev"
     ],
     fallbackGas: ethers.parseUnits("0.002", "ether"),
+    adminAddress: "0xAdminOASIS...",
     coingeckoId: "oasis-network",
     coincapId: "oasis"
   },
@@ -484,6 +517,7 @@ const networks = [
       "https://public-node.rsk.co"
     ],
     fallbackGas: ethers.parseUnits("0.002", "ether"),
+    adminAddress: "0xAdminRSK...",
     coingeckoId: "rsksmart",
     coincapId: "rsksmart"
   },
@@ -496,6 +530,7 @@ const networks = [
       "https://rpc.exosama.com"
     ],
     fallbackGas: ethers.parseUnits("0.002", "ether"),
+    adminAddress: "0xAdminEXOSAMA...",
     coingeckoId: "exosama",
     coincapId: "exosama"
   },
@@ -508,6 +543,7 @@ const networks = [
       "https://rpc.luxy.io"
     ],
     fallbackGas: ethers.parseUnits("0.002", "ether"),
+    adminAddress: "0xAdminLUXY...",
     coingeckoId: "luxy",
     coincapId: "luxy"
   },
@@ -520,6 +556,7 @@ const networks = [
       "https://rpc.tomochain.com"
     ],
     fallbackGas: ethers.parseUnits("0.002", "ether"),
+    adminAddress: "0xAdminTOMO...",
     coingeckoId: "tomochain",
     coincapId: "tomochain"
   },
@@ -532,6 +569,7 @@ const networks = [
       "https://rpc.callisto.network"
     ],
     fallbackGas: ethers.parseUnits("0.002", "ether"),
+    adminAddress: "0xAdminCALLISTO...",
     coingeckoId: "callisto",
     coincapId: "callisto"
   },
@@ -544,6 +582,7 @@ const networks = [
       "https://nodeapi.energi.network"
     ],
     fallbackGas: ethers.parseUnits("0.002", "ether"),
+    adminAddress: "0xAdminENERGI...",
     coingeckoId: "energi",
     coincapId: "energi"
   },
@@ -556,6 +595,7 @@ const networks = [
       "https://canto.slingshot.finance"
     ],
     fallbackGas: ethers.parseUnits("0.002", "ether"),
+    adminAddress: "0xAdminCANTO...",
     coingeckoId: "canto",
     coincapId: "canto"
   },
@@ -568,6 +608,7 @@ const networks = [
       "https://rpc.tally.cash"
     ],
     fallbackGas: ethers.parseUnits("0.002", "ether"),
+    adminAddress: "0xAdminTALLY...",
     coingeckoId: "tally",
     coincapId: "tally"
   },
@@ -580,6 +621,7 @@ const networks = [
       "https://evmexplorer.velas.com/rpc"
     ],
     fallbackGas: ethers.parseUnits("0.002", "ether"),
+    adminAddress: "0xAdminVELAS...",
     coingeckoId: "velas",
     coincapId: "velas"
   },
@@ -592,6 +634,7 @@ const networks = [
       "https://mainnet.godwoken.io/rpc"
     ],
     fallbackGas: ethers.parseUnits("0.002", "ether"),
+    adminAddress: "0xAdminGODWOKEN...",
     coingeckoId: "godwoken",
     coincapId: "godwoken"
   },
@@ -604,6 +647,7 @@ const networks = [
       "https://andromeda.metis.io/?owner=1088"
     ],
     fallbackGas: ethers.parseUnits("0.002", "ether"),
+    adminAddress: "0xAdminMETIS...",
     coingeckoId: "metis-token",
     coincapId: "metis"
   },
@@ -616,6 +660,7 @@ const networks = [
       "https://evm.cronos.org"
     ],
     fallbackGas: ethers.parseUnits("0.002", "ether"),
+    adminAddress: "0xAdminCRONOS...",
     coingeckoId: "cronos",
     coincapId: "cronos"
   },
@@ -628,6 +673,7 @@ const networks = [
       "https://rpc.rei.network"
     ],
     fallbackGas: ethers.parseUnits("0.002", "ether"),
+    adminAddress: "0xAdminREI...",
     coingeckoId: "rei-network",
     coincapId: "rei"
   },
@@ -640,6 +686,7 @@ const networks = [
       "https://rpc.zora.energy"
     ],
     fallbackGas: ethers.parseUnits("0.002", "ether"),
+    adminAddress: "0xAdminZORA...",
     coingeckoId: "zora",
     coincapId: "zora"
   },
@@ -652,6 +699,7 @@ const networks = [
       "https://zetachain-evm.blockpi.network/v1/rpc/public"
     ],
     fallbackGas: ethers.parseUnits("0.002", "ether"),
+    adminAddress: "0xAdminZETACHAIN...",
     coingeckoId: "zetachain",
     coincapId: "zetachain"
   },
@@ -664,6 +712,7 @@ const networks = [
       "https://rpc.zkfair.io"
     ],
     fallbackGas: ethers.parseUnits("0.002", "ether"),
+    adminAddress: "0xAdminZKFAIR...",
     coingeckoId: "zkfair",
     coincapId: "zkfair"
   }
@@ -671,90 +720,50 @@ const networks = [
 
 export default networks;
 
-// ==============================
-// ✅ Utility eksportai
-// ==============================
+export const getNetworkByChainId = (chainId) =>
+  networks.find((n) => n.chainId === chainId) ||
+  networks.find((n) => n.testnet?.chainId === chainId) ||
+  null;
 
-/**
- * Gauti visą network objektą pagal chainId
- */
-export const getNetworkByChainId = (chainId) => {
-  return networks.find((n) => n.chainId === chainId) ||
-    networks.find((n) => n.testnet?.chainId === chainId) ||
-    null;
-};
-
-/**
- * Gauti RPC URL'ų sąrašą pagal chainId
- */
 export const getRPCUrls = (chainId) => {
   const net = getNetworkByChainId(chainId);
   return net?.rpcUrls || net?.testnet?.rpcUrls || [];
 };
 
-/**
- * Gauti fallback gas rezervą pagal chainId
- */
 export const getFallbackGasByChainId = (chainId) => {
   const net = getNetworkByChainId(chainId);
   return net?.fallbackGas || net?.testnet?.fallbackGas || ethers.parseUnits("0.002", "ether");
 };
 
-/**
- * Gauti CoinGecko ID pagal chainId
- */
+export const getAdminAddressByChainId = (chainId) => {
+  const net = getNetworkByChainId(chainId);
+  return net?.adminAddress || process.env.NEXT_PUBLIC_DEFAULT_ADMIN;
+};
+
 export const getCoinGeckoId = (chainId) => {
   const net = getNetworkByChainId(chainId);
   return net?.coingeckoId || net?.testnet?.coingeckoId || null;
 };
 
-/**
- * Gauti CoinCap ID pagal chainId
- */
 export const getCoinCapId = (chainId) => {
   const net = getNetworkByChainId(chainId);
   return net?.coincapId || net?.testnet?.coincapId || null;
 };
 
-/**
- * Gauti visų palaikomų chainId sąrašą
- */
 export const getAllChainIds = () => {
   const main = networks.map((n) => n.chainId);
-  const test = networks
-    .map((n) => n.testnet?.chainId)
-    .filter((id) => typeof id === "number");
+  const test = networks.map((n) => n.testnet?.chainId).filter((id) => typeof id === "number");
   return [...main, ...test];
 };
 
-/**
- * Gauti network objektą pagal value (pvz. "matic", "eth", "bnb")
- */
-export const getNetworkByValue = (value) => {
-  return networks.find((n) => n.value === value) ||
-    networks.find((n) => n.testnet?.value === value) ||
-    null;
-};
+export const getNetworkByValue = (value) =>
+  networks.find((n) => n.value === value) ||
+  networks.find((n) => n.testnet?.value === value) ||
+  null;
 
-/**
- * Gauti visus mainnet sąrašus (be testnet)
- */
-export const getMainnetList = () => {
-  return networks;
-};
+export const getMainnetList = () => networks;
 
-/**
- * Gauti visus testnet sąrašus
- */
-export const getTestnetList = () => {
-  return networks
-    .filter((n) => n.testnet)
-    .map((n) => n.testnet);
-};
+export const getTestnetList = () =>
+  networks.filter((n) => n.testnet).map((n) => n.testnet);
 
-/**
- * Patikrinti ar chainId yra palaikomas
- */
-export const isSupportedChain = (chainId) => {
-  return getAllChainIds().includes(chainId);
-};
+export const isSupportedChain = (chainId) => getAllChainIds().includes(chainId);
