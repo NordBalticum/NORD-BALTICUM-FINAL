@@ -1,4 +1,4 @@
-// src/data/Networks2.js
+// src/data/Networks.js
 import { ethers } from "ethers";
 
 const networks = [
