@@ -1094,6 +1094,51 @@ const networks = [
 ];
 
 // ==========================================
-// ✅ Eksportas
+// ✅ EXPORT FUNCTIONS
 // ==========================================
+
+/**
+ * Gauti fallback GAS rezervą pagal chainId
+ */
+export const getFallbackGasByChainId = (chainId) => {
+  const net = networks.find((n) => n.chainId === chainId);
+  return net?.fallbackGas || ethers.parseUnits("0.002", "ether");
+};
+
+/**
+ * Gauti CoinGecko ID pagal chainId
+ */
+export const getCoinGeckoId = (chainId) => {
+  const net = networks.find((n) => n.chainId === chainId);
+  return net?.coingeckoId || null;
+};
+
+/**
+ * Gauti CoinCap ID pagal chainId
+ */
+export const getCoinCapId = (chainId) => {
+  const net = networks.find((n) => n.chainId === chainId);
+  return net?.coincapId || null;
+};
+
+/**
+ * Gauti RPC URL'ų sąrašą pagal chainId (fallback ready)
+ */
+export const getRPCUrls = (chainId) => {
+  const net = networks.find((n) => n.chainId === chainId);
+  return net?.rpcUrls || [];
+};
+
+/**
+ * Gauti visą network objektą pagal chainId
+ */
+export const getNetworkByChainId = (chainId) => {
+  return networks.find((n) => n.chainId === chainId) || null;
+};
+
+/**
+ * Gauti visus chainId
+ */
+export const getAllChainIds = () => networks.map((n) => n.chainId);
+
 export default networks;
