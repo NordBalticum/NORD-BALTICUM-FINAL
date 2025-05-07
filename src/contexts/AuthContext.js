@@ -405,7 +405,14 @@ return (
         try {
           const timestamp = localStorage.getItem("walletCreatedAt");
           return timestamp ? new Date(parseInt(timestamp, 10)) : null;
-        } catch {
+        } catch (err) {
+          return null;
+        }
+      },
+      getWalletAddress: () => {
+        try {
+          return localStorage.getItem("walletAddress") || null;
+        } catch (err) {
           return null;
         }
       },
