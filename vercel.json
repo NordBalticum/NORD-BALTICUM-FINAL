@@ -1,12 +1,10 @@
 {
   "buildCommand": "npm run test:send && next build",
-
   "build": {
     "env": {
       "NODE_ENV": "production"
     }
   },
-
   "headers": [
     {
       "source": "/(.*)\\.css",
@@ -14,6 +12,15 @@
         {
           "key": "Cache-Control",
           "value": "no-store"
+        }
+      ]
+    },
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, no-store, must-revalidate"
         }
       ]
     }
