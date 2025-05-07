@@ -1,7 +1,5 @@
 {
   "buildCommand": "npm run test:send && next build",
-
-  // ⚙️ ENV kintamieji naudojami build metu
   "build": {
     "env": {
       "NODE_ENV": "production"
