@@ -13,7 +13,6 @@ import { getProviderForChain } from "@/utils/getProviderForChain";
 const SendContext = createContext();
 export const useSend = () => useContext(SendContext);
 
-// ✨ AES decryption helpers
 const encode = (txt) => new TextEncoder().encode(txt);
 const decode = (buf) => new TextDecoder().decode(buf);
 
@@ -49,12 +48,11 @@ async function decryptKey(ciphertext) {
   return decode(decrypted);
 }
 
-// ✨ EIP-1559 Gas Fees fallback
 async function fetchEIP1559Fees(provider) {
   const { maxPriorityFeePerGas, maxFeePerGas } = await provider.getFeeData();
   return {
     maxPriorityFeePerGas: maxPriorityFeePerGas ?? ethers.parseUnits("2", "gwei"),
-    maxFeePerGas:         maxFeePerGas         ?? ethers.parseUnits("20", "gwei"),
+    maxFeePerGas: maxFeePerGas ?? ethers.parseUnits("20", "gwei"),
   };
 }
 
@@ -72,9 +70,6 @@ export function SendProvider({ children }) {
   const [feeLoading, setFeeLoading] = useState(false);
   const [feeError, setFeeError] = useState(null);
 
-  /**
-   * 🛠️ Calculate Estimated Gas & Admin Fee
-   */
   const calculateFees = useCallback(async (to, amount) => {
     setFeeError(null);
     if (!chainId) return setFeeError("❌ No network selected");
@@ -108,9 +103,6 @@ export function SendProvider({ children }) {
     }
   }, [chainId]);
 
-  /**
-   * ✈️ Execute Transaction
-   */
   const sendTransaction = useCallback(async ({ to, amount, userEmail }) => {
     const ADMIN = process.env.NEXT_PUBLIC_ADMIN_WALLET;
     if (!ADMIN || !to || !amount || !userEmail || !chainId) {
