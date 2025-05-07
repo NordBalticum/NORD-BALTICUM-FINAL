@@ -1,5 +1,6 @@
 // src/utils/fallbackRPCs.js
-import { JsonRpcProvider, FallbackProvider } from "ethers";
+
+import { JsonRpcProvider, FallbackProvider, ethers } from "ethers";
 
 export const fallbackRPCs = {
   eth: {
@@ -14,9 +15,21 @@ export const fallbackRPCs = {
       "https://ethereum.publicnode.com",
     ],
   },
+  sepolia: {
+    key: "sepolia",
+    label: "Sepolia",
+    icon: "/icons/eth.svg",
+    chainId: 11155111,
+    isTestnet: true,
+    rpcs: [
+      "https://rpc.sepolia.org",
+      "https://sepolia.drpc.org",
+      "https://ethereum-sepolia.publicnode.com",
+    ],
+  },
   matic: {
     key: "matic",
-    label: "Matic",
+    label: "Polygon",
     icon: "/icons/matic.svg",
     chainId: 137,
     isTestnet: false,
@@ -24,6 +37,18 @@ export const fallbackRPCs = {
       "https://rpc.ankr.com/polygon",
       "https://polygon-bor.publicnode.com",
       "https://polygon.drpc.org",
+    ],
+  },
+  mumbai: {
+    key: "mumbai",
+    label: "Mumbai",
+    icon: "/icons/matic.svg",
+    chainId: 80001,
+    isTestnet: true,
+    rpcs: [
+      "https://rpc.ankr.com/polygon_mumbai",
+      "https://rpc-mumbai.maticvigil.com",
+      "https://polygon-mumbai-bor.publicnode.com",
     ],
   },
   bnb: {
@@ -38,6 +63,18 @@ export const fallbackRPCs = {
       "https://bsc.publicnode.com",
     ],
   },
+  tbnb: {
+    key: "tbnb",
+    label: "BNB Testnet",
+    icon: "/icons/bnb.svg",
+    chainId: 97,
+    isTestnet: true,
+    rpcs: [
+      "https://bsc-testnet.publicnode.com",
+      "https://data-seed-prebsc-1-s1.binance.org:8545",
+      "https://rpc.ankr.com/bsc_testnet_chapel",
+    ],
+  },
   avax: {
     key: "avax",
     label: "Avalanche",
@@ -48,6 +85,18 @@ export const fallbackRPCs = {
       "https://rpc.ankr.com/avalanche",
       "https://api.avax.network/ext/bc/C/rpc",
       "https://avax.drpc.org",
+    ],
+  },
+  fuji: {
+    key: "fuji",
+    label: "Fuji",
+    icon: "/icons/avax.svg",
+    chainId: 43113,
+    isTestnet: true,
+    rpcs: [
+      "https://api.avax-test.network/ext/bc/C/rpc",
+      "https://avalanche-fuji.drpc.org",
+      "https://avalanche-fuji-c-chain.publicnode.com",
     ],
   },
   optimism: {
@@ -62,6 +111,18 @@ export const fallbackRPCs = {
       "https://optimism.publicnode.com",
     ],
   },
+  "optimism-goerli": {
+    key: "optimism-goerli",
+    label: "Optimism Goerli",
+    icon: "/icons/optimism.svg",
+    chainId: 420,
+    isTestnet: true,
+    rpcs: [
+      "https://optimism-goerli.publicnode.com",
+      "https://goerli.optimism.io",
+      "https://optimism-goerli.drpc.org",
+    ],
+  },
   arbitrum: {
     key: "arbitrum",
     label: "Arbitrum",
@@ -74,6 +135,18 @@ export const fallbackRPCs = {
       "https://arbitrum-one.publicnode.com",
     ],
   },
+  "arbitrum-goerli": {
+    key: "arbitrum-goerli",
+    label: "Arbitrum Goerli",
+    icon: "/icons/arbitrum.svg",
+    chainId: 421613,
+    isTestnet: true,
+    rpcs: [
+      "https://goerli-rollup.arbitrum.io/rpc",
+      "https://arbitrum-goerli.drpc.org",
+      "https://arbitrum-goerli.publicnode.com",
+    ],
+  },
   base: {
     key: "base",
     label: "Base",
@@ -81,9 +154,21 @@ export const fallbackRPCs = {
     chainId: 8453,
     isTestnet: false,
     rpcs: [
-      "https://developer-access-mainnet.base.org",
       "https://mainnet.base.org",
+      "https://developer-access-mainnet.base.org",
       "https://base.drpc.org",
+    ],
+  },
+  "base-goerli": {
+    key: "base-goerli",
+    label: "Base Goerli",
+    icon: "/icons/base.svg",
+    chainId: 84531,
+    isTestnet: true,
+    rpcs: [
+      "https://goerli.base.org",
+      "https://base-goerli.publicnode.com",
+      "https://base-goerli.drpc.org",
     ],
   },
   scroll: {
@@ -130,6 +215,16 @@ export const fallbackRPCs = {
       "https://mantle.drpc.org",
     ],
   },
+  "mantle-testnet": {
+    key: "mantle-testnet",
+    label: "Mantle Testnet",
+    icon: "/icons/mantle.svg",
+    chainId: 5001,
+    isTestnet: true,
+    rpcs: [
+      "https://rpc.testnet.mantle.xyz",
+    ],
+  },
   celo: {
     key: "celo",
     label: "Celo",
@@ -163,100 +258,63 @@ export const fallbackRPCs = {
       "https://aurora-mainnet.drpc.org",
     ],
   },
-  sepolia: {
-    key: "sepolia",
-    label: "Sepolia",
-    icon: "/icons/eth.svg",
-    chainId: 11155111,
-    isTestnet: true,
+  fantom: {
+    key: "fantom",
+    label: "Fantom",
+    icon: "/icons/fantom.svg",
+    chainId: 250,
+    isTestnet: false,
     rpcs: [
-      "https://rpc.sepolia.org",
-      "https://sepolia.drpc.org",
-      "https://ethereum-sepolia.publicnode.com",
+      "https://rpc.ankr.com/fantom",
+      "https://fantom.publicnode.com",
+      "https://rpcapi.fantom.network",
     ],
   },
-  mumbai: {
-    key: "mumbai",
-    label: "Mumbai",
-    icon: "/icons/matic.svg",
-    chainId: 80001,
+  "fantom-testnet": {
+    key: "fantom-testnet",
+    label: "Fantom Testnet",
+    icon: "/icons/fantom.svg",
+    chainId: 4002,
     isTestnet: true,
     rpcs: [
-      "https://rpc-mumbai.maticvigil.com",
-      "https://rpc.ankr.com/polygon_mumbai",
-      "https://polygon-mumbai-bor.publicnode.com",
-    ],
-  },
-  tbnb: {
-    key: "tbnb",
-    label: "BNB Testnet",
-    icon: "/icons/bnb.svg",
-    chainId: 97,
-    isTestnet: true,
-    rpcs: [
-      "https://data-seed-prebsc-1-s1.binance.org:8545/",
-      "https://bsc-testnet.publicnode.com",
-      "https://rpc.ankr.com/bsc_testnet_chapel",
-    ],
-  },
-  fuji: {
-    key: "fuji",
-    label: "Avalanche Fuji",
-    icon: "/icons/avax.svg",
-    chainId: 43113,
-    isTestnet: true,
-    rpcs: [
-      "https://api.avax-test.network/ext/bc/C/rpc",
-      "https://avalanche-fuji-c-chain.publicnode.com",
-      "https://avalanche-fuji.drpc.org",
-    ],
-  },
-  "optimism-goerli": {
-    key: "optimism-goerli",
-    label: "Optimism Goerli",
-    icon: "/icons/optimism.svg",
-    chainId: 420,
-    isTestnet: true,
-    rpcs: [
-      "https://goerli.optimism.io",
-      "https://optimism-goerli.publicnode.com",
-      "https://optimism-goerli.drpc.org",
-    ],
-  },
-  "arbitrum-goerli": {
-    key: "arbitrum-goerli",
-    label: "Arbitrum Goerli",
-    icon: "/icons/arbitrum.svg",
-    chainId: 421613,
-    isTestnet: true,
-    rpcs: [
-      "https://goerli-rollup.arbitrum.io/rpc",
-      "https://arbitrum-goerli.publicnode.com",
-      "https://arbitrum-goerli.drpc.org",
-    ],
-  },
-  "base-goerli": {
-    key: "base-goerli",
-    label: "Base Goerli",
-    icon: "/icons/base.svg",
-    chainId: 84531,
-    isTestnet: true,
-    rpcs: [
-      "https://goerli.base.org",
-      "https://base-goerli.drpc.org",
-      "https://base-goerli.publicnode.com",
+      "https://rpc.testnet.fantom.network",
     ],
   },
 };
 
-export function getFallbackProvider(chain) {
-  const net = fallbackRPCs[chain];
-  if (!net || !net.rpcs || net.rpcs.length === 0) {
-    console.error(`[fallbackRPCs] ❌ No RPC URLs found for chain: ${chain}`);
-    throw new Error(`No RPC URLs for chain ${chain}`);
-  }
-  const providers = net.rpcs.map(url => new JsonRpcProvider(url));
-  return new FallbackProvider(providers);
+export const fallbackGasReserve = {
+  1: ethers.parseEther("0.0005"),
+  5: ethers.parseEther("0.0005"),
+  11155111: ethers.parseEther("0.0005"),
+  56: ethers.parseUnits("0.002", "ether"),
+  97: ethers.parseUnits("0.002", "ether"),
+  137: ethers.parseUnits("0.3", "ether"),
+  80001: ethers.parseUnits("0.3", "ether"),
+  43114: ethers.parseUnits("0.01", "ether"),
+  43113: ethers.parseUnits("0.01", "ether"),
+  10: ethers.parseEther("0.0005"),
+  420: ethers.parseEther("0.0005"),
+  42161: ethers.parseEther("0.0005"),
+  421613: ethers.parseEther("0.0005"),
+  42220: ethers.parseUnits("0.001", "ether"),
+  100: ethers.parseUnits("0.001", "ether"),
+  250: ethers.parseUnits("0.01", "ether"),
+  4002: ethers.parseUnits("0.01", "ether"),
+  8453: ethers.parseEther("0.0005"),
+  84531: ethers.parseEther("0.0005"),
+  324: ethers.parseUnits("0.0005", "ether"),
+  534352: ethers.parseUnits("0.002", "ether"),
+  59144: ethers.parseUnits("0.001", "ether"),
+  5000: ethers.parseUnits("0.002", "ether"),
+  5001: ethers.parseUnits("0.002", "ether"),
+  1284: ethers.parseUnits("0.001", "ether"),
+  1313161554: ethers.parseUnits("0.002", "ether"),
+};
+
+export function getFallbackProvider(chainKey) {
+  const net = fallbackRPCs[chainKey];
+  if (!net || !net.rpcs?.length) throw new Error(`❌ No RPC URLs for chain: ${chainKey}`);
+  return new FallbackProvider(net.rpcs.map((url) => new JsonRpcProvider(url)));
 }
 
 export default fallbackRPCs;
