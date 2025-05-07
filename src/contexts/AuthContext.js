@@ -316,7 +316,7 @@ export const AuthProvider = ({ children }) => {
   }, [isClient]);
 
   // =======================================
-  // 💾 Wallet address + sukūrimo data į localStorage
+  // 💾 Wallet informacijos įrašymas į localStorage
   // =======================================
   useEffect(() => {
     if (!wallet?.wallet?.address) return;
@@ -325,7 +325,7 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem("walletAddress", wallet.wallet.address);
       localStorage.setItem("walletCreatedAt", Date.now().toString());
     } catch (err) {
-      console.warn("⚠️ Nepavyko įrašyti wallet info į localStorage:", err);
+      console.warn("⚠️ Nepavyko įrašyti wallet informacijos į localStorage:", err);
     }
   }, [wallet?.wallet?.address]);
   
