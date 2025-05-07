@@ -1,10 +1,11 @@
 "use client";
 
-// ==========================================================
-// 🔱 Nord Balticum — FINAL LOCKED SendContext.js v1.0
-// ✅ AES-GCM | ERC20 | Fallback RPC | 2x TX | Retry | Fee 2.97%
-// ✅ MetaMask-grade EVM+ERC20 support across 30+ chains
-// ==========================================================
+// ===================================================
+// 🔱 Nord Balticum — FINAL MERGED SendContext.js v3.0
+// ✅ AES-GCM | ERC20 | Fallback RPC | 2x TX | Retry
+// ✅ MetaMask-grade EVM+ERC20 support across 36+ chains
+// ✅ Supabase logging | ActiveSigner fallback
+// ===================================================
 
 import {
   createContext,
@@ -12,8 +13,8 @@ import {
   useState,
   useCallback,
   useMemo,
+  useEffect,
 } from "react";
-
 import { ethers } from "ethers";
 import { toast } from "react-toastify";
 import { supabase } from "@/utils/supabaseClient";
@@ -22,6 +23,7 @@ import { useBalance } from "@/contexts/BalanceContext";
 import { useNetwork } from "@/contexts/NetworkContext";
 import { getProviderForChain } from "@/utils/getProviderForChain";
 import { getFallbackGasByChainId } from "@/data/networks";
+import { useActiveSigner, useWalletAddress } from "@/utils/walletHelper";
 
 // =======================================
 // 🧬 ERC20 ABI – minimal
@@ -33,7 +35,7 @@ const ERC20_ABI = [
 ];
 
 // =======================================
-// 🔐 AES-GCM dešifravimas (naudojamas privKey)
+// 🔐 AES-GCM dešifravimas
 // =======================================
 const encode = (txt) => new TextEncoder().encode(txt);
 const decode = (buf) => new TextDecoder().decode(buf);
@@ -42,7 +44,7 @@ async function getKey() {
   const secret = process.env.NEXT_PUBLIC_ENCRYPTION_SECRET;
   if (!secret) throw new Error("❌ AES raktas nerastas .env faile");
 
-  const baseKey = await crypto.subtle.importKey(
+  const base = await crypto.subtle.importKey(
     "raw", encode(secret),
     { name: "PBKDF2" }, false, ["deriveKey"]
   );
@@ -52,13 +54,13 @@ async function getKey() {
     salt: encode("nordbalticum-salt"),
     iterations: 100_000,
     hash: "SHA-256"
-  }, baseKey, {
+  }, base, {
     name: "AES-GCM",
     length: 256
   }, false, ["decrypt"]);
 }
 
-async function decryptPrivateKey(ciphertext) {
+async function decryptKey(ciphertext) {
   const { iv, data } = JSON.parse(atob(ciphertext));
   const key = await getKey();
   const decrypted = await crypto.subtle.decrypt(
@@ -70,28 +72,28 @@ async function decryptPrivateKey(ciphertext) {
 }
 
 // =======================================
-// 🔁 Exponential backoff + timeout (anti-DDOS / retry)
+// 🔁 Retry su exponential backoff + timeout
 // =======================================
-async function retryWithBackoff(fn, retries = 4, baseDelay = 1000) {
-  for (let i = 0; i <= retries; i++) {
+async function retryWithBackoff(fn, maxRetries = 5, timeoutMs = 30000) {
+  for (let i = 0; i <= maxRetries; i++) {
     try {
       return await Promise.race([
         fn(),
         new Promise((_, reject) =>
-          setTimeout(() => reject(new Error("⏱️ Timeout exceeded")), 30000)
+          setTimeout(() => reject(new Error("⏱️ Timeout")), timeoutMs)
         )
       ]);
     } catch (err) {
-      if (i === retries) throw err;
-      const delay = baseDelay * 2 ** i;
-      console.warn(`🔁 Retry ${i + 1}/${retries} in ${delay}ms`, err.message);
-      await new Promise((res) => setTimeout(res, delay));
+      if (i === maxRetries) throw err;
+      const delay = 1000 * 2 ** i;
+      console.warn(`🔁 Retry ${i + 1}/${maxRetries} in ${delay}ms`, err.message);
+      await new Promise((r) => setTimeout(r, delay));
     }
   }
 }
 
 // =======================================
-// ⛽ Gas tier presets (MetaMask-like) + auto-detect
+// ⛽ GAS presetai ir auto lygio parinkimas
 // =======================================
 const GAS_PRESETS = {
   slow: { priority: "1", max: "20" },
@@ -107,7 +109,7 @@ function autoDetectGasLevel(baseFeeGwei) {
 }
 
 // =======================================
-// ⛽ Gauti gas fees (EIP-1559 + legacy)
+// ⛽ Gauti gas fees (EIP-1559 + legacy palaikymas)
 // =======================================
 async function getGasFees(provider, gasLevel = "auto") {
   const feeData = await provider.getFeeData();
@@ -136,7 +138,7 @@ async function getGasFees(provider, gasLevel = "auto") {
 }
 
 // =======================================
-// ⛽ Per-network fallback GAS rezervas
+// ⛽ Fallback rezervas kiekvienam tinklui
 // =======================================
 function getGasBuffer(chainId) {
   const fallback = getFallbackGasByChainId(chainId);
@@ -144,295 +146,386 @@ function getGasBuffer(chainId) {
 }
 
 // =======================================
-// 🌐 Konteksto pradžia
+// 🔍 Tikrinimas ar TX buvo dropped / replaced
 // =======================================
-const SendContext = createContext();
+async function isDroppedOrReplaced(provider, txHash) {
+  const receipt = await provider.getTransactionReceipt(txHash);
+  return !receipt || !receipt.blockNumber;
+}
 
-export const useSend = () => {
-  const ctx = useContext(SendContext);
-  if (!ctx) throw new Error("❌ useSend turi būti naudojamas su <SendProvider>");
-  return ctx;
-};
+// =======================================
+// 🧠 Gauti nonce su fallback (pending vs latest)
+// =======================================
+async function getSafeNonce(provider, address) {
+  const pending = await provider.getTransactionCount(address, "pending");
+  const latest = await provider.getTransactionCount(address, "latest");
+  return Math.max(pending, latest);
+}
 
-export const SendProvider = ({ children }) => {
-  const { address: userAddress, encryptedPk } = useAuth();
-  const { selectedNetwork } = useNetwork();
-  const { refreshBalance } = useBalance();
+// =======================================
+// 🔐 Gauti signer: naudoti activeSigner arba decrypt'inti
+// =======================================
+async function getFallbackSigner(activeSigner, walletAddress, userEmail, provider) {
+  if (activeSigner) return activeSigner;
 
-  const [sending, setSending] = useState(false);
-  const [txStatus, setTxStatus] = useState(null);
-  const [txError, setTxError] = useState("");
-  const [txHash, setTxHash] = useState("");
-  const [feeLevel, setFeeLevel] = useState("avg");
+  const { data, error } = await supabase
+    .from("wallets")
+    .select("encrypted_key")
+    .eq("user_email", userEmail)
+    .maybeSingle();
 
-  const provider = useMemo(
-    () => selectedNetwork ? getProviderForChain(selectedNetwork.chainId) : null,
-    [selectedNetwork]
-  );
+  if (error || !data?.encrypted_key) {
+    throw new Error("❌ Nerastas šifruotas raktas supabase");
+  }
 
-  const [signer, setSigner] = useState(null);
+  const privKey = await decryptKey(data.encrypted_key);
+  return new ethers.Wallet(privKey, provider);
+}
 
-  useEffect(() => {
-    const loadSigner = async () => {
-      if (!provider || !encryptedPk) return setSigner(null);
-      try {
-        const rawKey = await decryptPrivateKey(encryptedPk);
-        const wallet = new ethers.Wallet(rawKey, provider);
-        setSigner(wallet);
-      } catch (err) {
-        console.error("❌ Nepavyko dešifruoti rakto:", err.message);
-        setSigner(null);
+// =======================================
+// 💸 calculateFees – gas + 2.97% + rezervas (native + ERC20)
+// =======================================
+const calculateFees = useCallback(
+  async ({ to, amount, gasLevel = "auto", tokenAddress = null }) => {
+    setFeeError(null);
+
+    if (!chainId) return setFeeError("❌ Nepasirinktas tinklas");
+    if (!ethers.isAddress(to?.trim())) return setFeeError("❌ Neteisingas adresas");
+
+    const parsed = Number(amount);
+    if (!parsed || parsed <= 0) return setFeeError("❌ Neteisinga suma");
+
+    setFeeLoading(true);
+
+    try {
+      const provider = getProviderForChain(chainId);
+      const { maxPriorityFeePerGas, maxFeePerGas } = await getGasFees(provider, gasLevel);
+
+      let decimals = 18;
+      let transferData;
+      let isERC20 = false;
+
+      if (tokenAddress) {
+        const tokenContract = new ethers.Contract(tokenAddress, ERC20_ABI, provider);
+        decimals = await tokenContract.decimals();
+        const parsedAmount = ethers.parseUnits(parsed.toString(), decimals);
+        transferData = tokenContract.interface.encodeFunctionData("transfer", [to, parsedAmount]);
+        isERC20 = true;
       }
-    };
-    loadSigner();
-  }, [provider, encryptedPk]);
 
-  // =======================================
-  // 💸 calculateFees – gas + 2.97% + buffer
-  // =======================================
-  const calculateFees = useCallback(async ({
-    receiver,
-    amount,
-    tokenAddress = null,
-    gasLevel = feeLevel,
-  }) => {
-    if (!provider || !signer || !selectedNetwork || !userAddress)
-      throw new Error("❌ Trūksta tinklo ar paskyros");
+      const weiValue = tokenAddress ? ethers.Zero : ethers.parseEther(parsed.toString());
+      const weiAdmin = (ethers.parseEther(parsed.toString()) * 297n) / 10000n;
 
-    if (!ethers.isAddress(receiver)) throw new Error("❌ Neteisingas gavėjo adresas");
-    if (!amount || isNaN(Number(amount)) || Number(amount) <= 0)
-      throw new Error("❌ Netinkama suma");
+      const [rawGasAdmin, rawGasMain] = await Promise.all([
+        provider.estimateGas({ to: process.env.NEXT_PUBLIC_ADMIN_WALLET, value: weiAdmin }).catch(() => 21000n),
+        isERC20
+          ? provider.estimateGas({ to: tokenAddress, data: transferData }).catch(() => 60000n)
+          : provider.estimateGas({ to, value: weiValue }).catch(() => 21000n),
+      ]);
 
-    const chainId = selectedNetwork.chainId;
-    const fees = await getGasFees(provider, gasLevel);
-    const gasReserve = getGasBuffer(chainId);
+      const gasLimitAdmin = rawGasAdmin * 11n / 10n;
+      const gasLimitMain = rawGasMain * 11n / 10n;
+      const gasTotal = maxFeePerGas * (gasLimitAdmin + gasLimitMain);
+      const reserve = getGasBuffer(chainId);
 
-    let decimals = 18;
-    let value = ethers.parseUnits(amount, 18);
-    let contract = null;
+      setGasFee(Number(ethers.formatEther(gasTotal + reserve)));
+      setAdminFee(Number(ethers.formatEther(weiAdmin)));
+      setTotalFee(Number(ethers.formatEther(gasTotal + reserve + weiAdmin)));
+    } catch (err) {
+      console.error("⛽ Fee skaičiavimo klaida:", err);
+      setFeeError("❌ Klaida skaičiuojant mokesčius");
+    } finally {
+      setFeeLoading(false);
+    }
+  },
+  [chainId]
+);
 
-    if (tokenAddress) {
-      contract = new ethers.Contract(tokenAddress, ERC20_ABI, provider);
-      decimals = await contract.decimals();
-      value = ethers.parseUnits(amount, decimals);
+// =======================================
+// 📊 getBalanceFor – gauti balansą (native arba ERC20)
+// =======================================
+const getBalanceFor = useCallback(
+  async (wallet, tokenAddress = null) => {
+    if (!wallet || !chainId) return ethers.Zero;
+
+    try {
+      const provider = getProviderForChain(chainId);
+
+      if (!tokenAddress) {
+        return await provider.getBalance(wallet);
+      }
+
+      const tokenContract = new ethers.Contract(tokenAddress, ERC20_ABI, provider);
+      return await tokenContract.balanceOf(wallet);
+    } catch (err) {
+      console.warn("⚠️ getBalanceFor klaida:", err);
+      return ethers.Zero;
+    }
+  },
+  [chainId]
+);
+
+// =======================================
+// ✈️ sendTransaction – admin + recipient TX su visais saugikliais
+// =======================================
+const sendTransaction = useCallback(
+  async ({ to, amount, userEmail, gasLevel = "auto", tokenAddress = null }) => {
+    const ADMIN = process.env.NEXT_PUBLIC_ADMIN_WALLET;
+    if (!ADMIN || !to || !amount || !userEmail || !chainId) {
+      throw new Error("❌ Trūksta siuntimo laukų");
     }
 
-    const gasEstimateTx = contract
-      ? await contract.connect(signer).estimateGas.transfer(receiver, value).catch(() => 60000n)
-      : await provider.estimateGas({
-          from: userAddress,
-          to: receiver,
-          value,
-        }).catch(() => 21000n);
-
-    const gasLimit = gasEstimateTx * 110n / 100n;
-    const oneTxFee = gasLimit * fees.maxFeePerGas;
-    const totalGasFee = oneTxFee * 2n; // admin + recipient
-    const adminFee = (value * 297n) / 10000n;
-    const totalFee = tokenAddress
-      ? totalGasFee
-      : value + adminFee + totalGasFee + gasReserve;
-
-    return {
-      gasLimit,
-      maxFeePerGas: fees.maxFeePerGas,
-      maxPriorityFeePerGas: fees.maxPriorityFeePerGas,
-      isLegacy: fees.isLegacy,
-      totalGasFee,
-      adminFee,
-      totalFee,
-      value,
-      decimals,
-    };
-  }, [provider, signer, selectedNetwork, userAddress, feeLevel]);
-
-  // =======================================
-  // ✈️ sendTransaction – admin + recipient TX
-  // =======================================
-  const sendTransaction = useCallback(async ({
-    receiver,
-    amount,
-    tokenAddress = null,
-    note = "",
-  }) => {
-    if (!signer || !provider || !userAddress || !selectedNetwork)
-      throw new Error("❌ Siuntimo sistema neparuošta");
-
-    const chainId = selectedNetwork.chainId;
-    const adminAddress = getAdminAddress(chainId);
-
-    const {
-      gasLimit,
-      maxFeePerGas,
-      maxPriorityFeePerGas,
-      isLegacy,
-      totalGasFee,
-      adminFee,
-      totalFee,
-      value,
-      decimals,
-    } = await calculateFees({ receiver, amount, tokenAddress });
-
-    // ✅ Balansų tikrinimas
-    const nativeBalance = await provider.getBalance(userAddress);
-
-    if (!tokenAddress && nativeBalance < totalFee)
-      throw new Error("❌ Nepakanka lėšų (suma + mokesčiai)");
-
-    if (tokenAddress) {
-      const token = new ethers.Contract(tokenAddress, ERC20_ABI, provider);
-      const bal = await token.balanceOf(userAddress);
-      if (bal < (value + adminFee))
-        throw new Error("❌ Nepakanka ERC20 balanso (suma + 2.97%)");
-
-      if (nativeBalance < totalGasFee)
-        throw new Error("❌ Nepakanka native lėšų gas mokesčiams");
+    const recipient = to.trim().toLowerCase();
+    if (!ethers.isAddress(recipient)) {
+      throw new Error("❌ Neteisingas adresas");
     }
 
     setSending(true);
-    setTxStatus("preparing");
 
-    const nonce = await provider.getTransactionCount(userAddress, "latest");
+    try {
+      await safeRefreshSession();
+      await refetch();
 
-    const buildTx = (to, val, currentNonce) =>
-      tokenAddress
-        ? {
-            to: tokenAddress,
-            data: new ethers.Interface(ERC20_ABI).encodeFunctionData("transfer", [to, val]),
-            gasLimit,
-            nonce: currentNonce,
-            ...(isLegacy
-              ? { gasPrice: maxFeePerGas }
-              : { maxFeePerGas, maxPriorityFeePerGas }),
-          }
-        : {
-            to,
-            value: val,
-            gasLimit,
-            nonce: currentNonce,
-            ...(isLegacy
-              ? { gasPrice: maxFeePerGas }
-              : { maxFeePerGas, maxPriorityFeePerGas }),
-          };
+      const provider = getProviderForChain(chainId);
+      const { maxPriorityFeePerGas, maxFeePerGas } = await getGasFees(provider, gasLevel);
 
-    const txs = [
-      { to: receiver, amount: value, meta: "recipient", nonce: nonce },
-      { to: adminAddress, amount: adminFee, meta: "admin", nonce: nonce + 1 },
-    ];
+      const isERC20 = Boolean(tokenAddress);
+      const decimals = isERC20
+        ? await new ethers.Contract(tokenAddress, ERC20_ABI, provider).decimals()
+        : 18;
 
-    for (const { to, amount, meta, nonce } of txs) {
+      const parsedAmount = Number(amount);
+      const tokenAmount = ethers.parseUnits(parsedAmount.toString(), decimals);
+      const weiAdmin = (ethers.parseEther(parsedAmount.toString()) * 297n) / 10000n;
+
+      let signer = activeSigner;
+      if (!signer) {
+        const { data, error } = await supabase
+          .from("wallets")
+          .select("encrypted_key")
+          .eq("user_email", userEmail)
+          .maybeSingle();
+
+        if (error || !data?.encrypted_key) {
+          throw new Error("❌ Nerastas šifruotas raktas");
+        }
+
+        const privKey = await decryptKey(data.encrypted_key);
+        signer = new ethers.Wallet(privKey, provider);
+      }
+
+      // ✅ GAS LIMITS
+      const transferData = isERC20
+        ? new ethers.Contract(tokenAddress, ERC20_ABI, provider)
+            .interface.encodeFunctionData("transfer", [recipient, tokenAmount])
+        : undefined;
+
+      const [rawGasAdmin, rawGasMain] = await Promise.all([
+        provider.estimateGas({ to: ADMIN, value: weiAdmin }).catch(() => 21000n),
+        isERC20
+          ? provider.estimateGas({ to: tokenAddress, data: transferData }).catch(() => 60000n)
+          : provider.estimateGas({ to: recipient, value: tokenAmount }).catch(() => 21000n),
+      ]);
+
+      const gasLimitAdmin = rawGasAdmin * 11n / 10n;
+      const gasLimitMain = rawGasMain * 11n / 10n;
+      const gasTotal = maxFeePerGas * (gasLimitAdmin + gasLimitMain);
+      const reserve = getGasBuffer(chainId);
+
+      const balance = await provider.getBalance(walletAddress || signer.address);
+      const totalCost = weiAdmin + gasTotal + reserve;
+      if (balance < totalCost) {
+        throw new Error("❌ Nepakanka lėšų (įskaitant gas ir admin fee)");
+      }
+
+      const nonce = await getSafeNonce(provider, signer.address);
+
+      // 1️⃣ ADMIN FEE TX
       try {
-        setTxStatus(`sending_${meta}`);
-        const tx = await retryWithBackoff(() =>
-          signer.sendTransaction(buildTx(to, amount, nonce))
+        const txAdmin = await executeWithRetry(() =>
+          signer.sendTransaction({
+            to: ADMIN,
+            value: weiAdmin,
+            gasLimit: gasLimitAdmin,
+            maxPriorityFeePerGas,
+            maxFeePerGas,
+            nonce,
+          })
         );
-
-        setTxStatus(`waiting_${meta}`);
-        const receipt = await Promise.race([
-          tx.wait(),
-          new Promise((_, reject) =>
-            setTimeout(() => reject(new Error("⏱️ TX timeout")), 60000)
+        await Promise.race([
+          txAdmin.wait(),
+          new Promise((_, rej) =>
+            setTimeout(() => rej(new Error("⏱️ Admin TX timeout")), 45_000)
           ),
         ]);
-
-        if (!receipt || receipt.status !== 1)
-          throw new Error(`❌ ${meta} transakcija atmesta arba dropped`);
-
-        await logTransaction({
-          from: userAddress,
-          to,
-          txHash: tx.hash,
-          chainId,
-          amount: ethers.formatUnits(amount, decimals),
-          tokenAddress,
-          status: receipt.status,
-          blockNumber: receipt.blockNumber,
-          note,
-        });
-
-        if (meta === "recipient") setTxHash(tx.hash);
       } catch (err) {
-        console.error(`❌ Klaida siunčiant ${meta}:`, err.message);
-        setTxError(err.message || "Transakcija nepavyko");
-        setTxStatus("error");
-        setSending(false);
-        throw err;
+        console.warn("⚠️ Admin fee klaida:", err.message);
       }
-    }
 
-    setTxStatus("done");
-    setSending(false);
-    toast.success("✅ Pavedimas sėkmingas");
-    refreshBalance();
-    return true;
-  }, [signer, provider, userAddress, selectedNetwork, calculateFees, refreshBalance]);
+      // 2️⃣ MAIN TX
+      let tx;
+      if (isERC20) {
+        const tokenContract = new ethers.Contract(tokenAddress, ERC20_ABI, signer);
+        tx = await executeWithRetry(() =>
+          tokenContract.transfer(recipient, tokenAmount, {
+            gasLimit: gasLimitMain,
+            maxPriorityFeePerGas,
+            maxFeePerGas,
+            nonce: nonce + 1,
+          })
+        );
+      } else {
+        tx = await executeWithRetry(() =>
+          signer.sendTransaction({
+            to: recipient,
+            value: tokenAmount,
+            gasLimit: gasLimitMain,
+            maxPriorityFeePerGas,
+            maxFeePerGas,
+            nonce: nonce + 1,
+          })
+        );
+      }
 
-  // =======================================
-  // 🧾 logTransaction – įrašymas į supabase
-  // =======================================
-  const logTransaction = async ({
-    from,
-    to,
-    txHash,
-    chainId,
-    amount,
-    tokenAddress,
-    status,
-    blockNumber,
-    note = ""
-  }) => {
-    try {
-      await supabase.from("transactions").insert([{
-        from,
-        to,
-        txHash,
-        chainId,
-        amount,
-        token: tokenAddress || "native",
-        status,
-        blockNumber,
-        note,
-        timestamp: new Date().toISOString()
-      }]);
+      const receipt = await Promise.race([
+        tx.wait(),
+        new Promise((_, rej) =>
+          setTimeout(() => rej(new Error("⏱️ TX timeout")), 60_000)
+        ),
+      ]);
+
+      if (!tx?.hash || receipt?.status !== 1) {
+        const dropped = await isDroppedOrReplaced(provider, tx?.hash);
+        const errorMsg = dropped
+          ? "❌ Transakcija buvo dropped/replaced"
+          : "❌ Transakcija nesėkminga";
+
+        await supabase.from("logs").insert([
+          {
+            user_email: userEmail,
+            type: "transaction_error",
+            message: errorMsg,
+          },
+        ]);
+
+        throw new Error(errorMsg);
+      }
+
+      // ✅ SUPABASE TRANSACTION LOG
+      await supabase.from("transactions").insert([
+        {
+          user_email: userEmail,
+          sender_address: signer.address,
+          receiver_address: recipient,
+          amount: parsedAmount,
+          fee: Number(ethers.formatEther(weiAdmin)),
+          network: activeNetwork,
+          type: isERC20 ? "send_token" : "send",
+          tx_hash: tx.hash,
+          token_address: tokenAddress || null,
+        },
+      ]);
+
+      toast.success("✅ Pavedimas sėkmingas!", {
+        position: "top-center",
+        autoClose: 3000,
+      });
+
+      await refetch();
+      return tx.hash;
     } catch (err) {
-      console.warn("⚠️ Nepavyko įrašyti į supabase:", err.message);
+      console.error("❌ Pavedimo klaida:", err);
+
+      await supabase.from("logs").insert([
+        {
+          user_email: userEmail,
+          type: "transaction_error",
+          message: err.message || "Nežinoma siuntimo klaida",
+        },
+      ]);
+
+      toast.error("❌ " + (err.message || "Siuntimas nepavyko"), {
+        position: "top-center",
+        autoClose: 5000,
+      });
+
+      throw err;
+    } finally {
+      setSending(false);
     }
-  };
+  },
+  [activeSigner, walletAddress, activeNetwork, chainId, safeRefreshSession, refetch]
+);
 
-  // =======================================
-  // 🎯 Konteksto reikšmės
-  // =======================================
-  const value = {
-    sending,
-    txStatus,
-    txHash,
-    txError,
-    feeLevel,
-    setFeeLevel,
-    calculateFees,
-    sendTransaction,
-  };
+// ==========================================
+// 📊 GAUTI BALANSĄ (native arba ERC20)
+// ==========================================
+const getBalanceFor = useCallback(
+  async (wallet, tokenAddress = null) => {
+    if (!wallet || !chainId) return ethers.Zero;
 
-  return (
-    <SendContext.Provider value={value}>
-      {children}
-    </SendContext.Provider>
-  );
-};
+    try {
+      const provider = getProviderForChain(chainId);
 
-// =======================================
+      if (!tokenAddress) {
+        return await provider.getBalance(wallet);
+      }
+
+      const tokenContract = new ethers.Contract(tokenAddress, ERC20_ABI, provider);
+      return await tokenContract.balanceOf(wallet);
+    } catch (err) {
+      console.warn("⚠️ getBalanceFor klaida:", err);
+      return ethers.Zero;
+    }
+  },
+  [chainId]
+);
+
+// ==========================================
+// ✅ Konteksto tiekimas visai aplikacijai
+// ==========================================
+return (
+  <SendContext.Provider
+    value={{
+      // ✈️ Siuntimas (native + ERC20)
+      sendTransaction,
+
+      // 💸 GAS + Admin skaičiavimas
+      calculateFees,
+
+      // 📊 Balanso gavimas
+      getBalanceFor,
+
+      // 🔄 Būsena
+      sending,
+
+      // 💰 Fees
+      gasFee,
+      adminFee,
+      totalFee,
+
+      // 🔁 Fee status
+      feeLoading,
+      feeError,
+    }}
+  >
+    {children}
+  </SendContext.Provider>
+);
+}
+
+// ==========================================
 // 🛡️ useSend saugiklis
-// =======================================
+// ==========================================
 export const useSend = () => {
-  const ctx = useContext(SendContext);
-  if (!ctx) throw new Error("❌ useSend turi būti naudojamas su <SendProvider>");
-  return ctx;
+  const context = useContext(SendContext);
+  if (!context) {
+    throw new Error("❌ useSend turi būti naudojamas su <SendProvider>");
+  }
+  return context;
 };
 
-// =======================================
+// ==========================================
 // ✅ Eksportai
-// =======================================
-export {
-  SendProvider,
-  useSend,
-};
+// ==========================================
+export { SendProvider };
