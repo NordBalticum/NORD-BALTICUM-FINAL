@@ -21,6 +21,7 @@ export function NetworkProvider({ children }) {
   const [activeNetwork, setActiveNetwork] = useState(DEFAULT_NETWORK);
   const [hydrated, setHydrated] = useState(false);
 
+  // Initialize active network from localStorage if valid
   useEffect(() => {
     if (typeof window === "undefined") return;
     try {
@@ -29,28 +30,33 @@ export function NetworkProvider({ children }) {
         setActiveNetwork(saved);
       }
     } catch (err) {
-      console.warn("[NetworkContext] Could not load saved network:", err);
+      console.warn("[NetworkContext] ⚠️ Could not load saved network:", err);
     } finally {
       setHydrated(true);
     }
   }, []);
 
+  // Persist active network to localStorage
   useEffect(() => {
     if (!hydrated || typeof window === "undefined") return;
     try {
       localStorage.setItem(STORAGE_KEY, activeNetwork);
     } catch (err) {
-      console.warn("[NetworkContext] Could not save active network:", err);
+      console.warn("[NetworkContext] ⚠️ Could not save active network:", err);
     }
   }, [hydrated, activeNetwork]);
 
+  // Switch network logic
   const switchNetwork = useCallback((netKey) => {
     if (!NETWORK_KEYS.includes(netKey)) {
       console.warn(`[NetworkContext] ❌ Invalid network attempted: ${netKey}`);
       return;
     }
+    if (netKey === activeNetwork) {
+      console.info(`[NetworkContext] 🔄 ${netKey} already active, reloading context.`);
+    }
     setActiveNetwork(netKey);
-  }, []);
+  }, [activeNetwork]);
 
   const chainId = useMemo(() => NETWORK_ID_MAP[activeNetwork] ?? null, [activeNetwork]);
 
