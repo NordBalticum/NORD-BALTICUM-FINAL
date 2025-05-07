@@ -50,12 +50,11 @@ const format = (val, decimals = 5) => {
   return Number(val).toFixed(decimals);
 };
 
-function getEnabledNetworks() {
-  try {
-    const local = JSON.parse(localStorage.getItem("enabledNetworks"));
-    if (Array.isArray(local)) return [...new Set([...DEFAULT_NETWORKS, ...local])];
-  } catch {}
-  return DEFAULT_NETWORKS;
+function getValidNetworks(localEnabled) {
+  return [...new Set([
+    ...DEFAULT_NETWORKS,
+    ...(Array.isArray(localEnabled) ? localEnabled : []),
+  ])].filter(key => fallbackRPCs[key]);
 }
 
 export function BalanceProvider({ children }) {
@@ -71,14 +70,25 @@ export function BalanceProvider({ children }) {
   const retryQueue = useRef([]);
   const retryCount = useRef(0);
 
-  const enabledNetworks = useMemo(() => getEnabledNetworks(), []);
+  const enabledNetworks = useMemo(() => {
+    try {
+      const stored = JSON.parse(localStorage.getItem("enabledNetworks"));
+      return getValidNetworks(stored);
+    } catch {
+      return DEFAULT_NETWORKS;
+    }
+  }, []);
 
   const providers = useMemo(() => {
     const out = {};
     for (const key of enabledNetworks) {
       const net = fallbackRPCs[key];
       if (net?.rpcs?.length) {
-        out[key] = new FallbackProvider(net.rpcs.map(url => new JsonRpcProvider(url)));
+        try {
+          out[key] = new FallbackProvider(net.rpcs.map(url => new JsonRpcProvider(url)));
+        } catch (err) {
+          console.warn(`[Balance] ❌ Failed to create provider for ${key}:`, err);
+        }
       }
     }
     return out;
