@@ -6,8 +6,7 @@ import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 
 import { useAuth } from "@/contexts/AuthContext";
-import styles from "@/styles/indextest.module.css";
-import background from "@/styles/background.module.css";
+import styles from "@/styles/indextest.module.css"; // ✅ now standalone
 
 export default function Home() {
   const router = useRouter();
@@ -70,7 +69,7 @@ export default function Home() {
       initial={{ opacity: 0, scale: 0.97 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.8, ease: "easeOut" }}
-      className={`${styles.wrapper} ${background.fullscreen}`}
+      className={styles.wrapper}
     >
       <motion.div
         className={styles.card}
