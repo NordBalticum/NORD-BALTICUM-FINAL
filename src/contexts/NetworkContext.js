@@ -1,8 +1,8 @@
 "use client";
 
-// =======================================
-// 🌐 NetworkContext.js – FINAL V1 META-GRADE
-// =======================================
+// ============================================
+// 🌐 NetworkContext.js – FINAL META+ DIAMOND VERSION
+// ============================================
 
 import {
   createContext,
@@ -15,98 +15,91 @@ import {
 
 import fallbackRPCs from "@/utils/fallbackRPCs";
 
-// 🔑 LocalStorage key
+// 🔐 LocalStorage raktas
 const STORAGE_KEY = "activeNetwork";
 
-// 🎯 Numatyta vertė – Ethereum mainnet
+// 🌐 Numatyto tinklo vertė (ETH)
 const DEFAULT_NETWORK = "eth";
 
-// ✅ Palaikomi tinklai iš fallbackRPCs
+// ✅ Galimi tinklų ID pagal fallbackRPCs
 const NETWORK_KEYS = Object.keys(fallbackRPCs);
 
-// 🔁 Mappinam tinklų pavadinimus į chainId
+// 🔁 Tinklo -> chainId mapping
 const NETWORK_ID_MAP = Object.fromEntries(
-  NETWORK_KEYS.map((key) => [key, fallbackRPCs[key].chainId])
+  NETWORK_KEYS.map(key => [key, fallbackRPCs[key].chainId])
 );
 
-// 📦 Konteksto sukūrimas
+// 📦 Sukuriam kontekstą su defaultais
 const NetworkContext = createContext({
   activeNetwork: DEFAULT_NETWORK,
   chainId: NETWORK_ID_MAP[DEFAULT_NETWORK] ?? 1,
   switchNetwork: () => {},
 });
 
-// 🧠 Hook'as komponentams naudoti kontekstą
 export const useNetwork = () => useContext(NetworkContext);
 
-// =======================================
-// 🚀 Konteksto Provider komponentas
-// =======================================
+// ============================================
+// 🚀 NetworkProvider – 100% SSR Safe + MetaMask logic
+// ============================================
 export function NetworkProvider({ children }) {
-  // 🔧 Aktyvus tinklas (eth, bnb, matic ir t.t.)
   const [activeNetwork, setActiveNetwork] = useState(DEFAULT_NETWORK);
-
-  // ✅ Ar localStorage užkrautas
   const [hydrated, setHydrated] = useState(false);
 
-  // =======================================
-  // 💾 useEffect: užkraunam localStorage išsaugotą tinklą
-  // =======================================
+  // 🧠 Pirmą kartą užkraunam aktyvų tinklą iš localStorage
   useEffect(() => {
     if (typeof window === "undefined") return;
 
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
+
       if (saved && NETWORK_KEYS.includes(saved)) {
         setActiveNetwork(saved);
       } else {
-        // Jei localStorage yra netinkamas raktas, atstatom default'ą
         localStorage.setItem(STORAGE_KEY, DEFAULT_NETWORK);
       }
     } catch (err) {
-      console.warn("[NetworkContext] ⚠️ Nepavyko gauti iš localStorage:", err);
+      console.warn("[NetworkContext] ⚠️ Failed to load from localStorage:", err);
     } finally {
       setHydrated(true);
     }
   }, []);
 
-  // =======================================
-  // 💽 useEffect: Išsaugom aktyvų tinklą į localStorage
-  // =======================================
+  // 💾 Kai pasikeičia tinklas – išsaugom į localStorage
   useEffect(() => {
     if (!hydrated || typeof window === "undefined") return;
 
     try {
       localStorage.setItem(STORAGE_KEY, activeNetwork);
     } catch (err) {
-      console.warn("[NetworkContext] ⚠️ Nepavyko išsaugoti į localStorage:", err);
+      console.warn("[NetworkContext] ⚠️ Failed to save to localStorage:", err);
     }
   }, [hydrated, activeNetwork]);
 
-  // =======================================
-  // 🔁 switchNetwork: Pakeičiam aktyvų tinklą
-  // =======================================
+  // 🔄 Funkcija keisti aktyvų tinklą (tik jei validus)
   const switchNetwork = useCallback(
     (netKey) => {
       if (!NETWORK_KEYS.includes(netKey)) {
-        console.warn(`[NetworkContext] ❌ Nepalaikomas tinklas: ${netKey}`);
+        console.error(`[NetworkContext] ❌ Unsupported network: ${netKey}`);
         return;
       }
       if (netKey === activeNetwork) {
-        console.info(`[NetworkContext] 🔄 Tinklas '${netKey}' jau aktyvus`);
+        console.info(`[NetworkContext] ⏸️ Network '${netKey}' already active`);
+        return;
       }
+
+      console.log(`[NetworkContext] 🔄 Switching to: ${netKey}`);
       setActiveNetwork(netKey);
     },
     [activeNetwork]
   );
 
-  // 📟 Grąžinam current chainId pagal pasirinkimą
+  // 📡 chainId grąžinamas pagal pasirinkimą
   const chainId = useMemo(
     () => NETWORK_ID_MAP[activeNetwork] ?? null,
     [activeNetwork]
   );
 
-  // 📤 Viskas, ką kontekstas perduoda į sistemą
+  // 💎 Konteksto reikšmės
   const value = useMemo(
     () => ({
       activeNetwork,
