@@ -2,7 +2,7 @@
 "use client";
 
 // ==========================================
-// 💎 BALANCE CONTEXT – META-GRADE FINAL v2.5
+// 💎 BALANCE CONTEXT – META-GRADE FINAL v3.0
 // ==========================================
 
 import React, {
@@ -12,6 +12,7 @@ import React, {
 
 import { ethers, JsonRpcProvider, FallbackProvider } from "ethers";
 import debounce from "lodash.debounce";
+import throttle from "lodash.throttle"; // ✅ Pagerintas našumas
 
 import { useAuth } from "@/contexts/AuthContext";
 import networks from "@/data/networks";
@@ -23,15 +24,16 @@ const BalanceContext = createContext(null);
 export const useBalance = () => useContext(BalanceContext);
 
 // ==========================================
-// ⏱️ Konstantos ir helperiai
+// ⏱️ Konstantos ir formatavimo helperiai
 // ==========================================
 const PRICE_TTL = 30000;
+const MAX_RETRIES = 6;
 
 const format = (v, d = 5) =>
   typeof v !== "number" || isNaN(v) ? "0.00000" : Number(v).toFixed(d);
 
 // ==========================================
-// 🎯 Token ID mapping iš networks.js
+// 🎯 Static token ID mapping iš networks.js
 // ==========================================
 const COINGECKO_IDS = {
   eth: "ethereum", sepolia: "ethereum", matic: "polygon", mumbai: "polygon",
@@ -92,9 +94,7 @@ export function BalanceProvider({ children }) {
   const retryQueue = useRef([]);
   const retryCount = useRef(0);
 
-  // ==========================================
   // 🌐 Sugeneruojame visų tinklų FallbackProviders iš networks.js
-  // ==========================================
   const providers = useMemo(() => {
     const map = {};
     networks.forEach(({ value, rpcUrls }) => {
@@ -111,9 +111,7 @@ export function BalanceProvider({ children }) {
     return map;
   }, []);
 
-// ==========================================
   // 💸 ETH balansų užklausa per visus tinklus
-  // ==========================================
   const fetchBalances = useCallback(async () => {
     const address = wallet?.wallet?.address;
     if (!address) return {};
@@ -132,9 +130,7 @@ export function BalanceProvider({ children }) {
     return results;
   }, [wallet, providers]);
 
-  // ==========================================
-  // 📈 Kainų užklausa iš CoinGecko + CoinCap fallback
-  // ==========================================
+  // 📈 Kainų užklausa su CoinGecko ir CoinCap fallback
   const fetchPrices = useCallback(async () => {
     const now = Date.now();
     if (now - lastPriceFetch.current < PRICE_TTL) return prices;
@@ -155,7 +151,7 @@ export function BalanceProvider({ children }) {
       lastPriceFetch.current = now;
       return out;
     } catch (err) {
-      console.warn("[Balance] ❌ CoinGecko error, falling back to CoinCap:", err?.message);
+      console.warn("[Balance] ❌ CoinGecko error, fallback to CoinCap:", err?.message);
       try {
         const res = await fetch("https://api.coincap.io/v2/assets", {
           headers: { accept: "application/json" },
@@ -178,9 +174,7 @@ export function BalanceProvider({ children }) {
     }
   }, [prices]);
 
-  // ==========================================
-  // 🔁 fetchAll + retry su exponential backoff
-  // ==========================================
+// 🔁 fetchAll + retry su exponential backoff
   const fetchAll = useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
     silentLoading.current = true;
@@ -205,6 +199,7 @@ export function BalanceProvider({ children }) {
     }
   }, [fetchBalances, fetchPrices]);
 
+  // Retry sistema su exponential delay
   const silentRetry = useCallback(() => {
     if (retryCount.current >= 6) return;
     const delay = Math.min(2 ** retryCount.current * 3000, 60000);
@@ -214,16 +209,14 @@ export function BalanceProvider({ children }) {
     console.warn(`[Balance] 🔁 Retry #${retryCount.current} in ${delay / 1000}s`);
   }, [fetchAll]);
 
-// ==========================================
-  // ⏱️ Automatinis balansų atnaujinimas
-  // ==========================================
+  // Automatinis užkrovimas kai piniginė pasiruošusi
   useEffect(() => {
     if (!authLoading && !walletLoading && wallet?.wallet?.address) {
       fetchAll();
     }
   }, [authLoading, walletLoading, wallet, fetchAll]);
 
-  // 🔁 Periodinis fetch kas 30s + matomumo detektorius
+  // Periodinis fetch kas 30s + tab visibility detektorius
   useEffect(() => {
     const interval = setInterval(() => {
       if (!silentLoading.current) fetchAll(true);
@@ -245,20 +238,27 @@ export function BalanceProvider({ children }) {
     };
   }, [fetchAll]);
 
-  // ==========================================
+// ==========================================
   // 💲 Balanso skaičiavimo helperiai
   // ==========================================
-  const getUsdBalance = (key) =>
-    format((balances[key] || 0) * (prices[key]?.usd || 0), 2);
+  const getUsdBalance = useCallback((key) => {
+    const price = prices[key]?.usd ?? 0;
+    const amount = balances[key] ?? 0;
+    return format(amount * price, 2);
+  }, [balances, prices]);
 
-  const getEurBalance = (key) =>
-    format((balances[key] || 0) * (prices[key]?.eur || 0), 2);
+  const getEurBalance = useCallback((key) => {
+    const price = prices[key]?.eur ?? 0;
+    const amount = balances[key] ?? 0;
+    return format(amount * price, 2);
+  }, [balances, prices]);
 
-  const getFormattedBalance = (key) =>
-    format(balances[key] || 0);
+  const getFormattedBalance = useCallback((key) => {
+    return format(balances[key] ?? 0);
+  }, [balances]);
 
   // ==========================================
-  // ✅ BalanceContext eksportas
+  // ✅ Konteksto tiekimas visai aplikacijai
   // ==========================================
   return (
     <BalanceContext.Provider
@@ -278,3 +278,32 @@ export function BalanceProvider({ children }) {
     </BalanceContext.Provider>
   );
 }
+
+// ==========================================
+// 🛡️ SSR-safe useBalance hook
+// ==========================================
+export const useBalance = () => {
+  const context = useContext(BalanceContext);
+  if (!context) {
+    if (typeof window !== "undefined") {
+      throw new Error("❌ useBalance turi būti naudojamas su <BalanceProvider>");
+    }
+    return {
+      balances: {},
+      prices: {},
+      loading: true,
+      balancesReady: false,
+      lastUpdated: null,
+      getUsdBalance: () => "0.00",
+      getEurBalance: () => "0.00",
+      getFormattedBalance: () => "0.00000",
+      refetch: () => {},
+    };
+  }
+  return context;
+};
+
+// ==========================================
+// ✅ Pilnas eksportas
+// ==========================================
+export { BalanceProvider };
