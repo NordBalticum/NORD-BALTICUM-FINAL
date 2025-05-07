@@ -1,9 +1,14 @@
 "use client";
 
 // ==========================================
-// 📦 Importai
+// 📦 Importai ir bazė
 // ==========================================
-import { createContext, useContext, useState, useCallback } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+} from "react";
 import { ethers } from "ethers";
 import { toast } from "react-toastify";
 import { supabase } from "@/utils/supabaseClient";
@@ -14,20 +19,14 @@ import { useActiveSigner, useWalletAddress } from "@/utils/walletHelper";
 import { getProviderForChain } from "@/utils/getProviderForChain";
 
 // ==========================================
-// 🧠 Konteksto kūrimas
-// ==========================================
-const SendContext = createContext();
-export const useSend = () => useContext(SendContext);
-
-// ==========================================
-// 🔐 AES-GCM dešifravimas
+// 🔐 AES-GCM dešifravimas (browser only)
 // ==========================================
 const encode = (txt) => new TextEncoder().encode(txt);
 const decode = (buf) => new TextDecoder().decode(buf);
 
 async function getKey() {
   const secret = process.env.NEXT_PUBLIC_ENCRYPTION_SECRET;
-  if (!secret) throw new Error("🔐 Trūksta šifravimo rakto .env faile");
+  if (!secret) throw new Error("❌ AES raktas nerastas .env faile");
 
   const base = await crypto.subtle.importKey(
     "raw", encode(secret),
@@ -60,23 +59,29 @@ async function decryptKey(ciphertext) {
 }
 
 // ==========================================
-// ⚙️ GAS FEE preset'ai kaip MetaMask: slow, avg, fast
+// ⛽ GAS FEE preset'ai kaip MetaMask
 // ==========================================
 const GAS_PRESETS = {
-  slow:   { priority: "1", max: "20" },
-  avg:    { priority: "2", max: "30" },
-  fast:   { priority: "4", max: "50" },
+  slow: { priority: "1", max: "20" },
+  avg:  { priority: "2", max: "30" },
+  fast: { priority: "4", max: "50" },
 };
 
 async function getGasFees(provider, level = "avg") {
-  const base = await provider.getFeeData();
-  const preset = GAS_PRESETS[level] ?? GAS_PRESETS.avg;
+  const preset = GAS_PRESETS[level] || GAS_PRESETS.avg;
+  const feeData = await provider.getFeeData();
 
-  const maxPriorityFeePerGas = base.maxPriorityFeePerGas ?? ethers.parseUnits(preset.priority, "gwei");
-  const maxFeePerGas = base.maxFeePerGas ?? ethers.parseUnits(preset.max, "gwei");
+  const maxPriorityFeePerGas = feeData.maxPriorityFeePerGas ?? ethers.parseUnits(preset.priority, "gwei");
+  const maxFeePerGas = feeData.maxFeePerGas ?? ethers.parseUnits(preset.max, "gwei");
 
   return { maxPriorityFeePerGas, maxFeePerGas };
 }
+
+// ==========================================
+// 🎯 Konteksto kūrimas
+// ==========================================
+const SendContext = createContext();
+export const useSend = () => useContext(SendContext);
 
 export function SendProvider({ children }) {
   const { safeRefreshSession } = useAuth();
@@ -92,17 +97,17 @@ export function SendProvider({ children }) {
   const [feeLoading, setFeeLoading] = useState(false);
   const [feeError, setFeeError] = useState(null);
 
-  /**
-   * 💸 Apskaičiuoja GAS + Admin fee pagal pasirinktą GAS presetą (slow / avg / fast)
-   */
+  // ==========================================
+  // 💸 GAS + ADMIN FEE SKAIČIAVIMAS
+  // ==========================================
   const calculateFees = useCallback(async (to, amount, gasLevel = "avg") => {
     setFeeError(null);
 
-    if (!chainId) return setFeeError("❌ Tinklas nepasirinktas");
+    if (!chainId) return setFeeError("❌ Nepasirinktas tinklas");
     if (!ethers.isAddress(to)) return setFeeError("❌ Neteisingas adresas");
 
     const parsed = Number(amount);
-    if (!parsed || parsed <= 0) return setFeeError("❌ Netinkama suma");
+    if (!parsed || parsed <= 0) return setFeeError("❌ Neteisinga suma");
 
     setFeeLoading(true);
 
@@ -111,9 +116,8 @@ export function SendProvider({ children }) {
       const { maxPriorityFeePerGas, maxFeePerGas } = await getGasFees(provider, gasLevel);
 
       const weiValue = ethers.parseEther(parsed.toString());
-      const weiAdmin = (weiValue * 297n) / 10000n;
+      const weiAdmin = (weiValue * 297n) / 10000n; // 2.97% fee
 
-      // Estimations: jei nepavyksta – 21000 kaip fallback
       const [gasLimitAdmin, gasLimitMain] = await Promise.all([
         provider.estimateGas({
           to: process.env.NEXT_PUBLIC_ADMIN_WALLET,
@@ -127,35 +131,39 @@ export function SendProvider({ children }) {
 
       const totalGas = maxFeePerGas * (gasLimitAdmin + gasLimitMain);
 
-      // Išsaugom
+      // ✅ Setinam fees į state
       setGasFee(Number(ethers.formatEther(totalGas)));
       setAdminFee(Number(ethers.formatEther(weiAdmin)));
       setTotalFee(
         Number(ethers.formatEther(totalGas)) + Number(ethers.formatEther(weiAdmin))
       );
     } catch (err) {
-      console.error("⛽ Klaida skaičiuojant fees:", err);
-      setFeeError("❌ Fees klaida: " + (err.message || "Nežinoma klaida"));
+      console.error("⛽ Fee skaičiavimo klaida:", err);
+      setFeeError("❌ Klaida skaičiuojant mokesčius");
     } finally {
       setFeeLoading(false);
     }
   }, [chainId]);
 
-  /**
-   * ✈️ Vykdom transakciją: pirmiausia admin fee, po to – gavėjui
-   */
+  // ==========================================
+  // ✈️ VYKDOMA TRANSAKCIJA (ADMIN + RECIPIENT)
+  // ==========================================
   const sendTransaction = useCallback(
     async ({ to, amount, userEmail, gasLevel = "avg" }) => {
       const ADMIN = process.env.NEXT_PUBLIC_ADMIN_WALLET;
 
       if (!ADMIN || !to || !amount || !userEmail || !chainId) {
-        throw new Error("❌ Trūksta būtinų duomenų siuntimui");
+        throw new Error("❌ Trūksta duomenų siuntimui");
+      }
+
+      const recipient = to.trim().toLowerCase();
+      if (!ethers.isAddress(recipient)) {
+        throw new Error("❌ Neteisingas adresas");
       }
 
       setSending(true);
 
       try {
-        // ✅ Patikrinam sesiją + atnaujinam balansus
         await safeRefreshSession();
         await refetch();
 
@@ -167,8 +175,6 @@ export function SendProvider({ children }) {
         const weiAdmin = (weiValue * 297n) / 10000n;
 
         let signer = activeSigner;
-
-        // 🔐 Jei neturime signerio – dešifruojam private key
         if (!signer) {
           const { data, error } = await supabase
             .from("wallets")
@@ -177,28 +183,29 @@ export function SendProvider({ children }) {
             .single();
 
           if (error || !data?.encrypted_key) {
-            throw new Error("❌ Nerastas užšifruotas raktas");
+            throw new Error("❌ Nerastas privatus raktas");
           }
 
           const privKey = await decryptKey(data.encrypted_key);
           signer = new ethers.Wallet(privKey, provider);
         }
 
-        // ⛽ Estimuojam GAS
         const [gasLimitAdmin, gasLimitMain] = await Promise.all([
           provider.estimateGas({ to: ADMIN, value: weiAdmin }).catch(() => 21000n),
-          provider.estimateGas({ to, value: weiValue }).catch(() => 21000n),
+          provider.estimateGas({ to: recipient, value: weiValue }).catch(() => 21000n),
         ]);
 
-        // 💰 Patikrinam ar balanso užtenka
+        const totalGas = maxFeePerGas * (gasLimitAdmin + gasLimitMain);
+        const gasBuffer = ethers.parseUnits("0.0004", "ether");
+
         const balance = await provider.getBalance(walletAddress || signer.address);
-        const totalCost = weiValue + weiAdmin + maxFeePerGas * (gasLimitAdmin + gasLimitMain);
+        const totalCost = weiValue + weiAdmin + totalGas + gasBuffer;
 
         if (balance < totalCost) {
-          throw new Error("❌ Nepakanka lėšų siuntimui ir gas mokesčiui");
+          throw new Error("❌ Nepakanka lėšų siuntimui + mokesčiams");
         }
 
-        // 📤 Siunčiam admin fee
+        // 1️⃣ Siunčiam admin fee
         try {
           await signer.sendTransaction({
             to: ADMIN,
@@ -211,22 +218,21 @@ export function SendProvider({ children }) {
           console.warn("⚠️ Admin fee nepavyko:", err.message);
         }
 
-        // 📤 Siunčiam gavėjui
+        // 2️⃣ Siunčiam recipient'ui
         const tx = await signer.sendTransaction({
-          to,
+          to: recipient,
           value: weiValue,
           gasLimit: gasLimitMain,
           maxPriorityFeePerGas,
           maxFeePerGas,
         });
 
-        if (!tx.hash) throw new Error("❌ Transakcija nesugeneravo hash");
+        if (!tx?.hash) throw new Error("❌ Transakcija nesugeneravo hash");
 
-        // 📦 Įrašom į supabase
         await supabase.from("transactions").insert([{
           user_email: userEmail,
           sender_address: signer.address,
-          receiver_address: to,
+          receiver_address: recipient,
           amount: parsedAmount,
           fee: Number(ethers.formatEther(weiAdmin)),
           network: activeNetwork,
@@ -239,7 +245,7 @@ export function SendProvider({ children }) {
 
         return tx.hash;
       } catch (err) {
-        console.error("❌ Transakcijos klaida:", err);
+        console.error("❌ Siuntimo klaida:", err);
         await supabase.from("logs").insert([{
           user_email: userEmail,
           type: "transaction_error",
@@ -255,28 +261,21 @@ export function SendProvider({ children }) {
   );
 
   // ==========================================
-  // ✅ Returninam Context Provider su visomis reikšmėmis
+  // ✅ Konteksto tiekimas visai aplikacijai
   // ==========================================
   return (
     <SendContext.Provider
       value={{
-        // Funkcija siųsti
-        sendTransaction,
+        sendTransaction,         // ✈️ Siunčia: admin + recipient pavedimus
+        sending,                 // ⏱️ Ar šiuo metu siunčiama
 
-        // Ar vyksta siuntimas
-        sending,
+        calculateFees,           // 🧮 GAS + admin fee skaičiavimas
+        gasFee,                  // ⛽ Tikras GAS fee
+        adminFee,                // 💸 Admin fee (2.97%)
+        totalFee,                // 💰 Viso suma (admin + gas)
 
-        // Funkcija skaičiuoti mokesčius
-        calculateFees,
-
-        // Gauti mokesčiai
-        gasFee,
-        adminFee,
-        totalFee,
-
-        // Statusai
-        feeLoading,
-        feeError,
+        feeLoading,              // ⏳ Ar kraunami mokesčiai
+        feeError,                // ❌ Klaidų pranešimai
       }}
     >
       {children}
