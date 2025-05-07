@@ -1,0 +1,175 @@
+.wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 2rem;
+  background: linear-gradient(135deg, #0a0a0a 50%, #4b0082 25%, #1a237e 25%);
+  background-size: 200% 200%;
+  animation: gradientFlow 8s ease infinite;
+}
+
+@keyframes gradientFlow {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.card {
+  background-color: #111111;
+  border-radius: 24px;
+  padding: 3rem 2rem;
+  max-width: 400px;
+  width: 100%;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+  text-align: center;
+  color: #ffffff;
+  backdrop-filter: blur(20px);
+}
+
+.logo {
+  margin-bottom: 1.5rem;
+}
+
+.title {
+  font-size: 1.75rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.subtitle {
+  font-size: 1rem;
+  margin-bottom: 2rem;
+  opacity: 0.8;
+}
+
+.input {
+  width: 100%;
+  padding: 0.9rem 1.2rem;
+  border-radius: 10px;
+  border: none;
+  margin-bottom: 1rem;
+  font-size: 1rem;
+  background-color: #222;
+  color: white;
+  outline: none;
+  transition: all 0.3s ease;
+}
+
+.input::placeholder {
+  color: #888;
+}
+
+.input:focus {
+  box-shadow: 0 0 0 2px #8247e5;
+}
+
+.buttonPrimary {
+  width: 100%;
+  padding: 0.9rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 10px;
+  background-color: #8247e5;
+  color: white;
+  border: none;
+  margin-bottom: 1rem;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.buttonPrimary:hover {
+  background-color: #6a35c1;
+}
+
+.divider {
+  margin: 1rem 0;
+  font-size: 0.85rem;
+  color: #999;
+  position: relative;
+}
+
+.divider::before,
+.divider::after {
+  content: "";
+  height: 1px;
+  background: #333;
+  position: absolute;
+  top: 50%;
+  width: 40%;
+}
+
+.divider::before {
+  left: 0;
+}
+
+.divider::after {
+  right: 0;
+}
+
+.buttonSecondary {
+  width: 100%;
+  padding: 0.9rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 10px;
+  background-color: #1a237e;
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.buttonSecondary:hover {
+  background-color: #0f154d;
+}
+
+.error {
+  margin-top: 1rem;
+  color: #ff4d4f;
+  font-size: 0.9rem;
+}
+
+/* Mobile-first enhancements */
+@media screen and (max-width: 480px) {
+  .card {
+    padding: 2rem 1.5rem;
+    border-radius: 18px;
+  }
+
+  .title {
+    font-size: 1.5rem;
+  }
+
+  .subtitle {
+    font-size: 0.95rem;
+  }
+
+  .input,
+  .buttonPrimary,
+  .buttonSecondary {
+    font-size: 0.95rem;
+    padding: 0.8rem;
+  }
+}
+
+/* Desktop enhancements */
+@media screen and (min-width: 768px) {
+  .card {
+    max-width: 460px;
+  }
+
+  .title {
+    font-size: 2rem;
+  }
+
+  .subtitle {
+    font-size: 1.05rem;
+  }
+}
