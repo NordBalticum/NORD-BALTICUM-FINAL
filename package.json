@@ -5,7 +5,9 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "test": "vitest --dir=tests",
+    "test:watch": "vitest --watch --dir=tests"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.49.3",
