@@ -1,8 +1,9 @@
 "use client";
 
 // =======================================
-// 📦 IMPORTAI IR SISTEMINĖ BAZĖ
+// 🔐 AuthContext.js — FINAL META-GRADE V1 (1/4)
 // =======================================
+
 import {
   createContext,
   useContext,
@@ -19,30 +20,27 @@ import debounce from "lodash.debounce";
 import { toast } from "react-toastify";
 
 // =======================================
-// 🔐 AES-GCM ŠIFRAVIMO SISTEMA
+// 🔐 AES-GCM ENCRYPTION — 101% BULLETPROOF
 // =======================================
 
-// Apsaugos slaptas raktas iš .env failo
 const ENCRYPTION_SECRET = process.env.NEXT_PUBLIC_ENCRYPTION_SECRET;
+
 if (!ENCRYPTION_SECRET && typeof window !== "undefined") {
-  console.error("❌ Trūksta NEXT_PUBLIC_ENCRYPTION_SECRET .env faile");
+  console.error("❌ ENV klaida: NEXT_PUBLIC_ENCRYPTION_SECRET trūksta");
 }
 
-// Pagalbinės funkcijos: tekstas <-> baitai
-const encode = (str) => new TextEncoder().encode(str);
+const encode = (txt) => new TextEncoder().encode(txt);
 const decode = (buf) => new TextDecoder().decode(buf);
 
-// Sugeneruoja AES raktą naudojant PBKDF2
 const getKey = async () => {
-  if (typeof window === "undefined") throw new Error("❌ AES key veikia tik naršyklėje");
-  const baseKey = await window.crypto.subtle.importKey(
-    "raw",
-    encode(ENCRYPTION_SECRET),
-    { name: "PBKDF2" },
-    false,
-    ["deriveKey"]
+  if (typeof window === "undefined") throw new Error("❌ getKey veikia tik naršyklėje");
+
+  const baseKey = await crypto.subtle.importKey(
+    "raw", encode(ENCRYPTION_SECRET),
+    { name: "PBKDF2" }, false, ["deriveKey"]
   );
-  return window.crypto.subtle.deriveKey(
+
+  return crypto.subtle.deriveKey(
     {
       name: "PBKDF2",
       salt: encode("nordbalticum-salt"),
@@ -56,23 +54,18 @@ const getKey = async () => {
   );
 };
 
-// Užšifruoja tekstą (privatų raktą)
 export const encrypt = async (text) => {
-  const iv = window.crypto.getRandomValues(new Uint8Array(12));
+  const iv = crypto.getRandomValues(new Uint8Array(12));
   const key = await getKey();
   const data = encode(text);
-  const encrypted = await window.crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, data);
-  return btoa(JSON.stringify({
-    iv: Array.from(iv),
-    data: Array.from(new Uint8Array(encrypted)),
-  }));
+  const encrypted = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, data);
+  return btoa(JSON.stringify({ iv: Array.from(iv), data: Array.from(new Uint8Array(encrypted)) }));
 };
 
-// Iššifruoja privatų raktą
 export const decrypt = async (ciphertext) => {
   const { iv, data } = JSON.parse(atob(ciphertext));
   const key = await getKey();
-  const decrypted = await window.crypto.subtle.decrypt(
+  const decrypted = await crypto.subtle.decrypt(
     { name: "AES-GCM", iv: new Uint8Array(iv) },
     key,
     new Uint8Array(data)
@@ -80,62 +73,54 @@ export const decrypt = async (ciphertext) => {
   return decode(decrypted);
 };
 
-// PrivKey formatas tikrinamas (0x + 64 hex simboliai)
 export const isValidPrivateKey = (key) =>
-  /^0x[a-fA-F0-9]{64}$/.test(key.trim());
+  typeof key === "string" && /^0x[a-fA-F0-9]{64}$/.test(key.trim());
 
 // =======================================
-// 🌐 AUTENTIFIKACIJOS KONTEKSTAS
+// 🌐 Konteksto inicijavimas
 // =======================================
 export const AuthContext = createContext(null);
 export const useAuth = () => useContext(AuthContext);
 
 // =======================================
-// 🧠 PAGRINDINIS AuthProvider
+// 🚀 AuthProvider – Wallet Setup & Core Logic
 // =======================================
 export const AuthProvider = ({ children }) => {
   const router = useRouter();
   const isClient = typeof window !== "undefined";
 
-  // Pagrindinės būsenos
-  const [user, setUser] = useState(null);           // Supabase user info
-  const [wallet, setWallet] = useState(null);       // Wallet + signeriai
-  const [session, setSession] = useState(null);     // Supabase sesija
+  const [user, setUser] = useState(null);
+  const [wallet, setWallet] = useState(null);
+  const [session, setSession] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [walletLoading, setWalletLoading] = useState(true);
 
-  const lastSessionRefresh = useRef(Date.now());    // Refresho laikmatis
-  const inactivityTimer = useRef(null);             // Auto logout laikmatis
+  const lastSessionRefresh = useRef(Date.now());
+  const inactivityTimer = useRef(null);
 
-  // =======================================
-  // 🧱 SETUP Wallet iš privKey + RPCs
-  // =======================================
+  // 🧱 Setup signeriai per fallbackRPCs
   const setupWallet = useCallback((privateKey) => {
     const base = new ethers.Wallet(privateKey);
     const signers = {};
 
-    // Kiekvienam tinklui sukurti signerį
     for (const key in fallbackRPCs) {
       const net = fallbackRPCs[key];
       if (!net?.rpcs?.length) continue;
-
       try {
         const provider = new ethers.JsonRpcProvider(net.rpcs[0], net.chainId);
         signers[key] = new ethers.Wallet(privateKey, provider);
       } catch (err) {
-        console.warn(`⚠️ ${net.label} provider nepavyko:`, err.message);
+        console.warn(`⚠️ ${net.label} RPC setup klaida:`, err.message);
       }
     }
 
     setWallet({ wallet: base, signers });
   }, []);
 
-  // =======================================
-  // ✨ Sukuriam ir įrašom naują wallet
-  // =======================================
+  // ✨ Naujas wallet (jei pirmas login)
   const createAndStoreWallet = useCallback(async (email) => {
-    const newWallet = ethers.Wallet.createRandom(); // Generuoja naują wallet
-    const encryptedKey = await encrypt(newWallet.privateKey); // Užšifruojam privKey
+    const newWallet = ethers.Wallet.createRandom();
+    const encryptedKey = await encrypt(newWallet.privateKey);
 
     const { error } = await supabase.from("wallets").upsert({
       user_email: email,
@@ -146,17 +131,14 @@ export const AuthProvider = ({ children }) => {
 
     if (error) throw error;
 
-    setupWallet(newWallet.privateKey); // Inicijuojam signer'ius
-    toast.success("✅ Naujas wallet sukurtas!", { position: "top-center", autoClose: 3000 });
+    setupWallet(newWallet.privateKey);
+    toast.success("✅ Wallet sukurtas", { position: "top-center", autoClose: 3000 });
   }, [setupWallet]);
 
-  // =======================================
-  // 💾 Įkeliam esamą wallet arba sukuriam naują
-  // =======================================
+  // 🔄 Įkeliam arba sukuriam wallet
   const loadOrCreateWallet = useCallback(async (email) => {
     try {
       setWalletLoading(true);
-
       const { data, error } = await supabase
         .from("wallets")
         .select("encrypted_key")
@@ -172,26 +154,23 @@ export const AuthProvider = ({ children }) => {
         await createAndStoreWallet(email);
       }
     } catch (err) {
-      console.error("❌ Wallet klaida:", err.message);
-      toast.error("❌ Wallet nepavyko", { position: "top-center", autoClose: 3000 });
+      console.error("❌ Wallet įkėlimo klaida:", err.message);
+      toast.error("❌ Wallet klaida", { position: "top-center", autoClose: 3000 });
       setWallet(null);
     } finally {
       setWalletLoading(false);
     }
   }, [createAndStoreWallet, setupWallet]);
 
-  // =======================================
-  // 🔓 Importas iš privKey
-  // =======================================
+  // 🔓 Importavimas per rankinį privKey
   const importWalletFromPrivateKey = useCallback(async (email, privateKey) => {
     if (!isValidPrivateKey(privateKey)) {
-      toast.error("❌ Neteisingas privatus raktas", { position: "top-center", autoClose: 3000 });
+      toast.error("❌ Netinkamas privatus raktas", { position: "top-center", autoClose: 3000 });
       return;
     }
 
     try {
       setWalletLoading(true);
-
       const address = new ethers.Wallet(privateKey).address;
       const encryptedKey = await encrypt(privateKey);
 
@@ -205,17 +184,17 @@ export const AuthProvider = ({ children }) => {
       if (error) throw error;
 
       setupWallet(privateKey);
-      toast.success("✅ Wallet importuotas!", { position: "top-center", autoClose: 3000 });
+      toast.success("✅ Wallet importuotas", { position: "top-center", autoClose: 3000 });
     } catch (err) {
-      console.error("❌ Importo klaida:", err.message);
-      toast.error("❌ Importo nepavyko", { position: "top-center", autoClose: 3000 });
+      console.error("❌ Importavimo klaida:", err.message);
+      toast.error("❌ Nepavyko importuoti", { position: "top-center", autoClose: 3000 });
     } finally {
       setWalletLoading(false);
     }
   }, [setupWallet]);
 
   // =======================================
-  // 🔁 Refreshinam sesiją kas 60s
+  // 🔁 Saugus sesijos atnaujinimas (kas max 60s)
   // =======================================
   const safeRefreshSession = useCallback(async () => {
     if (Date.now() - lastSessionRefresh.current < 60_000) return;
@@ -227,12 +206,13 @@ export const AuthProvider = ({ children }) => {
         setSession(newSession);
         setUser(newSession.user);
       } else {
+        console.warn("⚠️ Sesija pasibaigė – sign out");
         setSession(null);
         setUser(null);
         setWallet(null);
       }
     } catch (err) {
-      console.error("❌ Sesijos refresh klaida:", err.message);
+      console.error("❌ Sesijos atnaujinimo klaida:", err.message);
       setSession(null);
       setUser(null);
       setWallet(null);
@@ -240,7 +220,7 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   // =======================================
-  // 🔑 Prisijungimas su MagicLink
+  // ✉️ Prisijungimas per MagicLink (OTP)
   // =======================================
   const signInWithMagicLink = useCallback(async (email) => {
     const redirectTo = (isClient ? window.location.origin : "https://nordbalticum.com") + "/dashboard";
@@ -277,7 +257,7 @@ export const AuthProvider = ({ children }) => {
   }, [isClient]);
 
   // =======================================
-  // 🚪 Atsijungimas – su redirect ir localStorage išvalymu
+  // 🚪 Atsijungimas – sesijos ir localStorage išvalymas
   // =======================================
   const signOut = useCallback(async (showToast = false, redirectPath = "/") => {
     try {
@@ -291,9 +271,7 @@ export const AuthProvider = ({ children }) => {
     setWallet(null);
 
     if (isClient) {
-      ["userPrivateKey", "activeNetwork", "sessionData"].forEach(k =>
-        localStorage.removeItem(k)
-      );
+      ["userPrivateKey", "activeNetwork", "sessionData"].forEach(k => localStorage.removeItem(k));
     }
 
     router.replace(redirectPath);
@@ -304,7 +282,7 @@ export const AuthProvider = ({ children }) => {
   }, [router, isClient]);
 
   // =======================================
-  // 🧠 Pirmas useEffect – inicializuojam sesiją
+  // 🧠 useEffect – sesijos inicializavimas iš Supabase
   // =======================================
   useEffect(() => {
     if (!isClient) return;
@@ -317,7 +295,7 @@ export const AuthProvider = ({ children }) => {
           setUser(initSession.user);
         }
       } catch (err) {
-        console.error("❌ Sesijos pradinė klaida:", err.message);
+        console.error("❌ Pradinis sesijos užkrovimas nepavyko:", err.message);
       } finally {
         setAuthLoading(false);
       }
@@ -338,7 +316,7 @@ export const AuthProvider = ({ children }) => {
   }, [isClient]);
 
   // =======================================
-  // 🪝 useEffect: kraunam wallet jei turim userį
+  // 🪝 Wallet įkėlimas kai turim user email
   // =======================================
   useEffect(() => {
     if (!isClient || authLoading || !user?.email) return;
@@ -346,7 +324,7 @@ export const AuthProvider = ({ children }) => {
   }, [authLoading, user?.email, isClient, loadOrCreateWallet]);
 
   // =======================================
-  // 👁️ useEffect: tabo fokusavimas – atnaujina sesiją
+  // 👁️ Sesijos atnaujinimas kai grįžta į tabą ar focusuoja
   // =======================================
   useEffect(() => {
     if (!isClient) return;
@@ -368,7 +346,7 @@ export const AuthProvider = ({ children }) => {
   }, [safeRefreshSession, isClient]);
 
   // =======================================
-  // ⏱️ Inaktyvumo logout (15 min timeout)
+  // ⏱️ Auto logout po 15min inaktyvumo
   // =======================================
   useEffect(() => {
     if (!isClient) return;
@@ -376,7 +354,7 @@ export const AuthProvider = ({ children }) => {
     const events = ["mousemove", "keydown", "click", "touchstart"];
     const resetTimer = () => {
       clearTimeout(inactivityTimer.current);
-      inactivityTimer.current = setTimeout(() => signOut(true), 15 * 60 * 1000); // 15min
+      inactivityTimer.current = setTimeout(() => signOut(true), 15 * 60 * 1000); // 15 min
     };
 
     events.forEach(evt => window.addEventListener(evt, resetTimer));
@@ -388,25 +366,24 @@ export const AuthProvider = ({ children }) => {
   }, [signOut, isClient]);
 
   // =======================================
-  // 🎯 Returninam Context Provider visiems vaikams
+  // 🧠 Return AuthContext visai aplikacijai
   // =======================================
   return (
     <AuthContext.Provider
       value={{
-        user,                 // Supabase user objektas
-        session,              // Dabartinė sesija
-        wallet,               // Wallet objektas su signeriais (visi networkai)
-        authLoading,          // Ar authetifikacija vis dar kraunasi
-        walletLoading,        // Ar wallet dar generuojamas ar atkuriamas
-        safeRefreshSession,   // Saugus sesijos atnaujinimas (kas 60s)
-        signInWithMagicLink,  // Prisijungimas per Magic Link
-        signInWithGoogle,     // Prisijungimas per Google OAuth
-        signOut,              // Atsijungimo logika
-        importWalletFromPrivateKey, // Importavimas iš rankinio privKey
-        isValidPrivateKey,    // Validacijos helperis
+        user,
+        session,
+        wallet,
+        authLoading,
+        walletLoading,
+        safeRefreshSession,
+        signInWithMagicLink,
+        signInWithGoogle,
+        signOut,
+        importWalletFromPrivateKey,
+        isValidPrivateKey,
       }}
     >
-      {/* 👁️ Atvaizduojam children tik kai auth pilnai užsikrovęs */}
       {!authLoading && children}
     </AuthContext.Provider>
   );
