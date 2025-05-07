@@ -6,7 +6,10 @@ import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 
 import { useAuth } from "@/contexts/AuthContext";
-import styles from "@/styles/indextest.module.css"; // ✅ now standalone
+import { Input } from "@/components/ui/Input";
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import styles from "@/styles/indextest.module.css";
 
 export default function Home() {
   const router = useRouter();
@@ -90,21 +93,26 @@ export default function Home() {
 
         <form onSubmit={handleSignIn} className={styles.loginBox} autoComplete="off">
           <fieldset disabled={status === "loading"} style={{ border: "none", padding: 0 }}>
-            <input
+            <Input
               type="email"
               inputMode="email"
               placeholder="you@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className={styles.input}
             />
 
-            <button type="submit" className={styles.buttonPrimary}>
+            <Button type="submit" size="md" glow className="mt-4 w-full">
               {status === "loading" ? "SENDING..." : "SEND MAGIC LINK"}
-            </button>
+            </Button>
 
-            <button type="button" onClick={handleGoogleSignIn} className={styles.buttonSecondary}>
+            <Button
+              type="button"
+              variant="secondary"
+              size="md"
+              onClick={handleGoogleSignIn}
+              className="mt-2 w-full"
+            >
               <Image
                 src="/icons/google-logo.png"
                 alt="Google"
@@ -113,7 +121,7 @@ export default function Home() {
                 style={{ marginRight: "8px" }}
               />
               {status === "loading" ? "CONNECTING..." : "LOGIN WITH GOOGLE"}
-            </button>
+            </Button>
           </fieldset>
 
           <AnimatePresence>
@@ -136,7 +144,6 @@ export default function Home() {
         </form>
       </motion.div>
 
-      {/* ✅ Coinbase-style modal confirmation */}
       <AnimatePresence>
         {showModal && (
           <motion.div
