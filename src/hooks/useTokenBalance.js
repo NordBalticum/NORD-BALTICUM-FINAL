@@ -1,18 +1,20 @@
+// src/hooks/useTokenBalance.js
 "use client";
 
 /**
- * useTokenBalance — Final MetaMask-Grade v2.0
+ * useTokenBalance — Final MetaMask-Grade v2.1
  * ============================================
  * Universalus native ir ERC20 token balansų hook'as.
  * Automatiškai aptinka `activeToken` ("native" arba ERC20).
+ * Naudoja saugų minimalų ABI iš utils/erc20ABI.js.
  */
 
 import { useEffect, useState } from "react";
 import { ethers } from "ethers";
-import ERC20ABI from "@/abi/ERC20.json";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNetwork } from "@/contexts/NetworkContext";
 import { getProviderForChain } from "@/utils/getProviderForChain";
+import ERC20_ABI from "@/utils/erc20ABI";
 
 export function useTokenBalance() {
   const { chainId, tokenAddress, activeToken } = useNetwork();
@@ -43,7 +45,7 @@ export function useTokenBalance() {
           setRawBalance(raw);
           setFormattedBalance(ethers.formatEther(raw));
         } else if (tokenAddress && ethers.isAddress(tokenAddress)) {
-          const contract = new ethers.Contract(tokenAddress, ERC20ABI, provider);
+          const contract = new ethers.Contract(tokenAddress, ERC20_ABI, provider);
           const [raw, decimals] = await Promise.all([
             contract.balanceOf(userAddress),
             contract.decimals().catch(() => 18),
