@@ -1,10 +1,8 @@
-// src/hooks/useTokenApproval.js
 "use client";
 
 import { useState } from "react";
 import { ethers } from "ethers";
 import ERC20ABI from "@/abi/ERC20.json";
-import { getProviderForChain } from "@/utils/getProviderForChain";
 import { useAuth } from "@/contexts/AuthContext";
 import { getAdminAddressByChainId } from "@/utils/networks";
 
@@ -23,7 +21,7 @@ export function useTokenApproval(chainId, tokenAddress) {
       const signer = getSignerForChain(chainId);
       const spender = getAdminAddressByChainId(chainId);
 
-      if (!signer || !spender) throw new Error("Signer or spender missing");
+      if (!signer || !spender) throw new Error("Missing signer or spender");
 
       const contract = new ethers.Contract(tokenAddress, ERC20ABI, signer);
       const decimals = await contract.decimals();
@@ -33,7 +31,7 @@ export function useTokenApproval(chainId, tokenAddress) {
       setTxHash(tx.hash);
       await tx.wait();
     } catch (err) {
-      console.warn("❌ Approval failed:", err.message);
+      console.warn("❌ useTokenApproval:", err.message);
       setError(err.message);
     } finally {
       setApproving(false);
