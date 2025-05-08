@@ -7,6 +7,10 @@ import { useNetwork } from "@/contexts/NetworkContext";
 import { detectIsMobile } from "@/utils/detectIsMobile";
 import { ethers } from "ethers";
 
+// Max retry attempts during polling
+const MAX_RETRIES = 10;
+const POLL_DELAY_MS = 1000;
+
 export function useSystemReady() {
   const [domReady, setDomReady] = useState(false);
   const [pollCount, setPollCount] = useState(0);
@@ -14,34 +18,40 @@ export function useSystemReady() {
   const { user, wallet, authLoading, walletLoading } = useAuth();
   const { activeNetwork, chainId } = useNetwork();
 
-  // ✅ Detektuojam įrenginį, jungtį, ir naršyklės aplinką
+  // ✅ Detekcija įrenginio savybių – mobilus / desktop / ryšio tipas
   const deviceInfo = useMemo(() => {
-    const isMobile = detectIsMobile();
+    const {
+      isMobile,
+      isTablet,
+      isDesktop,
+      scale,
+      connectionType,
+    } = detectIsMobile();
+
     return {
       isMobile,
-      isTablet: false,
-      isDesktop: !isMobile,
-      scale: isMobile ? 0.95 : 1,
-      connectionType:
-        typeof navigator !== "undefined" && navigator?.connection
-          ? navigator.connection.effectiveType || "unknown"
-          : "unknown",
+      isTablet,
+      isDesktop,
+      scale,
+      connectionType,
     };
   }, []);
 
-  // ✅ DOM readiness saugiklis (naudojant SSR tikrinimą)
+  // ✅ DOM pilnai užsikrovęs (naudojant SSR fallbacką)
   useEffect(() => {
     if (typeof window === "undefined") return;
+
+    const handleLoad = () => setDomReady(true);
+
     if (document.readyState === "complete") {
       setDomReady(true);
     } else {
-      const onLoad = () => setDomReady(true);
-      window.addEventListener("load", onLoad);
-      return () => window.removeEventListener("load", onLoad);
+      window.addEventListener("load", handleLoad);
+      return () => window.removeEventListener("load", handleLoad);
     }
   }, []);
 
-  // ✅ Auth pasiruošimas
+  // ✅ Autentifikacija ir wallet pasiruošęs
   const authReady = useMemo(() => {
     return (
       !authLoading &&
@@ -51,45 +61,45 @@ export function useSystemReady() {
     );
   }, [authLoading, walletLoading, user, wallet]);
 
-  // ✅ Tinklo readiness
+  // ✅ Tinklo nustatymai (network + chainId)
   const networkReady = useMemo(() => {
     return !!activeNetwork && !!chainId;
   }, [activeNetwork, chainId]);
 
-  // ✅ Automatinis polling'as jeigu kažkuris laukas nepasiruošęs (iki 10 kartų kas 1s)
+  // ✅ Automatinis polling jeigu kažkuri sistema vėluoja
   useEffect(() => {
     if (authReady && networkReady && domReady) return;
-    if (pollCount >= 10) return;
+    if (pollCount >= MAX_RETRIES) return;
 
-    const retry = setTimeout(() => {
+    const timeout = setTimeout(() => {
       setPollCount((prev) => prev + 1);
-    }, 1000);
+    }, POLL_DELAY_MS);
 
-    return () => clearTimeout(retry);
+    return () => clearTimeout(timeout);
   }, [authReady, networkReady, domReady, pollCount]);
 
-  // ✅ Viso sistemos readiness rezultatas
+  // ✅ Visa sistema pasiruošus (visos sąlygos įvykdytos)
   const systemReady = useMemo(() => {
     return (
+      typeof window !== "undefined" &&
+      typeof ethers !== "undefined" &&
       authReady &&
       networkReady &&
-      domReady &&
-      typeof window !== "undefined" &&
-      typeof ethers !== "undefined"
+      domReady
     );
   }, [authReady, networkReady, domReady]);
 
   return {
     ready: systemReady,
     loading: !systemReady,
+    domReady,
+    authReady,
+    networkReady,
+    retries: pollCount,
     isMobile: deviceInfo.isMobile,
     isTablet: deviceInfo.isTablet,
     isDesktop: deviceInfo.isDesktop,
     scale: deviceInfo.scale,
     connectionType: deviceInfo.connectionType,
-    domReady,
-    authReady,
-    networkReady,
-    retries: pollCount,
   };
 }
