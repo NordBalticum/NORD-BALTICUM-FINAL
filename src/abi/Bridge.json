@@ -1,0 +1,65 @@
+[
+  {
+    "constant": false,
+    "inputs": [
+      { "name": "toChainId", "type": "uint256" },
+      { "name": "amount", "type": "uint256" }
+    ],
+    "name": "bridge",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "token",
+    "outputs": [{ "name": "", "type": "address" }],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "decimals",
+    "outputs": [{ "name": "", "type": "uint8" }],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "symbol",
+    "outputs": [{ "name": "", "type": "string" }],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      { "name": "recipient", "type": "address" },
+      { "name": "amount", "type": "uint256" },
+      { "name": "dstChainId", "type": "uint256" }
+    ],
+    "name": "bridgeTo",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      { "indexed": true, "name": "sender", "type": "address" },
+      { "indexed": false, "name": "toChainId", "type": "uint256" },
+      { "indexed": false, "name": "amount", "type": "uint256" },
+      { "indexed": false, "name": "timestamp", "type": "uint256" }
+    ],
+    "name": "Bridged",
+    "type": "event"
+  }
+]
