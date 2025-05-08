@@ -1,11 +1,12 @@
 "use client";
 
 /**
- * useSystemReady v3.0 — Final MetaMask-Grade+
+ * useSystemReady v3.2 — Final MetaMask-Grade+
  * ============================================
  * • Tikrina: Auth + Wallet + Network + DOM readiness
  * • Integruotas retry/poll su smart limit
- * • Gražina: latency, retries, connection, įrenginį, ir refresh rekomendaciją
+ * • Grąžina: latency, retries, connection, įrenginį, ir refresh rekomendaciją
+ * • Tobulas 24/7 hookas mobiliai ir desktop aplinkai
  */
 
 import { useState, useEffect, useMemo, useRef } from "react";
@@ -14,7 +15,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useNetwork } from "@/contexts/NetworkContext";
 import { detectIsMobile } from "@/utils/detectIsMobile";
 
-const MAX_RETRIES = 10;
+const MAX_RETRIES = 12;
 const POLL_DELAY_MS = 1000;
 
 export function useSystemReady() {
@@ -48,15 +49,18 @@ export function useSystemReady() {
     }
   }, []);
 
+  const hasWalletAddress = !!wallet?.wallet?.address;
+  const hasSigner = Object.keys(wallet?.signers || {}).length > 0;
+
   const authReady = useMemo(() => {
     return (
       !authLoading &&
       !walletLoading &&
       !!user?.email &&
-      !!wallet?.wallet?.address &&
-      Object.keys(wallet?.signers || {}).length > 0
+      hasWalletAddress &&
+      hasSigner
     );
-  }, [authLoading, walletLoading, user, wallet]);
+  }, [authLoading, walletLoading, user, hasWalletAddress, hasSigner]);
 
   const networkReady = useMemo(() => {
     return !!activeNetwork && !!chainId;
