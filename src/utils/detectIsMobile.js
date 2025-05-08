@@ -5,7 +5,8 @@ let cachedResult = null;
 
 export function detectIsMobile() {
   if (cachedResult !== null) return cachedResult;
-  if (typeof window === "undefined") {
+
+  if (typeof window === "undefined" || typeof navigator === "undefined") {
     return {
       isMobile: false,
       isTablet: false,
@@ -16,83 +17,54 @@ export function detectIsMobile() {
   }
 
   try {
-    const ua = (navigator.userAgent || "").toLowerCase().replace(/\u0000/g, "");
+    const ua = navigator.userAgent?.toLowerCase?.() || "";
     const uaData = navigator.userAgentData;
     const platform = navigator.platform?.toLowerCase?.() || "";
 
     const width = window.innerWidth || screen.width || 0;
     const height = window.innerHeight || screen.height || 0;
 
-    const isSamsungUltra =
-      /samsung/.test(ua) &&
-      /sm-s9\d{2}|ultra|s24|s23|s22|s21/.test(ua) &&
-      width >= 360 && width <= 920 &&
-      height >= 640 && height <= 1800;
-
-    const isTouchCapable =
-      navigator.maxTouchPoints >= 1 ||
+    const isTouch =
+      navigator.maxTouchPoints > 1 ||
       "ontouchstart" in window ||
       window.matchMedia("(pointer: coarse)").matches;
 
-    const isMobileUA = /android|iphone|ipod|iemobile|blackberry|bada|webos|opera mini|mobile|palm|windows phone|nexus|pixel|sm-|samsung/.test(ua);
-    const isTabletUA = /ipad|tablet|tab|kindle|silk|playbook/.test(ua);
-    const isDesktopUA =
-      /macintosh|windows nt|linux x86_64/.test(ua) ||
-      /mac|win|linux/.test(platform);
+    const isMobileUA = /iphone|android|mobile|blackberry|phone|ipod/.test(ua);
+    const isTabletUA = /ipad|tablet|kindle|nexus 7|tab/.test(ua);
+    const isDesktopUA = /macintosh|windows nt|linux x86_64/.test(ua);
 
-    const isNarrowWidth = width <= 920;
-    const isShortHeight = height <= 600;
-    const isPortrait = window.matchMedia("(orientation: portrait)").matches;
-    const isLowRes = screen.width <= 920 || window.devicePixelRatio >= 2;
+    const isNarrow = width > 0 && width <= 920;
+    const isShort = height <= 600;
+    const isPortrait = height > width;
 
-    const isMobileMediaQuery =
-      window.matchMedia("(max-width: 920px)").matches &&
-      window.matchMedia("(any-pointer: coarse)").matches;
+    const uaDataMobile = uaData?.mobile === true;
 
-    const isFoldable =
-      window.matchMedia("(device-width: 540px) and (device-height: 720px)").matches ||
-      window.matchMedia("(max-width: 850px) and (max-height: 1600px)").matches ||
-      window.matchMedia("(min-width: 672px) and (max-width: 920px) and (max-height: 1800px)").matches;
+    const isMobileGuess =
+      uaDataMobile ||
+      (isTouch && isMobileUA) ||
+      (isTouch && isNarrow && !isDesktopUA) ||
+      (isTouch && window.matchMedia("(max-width: 920px)").matches) ||
+      (isTouch && isShort) ||
+      false;
 
-    const isTabletMediaQuery = window.matchMedia(
-      "(min-device-width: 600px) and (max-device-width: 1366px) and (orientation: portrait)"
-    ).matches;
+    const isTablet = isTabletUA || (isTouch && !isMobileGuess && isPortrait && width > 600 && width < 1024);
+    const isMobile = isMobileGuess && !isTablet;
+    const isDesktop = !isMobile && !isTablet;
 
-    const isUADataMobile = uaData?.mobile === true;
-
-    const looksLikeMobile =
-      isUADataMobile ||
-      isSamsungUltra ||
-      (isTouchCapable && isMobileUA) ||
-      (isTouchCapable && isFoldable) ||
-      (isTouchCapable && isTabletUA && isPortrait) ||
-      (isTouchCapable && isTabletMediaQuery) ||
-      (isTouchCapable && !isDesktopUA && !isTabletUA && (isNarrowWidth || isLowRes)) ||
-      (isTouchCapable && isMobileMediaQuery) ||
-      (isTouchCapable && isShortHeight);
-
-    const isDefinitelyMobile = looksLikeMobile && width > 0 && height > 0;
-
-    const isTablet = isTabletUA || isTabletMediaQuery;
-    const isDesktop = !isDefinitelyMobile && !isTablet;
-
+    const scale = window.devicePixelRatio || 1;
     const connectionType = navigator.connection?.effectiveType || "unknown";
 
-    if (isDefinitelyMobile) {
-      window.__DEBUG_MOBILE__ = true;
-    }
-
     cachedResult = {
-      isMobile: !!isDefinitelyMobile,
-      isTablet: !!isTablet,
-      isDesktop: !!isDesktop,
-      scale: window.devicePixelRatio || 1,
+      isMobile,
+      isTablet,
+      isDesktop,
+      scale,
       connectionType,
     };
 
     return cachedResult;
   } catch (err) {
-    console.warn("detectIsMobile() failed:", err);
+    console.warn("❌ detectIsMobile failed:", err);
     return {
       isMobile: false,
       isTablet: false,
