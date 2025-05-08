@@ -1,141 +1,160 @@
-// src/utils/startSilentBalanceRefetch.js
 "use client";
+
+// ==================================================
+// 🔄 SilentBalanceRefetch – FINAL META-GRADE VERSION
+// ✅ Auto refetch | Retry logic | Debounce | SSR-safe
+// ✅ Network speed detection | Offline/online guards
+// ✅ Visibility + Focus triggers | Heartbeat + Interval
+// ==================================================
 
 import debounce from "lodash.debounce";
 
-const SESSION_INTERVAL = 30_000;
-const HEARTBEAT_INTERVAL = 120_000;
+// Konfigūracija (sekundėmis)
+const INTERVAL_MS = 30_000;      // Normalus refetch ciklas (30s)
+const HEARTBEAT_MS = 120_000;    // Širdies dūžis – silent check (2min)
 const MAX_RETRIES = 6;
 
+// ==========================================
+// 🔁 Paleidžia silent refetch su retry logika
+// ==========================================
 export function startSilentBalanceRefetch(refetch) {
   if (typeof window === "undefined" || typeof refetch !== "function") {
-    console.error("[SilentBalanceRefetch] ❌ Invalid usage or missing window/refetch function.");
-    return () => {}; // Grąžinam tuščią funkciją saugiai
+    console.error("❌ [SilentBalanceRefetch] Netinkamas kvietimas (SSR ar refetch nėra funkcija)");
+    return () => {}; // tuščias saugus stop
   }
 
-  let retryQueue = [];
   let retryCount = 0;
-  let lastOnlineSpeed = "unknown";
+  let retryTimers = [];
+  let lastSpeed = "unknown";
   let isOffline = false;
+  let isRefetching = false;
+
   let heartbeatTimer = null;
   let intervalTimer = null;
 
+  // ================================
+  // ⛔ Atnaujinti retry sistemą
+  // ================================
   const resetRetries = () => {
     retryCount = 0;
-    retryQueue.forEach(clearTimeout);
-    retryQueue = [];
+    retryTimers.forEach(clearTimeout);
+    retryTimers = [];
   };
 
-  const getNetworkSpeed = () => {
-    return navigator.connection?.effectiveType || "unknown";
-  };
+  const getNetworkSpeed = () =>
+    navigator.connection?.effectiveType || "unknown";
 
-  const getDelay = () => {
-    const baseDelay = 3000;
-    const exponential = Math.min(2 ** retryCount * baseDelay, 60000); // max 60s
-    if (lastOnlineSpeed.includes("2g") || lastOnlineSpeed.includes("slow")) {
-      return exponential * 1.5;
-    }
-    return exponential;
+  const getRetryDelay = () => {
+    const base = 3000;
+    const expo = Math.min(2 ** retryCount * base, 60_000);
+    return lastSpeed.includes("2g") || lastSpeed.includes("slow") ? expo * 1.5 : expo;
   };
 
   const scheduleRetry = () => {
     if (retryCount >= MAX_RETRIES) {
-      console.error("[SilentBalanceRefetch] ❌ Max retries reached. No more retries.");
+      console.warn("❌ [SilentBalanceRefetch] Pasiektas maksimalus bandymų kiekis");
       return;
     }
 
-    const delay = getDelay();
-    console.warn(`[SilentBalanceRefetch] 🔁 Retrying in ${Math.round(delay / 1000)}s...`);
+    const delay = getRetryDelay();
+    console.warn(`🔁 [SilentBalanceRefetch] Bandymas #${retryCount + 1} po ${Math.round(delay / 1000)}s...`);
 
     const id = setTimeout(() => {
-      if (!isOffline) safeRefetch("retry");
+      if (!isOffline) performRefetch("retry");
     }, delay);
 
-    retryQueue.push(id);
+    retryTimers.push(id);
     retryCount++;
   };
 
-  const safeRefetch = async (source) => {
+  // ================================
+  // ✅ Saugus refetch
+  // ================================
+  const performRefetch = async (source = "unknown") => {
     if (isOffline) {
-      console.warn(`[SilentBalanceRefetch] Skipped fetch (offline) [${source}]`);
+      console.log(`[SilentBalanceRefetch] ⏸️ Skip: Offline režimas [${source}]`);
       return;
     }
+    if (isRefetching) return;
 
+    isRefetching = true;
     try {
       await refetch();
-      console.log(`[SilentBalanceRefetch] ✅ Successfully refetched via ${source}`);
+      console.log(`[SilentBalanceRefetch] ✅ Refetched iš: ${source}`);
       resetRetries();
     } catch (err) {
-      console.error(`[SilentBalanceRefetch] ❌ Refetch failed via ${source}:`, err?.message || err);
+      console.error(`❌ [SilentBalanceRefetch] Klaida (${source}):`, err?.message || err);
       scheduleRetry();
+    } finally {
+      isRefetching = false;
     }
   };
 
-  const onVisibilityChange = debounce(() => {
-    if (document.visibilityState === "visible") safeRefetch("visibility");
+  // ================================
+  // 🧠 Event listeneriai
+  // ================================
+  const onFocus = debounce(() => performRefetch("focus"), 300);
+  const onVisibility = debounce(() => {
+    if (document.visibilityState === "visible") performRefetch("visibility");
   }, 300);
-
-  const onFocus = debounce(() => safeRefetch("focus"), 300);
-
   const onOnline = debounce(() => {
-    console.log("[SilentBalanceRefetch] 📶 Back online detected");
     isOffline = false;
-    lastOnlineSpeed = getNetworkSpeed();
-    safeRefetch("online");
+    lastSpeed = getNetworkSpeed();
+    console.log("[SilentBalanceRefetch] 📶 Online grįžo, paleidžiam refetch");
+    performRefetch("online");
   }, 300);
-
   const onOffline = debounce(() => {
-    console.warn("[SilentBalanceRefetch] 🔌 Offline detected");
     isOffline = true;
+    console.warn("[SilentBalanceRefetch] 🔌 Atskirtas nuo interneto");
+  }, 300);
+  const onWake = debounce(() => {
+    if (document.visibilityState === "visible") performRefetch("wake");
   }, 300);
 
-  const onWakeLock = debounce(() => {
-    if (document.visibilityState === "visible") safeRefetch("wake-up");
-  }, 300);
-
-  // Heartbeat: kas 2min
+  // ================================
+  // ⏱️ Heartbeat + Intervalai
+  // ================================
   heartbeatTimer = setInterval(() => {
-    if (!isOffline) {
-      console.log("[SilentBalanceRefetch] 💓 Heartbeat refetch");
-      safeRefetch("heartbeat");
-    }
-  }, HEARTBEAT_INTERVAL);
+    if (!isOffline) performRefetch("heartbeat");
+  }, HEARTBEAT_MS);
 
-  // Interval: kas 30s
   intervalTimer = setInterval(() => {
     if (!isOffline) {
-      lastOnlineSpeed = getNetworkSpeed();
-      safeRefetch("interval");
+      lastSpeed = getNetworkSpeed();
+      performRefetch("interval");
     }
-  }, SESSION_INTERVAL);
+  }, INTERVAL_MS);
 
-  // Event listeners
-  document.addEventListener("visibilitychange", onVisibilityChange);
+  // ================================
+  // 📡 Įvykiai
+  // ================================
+  document.addEventListener("visibilitychange", onVisibility);
   window.addEventListener("focus", onFocus);
   window.addEventListener("online", onOnline);
   window.addEventListener("offline", onOffline);
-  document.addEventListener("resume", onWakeLock);
+  document.addEventListener("resume", onWake);
 
-  // RETURN clean stop function
+  // ================================
+  // 🛑 Stop funkcija
+  // ================================
   return () => {
-    retryQueue.forEach(clearTimeout);
-    retryQueue = [];
-    clearInterval(heartbeatTimer);
+    retryTimers.forEach(clearTimeout);
+    retryTimers = [];
     clearInterval(intervalTimer);
+    clearInterval(heartbeatTimer);
 
-    onVisibilityChange.cancel();
     onFocus.cancel();
+    onVisibility.cancel();
     onOnline.cancel();
     onOffline.cancel();
-    onWakeLock.cancel();
+    onWake.cancel();
 
-    document.removeEventListener("visibilitychange", onVisibilityChange);
+    document.removeEventListener("visibilitychange", onVisibility);
     window.removeEventListener("focus", onFocus);
     window.removeEventListener("online", onOnline);
     window.removeEventListener("offline", onOffline);
-    document.removeEventListener("resume", onWakeLock);
+    document.removeEventListener("resume", onWake);
 
-    console.log("[SilentBalanceRefetch] 🛑 Silent balance refetch stopped.");
+    console.log("[SilentBalanceRefetch] 🛑 Sustabdytas silent refetch.");
   };
 }
