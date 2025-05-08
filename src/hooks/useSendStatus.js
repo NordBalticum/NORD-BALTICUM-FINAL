@@ -2,21 +2,22 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ethers } from "ethers";
 import { getProviderForChain } from "@/utils/getProviderForChain";
 
 /**
- * Hook'as, kuris seka transakcijos statusą.
+ * Sekti transakcijos statusą su retry, backoff ir replaced detection.
  *
  * @param {string} txHash - Transaction hash
- * @param {number} chainId - chainId, kuriame siuntėme
- * @returns { status, loading, confirmed, error }
+ * @param {number} chainId - chainId, kuriame siųsta
+ * @returns { status, loading, confirmed, dropped, replaced, error }
  */
 export function useSendStatus(txHash, chainId) {
   const [loading, setLoading] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
+  const [dropped, setDropped] = useState(false);
+  const [replaced, setReplaced] = useState(false);
   const [error, setError] = useState(null);
-  const [status, setStatus] = useState("idle"); // idle | pending | confirmed | failed
+  const [status, setStatus] = useState("idle"); // idle | pending | confirmed | dropped | replaced | failed
 
   useEffect(() => {
     if (!txHash || !chainId) return;
@@ -24,37 +25,79 @@ export function useSendStatus(txHash, chainId) {
     const provider = getProviderForChain(chainId);
     let cancelled = false;
 
-    async function checkTxStatus() {
-      try {
-        setLoading(true);
-        setStatus("pending");
+    const checkTransaction = async () => {
+      setLoading(true);
+      setStatus("pending");
 
-        const receipt = await provider.waitForTransaction(txHash, 1, 90_000); // timeout: 90s
-        if (cancelled) return;
+      const maxRetries = 6;
+      let retry = 0;
 
-        if (receipt && receipt.status === 1) {
-          setConfirmed(true);
-          setStatus("confirmed");
-        } else {
-          setError("Transaction failed");
-          setStatus("failed");
+      while (retry < maxRetries && !cancelled) {
+        try {
+          const receipt = await Promise.race([
+            provider.waitForTransaction(txHash, 1),
+            new Promise((_, reject) =>
+              setTimeout(() => reject(new Error("⏱️ Timeout")), 30000 + retry * 5000)
+            )
+          ]);
+
+          if (cancelled) return;
+
+          if (receipt && receipt.status === 1) {
+            setConfirmed(true);
+            setStatus("confirmed");
+            setLoading(false);
+            return;
+          } else if (receipt && receipt.status === 0) {
+            setError("❌ Transaction reverted");
+            setStatus("failed");
+            setLoading(false);
+            return;
+          }
+        } catch (err) {
+          retry++;
+          console.warn(`⏳ Retry ${retry}/${maxRetries} —`, err.message);
+
+          // Retry exhausted
+          if (retry >= maxRetries) {
+            try {
+              const tx = await provider.getTransaction(txHash);
+              if (!tx || tx.blockNumber == null) {
+                setDropped(true);
+                setStatus("dropped");
+                setError("⚠️ Transaction dropped (not mined)");
+              } else if (tx?.replacedByAnotherTransaction) {
+                setReplaced(true);
+                setStatus("replaced");
+                setError("⚠️ Transaction replaced");
+              } else {
+                setError("❌ Transaction timeout or failed");
+                setStatus("failed");
+              }
+            } catch (finalErr) {
+              setError(finalErr.message || "❌ Unknown final error");
+              setStatus("failed");
+            }
+
+            setLoading(false);
+            return;
+          }
+
+          await new Promise((res) =>
+            setTimeout(res, 1000 * Math.pow(2, retry))
+          );
         }
-      } catch (err) {
-        if (cancelled) return;
-        console.error("❌ Transaction status error:", err);
-        setError(err.message || "Unknown error");
-        setStatus("failed");
-      } finally {
-        if (!cancelled) setLoading(false);
       }
-    }
 
-    checkTxStatus();
+      setLoading(false);
+    };
+
+    checkTransaction();
 
     return () => {
       cancelled = true;
     };
   }, [txHash, chainId]);
 
-  return { status, loading, confirmed, error };
+  return { status, loading, confirmed, dropped, replaced, error };
 }
