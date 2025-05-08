@@ -7,61 +7,56 @@
  * Visiškai saugus, SSR-aware, integruotas su AuthContext.
  * 
  * - Tikrina tik jei yra prisijungęs vartotojas su el. paštu
- * - Naudoja `.single()` + `maybeSingle()` fallback
- * - Grąžina `isAdmin`, `loading`, ir `error`
+ * - Naudoja `.maybeSingle()` (negrąžina klaidos, jei nėra)
+ * - Visiškai SSR‑saugus
+ * - Grąžina `isAdmin`, `loading`, `error`
  */
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/utils/supabaseClient";
 
 export function useIsAdmin() {
   const { user } = useAuth();
   const [isAdmin, setIsAdmin] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!!user?.email);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    let cancelled = false;
+  const checkAdmin = useCallback(async () => {
+    if (!user?.email) {
+      setIsAdmin(false);
+      setLoading(false);
+      return;
+    }
 
-    const checkAdmin = async () => {
-      setLoading(true);
-      setError(null);
+    setLoading(true);
+    setError(null);
 
-      if (!user?.email) {
-        setIsAdmin(false);
-        setLoading(false);
-        return;
+    try {
+      const { data, error: supaError } = await supabase
+        .from("admins")
+        .select("id")
+        .eq("email", user.email)
+        .maybeSingle();
+
+      if (supaError && supaError.code !== "PGRST116") {
+        console.warn("❌ Supabase error:", supaError.message);
+        setError(supaError);
       }
 
-      try {
-        const { data, error: supaError } = await supabase
-          .from("admins")
-          .select("id")
-          .eq("email", user.email)
-          .maybeSingle();
-
-        if (cancelled) return;
-
-        if (supaError && supaError.code !== "PGRST116") {
-          console.warn("❌ Admin check error:", supaError.message);
-          setError(supaError);
-        }
-
-        setIsAdmin(!!data);
-      } catch (err) {
-        console.error("❌ Admin check unexpected error:", err);
-        if (!cancelled) setError(err);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    };
-
-    checkAdmin();
-    return () => {
-      cancelled = true;
-    };
+      setIsAdmin(!!data);
+    } catch (err) {
+      console.error("❌ Unexpected admin check error:", err.message);
+      setError(err);
+      setIsAdmin(false);
+    } finally {
+      setLoading(false);
+    }
   }, [user?.email]);
+
+  useEffect(() => {
+    checkAdmin();
+  }, [checkAdmin]);
 
   return { isAdmin, loading, error };
 }
