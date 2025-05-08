@@ -1,15 +1,16 @@
 "use client";
 
+/**
+ * useSendStatus v2.0 — Final MetaMask-Grade TX Status Tracker
+ * ============================================================
+ * • Full tx lifecycle tracking with retry + exponential backoff
+ * • Detects: confirmed, failed, dropped, replaced
+ * • Uses both provider.waitForTransaction and manual fallback
+ */
+
 import { useEffect, useState } from "react";
 import { getProviderForChain } from "@/utils/getProviderForChain";
 
-/**
- * ✅ Sekti transakcijos statusą (MetaMask-grade) su retry + backoff + dropped/replaced detekcija.
- *
- * @param {string} txHash - Transakcijos hash
- * @param {number} chainId - Tinklo chainId
- * @returns {Object} - { status, loading, confirmed, dropped, replaced, error }
- */
 export function useSendStatus(txHash, chainId) {
   const [status, setStatus] = useState("idle"); // idle | pending | confirmed | dropped | replaced | failed
   const [loading, setLoading] = useState(false);
@@ -24,7 +25,7 @@ export function useSendStatus(txHash, chainId) {
     const provider = getProviderForChain(chainId);
     let cancelled = false;
 
-    const checkTxStatus = async () => {
+    const checkStatus = async () => {
       setLoading(true);
       setStatus("pending");
 
@@ -33,11 +34,12 @@ export function useSendStatus(txHash, chainId) {
 
       while (retry < MAX_RETRIES && !cancelled) {
         try {
-          const timeoutMs = 30000 + retry * 5000;
+          const timeout = 30000 + retry * 5000;
+
           const receipt = await Promise.race([
             provider.waitForTransaction(txHash, 1),
             new Promise((_, reject) =>
-              setTimeout(() => reject(new Error("⏱️ Timeout")), timeoutMs)
+              setTimeout(() => reject(new Error("⏱️ Timeout")), timeout)
             ),
           ]);
 
@@ -47,33 +49,36 @@ export function useSendStatus(txHash, chainId) {
             setConfirmed(true);
             setStatus("confirmed");
             break;
-          } else if (receipt?.status === 0) {
-            setError("❌ Transaction reverted");
+          }
+
+          if (receipt?.status === 0) {
             setStatus("failed");
+            setError("❌ Transaction reverted");
             break;
           }
         } catch (err) {
           retry++;
-          console.warn(`[useSendStatus] Retry ${retry}/${MAX_RETRIES} —`, err.message);
+          console.warn(`[useSendStatus] Retry ${retry}/${MAX_RETRIES} — ${err.message}`);
 
           if (retry >= MAX_RETRIES) {
             try {
               const tx = await provider.getTransaction(txHash);
+
               if (!tx || tx.blockNumber == null) {
                 setDropped(true);
                 setStatus("dropped");
                 setError("⚠️ Transaction dropped (not mined)");
-              } else if (tx.replacedByAnotherTransaction) {
+              } else if (tx?.replacementTx) {
                 setReplaced(true);
                 setStatus("replaced");
                 setError("⚠️ Transaction replaced");
               } else {
                 setStatus("failed");
-                setError("❌ Transaction not confirmed");
+                setError("❌ Transaction stuck or failed");
               }
             } catch (finalErr) {
               setStatus("failed");
-              setError(finalErr.message || "❌ Unknown transaction error");
+              setError(finalErr.message || "❌ Unknown final tx error");
             }
             break;
           }
@@ -85,11 +90,18 @@ export function useSendStatus(txHash, chainId) {
       if (!cancelled) setLoading(false);
     };
 
-    checkTxStatus();
+    checkStatus();
     return () => {
       cancelled = true;
     };
   }, [txHash, chainId]);
 
-  return { status, loading, confirmed, dropped, replaced, error };
+  return {
+    status,
+    loading,
+    confirmed,
+    dropped,
+    replaced,
+    error,
+  };
 }
