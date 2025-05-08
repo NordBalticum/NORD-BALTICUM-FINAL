@@ -1,5 +1,12 @@
-// src/hooks/useTokenApproval.js
 "use client";
+
+/**
+ * useTokenApproval — Final MetaMask-Grade Version v2.0
+ * =====================================================
+ * • Automatiškai tikrina allowance tarp user → spender
+ * • Paleidžia approve jei reikia
+ * • Full EVM + ERC20 + DApp compatibility
+ */
 
 import { useState, useEffect } from "react";
 import { ethers } from "ethers";
@@ -8,14 +15,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { getAdminAddressByChainId } from "@/utils/networks";
 import { getProviderForChain } from "@/utils/getProviderForChain";
 
-/**
- * useTokenApproval – leidžia patikrinti ir iškviesti approve() ERC20 tokenui
- *
- * @param {number} chainId - tinklo ID
- * @param {string} tokenAddress - tokeno kontrakto adresas
- * @param {string} [spenderAddress] - adresas, kuriam suteikiamas leidimas (optional – naudos admin jei nepateikta)
- * @param {string|number} [amountRequired] - kiek reikia patvirtinti (optional – bus naudojama approve tik jei pateikta)
- */
 export function useTokenApproval(chainId, tokenAddress, spenderAddress, amountRequired) {
   const { getSignerForChain, getPrimaryAddress } = useAuth();
 
@@ -26,7 +25,6 @@ export function useTokenApproval(chainId, tokenAddress, spenderAddress, amountRe
 
   const spender = spenderAddress || getAdminAddressByChainId(chainId);
 
-  // Automatinis allowance tikrinimas
   useEffect(() => {
     if (!chainId || !tokenAddress || !spender || !amountRequired) return;
 
@@ -34,16 +32,21 @@ export function useTokenApproval(chainId, tokenAddress, spenderAddress, amountRe
       try {
         const provider = getProviderForChain(chainId);
         const owner = getPrimaryAddress();
-        if (!owner) return;
+
+        if (!owner || !ethers.isAddress(owner)) throw new Error("Invalid owner address");
+        if (!ethers.isAddress(spender)) throw new Error("Invalid spender address");
 
         const contract = new ethers.Contract(tokenAddress, ERC20ABI, provider);
-        const decimals = await contract.decimals();
-        const allowance = await contract.allowance(owner, spender);
-        const required = ethers.parseUnits(amountRequired.toString(), decimals);
 
-        setApproved(allowance >= required);
+        const [allowance, decimals] = await Promise.all([
+          contract.allowance(owner, spender),
+          contract.decimals().catch(() => 18),
+        ]);
+
+        const required = ethers.parseUnits(amountRequired.toString(), decimals);
+        setApproved(BigInt(allowance) >= BigInt(required));
       } catch (err) {
-        console.warn("⚠️ useTokenApproval allowance check error:", err.message);
+        console.warn("⚠️ useTokenApproval check error:", err.message);
         setApproved(false);
       }
     };
@@ -51,7 +54,6 @@ export function useTokenApproval(chainId, tokenAddress, spenderAddress, amountRe
     checkAllowance();
   }, [chainId, tokenAddress, spender, amountRequired, getPrimaryAddress]);
 
-  // Paleidžia approve() jeigu reikia
   const approve = async (amountOverride) => {
     setApproving(true);
     setError(null);
@@ -59,10 +61,10 @@ export function useTokenApproval(chainId, tokenAddress, spenderAddress, amountRe
 
     try {
       const signer = getSignerForChain(chainId);
-      if (!signer || !spender) throw new Error("Signer or spender missing");
+      if (!signer || !ethers.isAddress(spender)) throw new Error("Missing or invalid signer/spender");
 
       const contract = new ethers.Contract(tokenAddress, ERC20ABI, signer);
-      const decimals = await contract.decimals();
+      const decimals = await contract.decimals().catch(() => 18);
       const amt = ethers.parseUnits(
         (amountOverride || amountRequired || "0").toString(),
         decimals
@@ -71,6 +73,7 @@ export function useTokenApproval(chainId, tokenAddress, spenderAddress, amountRe
       const tx = await contract.approve(spender, amt);
       setTxHash(tx.hash);
       await tx.wait();
+
       setApproved(true);
     } catch (err) {
       console.error("❌ useTokenApproval error:", err.message);
