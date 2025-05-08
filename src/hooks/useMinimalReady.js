@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import debounce from "lodash.debounce";
 import { toast } from "react-toastify";
-
 import { useAuth } from "@/contexts/AuthContext";
 import { detectIsMobile } from "@/utils/detectIsMobile";
 
@@ -25,12 +24,14 @@ export function useMinimalReady() {
   const lastRefreshTime = useRef(Date.now());
   const failureCount = useRef(0);
   const refreshInterval = useRef(null);
-  const isMobile = useMemo(() => detectIsMobile(), []);
 
-  // Detect DOM ready
+  const { isMobile } = useMemo(() => detectIsMobile(), []);
+
+  // ✅ DOM ready detection
   useEffect(() => {
     if (!isClient) return;
     const markReady = () => setIsDomReady(true);
+
     if (document.readyState === "complete") {
       markReady();
     } else {
@@ -45,6 +46,7 @@ export function useMinimalReady() {
     }
   }, [isClient]);
 
+  // ✅ Minimal readiness check
   const minimalReady = useMemo(() => {
     return (
       isClient &&
@@ -52,13 +54,14 @@ export function useMinimalReady() {
       !!user?.email &&
       !!wallet?.wallet?.address &&
       !authLoading &&
-      !walletLoading
+      !walletLoading &&
+      Object.keys(wallet?.signers || {}).length > 0
     );
   }, [isClient, isDomReady, user, wallet, authLoading, walletLoading]);
 
   const loading = !minimalReady;
 
-  // Update session score
+  // ✅ Session quality score
   useEffect(() => {
     if (!minimalReady) return;
     const score =
@@ -70,7 +73,7 @@ export function useMinimalReady() {
     setSessionScore(Math.max(0, score));
   }, [minimalReady, authLoading, walletLoading, user, wallet]);
 
-  // Safe refresh session manually
+  // ✅ Manual + passive refresh triggers
   useEffect(() => {
     if (!minimalReady) return;
 
@@ -87,16 +90,16 @@ export function useMinimalReady() {
         console.error(`❌ Refresh failed [${trigger}] (${failureCount.current}/3):`, err?.message || err);
         if (failureCount.current >= 3) {
           toast.error("⚠️ Session expired. Logging out...");
-          if (typeof signOut === "function") {
-            signOut(true);
-          }
+          signOut?.(true);
         }
       }
     };
 
-    const onVisible = debounce(() => refresh("visibility"), 300);
-    const onFocus   = debounce(() => refresh("focus"), 300);
-    const onOnline  = debounce(() => refresh("online"), 300);
+    const onVisible = debounce(() => {
+      if (document.visibilityState === "visible") refresh("visibility");
+    }, 300);
+    const onFocus = debounce(() => refresh("focus"), 300);
+    const onOnline = debounce(() => refresh("online"), 300);
 
     document.addEventListener("visibilitychange", onVisible);
     window.addEventListener("focus", onFocus);
@@ -129,9 +132,10 @@ export function useMinimalReady() {
     };
   }, [minimalReady, safeRefreshSession, isMobile, signOut]);
 
-  // Polling every 30s
+  // ✅ Periodic auto-refresh every 30s (if 5min passed)
   useEffect(() => {
     if (!minimalReady) return;
+
     refreshInterval.current = setInterval(() => {
       if (Date.now() - lastRefreshTime.current >= 5 * 60 * 1000) {
         console.log("⏳ Auto refresh after 5 min");
@@ -139,10 +143,11 @@ export function useMinimalReady() {
         lastRefreshTime.current = Date.now();
       }
     }, 30_000);
+
     return () => clearInterval(refreshInterval.current);
   }, [minimalReady, safeRefreshSession]);
 
-  // Offline detection
+  // ✅ Offline notification
   useEffect(() => {
     if (!isClient) return;
     const onOffline = () => toast.warning("⚠️ You are offline. Cached data in use.");
