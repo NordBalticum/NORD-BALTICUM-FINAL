@@ -1,47 +1,69 @@
-// src/hooks/useContractRead.js
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { ethers } from "ethers";
 import { getProviderForChain } from "@/utils/getProviderForChain";
 
 /**
- * useContractRead – universalus hookas smart contract view duomenų skaitymui
+ * useContractRead – universalus hookas bet kokio `view` arba `pure` smart contract metodo skaitymui.
  *
  * @param {number} chainId - tinklo ID
  * @param {string} contractAddress - kontrakto adresas
  * @param {any[]} abi - kontrakto ABI
- * @param {string} method - view/pure metodo pavadinimas
- * @param {any[]} args - metodo argumentai
+ * @param {string} method - metodo pavadinimas
+ * @param {any[]} args - argumento masyvas
+ * @param {boolean} [watch=false] - ar automatiškai refrešinti duomenis kas X sekundžių
+ * @param {number} [intervalMs=10000] - intervalas milisekundėmis, jeigu watch=true
  */
-export function useContractRead(chainId, contractAddress, abi, method, args = []) {
+export function useContractRead(
+  chainId,
+  contractAddress,
+  abi,
+  method,
+  args = [],
+  watch = false,
+  intervalMs = 10000
+) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
+  const readContract = useCallback(async () => {
     if (!chainId || !contractAddress || !abi || !method) return;
 
-    const fetch = async () => {
+    try {
       setLoading(true);
       setError(null);
-      setData(null);
 
-      try {
-        const provider = getProviderForChain(chainId);
-        const contract = new ethers.Contract(contractAddress, abi, provider);
-        const result = await contract[method](...args);
-        setData(result);
-      } catch (err) {
-        console.warn("❌ useContractRead error:", err.message);
-        setError(err.message);
-      } finally {
-        setLoading(false);
+      const provider = getProviderForChain(chainId);
+      const contract = new ethers.Contract(contractAddress, abi, provider);
+
+      if (typeof contract[method] !== "function") {
+        throw new Error(`Method "${method}" not found in contract`);
       }
-    };
 
-    fetch();
+      const result = await contract[method](...args);
+      setData(result);
+    } catch (err) {
+      console.warn("❌ useContractRead error:", err.message);
+      setError(err.message);
+      setData(null);
+    } finally {
+      setLoading(false);
+    }
   }, [chainId, contractAddress, abi, method, JSON.stringify(args)]);
 
-  return { data, loading, error };
+  useEffect(() => {
+    readContract();
+
+    if (!watch) return;
+
+    const interval = setInterval(() => {
+      readContract();
+    }, intervalMs);
+
+    return () => clearInterval(interval);
+  }, [readContract, watch, intervalMs]);
+
+  return { data, loading, error, refetch: readContract };
 }
