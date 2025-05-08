@@ -1,11 +1,15 @@
-// src/hooks/useFeeEstimates.js
 "use client";
 
 import { useEffect, useState } from "react";
 import { getProviderForChain } from "@/utils/getProviderForChain";
 
+/**
+ * useFeeEstimates – MetaMask-grade dujų kainų skaičiavimas (EIP-1559 + legacy)
+ *
+ * @param {number} chainId – tinklo ID
+ * @returns { baseFee, slow, average, fast, legacy, loading, error }
+ */
 export function useFeeEstimates(chainId) {
-  const [loading, setLoading] = useState(true);
   const [fees, setFees] = useState({
     baseFee: null,
     slow: null,
@@ -13,6 +17,7 @@ export function useFeeEstimates(chainId) {
     fast: null,
     legacy: null,
   });
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
   useEffect(() => {
@@ -26,29 +31,42 @@ export function useFeeEstimates(chainId) {
         const provider = getProviderForChain(chainId);
         const latest = await provider.getBlock("latest");
 
-        if (!latest.baseFeePerGas) {
-          // Legacy gas model fallback
-          const gasPrice = await provider.getGasPrice();
-          setFees({
-            baseFee: null,
-            slow: gasPrice,
-            average: gasPrice,
-            fast: gasPrice,
-            legacy: gasPrice,
-          });
-        } else {
+        // EIP-1559 support
+        if (latest?.baseFeePerGas) {
           const base = BigInt(latest.baseFeePerGas.toString());
+
+          const slow = base + base / 10n;
+          const avg = base + base / 5n;
+          const fast = base + base / 3n;
 
           setFees({
             baseFee: base,
-            slow: base + base / 10n,
-            average: base + base / 5n,
-            fast: base + base / 3n,
+            slow,
+            average: avg,
+            fast,
             legacy: null,
+          });
+        } else {
+          // Legacy network (e.g., BNB)
+          const legacyGasPrice = await provider.getGasPrice();
+          setFees({
+            baseFee: null,
+            slow: legacyGasPrice,
+            average: legacyGasPrice,
+            fast: legacyGasPrice,
+            legacy: legacyGasPrice,
           });
         }
       } catch (err) {
-        setError(err.message || "Failed to estimate fees");
+        console.warn("❌ useFeeEstimates error:", err.message);
+        setError(err.message || "Failed to fetch gas estimates");
+        setFees({
+          baseFee: null,
+          slow: null,
+          average: null,
+          fast: null,
+          legacy: null,
+        });
       } finally {
         setLoading(false);
       }
@@ -57,5 +75,5 @@ export function useFeeEstimates(chainId) {
     fetchFees();
   }, [chainId]);
 
-  return { fees, loading, error };
+  return { ...fees, loading, error };
 }
