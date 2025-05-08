@@ -19,10 +19,6 @@ import networks, {
   getNetworkByChainId,
 } from "@/data/networks";
 
-// ============================================
-// ⚙️ Konstanta: LocalStorage Key
-// ============================================
-
 const STORAGE_KEY = "activeNetwork";
 const DEFAULT_NETWORK = "eth";
 
@@ -40,28 +36,25 @@ const NETWORK_ID_MAP = Object.fromEntries(
 const INITIAL_STATE = {
   activeNetwork: DEFAULT_NETWORK,
   chainId: NETWORK_ID_MAP[DEFAULT_NETWORK] ?? 1,
-  chainLabel: getNetworkByValue(DEFAULT_NETWORK)?.label ?? "Ethereum",
+  chainLabel: "Ethereum",
   hydrated: false,
   switchNetwork: () => {},
   switchNetworkSafe: async () => {},
+  switchNetworkOnChainId: () => {},
   isSupportedNetwork: () => false,
   activeToken: "native",
   tokenSymbol: "ETH",
   tokenAddress: null,
+  isTestnet: false,
 };
 
 const NetworkContext = createContext(INITIAL_STATE);
 export const useNetwork = () => useContext(NetworkContext);
 
-// ============================================
-// 🚀 NetworkProvider — MetaMask-level EVM context
-// ============================================
-
 export function NetworkProvider({ children }) {
   const [activeNetwork, setActiveNetwork] = useState(DEFAULT_NETWORK);
   const [hydrated, setHydrated] = useState(false);
 
-  // LocalStorage init
   useEffect(() => {
     if (typeof window === "undefined") return;
     try {
@@ -78,7 +71,6 @@ export function NetworkProvider({ children }) {
     }
   }, []);
 
-  // LocalStorage write
   useEffect(() => {
     if (!hydrated || typeof window === "undefined") return;
     try {
@@ -87,10 +79,6 @@ export function NetworkProvider({ children }) {
       console.warn("[NetworkContext] ⚠️ Nepavyko įrašyti į localStorage:", err);
     }
   }, [hydrated, activeNetwork]);
-
-  // ============================================
-  // 🧠 MetaMask-level network switching
-  // ============================================
 
   const switchNetwork = useCallback((netKey) => {
     if (!NETWORK_KEYS.includes(netKey)) {
@@ -109,17 +97,35 @@ export function NetworkProvider({ children }) {
     }
   }, []);
 
+  const switchNetworkOnChainId = useCallback((chainId) => {
+    const match = Object.entries(NETWORK_ID_MAP).find(([key, id]) => id === chainId);
+    if (match) {
+      const [netKey] = match;
+      setActiveNetwork(netKey);
+    } else {
+      console.warn(`[NetworkContext] ⚠️ Nepavyko rasti tinklo pagal chainId: ${chainId}`);
+    }
+  }, []);
+
   const isSupportedNetwork = useCallback(
     (netKey) => NETWORK_KEYS.includes(netKey),
     []
   );
 
-  const netObj = useMemo(() => getNetworkByValue(activeNetwork), [activeNetwork]);
+  const netObj = useMemo(() => {
+    try {
+      return getNetworkByValue(activeNetwork);
+    } catch {
+      return null;
+    }
+  }, [activeNetwork]);
+
   const chainId = useMemo(() => NETWORK_ID_MAP[activeNetwork] ?? 1, [activeNetwork]);
   const chainLabel = useMemo(() => netObj?.label || "Unknown", [netObj]);
   const tokenSymbol = netObj?.erc20?.symbol || netObj?.nativeSymbol || "ETH";
   const tokenAddress = netObj?.erc20?.address || null;
   const activeToken = tokenAddress ? "erc20" : "native";
+  const isTestnet = !!netObj?.testnet;
 
   const value = useMemo(
     () => ({
@@ -129,10 +135,12 @@ export function NetworkProvider({ children }) {
       hydrated,
       switchNetwork,
       switchNetworkSafe,
+      switchNetworkOnChainId,
       isSupportedNetwork,
       activeToken,
       tokenSymbol,
       tokenAddress,
+      isTestnet,
     }),
     [
       activeNetwork,
@@ -141,10 +149,12 @@ export function NetworkProvider({ children }) {
       hydrated,
       switchNetwork,
       switchNetworkSafe,
+      switchNetworkOnChainId,
       isSupportedNetwork,
       activeToken,
       tokenSymbol,
       tokenAddress,
+      isTestnet,
     ]
   );
 
