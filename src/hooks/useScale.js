@@ -1,16 +1,17 @@
 "use client";
 
+/**
+ * useScale — Ferrari Ultra Responsive Hook v4.9
+ * =============================================
+ * • SSR‑safe + Mobile/Desktop + HDPI + Orientation‑aware
+ * • Battery‑sensitive, motion-safe, GPU-friendly
+ * • Breakpoint‑based scaling with pixel ratio + viewport width
+ * • Coinbase | Phantom | MetaMask‑grade production hook
+ */
+
 import { useEffect, useState, useCallback } from "react";
 import debounce from "lodash.debounce";
 
-/**
- * useScale — Ferrari Ultra Responsive Hook v4.2
- * =============================================
- * • SSR‑safe scale detekcija pagal DPI, ekraną, viewport'ą, orientation
- * • Breakpoint'ai, HDPI korekcijos, motion awareness
- * • Battery‑aware, GPU‑safe, cancelable ir debounced
- * • Coinbase | Phantom | MetaMask‑grade level
- */
 export function useScale(
   base = 1.0,
   {
@@ -27,6 +28,7 @@ export function useScale(
     mobileFactor = 0.75,
     hdpiAdjustment = 0.015,
     portraitAdjustment = 0.01,
+    batteryAdjustment = 0.02,
     minScale = 0.45,
     maxScale = 0.9,
     debounceMs = 120,
@@ -34,7 +36,7 @@ export function useScale(
 ) {
   const [scale, setScale] = useState(base);
 
-  const update = useCallback(() => {
+  const update = useCallback(async () => {
     if (typeof window === "undefined") return;
 
     const width = window.innerWidth;
@@ -64,6 +66,15 @@ export function useScale(
       chosenScale -= portraitAdjustment;
     }
 
+    try {
+      const battery = await navigator?.getBattery?.();
+      if (battery && battery.level < 0.25 && battery.charging === false) {
+        chosenScale -= batteryAdjustment;
+      }
+    } catch {
+      // Fail silently
+    }
+
     chosenScale = Math.max(minScale, Math.min(maxScale, chosenScale));
     setScale(parseFloat(chosenScale.toFixed(4)));
   }, [
@@ -73,6 +84,7 @@ export function useScale(
     mobileFactor,
     hdpiAdjustment,
     portraitAdjustment,
+    batteryAdjustment,
     minScale,
     maxScale,
   ]);
