@@ -4,10 +4,8 @@
 import { ethers } from "ethers";
 
 /**
- * MetaMask-grade universal gas price fetcher.
- * - Supports EIP-1559 + legacy
- * - Applies speed multipliers (slow, avg, fast)
- * - Fallback to 5 Gwei on any node failure
+ * Bulletproof universal gas price getter (EVM + ERC20 + all edge cases).
+ * Works on any 1559 or legacy chain with fallback and multiplier logic.
  *
  * @param {ethers.JsonRpcProvider | ethers.FallbackProvider} provider
  * @param {"slow"|"avg"|"fast"} speed
@@ -15,22 +13,36 @@ import { ethers } from "ethers";
  */
 export async function getGasPrice(provider, speed = "avg") {
   try {
-    const feeData = await provider.getFeeData();
-    const supports1559 = feeData.maxFeePerGas && feeData.maxPriorityFeePerGas;
+    let base;
 
-    let base = supports1559
-      ? feeData.maxFeePerGas
-      : feeData.gasPrice ?? await provider.getGasPrice();
+    // 1) Try full feeData
+    try {
+      const feeData = await provider.getFeeData();
+      base = feeData.maxFeePerGas || feeData.gasPrice || null;
+    } catch (innerErr) {
+      console.warn("⚠️ provider.getFeeData() failed, trying getGasPrice()");
+    }
 
+    // 2) Fallback if feeData missing or broken
     if (!base || typeof base !== "bigint") {
-      console.warn("⚠️ Invalid gas price, fallback to 5 Gwei.");
+      try {
+        base = await provider.getGasPrice();
+      } catch {
+        console.warn("⚠️ provider.getGasPrice() also failed, defaulting...");
+      }
+    }
+
+    // 3) Final fallback
+    if (!base || typeof base !== "bigint") {
+      console.warn("⚠️ Invalid gas price, using fallback 5 Gwei.");
       base = ethers.parseUnits("5", "gwei");
     }
 
-    let multiplier = {
-      slow: 90n,   // 0.9x
-      avg: 100n,   // 1.0x
-      fast: 120n,  // 1.2x
+    // 4) Multiplier
+    const multiplier = {
+      slow: 90n,
+      avg: 100n,
+      fast: 120n,
     }[speed] ?? 100n;
 
     const adjusted = (base * multiplier) / 100n;
@@ -38,7 +50,7 @@ export async function getGasPrice(provider, speed = "avg") {
     console.debug(`⛽ Gas price [${speed}]: ${ethers.formatUnits(adjusted, "gwei")} Gwei`);
     return adjusted;
   } catch (err) {
-    console.error("❌ getGasPrice() failed:", err.message || err);
+    console.error("❌ getGasPrice() critical failure:", err.message || err);
     return ethers.parseUnits("5", "gwei");
   }
 }
