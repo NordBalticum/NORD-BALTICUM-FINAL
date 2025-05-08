@@ -1,13 +1,15 @@
+// src/hooks/useTokenAllowance.js
 "use client";
 
 /**
- * useTokenAllowance — Final MetaMask-Grade Version v2.0
- * ======================================================
- * Tikrina ERC-20 allowance tarp naudotojo ir kontrakto (spender).
- * • Automatinis user address iš AuthContext
- * • Automatinis spender iš networks.js (jei nenurodytas)
- * • Smart BigInt + formatuotas allowance
- * • Full validation + fallback support
+ * useTokenAllowance — MetaMask-Grade ERC20 Allowance Hook
+ * ========================================================
+ * Tikrina ERC20 tokeno allowance tarp naudotojo ir spender (admin ar nurodytas).
+ * - Automatinis naudotojo adresas iš AuthContext
+ * - Automatinis spender iš networks.js (nebent nurodytas ranka)
+ * - Saugus BigInt + žmogui suprantamas formatuotas tekstas
+ * - Apsauga nuo nulinių/neteisingų adresų
+ * - Pilnas klaidų valdymas ir išvalymas
  */
 
 import { useEffect, useState } from "react";
@@ -73,8 +75,8 @@ export function useTokenAllowance(chainId, tokenAddress, spenderAddress = null) 
   }, [chainId, tokenAddress, spenderAddress, getPrimaryAddress]);
 
   return {
-    allowance: rawAllowance,              // BigInt (wei)
-    formatted: formattedAllowance,        // Human-readable string (e.g. "0.0023")
+    allowance: rawAllowance,             // BigInt (wei)
+    formatted: formattedAllowance,       // Žmogui suprantamas tekstas (pvz. "0.0001")
     loading,
     error,
   };
