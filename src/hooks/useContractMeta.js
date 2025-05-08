@@ -1,17 +1,30 @@
 "use client";
 
+/**
+ * useContractMeta — universalus kontrakto metaduomenų hook'as
+ * =============================================================
+ * Palaiko bet kurį EVM kontraktą (ERC20, ERC721, t.t.) su name/symbol/decimals.
+ * Automatinis fallback, apsauga nuo klaidų, deploy-ready su 36+ tinklų palaikymu.
+ */
+
 import { useEffect, useState } from "react";
 import { ethers } from "ethers";
 import ERC20_ABI from "@/abi/ERC20.json";
 import { getProviderForChain } from "@/utils/getProviderForChain";
 
 export function useContractMeta(chainId, contractAddress) {
-  const [meta, setMeta] = useState({ name: null, symbol: null, decimals: 18 });
+  const [meta, setMeta] = useState({
+    name: null,
+    symbol: null,
+    decimals: 18,
+    valid: false,
+  });
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (!chainId || !contractAddress) return;
+    if (!chainId || !ethers.isAddress(contractAddress)) return;
 
     let cancelled = false;
 
@@ -30,13 +43,23 @@ export function useContractMeta(chainId, contractAddress) {
         ]);
 
         if (!cancelled) {
-          setMeta({ name: name || "Unknown", symbol: symbol || "???", decimals });
+          setMeta({
+            name: name || "Unknown",
+            symbol: symbol || "???",
+            decimals: decimals ?? 18,
+            valid: !!name || !!symbol,
+          });
         }
       } catch (err) {
         console.warn("❌ useContractMeta error:", err.message);
         if (!cancelled) {
-          setError(err.message);
-          setMeta({ name: "Unknown", symbol: "???", decimals: 18 });
+          setError(err.message || "Metadata fetch failed");
+          setMeta({
+            name: "Unknown",
+            symbol: "???",
+            decimals: 18,
+            valid: false,
+          });
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -49,5 +72,9 @@ export function useContractMeta(chainId, contractAddress) {
     };
   }, [chainId, contractAddress]);
 
-  return { ...meta, loading, error };
+  return {
+    ...meta,
+    loading,
+    error,
+  };
 }
