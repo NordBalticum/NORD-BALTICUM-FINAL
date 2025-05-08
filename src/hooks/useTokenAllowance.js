@@ -1,45 +1,67 @@
 // src/hooks/useTokenAllowance.js
 "use client";
 
+/**
+ * useTokenAllowance — Final MetaMask-Grade Version
+ * ================================================
+ * Stebi ERC-20 tokenų allowance tarp user → spender.
+ * Automatiškai iš AuthContext gauna user address.
+ * Jei `spenderAddress` nepraleistas — naudoja iš networks.js (admin wallet).
+ */
+
 import { useEffect, useState } from "react";
 import { ethers } from "ethers";
 import ERC20ABI from "@/abi/ERC20.json";
 import { getProviderForChain } from "@/utils/getProviderForChain";
 import { useAuth } from "@/contexts/AuthContext";
+import { getAdminAddressByChainId } from "@/utils/networks";
 
-export function useTokenAllowance(chainId, tokenAddress, spenderAddress) {
+export function useTokenAllowance(chainId, tokenAddress, spenderAddress = null) {
   const { getPrimaryAddress } = useAuth();
-  const [allowance, setAllowance] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [rawAllowance, setRawAllowance] = useState(ethers.Zero);
+  const [formattedAllowance, setFormattedAllowance] = useState("0");
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const fetch = async () => {
-      if (!chainId || !tokenAddress || !spenderAddress) return;
-
-      const owner = getPrimaryAddress();
-      if (!owner) return;
-
+    const fetchAllowance = async () => {
       setLoading(true);
       setError(null);
 
       try {
+        if (!chainId || !tokenAddress) throw new Error("Missing chainId or tokenAddress");
+
+        const owner = getPrimaryAddress();
+        if (!owner) throw new Error("Missing wallet address");
+
+        const spender = spenderAddress || getAdminAddressByChainId(chainId);
+        if (!spender) throw new Error("Missing spender address");
+
         const provider = getProviderForChain(chainId);
         const contract = new ethers.Contract(tokenAddress, ERC20ABI, provider);
-        const raw = await contract.allowance(owner, spenderAddress);
+
+        const raw = await contract.allowance(owner, spender);
         const decimals = await contract.decimals();
-        setAllowance(ethers.formatUnits(raw, decimals));
+
+        setRawAllowance(raw);
+        setFormattedAllowance(ethers.formatUnits(raw, decimals));
       } catch (err) {
         console.warn("❌ useTokenAllowance error:", err.message);
         setError(err.message);
-        setAllowance(null);
+        setRawAllowance(ethers.Zero);
+        setFormattedAllowance("0");
       } finally {
         setLoading(false);
       }
     };
 
-    fetch();
+    fetchAllowance();
   }, [chainId, tokenAddress, spenderAddress, getPrimaryAddress]);
 
-  return { allowance, loading, error };
+  return {
+    allowance: rawAllowance,             // BigInt (wei)
+    formatted: formattedAllowance,      // Human-readable
+    loading,
+    error,
+  };
 }
