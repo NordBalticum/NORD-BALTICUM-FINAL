@@ -1,32 +1,26 @@
-// src/hooks/useContractWrite.js
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { ethers } from "ethers";
 import { useAuth } from "@/contexts/AuthContext";
 
 /**
- * useContractWrite – universalus hookas smart contractų metodų siuntimui
+ * useContractWrite – universalus smart contract metodų vykdymo hook'as su tx hash, kvitu (receipt) ir klaidų tvarkymu.
  *
  * @param {number} chainId - tinklo ID
  * @param {string} contractAddress - kontrakto adresas
  * @param {any[]} abi - kontrakto ABI
+ * @returns { write, writing, txHash, receipt, error }
  */
 export function useContractWrite(chainId, contractAddress, abi) {
   const { getSignerForChain } = useAuth();
 
   const [txHash, setTxHash] = useState(null);
+  const [receipt, setReceipt] = useState(null);
   const [error, setError] = useState(null);
   const [writing, setWriting] = useState(false);
-  const [receipt, setReceipt] = useState(null);
 
-  /**
-   * Vykdyti kontrakto metodą
-   * @param {string} method - kontrakto metodo pavadinimas
-   * @param {any[]} args - metodo argumentai
-   * @param {object} overrides - tx overrides (pvz. value)
-   */
-  const write = async (method, args = [], overrides = {}) => {
+  const write = useCallback(async (method, args = [], overrides = {}) => {
     setWriting(true);
     setError(null);
     setTxHash(null);
@@ -34,26 +28,30 @@ export function useContractWrite(chainId, contractAddress, abi) {
 
     try {
       if (!chainId || !contractAddress || !abi || !method) {
-        throw new Error("⚠️ Missing required parameters");
+        throw new Error("Missing contract info");
       }
 
       const signer = getSignerForChain(chainId);
-      if (!signer) throw new Error("⚠️ Signer unavailable");
+      if (!signer) throw new Error("Signer unavailable");
 
       const contract = new ethers.Contract(contractAddress, abi, signer);
+
+      if (typeof contract[method] !== "function") {
+        throw new Error(`Method "${method}" does not exist on contract`);
+      }
 
       const tx = await contract[method](...args, overrides);
       setTxHash(tx.hash);
 
-      const receipt = await tx.wait();
-      setReceipt(receipt);
+      const result = await tx.wait();
+      setReceipt(result);
     } catch (err) {
-      console.warn("❌ useContractWrite error:", err.message);
-      setError(err.message);
+      console.error("❌ useContractWrite error:", err.message);
+      setError(err.message || "Transaction failed");
     } finally {
       setWriting(false);
     }
-  };
+  }, [chainId, contractAddress, abi, getSignerForChain]);
 
   return {
     write,
