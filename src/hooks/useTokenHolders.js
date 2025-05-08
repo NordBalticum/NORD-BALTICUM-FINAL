@@ -1,12 +1,9 @@
-// src/hooks/useTokenHolders.js
 "use client";
 
-// Šis hook'as naudoja `explorerApi` (pvz. Etherscan, BscScan, etc.) norint gauti holderių skaičių.
-// Reikalinga, kad `networks.js` turėtų `explorerApi` ir kad būtų API key aplinkoje.
-
 import { useEffect, useState } from "react";
-import networks from "@/utils/networks";
-import { getTokenHolders } from "@/utils/fetchTokenHolders"; // reikia sukurti utils/fetchTokenHolders.js
+import { isAddress } from "ethers";
+import networks from "@/data/networks";
+import { getTokenHolders } from "@/utils/fetchTokenHolders";
 
 export function useTokenHolders(chainId, tokenAddress) {
   const [holders, setHolders] = useState(null);
@@ -14,23 +11,42 @@ export function useTokenHolders(chainId, tokenAddress) {
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    let cancelled = false;
+
     const fetch = async () => {
       setLoading(true);
       setError(null);
 
       try {
-        const data = await getTokenHolders(chainId, tokenAddress);
-        setHolders(data);
+        if (!chainId || !isAddress(tokenAddress)) {
+          throw new Error("Invalid chainId or tokenAddress");
+        }
+
+        const network = networks.find(
+          (n) => n.chainId === chainId || n.testnet?.chainId === chainId
+        );
+
+        if (!network?.explorerApi) {
+          throw new Error("Missing explorer API for selected network");
+        }
+
+        const result = await getTokenHolders(chainId, tokenAddress);
+        if (!cancelled) setHolders(result);
       } catch (err) {
         console.warn("❌ Token holders fetch error:", err.message);
-        setError(err.message);
-        setHolders(null);
+        if (!cancelled) {
+          setError(err.message);
+          setHolders(null);
+        }
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
 
-    if (tokenAddress && chainId) fetch();
+    if (chainId && tokenAddress) fetch();
+    return () => {
+      cancelled = true;
+    };
   }, [chainId, tokenAddress]);
 
   return { holders, loading, error };
