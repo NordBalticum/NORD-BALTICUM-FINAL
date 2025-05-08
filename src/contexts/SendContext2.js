@@ -23,6 +23,7 @@ import { useNetwork } from "@/contexts/NetworkContext";
 import { getProviderForChain } from "@/utils/getProviderForChain";
 import { getFallbackGasByChainId } from "@/data/networks";
 import { useActiveSigner, useWalletAddress } from "@/utils/walletHelper";
+import ERC20_ABI from "@/utils/erc20ABI";
 
 // =======================================
 // 🔐 AES-GCM DECRYPT – kaip MetaMask
