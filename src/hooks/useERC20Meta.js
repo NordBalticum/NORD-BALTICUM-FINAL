@@ -1,9 +1,8 @@
-// src/hooks/useERC20Meta.js
 "use client";
 
 import { useEffect, useState } from "react";
-import { getProviderForChain } from "@/utils/getProviderForChain";
 import { ethers } from "ethers";
+import { getProviderForChain } from "@/utils/getProviderForChain";
 
 const ERC20_ABI = [
   "function name() view returns (string)",
@@ -11,13 +10,16 @@ const ERC20_ABI = [
   "function decimals() view returns (uint8)",
 ];
 
+/**
+ * useERC20Meta – universalus hookas token metaduomenims gauti
+ *
+ * @param {string} tokenAddress – ERC20 tokeno adresas
+ * @param {number} chainId – tinklo ID
+ * @returns { name, symbol, decimals, loading, error }
+ */
 export function useERC20Meta(tokenAddress, chainId) {
-  const [meta, setMeta] = useState({
-    name: null,
-    symbol: null,
-    decimals: null,
-  });
-  const [loading, setLoading] = useState(true);
+  const [meta, setMeta] = useState({ name: "", symbol: "", decimals: 18 });
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
   useEffect(() => {
@@ -26,8 +28,11 @@ export function useERC20Meta(tokenAddress, chainId) {
     const fetchMeta = async () => {
       setLoading(true);
       setError(null);
+
       try {
         const provider = getProviderForChain(chainId);
+        if (!provider) throw new Error("Provider unavailable");
+
         const contract = new ethers.Contract(tokenAddress, ERC20_ABI, provider);
 
         const [name, symbol, decimals] = await Promise.all([
@@ -38,7 +43,9 @@ export function useERC20Meta(tokenAddress, chainId) {
 
         setMeta({ name, symbol, decimals });
       } catch (err) {
-        setError(err.message || "Failed to load ERC20 meta");
+        console.warn("❌ useERC20Meta error:", err.message);
+        setMeta({ name: "", symbol: "", decimals: 18 });
+        setError(err.message || "Failed to load token metadata");
       } finally {
         setLoading(false);
       }
@@ -47,5 +54,11 @@ export function useERC20Meta(tokenAddress, chainId) {
     fetchMeta();
   }, [tokenAddress, chainId]);
 
-  return { ...meta, loading, error };
+  return {
+    name: meta.name,
+    symbol: meta.symbol,
+    decimals: meta.decimals,
+    loading,
+    error,
+  };
 }
