@@ -2,16 +2,16 @@
 "use client";
 
 /**
- * useTokenName — MetaMask-grade ERC20 name hook
- * =============================================
- * Gauna tokeno pavadinimą saugiai iš bet kurio EVM tinklo.
- * Jei nepavyksta – grąžina null be crash'ų.
+ * useTokenName — ERC20 name() gavimas su MetaMask-grade stabilumu
+ * ---------------------------------------------------------------
+ * Naudoja minimalų inline ABI. Jokio konflikto su bendru ABI rinkiniu.
  */
 
 import { useEffect, useState } from "react";
 import { ethers } from "ethers";
-import ERC20ABI from "@/abi/ERC20.json";
 import { getProviderForChain } from "@/utils/getProviderForChain";
+
+const NAME_ABI = ["function name() view returns (string)"];
 
 export function useTokenName(chainId, tokenAddress) {
   const [name, setName] = useState(null);
@@ -21,7 +21,7 @@ export function useTokenName(chainId, tokenAddress) {
   useEffect(() => {
     let cancelled = false;
 
-    const fetchName = async () => {
+    const fetch = async () => {
       if (!chainId || !tokenAddress) return;
 
       setLoading(true);
@@ -29,21 +29,21 @@ export function useTokenName(chainId, tokenAddress) {
 
       try {
         const provider = getProviderForChain(chainId);
-        const contract = new ethers.Contract(tokenAddress, ERC20ABI, provider);
+        const contract = new ethers.Contract(tokenAddress, NAME_ABI, provider);
         const result = await contract.name();
         if (!cancelled) setName(result);
       } catch (err) {
         console.warn("❌ useTokenName error:", err.message);
         if (!cancelled) {
           setName(null);
-          setError(err.message || "Failed to fetch token name");
+          setError(err.message);
         }
       } finally {
         if (!cancelled) setLoading(false);
       }
     };
 
-    fetchName();
+    fetch();
     return () => {
       cancelled = true;
     };
