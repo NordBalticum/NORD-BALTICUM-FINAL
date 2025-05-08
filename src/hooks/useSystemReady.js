@@ -1,35 +1,45 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+/**
+ * useSystemReady v3.0 — Final MetaMask-Grade+
+ * ============================================
+ * • Tikrina: Auth + Wallet + Network + DOM readiness
+ * • Integruotas retry/poll su smart limit
+ * • Gražina: latency, retries, connection, įrenginį, ir refresh rekomendaciją
+ */
+
+import { useState, useEffect, useMemo, useRef } from "react";
 import { ethers } from "ethers";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNetwork } from "@/contexts/NetworkContext";
 import { detectIsMobile } from "@/utils/detectIsMobile";
 
-// Tikrinimų limitas per komponento gyvavimo ciklą
 const MAX_RETRIES = 10;
 const POLL_DELAY_MS = 1000;
 
 export function useSystemReady() {
   const [domReady, setDomReady] = useState(false);
   const [pollCount, setPollCount] = useState(0);
+  const [latencyMs, setLatencyMs] = useState(null);
+  const startTimeRef = useRef(performance.now());
 
   const { user, wallet, authLoading, walletLoading } = useAuth();
   const { activeNetwork, chainId } = useNetwork();
 
-  // ✅ Įrenginio informacija: mobile, scale, ryšys
   const {
     isMobile,
     isTablet,
     isDesktop,
     scale,
-    connectionType,
+    connectionType: rawConnection,
   } = useMemo(() => detectIsMobile(), []);
 
-  // ✅ DOM readiness (SSR fallback)
+  const connectionType = rawConnection || (typeof navigator !== "undefined" && navigator.onLine ? "online" : "offline");
+
   useEffect(() => {
     if (typeof window === "undefined") return;
     const onReady = () => setDomReady(true);
+
     if (document.readyState === "complete") {
       onReady();
     } else {
@@ -38,7 +48,6 @@ export function useSystemReady() {
     }
   }, []);
 
-  // ✅ Auth readiness
   const authReady = useMemo(() => {
     return (
       !authLoading &&
@@ -49,33 +58,35 @@ export function useSystemReady() {
     );
   }, [authLoading, walletLoading, user, wallet]);
 
-  // ✅ Network readiness
   const networkReady = useMemo(() => {
     return !!activeNetwork && !!chainId;
   }, [activeNetwork, chainId]);
 
-  // ✅ Retry/polling jei vėluoja readiness
-  useEffect(() => {
-    if (authReady && networkReady && domReady) return;
-    if (pollCount >= MAX_RETRIES) return;
-
-    const timeout = setTimeout(() => {
-      setPollCount((prev) => prev + 1);
-    }, POLL_DELAY_MS);
-
-    return () => clearTimeout(timeout);
-  }, [authReady, networkReady, domReady, pollCount]);
-
-  // ✅ Galutinė readiness būsena
   const systemReady = useMemo(() => {
     return (
       typeof window !== "undefined" &&
       typeof ethers !== "undefined" &&
+      domReady &&
       authReady &&
-      networkReady &&
-      domReady
+      networkReady
     );
-  }, [authReady, networkReady, domReady]);
+  }, [domReady, authReady, networkReady]);
+
+  useEffect(() => {
+    if (!systemReady && pollCount < MAX_RETRIES) {
+      const timeout = setTimeout(() => {
+        setPollCount((prev) => prev + 1);
+      }, POLL_DELAY_MS);
+      return () => clearTimeout(timeout);
+    } else if (systemReady && latencyMs === null) {
+      const endTime = performance.now();
+      setLatencyMs(Math.round(endTime - startTimeRef.current));
+    }
+  }, [systemReady, pollCount, latencyMs]);
+
+  const refreshRecommended = useMemo(() => {
+    return pollCount >= MAX_RETRIES && !systemReady;
+  }, [pollCount, systemReady]);
 
   return {
     ready: systemReady,
@@ -84,10 +95,12 @@ export function useSystemReady() {
     authReady,
     networkReady,
     retries: pollCount,
+    latencyMs,
+    refreshRecommended,
     isMobile,
     isTablet,
     isDesktop,
-    scale,
     connectionType,
+    scale,
   };
 }
