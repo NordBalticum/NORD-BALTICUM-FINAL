@@ -4,18 +4,32 @@
 import { useMemo } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 
+/**
+ * useWalletStatus – Ultra hook for wallet readiness and diagnostics.
+ */
 export function useWalletStatus() {
-  const { wallet, walletLoading, getPrimaryAddress } = useAuth();
+  const {
+    wallet,
+    walletLoading,
+    getPrimaryAddress,
+    getAllSigners,
+  } = useAuth();
+
+  const isConnected = !!wallet?.wallet;
+  const address = getPrimaryAddress();
+  const signerCount = Object.keys(getAllSigners() || {}).length;
 
   const isReady = useMemo(() => {
-    return !!wallet?.wallet && !!getPrimaryAddress() && !walletLoading;
-  }, [wallet, getPrimaryAddress, walletLoading]);
+    return isConnected && !!address && signerCount > 0 && !walletLoading;
+  }, [isConnected, address, signerCount, walletLoading]);
 
   return {
-    address: getPrimaryAddress(),
+    address,
     ready: isReady,
     loading: walletLoading,
-    isConnected: !!wallet?.wallet,
-    signerCount: Object.keys(wallet?.signers || {}).length,
+    isConnected,
+    signerCount,
+    walletObject: wallet?.wallet || null,
+    allSigners: getAllSigners(),
   };
 }
