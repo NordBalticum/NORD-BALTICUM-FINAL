@@ -1,13 +1,12 @@
-// src/hooks/useSystemReady.js
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import { ethers } from "ethers";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNetwork } from "@/contexts/NetworkContext";
 import { detectIsMobile } from "@/utils/detectIsMobile";
-import { ethers } from "ethers";
 
-// Max retry attempts during polling
+// Tikrinimų limitas per komponento gyvavimo ciklą
 const MAX_RETRIES = 10;
 const POLL_DELAY_MS = 1000;
 
@@ -18,55 +17,44 @@ export function useSystemReady() {
   const { user, wallet, authLoading, walletLoading } = useAuth();
   const { activeNetwork, chainId } = useNetwork();
 
-  // ✅ Detekcija įrenginio savybių – mobilus / desktop / ryšio tipas
-  const deviceInfo = useMemo(() => {
-    const {
-      isMobile,
-      isTablet,
-      isDesktop,
-      scale,
-      connectionType,
-    } = detectIsMobile();
+  // ✅ Įrenginio informacija: mobile, scale, ryšys
+  const {
+    isMobile,
+    isTablet,
+    isDesktop,
+    scale,
+    connectionType,
+  } = useMemo(() => detectIsMobile(), []);
 
-    return {
-      isMobile,
-      isTablet,
-      isDesktop,
-      scale,
-      connectionType,
-    };
-  }, []);
-
-  // ✅ DOM pilnai užsikrovęs (naudojant SSR fallbacką)
+  // ✅ DOM readiness (SSR fallback)
   useEffect(() => {
     if (typeof window === "undefined") return;
-
-    const handleLoad = () => setDomReady(true);
-
+    const onReady = () => setDomReady(true);
     if (document.readyState === "complete") {
-      setDomReady(true);
+      onReady();
     } else {
-      window.addEventListener("load", handleLoad);
-      return () => window.removeEventListener("load", handleLoad);
+      window.addEventListener("load", onReady);
+      return () => window.removeEventListener("load", onReady);
     }
   }, []);
 
-  // ✅ Autentifikacija ir wallet pasiruošęs
+  // ✅ Auth readiness
   const authReady = useMemo(() => {
     return (
       !authLoading &&
       !walletLoading &&
       !!user?.email &&
-      !!wallet?.wallet?.address
+      !!wallet?.wallet?.address &&
+      Object.keys(wallet?.signers || {}).length > 0
     );
   }, [authLoading, walletLoading, user, wallet]);
 
-  // ✅ Tinklo nustatymai (network + chainId)
+  // ✅ Network readiness
   const networkReady = useMemo(() => {
     return !!activeNetwork && !!chainId;
   }, [activeNetwork, chainId]);
 
-  // ✅ Automatinis polling jeigu kažkuri sistema vėluoja
+  // ✅ Retry/polling jei vėluoja readiness
   useEffect(() => {
     if (authReady && networkReady && domReady) return;
     if (pollCount >= MAX_RETRIES) return;
@@ -78,7 +66,7 @@ export function useSystemReady() {
     return () => clearTimeout(timeout);
   }, [authReady, networkReady, domReady, pollCount]);
 
-  // ✅ Visa sistema pasiruošus (visos sąlygos įvykdytos)
+  // ✅ Galutinė readiness būsena
   const systemReady = useMemo(() => {
     return (
       typeof window !== "undefined" &&
@@ -96,10 +84,10 @@ export function useSystemReady() {
     authReady,
     networkReady,
     retries: pollCount,
-    isMobile: deviceInfo.isMobile,
-    isTablet: deviceInfo.isTablet,
-    isDesktop: deviceInfo.isDesktop,
-    scale: deviceInfo.scale,
-    connectionType: deviceInfo.connectionType,
+    isMobile,
+    isTablet,
+    isDesktop,
+    scale,
+    connectionType,
   };
 }
