@@ -1,4 +1,3 @@
-// src/hooks/useTokenTransferFrom.js
 "use client";
 
 import { useState } from "react";
@@ -19,6 +18,8 @@ export function useTokenTransferFrom(chainId, tokenAddress) {
 
     try {
       const signer = getSignerForChain(chainId);
+      if (!signer) throw new Error("No signer available");
+
       const contract = new ethers.Contract(tokenAddress, ERC20ABI, signer);
       const decimals = await contract.decimals();
       const amt = ethers.parseUnits(amount.toString(), decimals);
@@ -27,7 +28,7 @@ export function useTokenTransferFrom(chainId, tokenAddress) {
       setTxHash(tx.hash);
       await tx.wait();
     } catch (err) {
-      console.warn("❌ transferFrom failed:", err.message);
+      console.warn("❌ useTokenTransferFrom:", err.message);
       setError(err.message);
     } finally {
       setSending(false);
