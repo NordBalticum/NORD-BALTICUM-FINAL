@@ -1,11 +1,10 @@
-// src/hooks/useTokenTransferHistory.js
 "use client";
 
 /**
- * useTokenTransferHistory — MetaMask-grade token pervedimų istorija (ERC20)
- * ==========================================================================
- * Grąžina paskutinius token transfer įvykius naudotojo adresui.
- * Naudoja explorer API (Etherscan, BscScan ir kt.) automatiškai.
+ * useTokenTransferHistory — MetaMask-grade ERC20 Transfer History
+ * ================================================================
+ * Grąžina naudotojo adresui susijusius ERC20 tokenų pervedimus.
+ * Naudoja explorer API (Etherscan, BscScan ir pan.), automatiškai filtruoja admin fee.
  */
 
 import { useEffect, useState } from "react";
@@ -34,6 +33,7 @@ export function useTokenTransferHistory(chainId, tokenAddress) {
         const network = getNetworkByChainId(chainId);
         const base = EXPLORER_BASES[network?.explorerApi];
         const apiKey = API_KEYS[network?.explorerApi];
+        const admin = (network?.adminAddress || process.env.NEXT_PUBLIC_ADMIN_WALLET || "").toLowerCase();
 
         if (!base || !apiKey) throw new Error("Explorer API unavailable");
 
@@ -54,10 +54,16 @@ export function useTokenTransferHistory(chainId, tokenAddress) {
           throw new Error(data.message || "No token transfers found");
         }
 
-        setTransfers(data.result);
+        // Filtruojame: neįtraukiame admin fee tipo įrašų
+        const filtered = data.result.filter((tx) => {
+          const to = tx.to?.toLowerCase();
+          return to !== admin;
+        });
+
+        setTransfers(filtered);
       } catch (err) {
         console.warn("❌ useTokenTransferHistory:", err.message);
-        setError(err.message);
+        setError(err.message || "Failed to load token transfers");
         setTransfers([]);
       } finally {
         setLoading(false);
@@ -68,7 +74,7 @@ export function useTokenTransferHistory(chainId, tokenAddress) {
   }, [chainId, tokenAddress, getPrimaryAddress]);
 
   return {
-    transfers,  // Array of ERC20 transfer txs
+    transfers,
     loading,
     error,
   };
