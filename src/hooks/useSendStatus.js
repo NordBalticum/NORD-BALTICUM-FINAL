@@ -1,23 +1,22 @@
-// src/hooks/useSendStatus.js
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { getProviderForChain } from "@/utils/getProviderForChain";
 
 /**
- * Sekti transakcijos statusą su retry, backoff ir replaced detection.
+ * ✅ Sekti transakcijos statusą (MetaMask-grade) su retry + backoff + dropped/replaced detekcija.
  *
- * @param {string} txHash - Transaction hash
- * @param {number} chainId - chainId, kuriame siųsta
- * @returns { status, loading, confirmed, dropped, replaced, error }
+ * @param {string} txHash - Transakcijos hash
+ * @param {number} chainId - Tinklo chainId
+ * @returns {Object} - { status, loading, confirmed, dropped, replaced, error }
  */
 export function useSendStatus(txHash, chainId) {
+  const [status, setStatus] = useState("idle"); // idle | pending | confirmed | dropped | replaced | failed
   const [loading, setLoading] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
   const [dropped, setDropped] = useState(false);
   const [replaced, setReplaced] = useState(false);
   const [error, setError] = useState(null);
-  const [status, setStatus] = useState("idle"); // idle | pending | confirmed | dropped | replaced | failed
 
   useEffect(() => {
     if (!txHash || !chainId) return;
@@ -25,75 +24,68 @@ export function useSendStatus(txHash, chainId) {
     const provider = getProviderForChain(chainId);
     let cancelled = false;
 
-    const checkTransaction = async () => {
+    const checkTxStatus = async () => {
       setLoading(true);
       setStatus("pending");
 
-      const maxRetries = 6;
+      const MAX_RETRIES = 6;
       let retry = 0;
 
-      while (retry < maxRetries && !cancelled) {
+      while (retry < MAX_RETRIES && !cancelled) {
         try {
+          const timeoutMs = 30000 + retry * 5000;
           const receipt = await Promise.race([
             provider.waitForTransaction(txHash, 1),
             new Promise((_, reject) =>
-              setTimeout(() => reject(new Error("⏱️ Timeout")), 30000 + retry * 5000)
-            )
+              setTimeout(() => reject(new Error("⏱️ Timeout")), timeoutMs)
+            ),
           ]);
 
           if (cancelled) return;
 
-          if (receipt && receipt.status === 1) {
+          if (receipt?.status === 1) {
             setConfirmed(true);
             setStatus("confirmed");
-            setLoading(false);
-            return;
-          } else if (receipt && receipt.status === 0) {
+            break;
+          } else if (receipt?.status === 0) {
             setError("❌ Transaction reverted");
             setStatus("failed");
-            setLoading(false);
-            return;
+            break;
           }
         } catch (err) {
           retry++;
-          console.warn(`⏳ Retry ${retry}/${maxRetries} —`, err.message);
+          console.warn(`[useSendStatus] Retry ${retry}/${MAX_RETRIES} —`, err.message);
 
-          // Retry exhausted
-          if (retry >= maxRetries) {
+          if (retry >= MAX_RETRIES) {
             try {
               const tx = await provider.getTransaction(txHash);
               if (!tx || tx.blockNumber == null) {
                 setDropped(true);
                 setStatus("dropped");
                 setError("⚠️ Transaction dropped (not mined)");
-              } else if (tx?.replacedByAnotherTransaction) {
+              } else if (tx.replacedByAnotherTransaction) {
                 setReplaced(true);
                 setStatus("replaced");
                 setError("⚠️ Transaction replaced");
               } else {
-                setError("❌ Transaction timeout or failed");
                 setStatus("failed");
+                setError("❌ Transaction not confirmed");
               }
             } catch (finalErr) {
-              setError(finalErr.message || "❌ Unknown final error");
               setStatus("failed");
+              setError(finalErr.message || "❌ Unknown transaction error");
             }
-
-            setLoading(false);
-            return;
+            break;
           }
 
-          await new Promise((res) =>
-            setTimeout(res, 1000 * Math.pow(2, retry))
-          );
+          await new Promise((r) => setTimeout(r, 1000 * 2 ** retry));
         }
       }
 
-      setLoading(false);
+      if (!cancelled) setLoading(false);
     };
 
-    checkTransaction();
-
+    checkTxStatus();
     return () => {
       cancelled = true;
     };
