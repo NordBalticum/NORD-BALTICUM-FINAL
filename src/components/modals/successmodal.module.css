@@ -1,85 +1,109 @@
+/*────────────────────────────────────────────────────────────────────────────
+  SuccessModal.module.css — FINAL DIAMOND V2.0
+  Inspired by MetaMask, Phantom, Coinbase
+────────────────────────────────────────────────────────────────────────────*/
+
 .overlay {
   position: fixed;
   inset: 0;
+  z-index: 9999;
   background: rgba(0, 0, 0, 0.75);
-  backdrop-filter: blur(25px) saturate(150%);
+  backdrop-filter: blur(25px) saturate(160%);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 9999;
-  animation: fadeIn 0.4s ease forwards;
+  animation: fadeIn 0.35s ease-out forwards;
+  pointer-events: auto;
 }
 
-@keyframes fadeIn {
-  0% { opacity: 0; }
-  100% { opacity: 1; }
-}
-
+/* Main Modal */
 .confirmModal {
-  background: rgba(18, 18, 24, 0.92);
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  border-radius: 24px;
+  background: linear-gradient(145deg, #0f0f0f, #1a1a1a);
+  border: 1px solid rgba(0, 255, 127, 0.25);
+  border-radius: 22px;
   padding: 40px;
   max-width: 420px;
   width: 90%;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
-  backdrop-filter: blur(30px) saturate(160%);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  box-shadow: 0 20px 60px rgba(0, 255, 127, 0.25);
   text-align: center;
-  animation: popIn 0.45s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+  position: relative;
+  backdrop-filter: blur(30px) saturate(180%);
+  animation: popIn 0.4s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+  color: white;
 }
 
-@keyframes popIn {
-  0% { opacity: 0; transform: scale(0.85); }
-  100% { opacity: 1; transform: scale(1); }
-}
-
+/* Title */
 .modalTitle {
-  font-size: 2rem;
-  font-weight: 900;
-  color: #ffffff;
-  margin-bottom: 24px;
-  text-shadow: 0 0 12px rgba(255, 255, 255, 0.7);
-  letter-spacing: 0.8px;
+  font-size: 1.9rem;
+  font-weight: 800;
+  color: #00ff8b;
+  margin-bottom: 1rem;
+  text-shadow: 0 0 12px rgba(0, 255, 127, 0.4);
+  letter-spacing: 0.6px;
 }
 
+/* Info / Message */
 .modalInfo {
-  font-size: 1.2rem;
-  color: #d1d1d1;
-  margin-bottom: 30px;
-  text-shadow: 0 0 6px rgba(255, 255, 255, 0.5);
-  opacity: 0.9;
+  font-size: 1.15rem;
+  color: #e0ffe8;
+  opacity: 0.95;
+  margin-bottom: 1.8rem;
 }
 
+/* Explorer Button */
+.explorerButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(90deg, #00bfff, #1a73e8);
+  padding: 14px 28px;
+  color: white;
+  font-weight: 800;
+  font-size: 1.1rem;
+  text-decoration: none;
+  border-radius: 16px;
+  border: 2px solid white;
+  box-shadow: 0 0 20px rgba(0, 191, 255, 0.6);
+  margin-top: 20px;
+  transition: all 0.3s ease;
+  animation: explorerGlow 2.5s infinite alternate;
+}
+
+.explorerButton:hover {
+  background: linear-gradient(90deg, #1a73e8, #00bfff);
+  transform: scale(1.08);
+  box-shadow: 0 0 30px rgba(0, 191, 255, 0.9);
+}
+
+/* Bottom Actions */
 .modalActions {
-  margin-top: 28px;
+  margin-top: 32px;
   display: flex;
-  gap: 16px;
+  gap: 18px;
   justify-content: center;
 }
 
 .modalButton {
-  background: linear-gradient(135deg, #00bfff, #1a73e8);
-  border: 2px solid white;
-  color: white;
   padding: 14px 30px;
+  font-size: 1.05rem;
   font-weight: 700;
-  font-size: 1.1rem;
   border-radius: 16px;
+  border: none;
   cursor: pointer;
-  transition: all 0.35s ease;
   text-shadow: 0 0 8px rgba(255, 255, 255, 0.7);
-  box-shadow: 0 8px 25px rgba(0, 191, 255, 0.5);
+  background: linear-gradient(135deg, #00ff8b, #00cc6a);
+  color: black;
+  box-shadow: 0 0 20px rgba(0, 255, 127, 0.5);
+  transition: all 0.3s ease;
 }
 
 .modalButton:hover {
-  background: linear-gradient(135deg, #1a73e8, #00bfff);
-  transform: scale(1.08);
-  box-shadow: 0 0 22px rgba(0, 191, 255, 1);
+  background: linear-gradient(135deg, #00e676, #00ff8b);
+  transform: scale(1.06);
+  box-shadow: 0 0 28px rgba(0, 255, 127, 0.7);
 }
 
+/* Optional Cancel Variant */
 .cancel {
   background: transparent;
   color: white;
@@ -89,34 +113,38 @@
 
 .cancel:hover {
   background: rgba(255, 255, 255, 0.1);
-  transform: scale(1.05);
+  transform: scale(1.04);
 }
 
-.explorerButton {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(90deg, #00bfff, #1a73e8);
-  padding: 14px 28px;
-  color: white;
-  text-decoration: none;
-  font-weight: 800;
-  font-size: 1.1rem;
-  border-radius: 16px;
-  border: 2px solid white;
-  box-shadow: 0 0 20px rgba(0, 191, 255, 0.6);
-  margin-top: 20px;
-  transition: all 0.3s ease;
-  animation: explorerGlow 2s infinite alternate;
+/* Close Button (X) */
+.closeBtn {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  background: transparent;
+  border: none;
+  font-size: 1.5rem;
+  color: #ffffff;
+  cursor: pointer;
+  transition: color 0.2s ease;
 }
 
-.explorerButton:hover {
-  background: linear-gradient(90deg, #1a73e8, #00bfff);
-  box-shadow: 0 0 30px rgba(0, 191, 255, 0.9);
-  transform: scale(1.1);
+.closeBtn:hover {
+  color: #ff4d4f;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes popIn {
+  from { opacity: 0; transform: scale(0.85); }
+  to   { opacity: 1; transform: scale(1); }
 }
 
 @keyframes explorerGlow {
-  0% { box-shadow: 0 0 20px rgba(0, 191, 255, 0.5); }
+  0%   { box-shadow: 0 0 20px rgba(0, 191, 255, 0.5); }
   100% { box-shadow: 0 0 30px rgba(0, 191, 255, 0.8); }
 }
