@@ -28,17 +28,24 @@ export function useWalletStatus() {
   }, [isConnected, address, signerCount, walletLoading]);
 
   return {
-    ready: isReady,
-    loading: walletLoading,
-    isConnected,
-    address,
-    signerCount,
-    walletObject: wallet?.wallet || null,
-    allSigners: signers,
+    ready: isReady,                        // Whether wallet is fully ready for interaction
+    loading: walletLoading,                 // Indicates whether wallet is still loading
+    isConnected,                           // Whether the wallet is connected
+    address,                               // The primary address associated with the wallet
+    signerCount,                           // The number of available signers
+    walletObject: wallet?.wallet || null,   // Wallet object with full details, null if not connected
+    allSigners: signers,                   // All available signers
     diagnostics: {
-      hasWallet: !!wallet,
-      hasSigners: signerCount > 0,
-      hasAddress: !!address,
+      hasWallet: !!wallet,                 // Whether wallet object is present
+      hasSigners: signerCount > 0,         // Whether there are any available signers
+      hasAddress: !!address,               // Whether the wallet has a primary address
     },
+    debug: {
+      // For debugging purposes, returns additional wallet state details
+      walletState: wallet,
+      addressState: address,
+      signersState: signers,
+      readyState: isReady,
+    }
   };
 }
