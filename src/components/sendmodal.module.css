@@ -216,3 +216,62 @@
   backdrop-filter: blur(6px);
   box-shadow: inset 0 0 12px rgba(255, 255, 255, 0.03);
 }
+
+/* === TX Pulse Animation === */
+.txPulse {
+  display: inline-block;
+  color: #22c55e;
+  font-weight: 600;
+  animation: pulseGlow 1.2s infinite ease-in-out;
+  text-shadow:
+    0 0 6px rgba(34, 197, 94, 0.3),
+    0 0 12px rgba(34, 197, 94, 0.4),
+    0 0 24px rgba(34, 197, 94, 0.5);
+}
+
+@keyframes pulseGlow {
+  0%   { text-shadow: 0 0 6px rgba(34, 197, 94, 0.3); }
+  50%  { text-shadow: 0 0 18px rgba(34, 197, 94, 0.7); }
+  100% { text-shadow: 0 0 6px rgba(34, 197, 94, 0.3); }
+}
+
+/* === Responsive Modal === */
+@media screen and (max-width: 768px) {
+  .modalContent {
+    padding: 26px;
+    width: 94%;
+    max-width: 96%;
+    border-radius: 20px;
+  }
+
+  .title {
+    font-size: 1.2rem;
+    margin-bottom: 18px;
+  }
+
+  .input,
+  .maxButton {
+    font-size: 0.95rem;
+    padding: 12px 14px;
+  }
+
+  .buttonGroup {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .confirmButton,
+  .cancelButton {
+    font-size: 0.95rem;
+    padding: 12px 14px;
+  }
+
+  .confirmBox {
+    padding: 14px;
+    font-size: 0.9rem;
+  }
+
+  .loadingText {
+    font-size: 0.9rem;
+  }
+}
