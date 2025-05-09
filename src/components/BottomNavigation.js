@@ -6,7 +6,6 @@ import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { FaWallet, FaArrowUp, FaArrowDown, FaClock, FaUserCircle } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
-
 import { useMinimalReady } from "@/hooks/useMinimalReady"; // ✅ Naujas hookas readiness
 
 import styles from "@/components/bottomnav.module.css";
