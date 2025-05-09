@@ -11,12 +11,8 @@
 }
 
 @keyframes fadeIn {
-  0% {
-    opacity: 0;
-  }
-  100% {
-    opacity: 1;
-  }
+  0% { opacity: 0; }
+  100% { opacity: 1; }
 }
 
 .confirmModal {
@@ -36,14 +32,8 @@
 }
 
 @keyframes popIn {
-  0% {
-    opacity: 0;
-    transform: scale(0.85);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
+  0% { opacity: 0; transform: scale(0.85); }
+  100% { opacity: 1; transform: scale(1); }
 }
 
 .modalTitle {
@@ -127,10 +117,6 @@
 }
 
 @keyframes explorerGlow {
-  0% {
-    box-shadow: 0 0 20px rgba(0, 191, 255, 0.5);
-  }
-  100% {
-    box-shadow: 0 0 30px rgba(0, 191, 255, 0.8);
-  }
+  0% { box-shadow: 0 0 20px rgba(0, 191, 255, 0.5); }
+  100% { box-shadow: 0 0 30px rgba(0, 191, 255, 0.8); }
 }
