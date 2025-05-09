@@ -1,11 +1,13 @@
 "use client";
 
 /**
- * useMinimalReady — universalus readiness ir session guard hookas
- * ===============================================================
- * - Tikrina ar user, wallet, signer ir DOM yra pilnai paruošti
- * - Įvertina sesijos kokybę, rodo latency, saugiai auto-refreshina
- * - Detekuoja mobile, offline, visibility ir focus pokyčius
+ * useMinimalReady — MetaMask-Grade Session Guard Hook
+ * ====================================================
+ * Tikrina ar sistema pasiruošusi naudoti: user, wallet, signer, DOM, mobilus statusas.
+ * - Automatinis session refresh su cooldown + retry
+ * - Debounce'inamas matomumas, focus, online statusas
+ * - Auto refresh kas 30s jeigu praėjo 5min nuo paskutinio
+ * - Detekuoja offline, mobile, resume, pageshow
  */
 
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -31,12 +33,12 @@ export function useMinimalReady() {
   const isClient = typeof window !== "undefined";
   const lastRefreshTime = useRef(Date.now());
   const failureCount = useRef(0);
-  const refreshInterval = useRef(null);
   const refreshCooldown = useRef(false);
+  const refreshInterval = useRef(null);
 
   const { isMobile } = useMemo(() => detectIsMobile(), []);
 
-  // ✅ DOM ready (with double fallback)
+  // ✅ DOM ready tracker
   useEffect(() => {
     if (!isClient) return;
 
@@ -56,7 +58,7 @@ export function useMinimalReady() {
     }
   }, [isClient]);
 
-  // ✅ Final minimal readiness
+  // ✅ Minimal readiness tikrinimas
   const minimalReady = useMemo(() => {
     return (
       isClient &&
@@ -71,7 +73,7 @@ export function useMinimalReady() {
 
   const loading = !minimalReady;
 
-  // ✅ Session score tracker
+  // ✅ Sesijos kokybės balas
   useEffect(() => {
     if (!minimalReady) return;
     const score =
@@ -83,14 +85,15 @@ export function useMinimalReady() {
     setSessionScore(Math.max(0, score));
   }, [minimalReady, authLoading, walletLoading, user, wallet]);
 
-  // ✅ Passive + active refresh handler
+  // ✅ Aktyvus + pasyvus refresh
   useEffect(() => {
     if (!minimalReady || !safeRefreshSession) return;
 
     const refresh = async (trigger = "auto") => {
       if (refreshCooldown.current) return;
+
       refreshCooldown.current = true;
-      setTimeout(() => (refreshCooldown.current = false), 2500); // cooldown
+      setTimeout(() => (refreshCooldown.current = false), 2500); // Cooldown 2.5s
 
       const start = performance.now();
       try {
@@ -147,13 +150,13 @@ export function useMinimalReady() {
     };
   }, [minimalReady, safeRefreshSession, isMobile, signOut]);
 
-  // ✅ Periodic refresh every 30s (only if 5min passed)
+  // ✅ Periodic auto refresh kas 30s jei praėjo >5min
   useEffect(() => {
     if (!minimalReady || !safeRefreshSession) return;
 
     refreshInterval.current = setInterval(() => {
       if (Date.now() - lastRefreshTime.current >= 5 * 60 * 1000) {
-        console.log("⏳ Auto refresh every 5min");
+        console.log("⏳ Auto refresh after 5min");
         safeRefreshSession?.();
         lastRefreshTime.current = Date.now();
       }
@@ -165,16 +168,16 @@ export function useMinimalReady() {
   // ✅ Offline detection
   useEffect(() => {
     if (!isClient) return;
-    const onOffline = () => toast.warning("⚠️ You are offline. Cached data in use.");
+    const onOffline = () => toast.warning("⚠️ You are offline. Using cached data.");
     window.addEventListener("offline", onOffline);
     return () => window.removeEventListener("offline", onOffline);
   }, []);
 
   return {
-    ready: minimalReady,
-    loading,
-    latencyMs,
-    sessionScore,
-    isMobile,
+    ready: minimalReady,     // boolean — visa sistema veikia
+    loading,                 // boolean — false kai pasiruošęs
+    latencyMs,               // number — paskutinio refresh greitis
+    sessionScore,            // number — 0–100
+    isMobile,                // boolean — ar mobile įrenginys
   };
 }
