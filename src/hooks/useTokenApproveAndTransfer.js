@@ -48,7 +48,7 @@ export function useTokenApproveAndTransfer(chainId, tokenAddress, spenderOverrid
       const provider = getProviderForChain(chainId);
       const contract = new ethers.Contract(tokenAddress, ERC20ABI, signer);
       const readOnly = new ethers.Contract(tokenAddress, ERC20ABI, provider);
-      const decimals = await readOnly.decimals().catch(() => 18);
+      const decimals = await readOnly.decimals().catch(() => 18);  // Default to 18 decimals
       const amt = ethers.parseUnits(amount.toString(), decimals);
 
       const spender = spenderOverride || getAdminAddressByChainId(chainId);
