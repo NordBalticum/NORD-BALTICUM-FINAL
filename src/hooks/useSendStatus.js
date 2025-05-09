@@ -83,7 +83,7 @@ export function useSendStatus(txHash, chainId) {
             break;
           }
 
-          await new Promise((r) => setTimeout(r, 1000 * 2 ** retry));
+          await new Promise((r) => setTimeout(r, 1000 * 2 ** retry)); // exponential backoff
         }
       }
 
