@@ -1,3 +1,4 @@
+/* === Modal Overlay === */
 .modalOverlay {
   position: fixed;
   top: 0;
@@ -13,6 +14,7 @@
   pointer-events: auto;
 }
 
+/* === Modal Content === */
 .modalContent {
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -43,6 +45,16 @@
   }
 }
 
+/* === Title === */
+.title {
+  font-size: 1.3rem;
+  font-weight: 700;
+  margin-bottom: 20px;
+  text-align: center;
+  color: #fff;
+}
+
+/* === Input Fields === */
 .input {
   width: 100%;
   padding: 14px 18px;
@@ -65,12 +77,14 @@
   box-shadow: 0 0 18px rgba(255, 215, 0, 0.35);
 }
 
+/* === Amount Row === */
 .amountRow {
   display: flex;
   gap: 12px;
   align-items: center;
 }
 
+/* === Max Button === */
 .maxButton {
   padding: 12px 16px;
   background: rgba(255, 255, 255, 0.04);
@@ -88,6 +102,7 @@
   border-color: rgba(255, 255, 255, 0.4);
 }
 
+/* === Balance === */
 .balance {
   font-size: 0.95rem;
   color: rgba(255, 255, 255, 0.5);
@@ -95,6 +110,15 @@
   font-weight: 400;
 }
 
+/* === Fee Summary === */
+.feeSummary {
+  font-size: 0.95rem;
+  color: #ddd;
+  margin-bottom: 14px;
+  line-height: 1.4;
+}
+
+/* === Warning === */
 .warning {
   color: #facc15;
   font-size: 0.9rem;
@@ -103,6 +127,7 @@
   margin-bottom: 16px;
 }
 
+/* === Error === */
 .error {
   color: #ff4d4d;
   font-size: 0.9rem;
@@ -117,6 +142,14 @@
   100% { transform: scale(1); }
 }
 
+/* === Info (fees, etc.) === */
+.info {
+  font-size: 0.9rem;
+  color: #999;
+  margin-bottom: 14px;
+}
+
+/* === Button Group === */
 .buttonGroup {
   display: flex;
   justify-content: space-between;
@@ -124,6 +157,7 @@
   margin-top: 28px;
 }
 
+/* === Buttons === */
 .confirmButton,
 .cancelButton {
   flex: 1;
@@ -161,9 +195,24 @@
   transform: scale(1.03);
 }
 
+/* === Loading Spinner Text === */
 .loadingText {
   margin-top: 14px;
   color: #bbb;
   font-size: 0.95rem;
   text-align: center;
+}
+
+/* === Confirmation Box (second step) === */
+.confirmBox {
+  font-size: 0.95rem;
+  color: #e2e2e2;
+  line-height: 1.6;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 18px;
+  margin-bottom: 24px;
+  backdrop-filter: blur(6px);
+  box-shadow: inset 0 0 12px rgba(255, 255, 255, 0.03);
 }
