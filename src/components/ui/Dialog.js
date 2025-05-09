@@ -16,7 +16,7 @@ const DialogOverlay = React.forwardRef(({ className, ...props }, ref) => (
   <DialogPrimitive.Overlay
     ref={ref}
     className={cn(
-      "fixed inset-0 z-40 bg-black/70 backdrop-blur-md transition-all duration-300 ease-out",
+      "fixed inset-0 z-40 bg-black/70 backdrop-blur-[12px] saturate-150 animate-fadeIn",
       className
     )}
     {...props}
@@ -30,14 +30,14 @@ const DialogContent = React.forwardRef(({ className, children, ...props }, ref) 
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        "fixed z-50 left-1/2 top-1/2 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-neutral-800 bg-neutral-900/90 p-6 shadow-2xl backdrop-blur-lg transition-all duration-300 ease-out animate-in fade-in zoom-in-90",
+        "fixed z-50 left-1/2 top-1/2 w-full max-w-lg -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-white/10 bg-gradient-to-br from-[#111] to-[#1c1c1c] p-8 shadow-[0_8px_40px_rgba(0,0,0,0.6)] backdrop-blur-xl text-white animate-popup",
         className
       )}
       {...props}
     >
       {children}
-      <DialogPrimitive.Close className="absolute right-4 top-4 rounded-full p-1 hover:bg-white/10 transition">
-        <X className="h-5 w-5 text-white" />
+      <DialogPrimitive.Close className="absolute top-4 right-4 text-white/70 hover:text-white transition duration-200">
+        <X className="h-6 w-6" />
       </DialogPrimitive.Close>
     </DialogPrimitive.Content>
   </DialogPortal>
