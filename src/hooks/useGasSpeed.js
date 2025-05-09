@@ -1,26 +1,28 @@
 "use client";
 
+/**
+ * useGasSpeed — MetaMask-grade tx gas speed hook
+ * ===============================================
+ * • Saugo pasirinktą greitį: "slow", "average", "fast"
+ * • Naudoja localStorage (išlieka po refresh)
+ * • Pilnai SSR-safe
+ * • Apsauga nuo klaidų / netinkamų reikšmių
+ */
+
 import { useEffect, useState } from "react";
 
-/**
- * useGasSpeed – UI & tx gasSpeed control (slow | average | fast)
- * =========================================
- * - Stores speed in localStorage (survives reload)
- * - SSR-safe
- * - Validated input only
- */
 export function useGasSpeed(defaultSpeed = "average") {
-  const validSpeeds = ["slow", "average", "fast"];
-  const key = "gasSpeed";
+  const VALID_SPEEDS = ["slow", "average", "fast"];
+  const STORAGE_KEY = "gasSpeed";
 
   const getInitialSpeed = () => {
     if (typeof window === "undefined") return defaultSpeed;
-
     try {
-      const stored = localStorage.getItem(key);
-      if (validSpeeds.includes(stored)) return stored;
-    } catch {}
-    return defaultSpeed;
+      const stored = localStorage.getItem(STORAGE_KEY);
+      return VALID_SPEEDS.includes(stored) ? stored : defaultSpeed;
+    } catch {
+      return defaultSpeed;
+    }
   };
 
   const [speed, setSpeed] = useState(getInitialSpeed);
@@ -28,14 +30,21 @@ export function useGasSpeed(defaultSpeed = "average") {
   useEffect(() => {
     if (typeof window !== "undefined") {
       try {
-        localStorage.setItem(key, speed);
-      } catch {}
+        localStorage.setItem(STORAGE_KEY, speed);
+      } catch {
+        // Silent fail — e.g. Safari Private Mode
+      }
     }
   }, [speed]);
 
-  const setGasSpeed = (s) => {
-    if (validSpeeds.includes(s)) setSpeed(s);
+  const setGasSpeed = (newSpeed) => {
+    if (VALID_SPEEDS.includes(newSpeed)) {
+      setSpeed(newSpeed);
+    }
   };
 
-  return { speed, setGasSpeed };
+  return {
+    speed,        // "slow" | "average" | "fast"
+    setGasSpeed,  // fn(newSpeed)
+  };
 }
