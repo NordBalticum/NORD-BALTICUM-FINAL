@@ -23,18 +23,21 @@ export function useSignatureVerify() {
     setRecoveredAddress(null);
 
     try {
+      // Check if the required parameters are provided
       if (!message || !signature || !expectedAddress) {
         throw new Error("Missing required fields");
       }
 
+      // Verify the signature with ethers.js
       const recovered = ethers.verifyMessage(message, signature);
       const valid =
         recovered.toLowerCase() === expectedAddress.toLowerCase();
 
+      // Store the recovered address and the validity of the signature
       setRecoveredAddress(recovered);
       setIsValid(valid);
     } catch (err) {
-      console.warn("❌ useSignatureVerify:", err.message);
+      console.warn("❌ useSignatureVerify error:", err.message);
       setError(err.message || "Verification failed");
     } finally {
       setVerifying(false);
