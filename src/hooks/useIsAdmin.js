@@ -1,15 +1,12 @@
 "use client";
 
 /**
- * useIsAdmin — Supabase Role Detection Hook
- * ==========================================
- * Tikrina ar user yra administratorius iš `admins` lentelės.
- * Visiškai saugus, SSR-aware, integruotas su AuthContext.
- * 
- * - Tikrina tik jei yra prisijungęs vartotojas su el. paštu
- * - Naudoja `.maybeSingle()` (negrąžina klaidos, jei nėra)
- * - Visiškai SSR‑saugus
- * - Grąžina `isAdmin`, `loading`, `error`
+ * useIsAdmin — Final Supabase Role Detection Hook (MetaMask-grade)
+ * ================================================================
+ * Tikrina ar prisijungęs vartotojas yra administratorius (`admins` lentelė).
+ * - Naudoja Supabase `.maybeSingle()` (grąžina `null` jei nerasta)
+ * - Automatinis el. pašto tikrinimas iš AuthContext
+ * - Apsaugotas nuo SSR, saugus, nekelia klaidų, paruoštas deploy
  */
 
 import { useEffect, useState, useCallback } from "react";
@@ -18,6 +15,7 @@ import { supabase } from "@/utils/supabaseClient";
 
 export function useIsAdmin() {
   const { user } = useAuth();
+
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(!!user?.email);
   const [error, setError] = useState(null);
@@ -40,14 +38,14 @@ export function useIsAdmin() {
         .maybeSingle();
 
       if (supaError && supaError.code !== "PGRST116") {
-        console.warn("❌ Supabase error:", supaError.message);
-        setError(supaError);
+        console.warn("❌ Supabase error (isAdmin):", supaError.message);
+        setError(supaError.message);
       }
 
       setIsAdmin(!!data);
     } catch (err) {
-      console.error("❌ Unexpected admin check error:", err.message);
-      setError(err);
+      console.error("❌ Unexpected error (useIsAdmin):", err.message);
+      setError(err.message || "Unknown error");
       setIsAdmin(false);
     } finally {
       setLoading(false);
@@ -58,5 +56,9 @@ export function useIsAdmin() {
     checkAdmin();
   }, [checkAdmin]);
 
-  return { isAdmin, loading, error };
+  return {
+    isAdmin,  // boolean: true if user is in `admins` table
+    loading,  // boolean: true while checking
+    error,    // string|null: error message
+  };
 }
