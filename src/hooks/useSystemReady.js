@@ -15,8 +15,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useNetwork } from "@/contexts/NetworkContext";
 import { detectIsMobile } from "@/utils/detectIsMobile";
 
-const MAX_RETRIES = 12;
-const POLL_DELAY_MS = 1000;
+const MAX_RETRIES = 12; // Maximum number of retries before declaring the system as failed
+const POLL_DELAY_MS = 1000; // Delay between polling attempts in milliseconds
 
 export function useSystemReady() {
   const [domReady, setDomReady] = useState(false);
@@ -37,6 +37,7 @@ export function useSystemReady() {
 
   const connectionType = rawConnection || (typeof navigator !== "undefined" && navigator.onLine ? "online" : "offline");
 
+  // DOM readiness check
   useEffect(() => {
     if (typeof window === "undefined") return;
     const onReady = () => setDomReady(true);
@@ -76,6 +77,7 @@ export function useSystemReady() {
     );
   }, [domReady, authReady, networkReady]);
 
+  // Polling for system readiness
   useEffect(() => {
     if (!systemReady && pollCount < MAX_RETRIES) {
       const timeout = setTimeout(() => {
@@ -93,18 +95,18 @@ export function useSystemReady() {
   }, [pollCount, systemReady]);
 
   return {
-    ready: systemReady,
-    loading: !systemReady,
-    domReady,
-    authReady,
-    networkReady,
-    retries: pollCount,
-    latencyMs,
-    refreshRecommended,
-    isMobile,
-    isTablet,
-    isDesktop,
-    connectionType,
-    scale,
+    ready: systemReady, // Indicates if everything is ready for interaction
+    loading: !systemReady, // Loading state while the system is not ready
+    domReady, // Indicates if the DOM is ready for interaction
+    authReady, // Indicates if Auth context is ready
+    networkReady, // Indicates if Network context is ready
+    retries: pollCount, // The number of polling attempts made so far
+    latencyMs, // Latency in milliseconds, if available
+    refreshRecommended, // If a refresh is recommended due to timeouts
+    isMobile, // Whether the device is mobile
+    isTablet, // Whether the device is a tablet
+    isDesktop, // Whether the device is desktop
+    connectionType, // Connection type ("online" or "offline")
+    scale, // Scaling factor for responsive design
   };
 }
