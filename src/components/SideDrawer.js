@@ -1,7 +1,7 @@
+// SIDE DRAWER — ULTRA FINAL VERSION (BEYOND METAMASK/PANTOM)
 "use client";
 
-// 1️⃣ IMPORTAI
-import { useEffect, useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
@@ -9,10 +9,10 @@ import { FaTimes, FaBars } from "react-icons/fa";
 
 import { useAuth } from "@/contexts/AuthContext";
 import { useMinimalReady } from "@/hooks/useMinimalReady";
+import NetworkSelector from "@/components/NetworkSelector";
 
 import styles from "@/components/sidedrawer.module.css";
 
-// 2️⃣ NAVIGACIJOS ELEMENTAI
 const navItems = [
   { label: "Dashboard", path: "/dashboard" },
   { label: "Send", path: "/send" },
@@ -21,22 +21,35 @@ const navItems = [
   { label: "Settings", path: "/settings" },
 ];
 
-// 3️⃣ PAGRINDINIS KOMPONENTAS
 export default function SideDrawer() {
   const router = useRouter();
   const pathname = usePathname();
-
   const { signOut, user } = useAuth();
   const { ready, loading } = useMinimalReady();
 
   const [open, setOpen] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
+  const firstLinkRef = useRef(null);
 
-  // ✅ Disable scroll kai drawer atidarytas
+  // Scroll lock + ESC listener
   useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+
     if (typeof window !== "undefined") {
       document.body.style.overflow = open ? "hidden" : "auto";
+      if (open) {
+        window.addEventListener("keydown", handleKeyDown);
+        setTimeout(() => {
+          firstLinkRef.current?.focus();
+        }, 200);
+      } else {
+        window.removeEventListener("keydown", handleKeyDown);
+      }
       return () => {
         document.body.style.overflow = "auto";
+        window.removeEventListener("keydown", handleKeyDown);
       };
     }
   }, [open]);
@@ -44,73 +57,75 @@ export default function SideDrawer() {
   const toggleDrawer = () => setOpen((prev) => !prev);
 
   const handleLogout = async () => {
+    if (loggingOut) return;
     try {
+      setLoggingOut(true);
       await signOut(true);
-      setOpen(false);
-      router.replace("/");
-    } catch (error) {
-      console.error("Logout failed:", error.message || error);
+      setTimeout(() => {
+        router.replace("/");
+        setOpen(false);
+      }, 300);
+    } catch (err) {
+      console.error("Logout error:", err);
+      setLoggingOut(false);
     }
   };
 
-  // ✅ Jei sistema dar kraunasi arba nepasiruošusi → nieko nerodom
   if (loading || !ready) return null;
 
   return (
     <>
-      {/* ✅ Hamburger Button */}
       <motion.button
         className={styles.hamburger}
         onClick={toggleDrawer}
-        aria-label="Open Menu"
+        aria-label="Open menu"
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.95 }}
-        transition={{ type: "spring", stiffness: 300, damping: 20 }}
+        transition={{ type: "spring", stiffness: 280, damping: 22 }}
       >
         <FaBars size={22} />
       </motion.button>
 
-      {/* ✅ Drawer + Backdrop */}
       <AnimatePresence mode="wait" initial={false}>
         {open && (
           <>
-            {/* ✅ Fonas */}
             <motion.div
               className={styles.backdrop}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.45, ease: "easeInOut" }}
+              transition={{ duration: 0.35, ease: "easeInOut" }}
               onClick={toggleDrawer}
+              aria-hidden="true"
             />
 
-            {/* ✅ Drawer */}
             <motion.aside
               className={styles.drawer}
-              initial={{ opacity: 0, x: -80, scale: 0.92 }}
-              animate={{ opacity: 1, x: 0, scale: 1 }}
-              exit={{ opacity: 0, x: -40, scale: 0.96 }}
-              transition={{ duration: 0.45, ease: [0.65, 0, 0.35, 1] }}
+              initial={{ opacity: 0, x: -80 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -60 }}
+              transition={{ duration: 0.4, ease: [0.65, 0, 0.35, 1] }}
+              role="dialog"
+              aria-modal="true"
             >
-              {/* ✅ Header */}
               <div className={styles.drawerHeader}>
+                <NetworkSelector />
                 <motion.button
                   className={styles.closeIcon}
                   onClick={toggleDrawer}
-                  aria-label="Close Menu"
+                  aria-label="Close menu"
                   whileHover={{ rotate: 90 }}
-                  transition={{ type: "spring", stiffness: 400, damping: 20 }}
+                  transition={{ type: "spring", stiffness: 500, damping: 22 }}
                 >
                   <FaTimes size={22} />
                 </motion.button>
               </div>
 
-              {/* ✅ Vartotojo Info */}
               <motion.div
                 className={styles.userBox}
-                initial={{ opacity: 0, y: -10 }}
+                initial={{ opacity: 0, y: -8 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2, duration: 0.5 }}
+                transition={{ delay: 0.15, duration: 0.45 }}
               >
                 <img
                   src="/icons/logo.svg"
@@ -123,24 +138,21 @@ export default function SideDrawer() {
                   className={styles.email}
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  transition={{ delay: 0.3, duration: 0.5 }}
+                  transition={{ delay: 0.3, duration: 0.4 }}
                 >
-                  {user?.email || "User"}
+                  {(user?.email?.length || 0) > 28
+                    ? user.email.slice(0, 25) + "..."
+                    : user?.email || "User"}
                 </motion.p>
               </motion.div>
 
-              {/* ✅ Navigacija */}
               <nav className={styles.nav}>
                 {navItems.map((item, index) => (
                   <motion.div
                     key={item.label}
-                    initial={{ opacity: 0, x: -20 }}
+                    initial={{ opacity: 0, x: -16 }}
                     animate={{ opacity: 1, x: 0 }}
-                    transition={{
-                      delay: 0.4 + index * 0.1,
-                      duration: 0.4,
-                      ease: "easeOut",
-                    }}
+                    transition={{ delay: 0.35 + index * 0.1 }}
                   >
                     <Link
                       href={item.path}
@@ -149,6 +161,7 @@ export default function SideDrawer() {
                       }`}
                       onClick={() => setOpen(false)}
                       aria-current={pathname === item.path ? "page" : undefined}
+                      ref={index === 0 ? firstLinkRef : null}
                     >
                       {item.label}
                     </Link>
@@ -156,16 +169,16 @@ export default function SideDrawer() {
                 ))}
               </nav>
 
-              {/* ✅ Logout Button */}
               <motion.button
                 className={styles.logout}
                 onClick={handleLogout}
                 aria-label="Logout"
+                disabled={loggingOut}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                transition={{ type: "spring", stiffness: 280, damping: 24 }}
               >
-                Logout
+                {loggingOut ? "Logging out..." : "Logout"}
               </motion.button>
             </motion.aside>
           </>
