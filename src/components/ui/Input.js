@@ -3,12 +3,14 @@
 import React from "react";
 import { cn } from "@/lib/utils";
 
-const Input = React.forwardRef(({ className, ...props }, ref) => {
+const Input = React.forwardRef(({ className, glow = true, ...props }, ref) => {
   return (
     <input
       ref={ref}
       className={cn(
-        "w-full rounded-xl bg-neutral-900/90 border border-neutral-700 px-4 py-2 text-white placeholder-neutral-500 backdrop-blur-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#8247e5]/60 focus:border-[#8247e5]",
+        "w-full rounded-xl bg-[#111111]/90 border border-white/10 px-4 py-3 text-white placeholder-white/40 shadow-sm backdrop-blur-md transition-all duration-200",
+        "focus:outline-none focus:ring-2 focus:ring-offset-0 focus:ring-[#00bfff]/60 focus:border-[#00bfff]",
+        glow && "hover:ring-1 hover:ring-[#00bfff]/40",
         className
       )}
       {...props}
