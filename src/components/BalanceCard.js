@@ -1,23 +1,24 @@
-// src/components/BalanceCard.js
 "use client";
 
 import React, { useState, useMemo } from "react";
 import Image from "next/image";
 import { useBalance } from "@/contexts/BalanceContext";
-import fallbackRPCs from "@/utils/fallbackRPCs"; // ✅ Ultimate fallback RPCs config
+import networks from "@/data/networks"; // Ultimate fallback RPCs from data
 import styles from "./balancecard.module.css";
 
 export default function BalanceCard() {
   const { balances, prices, balancesReady } = useBalance();
   const [showTestnets, setShowTestnets] = useState(false);
 
+  // Dynamic filtering of networks
   const networkList = useMemo(() => {
-    return Object.values(fallbackRPCs).filter(net => {
+    return networks.filter(net => {
       if (showTestnets) return net.isTestnet;
       return !net.isTestnet;
     });
   }, [showTestnets]);
 
+  // Formatting functions for crypto and fiat values
   const fmtCrypto = (n) =>
     Number(n || 0).toLocaleString(undefined, {
       minimumFractionDigits: 2,
@@ -30,6 +31,7 @@ export default function BalanceCard() {
       maximumFractionDigits: 2,
     });
 
+  // Total USD and EUR balance calculation
   const { totalUsd, totalEur } = useMemo(() => {
     return networkList.reduce((acc, net) => {
       const bal = balances[net.key] ?? 0;
@@ -50,7 +52,6 @@ export default function BalanceCard() {
 
   return (
     <div className={styles.cardWrapper}>
-
       {/* Toggle buttons */}
       <div className={styles.toggleWrapper} role="tablist">
         <button
@@ -124,7 +125,6 @@ export default function BalanceCard() {
             </div>
           </div>
         </div>
-
       </div>
     </div>
   );
