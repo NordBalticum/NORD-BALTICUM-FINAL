@@ -13,7 +13,7 @@ import ErrorModal from "@/components/modals/ErrorModal";
 
 import styles from "@/components/sendmodal.module.css";
 
-export default function SendModal({ onClose }) {
+export default function StepModal({ onClose }) {
   const { user } = useAuth();
   const {
     sendTransaction,
@@ -26,13 +26,12 @@ export default function SendModal({ onClose }) {
     calculateFees,
   } = useSend();
   const { balances } = useBalance();
-  const { activeNetwork } = useNetwork();
+  const { activeNetwork, tokenSymbol } = useNetwork();
   const { ready, loading } = useSystemReady();
 
   const [recipient, setRecipient] = useState("");
   const [amount, setAmount] = useState("");
-  const [confirming, setConfirming] = useState(false);
-  const [confirmed, setConfirmed] = useState(false);
+  const [step, setStep] = useState(0);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [txHash, setTxHash] = useState(null);
@@ -45,7 +44,6 @@ export default function SendModal({ onClose }) {
     !recipient ||
     !amount ||
     sending ||
-    confirmed ||
     parsedAmount <= 0 ||
     parsedAmount + totalFee > balance ||
     !isValidAddress ||
@@ -53,22 +51,22 @@ export default function SendModal({ onClose }) {
 
   useEffect(() => {
     if (activeNetwork && parsedAmount > 0) {
-      calculateFees(activeNetwork, parsedAmount);
+      calculateFees({
+        to: recipient.trim(),
+        amount: parsedAmount,
+      });
     }
-  }, [activeNetwork, parsedAmount]);
+  }, [activeNetwork, parsedAmount, recipient]);
 
   useEffect(() => {
     if (!recipient) return setIsValidAddress(false);
-    const isValid = /^0x[a-fA-F0-9]{40}$/.test(recipient.trim());
-    setIsValidAddress(isValid);
+    setIsValidAddress(/^0x[a-fA-F0-9]{40}$/.test(recipient.trim()));
   }, [recipient]);
 
   useEffect(() => {
-    // Reset modal state on mount
     setRecipient("");
     setAmount("");
-    setConfirming(false);
-    setConfirmed(false);
+    setStep(0);
     setError("");
     setSuccess(false);
     setTxHash(null);
@@ -79,14 +77,8 @@ export default function SendModal({ onClose }) {
     if (max > 0) setAmount(max.toFixed(6));
   };
 
-  const handleSubmit = () => {
-    setError("");
-    setConfirming(true);
-  };
-
-  const handleFinalSend = async () => {
+  const handleSend = async () => {
     try {
-      setConfirmed(true);
       const tx = await sendTransaction({
         to: recipient.trim().toLowerCase(),
         amount: parsedAmount,
@@ -96,30 +88,29 @@ export default function SendModal({ onClose }) {
       setSuccess(true);
     } catch (err) {
       setError(err.message || "Transaction failed.");
-      setConfirmed(false);
     }
   };
 
-  if (loading || !ready) {
+  const StepView = () => {
+    if (loading || !ready) {
+      return (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modalContent}>
+            <MiniLoadingSpinner />
+            <p className={styles.loadingText}>Preparing secure environment...</p>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className={styles.modalOverlay}>
         <div className={styles.modalContent}>
-          <MiniLoadingSpinner />
-          <p className={styles.loadingText}>Preparing secure environment...</p>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <>
-      <div className={styles.modalOverlay}>
-        <div className={styles.modalContent}>
           <h2 className={styles.title}>
-            Send {activeNetwork?.toUpperCase()} Tokens
+            Send {tokenSymbol} ({activeNetwork.toUpperCase()})
           </h2>
 
-          {!confirming ? (
+          {step === 0 && (
             <>
               <input
                 type="text"
@@ -129,6 +120,26 @@ export default function SendModal({ onClose }) {
                 className={styles.input}
                 autoFocus
               />
+              {!isValidAddress && recipient && (
+                <p className={styles.warning}>⚠️ Invalid address format</p>
+              )}
+              <div className={styles.buttonGroup}>
+                <button onClick={onClose} className={styles.cancelButton}>
+                  Cancel
+                </button>
+                <button
+                  onClick={() => setStep(1)}
+                  className={styles.confirmButton}
+                  disabled={!isValidAddress}
+                >
+                  Next
+                </button>
+              </div>
+            </>
+          )}
+
+          {step === 1 && (
+            <>
               <div className={styles.amountRow}>
                 <input
                   type="number"
@@ -145,7 +156,7 @@ export default function SendModal({ onClose }) {
               </div>
 
               <p className={styles.balance}>
-                Balance: {balance.toFixed(6)} {activeNetwork?.toUpperCase()}
+                Balance: {balance.toFixed(6)} {tokenSymbol}
               </p>
 
               {feeLoading ? (
@@ -157,8 +168,7 @@ export default function SendModal({ onClose }) {
                   <p>
                     Total:{" "}
                     <strong>
-                      {(parsedAmount + totalFee).toFixed(6)}{" "}
-                      {activeNetwork?.toUpperCase()}
+                      {(parsedAmount + totalFee).toFixed(6)} {tokenSymbol}
                     </strong>
                   </p>
                   <p>Gas Fee: {gasFee.toFixed(6)}</p>
@@ -166,33 +176,31 @@ export default function SendModal({ onClose }) {
                 </div>
               )}
 
-              {!isValidAddress && recipient && (
-                <p className={styles.warning}>⚠️ Invalid address format</p>
-              )}
               {error && <p className={styles.error}>❌ {error}</p>}
 
               <div className={styles.buttonGroup}>
-                <button onClick={onClose} className={styles.cancelButton}>
-                  Cancel
+                <button onClick={() => setStep(0)} className={styles.cancelButton}>
+                  Back
                 </button>
                 <button
-                  onClick={handleSubmit}
+                  onClick={() => setStep(2)}
                   className={styles.confirmButton}
                   disabled={isDisabled}
                 >
-                  {sending ? <MiniLoadingSpinner /> : "Next"}
+                  Confirm
                 </button>
               </div>
             </>
-          ) : (
+          )}
+
+          {step === 2 && (
             <>
               <div className={styles.confirmBox}>
                 <p>
                   <strong>Recipient:</strong> {recipient}
                 </p>
                 <p>
-                  <strong>Amount:</strong> {parsedAmount.toFixed(6)}{" "}
-                  {activeNetwork?.toUpperCase()}
+                  <strong>Amount:</strong> {parsedAmount.toFixed(6)} {tokenSymbol}
                 </p>
                 <p>
                   <strong>Gas Fee:</strong> {gasFee.toFixed(6)}
@@ -201,24 +209,20 @@ export default function SendModal({ onClose }) {
                   <strong>Admin Fee:</strong> {adminFee.toFixed(6)}
                 </p>
                 <p>
-                  <strong>Total:</strong>{" "}
-                  {(parsedAmount + totalFee).toFixed(6)}
+                  <strong>Total:</strong> {(parsedAmount + totalFee).toFixed(6)} {tokenSymbol}
                 </p>
               </div>
 
               <div className={styles.buttonGroup}>
-                <button
-                  onClick={() => setConfirming(false)}
-                  className={styles.cancelButton}
-                >
+                <button onClick={() => setStep(1)} className={styles.cancelButton}>
                   Back
                 </button>
                 <button
-                  onClick={handleFinalSend}
+                  onClick={handleSend}
                   className={styles.confirmButton}
                   disabled={sending}
                 >
-                  {sending ? <MiniLoadingSpinner /> : "Confirm & Send"}
+                  {sending ? <MiniLoadingSpinner /> : "Send"}
                 </button>
               </div>
 
@@ -227,8 +231,12 @@ export default function SendModal({ onClose }) {
           )}
         </div>
       </div>
+    );
+  };
 
-      {/* ✅ Success Modal */}
+  return (
+    <>
+      <StepView />
       {success && txHash && (
         <SuccessModal
           message="✅ Transaction Successful!"
@@ -241,15 +249,8 @@ export default function SendModal({ onClose }) {
           network={activeNetwork}
         />
       )}
-
-      {/* ❌ Error Modal */}
-      {error && !confirming && (
-        <ErrorModal
-          error={error}
-          onClose={() => {
-            setError("");
-          }}
-        />
+      {error && step === 0 && (
+        <ErrorModal error={error} onClose={() => setError("")} />
       )}
     </>
   );
