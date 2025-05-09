@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * useTokenDecimals — Final MetaMask-Grade v2.0
+ * useTokenDecimals — Final MetaMask-Grade v2.1
  * ============================================
  * Gauk ERC20 tokeno `decimals` saugiai, greitai, ir universaliai.
  */
