@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * useTokenSymbol — MetaMask-grade ERC20 simbolio hook'as
+ * useTokenSymbol — MetaMask-grade ERC20 symbol hook
  * ========================================================
  * • Pritaikytas visiems EVM tinklams
  * • SSR-safe, fallback į "???" jeigu neįmanoma gauti simbolio
