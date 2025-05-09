@@ -1,17 +1,18 @@
 "use client";
 
+/**
+ * useContractWrite — universalus smart contract rašymo hook'as
+ * =============================================================
+ * Veikia su visais EVM tinklais ir bet kokiu kontraktu/metodu.
+ * ✅ Grąžina tx hash, receipt, klaidą, writing statusą
+ * ✅ Dirba su overrides (gas, value, t.t.)
+ * ✅ MetaMask-grade bulletproof veikimas
+ */
+
 import { useState, useCallback } from "react";
 import { ethers } from "ethers";
 import { useAuth } from "@/contexts/AuthContext";
 
-/**
- * useContractWrite – universalus smart contract metodų vykdymo hook'as su tx hash, kvitu (receipt) ir klaidų tvarkymu.
- *
- * @param {number} chainId - tinklo ID
- * @param {string} contractAddress - kontrakto adresas
- * @param {any[]} abi - kontrakto ABI
- * @returns { write, writing, txHash, receipt, error }
- */
 export function useContractWrite(chainId, contractAddress, abi) {
   const { getSignerForChain } = useAuth();
 
@@ -20,44 +21,47 @@ export function useContractWrite(chainId, contractAddress, abi) {
   const [error, setError] = useState(null);
   const [writing, setWriting] = useState(false);
 
-  const write = useCallback(async (method, args = [], overrides = {}) => {
-    setWriting(true);
-    setError(null);
-    setTxHash(null);
-    setReceipt(null);
+  const write = useCallback(
+    async (method, args = [], overrides = {}) => {
+      setWriting(true);
+      setError(null);
+      setTxHash(null);
+      setReceipt(null);
 
-    try {
-      if (!chainId || !contractAddress || !abi || !method) {
-        throw new Error("Missing contract info");
+      try {
+        if (!chainId || !ethers.isAddress(contractAddress) || !abi || !method) {
+          throw new Error("Missing or invalid contract info");
+        }
+
+        const signer = getSignerForChain(chainId);
+        if (!signer) throw new Error("Signer unavailable");
+
+        const contract = new ethers.Contract(contractAddress, abi, signer);
+
+        if (typeof contract[method] !== "function") {
+          throw new Error(`Method "${method}" not found in contract`);
+        }
+
+        const tx = await contract[method](...args, overrides);
+        setTxHash(tx.hash);
+
+        const result = await tx.wait();
+        setReceipt(result);
+      } catch (err) {
+        console.error("❌ useContractWrite error:", err.message);
+        setError(err.message || "Transaction failed");
+      } finally {
+        setWriting(false);
       }
-
-      const signer = getSignerForChain(chainId);
-      if (!signer) throw new Error("Signer unavailable");
-
-      const contract = new ethers.Contract(contractAddress, abi, signer);
-
-      if (typeof contract[method] !== "function") {
-        throw new Error(`Method "${method}" does not exist on contract`);
-      }
-
-      const tx = await contract[method](...args, overrides);
-      setTxHash(tx.hash);
-
-      const result = await tx.wait();
-      setReceipt(result);
-    } catch (err) {
-      console.error("❌ useContractWrite error:", err.message);
-      setError(err.message || "Transaction failed");
-    } finally {
-      setWriting(false);
-    }
-  }, [chainId, contractAddress, abi, getSignerForChain]);
+    },
+    [chainId, contractAddress, abi, getSignerForChain]
+  );
 
   return {
-    write,
-    writing,
-    txHash,
-    receipt,
-    error,
+    write,        // (methodName, args[], overrides?) => tx
+    writing,      // bool
+    txHash,       // string|null
+    receipt,      // tx receipt object|null
+    error,        // string|null
   };
 }
