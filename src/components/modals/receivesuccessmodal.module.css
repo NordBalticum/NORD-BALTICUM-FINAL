@@ -1,0 +1,71 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal {
+  background: linear-gradient(135deg, #0a0a0a, #161616);
+  padding: 28px 24px;
+  border-radius: 18px;
+  box-shadow:
+    0 0 24px rgba(0, 255, 0, 0.35),
+    inset 0 0 12px rgba(0, 255, 0, 0.1);
+  text-align: center;
+  max-width: 380px;
+  width: 90%;
+  color: #fff;
+  animation: fadeIn 0.4s ease-out both;
+}
+
+.icon {
+  font-size: 3rem;
+  color: #00ff88;
+  margin-bottom: 16px;
+}
+
+.title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 12px;
+  color: #00ff88;
+}
+
+.amount {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #ffffff;
+  opacity: 0.9;
+  margin-bottom: 24px;
+}
+
+.button {
+  padding: 12px 28px;
+  border-radius: 12px;
+  background-color: #00ff88;
+  color: #000;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none;
+  box-shadow: 0 0 12px rgba(0, 255, 136, 0.4);
+}
+
+.button:hover {
+  background-color: #00e676;
+  box-shadow:
+    0 0 14px rgba(0, 255, 136, 0.5),
+    0 0 6px rgba(0, 255, 136, 0.3) inset;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  0%   { opacity: 0; transform: translateY(20px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
