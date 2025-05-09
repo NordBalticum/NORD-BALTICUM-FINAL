@@ -2,7 +2,7 @@
 
 import styles from "./miniloadingspinner.module.css"; // Import CSS module
 
-export default function MiniLoadingSpinner({ size = 20 }) {
+export default function MiniLoadingSpinner({ size = 30, color = "#3498db", borderColor = "#f3f3f3" }) {
   return (
     <div className={styles.spinnerWrapper}>
       <div
@@ -10,8 +10,8 @@ export default function MiniLoadingSpinner({ size = 20 }) {
         style={{
           width: size,
           height: size,
-          border: "3px solid #f3f3f3",
-          borderTop: "3px solid #3498db",
+          border: `3px solid ${borderColor}`,
+          borderTop: `3px solid ${color}`,
         }}
       ></div>
     </div>
