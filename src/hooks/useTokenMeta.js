@@ -1,11 +1,10 @@
-// src/hooks/useTokenMeta.js
 "use client";
 
 /**
  * useTokenMeta — MetaMask-grade ERC20 token metadata hook
  * ========================================================
- * Grąžina simbolį, pavadinimą, desimalus (su SSR apsauga ir fallback).
- * 100% veikia visuose EVM tinkluose, išfiltruoja klaidas, veikia net su blogais kontraktais.
+ * Returns the symbol, name, decimals (with SSR protection and fallback).
+ * Fully functional on all EVM networks, filters errors, works with non-compliant contracts.
  */
 
 import { useEffect, useState } from "react";
@@ -44,16 +43,16 @@ export function useTokenMeta(chainId, tokenAddress) {
 
         if (!cancelled) {
           setMeta({
-            name: name || "Unknown",
-            symbol: symbol || "???",
-            decimals: decimals ?? 18,
+            name: name || "Unknown",            // Default fallback to "Unknown"
+            symbol: symbol || "???",            // Default fallback to "???"
+            decimals: decimals ?? 18,           // Default fallback to 18 decimals
           });
         }
       } catch (err) {
         console.warn("❌ useTokenMeta error:", err.message);
         if (!cancelled) {
           setError(err.message || "Token metadata error");
-          setMeta({ name: "Unknown", symbol: "???", decimals: 18 });
+          setMeta({ name: "Unknown", symbol: "???", decimals: 18 });  // Set defaults on error
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -67,8 +66,8 @@ export function useTokenMeta(chainId, tokenAddress) {
   }, [chainId, tokenAddress]);
 
   return {
-    ...meta,
-    loading,
-    error,
+    ...meta,       // Return the token's name, symbol, decimals
+    loading,       // Loading state for metadata
+    error,         // Error state for any issues during metadata fetch
   };
 }
