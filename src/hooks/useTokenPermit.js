@@ -1,11 +1,10 @@
-// src/hooks/useTokenPermit.js
 "use client";
 
 /**
  * useTokenPermit — Final MetaMask-Grade Hook
  * ==========================================
- * Generuoja `permit` žinutę naudotojo adresui, pasirašo su signer'iu ir grąžina vrs parašą.
- * Veikia su EIP-2612 palaikančiais tokenais.
+ * Generates a `permit` message for the user's address, signs with the signer, and returns the signature.
+ * Compatible with EIP-2612 supporting tokens.
  */
 
 import { useState } from "react";
@@ -32,6 +31,7 @@ export function useTokenPermit() {
     setError(null);
 
     try {
+      // Get the provider and signer for the specified chain
       const provider = getProviderForChain(chainId);
       const signer = getSignerForChain(chainId);
       const owner = getPrimaryAddress();
@@ -39,9 +39,11 @@ export function useTokenPermit() {
       if (!signer || !ethers.isAddress(owner)) throw new Error("Wallet not ready");
 
       const contract = new ethers.Contract(tokenAddress, ERC20ABI, provider);
+
+      // Fetch necessary details like nonce and name
       const nonce = await contract.nonces(owner);
       const name = await contract.name();
-      const version = "1";
+      const version = "1"; // versioning for the domain
 
       const domain = {
         name,
@@ -50,6 +52,7 @@ export function useTokenPermit() {
         verifyingContract: tokenAddress,
       };
 
+      // Define the types for the permit message
       const types = {
         Permit: [
           { name: "owner", type: "address" },
@@ -60,6 +63,7 @@ export function useTokenPermit() {
         ],
       };
 
+      // Define the message to sign
       const message = {
         owner,
         spender,
@@ -68,6 +72,7 @@ export function useTokenPermit() {
         deadline,
       };
 
+      // Sign the message with the user's signer
       const signed = await signer.signTypedData(domain, types, message);
       setSignature(signed);
       return { signature: signed, nonce, deadline };
