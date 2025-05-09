@@ -1,5 +1,16 @@
 "use client";
 
+/**
+ * useAllowance — v3.0 FINAL META-GRADE
+ * ============================================
+ * Tikrina ERC20 allowance tarp naudotojo ir spender (admin/staking contract).
+ * ✅ Veikia su 36+ EVM tinklų
+ * ✅ Pilnas support ERC20 su fallback decimals
+ * ✅ Automatinis user + spender adresas
+ * ✅ Tikrina requiredAmount (BigInt)
+ * ✅ Pilna klaidų kontrolė
+ */
+
 import { useEffect, useState, useMemo } from "react";
 import { ethers } from "ethers";
 import { useAuth } from "@/contexts/AuthContext";
@@ -8,28 +19,27 @@ import { getProviderForChain } from "@/utils/getProviderForChain";
 import { getAdminAddressByChainId } from "@/utils/networks";
 import ERC20ABI from "@/abi/ERC20.json";
 
-/**
- * Tikrina naudotojo ERC20 allowance tam tikram spenderiui (dažniausiai admin arba staking contract).
- * Tinkamas tiek staking, tiek dApps sąveikai.
- */
 export function useAllowance(requiredAmount = null, customSpender = null) {
   const { chainId, tokenAddress } = useNetwork();
   const { getAddressForChain } = useAuth();
 
-  const [allowanceRaw, setAllowanceRaw] = useState(null);
-  const [allowanceFormatted, setAllowanceFormatted] = useState(null);
+  const [allowanceRaw, setAllowanceRaw] = useState(ethers.Zero);
+  const [allowanceFormatted, setAllowanceFormatted] = useState("0.0000");
   const [isApproved, setIsApproved] = useState(false);
   const [decimals, setDecimals] = useState(18);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const user = useMemo(() => getAddressForChain(chainId), [getAddressForChain, chainId]);
+  // Memoized user + spender address
+  const user = useMemo(() => getAddressForChain?.(chainId), [getAddressForChain, chainId]);
   const spender = useMemo(() => customSpender || getAdminAddressByChainId(chainId), [customSpender, chainId]);
 
   useEffect(() => {
-    const fetchAllowance = async () => {
-      if (!chainId || !tokenAddress || !user || !spender) return;
+    if (!chainId || !tokenAddress || !user || !spender) return;
 
+    let cancelled = false;
+
+    const fetchAllowance = async () => {
       setLoading(true);
       setError(null);
 
@@ -39,37 +49,47 @@ export function useAllowance(requiredAmount = null, customSpender = null) {
 
         const [raw, dec] = await Promise.all([
           contract.allowance(user, spender),
-          contract.decimals()
+          contract.decimals().catch(() => 18),
         ]);
+
+        if (cancelled) return;
 
         setAllowanceRaw(raw);
         setDecimals(dec);
+
         const formatted = ethers.formatUnits(raw, dec);
         setAllowanceFormatted(formatted);
 
         if (requiredAmount != null) {
-          const req = ethers.parseUnits(requiredAmount.toString(), dec);
-          setIsApproved(raw >= req);
+          const required = ethers.parseUnits(requiredAmount.toString(), dec);
+          setIsApproved(raw >= required);
+        } else {
+          setIsApproved(false);
         }
       } catch (err) {
         console.warn("❌ useAllowance error:", err.message);
-        setError(err.message);
-        setAllowanceRaw(null);
-        setAllowanceFormatted(null);
-        setIsApproved(false);
+        if (!cancelled) {
+          setError(err.message || "Allowance fetch failed");
+          setAllowanceRaw(ethers.Zero);
+          setAllowanceFormatted("0.0000");
+          setIsApproved(false);
+        }
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
 
     fetchAllowance();
+    return () => {
+      cancelled = true;
+    };
   }, [chainId, tokenAddress, user, spender, requiredAmount]);
 
   return {
-    allowanceRaw,
-    allowanceFormatted,
-    isApproved,
-    decimals,
+    allowanceRaw,           // BigInt (wei)
+    allowanceFormatted,     // string (e.g. "0.0034")
+    isApproved,             // boolean — ar užtenka
+    decimals,               // token decimals
     loading,
     error,
     spender,
