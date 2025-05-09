@@ -3,22 +3,20 @@
 import React, { useState, useMemo } from "react";
 import Image from "next/image";
 import { useBalance } from "@/contexts/BalanceContext";
-import networks from "@/data/networks"; // Ultimate fallback RPCs from data
+import networks from "@/data/networks";
 import styles from "./balancecard.module.css";
 
 export default function BalanceCard() {
-  const { balances, prices, balancesReady } = useBalance();
+  const { balances, prices, balancesReady, lastUpdated } = useBalance();
   const [showTestnets, setShowTestnets] = useState(false);
 
-  // Dynamic filtering of networks
-  const networkList = useMemo(() => {
-    return networks.filter(net => {
-      if (showTestnets) return net.isTestnet;
-      return !net.isTestnet;
-    });
-  }, [showTestnets]);
+  const now = Date.now();
 
-  // Formatting functions for crypto and fiat values
+  const networkList = useMemo(() =>
+    networks.filter(net => showTestnets ? net.isTestnet : !net.isTestnet),
+    [showTestnets]
+  );
+
   const fmtCrypto = (n) =>
     Number(n || 0).toLocaleString(undefined, {
       minimumFractionDigits: 2,
@@ -31,13 +29,12 @@ export default function BalanceCard() {
       maximumFractionDigits: 2,
     });
 
-  // Total USD and EUR balance calculation
   const { totalUsd, totalEur } = useMemo(() => {
     return networkList.reduce((acc, net) => {
       const bal = balances[net.key] ?? 0;
       const price = prices[net.key] ?? { usd: 0, eur: 0 };
-      acc.totalUsd += bal * (price.usd || 0);
-      acc.totalEur += bal * (price.eur || 0);
+      acc.totalUsd += bal * price.usd;
+      acc.totalEur += bal * price.eur;
       return acc;
     }, { totalUsd: 0, totalEur: 0 });
   }, [networkList, balances, prices]);
@@ -45,18 +42,20 @@ export default function BalanceCard() {
   if (!balancesReady) {
     return (
       <div className={styles.cardWrapper}>
-        <div className={styles.loadingState}>Loading balances...</div>
+        <div className={styles.loadingState}>
+          Fetching balances...
+        </div>
       </div>
     );
   }
 
   return (
     <div className={styles.cardWrapper}>
-      {/* Toggle buttons */}
-      <div className={styles.toggleWrapper} role="tablist">
+      <div className={styles.toggleWrapper} role="tablist" aria-label="Balance view toggle">
         <button
           role="tab"
           aria-selected={!showTestnets}
+          tabIndex={0}
           onClick={() => setShowTestnets(false)}
           className={`${styles.toggleButton} ${!showTestnets ? styles.active : ""}`}
         >
@@ -65,6 +64,7 @@ export default function BalanceCard() {
         <button
           role="tab"
           aria-selected={showTestnets}
+          tabIndex={0}
           onClick={() => setShowTestnets(true)}
           className={`${styles.toggleButton} ${showTestnets ? styles.active : ""}`}
         >
@@ -72,13 +72,12 @@ export default function BalanceCard() {
         </button>
       </div>
 
-      {/* Network list */}
-      <div className={styles.list}>
+      <div className={styles.list} aria-live="polite">
         {networkList.map(net => {
           const balance = balances[net.key] ?? 0;
           const price = prices[net.key] ?? { usd: 0, eur: 0 };
-          const usd = balance * (price.usd || 0);
-          const eur = balance * (price.eur || 0);
+          const usd = balance * price.usd;
+          const eur = balance * price.eur;
           const hasPrice = price.usd > 0 || price.eur > 0;
 
           return (
@@ -100,16 +99,13 @@ export default function BalanceCard() {
                 <div className={styles.fiatAmount}>
                   {hasPrice ? (
                     <>≈ ${fmtFiat(usd)} | €{fmtFiat(eur)}</>
-                  ) : (
-                    <>–</>
-                  )}
+                  ) : "–"}
                 </div>
               </div>
             </div>
           );
         })}
 
-        {/* TOTAL */}
         <div className={`${styles.listItem} ${styles.totalRow}`}>
           <div className={styles.networkLeft}>
             <span className={styles.networkLabel}>Total</span>
@@ -118,13 +114,24 @@ export default function BalanceCard() {
             <div className={styles.cryptoAmount}></div>
             <div className={styles.fiatAmount}>
               {(totalUsd || totalEur) ? (
-                <>≈ ${fmtFiat(totalUsd)} | €{fmtFiat(totalEur)}</>
-              ) : (
-                <>–</>
-              )}
+                <span style={{
+                  background: "linear-gradient(90deg, #ffd700, #ff9900)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  fontWeight: 700
+                }}>
+                  ≈ ${fmtFiat(totalUsd)} | €{fmtFiat(totalEur)}
+                </span>
+              ) : "–"}
             </div>
           </div>
         </div>
+
+        {lastUpdated && (
+          <div className={styles.updatedAgo}>
+            Updated {Math.floor((now - lastUpdated) / 1000)}s ago
+          </div>
+        )}
       </div>
     </div>
   );
