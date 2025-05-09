@@ -1,15 +1,10 @@
-/* — Spinner styling */
+/* Keyframe Animation for Spinner */
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }
 
-.spinnerWrapper {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
+/* Fullscreen Overlay - covers the entire screen */
 .fullscreenOverlay {
   position: fixed;
   top: 0;
@@ -17,11 +12,24 @@
   width: 100vw;
   height: 100vh;
   z-index: 9999;
-  background: rgba(15, 23, 42, 0.5); /* Soft semi-dark background */
-  backdrop-filter: blur(14px);        /* Subtle blur */
+  background: rgba(15, 23, 42, 0.5); /* Dark background */
+  backdrop-filter: blur(14px); /* Subtle blur effect */
   display: flex;
   justify-content: center;
   align-items: center;
+}
+
+/* Animation wrapper for spinner */
+.spinnerWrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: rgba(0, 0, 0, 0.8); /* Darker background for the spinner */
+  padding: 30px;
+  border-radius: 8px;
+  box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.25);
+  transition: all 0.3s ease;
+  backdrop-filter: blur(5px); /* Adds blur to spinner wrapper */
 }
 
 /* Spinner animation */
@@ -29,7 +37,47 @@
   width: 40px;
   height: 40px;
   border: 3px solid #f3f3f3;
-  border-top: 3px solid #3498db;
+  border-top: 3px solid #3498db; /* Blue spinner */
   border-radius: 50%;
   animation: spin 2s linear infinite;
+  transition: transform 0.3s ease;
+}
+
+/* Loading message for accessibility and clarity */
+.loadingMessage {
+  margin-top: 16px;
+  font-size: 18px;
+  color: #ffffff;
+  font-weight: bold;
+  font-family: "Roboto", sans-serif;
+  text-align: center;
+  transition: opacity 0.3s ease;
+}
+
+/* Responsiveness for mobile devices */
+@media (max-width: 768px) {
+  .spinnerWrapper {
+    padding: 20px; /* Reduced padding for smaller screens */
+  }
+
+  .loadingMessage {
+    font-size: 14px; /* Smaller text on mobile */
+  }
+}
+
+/* Smooth transition for the entire overlay */
+.fullscreenOverlay, .spinnerWrapper, .loadingMessage {
+  opacity: 0;
+  animation: fadeIn 0.5s forwards;
+}
+
+@keyframes fadeIn {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+/* Optional: Fade out animation for spinner when it's removed from the DOM */
+@keyframes fadeOut {
+  0% { opacity: 1; }
+  100% { opacity: 0; }
 }
