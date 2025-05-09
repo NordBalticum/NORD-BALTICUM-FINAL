@@ -1,10 +1,6 @@
-/* Keyframe Animation for Spinner */
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
+/* === Premium MiniLoadingSpinner CSS with Fullscreen Overlay === */
 
-/* Fullscreen Overlay - covers the entire screen */
+/* Fullscreen Overlay */
 .fullscreenOverlay {
   position: fixed;
   top: 0;
@@ -17,9 +13,11 @@
   display: flex;
   justify-content: center;
   align-items: center;
+  opacity: 0;
+  animation: fadeIn 0.5s ease-in-out forwards;
 }
 
-/* Animation wrapper for spinner */
+/* Animation for the spinner's wrapper */
 .spinnerWrapper {
   display: flex;
   justify-content: center;
@@ -30,17 +28,36 @@
   box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.25);
   transition: all 0.3s ease;
   backdrop-filter: blur(5px); /* Adds blur to spinner wrapper */
+  animation: fadeIn 0.5s ease-in-out;
 }
 
-/* Spinner animation */
+/* Spinner Animation */
 .spinner {
-  width: 40px;
-  height: 40px;
-  border: 3px solid #f3f3f3;
-  border-top: 3px solid #3498db; /* Blue spinner */
   border-radius: 50%;
-  animation: spin 2s linear infinite;
-  transition: transform 0.3s ease;
+  border: 3px solid #f3f3f3; /* Light border */
+  border-top: 3px solid #3498db; /* Default blue border */
+  animation: spin 1.5s linear infinite;
+  transition: transform 0.3s ease-out, border-top-color 0.3s ease-out;
+}
+
+/* Rotate animation */
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Fade-in animation for the spinner and overlay */
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
 }
 
 /* Loading message for accessibility and clarity */
@@ -65,19 +82,57 @@
   }
 }
 
-/* Smooth transition for the entire overlay */
-.fullscreenOverlay, .spinnerWrapper, .loadingMessage {
-  opacity: 0;
-  animation: fadeIn 0.5s forwards;
-}
-
-@keyframes fadeIn {
-  0% { opacity: 0; }
-  100% { opacity: 1; }
-}
-
 /* Optional: Fade out animation for spinner when it's removed from the DOM */
 @keyframes fadeOut {
-  0% { opacity: 1; }
-  100% { opacity: 0; }
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* === Premium MiniLoadingSpinner CSS === */
+
+.spinnerWrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  animation: fadeIn 0.5s ease-in-out; /* Smooth fade-in */
+}
+
+.spinner {
+  border-radius: 50%;
+  border: 3px solid #f3f3f3; /* Light border */
+  border-top: 3px solid #3498db; /* Default blue border */
+  animation: spin 1.5s linear infinite;
+  transition: transform 0.3s ease-out, border-top-color 0.3s ease-out; /* Smooth color change and transform */
+}
+
+/* Rotate animation */
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Fade-in animation for better UX */
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@media (max-width: 480px) {
+  /* On smaller screens, reduce spinner size */
+  .spinner {
+    width: 20px;
+    height: 20px;
+  }
 }
