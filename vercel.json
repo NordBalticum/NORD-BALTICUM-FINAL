@@ -1,10 +1,5 @@
 {
-  "buildCommand": "npm run test:send && next build",
-  "build": {
-    "env": {
-      "NODE_ENV": "production"
-    }
-  },
+  "buildCommand": "next build",
   "headers": [
     {
       "source": "/(.*)\\.css",
