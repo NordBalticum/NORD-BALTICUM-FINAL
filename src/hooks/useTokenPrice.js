@@ -1,11 +1,10 @@
-// src/hooks/useTokenPrice.js
 "use client";
 
 /**
  * useTokenPrice — MetaMask-Grade v2.1 (USD + EUR)
  * ===============================================
- * Grąžina USD ir EUR kainą tiek natyviam, tiek ERC20 tokenui.
- * Naudoja CoinGecko API. Palaiko visus EVM tinklus.
+ * Returns USD and EUR price for both native and ERC20 tokens.
+ * Uses CoinGecko API. Supports all EVM networks.
  */
 
 import { useEffect, useState } from "react";
@@ -30,11 +29,14 @@ export function useTokenPrice(tokenType = "native") {
       try {
         let url = "";
 
+        // Fetching price for native token
         if (tokenType === "native") {
           const id = getCoinGeckoId(chainId);
           if (!id) throw new Error("Missing CoinGecko ID for native token");
           url = `https://api.coingecko.com/api/v3/simple/price?ids=${id}&vs_currencies=usd,eur`;
-        } else if (tokenAddress) {
+        }
+        // Fetching price for ERC20 token
+        else if (tokenAddress) {
           url = `https://api.coingecko.com/api/v3/simple/token_price/ethereum?contract_addresses=${tokenAddress}&vs_currencies=usd,eur`;
         } else {
           throw new Error("Missing token address");
@@ -42,6 +44,7 @@ export function useTokenPrice(tokenType = "native") {
 
         const { data } = await axios.get(url);
 
+        // Extract prices based on token type
         if (tokenType === "native") {
           const id = getCoinGeckoId(chainId);
           setPriceUSD(data?.[id]?.usd || null);
