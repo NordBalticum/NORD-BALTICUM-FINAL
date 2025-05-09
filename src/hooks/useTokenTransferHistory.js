@@ -74,8 +74,8 @@ export function useTokenTransferHistory(chainId, tokenAddress) {
   }, [chainId, tokenAddress, getPrimaryAddress]);
 
   return {
-    transfers,
-    loading,
-    error,
+    transfers, // Array of token transfers
+    loading,   // Indicates if the data is being fetched
+    error,     // Error message if the data fetch fails
   };
 }
