@@ -64,6 +64,7 @@ export default function SendModal({ onClose }) {
   }, [recipient]);
 
   useEffect(() => {
+    // Reset modal state on mount
     setRecipient("");
     setAmount("");
     setConfirming(false);
@@ -104,7 +105,7 @@ export default function SendModal({ onClose }) {
       <div className={styles.modalOverlay}>
         <div className={styles.modalContent}>
           <MiniLoadingSpinner />
-          <p className={styles.loadingText}>Preparing transaction...</p>
+          <p className={styles.loadingText}>Preparing secure environment...</p>
         </div>
       </div>
     );
@@ -114,7 +115,9 @@ export default function SendModal({ onClose }) {
     <>
       <div className={styles.modalOverlay}>
         <div className={styles.modalContent}>
-          <h2>Send {activeNetwork?.toUpperCase()} Tokens</h2>
+          <h2 className={styles.title}>
+            Send {activeNetwork?.toUpperCase()} Tokens
+          </h2>
 
           {!confirming ? (
             <>
@@ -124,6 +127,7 @@ export default function SendModal({ onClose }) {
                 value={recipient}
                 onChange={(e) => setRecipient(e.target.value)}
                 className={styles.input}
+                autoFocus
               />
               <div className={styles.amountRow}>
                 <input
@@ -132,6 +136,8 @@ export default function SendModal({ onClose }) {
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                   className={styles.input}
+                  min="0"
+                  step="0.0001"
                 />
                 <button onClick={handleMax} className={styles.maxButton}>
                   Max
@@ -143,22 +149,25 @@ export default function SendModal({ onClose }) {
               </p>
 
               {feeLoading ? (
-                <p>Calculating fees...</p>
+                <p className={styles.info}>Calculating network fees...</p>
               ) : feeError ? (
                 <p className={styles.error}>⚠️ {feeError}</p>
               ) : (
-                <>
+                <div className={styles.feeSummary}>
                   <p>
-                    Total: {(parsedAmount + totalFee).toFixed(6)}{" "}
-                    {activeNetwork?.toUpperCase()}
+                    Total:{" "}
+                    <strong>
+                      {(parsedAmount + totalFee).toFixed(6)}{" "}
+                      {activeNetwork?.toUpperCase()}
+                    </strong>
                   </p>
                   <p>Gas Fee: {gasFee.toFixed(6)}</p>
                   <p>Admin Fee: {adminFee.toFixed(6)}</p>
-                </>
+                </div>
               )}
 
               {!isValidAddress && recipient && (
-                <p className={styles.warning}>⚠️ Invalid address</p>
+                <p className={styles.warning}>⚠️ Invalid address format</p>
               )}
               {error && <p className={styles.error}>❌ {error}</p>}
 
@@ -171,30 +180,31 @@ export default function SendModal({ onClose }) {
                   className={styles.confirmButton}
                   disabled={isDisabled}
                 >
-                  {sending ? <MiniLoadingSpinner /> : "Continue"}
+                  {sending ? <MiniLoadingSpinner /> : "Next"}
                 </button>
               </div>
             </>
           ) : (
             <>
-              <p>
-                Recipient: <strong>{recipient}</strong>
-              </p>
-              <p>
-                Amount:{" "}
-                <strong>
-                  {parsedAmount.toFixed(6)} {activeNetwork?.toUpperCase()}
-                </strong>
-              </p>
-              <p>
-                Admin Fee: <strong>{adminFee.toFixed(6)}</strong>
-              </p>
-              <p>
-                Gas Fee: <strong>{gasFee.toFixed(6)}</strong>
-              </p>
-              <p>
-                Total: <strong>{(parsedAmount + totalFee).toFixed(6)}</strong>
-              </p>
+              <div className={styles.confirmBox}>
+                <p>
+                  <strong>Recipient:</strong> {recipient}
+                </p>
+                <p>
+                  <strong>Amount:</strong> {parsedAmount.toFixed(6)}{" "}
+                  {activeNetwork?.toUpperCase()}
+                </p>
+                <p>
+                  <strong>Gas Fee:</strong> {gasFee.toFixed(6)}
+                </p>
+                <p>
+                  <strong>Admin Fee:</strong> {adminFee.toFixed(6)}
+                </p>
+                <p>
+                  <strong>Total:</strong>{" "}
+                  {(parsedAmount + totalFee).toFixed(6)}
+                </p>
+              </div>
 
               <div className={styles.buttonGroup}>
                 <button
@@ -211,6 +221,7 @@ export default function SendModal({ onClose }) {
                   {sending ? <MiniLoadingSpinner /> : "Confirm & Send"}
                 </button>
               </div>
+
               {error && <p className={styles.error}>❌ {error}</p>}
             </>
           )}
