@@ -1,4 +1,4 @@
-/* === SUCCESS TOAST FINAL ULTRA PREMIUM V12.1 === */
+/* === SUCCESS TOAST — V12.999 FINAL META-TITAN === */
 
 .toast {
   position: fixed;
@@ -20,10 +20,14 @@
   min-width: clamp(200px, 30vw, 260px);
   min-height: clamp(52px, 7vh, 64px);
   pointer-events: none;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  outline: 1px solid rgba(255, 255, 255, 0.08);
+  outline-offset: -2px;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
   transition: opacity 0.45s ease, transform 0.45s ease;
 }
 
-/* ✅ LOGO WRAPPER */
 .logoWrapper {
   display: flex;
   align-items: center;
@@ -32,7 +36,6 @@
   min-height: clamp(28px, 3vw, 32px);
 }
 
-/* ✅ MESSAGE */
 .message {
   white-space: nowrap;
   font-family: var(--font-crypto);
@@ -43,39 +46,30 @@
   line-height: 1;
 }
 
-/* ✅ SUPER SMOOTH ENTRANCE + EXIT ANIMATIONS */
-.toast-enter {
-  transform: translateX(150%);
-  opacity: 0;
+/* === NETWORK COLOR GLOWS === */
+.eth {
+  box-shadow: 0 0 18px #627eea66, 0 0 32px #627eea33;
 }
-.toast-enter-active {
-  transform: translateX(0);
-  opacity: 1;
-  transition: transform 0.5s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.5s ease;
+.bnb, .tbnb {
+  box-shadow: 0 0 18px #f3ba2f66, 0 0 32px #f3ba2f33;
 }
-.toast-exit {
-  transform: translateX(0);
-  opacity: 1;
+.matic {
+  box-shadow: 0 0 18px #8247e566, 0 0 32px #8247e533;
 }
-.toast-exit-active {
-  transform: translateX(150%);
-  opacity: 0;
-  transition: transform 0.45s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.45s ease;
+.avax {
+  box-shadow: 0 0 18px #e8414266, 0 0 32px #e8414233;
 }
 
-/* === RESPONSIVE MEDIA FIXAI ✅ === */
-
-/* ✅ Iki 1080px - planšetės, mažesni laptopai */
+/* === RESPONSIVE === */
 @media screen and (max-width: 1080px) {
   .toast {
-    right: 12%; /* Paslinktas į dešinę - daugiau vietos */
+    right: 12%;
     min-width: clamp(180px, 28vw, 240px);
     min-height: clamp(50px, 6vh, 60px);
     padding: 12px 24px;
   }
 }
 
-/* ✅ Iki 468px - telefonai, Galaxy Ultra, iPhone */
 @media screen and (max-width: 468px) {
   .toast {
     right: 10%;
