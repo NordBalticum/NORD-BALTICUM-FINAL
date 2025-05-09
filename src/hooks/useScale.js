@@ -1,12 +1,12 @@
 "use client";
 
 /**
- * useScale — Ferrari Ultra Responsive Hook v4.9
- * =============================================
+ * useScale — Ferrari Ultra Responsive Hook v5.0 (Locked)
+ * ======================================================
  * • SSR‑safe + Mobile/Desktop + HDPI + Orientation‑aware
  * • Battery‑sensitive, motion-safe, GPU-friendly
  * • Breakpoint‑based scaling with pixel ratio + viewport width
- * • Coinbase | Phantom | MetaMask‑grade production hook
+ * • Coinbase | Phantom | MetaMask-grade production hook
  */
 
 import { useEffect, useState, useCallback } from "react";
@@ -49,6 +49,7 @@ export function useScale(
     const effectiveWidth = Math.min(width, screenWidth, outerWidth);
     let chosenScale = base;
 
+    // 1. Breakpoint scaling
     for (const bp of breakpoints) {
       if (effectiveWidth <= bp.max) {
         chosenScale = prefersReducedMotion ? bp.scale * 0.9 : bp.scale;
@@ -56,26 +57,32 @@ export function useScale(
       }
     }
 
+    // 2. Mobile/Desktop factor
     chosenScale *= effectiveWidth < 768 ? mobileFactor : desktopFactor;
 
+    // 3. HDPI (e.g. iPhones)
     if (pixelRatio >= 2 && effectiveWidth < 500) {
       chosenScale -= hdpiAdjustment;
     }
 
+    // 4. Portrait mode
     if (isPortrait && effectiveWidth < 768) {
       chosenScale -= portraitAdjustment;
     }
 
+    // 5. Battery check
     try {
       const battery = await navigator?.getBattery?.();
-      if (battery && battery.level < 0.25 && battery.charging === false) {
+      if (battery && battery.level < 0.25 && !battery.charging) {
         chosenScale -= batteryAdjustment;
       }
     } catch {
-      // Fail silently
+      // Silent fail
     }
 
+    // 6. Clamp to safe range
     chosenScale = Math.max(minScale, Math.min(maxScale, chosenScale));
+
     setScale(parseFloat(chosenScale.toFixed(4)));
   }, [
     base,
