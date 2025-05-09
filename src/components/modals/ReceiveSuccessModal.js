@@ -1,44 +1,34 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
+import { FaCheckCircle } from "react-icons/fa";
+import styles from "@/components/modals/receivesuccessmodal.module.css";
 
 export default function ReceiveSuccessModal({ show, onClose, amount, network }) {
   return (
     <AnimatePresence>
       {show && (
         <motion.div
+          className={styles.overlay}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed top-0 left-0 w-full h-full flex items-center justify-center z-50"
-          style={{ backgroundColor: "rgba(0,0,0,0.7)" }}
+          role="dialog"
+          aria-modal="true"
         >
           <motion.div
-            initial={{ scale: 0.7 }}
-            animate={{ scale: 1 }}
-            exit={{ scale: 0.7 }}
-            transition={{ type: "spring", stiffness: 300, damping: 20 }}
-            className="p-8 rounded-2xl shadow-lg bg-black border-2 border-green-400 text-center"
-            style={{
-              background: "linear-gradient(145deg, #0a0a0a, #111)",
-              color: "white",
-              boxShadow: "0 0 25px rgba(0, 255, 0, 0.5)",
-            }}
+            className={styles.modal}
+            initial={{ scale: 0.85, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.85, opacity: 0 }}
+            transition={{ type: "spring", stiffness: 260, damping: 20 }}
           >
-            <h2 style={{ fontSize: "1.8rem", marginBottom: "1rem" }}>Funds Received!</h2>
-            <p style={{ fontSize: "1.2rem" }}>+{amount} {network.toUpperCase()}</p>
+            <FaCheckCircle className={styles.icon} />
 
-            <button
-              onClick={onClose}
-              style={{
-                marginTop: "2rem",
-                padding: "0.7rem 2rem",
-                backgroundColor: "#00FF00",
-                borderRadius: "12px",
-                fontWeight: "bold",
-                color: "#000",
-              }}
-            >
+            <h2 className={styles.title}>Funds Received</h2>
+            <p className={styles.amount}>+{amount} {network?.toUpperCase()}</p>
+
+            <button className={styles.button} onClick={onClose}>
               Close
             </button>
           </motion.div>
