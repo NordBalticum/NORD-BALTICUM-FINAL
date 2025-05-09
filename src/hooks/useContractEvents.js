@@ -1,50 +1,51 @@
 "use client";
 
+/**
+ * useContractEvents — MetaMask-grade contract event hook
+ * ========================================================
+ * Realiu laiku stebi nurodytą EVM kontrakto įvykį.
+ * ✅ Palaiko visus 36+ tinklus per getProviderForChain
+ * ✅ Automatinė `Interface` eventų dekodacija
+ * ✅ Unikalūs TX filtrai (ref-based)
+ * ✅ Automatinis listener cleanup (off)
+ */
+
 import { useEffect, useState, useRef } from "react";
 import { ethers, Interface } from "ethers";
 import { getProviderForChain } from "@/utils/getProviderForChain";
 
-/**
- * useContractEvents – stebėti EVM kontrakto eventus realiu laiku.
- *
- * @param {number} chainId - EVM tinklo ID
- * @param {string} contractAddress - kontrakto adresas
- * @param {any[]} abi - kontrakto ABI
- * @param {string} eventName - sekamas įvykis (tikslus pavadinimas)
- * @param {Function} [filterFn] - pasirinktinis filtravimo callback
- *
- * @returns { events, error, clearEvents }
- */
 export function useContractEvents(chainId, contractAddress, abi, eventName, filterFn = null) {
   const [events, setEvents] = useState([]);
   const [error, setError] = useState(null);
-  const seenTxs = useRef(new Set()); // Unikalūs TX hashai duplikatų filtravimui
+  const seenTxs = useRef(new Set());
 
   useEffect(() => {
     if (!chainId || !contractAddress || !abi || !eventName) return;
 
     let contract;
     let provider;
+    let iface;
+    let listener;
 
     try {
       provider = getProviderForChain(chainId);
-      const iface = new Interface(abi);
+      iface = new Interface(abi);
       contract = new ethers.Contract(contractAddress, abi, provider);
 
-      const listener = (...args) => {
-        const event = args[args.length - 1]; // paskutinis argumentas – event object
+      listener = (...args) => {
+        const event = args[args.length - 1];
         if (!event || !event.transactionHash) return;
 
-        // Duplikatų guard
-        if (seenTxs.current.has(event.transactionHash)) return;
-        seenTxs.current.add(event.transactionHash);
+        const hash = event.transactionHash;
+        if (seenTxs.current.has(hash)) return;
+        seenTxs.current.add(hash);
 
         try {
           const parsed = iface.parseLog(event);
           const structured = {
             name: parsed.name,
             args: parsed.args,
-            txHash: event.transactionHash,
+            txHash: hash,
             blockNumber: event.blockNumber,
             timestamp: Date.now(),
           };
@@ -54,21 +55,25 @@ export function useContractEvents(chainId, contractAddress, abi, eventName, filt
             return filterFn ? updated.filter(filterFn) : updated;
           });
         } catch (parseErr) {
-          console.warn("⚠️ Failed to parse event:", parseErr.message);
+          console.warn("⚠️ Event parse failed:", parseErr.message);
         }
       };
 
       contract.on(eventName, listener);
-
-      return () => {
-        contract.off(eventName, listener);
-      };
     } catch (err) {
       console.warn("❌ useContractEvents error:", err.message);
       setError(err.message);
     }
 
-    return () => {};
+    return () => {
+      if (contract && listener) {
+        try {
+          contract.off(eventName, listener);
+        } catch (cleanupErr) {
+          console.warn("⚠️ Event cleanup failed:", cleanupErr.message);
+        }
+      }
+    };
   }, [chainId, contractAddress, abi, eventName, filterFn]);
 
   const clearEvents = () => {
@@ -76,5 +81,9 @@ export function useContractEvents(chainId, contractAddress, abi, eventName, filt
     seenTxs.current.clear();
   };
 
-  return { events, error, clearEvents };
+  return {
+    events,        // all structured logs (name, args, txHash, etc.)
+    error,         // string|null
+    clearEvents,   // function to reset log list
+  };
 }
