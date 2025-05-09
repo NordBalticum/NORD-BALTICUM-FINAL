@@ -1,28 +1,62 @@
-/* Network Selector Styles */
-.networkSelector {
-  background: var(--overlay);
-  padding: 20px;
-  border-radius: var(--radius-base);
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
-  text-align: center;
-}
+/* === Network Selector Styles — Premium MetaMask-Grade === */
 
-.networkSelector h3 {
-  font-size: 1.5rem;
-  margin-bottom: 10px;
-}
-
-.networkSelector ul {
-  list-style: none;
-  padding: 0;
-}
-
-.networkSelector li {
-  margin: 10px;
+.selectTrigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px;
+  background-color: #1e1e2d;
+  border: 2px solid #fff;
+  border-radius: 12px;
   cursor: pointer;
-  color: var(--text-primary);
+  transition: background-color 0.3s ease;
+  width: 200px;
 }
 
-.networkSelector li:hover {
-  text-decoration: underline;
+.selectTrigger:hover {
+  background-color: #2e2e3a;
+}
+
+.selectValueWrapper {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.selectIcon {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+}
+
+.selectItem {
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.selectItem:hover {
+  background-color: #1e1e2d;
+}
+
+.selectItemText {
+  font-size: 14px;
+  color: #fff;
+  font-weight: 600;
+}
+
+.selectIcon {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+  border-radius: 50%;
+}
+
+@media (max-width: 768px) {
+  .selectTrigger {
+    width: 150px;
+  }
 }
