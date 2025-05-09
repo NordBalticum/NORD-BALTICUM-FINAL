@@ -1,21 +1,23 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Wallet } from "ethers";
 import { useRouter } from "next/navigation";
-import { useAuth, encrypt } from "@/contexts/AuthContext";
-import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
 import { toast } from "react-toastify";
 
+import MiniLoadingSpinner from "@/components/MiniLoadingSpinner";
+import { useAuth } from "@/contexts/AuthContext";
+import styles from "@/components/walletimport.module.css";
+
 export default function WalletImport() {
-  const { user, reloadWallet } = useAuth();
+  const { user, importWalletFromPrivateKey, walletLoading } = useAuth();
+
   const [privateKey, setPrivateKey] = useState("");
   const [loading, setLoading] = useState(false);
-  const isMounted = useRef(true);
-  const router = useRouter();
 
-  // Focus on input on mount
+  const router = useRouter();
+  const isMounted = useRef(true);
   const inputRef = useRef(null);
+
   useEffect(() => {
     inputRef.current?.focus();
     return () => {
@@ -40,72 +42,41 @@ export default function WalletImport() {
     }
 
     if (!/^0x[a-fA-F0-9]{64}$/.test(privateKey)) {
-      toast.error("❌ Invalid private key format. Must start with 0x and be 66 characters.");
+      toast.error("❌ Invalid private key. Must be 66 characters and start with 0x.");
       inputRef.current?.focus();
       return;
     }
 
     if (!user?.email) {
-      toast.error("❌ User session missing. Please login again.");
+      toast.error("❌ Session expired. Please login again.");
       return;
     }
 
     try {
       setLoading(true);
+      await importWalletFromPrivateKey(user.email, privateKey);
 
-      const importedWallet = new Wallet(privateKey);
-      if (!importedWallet.address) {
-        throw new Error("Invalid wallet address.");
+      if (isMounted.current) {
+        toast.success("✅ Wallet imported successfully!");
+        setPrivateKey("");
+        router.replace("/dashboard");
       }
-
-      const encrypted = await encrypt(privateKey);
-
-      const { error } = await supabase
-        .from("wallets")
-        .update({
-          encrypted_key: encrypted,
-          eth_address: importedWallet.address,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("user_email", user.email);
-
-      if (error) {
-        console.error("Supabase update error:", error.message || error);
-        toast.error(`❌ Database error: ${error.message || "Unknown error"}`);
-        return;
-      }
-
-      toast.success("✅ Wallet imported successfully!");
-
-      await reloadWallet(user.email);
-
-      setTimeout(() => {
-        if (isMounted.current) {
-          router.replace("/dashboard");
-        }
-      }, 2500);
-
     } catch (err) {
       console.error("Wallet import error:", err.message || err);
-      toast.error("❌ Invalid private key. Please check and try again.");
+      toast.error("❌ Import failed. Please try again.");
       inputRef.current?.focus();
     } finally {
-      if (isMounted.current) {
-        setLoading(false);
-        setPrivateKey("");
-      }
+      if (isMounted.current) setLoading(false);
     }
   };
 
   return (
-    <div style={{ marginTop: "32px", width: "100%", maxWidth: "460px" }}>
-      <h4 style={{ textAlign: "center", marginBottom: "12px", color: "white" }}>
-        Import Wallet (Private Key)
-      </h4>
+    <div className={styles.walletImportWrapper}>
+      <h4 className={styles.title}>Import Wallet (Private Key)</h4>
 
       <form onSubmit={handleImport}>
-        {loading ? (
-          <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "180px" }}>
+        {loading || walletLoading ? (
+          <div className={styles.spinnerWrapper}>
             <MiniLoadingSpinner />
           </div>
         ) : (
@@ -121,37 +92,13 @@ export default function WalletImport() {
               required
               aria-label="Private Key"
               disabled={loading}
-              style={{
-                width: "100%",
-                padding: "14px",
-                borderRadius: "12px",
-                border: "1px solid rgba(255,255,255,0.2)",
-                marginBottom: "12px",
-                background: "rgba(255, 255, 255, 0.08)",
-                color: "white",
-                fontFamily: "var(--font-crypto, monospace)",
-                transition: "all 0.3s ease",
-              }}
+              className={styles.input}
             />
 
             <button
               type="submit"
               disabled={loading}
-              style={{
-                width: "100%",
-                padding: "14px",
-                borderRadius: "12px",
-                background: loading ? "rgba(255,255,255,0.1)" : "black",
-                color: "white",
-                border: "1px solid white",
-                fontWeight: "700",
-                cursor: loading ? "not-allowed" : "pointer",
-                fontFamily: "var(--font-crypto, monospace)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                transition: "all 0.3s ease",
-              }}
+              className={styles.button}
             >
               {loading ? <MiniLoadingSpinner /> : "Import Wallet"}
             </button>
