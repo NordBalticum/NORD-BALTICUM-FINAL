@@ -11,43 +11,59 @@ const Button = React.forwardRef(
       size = "md",
       shadow = true,
       glow = false,
+      gradient = false,
+      full = false,
+      icon,
+      iconRight,
       ...props
     },
     ref
   ) => {
     const base =
-      "inline-flex items-center justify-center font-semibold rounded-xl transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none";
+      "inline-flex items-center justify-center font-bold rounded-2xl transition-all duration-200 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none select-none";
 
     const variants = {
       primary:
-        "bg-gradient-to-r from-[#8247e5] via-[#4b0082] to-[#1a237e] text-white hover:brightness-110",
+        "bg-gradient-to-r from-[#7f5af0] to-[#6246ea] text-white hover:brightness-110",
       secondary:
-        "bg-[#1a237e] text-white hover:bg-[#0f154d]",
+        "bg-[#1a1a1a] text-white border border-neutral-700 hover:bg-[#2a2a2a]",
       outline:
-        "border border-neutral-600 bg-transparent text-white hover:bg-neutral-900",
+        "border border-neutral-600 text-white hover:bg-neutral-900",
       ghost: "bg-transparent text-white hover:bg-neutral-800",
     };
 
     const sizes = {
-      sm: "text-sm px-3 py-1.5",
+      xs: "text-xs px-3 py-1",
+      sm: "text-sm px-3.5 py-1.5",
       md: "text-base px-4 py-2",
       lg: "text-lg px-5 py-3",
+      xl: "text-xl px-6 py-3.5",
     };
 
-    const shadows = shadow
-      ? "shadow-lg hover:shadow-xl"
-      : "shadow-none";
-
-    const glowStyle = glow
-      ? "hover:ring-2 hover:ring-[#8247e5]/50"
-      : "";
+    const shadowStyle = shadow ? "shadow-md hover:shadow-lg" : "";
+    const glowStyle = glow ? "hover:ring-2 hover:ring-[#7f5af0]/60" : "";
+    const gradientBorder = gradient ? "border border-white/10 backdrop-blur" : "";
+    const fullWidth = full ? "w-full" : "";
 
     return (
       <button
         ref={ref}
-        className={cn(base, variants[variant], sizes[size], shadows, glowStyle, className)}
+        className={cn(
+          base,
+          variants[variant],
+          sizes[size],
+          shadowStyle,
+          glowStyle,
+          gradientBorder,
+          fullWidth,
+          className
+        )}
         {...props}
-      />
+      >
+        {icon && <span className="mr-2">{icon}</span>}
+        {props.children}
+        {iconRight && <span className="ml-2">{iconRight}</span>}
+      </button>
     );
   }
 );
