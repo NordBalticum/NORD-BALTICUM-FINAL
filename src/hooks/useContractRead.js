@@ -1,20 +1,18 @@
 "use client";
 
+/**
+ * useContractRead — universalus `view`/`pure` smart contract metodų skaitymo hookas
+ * ==================================================================================
+ * Veikia su visais EVM tinklais ir ABI — skaito bet kurį `view` ar `pure` metodą.
+ * ✅ Automatinis refetch (watch režimas)
+ * ✅ Full fallback + klaidų sauga
+ * ✅ MetaMask-grade stabilumas
+ */
+
 import { useEffect, useState, useCallback } from "react";
 import { ethers } from "ethers";
 import { getProviderForChain } from "@/utils/getProviderForChain";
 
-/**
- * useContractRead – universalus hookas bet kokio `view` arba `pure` smart contract metodo skaitymui.
- *
- * @param {number} chainId - tinklo ID
- * @param {string} contractAddress - kontrakto adresas
- * @param {any[]} abi - kontrakto ABI
- * @param {string} method - metodo pavadinimas
- * @param {any[]} args - argumento masyvas
- * @param {boolean} [watch=false] - ar automatiškai refrešinti duomenis kas X sekundžių
- * @param {number} [intervalMs=10000] - intervalas milisekundėmis, jeigu watch=true
- */
 export function useContractRead(
   chainId,
   contractAddress,
@@ -29,7 +27,7 @@ export function useContractRead(
   const [error, setError] = useState(null);
 
   const readContract = useCallback(async () => {
-    if (!chainId || !contractAddress || !abi || !method) return;
+    if (!chainId || !ethers.isAddress(contractAddress) || !abi || !method) return;
 
     try {
       setLoading(true);
@@ -46,7 +44,7 @@ export function useContractRead(
       setData(result);
     } catch (err) {
       console.warn("❌ useContractRead error:", err.message);
-      setError(err.message);
+      setError(err.message || "Read failed");
       setData(null);
     } finally {
       setLoading(false);
@@ -65,5 +63,10 @@ export function useContractRead(
     return () => clearInterval(interval);
   }, [readContract, watch, intervalMs]);
 
-  return { data, loading, error, refetch: readContract };
+  return {
+    data,        // Raw result
+    loading,     // boolean
+    error,       // string|null
+    refetch: readContract, // callable
+  };
 }
