@@ -20,6 +20,11 @@ export function useTokenTransfer(chainId, tokenAddress) {
   const [txHash, setTxHash] = useState(null);
   const [error, setError] = useState(null);
 
+  /**
+   * Perform token transfer.
+   * @param {string} to - Recipient address
+   * @param {string|number} amount - Amount to transfer (human-readable)
+   */
   const transfer = async (to, amount) => {
     setTransferring(true);
     setError(null);
@@ -33,14 +38,18 @@ export function useTokenTransfer(chainId, tokenAddress) {
       const signer = getSignerForChain(chainId);
       if (!signer) throw new Error("No signer available");
 
+      // Connect to the contract
       const contract = new ethers.Contract(tokenAddress, ERC20ABI, signer);
 
-      const decimals = await contract.decimals().catch(() => 18);
+      // Handle decimals and ensure amount is parsed correctly
+      const decimals = await contract.decimals().catch(() => 18);  // Fallback to 18 decimals if no decimals function
       const amt = ethers.parseUnits(amount.toString(), decimals);
 
+      // Transfer the tokens
       const tx = await contract.transfer(to, amt);
       setTxHash(tx.hash);
-      await tx.wait();
+      await tx.wait(); // Wait for transaction confirmation
+
     } catch (err) {
       console.warn("❌ useTokenTransfer error:", err.message);
       setError(err.message || "Transfer failed");
