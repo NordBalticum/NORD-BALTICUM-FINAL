@@ -1,4 +1,3 @@
-// src/hooks/useTokenAllowance.js
 "use client";
 
 /**
@@ -46,13 +45,15 @@ export function useTokenAllowance(chainId, tokenAddress, spenderAddress = null) 
         const provider = getProviderForChain(chainId);
         const contract = new ethers.Contract(tokenAddress, ERC20ABI, provider);
 
+        // Fetch allowance and decimals in parallel for performance
         const [raw, decimals] = await Promise.all([
           contract.allowance(owner, spender),
-          contract.decimals().catch(() => 18),
+          contract.decimals().catch(() => 18), // Default to 18 if no decimals are provided
         ]);
 
         if (!isMounted) return;
 
+        // Update state with raw allowance and human-readable formatted allowance
         setRawAllowance(raw);
         setFormattedAllowance(ethers.formatUnits(raw, decimals));
       } catch (err) {
@@ -67,17 +68,19 @@ export function useTokenAllowance(chainId, tokenAddress, spenderAddress = null) 
       }
     };
 
+    // Call the function to fetch allowance
     fetchAllowance();
 
+    // Cleanup function to cancel any ongoing state updates if the component is unmounted
     return () => {
       isMounted = false;
     };
   }, [chainId, tokenAddress, spenderAddress, getPrimaryAddress]);
 
   return {
-    allowance: rawAllowance,             // BigInt (wei)
-    formatted: formattedAllowance,       // Žmogui suprantamas tekstas (pvz. "0.0001")
-    loading,
-    error,
+    allowance: rawAllowance,             // Raw BigInt (wei)
+    formatted: formattedAllowance,       // Human-readable string (e.g., "0.0001")
+    loading,                             // Boolean: true if loading data
+    error,                               // Error message, if any
   };
 }
