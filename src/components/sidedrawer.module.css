@@ -1,6 +1,6 @@
-/* === SIDEDRAWER MODULE – NordBalticum Ultra Premium 2025 FINAL === */
+/* === SIDEDRAWER MODULE — BEYOND METAMASK/PHANTOM — NORD BALTICUM FINAL VISION === */
 
-/* ✅ HAMBURGER BUTTON */
+/* === HAMBURGER BUTTON === */
 .hamburger {
   position: fixed;
   top: clamp(16px, 3vw, 24px);
@@ -18,69 +18,54 @@
 .hamburger:hover {
   transform: scale(1.18);
   color: #ffd700;
-  filter: drop-shadow(0 0 10px #ffd700);
+  filter: drop-shadow(0 0 12px #ffd700cc);
 }
 
-.hamburger.active {
-  transform: rotate(90deg) scale(1.2);
-  color: #ffd700;
-  filter: drop-shadow(0 0 14px #ffd700aa);
-}
-
-/* ✅ BACKDROP */
+/* === BACKDROP === */
 .backdrop {
   position: fixed;
   inset: 0;
-  background: radial-gradient(circle at center, rgba(10, 18, 42, 0.85) 0%, rgba(5, 10, 22, 0.92) 100%);
-  backdrop-filter: blur(20px) brightness(0.9) saturate(140%);
+  background: radial-gradient(circle at center, rgba(8, 12, 26, 0.88), rgba(4, 6, 18, 0.92));
+  backdrop-filter: blur(22px) brightness(0.9) saturate(160%);
   z-index: 9998;
+  animation: fadeInBackdrop 0.4s ease forwards;
 }
 
-/* Optional fallback animation for CSS-only exit */
-@keyframes fadeOutBackdrop {
-  from { opacity: 1; }
-  to { opacity: 0; }
+@keyframes fadeInBackdrop {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
-.backdropExit {
-  animation: fadeOutBackdrop 0.45s ease forwards;
-}
-
-/* ✅ DRAWER */
+/* === DRAWER PANEL === */
 .drawer {
   position: fixed;
   top: 0;
   left: 0;
   width: 280px;
   height: 100vh;
-  background: radial-gradient(circle at top left, rgba(14, 22, 55, 0.98), rgba(8, 14, 30, 0.95));
-  backdrop-filter: blur(24px) saturate(180%);
-  border-right: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 12px 0 28px rgba(0, 0, 0, 0.7);
+  background: linear-gradient(180deg, #0e162b, #080e1e);
+  backdrop-filter: blur(26px) saturate(200%);
+  border-right: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 14px 0 40px rgba(0, 0, 0, 0.7);
   padding: 36px 24px;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
   z-index: 9999;
+  overflow-y: auto;
+  scrollbar-width: none;
 }
 
-/* Fallback exit animation (CSS only) */
-@keyframes exitDrawer {
-  0% { opacity: 1; transform: translateX(0) scale(1); }
-  100% { opacity: 0; transform: translateX(-80px) scale(0.92); }
+.drawer::-webkit-scrollbar {
+  display: none;
 }
 
-.drawerExit {
-  animation: exitDrawer 0.5s ease-in forwards;
-}
-
-/* ✅ DRAWER HEADER */
+/* === DRAWER HEADER === */
 .drawerHeader {
   display: flex;
   justify-content: flex-end;
 }
 
-/* ✅ CLOSE ICON */
 .closeIcon {
   background: none;
   border: none;
@@ -95,16 +80,16 @@
   color: #ffd700;
 }
 
-/* ✅ USER BOX */
+/* === USER BOX === */
 .userBox {
   text-align: center;
-  margin-top: 24px;
+  margin-top: 28px;
   margin-bottom: 36px;
   padding: 28px 20px;
   background: rgba(255, 255, 255, 0.04);
   border-radius: 28px;
-  backdrop-filter: blur(36px) saturate(220%);
-  box-shadow: 0 0 24px rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(34px) saturate(200%);
+  box-shadow: 0 0 32px rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.08);
   display: flex;
   flex-direction: column;
@@ -112,12 +97,11 @@
   gap: 16px;
   position: relative;
   overflow: hidden;
-  transition: all 0.3s ease;
 }
 
 .userBox:hover {
-  box-shadow: 0 0 36px rgba(255, 255, 255, 0.2);
   background: rgba(255, 255, 255, 0.06);
+  box-shadow: 0 0 40px rgba(255, 255, 255, 0.18);
 }
 
 .userBox::before {
@@ -131,32 +115,36 @@
   background: linear-gradient(to right, transparent, #ffffff80, transparent);
 }
 
-/* ✅ LOGO */
 .logo {
   width: 92px;
   height: 92px;
   display: block;
-  filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.35));
+  filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.4));
   background: linear-gradient(120deg, #ffffff, #ffd700);
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  animation: fadeInDown 1s ease both;
+  animation: fadeInLogo 1s ease both;
 }
 
-@keyframes fadeInDown {
-  from { opacity: 0; transform: translateY(-20px); }
-  to { opacity: 1; transform: translateY(0); }
+@keyframes fadeInLogo {
+  from {
+    opacity: 0;
+    transform: translateY(-18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-/* ✅ EMAIL */
 .email {
   font-size: 0.66rem;
   font-weight: 500;
   color: white;
-  opacity: 0.9;
+  opacity: 0.92;
   font-family: var(--font-crypto);
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.06);
   padding: 10px 24px;
   border-radius: 18px;
   max-width: 100%;
@@ -166,21 +154,19 @@
 }
 
 .email:hover {
-  background: rgba(255, 255, 255, 0.08);
-  box-shadow: 0 0 8px rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.09);
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.25);
 }
 
-/* ✅ NAVIGATION */
+/* === NAVIGATION === */
 .nav {
   display: flex;
   flex-direction: column;
-  gap: 1.8rem;
+  gap: 1.9rem;
   font-family: var(--font-crypto);
   align-items: flex-start;
-  transform: translateY(-6px);
 }
 
-/* ✅ LINKS */
 .link {
   color: white;
   text-decoration: none;
@@ -188,12 +174,14 @@
   font-weight: 500;
   position: relative;
   transition: all 0.3s ease;
+  outline: none;
 }
 
-.link:hover {
+.link:hover,
+.link:focus-visible {
   color: #ffd700;
-  transform: translateX(8px) scale(1.02);
-  filter: brightness(1.4);
+  transform: translateX(8px) scale(1.03);
+  filter: brightness(1.3);
 }
 
 .link::before {
@@ -207,11 +195,11 @@
   transition: width 0.3s ease;
 }
 
-.link:hover::before {
+.link:hover::before,
+.link:focus-visible::before {
   width: 100%;
 }
 
-/* ✅ ACTIVE LINK */
 .active {
   color: #ffd700;
   font-weight: 600;
@@ -229,32 +217,36 @@
   background: linear-gradient(90deg, #ffd700, #ffffff, #ffd700);
 }
 
-/* ✅ LOGOUT BUTTON */
+/* === LOGOUT BUTTON === */
 .logout {
   margin-top: 36px;
   padding: 12px 20px;
   width: 72%;
-  background: rgba(14, 22, 55, 0.8);
+  background: linear-gradient(145deg, #1b253e, #111b2f);
   color: white;
-  border: 1px solid white;
+  border: 1px solid #ffffff33;
   border-radius: 16px;
   font-family: var(--font-crypto);
   font-size: 0.95rem;
   cursor: pointer;
   transition: all 0.3s ease;
   align-self: center;
-  transform: translateY(-6px);
 }
 
 .logout:hover {
   background: #ffd700;
   color: #0a122a;
   border-color: #ffd700;
-  box-shadow: 0 0 14px #ffd700cc;
-  transform: scale(1.06);
+  box-shadow: 0 0 16px #ffd700cc;
+  transform: scale(1.07);
 }
 
-/* ✅ RESPONSIVE (768px) */
+.logout:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* === RESPONSIVE === */
 @media (max-width: 768px) {
   .drawer {
     width: 220px;
