@@ -15,7 +15,7 @@ const tokens = [
 const currencies = ["eur", "usd"];
 const LOCAL_CACHE_KEY = "livePriceCache";
 
-// ✅ Fallback kainos (jei CoinGecko neveikia)
+// ✅ Fallback prices for when CoinGecko API fails
 const FALLBACK_PRICES = {
   "binancecoin": { eur: 450, usd: 480 },
   "ethereum": { eur: 2900, usd: 3100 },
@@ -32,6 +32,7 @@ export default function LivePriceTable() {
   const mountedRef = useRef(false);
   const intervalRef = useRef(null);
 
+  // Fetch live prices
   const fetchPrices = async () => {
     if (!mountedRef.current) return;
 
@@ -83,6 +84,7 @@ export default function LivePriceTable() {
     }
   };
 
+  // Load from local cache
   const loadFromCache = () => {
     const cached = localStorage.getItem(LOCAL_CACHE_KEY);
     if (cached) {
@@ -96,6 +98,7 @@ export default function LivePriceTable() {
     setLoading(false);
   };
 
+  // useEffect for mounting, fetch and periodic refresh
   useEffect(() => {
     if (typeof window === "undefined") return;
 
@@ -120,6 +123,7 @@ export default function LivePriceTable() {
     };
   }, []);
 
+  // Handle route on token click
   const handleCardClick = (route) => {
     if (navigator.vibrate) navigator.vibrate(10);
     router.push(route);
