@@ -5,9 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start",
-    "test": "vitest run",
-    "test:send": "node src/scripts/runSendTests.js"
+    "start": "next start"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.49.3",
@@ -41,9 +39,6 @@
   "devDependencies": {
     "cross-env": "7.0.3",
     "eslint": "9.23.0",
-    "eslint-config-next": "15.2.3",
-    "vitest": "1.6.0",
-    "@vitest/ui": "1.6.0",
-    "@vitest/coverage-v8": "1.6.0"
+    "eslint-config-next": "15.2.3"
   }
 }
