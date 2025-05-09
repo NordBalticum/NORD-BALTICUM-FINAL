@@ -1,10 +1,12 @@
 "use client";
 
 /**
- * useContractMeta — universalus kontrakto metaduomenų hook'as
- * =============================================================
- * Palaiko bet kurį EVM kontraktą (ERC20, ERC721, t.t.) su name/symbol/decimals.
- * Automatinis fallback, apsauga nuo klaidų, deploy-ready su 36+ tinklų palaikymu.
+ * useContractMeta — MetaMask-grade universal contract metadata hook
+ * ===================================================================
+ * Grąžina bet kurio EVM kontrakto `name`, `symbol`, `decimals` laukus.
+ * ✅ Fallback'ai
+ * ✅ `valid` flag'as
+ * ✅ 100% deploy-ready, klaidų saugos, 36+ tinklų palaikymas
  */
 
 import { useEffect, useState } from "react";
@@ -73,7 +75,7 @@ export function useContractMeta(chainId, contractAddress) {
   }, [chainId, contractAddress]);
 
   return {
-    ...meta,
+    ...meta,   // { name, symbol, decimals, valid }
     loading,
     error,
   };
