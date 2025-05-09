@@ -1,23 +1,26 @@
 /*────────────────────────────────────────────────────────────────────────────
-  Balance Card Container
+  BalanceCard.module.css – FINAL DIAMOND V2.0 ULTRA+
+  Designed to exceed MetaMask, Phantom & Coinbase Wallet
 ────────────────────────────────────────────────────────────────────────────*/
+
+/* Wrapper */
 .cardWrapper {
   display: flex;
   flex-direction: column;
   background: var(--panel-bg);
   border-radius: var(--panel-radius);
   padding: var(--spacing-lg);
-  box-shadow: var(--panel-shadow);
-  backdrop-filter: var(--panel-blur);
+  box-shadow: 0 0 20px rgba(255, 215, 0, 0.06);
+  backdrop-filter: blur(30px) saturate(180%);
   animation: fadeIn 0.6s ease-out both;
   width: 100%;
   max-width: 100%;
-  transition: all 0.3s ease-in-out;
+  position: relative;
+  overflow: hidden;
+  transition: background 0.4s ease, box-shadow 0.4s ease;
 }
 
-/*────────────────────────────────────────────────────────────────────────────
-  Toggle (Mainnets / Testnets)
-────────────────────────────────────────────────────────────────────────────*/
+/* Toggle */
 .toggleWrapper {
   display: flex;
   justify-content: center;
@@ -27,84 +30,119 @@
 }
 
 .toggleButton {
-  padding: 8px 22px;
+  padding: 10px 24px;
   font-size: 1rem;
   font-weight: 600;
   color: var(--text-sub);
-  background: transparent;
+  background: rgba(255, 255, 255, 0.02);
   border: 1px solid var(--border-color);
-  border-radius: var(--btn-radius);
+  border-radius: 14px;
   cursor: pointer;
   transition: all 0.3s ease;
+  backdrop-filter: blur(6px);
 }
 
 .toggleButton:hover {
-  background: var(--btn-hover-bg);
+  background: rgba(255, 255, 255, 0.07);
   color: var(--text-main);
   border-color: var(--accent-color);
 }
 
 .active {
   background: var(--accent-color);
-  color: #fff;
+  color: #000;
   border-color: var(--accent-color);
+  box-shadow: 0 0 16px rgba(255, 215, 0, 0.5);
 }
 
-/*────────────────────────────────────────────────────────────────────────────
-  Balances List
-────────────────────────────────────────────────────────────────────────────*/
+/* List */
 .list {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-md);
 }
 
-/*────────────────────────────────────────────────────────────────────────────
-  Single List Item
-────────────────────────────────────────────────────────────────────────────*/
+/* List Item */
 .listItem {
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: var(--spacing-lg);
-  padding: var(--spacing-sm) 0;
-  border-bottom: 1px solid var(--border-light);
-  transition: background 0.25s ease;
+  padding: var(--spacing-md) var(--spacing-sm);
+  background: rgba(255, 255, 255, 0.015);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  transition: all 0.25s ease;
   position: relative;
   overflow: hidden;
-  border-radius: var(--panel-radius);
 }
 
 .listItem:hover {
-  background: var(--hover-light);
+  background: rgba(255, 255, 255, 0.04);
+  transform: scale(1.005);
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+}
+
+.listItem[data-active="true"] {
+  animation: pulseGlow 1.8s infinite ease-in-out;
 }
 
 .listItem::after {
   content: '';
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(45deg, rgba(255, 255, 255, 0.1) 25%, transparent 50%, rgba(255, 255, 255, 0.1) 75%);
-  animation: shimmerMove 1.4s ease infinite;
+  inset: 0;
+  background: linear-gradient(
+    120deg,
+    rgba(255, 255, 255, 0.03) 25%,
+    rgba(255, 255, 255, 0.08) 50%,
+    rgba(255, 255, 255, 0.03) 75%
+  );
+  opacity: 0.12;
+  animation: shimmerMove 2.5s infinite ease-in-out;
+  pointer-events: none;
 }
 
-/*────────────────────────────────────────────────────────────────────────────
-  Total Row (Summary)
-────────────────────────────────────────────────────────────────────────────*/
+/* Total Row — Collapsible Summary */
 .totalRow {
   margin-top: var(--spacing-lg);
-  font-weight: bold;
-  background: var(--panel-bg-secondary);
-  padding: var(--spacing-sm) 0;
-  border-top: 2px solid var(--accent-color);
-  border-bottom: 2px solid var(--accent-color);
+  font-weight: 700;
+  background: rgba(255, 215, 0, 0.07);
+  border: 1px solid rgba(255, 215, 0, 0.2);
+  border-radius: 18px;
+  backdrop-filter: blur(16px);
+  box-shadow: 0 0 10px rgba(255, 215, 0, 0.12);
+  transition: all 0.3s ease;
+  cursor: pointer;
+  overflow: hidden;
+  position: relative;
 }
 
-/*────────────────────────────────────────────────────────────────────────────
-  Network Info (Left Side)
-────────────────────────────────────────────────────────────────────────────*/
+.totalRow:hover {
+  background: rgba(255, 215, 0, 0.1);
+  box-shadow:
+    0 0 12px rgba(255, 215, 0, 0.15),
+    inset 0 0 6px rgba(255, 215, 0, 0.05);
+}
+
+/* TotalRow expanded breakdown (if implemented in component) */
+.totalRow[data-expanded="true"]::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: linear-gradient(to right, var(--accent-color), transparent);
+  animation: slideBar 2s infinite linear;
+}
+
+/* Breakdown reveal animation */
+@keyframes slideBar {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+/* Network Info */
 .networkLeft {
   display: flex;
   align-items: center;
@@ -118,9 +156,7 @@
   word-break: break-word;
 }
 
-/*────────────────────────────────────────────────────────────────────────────
-  Amount Info (Right Side)
-────────────────────────────────────────────────────────────────────────────*/
+/* Amounts */
 .networkRight {
   display: flex;
   flex-direction: column;
@@ -143,9 +179,17 @@
   line-height: 1.2;
 }
 
-/*────────────────────────────────────────────────────────────────────────────
-  Shimmer Loader for Placeholders
-────────────────────────────────────────────────────────────────────────────*/
+/* Status indicator (could be added per-network in future) */
+.statusDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-left: 6px;
+  background-color: var(--green);
+  box-shadow: 0 0 0 1px #000, 0 0 4px var(--green);
+}
+
+/* Shimmer Loader */
 .shimmerSmall {
   display: inline-block;
   width: 5ch;
@@ -158,25 +202,42 @@
     var(--shimmer-light) 63%
   );
   background-size: 400% 100%;
-  animation: shimmerMove 1.4s ease infinite;
+  animation: shimmerMove 1.6s ease infinite;
 }
 
-/*────────────────────────────────────────────────────────────────────────────
-  Animations
-────────────────────────────────────────────────────────────────────────────*/
-@keyframes fadeIn {
-  0% { opacity: 0; transform: translateY(20px); }
-  100% { opacity: 1; transform: translateY(0); }
+/* Pulse highlight */
+.pulse {
+  animation: pulseGlow 1.5s infinite ease-in-out;
 }
 
+/* Updated ago */
+.updatedAgo {
+  font-size: 0.75rem;
+  color: var(--text-sub);
+  text-align: right;
+  margin-top: var(--spacing-md);
+  opacity: 0.7;
+  font-style: italic;
+}
+
+/* Animations */
 @keyframes shimmerMove {
   0% { background-position: -400% 0; }
   100% { background-position: 400% 0; }
 }
 
-/*────────────────────────────────────────────────────────────────────────────
-  Responsive Magic 📱
-────────────────────────────────────────────────────────────────────────────*/
+@keyframes pulseGlow {
+  0%   { box-shadow: 0 0 0 rgba(255, 215, 0, 0); }
+  50%  { box-shadow: 0 0 12px rgba(255, 215, 0, 0.5); }
+  100% { box-shadow: 0 0 0 rgba(255, 215, 0, 0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Responsive */
 @media (max-width: 768px) {
   .listItem {
     flex-direction: column;
@@ -190,7 +251,7 @@
   }
 
   .cryptoAmount {
-    font-size: 1.1rem;
+    font-size: 1.05rem;
   }
 
   .fiatAmount {
