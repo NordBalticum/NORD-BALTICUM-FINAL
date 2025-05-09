@@ -40,11 +40,11 @@ export function useTokenApproval(chainId, tokenAddress, spenderAddress, amountRe
 
         const [allowance, decimals] = await Promise.all([
           contract.allowance(owner, spender),
-          contract.decimals().catch(() => 18),
+          contract.decimals().catch(() => 18), // Fallback to 18 decimals
         ]);
 
         const required = ethers.parseUnits(amountRequired.toString(), decimals);
-        setApproved(BigInt(allowance) >= BigInt(required));
+        setApproved(BigInt(allowance) >= BigInt(required));  // BigInt comparison for allowance
       } catch (err) {
         console.warn("⚠️ useTokenApproval check error:", err.message);
         setApproved(false);
@@ -64,32 +64,32 @@ export function useTokenApproval(chainId, tokenAddress, spenderAddress, amountRe
       if (!signer || !ethers.isAddress(spender)) throw new Error("Missing or invalid signer/spender");
 
       const contract = new ethers.Contract(tokenAddress, ERC20ABI, signer);
-      const decimals = await contract.decimals().catch(() => 18);
+      const decimals = await contract.decimals().catch(() => 18); // Default to 18 decimals
       const amt = ethers.parseUnits(
         (amountOverride || amountRequired || "0").toString(),
         decimals
       );
 
-      const tx = await contract.approve(spender, amt);
-      setTxHash(tx.hash);
-      await tx.wait();
+      const tx = await contract.approve(spender, amt);  // Call ERC20 approve method
+      setTxHash(tx.hash);  // Set transaction hash
+      await tx.wait();  // Wait for transaction confirmation
 
-      setApproved(true);
+      setApproved(true);  // Update state once approval is successful
     } catch (err) {
       console.error("❌ useTokenApproval error:", err.message);
-      setError(err.message);
+      setError(err.message);  // Set error if approval fails
       setApproved(false);
     } finally {
-      setApproving(false);
+      setApproving(false);  // Reset loading state
     }
   };
 
   return {
-    approve,
-    approving,
-    approved,
-    txHash,
-    error,
-    spender,
+    approve,     // approve function
+    approving,   // boolean indicating if the approval is in progress
+    approved,    // boolean indicating if the approval was successful
+    txHash,      // transaction hash of the approval transaction
+    error,       // any error occurred during approval process
+    spender,     // the spender address
   };
 }
