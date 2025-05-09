@@ -1,10 +1,13 @@
 "use client";
 
 /**
- * useBridge — MetaMask-grade cross-chain bridge hook
- * ==================================================
- * Veikia su mūsų 36+ EVM tinklais, ERC20 kontraktais ir bridge smart contract.
- * Automatiškai valdo signer, decimals, txHash, loading ir klaidų būsenas.
+ * useBridge — v3.0 FINAL META-GRADE
+ * ============================================
+ * Naudoja bridge smart contract siųsti ERC20 ar native per EVM tiltą.
+ * ✅ Palaiko 36+ EVM tinklus
+ * ✅ Palaiko native ir ERC20 bridginimą
+ * ✅ Automatinis decimals, signer, tx.wait
+ * ✅ Full klaidų kontrolė
  */
 
 import { useState } from "react";
@@ -15,6 +18,7 @@ import BRIDGE_ABI from "@/abi/Bridge.json";
 
 export function useBridge() {
   const { getSignerForChain } = useAuth();
+
   const [bridging, setBridging] = useState(false);
   const [txHash, setTxHash] = useState(null);
   const [error, setError] = useState(null);
@@ -32,26 +36,34 @@ export function useBridge() {
     setTxHash(null);
 
     try {
+      // === Validation ===
       if (!fromChainId || !toChainId || !bridgeAddress || !amount) {
-        throw new Error("Missing required parameters");
+        throw new Error("❌ Missing bridge parameters");
       }
 
       const signer = getSignerForChain(fromChainId);
-      if (!signer) throw new Error("Signer not available");
+      if (!signer) throw new Error("❌ Signer unavailable");
 
       const contract = new ethers.Contract(bridgeAddress, BRIDGE_ABI, signer);
 
+      // === Prepare amount ===
       let amt;
       if (isNative) {
         amt = ethers.parseEther(amount.toString());
       } else {
-        const tokenContract = new ethers.Contract(tokenAddress, [
-          "function decimals() view returns (uint8)",
-        ], signer);
-        const decimals = await tokenContract.decimals().catch(() => 18);
+        if (!tokenAddress) throw new Error("❌ ERC20 token address missing");
+
+        const token = new ethers.Contract(
+          tokenAddress,
+          ["function decimals() view returns (uint8)"],
+          signer
+        );
+
+        const decimals = await token.decimals().catch(() => 18);
         amt = ethers.parseUnits(amount.toString(), decimals);
       }
 
+      // === Call bridge function ===
       const tx = isNative
         ? await contract.bridgeNative(toChainId, { value: amt })
         : await contract.bridgeToken(toChainId, tokenAddress, amt);
