@@ -9,7 +9,6 @@ import styles from "./balancecard.module.css";
 export default function BalanceCard() {
   const { balances, prices, balancesReady, lastUpdated } = useBalance();
   const [showTestnets, setShowTestnets] = useState(false);
-
   const now = Date.now();
 
   const networkList = useMemo(() =>
@@ -17,34 +16,33 @@ export default function BalanceCard() {
     [showTestnets]
   );
 
-  const fmtCrypto = (n) =>
+  const fmtCrypto = n =>
     Number(n || 0).toLocaleString(undefined, {
       minimumFractionDigits: 2,
       maximumFractionDigits: 6,
     });
 
-  const fmtFiat = (n) =>
+  const fmtFiat = n =>
     Number(n || 0).toLocaleString(undefined, {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     });
 
-  const { totalUsd, totalEur } = useMemo(() => {
-    return networkList.reduce((acc, net) => {
+  const { totalUsd, totalEur } = useMemo(() =>
+    networkList.reduce((acc, net) => {
       const bal = balances[net.key] ?? 0;
       const price = prices[net.key] ?? { usd: 0, eur: 0 };
       acc.totalUsd += bal * price.usd;
       acc.totalEur += bal * price.eur;
       return acc;
-    }, { totalUsd: 0, totalEur: 0 });
-  }, [networkList, balances, prices]);
+    }, { totalUsd: 0, totalEur: 0 }),
+    [networkList, balances, prices]
+  );
 
   if (!balancesReady) {
     return (
       <div className={styles.cardWrapper}>
-        <div className={styles.loadingState}>
-          Fetching balances...
-        </div>
+        <div className={styles.shimmerSmall}>Fetching balances...</div>
       </div>
     );
   }
@@ -81,7 +79,12 @@ export default function BalanceCard() {
           const hasPrice = price.usd > 0 || price.eur > 0;
 
           return (
-            <div key={net.key} className={styles.listItem}>
+            <div
+              key={net.key}
+              className={styles.listItem}
+              data-active={balance > 0}
+              data-network={net.key}
+            >
               <div className={styles.networkLeft}>
                 <Image
                   src={net.icon}
@@ -106,7 +109,10 @@ export default function BalanceCard() {
           );
         })}
 
-        <div className={`${styles.listItem} ${styles.totalRow}`}>
+        <div
+          className={`${styles.listItem} ${styles.totalRow}`}
+          data-expanded={true}
+        >
           <div className={styles.networkLeft}>
             <span className={styles.networkLabel}>Total</span>
           </div>
