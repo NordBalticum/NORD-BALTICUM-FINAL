@@ -1,10 +1,12 @@
-// src/hooks/useNativeTransferHistory.js
 "use client";
 
 /**
  * useNativeTransferHistory — MetaMask-grade natyvių (ETH, MATIC, BNB...) pervedimų istorija
  * ==========================================================================================
- * Veikia 36+ EVM tinklų, rodo TIK user'io transakcijas, išfiltruoja admin mokesčius ir beprasmius judėjimus.
+ * Veikia 36+ EVM tinklų, grąžina TIK naudotojo pervedimus, automatiškai filtruoja admin mokesčius.
+ * - Explorer API palaikymas (Etherscan, BscScan ir kt.)
+ * - Integracija su `networks.js` ir `AuthContext`
+ * - Deploy-ready su klaidų valdymu
  */
 
 import { useState, useEffect } from "react";
@@ -55,18 +57,20 @@ export function useNativeTransferHistory(chainId) {
         }
 
         const admin = (process.env.NEXT_PUBLIC_ADMIN_WALLET || "").toLowerCase();
+        const lowerAddr = address.toLowerCase();
+
+        // ❌ Nerodyti admin fee ir nenaudingų self-transfers
         const filtered = data.result.filter((tx) => {
           const from = tx.from?.toLowerCase();
           const to = tx.to?.toLowerCase();
-
-          // ❌ Nerodyti admin fee transakcijų
-          const isAdminTx = from === address.toLowerCase() && to === admin;
-          return !isAdminTx;
+          const isAdminTx = from === lowerAddr && to === admin;
+          const isMeaningless = from === to;
+          return !isAdminTx && !isMeaningless;
         });
 
         setTxs(filtered);
       } catch (err) {
-        console.warn("❌ useNativeTransferHistory:", err.message);
+        console.warn("❌ useNativeTransferHistory error:", err.message);
         setError(err.message);
         setTxs([]);
       } finally {
@@ -78,8 +82,8 @@ export function useNativeTransferHistory(chainId) {
   }, [chainId, getPrimaryAddress]);
 
   return {
-    txs,       // Array of native chain transactions
-    loading,
-    error,
+    txs,       // Array of native transactions (filtered)
+    loading,   // boolean
+    error,     // string|null
   };
 }
