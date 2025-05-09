@@ -1,4 +1,3 @@
-// src/hooks/useTokenBalance.js
 "use client";
 
 /**
@@ -43,15 +42,15 @@ export function useTokenBalance() {
         if (activeToken === "native") {
           const raw = await provider.getBalance(userAddress);
           setRawBalance(raw);
-          setFormattedBalance(ethers.formatEther(raw));
+          setFormattedBalance(ethers.formatEther(raw)); // Convert wei to ETH or the appropriate native token format
         } else if (tokenAddress && ethers.isAddress(tokenAddress)) {
           const contract = new ethers.Contract(tokenAddress, ERC20_ABI, provider);
           const [raw, decimals] = await Promise.all([
             contract.balanceOf(userAddress),
-            contract.decimals().catch(() => 18),
+            contract.decimals().catch(() => 18), // Default to 18 decimals if none are available
           ]);
           setRawBalance(raw);
-          setFormattedBalance(ethers.formatUnits(raw, decimals));
+          setFormattedBalance(ethers.formatUnits(raw, decimals)); // Format according to the token's decimals
         } else {
           throw new Error("Missing or invalid tokenAddress");
         }
@@ -69,8 +68,8 @@ export function useTokenBalance() {
   }, [chainId, tokenAddress, activeToken, getAddressForChain]);
 
   return {
-    balance: rawBalance,              // BigInt (wei)
-    formatted: formattedBalance,     // Human-readable
+    balance: rawBalance,              // BigInt (wei or token smallest unit)
+    formatted: formattedBalance,     // Human-readable formatted balance (e.g., "0.0001")
     loading,
     error,
   };
