@@ -1,15 +1,19 @@
-/* === NordBalticum Layout Wrapper — NEUTRALUS === */
+/* === Layout Container (Bulletproof) === */
 .layoutWrapper {
   width: 100%;
-  min-height: 100%;
-  position: relative;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background: inherit;
-  overflow: visible;
+  justify-content: flex-start;
+  background: var(--background);
+  position: relative;
+  overflow: hidden;
+  transition: background 0.3s ease-in-out, padding 0.3s ease-in-out;
+  padding-top: var(--spacing-md);
+  padding-bottom: var(--spacing-md);
 }
 
-/* === Main Content — Full Responsive Area === */
+/* === Main Content Area (Fully Responsive and Centered) === */
 .mainContent {
   width: 100%;
   flex: 1;
@@ -18,6 +22,183 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  padding: var(--spacing-lg);
   box-sizing: border-box;
-  overflow: visible;
+  overflow: hidden;
+  transition: padding 0.3s ease-in-out, transform 0.25s ease-in-out;
 }
+
+/* === Mobile Layout Enhancements (Seamless experience on mobile) === */
+.mobileLayout {
+  padding: var(--spacing-sm);  /* Adjusted padding for mobile */
+  overflow: hidden;  /* Prevent overflow */
+  transition: padding 0.3s ease-in-out;
+}
+
+/* === Side Drawer (Smooth Transition, Mobile Optimized) === */
+@keyframes slideIn {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(0); }
+}
+
+/* === Drawer and Bottom Navigation Enhancements === */
+@media (max-width: 768px) {
+  .layoutWrapper {
+    position: relative;
+    display: block;
+    height: auto;
+  }
+
+  .sideDrawer {
+    position: fixed;
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: 280px;
+    background-color: var(--drawer-bg);
+    animation: slideIn 0.3s ease-out;
+    z-index: 1020;
+    box-shadow: 5px 0px 12px rgba(0, 0, 0, 0.15);
+  }
+
+  .bottomNavWrapper {
+    position: fixed;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    background-color: var(--nav-bg);
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.2);
+    z-index: 1010;
+  }
+}
+
+/* === Light & Dark Theme Support (Global themes with smooth transitions) === */
+:root {
+  --background: #f5f5f5;
+  --drawer-bg: #ffffff;
+  --nav-bg: #ffffff;
+  --text-color: #333;
+  --accent-color: #0070f3;
+  --font-crypto: "Monaco", monospace;
+  --spacing-lg: 24px;
+  --spacing-md: 16px;
+  --spacing-sm: 8px;
+}
+
+[data-theme="dark"] {
+  --background: #1e1e1e;
+  --drawer-bg: #2e2e2e;
+  --nav-bg: #2e2e2e;
+  --text-color: #f0f0f0;
+  --accent-color: #1a73e8;
+}
+
+/* === Accessibility & Focus Styles (Ensures smooth experience for keyboard users) === */
+button:focus, a:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--accent-color);
+}
+
+button:active, a:active {
+  transform: scale(0.98);
+  transition: transform 0.1s ease;
+}
+
+button, a {
+  transition: background-color 0.2s ease, color 0.2s ease;
+  cursor: pointer;
+}
+
+/* === Hover and Active States (Ensure interactive clarity) === */
+.navItem {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: var(--spacing-sm) 0;
+  background: transparent;
+  color: var(--text-color);
+  font-weight: 600;
+  font-family: var(--font-crypto);
+  text-decoration: none;
+  transition: transform 0.25s ease, color 0.25s ease;
+  position: relative;
+  min-width: 60px;
+  border-radius: 12px;
+}
+
+.navItem:hover {
+  transform: translateY(-2px);
+  color: var(--accent-color);
+}
+
+.navItem.active {
+  background: var(--accent-color);
+  color: #fff;
+  box-shadow: 0 0 12px rgba(0, 0, 0, 0.2);
+  transform: scale(1.03);
+  transition: transform 0.25s ease-in-out;
+}
+
+.navItem::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.08);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  border-radius: 12px;
+}
+
+.navItem:hover::after {
+  opacity: 1;
+}
+
+/* === Mobile Responsive Adjustments === */
+@media (max-width: 768px) {
+  .navItem {
+    padding: var(--spacing-sm) 0;
+    font-size: 1rem;
+  }
+
+  .mainContent {
+    padding: var(--spacing-md);
+  }
+
+  .bottomWrapper {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding-bottom: var(--spacing-lg);
+  }
+}
+
+/* === Smooth Transition for Bottom Navigation === */
+.bottomWrapper {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 59px);
+  display: flex;
+  justify-content: center;
+  z-index: 9999;
+  pointer-events: none;
+}
+
+.navbar {
+  pointer-events: auto;
+  width: 90%;
+  max-width: 520px;
+  height: 64px;
+  background: rgba(12, 18, 36, 0.92);
+  border-radius: 20px;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  backdrop-filter: blur(20px) saturate(180%);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.45);
+  transition: all 0.3s ease;
+  padding: 0 16px;
+}
+
+/* === End of Mobile and Main Layout Styles === */
